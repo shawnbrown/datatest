@@ -4,6 +4,7 @@ from datatest.case import DataTestCase
 from datatest.datasource import BaseDataSource
 from datatest.datasource import SqliteDataSource
 from datatest.datasource import CsvDataSource
+from datatest.datasource import MultiDataSource
 from datatest.diff import ExtraColumn
 from datatest.diff import ExtraValue
 from datatest.diff import ExtraSum
@@ -21,6 +22,7 @@ __all__ = [
     'BaseDataSource',
     'SqliteDataSource',
     'CsvDataSource',
+    'MultiDataSource',
 
     # Differences.
     'ExtraColumn',

@@ -11,6 +11,7 @@ import unittest
 from datatest.datasource import BaseDataSource
 from datatest.datasource import SqliteDataSource
 from datatest.datasource import CsvDataSource
+from datatest.datasource import MultiDataSource
 
 
 class TestBaseDataSource(unittest.TestCase):
@@ -22,6 +23,16 @@ class TestBaseDataSource(unittest.TestCase):
                 ['b', 'z', '5' ],
                 ['b', 'y', '40'],
                 ['b', 'x', '25']]
+
+    @staticmethod
+    def _make_csv_file(fieldnames, testdata):
+        """Build CSV file from source data."""
+        init_string = []
+        init_string.append(','.join(fieldnames)) # Concat cells into row.
+        for row in testdata:
+            init_string.append(','.join(row))    # Concat cells into row.
+        init_string = '\n'.join(init_string)     # Concat rows into final string.
+        return io.StringIO(init_string)
 
     def setUp(self):
         """Define and instantiate a minimal data source."""
@@ -39,11 +50,14 @@ class TestBaseDataSource(unittest.TestCase):
 
         self.datasource = MinimalDataSource(self.testdata, self.fieldnames)
 
+    def test_for_datasource(self):
+        msg = '{0} missing `datasource` attribute.'
+        msg = msg.format(self.__class__.__name__)
+        self.assertTrue(hasattr(self, 'datasource'), msg)
+
     def test_slow_iter(self):
         """Test slow iterator."""
         results = self.datasource.slow_iter()
-        if results == NotImplemented:
-            return  # <- EXIT!
 
         results = list(results)
         expected = [
@@ -193,43 +207,71 @@ class TestSqliteDataSource(TestBaseDataSource):
 
 class TestCsvDataSource(TestBaseDataSource):
     def setUp(self):
-        fh = self._make_csv_file()
+        fh = self._make_csv_file(self.fieldnames, self.testdata)
         self.datasource = CsvDataSource(fh)
-
-    def _make_csv_file(self):
-        """Build CSV file from source data (self.testdata)."""
-        init_string = []
-        init_string.append(','.join(self.fieldnames)) # Concat cells into row.
-        for row in self.testdata:
-            init_string.append(','.join(row)) # Concat cells into row.
-        init_string = '\n'.join(init_string)  # Concat rows into final string.
-        return io.StringIO(init_string)
 
     def test_empty_file(self):
         pass
         #file exists but is empty should fail, too!
 
 
-#src = CsvDataSource(file=self._source_data)
-#self.assertEqual(src._file, self._source_data)
+class TestMultiDataSource(TestBaseDataSource):
+    def setUp(self):
+        fieldnames1 = ['label1', 'label2', 'value']
+        testdata1 = [['a', 'x', '17'],
+                     ['a', 'x', '13'],
+                     ['a', 'y', '20'],
+                     ['a', 'z', '15']]
 
-# Test filename.
-#trustedsource
-#datasource
-#trusted_datasource
-#suspect_datasource
-#suspect_datasource
+        fieldnames2 = ['label1', 'label2', 'value']
+        testdata2 = [['b', 'z', '5' ],
+                     ['b', 'y', '40'],
+                     ['b', 'x', '25']]
 
-#src = CsvDataSource(file='somefile.csv')
-#trusted
-#suspect
-#self.assertEqual(src._file, self._source_data)
+        class MinimalDataSource(BaseDataSource):
+            def __init__(self, data, fieldnames):
+                self._data = data
+                self._fieldnames = fieldnames
 
-#self.assertSums(suspectsource, trustedsource, quantity='votes', groupby=['county', 'party'], office='pres')
+            def slow_iter(self):
+                for row in self._data:
+                    yield dict(zip(self._fieldnames, row))
 
-#self.assertDataSum('votes', ['county', 'party'], office='pres')
-#self.assertDataSum('votes', ['county', 'party'], office='ussen')
-#self.assertDataSum('votes', ['county', 'party', 'cd'], office='ushse')
-#self.assertDataSum('votes', ['county', 'party', 'stsen'], office='stsen')
-#self.assertDataSum('votes', ['county', 'party', 'sthse'], office='sthse')
+            def columns(self):
+                return self._fieldnames
+
+        source1 = MinimalDataSource(testdata1, fieldnames1)
+        source2 = MinimalDataSource(testdata2, fieldnames2)
+        self.datasource = MultiDataSource(source1, source2)
+
+
+class TestMixedMultiDataSource(TestBaseDataSource):
+    """Test MultiDataSource with sub-sources of different types."""
+    def setUp(self):
+        fieldnames1 = ['label1', 'label2', 'value']
+        testdata1 = [['a', 'x', '17'],
+                     ['a', 'x', '13'],
+                     ['a', 'y', '20'],
+                     ['a', 'z', '15']]
+
+        class MinimalDataSource(BaseDataSource):
+            def __init__(self, data, fieldnames):
+                self._data = data
+                self._fieldnames = fieldnames
+            def slow_iter(self):
+                for row in self._data:
+                    yield dict(zip(self._fieldnames, row))
+            def columns(self):
+                return self._fieldnames
+
+        minimal_source = MinimalDataSource(testdata1, fieldnames1)
+
+        fieldnames2 = ['label1', 'label2', 'value']
+        testdata2 = [['b', 'z', '5' ],
+                     ['b', 'y', '40'],
+                     ['b', 'x', '25']]
+        fh = self._make_csv_file(fieldnames2, testdata2)
+        csv_source = CsvDataSource(fh)
+
+        self.datasource = MultiDataSource(minimal_source, csv_source)
 

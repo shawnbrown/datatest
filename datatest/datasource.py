@@ -68,13 +68,13 @@ class SqliteDataSource(BaseDataSource):
         self._connection = connection
         self._table = table
 
-    #def slow_iter(self):
-    #    """Return iterator that yields dictionary values."""
-    #    cursor = self._connection.cursor()
-    #    cursor.execute('SELECT * FROM ' + self._table)
-    #    column_names = self.columns()
-    #    mkdict = lambda x: dict(zip(column_names, x))
-    #    return (mkdict(row) for row in cursor.fetchall())
+    def slow_iter(self):
+        """Return iterator that yields dictionary values."""
+        cursor = self._connection.cursor()
+        cursor.execute('SELECT * FROM ' + self._table)
+        column_names = self.columns()
+        mkdict = lambda x: dict(zip(column_names, x))
+        return (mkdict(row) for row in cursor.fetchall())
 
     def columns(self):
         """Return list of column names."""
@@ -204,16 +204,10 @@ class CsvDataSource(SqliteDataSource):
 
         """
 
-
     #def __del__(self):
     #    # If file was opened by init, then close it on del.
     #    if self._internal_fh:
     #        self._internal_fh.close()
-
-    #def slow_iter(self):
-    #    """Return iterator that yields dictionary values."""
-    #    self._file.seek(0)
-    #    return csv.DictReader(self._file)
 
     #def columns(self):
     #    """Return list of column names."""
@@ -298,6 +292,34 @@ class CsvDataSource(SqliteDataSource):
 
         if duplicates:
             raise ValueError('Duplicate values: ' + ', '.join(duplicates))
+
+
+class MultiDataSource(BaseDataSource):
+    def __init__(self, *sources):
+        """Composite of multiple data source objects."""
+        for source in sources:
+            msg = 'Sources must be derived from BaseDataSource'
+            assert isinstance(source, BaseDataSource), msg
+        self.sources = sources
+
+    def slow_iter(self):
+        """Return iterator that yields dictionary rows."""
+        columns = self.columns()
+        for source in self.sources:
+            for row in source.slow_iter():
+                for col in columns:
+                    if col not in row:
+                        row[col] = ''
+                yield row
+
+    def columns(self):
+        """Return list of column names."""
+        columns = []
+        for source in self.sources:
+            for col in source.columns():
+                if col not in columns:
+                    columns.append(col)  # TODO: Look at improving order!
+        return columns
 
 
 #DefaultDataSource = CsvDataSource
