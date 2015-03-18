@@ -306,6 +306,11 @@ class TestMultiDataSourceDifferentColumns(unittest.TestCase):
         subsrc2 = MinimalDataSource(testdata2, fieldnames2)
         self.datasource = MultiDataSource(subsrc1, subsrc2)
 
+    def test_combined_columns(self):
+        expected = ['label1', 'label2', 'value', 'label3', 'other_value']
+        result = self.datasource.columns()
+        self.assertSetEqual(set(expected), set(result))
+
     def test_set_method(self):
         expected = set(['a', 'b'])
         result = self.datasource.set('label1')
