@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import collections
 import csv
+import itertools
 import sqlite3
 from decimal import Decimal
 
@@ -320,6 +321,34 @@ class MultiDataSource(BaseDataSource):
                 if col not in columns:
                     columns.append(col)  # TODO: Look at improving order!
         return columns
+
+    def set(self, column, **kwds):
+        """Return set of column values."""
+        if not any(column in source.columns() for source in self.sources):
+            msg = 'No sub-sources not contain {0!r} column.'.format(column)
+            raise Exception(msg)
+
+        result_sets = []
+        for source in self.sources:
+            cols = source.columns()
+            sub_kwds = self._format_kwds(source, cols, **kwds)
+            if column not in cols:
+                result_sets.append(set(['']))
+            else:
+                result_sets.append(source.set(column, **sub_kwds))
+
+        return set(itertools.chain(*result_sets))
+
+    @staticmethod
+    def _format_kwds(source, cols, **kwds):
+        cleaned_kwds = {}
+        for key, val in kwds.items():
+            if key in cols:
+                cleaned_kwds[key] = val
+            else:
+                msg = 'Sub source {0!r} has no value {1}={2!r}'
+                assert val == '', msg.format(source, key, val)
+        return cleaned_kwds
 
 
 #DefaultDataSource = CsvDataSource

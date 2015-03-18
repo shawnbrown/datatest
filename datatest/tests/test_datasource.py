@@ -275,3 +275,46 @@ class TestMixedMultiDataSource(TestBaseDataSource):
 
         self.datasource = MultiDataSource(minimal_source, csv_source)
 
+
+class TestMultiDataSourceDifferentColumns(unittest.TestCase):
+    """Test MultiDataSource with sub-sources that use different columns."""
+    def setUp(self):
+        fieldnames1 = ['label1', 'label2', 'value']
+        testdata1 = [['a', 'x', '17'],
+                     ['a', 'x', '13'],
+                     ['a', 'y', '20'],
+                     ['a', 'z', '15']]
+
+        fieldnames2 = ['label1', 'label3', 'other_value']
+        testdata2 = [['b', 'zzz', '5' ],
+                     ['b', 'yyy', '40'],
+                     ['b', 'xxx', '25']]
+
+        class MinimalDataSource(BaseDataSource):
+            def __init__(self, data, fieldnames):
+                self._data = data
+                self._fieldnames = fieldnames
+
+            def slow_iter(self):
+                for row in self._data:
+                    yield dict(zip(self._fieldnames, row))
+
+            def columns(self):
+                return self._fieldnames
+
+        subsrc1 = MinimalDataSource(testdata1, fieldnames1)
+        subsrc2 = MinimalDataSource(testdata2, fieldnames2)
+        self.datasource = MultiDataSource(subsrc1, subsrc2)
+
+    def test_set_method(self):
+        expected = set(['a', 'b'])
+        result = self.datasource.set('label1')
+        self.assertSetEqual(expected, result)
+
+        expected = set(['x', 'y', 'z', ''])
+        result = self.datasource.set('label2')
+        msg = ("Should include empty string as subsrc2 doesn't have "
+               "the specified column.")
+        self.assertSetEqual(expected, result, msg)
+
+
