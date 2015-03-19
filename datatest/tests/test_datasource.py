@@ -280,15 +280,15 @@ class TestMultiDataSourceDifferentColumns(unittest.TestCase):
     """Test MultiDataSource with sub-sources that use different columns."""
     def setUp(self):
         fieldnames1 = ['label1', 'label2', 'value']
-        testdata1 = [['a', 'x', '17'],
-                     ['a', 'x', '13'],
-                     ['a', 'y', '20'],
-                     ['a', 'z', '15']]
+        testdata1 = [['a',            'x',    '17'],
+                     ['a',            'x',    '13'],
+                     ['a',            'y',    '20'],
+                     ['b',            'z',     '5']]
 
-        fieldnames2 = ['label1', 'label3', 'other_value']
-        testdata2 = [['b', 'zzz', '5' ],
-                     ['b', 'yyy', '40'],
-                     ['b', 'xxx', '25']]
+        fieldnames2 = ['label1', 'label3', 'value', 'other_value']
+        testdata2 = [['a',          'zzz',    '15',           '3'],
+                     ['b',          'yyy',     '4',            ''],
+                     ['b',          'xxx',     '2',           '2']]
 
         class MinimalDataSource(BaseDataSource):
             def __init__(self, data, fieldnames):
@@ -312,14 +312,27 @@ class TestMultiDataSourceDifferentColumns(unittest.TestCase):
         self.assertSetEqual(set(expected), set(result))
 
     def test_set_method(self):
+        # Selected column exists in all sub-sources.
         expected = set(['a', 'b'])
         result = self.datasource.set('label1')
         self.assertSetEqual(expected, result)
 
+        # Selected column exists in only one sub-source.
         expected = set(['x', 'y', 'z', ''])
         result = self.datasource.set('label2')
         msg = ("Should include empty string as subsrc2 doesn't have "
                "the specified column.")
         self.assertSetEqual(expected, result, msg)
+
+    def test_kwds_filter(self):
+        # Filtered value spans sub-sources.
+        expected = set(['17', '13', '20', '15'])
+        result = self.datasource.set('value', label1='a')
+        self.assertSetEqual(expected, result)
+
+        # Filter column exists in only one sub-source.
+        expected = set(['17', '13'])
+        result = self.datasource.set('value', label1='a', label2='x')
+        self.assertSetEqual(expected, result)
 
 
