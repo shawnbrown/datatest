@@ -150,10 +150,6 @@ class _AcceptPercentToleranceContext(_BaseAcceptContext):
 
 
 class DataTestCase(TestCase):
-    tolerance = None
-    #absoluteTolerance = None
-    #percentTolerance = None
-
     def __getattr__(self, name):
         if name in ('trustedData', 'subjectData'):
             for record in inspect.stack():  # Bubble-up stack looking
@@ -266,12 +262,11 @@ class DataTestCase(TestCase):
         def test(group_kwds):
             subject_sum = subject.sum(column, **group_kwds)
             trusted_sum = trusted.sum(column, **group_kwds)
-            tolerance = self.tolerance if self.tolerance else 0
             s_sum = subject_sum if subject_sum else 0
             t_sum = trusted_sum if trusted_sum else 0
             difference = s_sum - t_sum
             try:
-                assert abs(difference) <= tolerance  # <- The assertion!
+                assert difference == 0
             except AssertionError:
                 all_kwds = kwds.copy()
                 all_kwds.update(group_kwds)

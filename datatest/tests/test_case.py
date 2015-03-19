@@ -204,20 +204,6 @@ class TestDataSum(TestHelperCase):
                    " MissingSum\(-1, 70, label1=u?'b'\)")
         self.assertRegex(failure, pattern)
 
-    def test_tolerance(self):
-        """Differences are no-greater than tolerance, test should pass."""
-        class _TestClass(DataTestCase):
-            def setUp(_self):
-                _self.tolerance = 1  # <- Set tolerance.
-                _self.trustedData = self.trusted
-                _self.subjectData = self.subject_bad
-
-            def test_method(_self):
-                _self.assertValueSum('value', ['label1'])  # <- test assert
-
-        failure = self._run_one_test(_TestClass, 'test_method')
-        self.assertIsNone(failure)
-
 
 class TestColumnsSet(TestHelperCase):
     def setUp(self):
