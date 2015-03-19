@@ -334,7 +334,7 @@ class MultiDataSource(BaseDataSource):
             if column in subcols:
                 if any(v != '' for k, v in kwds.items() if k not in subcols):
                     continue
-                subkwds = {k: v for k, v in kwds.items() if k in subcols}
+                subkwds = dict((k, v) for k, v in kwds.items() if k in subcols)
                 result_sets.append(source.set(column, **subkwds))
             else:
                 result_sets.append(set(['']))
@@ -352,7 +352,7 @@ class MultiDataSource(BaseDataSource):
             if column in subcols:
                 if any(v != '' for k, v in kwds.items() if k not in subcols):
                     continue
-                subkwds = {k: v for k, v in kwds.items() if k in subcols}
+                subkwds = dict((k, v) for k, v in kwds.items() if k in subcols)
                 result = source.sum(column, **subkwds)
                 if result:
                     total_result += result
@@ -370,7 +370,7 @@ class MultiDataSource(BaseDataSource):
             if column in subcols:
                 if any(v != '' for k, v in kwds.items() if k not in subcols):
                     continue
-                subkwds = {k: v for k, v in kwds.items() if k in subcols}
+                subkwds = dict((k, v) for k, v in kwds.items() if k in subcols)
                 total_result += source.count(column, **subkwds)
 
         return total_result

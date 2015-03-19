@@ -15,6 +15,65 @@ except AttributeError:
 
 
 try:
+    TestCase.assertIsNone  # New in 2.7/3.1
+    #TestCase.assertIsNotNone
+except AttributeError:
+    def _assertIsNone(self, obj, msg=None):
+        """Same as self.assertTrue(obj is None), with a nicer default message."""
+        if obj is not None:
+            standardMsg = '%s is not None' % (safe_repr(obj),)
+            self.fail(self._formatMessage(msg, standardMsg))
+    TestCase.assertIsNone = _assertIsNone
+
+    #def _assertIsNotNone(self, obj, msg=None):
+    #    """Included for symmetry with assertIsNone."""
+    #    if obj is None:
+    #        standardMsg = 'unexpectedly None'
+    #        self.fail(self._formatMessage(msg, standardMsg))
+    #TestCase.assertIsNotNone = _assertIsNotNone
+
+
+try:
+    TestCase.assertSetEqual  # New in 2.7/3.
+except AttributeError:
+    def _assertSetEqual(self, set1, set2, msg=None):
+        try:
+            difference1 = set1.difference(set2)
+        #except TypeError, e:
+        #    self.fail('invalid type when attempting set difference: %s' % e)
+        except TypeError:
+            self.fail('invalid type when attempting set difference')
+        #except AttributeError, e:
+        #    self.fail('first argument does not support set difference: %s' % e)
+        except AttributeError:
+            self.fail('first argument does not support set difference')
+        try:
+            difference2 = set2.difference(set1)
+        #except TypeError, e:
+        #    self.fail('invalid type when attempting set difference: %s' % e)
+        except TypeError:
+            self.fail('invalid type when attempting set difference')
+        #except AttributeError, e:
+        #    self.fail('second argument does not support set difference: %s' % e)
+        except AttributeError:
+            self.fail('second argument does not support set difference')
+        if not (difference1 or difference2):
+            return
+        lines = []
+        if difference1:
+            lines.append('Items in the first set but not the second:')
+            for item in difference1:
+                lines.append(repr(item))
+        if difference2:
+            lines.append('Items in the second set but not the first:')
+            for item in difference2:
+                lines.append(repr(item))
+        standardMsg = '\n'.join(lines)
+        self.fail(self._formatMessage(msg, standardMsg))
+    TestCase.assertSetEqual = _assertSetEqual
+
+
+try:
     TestCase.assertIsInstance  # New in 3.2
 except AttributeError:
     def _assertIsInstance(self, obj, cls, msg=None):
