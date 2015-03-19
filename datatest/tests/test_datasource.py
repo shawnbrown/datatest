@@ -165,6 +165,15 @@ class TestBaseDataSource(unittest.TestCase):
         expected_set = set(tuple(x.items()) for x in expected)
         self.assertEqual(result_set, expected_set)
 
+        # Test multiple columns with filter on non-grouped column.
+        result = self.datasource.groups('label1', 'value', label2='x')
+        expected = [{'label1': 'a', 'value': '17'},
+                    {'label1': 'a', 'value': '13'},
+                    {'label1': 'b', 'value': '25'}]
+        result_set = set(tuple(x.items()) for x in result)
+        expected_set = set(tuple(x.items()) for x in expected)
+        self.assertEqual(result_set, expected_set)
+
 
 class TestSqliteDataSource(TestBaseDataSource):
     def setUp(self):
