@@ -169,57 +169,7 @@ class CsvDataSource(SqliteDataSource):
             # Assume file-like object.
             connection = self._setup_database(file)
 
-        #super().__init__(connection, 'main')
         SqliteDataSource.__init__(self, connection, 'main')
-
-        """
-        def setUpModule():
-            global subjectData, trustedData
-            subjectData = CsvDataSource('ny12precinct-votes.csv')
-            trustedData = CsvDataSource('ny12county-votes.csv')
-
-        class TestCountyTotals(DataTestCase):
-            pass
-
-        class TestFile(DataTestCase):
-            @classmethod
-            self setUpClass(cls):
-                cls.subjectData = CsvDataSource('ny12precinct-votes.csv')
-                cls.trustedData = CsvDataSource('ny12county-votes.csv')
-
-            def test_counties(self):
-                #trusted = self.trustedData.columns()
-                #subject = self.subjectData.columns()
-                #self.assertEqual(trusted, subject)
-                self.assertDataColumns('county')
-
-            def test_offices(self):
-                self.assertDataSet('office')
-
-                #self.assertDataSubset('office')
-                #self.assertDataSuperset('office')
-
-            def test_pres(self):
-                self.assertDataSums('votes', ['county', 'party'], office='pres')
-
-            def test_ushse(self):
-                global subjectData, trustedData
-                self.assertEqual(subjectData.sum('votes', office='pres'), 17342)
-
-                self.assertDataSums('votes',
-                                    groupby=['county', 'cd', 'party'],
-                                    office='ushse')
-
-        """
-
-    #def __del__(self):
-    #    # If file was opened by init, then close it on del.
-    #    if self._internal_fh:
-    #        self._internal_fh.close()
-
-    #def columns(self):
-    #    """Return list of column names."""
-    #    return self.slow_iter().fieldnames
 
     @classmethod
     def _setup_database(cls, fh, table='main', in_memory=False):
