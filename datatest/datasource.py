@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 import collections
 import csv
+import inspect
 import itertools
+import os
 import sqlite3
+import sys
 from decimal import Decimal
-
 
 #pattern = 'test*.py'
 prefix = 'test_'
@@ -154,8 +156,13 @@ class SqliteDataSource(BaseDataSource):
 class CsvDataSource(SqliteDataSource):
     def __init__(self, file):
         if isinstance(file, str):
-            # Use string as file path.
-            # TODO: Make sure relative path is relative to calling module.
+            if not file.startswith(os.sep):
+                # Resolve path relative to caller.
+                calling_frame = sys._getframe(1)
+                calling_file = inspect.getfile(calling_frame)
+                calling_path = os.path.dirname(calling_file)
+                file = os.path.join(calling_path, file)
+
             with open(file) as fh:
                 connection = self._setup_database(fh)
         else:
