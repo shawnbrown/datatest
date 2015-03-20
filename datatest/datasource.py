@@ -156,8 +156,8 @@ class SqliteDataSource(BaseDataSource):
 class CsvDataSource(SqliteDataSource):
     def __init__(self, file):
         if isinstance(file, str):
-            if not file.startswith(os.sep):
-                # Resolve path relative to caller.
+            # Assume file path.
+            if not os.path.isabs(file):
                 calling_frame = sys._getframe(1)
                 calling_file = inspect.getfile(calling_frame)
                 calling_path = os.path.dirname(calling_file)
