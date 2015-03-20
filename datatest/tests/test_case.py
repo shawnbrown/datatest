@@ -205,6 +205,47 @@ class TestDataSum(TestHelperCase):
         self.assertRegex(failure, pattern)
 
 
+class TestDataSumGroupsAndFilters(TestHelperCase):
+    def setUp(self):
+        _fh = io.StringIO('label1,label2,value\n'
+                          'a,x,18\n'  # <- off by +1 (compared to src1)
+                          'a,x,13\n'
+                          'a,y,20\n'
+                          'a,z,15\n'
+                          'b,z,4\n'   # <- off by -1 (compared to src1)
+                          'b,y,40\n'
+                          'b,x,25\n')
+        self.src3_totals = CsvDataSource(_fh)  # src3_totals == src2_records
+
+        _fh = io.StringIO('label1,label2,label3,value\n'
+                          'a,x,foo,18\n'
+                          'a,x,bar,13\n'
+                          'a,y,foo,11\n'  # <- off by +1 (compared to src3)
+                          'a,y,bar,10\n'
+                          'a,z,foo,5\n'
+                          'a,z,bar,10\n'
+                          'b,z,baz,4\n'
+                          'b,y,bar,39\n'   # <- off by -1 (compared to src3)
+                          'b,x,foo,25\n')
+        self.src3_records = CsvDataSource(_fh)
+
+    def test_group_and_filter(self):
+        """Only groupby fields should appear in diff errors (kwds-filters should be omitted)."""
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                _self.trustedData = self.src3_totals
+                _self.subjectData = self.src3_records  # <- src1 != src2
+
+            def test_method(_self):
+                _self.assertValueSum('value', ['label1'], label2='y')  # <- test assert
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        pattern = ("DataAssertionError: different 'value' sums:\n"
+                   " ExtraSum\(\+1, 20, label1=u?'a'\),\n"
+                   " MissingSum\(-1, 40, label1=u?'b'\)")
+        self.assertRegex(failure, pattern)
+
+
 class TestColumnsSet(TestHelperCase):
     def setUp(self):
         _fh = io.StringIO('label1,value\n'

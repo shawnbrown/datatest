@@ -259,22 +259,22 @@ class DataTestCase(TestCase):
         trusted = self.trustedData
         subject = self.subjectData
 
-        def test(group_kwds):
-            subject_sum = subject.sum(column, **group_kwds)
-            trusted_sum = trusted.sum(column, **group_kwds)
+        def test(group_dict):
+            all_kwds = kwds.copy()
+            all_kwds.update(group_dict)
+            subject_sum = subject.sum(column, **all_kwds)
+            trusted_sum = trusted.sum(column, **all_kwds)
             s_sum = subject_sum if subject_sum else 0
             t_sum = trusted_sum if trusted_sum else 0
             difference = s_sum - t_sum
             if difference != 0:
-                all_kwds = kwds.copy()
-                all_kwds.update(group_kwds)
                 if difference > 0:
-                    return ExtraSum(difference, t_sum, **all_kwds)
+                    return ExtraSum(difference, t_sum, **group_dict)
                 else:
-                    return MissingSum(difference, t_sum, **all_kwds)
+                    return MissingSum(difference, t_sum, **group_dict)
             return None
 
-        failures = [test(x) for x in trusted.groups(*groups, **kwds)]
+        failures = [test(group_dict) for group_dict in trusted.groups(*groups, **kwds)]
         failures = [x for x in failures if x != None]  # Filter for failures.
         if failures:
             if not msg:
