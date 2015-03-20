@@ -265,9 +265,7 @@ class DataTestCase(TestCase):
             s_sum = subject_sum if subject_sum else 0
             t_sum = trusted_sum if trusted_sum else 0
             difference = s_sum - t_sum
-            try:
-                assert difference == 0
-            except AssertionError:
+            if difference != 0:
                 all_kwds = kwds.copy()
                 all_kwds.update(group_kwds)
                 if difference > 0:
