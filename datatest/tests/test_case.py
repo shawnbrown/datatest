@@ -153,7 +153,7 @@ class TestDataSum(TestHelperCase):
         _fh = io.StringIO('label1,value\n'
                           'a,65\n'
                           'b,70\n')
-        self.trusted = CsvDataSource(_fh)
+        self.src1_totals = CsvDataSource(_fh)
 
         _fh = io.StringIO('label1,label2,value\n'
                           'a,x,17\n'
@@ -163,24 +163,24 @@ class TestDataSum(TestHelperCase):
                           'b,z,5\n'
                           'b,y,40\n'
                           'b,x,25\n')
-        self.subject = CsvDataSource(_fh)
+        self.src1_records = CsvDataSource(_fh)
 
         _fh = io.StringIO('label1,label2,value\n'
-                          'a,x,18\n'  # <- off by +1
+                          'a,x,18\n'  # <- off by +1 (compared to src1)
                           'a,x,13\n'
                           'a,y,20\n'
                           'a,z,15\n'
-                          'b,z,4\n'   # <- off by -1
+                          'b,z,4\n'   # <- off by -1 (compared to src1)
                           'b,y,40\n'
                           'b,x,25\n')
-        self.subject_bad = CsvDataSource(_fh)
+        self.src2_records = CsvDataSource(_fh)
 
     def test_passing_case(self):
         """Sums are equal, test should pass."""
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.trustedData = self.trusted
-                _self.subjectData = self.subject
+                _self.trustedData = self.src1_totals
+                _self.subjectData = self.src1_records
 
             def test_method(_self):
                 _self.assertValueSum('value', ['label1'])  # <- test assert
@@ -192,8 +192,8 @@ class TestDataSum(TestHelperCase):
         """Sums are unequal, test should fail."""
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.trustedData = self.trusted
-                _self.subjectData = self.subject_bad  # <- Contains errors!
+                _self.trustedData = self.src1_totals
+                _self.subjectData = self.src2_records  # <- src1 != src2
 
             def test_method(_self):
                 _self.assertValueSum('value', ['label1'])  # <- test assert
