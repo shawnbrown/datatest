@@ -716,6 +716,21 @@ class TestAcceptTolerance(TestHelperCase):
                    " ExtraSum\(\+3, 65, label1=u?'a'\)")
         self.assertRegex(failure, pattern)
 
+    def test_tolerance_error(self):
+        """Must throw error if tolerance is invalid."""
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                _self.trustedData = self.trusted
+                _self.subjectData = self.bad_subject
+
+            def test_method(_self):
+                with _self.acceptTolerance(-5):  # <- invalid
+                    _self.assertValueSum('value', ['label1'])
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        pattern = ('Tolerance cannot be defined with a negative number.')
+        self.assertRegex(failure, pattern)
+
 
 class TestAcceptPercentTolerance(TestHelperCase):
     def setUp(self):
