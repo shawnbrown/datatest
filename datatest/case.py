@@ -171,22 +171,62 @@ class DataTestCase(TestCase):
             raise self.failureException(msg)
 
     def acceptDifference(self, diffs, callableObj=None, *args, **kwargs):
+        """Fail unless a DataAssertionError with a matching collection
+           of differences is raised by callableObj when invoked with
+           `args` and keyword `kwargs`.  If the raised differences do
+           not match the accepted differences, the test case will fail
+           with a DataAssertionError of the remaining differences.
+
+           If called with callableObj omitted or None, will return a
+           context object used like this::
+
+                with self.acceptDifference(SomeDifferences):
+                    do_something()
+
+           An optional keyword argument 'msg' can be provided when
+           acceptDifference is used as a context object.
+
+           The context manager keeps a reference to the exception as
+           the 'exception' attribute. This allows you to inspect the
+           exception after the assertion::
+
+               with self.acceptDifference(SomeDifferences) as cm:
+                   do_something()
+               the_exception = cm.exception
+               self.assertEqual(the_exception.error_code, 3)  <- TODO! FIX THIS!!
+        """
         context = _AcceptDifferenceContext(diffs, self, callableObj)
         return context.handle('acceptDifference', callableObj, args, kwargs)
 
-    def acceptTolerance(self, absolute=None, callableObj=None, *args, **kwargs):
-        percent = kwargs.get('percent')
+    def acceptTolerance(self, tolerance, callableObj=None, *args, **kwargs):
+        """Only fail if DataAssertionError contains numeric differeces
+           greater than the given tolerance.  If differences exceed the
+           tolerance, the test case will fail with a DataAssertionError
+           containing the excessive differences.
 
-        _abs = absolute is not None
-        _pct = percent is not None
-        msg = 'Must provide absolute or percent tolerance (but not both).'
-        assert (_abs or _pct) and not (_abs and _pct), msg
+           Like acceptDifference, this method can be used as a context
+           object:
 
-        if absolute:
-            context = _AcceptAbsoluteToleranceContext(absolute, self, callableObj)
-        else:
-            context = _AcceptPercentToleranceContext(percent, self, callableObj)
+                with self.acceptTolerance(SomeTolerance):
+                    do_something()
+        """
+        context = _AcceptAbsoluteToleranceContext(tolerance, self, callableObj)
         return context.handle('acceptTolerance', callableObj, args, kwargs)
+
+    def acceptPercentTolerance(self, tolerance, callableObj=None, *args, **kwargs):
+        """Only fail if DataAssertionError contains numeric differece
+           percents greater than the given tolerance.  If differences
+           exceed the tolerance, the test case will fail with a
+           DataAssertionError containing the excessive differences.
+
+           Like acceptDifference, this method can be used as a context
+           object:
+
+                with self.acceptPercentTolerance(SomeTolerance):
+                    do_something()
+        """
+        context = _AcceptPercentToleranceContext(tolerance, self, callableObj)
+        return context.handle('acceptPercentTolerance', callableObj, args, kwargs)
 
     def assertColumnSet(self, msg=None):
         """Assert set of subject columns equal to set of trusted columns."""

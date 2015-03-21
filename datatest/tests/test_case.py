@@ -694,7 +694,7 @@ class TestAcceptTolerance(TestHelperCase):
                 _self.subjectData = self.bad_subject
 
             def test_method(_self):
-                with _self.acceptTolerance(absolute=3):  # <- test tolerance
+                with _self.acceptTolerance(3):  # <- test tolerance
                     _self.assertValueSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')
@@ -716,6 +716,24 @@ class TestAcceptTolerance(TestHelperCase):
                    " ExtraSum\(\+3, 65, label1=u?'a'\)")
         self.assertRegex(failure, pattern)
 
+
+class TestAcceptPercentTolerance(TestHelperCase):
+    def setUp(self):
+        _fh = io.StringIO('label1,value\n'
+                          'a,65\n'
+                          'b,70\n')
+        self.trusted = CsvDataSource(_fh)
+
+        _fh = io.StringIO('label1,label2,value\n'
+                          'a,x,20\n'  # <- off by +3
+                          'a,x,13\n'
+                          'a,y,20\n'
+                          'a,z,15\n'
+                          'b,z,4\n'   # <- off by -1
+                          'b,y,40\n'
+                          'b,x,25\n')
+        self.bad_subject = CsvDataSource(_fh)
+
     def test_percent_tolerance(self):
         """If accepted differences not found, raise exception."""
         class _TestClass(DataTestCase):
@@ -724,7 +742,7 @@ class TestAcceptTolerance(TestHelperCase):
                 _self.subjectData = self.bad_subject
 
             def test_method(_self):
-                with _self.acceptTolerance(percent=0.05):  # <- test tolerance
+                with _self.acceptPercentTolerance(0.05):  # <- test tolerance
                     _self.assertValueSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')
@@ -738,7 +756,7 @@ class TestAcceptTolerance(TestHelperCase):
                 _self.subjectData = self.bad_subject
 
             def test_method(_self):
-                with _self.acceptTolerance(percent=0.03):  # <- test tolerance
+                with _self.acceptPercentTolerance(0.03):  # <- test tolerance
                     _self.assertValueSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')
@@ -747,19 +765,18 @@ class TestAcceptTolerance(TestHelperCase):
         self.assertRegex(failure, pattern)
 
     def test_tolerance_error(self):
-        """Tolerance must throw error if invalid parameters."""
+        """Tolerance must throw error if invalid parameter."""
         class _TestClass(DataTestCase):
             def setUp(_self):
                 _self.trustedData = self.trusted
                 _self.subjectData = self.bad_subject
 
             def test_method(_self):
-                with _self.acceptTolerance(3, percent=0.03):  # <- test tolerance
+                with _self.acceptPercentTolerance(1.1):  # <- invalid
                     _self.assertValueSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = ('AssertionError: Must provide absolute or percent '
-                   'tolerance \(but not both\).')
+        pattern = ('AssertionError: Percent tolerance must be between 0 and 1.')
         self.assertRegex(failure, pattern)
 
 
