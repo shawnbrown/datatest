@@ -229,7 +229,7 @@ class DataTestCase(TestCase):
         return context.handle('acceptPercentTolerance', callableObj, args, kwargs)
 
     def assertColumnSet(self, msg=None):
-        """Assert set of subject columns equal to set of trusted columns."""
+        """Assert set of columns is equal to set of trusted columns."""
         subject = set(self.subjectData.columns())
         trusted = set(self.trustedData.columns())
         if subject != trusted:
@@ -240,7 +240,7 @@ class DataTestCase(TestCase):
             self.fail(msg, extra+missing)
 
     def assertColumnSubset(self, msg=None):
-        """Assert that set of subject columns is subset of trusted columns."""
+        """Assert that set of columns is subset of trusted columns."""
         subject = set(self.subjectData.columns())
         trusted = set(self.trustedData.columns())
         if not subject.issubset(trusted):
@@ -251,7 +251,7 @@ class DataTestCase(TestCase):
             self.fail(msg, extra)
 
     def assertColumnSuperset(self, msg=None):
-        """Assert that set of subject columns is superset of trusted columns."""
+        """Assert that set of columns is superset of trusted columns."""
         trusted = set(self.trustedData.columns())
         subject = set(self.subjectData.columns())
         if not subject.issuperset(trusted):
@@ -262,7 +262,7 @@ class DataTestCase(TestCase):
             self.fail(msg, missing)
 
     def assertValueSet(self, column, msg=None, **kwds):
-        """Assert that set of subject values is equal to trusted values."""
+        """Assert that set of values is equal to set of trusted values."""
         trusted = self.trustedData.set(column, **kwds)
         subject = self.subjectData.set(column, **kwds)
         if subject != trusted:
@@ -273,7 +273,7 @@ class DataTestCase(TestCase):
             self.fail(msg, extra+missing)
 
     def assertValueSubset(self, column, msg=None, **kwds):
-        """Assert that set of subject values is subset of trusted values."""
+        """Assert that set of values is subset of trusted values."""
         trusted = self.trustedData.set(column, **kwds)
         subject = self.subjectData.set(column, **kwds)
         if not subject.issubset(trusted):
@@ -284,7 +284,7 @@ class DataTestCase(TestCase):
             self.fail(msg, extra)
 
     def assertValueSuperset(self, column, msg=None, **kwds):
-        """Assert that set of subject values is superset of trusted values."""
+        """Assert that set of values is superset of trusted values."""
         trusted = self.trustedData.set(column, **kwds)
         subject = self.subjectData.set(column, **kwds)
         if not subject.issuperset(trusted):
@@ -295,7 +295,7 @@ class DataTestCase(TestCase):
             self.fail(msg, missing)
 
     def assertValueSum(self, column, groups, msg=None, **kwds):
-        """Assert that sums of subject match sums of trusted."""
+        """Assert that sums of values match sums of trusted values."""
         trusted = self.trustedData
         subject = self.subjectData
 
