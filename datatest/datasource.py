@@ -13,37 +13,38 @@ prefix = 'test_'
 
 
 class BaseDataSource(object):
-    """ """
+    """Common base class for all data sources."""
+
     def __init__(self):
-        """."""
+        """Initialize self."""
         return NotImplemented
 
     def slow_iter(self):
-        """Return iterator that yields dictionary rows."""
+        """Return iterable of dictionary rows (like csv.DictReader)."""
         return NotImplemented
 
     def columns(self):
-        """Return list of column names."""
+        """Return sequence or collection of column names."""
         return NotImplemented
 
     def set(self, column, **kwds):
-        """Return set of column values."""
+        """Return set of values in column."""
         iterable = self._filtered(self.slow_iter(), **kwds)
         return set(x[column] for x in iterable)
 
     def sum(self, column, **kwds):
-        """Return sum of column values."""
+        """Return sum of values in column."""
         iterable = self._filtered(self.slow_iter(), **kwds)
         iterable = (x for x in iterable if x)
         return sum(Decimal(x[column]) for x in iterable)
 
     def count(self, column, **kwds):
-        """Return count of non-empty column values."""
+        """Return count of non-empty values in column."""
         iterable = self._filtered(self.slow_iter(), **kwds)
         return sum(bool(x[column]) for x in iterable)
 
     def groups(self, *columns, **kwds):
-        """Return unique collection of dicts containing column/value pairs."""
+        """Return iterable of unique dictionaries grouped by given columns."""
         iterable = self._filtered(self.slow_iter(), **kwds)   # Filtered rows only.
         fn = lambda dic: tuple((k, dic[k]) for k in columns)  # Subset as item-tuples.
 
@@ -56,9 +57,8 @@ class BaseDataSource(object):
 
     @staticmethod
     def _filtered(iterable, **kwds):
-        """Filter iterable by keywords (col_name=col_value, etc.)."""
+        """Filter iterable by keywords (column=value, etc.)."""
         mktup = lambda v: (v,) if not isinstance(v, (list, tuple)) else v
-        #kwds = {k: mktup(v) for k, v in kwds.items()}
         kwds = dict((k, mktup(v)) for k, v in kwds.items())
         for row in iterable:
             if all(row[k] in v for k, v in kwds.items()):
@@ -66,13 +66,16 @@ class BaseDataSource(object):
 
 
 class SqliteDataSource(BaseDataSource):
+    """SQLite data source."""
+
     def __init__(self, connection, table):
+        """Initialize self."""
         self.__name__ = 'SQLite Table {0!r}'.format(table)
         self._connection = connection
         self._table = table
 
     def slow_iter(self):
-        """Return iterator that yields dictionary values."""
+        """Return iterable of dictionary rows (like csv.DictReader)."""
         cursor = self._connection.cursor()
         cursor.execute('SELECT * FROM ' + self._table)
         column_names = self.columns()
@@ -86,25 +89,26 @@ class SqliteDataSource(BaseDataSource):
         return [x[1] for x in cursor.fetchall()]
 
     def set(self, column, **kwds):
-        """Return set of column values."""
+        """Return set of values in column."""
         assert column in self.columns(), 'No column %r' % column
         select_clause = 'DISTINCT "' + column + '"'
         cursor = self._execute_query(self._table, select_clause, **kwds)
         return set(x[0] for x in cursor)
 
     def sum(self, column, **kwds):
-        """Return sum of column values."""
+        """Return sum of values in column."""
         select_clause = 'SUM("' + column + '")'
         cursor = self._execute_query(self._table, select_clause, **kwds)
         return cursor.fetchone()[0]
 
     def count(self, column, **kwds):
-        """Return count of non-empty column values."""
+        """Return count of non-empty values in column."""
         select_clause = 'COUNT("' + column +  '")'
         cursor = self._execute_query(self._table, select_clause, **kwds)
         return cursor.fetchone()[0]
 
     def groups(self, *columns, **kwds):
+        """Return sorted iterable of unique dictionaries grouped by given columns."""
         column_names = ['"{0}"'.format(x) for x in columns]
         select_clause = 'DISTINCT ' + ', '.join(column_names)
         trailing_clause = 'ORDER BY ' + ', '.join(column_names)
@@ -154,7 +158,10 @@ class SqliteDataSource(BaseDataSource):
 
 
 class CsvDataSource(SqliteDataSource):
+    """CSV file data source."""
+
     def __init__(self, file):
+        """Initialize self."""
         if isinstance(file, str):
             # Assume file path.
             if not os.path.isabs(file):
@@ -181,7 +188,7 @@ class CsvDataSource(SqliteDataSource):
 
     @classmethod
     def _load_csv_file(cls, connection, table, fh):
-        """Loads CSV file into default database of given connection."""
+        """Load CSV file into default database of given connection."""
         reader = csv.reader(fh)
         csv_header = next(reader)
 
@@ -215,21 +222,21 @@ class CsvDataSource(SqliteDataSource):
 
     @classmethod
     def _build_create_statement(cls, table, columns):
-        """Returns a CREATE TABLE statement."""
+        """Return 'CREATE TABLE' statement."""
         cls._assert_unique(columns)
         columns = [cls._normalize_column(x) for x in columns]
         return 'CREATE TABLE %s (%s)' % (table, ', '.join(columns))
 
     @staticmethod
     def _build_insert_statement(table, row):
-        """Returns an INSERT INTO statement."""
+        """Return 'INSERT INTO' statement."""
         statement = 'INSERT INTO ' + table + ' VALUES (' + ', '.join(['?'] * len(row)) + ')'
         parameters = row
         return statement, parameters
 
     @staticmethod
     def _normalize_column(name):
-        """Normalize value for use as a SQLite column name."""
+        """Normalize value for use as SQLite column name."""
         name = name.strip()
         name = name.replace('"', '""')  # Escape quotes.
         if name == '':
@@ -253,15 +260,17 @@ class CsvDataSource(SqliteDataSource):
 
 
 class MultiDataSource(BaseDataSource):
+    """Composite of multiple data source objects."""
+
     def __init__(self, *sources):
-        """Composite of multiple data source objects."""
+        """Initialize self."""
         for source in sources:
             msg = 'Sources must be derived from BaseDataSource'
             assert isinstance(source, BaseDataSource), msg
         self.sources = sources
 
     def slow_iter(self):
-        """Return iterator that yields dictionary rows."""
+        """Return iterable of dictionary rows (like csv.DictReader)."""
         columns = self.columns()
         for source in self.sources:
             for row in source.slow_iter():
@@ -271,7 +280,7 @@ class MultiDataSource(BaseDataSource):
                 yield row
 
     def columns(self):
-        """Return list of column names."""
+        """Return sequence or collection of column names."""
         columns = []
         for source in self.sources:
             for col in source.columns():
@@ -280,7 +289,7 @@ class MultiDataSource(BaseDataSource):
         return columns
 
     def set(self, column, **kwds):
-        """Return set of column values."""
+        """Return set of values in column."""
         if column not in self.columns():
             msg = 'No sub-sources not contain {0!r} column.'.format(column)
             raise Exception(msg)
@@ -299,6 +308,7 @@ class MultiDataSource(BaseDataSource):
         return set(itertools.chain(*result_sets))
 
     def sum(self, column, **kwds):
+        """Return sum of values in column."""
         if column not in self.columns():
             msg = 'No sub-sources not contain {0!r} column.'.format(column)
             raise Exception(msg)
@@ -317,6 +327,7 @@ class MultiDataSource(BaseDataSource):
         return total_result
 
     def count(self, column, **kwds):
+        """Return count of non-empty values in column."""
         if column not in self.columns():
             msg = 'No sub-sources not contain {0!r} column.'.format(column)
             raise Exception(msg)
@@ -331,6 +342,9 @@ class MultiDataSource(BaseDataSource):
                 total_result += source.count(column, **subkwds)
 
         return total_result
+
+    #def groups(self, *columns, **kwds):
+    #    """Return unsorted iterable of unique dictionaries grouped by given columns."""
 
 
 #DefaultDataSource = CsvDataSource
