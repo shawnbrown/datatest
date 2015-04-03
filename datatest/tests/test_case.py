@@ -584,6 +584,37 @@ class TestValueSuperset(TestHelperCase):
         self.assertRegex(failure, pattern)
 
 
+class TestValueRegex(TestHelperCase):
+    def setUp(self):
+        self.source = io.StringIO('label1,label2\n'
+                                  'aaa,001\n'
+                                  'bbb,2\n'
+                                  'ccc,003\n')
+
+    def test_matching(self):
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                _self.subjectData = CsvDataSource(self.source)
+
+            def test_method(_self):
+                _self.assertValueRegex('label1', '\w\w\w')  # <- test assert
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        self.assertIsNone(failure)
+
+    def test_nonmatching(self):
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                _self.subjectData = CsvDataSource(self.source)
+
+            def test_method(_self):
+                _self.assertValueRegex('label2', '\d\d\d')  # <- test assert
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        pattern = "non-matching 'label2' values:\n ExtraValue\(u?'2'\)"
+        self.assertRegex(failure, pattern)
+
+
 class TestAcceptDifference(TestHelperCase):
     def setUp(self):
         _fh = io.StringIO('label1,value\n'
