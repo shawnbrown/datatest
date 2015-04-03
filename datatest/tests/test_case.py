@@ -468,7 +468,7 @@ class TestValueSet(TestHelperCase):
         self.assertRegex(failure, pattern)
 
 
-class TestDataSubset(TestHelperCase):
+class TestValueSubset(TestHelperCase):
     def setUp(self):
         _fh = io.StringIO('label\n'
                           'a\n'
@@ -526,7 +526,7 @@ class TestDataSubset(TestHelperCase):
         self.assertRegex(failure, pattern)
 
 
-class TestDataSuperset(TestHelperCase):
+class TestValueSuperset(TestHelperCase):
     def setUp(self):
         _fh = io.StringIO('label\n'
                           'a\n'
