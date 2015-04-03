@@ -148,7 +148,7 @@ class TestSubclass(TestHelperCase):
         self.assertTrue(issubclass(DataTestCase, _TestCase))
 
 
-class TestDataSum(TestHelperCase):
+class TestValueSum(TestHelperCase):
     def setUp(self):
         _fh = io.StringIO('label1,value\n'
                           'a,65\n'
@@ -205,7 +205,7 @@ class TestDataSum(TestHelperCase):
         self.assertRegex(failure, pattern)
 
 
-class TestDataSumGroupsAndFilters(TestHelperCase):
+class TestValueSumGroupsAndFilters(TestHelperCase):
     def setUp(self):
         _fh = io.StringIO('label1,label2,value\n'
                           'a,x,18\n'  # <- off by +1 (compared to src1)
