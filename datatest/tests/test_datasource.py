@@ -3,10 +3,11 @@ import csv
 import sqlite3
 import sys
 import unittest
+import tempfile
+import warnings
 
 import datatest.tests._io as io
-#import datatest.tests._unittest as unittest
-import unittest
+import datatest.tests._unittest as unittest
 
 from datatest.datasource import BaseDataSource
 from datatest.datasource import SqliteDataSource
@@ -222,6 +223,102 @@ class TestCsvDataSource(TestBaseDataSource):
     def test_empty_file(self):
         pass
         #file exists but is empty should fail, too!
+
+
+class TestCsvDataSource_FileHandling(unittest.TestCase):
+    @staticmethod
+    def _get_filelike(string, encoding=None):
+        """Return file-like stream object."""
+        filelike = io.BytesIO(string)
+        if encoding and sys.version >= '3':
+            filelike = io.TextIOWrapper(filelike, encoding=encoding)
+        return filelike
+
+    def test_filelike_object(self):
+        fh = self._get_filelike(b'label1,label2,value\n'
+                                b'a,x,18\n'
+                                b'a,x,13\n'
+                                b'a,y,20\n'
+                                b'a,z,15\n', encoding='ascii')
+        CsvDataSource(fh)  # Pass without error.
+
+        fh = self._get_filelike(b'label1,label2,value\n'
+                                b'a,x,18\n'
+                                b'a,x,13\n'
+                                b'a,\xc3\xb1,20\n'  # \xc3\xb1 is utf-8 literal for ñ
+                                b'a,z,15\n', encoding='utf-8')
+        CsvDataSource(fh)  # Pass without error.
+
+        fh = self._get_filelike(b'label1,label2,value\n'
+                                b'a,x,18\n'
+                                b'a,x,13\n'
+                                b'a,\xf1,20\n'  # '\xf1' is iso8859-1 for ñ
+                                b'a,z,15\n', encoding='iso8859-1')
+        CsvDataSource(fh, encoding='iso8859-1')  # Pass without error.
+
+    def test_bad_filelike_object(self):
+        with self.assertRaises(UnicodeDecodeError):
+            fh = self._get_filelike(b'label1,label2,value\n'
+                                    b'a,x,18\n'
+                                    b'a,x,13\n'
+                                    b'a,\xf1,20\n'  # '\xf1' is iso8859-1 for ñ, not utf-8!
+                                    b'a,z,15\n', encoding='utf-8')
+            CsvDataSource(fh, encoding='utf-8')  # Raises exception!
+
+    def test_actual_file_utf8(self):
+        with tempfile.NamedTemporaryFile() as fh:
+            filecontents = (b'label1,label2,value\n'
+                            b'a,x,18\n'
+                            b'a,x,13\n'
+                            b'a,\xc3\xb1,20\n'  # \xc3\xb1 is utf-8 literal for ñ
+                            b'a,z,15\n')
+            fh.write(filecontents)
+
+            fh.seek(0)
+            CsvDataSource(fh.name)  # Pass without error.
+
+            fh.seek(0)
+            CsvDataSource(fh.name, encoding='utf-8')  # Pass without error.
+
+            fh.seek(0)
+            msg = 'If wrong encoding is specified, should raise exception.'
+            with self.assertRaises(UnicodeDecodeError, msg=msg):
+                CsvDataSource(fh.name, encoding='ascii')
+
+    def test_actual_file_iso88591(self):
+        with tempfile.NamedTemporaryFile() as fh:
+            filecontents = (b'label1,label2,value\n'
+                            b'a,x,18\n'
+                            b'a,x,13\n'
+                            b'a,\xf1,20\n'  # '\xf1' is iso8859-1 for ñ, not utf-8!
+                            b'a,z,15\n')
+            fh.write(filecontents)
+
+            fh.seek(0)
+            CsvDataSource(fh.name, encoding='iso8859-1')  # Pass without error.
+
+            fh.seek(0)
+            msg = ('When encoding us unspecified, tries UTF-8 first then '
+                   'fallsback to ISO-8859-1 and raises a Warning.')
+            with self.assertWarns(UserWarning, msg=msg):
+                CsvDataSource(fh.name)
+
+            fh.seek(0)
+            msg = 'If wrong encoding is specified, should raise exception.'
+            with self.assertRaises(UnicodeDecodeError, msg=msg):
+                CsvDataSource(fh.name, encoding='utf-8')
+
+    def test_actual_file_wrong_mode(self):
+        with tempfile.NamedTemporaryFile() as fh:
+            filecontents = (b'label1,label2,value\n'
+                            b'a,x,18\n'
+                            b'a,x,13\n'
+                            b'a,y,20\n'
+                            b'a,z,15\n')
+            fh.write(filecontents)
+
+            #with open(fh.name, 'rb'):
+            #    CsvDataSource(fh.name, encoding='iso8859-1')  # Pass without error.
 
 
 class TestMultiDataSource(TestBaseDataSource):

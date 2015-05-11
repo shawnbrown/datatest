@@ -2,11 +2,15 @@
 import collections
 import csv
 import inspect
+import io
 import itertools
 import os
 import sqlite3
 import sys
+import warnings
 from decimal import Decimal
+
+from datatest._builtins import *
 
 #pattern = 'test*.py'
 prefix = 'test_'
@@ -157,68 +161,139 @@ class SqliteDataSource(BaseDataSource):
         return clause, params
 
 
+class _UnicodeCsvReader:
+    def __init__(self, file, encoding='utf-8', dialect='excel', **fmtparams):
+        self.file = file
+        self.dialect = dialect
+        self.encoding = encoding
+        self.fmtparams = fmtparams
+
+    def __enter__(self):
+        self.f = self._get_file_handle(self.file, self.encoding)
+        self.reader = csv.reader(self.f, dialect=self.dialect, **self.fmtparams)
+        return self
+
+    def __exit__(self, type, value, traceback):
+        if self.f != self.file:
+            self.f.close()
+
+    def __iter__(self):
+        return self
+
+    @staticmethod
+    def _get_file_handle(file, encoding):
+        if isinstance(file, str):
+            return open(file, 'rt', encoding=encoding, newline='')
+        if hasattr(file, 'mode'):
+            assert 'b' not in file.mode, "File must be open in text mode ('rt')."
+        elif issubclass(file.__class__, io.IOBase):
+            assert issubclass(file.__class__, io.TextIOBase), ("Stream object must inherit "
+                                                               "from io.TextIOBase.")
+        file.seek(0)
+        return file
+
+    def __next__(self):
+        return next(self.reader)
+
+
+# Patch `_UnicodeCsvReader` if using Python 2.
+if sys.version < '3':
+    _py3_UnicodeCsvReader = _UnicodeCsvReader
+    class _UnicodeCsvReader(_py3_UnicodeCsvReader):
+        @staticmethod
+        def _get_file_handle(file, encoding):
+            if isinstance(file, str):
+                return open(file, 'rb')
+            if hasattr(file, 'mode'):
+                assert 'b' in file.mode, ("When using Python 2, file must "
+                                          "be open in binary mode ('rb').")
+            elif issubclass(file.__class__, io.IOBase):
+                assert not issubclass(file.__class__, io.TextIOBase), ("When using Python 2, "
+                                                                       "must use byte stream "
+                                                                       "(not text stream).")
+            return file
+
+        def next(self):
+            row = next(self.reader)
+            return [s.decode(self.encoding) for s in row]
+
+        def __next__(self):
+            return self.next()
+
+
 class CsvDataSource(SqliteDataSource):
     """CSV file data source."""
 
-    def __init__(self, file):
+    def __init__(self, file, encoding=None, in_memory=False):
         """Initialize self."""
-        if isinstance(file, str):
-            # Assume file path.
-            if not os.path.isabs(file):
-                calling_frame = sys._getframe(1)
-                calling_file = inspect.getfile(calling_frame)
-                calling_path = os.path.dirname(calling_file)
-                file = os.path.join(calling_path, file)
+        # If `file` is relative path, uses directory of calling file as base.
+        if isinstance(file, str) and not os.path.isabs(file):
+            calling_frame = sys._getframe(1)
+            calling_file = inspect.getfile(calling_frame)
+            base_path = os.path.dirname(calling_file)
+            file = os.path.join(base_path, file)
 
-            with open(file) as fh:
-                connection = self._setup_database(fh)
+        # Create database (an empty string denotes use of a temp file).
+        sqlite_path = ':memory:' if in_memory else ''
+        connection = sqlite3.connect(sqlite_path)
+
+        # Populate database.
+        if encoding:
+            with _UnicodeCsvReader(file, encoding=encoding) as reader:
+                self._populate_database(connection, reader)
         else:
-            # Assume file-like object.
-            connection = self._setup_database(file)
+            try:
+                with _UnicodeCsvReader(file, encoding='utf-8') as reader:
+                    self._populate_database(connection, reader)
+
+            except UnicodeDecodeError:
+                with _UnicodeCsvReader(file, encoding='iso8859-1') as reader:
+                    self._populate_database(connection, reader)
+
+                try:
+                    filename = os.path.basename(file)
+                except AttributeError:
+                    filename = repr(file)
+                msg = ('\nData in file {0!r} does not appear to be encoded '
+                       'as UTF-8 (used ISO-8859-1 as fallback). To assure '
+                       'correct operation, please specify a text encoding.')
+                warnings.warn(msg.format(filename))
 
         SqliteDataSource.__init__(self, connection, 'main')
 
     @classmethod
-    def _setup_database(cls, fh, table='main', in_memory=False):
-        path = '' if not in_memory else ':memory:'  # Empty str for temp file.
-        connection = sqlite3.connect(path)
-
-        cls._load_csv_file(connection, table, fh)
-        return connection
-
-    @classmethod
-    def _load_csv_file(cls, connection, table, fh):
-        """Load CSV file into default database of given connection."""
-        reader = csv.reader(fh)
-        csv_header = next(reader)
-
+    def _populate_database(cls, connection, reader, table='main'):
+        _isolation_level = connection.isolation_level
+        connection.isolation_level = None
         cursor = connection.cursor()
+        cursor.execute('BEGIN TRANSACTION')
         try:
-            # Create table.
+            csv_header = next(reader)
             statement = cls._build_create_statement(table, csv_header)
             cursor.execute(statement)
 
-            # Insert rows.
-            try:
-                for row in reader:
-                    if not row:
-                        continue  # Skip empty rows.
-                    statement, params = cls._build_insert_statement(table, row)
+            for row in reader:  # Insert all rows.
+                if not row:
+                    continue  # Skip if row is empty.
+                statement, params = cls._build_insert_statement(table, row)
+                try:
                     cursor.execute(statement, params)
-            except Exception as e:
-                exc_cls = e.__class__
-                msg = ('\n'
-                       '    row -> %s\n'
-                       '    sql -> %s\n'
-                       ' params -> %s' % (row, statement, params))
-                msg = str(e).strip() + msg
-                raise exc_cls(msg)
-
+                except Exception as e:
+                    exc_cls = e.__class__
+                    msg = ('\n'
+                           '    row -> %s\n'
+                           '    sql -> %s\n'
+                           ' params -> %s' % (row, statement, params))
+                    msg = str(e).strip() + msg
+                    raise exc_cls(msg)
             connection.commit()
 
         except Exception as e:
             connection.rollback()
             raise e
+
+        finally:
+            connection.isolation_level = _isolation_level  # Restore original.
 
     @classmethod
     def _build_create_statement(cls, table, columns):

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import datatest.tests._io as io
-import datatest.tests._unittest as unittest  # Compatibility layer
-
+#import datatest.tests._unittest as unittest  # Compatibility layer
+import unittest
 from unittest import TestCase as _TestCase  # Orig TestCase, not
                                             # compatibility layer.
 

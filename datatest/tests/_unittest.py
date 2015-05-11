@@ -199,3 +199,82 @@ except AttributeError:
         TestCase.assertRaises = _assertRaises
         TestCase.assertRaisesRegexp = _assertRaisesRegexp
 
+
+try:
+    _sys.modules['unittest'].case._AssertWarnsContext  # New in 3.2
+except AttributeError:
+    import warnings as _warnings
+    class _AssertWarnsContext(object):
+        """A context manager used to implement TestCase.assertWarns* methods."""
+        def __init__(self, expected, test_case, callable_obj=None,
+                     expected_regex=None):
+            self.expected = expected
+            self.test_case = test_case
+            if callable_obj is not None:
+                try:
+                    self.obj_name = callable_obj.__name__
+                except AttributeError:
+                    self.obj_name = str(callable_obj)
+            else:
+                self.obj_name = None
+            if isinstance(expected_regex, (bytes, str)):
+                expected_regex = re.compile(expected_regex)
+            self.expected_regex = expected_regex
+            self.msg = None
+
+        def _raiseFailure(self, standardMsg):
+            msg = self.test_case._formatMessage(self.msg, standardMsg)
+            raise self.test_case.failureException(msg)
+
+        def handle(self, name, callable_obj, args, kwargs):
+            if callable_obj is None:
+                self.msg = kwargs.pop('msg', None)
+                return self
+            with self:
+                callable_obj(*args, **kwargs)
+
+        def __enter__(self):
+            for v in _sys.modules.values():
+                if getattr(v, '__warningregistry__', None):
+                    v.__warningregistry__ = {}
+            self.warnings_manager = _warnings.catch_warnings(record=True)
+            self.warnings = self.warnings_manager.__enter__()
+            _warnings.simplefilter("always", self.expected)
+            return self
+
+        def __exit__(self, exc_type, exc_value, tb):
+            self.warnings_manager.__exit__(exc_type, exc_value, tb)
+            if exc_type is not None:
+                return
+            try:
+                exc_name = self.expected.__name__
+            except AttributeError:
+                exc_name = str(self.expected)
+            first_matching = None
+            for m in self.warnings:
+                w = m.message
+                if not isinstance(w, self.expected):
+                    continue
+                if first_matching is None:
+                    first_matching = w
+                if (self.expected_regex is not None and
+                    not self.expected_regex.search(str(w))):
+                    continue
+                self.warning = w
+                self.filename = m.filename
+                self.lineno = m.lineno
+                return
+            if first_matching is not None:
+                self._raiseFailure('"{}" does not match "{}"'.format(
+                         self.expected_regex.pattern, str(first_matching)))
+            if self.obj_name:
+                self._raiseFailure("{} not triggered by {}".format(exc_name,
+                                                                   self.obj_name))
+            else:
+                self._raiseFailure("{} not triggered".format(exc_name))
+
+    def _assertWarns(self, expected_warning, callable_obj=None, *args, **kwargs):
+        context = _AssertWarnsContext(expected_warning, self, callable_obj)
+        return context.handle('assertWarns', callable_obj, args, kwargs)
+    TestCase.assertWarns = _assertWarns
+
