@@ -1,5 +1,5 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+"""Main entry point"""
+
 import sys
 if sys.argv[0].endswith('__main__.py'):
     import os.path
@@ -13,7 +13,7 @@ if sys.argv[0].endswith('__main__.py'):
 
 __unittest = True
 
-from unittest.main import main
-from unittest.main import TestProgram
+from unittest import main, TestProgram
+from datatest.runner import DataTestRunner
 
-main(module=None)
+main(module=None, testRunner=DataTestRunner)
