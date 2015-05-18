@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 import csv
+import os
 import sqlite3
 import sys
 import unittest
 import tempfile
 import warnings
 
-import datatest.tests._io as io
-import datatest.tests._unittest as unittest
+from datatest.tests import _io as io
+from datatest.tests import _unittest as unittest
+from datatest.tests.common import MkdtempTestCase
 
 from datatest.datasource import BaseDataSource
 from datatest.datasource import SqliteDataSource
@@ -265,60 +267,46 @@ class TestCsvDataSource_FileHandling(unittest.TestCase):
                                     b'a,z,15\n', encoding='utf-8')
             CsvDataSource(fh, encoding='utf-8')  # Raises exception!
 
-    def test_actual_file_utf8(self):
-        with tempfile.NamedTemporaryFile() as fh:
+
+class TestCsvDataSource_ActualFileHandling(MkdtempTestCase):
+    def test_utf8(self):
+        with open('utf8file.csv', 'wb') as fh:
             filecontents = (b'label1,label2,value\n'
                             b'a,x,18\n'
                             b'a,x,13\n'
                             b'a,\xc3\xb1,20\n'  # \xc3\xb1 is utf-8 literal for ñ
                             b'a,z,15\n')
             fh.write(filecontents)
+            abspath = os.path.abspath(fh.name)
 
-            fh.seek(0)
-            CsvDataSource(fh.name)  # Pass without error.
+        CsvDataSource(abspath)  # Pass without error.
 
-            fh.seek(0)
-            CsvDataSource(fh.name, encoding='utf-8')  # Pass without error.
+        CsvDataSource(abspath, encoding='utf-8')  # Pass without error.
 
-            fh.seek(0)
-            msg = 'If wrong encoding is specified, should raise exception.'
-            with self.assertRaises(UnicodeDecodeError, msg=msg):
-                CsvDataSource(fh.name, encoding='ascii')
+        msg = 'If wrong encoding is specified, should raise exception.'
+        with self.assertRaises(UnicodeDecodeError, msg=msg):
+            CsvDataSource(abspath, encoding='ascii')
 
-    def test_actual_file_iso88591(self):
-        with tempfile.NamedTemporaryFile() as fh:
+    def test_iso88591(self):
+        with open('iso88591file.csv', 'wb') as fh:
             filecontents = (b'label1,label2,value\n'
                             b'a,x,18\n'
                             b'a,x,13\n'
                             b'a,\xf1,20\n'  # '\xf1' is iso8859-1 for ñ, not utf-8!
                             b'a,z,15\n')
             fh.write(filecontents)
+            abspath = os.path.abspath(fh.name)
 
-            fh.seek(0)
-            CsvDataSource(fh.name, encoding='iso8859-1')  # Pass without error.
+        CsvDataSource(abspath, encoding='iso8859-1')  # Pass without error.
 
-            fh.seek(0)
-            msg = ('When encoding us unspecified, tries UTF-8 first then '
-                   'fallsback to ISO-8859-1 and raises a Warning.')
-            with self.assertWarns(UserWarning, msg=msg):
-                CsvDataSource(fh.name)
+        msg = ('When encoding us unspecified, tries UTF-8 first then '
+               'fallsback to ISO-8859-1 and raises a Warning.')
+        with self.assertWarns(UserWarning, msg=msg):
+            CsvDataSource(abspath)
 
-            fh.seek(0)
-            msg = 'If wrong encoding is specified, should raise exception.'
-            with self.assertRaises(UnicodeDecodeError, msg=msg):
-                CsvDataSource(fh.name, encoding='utf-8')
-
-    def test_actual_file_wrong_mode(self):
-        with tempfile.NamedTemporaryFile() as fh:
-            filecontents = (b'label1,label2,value\n'
-                            b'a,x,18\n'
-                            b'a,x,13\n'
-                            b'a,y,20\n'
-                            b'a,z,15\n')
-            fh.write(filecontents)
-
-            #with open(fh.name, 'rb'):
-            #    CsvDataSource(fh.name, encoding='iso8859-1')  # Pass without error.
+        msg = 'If wrong encoding is specified, should raise exception.'
+        with self.assertRaises(UnicodeDecodeError, msg=msg):
+            CsvDataSource(abspath, encoding='utf-8')
 
 
 class TestMultiDataSource(TestBaseDataSource):
