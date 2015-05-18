@@ -308,6 +308,30 @@ class TestCsvDataSource_ActualFileHandling(MkdtempTestCase):
         with self.assertRaises(UnicodeDecodeError, msg=msg):
             CsvDataSource(abspath, encoding='utf-8')
 
+    def test_file_handle(self):
+        if sys.version_info[0] > 2:
+            correct_mode = 'rt'  # Python 3, requires text-mode.
+            incorrect_mode = 'rb'
+        else:
+            correct_mode = 'rb'  # Python 2, requires binary-mode.
+            incorrect_mode = 'rt'
+
+        filename = 'utf8file.csv'
+        with open(filename, 'wb') as fh:
+            filecontents = (b'label1,label2,value\n'
+                            b'a,x,18\n'
+                            b'a,x,13\n'
+                            b'a,\xc3\xb1,20\n'  # \xc3\xb1 is utf-8 literal for ñ
+                            b'a,z,15\n')
+            fh.write(filecontents)
+
+        with open(filename, correct_mode) as fh:
+            CsvDataSource(fh, encoding='utf-8')  # Pass without error.
+
+        with self.assertRaises(Exception):
+            with open(filename, incorrect_mode) as fh:
+                CsvDataSource(fh, encoding='utf-8')  # Raise exception.
+
 
 class TestMultiDataSource(TestBaseDataSource):
     def setUp(self):

@@ -190,7 +190,8 @@ class _UnicodeCsvReader:
         return self._reader.line_num
 
     def __del__(self):
-        if self._fileobj != self._csvfile:
+        # Note: When  __init__ fails, _fileobj will not exist.
+        if hasattr(self, '_fileobj') and self._fileobj != self._csvfile:
             self._fileobj.close()
 
     def __enter__(self):
