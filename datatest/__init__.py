@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from datatest.case import DataTestCase
+from datatest.case import DataAssertionError
 from datatest.datasource import BaseDataSource
 from datatest.datasource import SqliteDataSource
 from datatest.datasource import CsvDataSource
@@ -18,6 +19,7 @@ __version__ = '0.0.1a'
 __all__ = [
     # Test case.
     'DataTestCase',
+    'DataAssertionError',
 
     # Data sources.
     'BaseDataSource',

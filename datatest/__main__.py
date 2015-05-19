@@ -12,8 +12,10 @@ if sys.argv[0].endswith('__main__.py'):
     del os
 
 __unittest = True
+__datatest = True
 
-from unittest import main, TestProgram
+#from unittest import main, TestProgram
+from unittest import main
 from datatest.runner import DataTestRunner
 
 main(module=None, testRunner=DataTestRunner)

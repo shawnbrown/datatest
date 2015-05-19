@@ -14,6 +14,9 @@ from datatest.diff import MissingColumn
 from datatest.diff import MissingValue
 from datatest.diff import MissingSum
 
+__datatest = True  # Used to detect in-module stack frames (which are
+                   # omitted from output).
+
 
 class DataAssertionError(AssertionError):
     """Data assertion failed."""
