@@ -2,6 +2,7 @@
 import inspect
 import os
 import re
+import sys
 import unittest
 import warnings
 from datatest import DataAssertionError
@@ -100,6 +101,13 @@ def _sort_tests(suite, key=_sort_key):
     return unittest.TestSuite(flattened)
 
 
+def _get_module(one_test):
+    method = getattr(one_test, one_test._testMethodName)
+    while hasattr(method, '_wrapped'):  # If object is wrapped with a
+        method = method._wrapped        # decorator, unwrap it.
+    return sys.modules[method.__module__]
+
+
 class DataTestRunner(unittest.TextTestRunner):
     """A data test runner (wraps unittest.TextTestRunner) that displays
     results in textual form.
@@ -108,6 +116,28 @@ class DataTestRunner(unittest.TextTestRunner):
 
     def run(self, test):
         """Run the given tests in order of line number from source file."""
-        #self.stream.writeln("RUNNING DATA TESTS:")  # !!! TODO: Replace with docstring?
-        test = _sort_tests(test)
+        test = _sort_tests(test)  # Sort tests by line number.
+
+        # Get test modules.
+        modules = []
+        for one_test in test._tests:
+            mod = _get_module(one_test)
+            if mod not in modules:
+                modules.append(mod)
+
+        # Build output from module docstring values.
+        separator = '-' * 70
+        docstrings = []
+        for mod in modules:
+            docstrings.append(separator)
+            docstrings.append('Module: ' + mod.__file__)
+            docstrings.append(separator)
+            doc = mod.__doc__
+            if doc:
+                docstrings.append(doc.rstrip())
+                docstrings.append('')
+        docstrings = '\n'.join(docstrings)
+
+        # Write module docstrings, run tests.
+        self.stream.writeln(docstrings)
         return unittest.TextTestRunner.run(self, test)
