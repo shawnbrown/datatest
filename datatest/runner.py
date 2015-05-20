@@ -125,19 +125,19 @@ class DataTestRunner(unittest.TextTestRunner):
             if mod not in modules:
                 modules.append(mod)
 
-        # Build output from module docstring values.
-        separator = '-' * 70
+        # Build banner output from file names and docstrings.
         docstrings = []
         for mod in modules:
-            docstrings.append(separator)
-            docstrings.append('Module: ' + mod.__file__)
-            docstrings.append(separator)
+            docstrings.append(mod.__file__)
             doc = mod.__doc__
-            if doc:
-                docstrings.append(doc.rstrip())
+            if doc and self.verbosity > 1:
+                docstrings.append('')
+                docstrings.append(doc.rstrip().lstrip('\n'))
                 docstrings.append('')
         docstrings = '\n'.join(docstrings)
 
         # Write module docstrings, run tests.
+        separator = '=' * 70
+        self.stream.writeln(separator)
         self.stream.writeln(docstrings)
         return unittest.TextTestRunner.run(self, test)
