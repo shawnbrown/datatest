@@ -350,3 +350,14 @@ class DataTestCase(TestCase):
             if not msg:
                 msg = 'non-matching {0!r} values'.format(column)
             self.fail(msg=msg, diff=failures)
+
+    def assertValueNotRegex(self, column, regex, msg=None, **kwds):
+        """Assert that set of values do not match regular expression."""
+        subject = self.subjectData.set(column, **kwds)
+        # !!! TODO: Add handling for pre-compiled regex.
+        failures = [x for x in subject if re.match(regex, x)]
+        failures = [ExtraValue(x) for x in failures]
+        if failures:
+            if not msg:
+                msg = 'matching {0!r} values'.format(column)
+            self.fail(msg=msg, diff=failures)
