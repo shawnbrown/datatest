@@ -298,7 +298,7 @@ class DataTestCase(TestCase):
                 msg = 'different {0!r} values'.format(column)
             self.fail(msg, missing)
 
-    def assertValueSum(self, column, groupy, msg=None, **kwds):
+    def assertValueSum(self, column, groupby, msg=None, **kwds):
         """Assert that sums of values match sums of trusted values
            grouped by given columns."""
         trusted = self.trustedData
@@ -319,7 +319,7 @@ class DataTestCase(TestCase):
                     return MissingSum(difference, t_sum, **group_dict)
             return None
 
-        failures = [test(group_dict) for group_dict in trusted.groups(*groupy, **kwds)]
+        failures = [test(group_dict) for group_dict in trusted.groups(*groupby, **kwds)]
         failures = [x for x in failures if x != None]  # Filter for failures.
         if failures:
             if not msg:
