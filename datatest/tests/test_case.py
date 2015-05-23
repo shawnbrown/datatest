@@ -683,14 +683,14 @@ class TestValueSuperset(TestHelperCase):
         self.assertRegex(failure, pattern)
 
 
-class TestValueRegex(TestHelperCase):
+class TestValueRegexAndValueNotRegex(TestHelperCase):
     def setUp(self):
         self.source = io.StringIO('label1,label2\n'
                                   'aaa,001\n'
                                   'bbb,2\n'
                                   'ccc,003\n')
 
-    def test_passing(self):
+    def test_regex_passing(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
                 _self.subjectData = CsvDataSource(self.source)
@@ -701,7 +701,7 @@ class TestValueRegex(TestHelperCase):
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
 
-    def test_failing(self):
+    def test_regex_failing(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
                 _self.subjectData = CsvDataSource(self.source)
@@ -713,15 +713,7 @@ class TestValueRegex(TestHelperCase):
         pattern = "non-matching 'label2' values:\n ExtraValue\(u?'2'\)"
         self.assertRegex(failure, pattern)
 
-
-class TestValueNotRegex(TestHelperCase):
-    def setUp(self):
-        self.source = io.StringIO('label1,label2\n'
-                                  'aaa,001\n'
-                                  'bbb,2\n'
-                                  'ccc,003\n')
-
-    def test_passing(self):
+    def test_not_regex_passing(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
                 _self.subjectData = CsvDataSource(self.source)
@@ -732,7 +724,7 @@ class TestValueNotRegex(TestHelperCase):
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
 
-    def test_failing(self):
+    def test_not_regex_failing(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
                 _self.subjectData = CsvDataSource(self.source)
