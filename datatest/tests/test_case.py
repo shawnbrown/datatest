@@ -253,10 +253,10 @@ class TestColumnsSet(TestHelperCase):
                           'b,70\n')
         self.trusted = CsvDataSource(_fh)
 
-    def test_same(self):
+    def test_pass(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.trustedData = self.trusted
+                _self.trustedData = self.trusted  # <- trustedData!
                 same_as_trusted = io.StringIO('label1,value\n'
                                               'a,6\n'
                                               'b,7\n')
@@ -264,6 +264,22 @@ class TestColumnsSet(TestHelperCase):
 
             def test_method(_self):
                 _self.assertColumnSet()  # <- test assert
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        self.assertIsNone(failure)
+
+    def test_pass_using_trusted_from_argument(self):
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                #_self.trustedData =   <- Not defined!
+                subject = io.StringIO('label1,value\n'
+                                      'a,6\n'
+                                      'b,7\n')
+                _self.subjectData = CsvDataSource(subject)
+
+            def test_method(_self):
+                trusted_set = set(['label1', 'value'])
+                _self.assertColumnSet(trusted=trusted_set)  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
@@ -338,6 +354,22 @@ class TestColumnSubset(TestHelperCase):
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
 
+    def test_pass_using_trusted_from_argument(self):
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                #_self.trustedData =   <- Not defined!
+                subset_of_trusted = io.StringIO('label1\n'
+                                                'a\n'
+                                                'b\n')
+                _self.subjectData = CsvDataSource(subset_of_trusted)
+
+            def test_method(_self):
+                trusted_set = set(['label1', 'value'])
+                _self.assertColumnSubset(trusted_set)  # <- test assert
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        self.assertIsNone(failure)
+
     def test_fail(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
@@ -392,6 +424,22 @@ class TestColumnSuperset(TestHelperCase):
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
 
+    def test_pass_using_trusted_from_argument(self):
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                #_self.trustedData =   <- Not defined!
+                superset_of_trusted = io.StringIO('label1,label2,value\n'
+                                                  'a,x,6\n'
+                                                  'b,y,7\n')
+                _self.subjectData = CsvDataSource(superset_of_trusted)
+
+            def test_method(_self):
+                trusted_set = set(['label1', 'value'])
+                _self.assertColumnSuperset(trusted_set)  # <- test assert
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        self.assertIsNone(failure)
+
     def test_fail(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
@@ -429,6 +477,23 @@ class TestValueSet(TestHelperCase):
 
             def test_method(_self):
                 _self.assertValueSet('label')  # <- test assert
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        self.assertIsNone(failure)
+
+    def test_same_using_trusted_from_argument(self):
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                #_self.trustedData =   <- Not defined!
+                same_as_trusted = io.StringIO('label\n'
+                                              'a\n'
+                                              'b\n'
+                                              'c\n')
+                _self.subjectData = CsvDataSource(same_as_trusted)
+
+            def test_method(_self):
+                trusted_set = set(['a', 'b', 'c'])
+                _self.assertValueSet('label', trusted=trusted_set)  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
@@ -507,6 +572,22 @@ class TestValueSubset(TestHelperCase):
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
 
+    def test_pass_using_trusted_from_argument(self):
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                #_self.trustedData =   <- Not defined!
+                subset_of_trusted = io.StringIO('label\n'
+                                                'a\n'
+                                                'b\n')
+                _self.subjectData = CsvDataSource(subset_of_trusted)
+
+            def test_method(_self):
+                trusted_set = set(['a', 'b', 'c'])
+                _self.assertValueSubset('label', trusted_set)  # <- test assert
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        self.assertIsNone(failure)
+
     def test_fail(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
@@ -563,6 +644,24 @@ class TestValueSuperset(TestHelperCase):
 
             def test_method(_self):
                 _self.assertValueSuperset('label')  # <- test assert
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        self.assertIsNone(failure)
+
+    def test_pass_using_trusted_from_argument(self):
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                #_self.trustedData =   <- Not defined!
+                superset_of_trusted = io.StringIO('label\n'
+                                                  'a\n'
+                                                  'b\n'
+                                                  'c\n'
+                                                  'd\n')
+                _self.subjectData = CsvDataSource(superset_of_trusted)
+
+            def test_method(_self):
+                trusted_set = set(['a', 'b', 'c'])
+                _self.assertValueSuperset('label', trusted=trusted_set)  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)

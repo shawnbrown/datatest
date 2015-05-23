@@ -17,6 +17,8 @@ from datatest.diff import MissingSum
 __datatest = True  # Used to detect in-module stack frames (which are
                    # omitted from output).
 
+USE_TRUSTEDDATA = object()  # Token for default `trusted` argument.
+
 
 class DataAssertionError(AssertionError):
     """Data assertion failed."""
@@ -232,10 +234,12 @@ class DataTestCase(TestCase):
         context = _AcceptPercentToleranceContext(tolerance, self, callableObj)
         return context.handle('acceptPercentTolerance', callableObj, args, kwargs)
 
-    def assertColumnSet(self, msg=None):
+    def assertColumnSet(self, trusted=USE_TRUSTEDDATA, msg=None):
         """Assert set of columns is equal to set of trusted columns."""
+        if trusted == USE_TRUSTEDDATA:
+            trusted = set(self.trustedData.columns())
         subject = set(self.subjectData.columns())
-        trusted = set(self.trustedData.columns())
+
         if subject != trusted:
             extra = [ExtraColumn(x) for x in subject - trusted]
             missing = [MissingColumn(x) for x in trusted - subject]
@@ -243,10 +247,12 @@ class DataTestCase(TestCase):
                 msg = 'different column names'
             self.fail(msg, extra+missing)
 
-    def assertColumnSubset(self, msg=None):
+    def assertColumnSubset(self, trusted=USE_TRUSTEDDATA, msg=None):
         """Assert that set of columns is subset of trusted columns."""
+        if trusted == USE_TRUSTEDDATA:
+            trusted = set(self.trustedData.columns())
         subject = set(self.subjectData.columns())
-        trusted = set(self.trustedData.columns())
+
         if not subject.issubset(trusted):
             extra = subject.difference(trusted)
             extra = [ExtraColumn(x) for x in extra]
@@ -254,10 +260,12 @@ class DataTestCase(TestCase):
                 msg = 'different column names'  # found extra columns
             self.fail(msg, extra)
 
-    def assertColumnSuperset(self, msg=None):
+    def assertColumnSuperset(self, trusted=USE_TRUSTEDDATA, msg=None):
         """Assert that set of columns is superset of trusted columns."""
-        trusted = set(self.trustedData.columns())
+        if trusted == USE_TRUSTEDDATA:
+            trusted = set(self.trustedData.columns())
         subject = set(self.subjectData.columns())
+
         if not subject.issuperset(trusted):
             missing = trusted.difference(subject)
             missing = [MissingColumn(x) for x in missing]
@@ -265,10 +273,12 @@ class DataTestCase(TestCase):
                 msg = 'different column names'  # missing expected columns
             self.fail(msg, missing)
 
-    def assertValueSet(self, column, msg=None, **kwds):
+    def assertValueSet(self, column, trusted=USE_TRUSTEDDATA, msg=None, **kwds):
         """Assert that set of values is equal to set of trusted values."""
-        trusted = self.trustedData.set(column, **kwds)
+        if trusted == USE_TRUSTEDDATA:
+            trusted = self.trustedData.set(column, **kwds)
         subject = self.subjectData.set(column, **kwds)
+
         if subject != trusted:
             extra = [ExtraValue(x) for x in subject - trusted]
             missing = [MissingValue(x) for x in trusted - subject]
@@ -276,10 +286,12 @@ class DataTestCase(TestCase):
                 msg = 'different {0!r} values'.format(column)
             self.fail(msg, extra+missing)
 
-    def assertValueSubset(self, column, msg=None, **kwds):
+    def assertValueSubset(self, column, trusted=USE_TRUSTEDDATA, msg=None, **kwds):
         """Assert that set of values is subset of trusted values."""
-        trusted = self.trustedData.set(column, **kwds)
+        if trusted == USE_TRUSTEDDATA:
+            trusted = self.trustedData.set(column, **kwds)
         subject = self.subjectData.set(column, **kwds)
+
         if not subject.issubset(trusted):
             extra = subject.difference(trusted)
             extra = [ExtraValue(x) for x in extra]
@@ -287,10 +299,12 @@ class DataTestCase(TestCase):
                 msg = 'different {0!r} values'.format(column)
             self.fail(msg, extra)
 
-    def assertValueSuperset(self, column, msg=None, **kwds):
+    def assertValueSuperset(self, column, trusted=USE_TRUSTEDDATA, msg=None, **kwds):
         """Assert that set of values is superset of trusted values."""
-        trusted = self.trustedData.set(column, **kwds)
+        if trusted == USE_TRUSTEDDATA:
+            trusted = self.trustedData.set(column, **kwds)
         subject = self.subjectData.set(column, **kwds)
+
         if not subject.issuperset(trusted):
             missing = trusted.difference(subject)
             missing = [MissingValue(x) for x in missing]
