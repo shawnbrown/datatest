@@ -153,7 +153,7 @@ class TestValueSum(TestHelperCase):
         _fh = io.StringIO('label1,value\n'
                           'a,65\n'
                           'b,70\n')
-        self.src1_totals = CsvDataSource(_fh)
+        self.src1_totals = CsvDataSource(_fh, in_memory=True)
 
         _fh = io.StringIO('label1,label2,value\n'
                           'a,x,17\n'
@@ -163,7 +163,7 @@ class TestValueSum(TestHelperCase):
                           'b,z,5\n'
                           'b,y,40\n'
                           'b,x,25\n')
-        self.src1_records = CsvDataSource(_fh)
+        self.src1_records = CsvDataSource(_fh, in_memory=True)
 
         _fh = io.StringIO('label1,label2,value\n'
                           'a,x,18\n'  # <- off by +1 (compared to src1)
@@ -173,7 +173,7 @@ class TestValueSum(TestHelperCase):
                           'b,z,4\n'   # <- off by -1 (compared to src1)
                           'b,y,40\n'
                           'b,x,25\n')
-        self.src2_records = CsvDataSource(_fh)
+        self.src2_records = CsvDataSource(_fh, in_memory=True)
 
     def test_passing_case(self):
         """Sums are equal, test should pass."""
@@ -215,7 +215,7 @@ class TestValueSumGroupsAndFilters(TestHelperCase):
                           'b,z,4\n'   # <- off by -1 (compared to src1)
                           'b,y,40\n'
                           'b,x,25\n')
-        self.src3_totals = CsvDataSource(_fh)  # src3_totals == src2_records
+        self.src3_totals = CsvDataSource(_fh, in_memory=True)  # src3_totals == src2_records
 
         _fh = io.StringIO('label1,label2,label3,value\n'
                           'a,x,foo,18\n'
@@ -227,7 +227,7 @@ class TestValueSumGroupsAndFilters(TestHelperCase):
                           'b,z,baz,4\n'
                           'b,y,bar,39\n'   # <- off by -1 (compared to src3)
                           'b,x,foo,25\n')
-        self.src3_records = CsvDataSource(_fh)
+        self.src3_records = CsvDataSource(_fh, in_memory=True)
 
     def test_group_and_filter(self):
         """Only groupby fields should appear in diff errors (kwds-filters should be omitted)."""
@@ -251,7 +251,7 @@ class TestColumnsSet(TestHelperCase):
         _fh = io.StringIO('label1,value\n'
                           'a,65\n'
                           'b,70\n')
-        self.trusted = CsvDataSource(_fh)
+        self.trusted = CsvDataSource(_fh, in_memory=True)
 
     def test_pass(self):
         class _TestClass(DataTestCase):
@@ -260,7 +260,7 @@ class TestColumnsSet(TestHelperCase):
                 same_as_trusted = io.StringIO('label1,value\n'
                                               'a,6\n'
                                               'b,7\n')
-                _self.subjectData = CsvDataSource(same_as_trusted)
+                _self.subjectData = CsvDataSource(same_as_trusted, in_memory=True)
 
             def test_method(_self):
                 _self.assertColumnSet()  # <- test assert
@@ -275,7 +275,7 @@ class TestColumnsSet(TestHelperCase):
                 subject = io.StringIO('label1,value\n'
                                       'a,6\n'
                                       'b,7\n')
-                _self.subjectData = CsvDataSource(subject)
+                _self.subjectData = CsvDataSource(subject, in_memory=True)
 
             def test_method(_self):
                 trusted_set = set(['label1', 'value'])
@@ -291,7 +291,7 @@ class TestColumnsSet(TestHelperCase):
                 too_many = io.StringIO('label1,label2,value\n'
                                        'a,x,6\n'
                                        'b,y,7\n')
-                _self.subjectData = CsvDataSource(too_many)
+                _self.subjectData = CsvDataSource(too_many, in_memory=True)
 
             def test_method(_self):
                 _self.assertColumnSet()  # <- test assert
@@ -307,7 +307,7 @@ class TestColumnsSet(TestHelperCase):
                 too_few = io.StringIO('label1\n'
                                       'a\n'
                                       'b\n')
-                _self.subjectData = CsvDataSource(too_few)
+                _self.subjectData = CsvDataSource(too_few, in_memory=True)
 
             def test_method(_self):
                 _self.assertColumnSet()  # <- test assert
@@ -322,7 +322,7 @@ class TestColumnSubset(TestHelperCase):
         _fh = io.StringIO('label1,value\n'
                           'a,65\n'
                           'b,70\n')
-        self.trusted = CsvDataSource(_fh)
+        self.trusted = CsvDataSource(_fh, in_memory=True)
 
     def test_same(self):
         class _TestClass(DataTestCase):
@@ -331,7 +331,7 @@ class TestColumnSubset(TestHelperCase):
                 same_as_trusted = io.StringIO('label1,value\n'
                                               'a,6\n'
                                               'b,7\n')
-                _self.subjectData = CsvDataSource(same_as_trusted)
+                _self.subjectData = CsvDataSource(same_as_trusted, in_memory=True)
 
             def test_method(_self):
                 _self.assertColumnSubset()  # <- test assert
@@ -346,7 +346,7 @@ class TestColumnSubset(TestHelperCase):
                 subset_of_trusted = io.StringIO('label1\n'
                                                 'a\n'
                                                 'b\n')
-                _self.subjectData = CsvDataSource(subset_of_trusted)
+                _self.subjectData = CsvDataSource(subset_of_trusted, in_memory=True)
 
             def test_method(_self):
                 _self.assertColumnSubset()  # <- test assert
@@ -361,7 +361,7 @@ class TestColumnSubset(TestHelperCase):
                 subset_of_trusted = io.StringIO('label1\n'
                                                 'a\n'
                                                 'b\n')
-                _self.subjectData = CsvDataSource(subset_of_trusted)
+                _self.subjectData = CsvDataSource(subset_of_trusted, in_memory=True)
 
             def test_method(_self):
                 trusted_set = set(['label1', 'value'])
@@ -377,7 +377,7 @@ class TestColumnSubset(TestHelperCase):
                 superset_of_trusted = io.StringIO('label1,label2,value\n'
                                                   'a,x,6\n'
                                                   'b,y,7\n')
-                _self.subjectData = CsvDataSource(superset_of_trusted)
+                _self.subjectData = CsvDataSource(superset_of_trusted, in_memory=True)
 
             def test_method(_self):
                 _self.assertColumnSubset()  # <- test assert
@@ -392,7 +392,7 @@ class TestColumnSuperset(TestHelperCase):
         _fh = io.StringIO('label1,value\n'
                           'a,65\n'
                           'b,70\n')
-        self.trusted = CsvDataSource(_fh)
+        self.trusted = CsvDataSource(_fh, in_memory=True)
 
     def test_equal(self):
         class _TestClass(DataTestCase):
@@ -401,7 +401,7 @@ class TestColumnSuperset(TestHelperCase):
                 same_as_trusted = io.StringIO('label1,value\n'
                                               'a,6\n'
                                               'b,7\n')
-                _self.subjectData = CsvDataSource(same_as_trusted)
+                _self.subjectData = CsvDataSource(same_as_trusted, in_memory=True)
 
             def test_method(_self):
                 _self.assertColumnSuperset()  # <- test assert
@@ -416,7 +416,7 @@ class TestColumnSuperset(TestHelperCase):
                 superset_of_trusted = io.StringIO('label1,label2,value\n'
                                                   'a,x,6\n'
                                                   'b,y,7\n')
-                _self.subjectData = CsvDataSource(superset_of_trusted)
+                _self.subjectData = CsvDataSource(superset_of_trusted, in_memory=True)
 
             def test_method(_self):
                 _self.assertColumnSuperset()  # <- test assert
@@ -431,7 +431,7 @@ class TestColumnSuperset(TestHelperCase):
                 superset_of_trusted = io.StringIO('label1,label2,value\n'
                                                   'a,x,6\n'
                                                   'b,y,7\n')
-                _self.subjectData = CsvDataSource(superset_of_trusted)
+                _self.subjectData = CsvDataSource(superset_of_trusted, in_memory=True)
 
             def test_method(_self):
                 trusted_set = set(['label1', 'value'])
@@ -447,7 +447,7 @@ class TestColumnSuperset(TestHelperCase):
                 subset_of_trusted = io.StringIO('label1\n'
                                                 'a\n'
                                                 'b\n')
-                _self.subjectData = CsvDataSource(subset_of_trusted)
+                _self.subjectData = CsvDataSource(subset_of_trusted, in_memory=True)
 
             def test_method(_self):
                 _self.assertColumnSuperset()  # <- test assert
@@ -463,7 +463,7 @@ class TestValueSet(TestHelperCase):
                           'a\n'
                           'b\n'
                           'c\n')
-        self.trusted = CsvDataSource(_fh)
+        self.trusted = CsvDataSource(_fh, in_memory=True)
 
     def test_same(self):
         class _TestClass(DataTestCase):
@@ -473,7 +473,7 @@ class TestValueSet(TestHelperCase):
                                               'a\n'
                                               'b\n'
                                               'c\n')
-                _self.subjectData = CsvDataSource(same_as_trusted)
+                _self.subjectData = CsvDataSource(same_as_trusted, in_memory=True)
 
             def test_method(_self):
                 _self.assertValueSet('label')  # <- test assert
@@ -489,7 +489,7 @@ class TestValueSet(TestHelperCase):
                                               'a\n'
                                               'b\n'
                                               'c\n')
-                _self.subjectData = CsvDataSource(same_as_trusted)
+                _self.subjectData = CsvDataSource(same_as_trusted, in_memory=True)
 
             def test_method(_self):
                 trusted_set = set(['a', 'b', 'c'])
@@ -505,7 +505,7 @@ class TestValueSet(TestHelperCase):
                 same_as_trusted = io.StringIO('label\n'
                                               'a\n'
                                               'b\n')
-                _self.subjectData = CsvDataSource(same_as_trusted)
+                _self.subjectData = CsvDataSource(same_as_trusted, in_memory=True)
 
             def test_method(_self):
                 _self.assertValueSet('label')  # <- test assert
@@ -523,7 +523,7 @@ class TestValueSet(TestHelperCase):
                                               'b\n'
                                               'c\n'
                                               'd\n')
-                _self.subjectData = CsvDataSource(same_as_trusted)
+                _self.subjectData = CsvDataSource(same_as_trusted, in_memory=True)
 
             def test_method(_self):
                 _self.assertValueSet('label')  # <- test assert
@@ -539,7 +539,7 @@ class TestValueSubset(TestHelperCase):
                           'a\n'
                           'b\n'
                           'c\n')
-        self.trusted = CsvDataSource(_fh)
+        self.trusted = CsvDataSource(_fh, in_memory=True)
 
     def test_same(self):
         class _TestClass(DataTestCase):
@@ -549,7 +549,7 @@ class TestValueSubset(TestHelperCase):
                                               'a\n'
                                               'b\n'
                                               'c\n')
-                _self.subjectData = CsvDataSource(same_as_trusted)
+                _self.subjectData = CsvDataSource(same_as_trusted, in_memory=True)
 
             def test_method(_self):
                 _self.assertValueSubset('label')  # <- test assert
@@ -564,7 +564,7 @@ class TestValueSubset(TestHelperCase):
                 subset_of_trusted = io.StringIO('label\n'
                                                 'a\n'
                                                 'b\n')
-                _self.subjectData = CsvDataSource(subset_of_trusted)
+                _self.subjectData = CsvDataSource(subset_of_trusted, in_memory=True)
 
             def test_method(_self):
                 _self.assertValueSubset('label')  # <- test assert
@@ -579,7 +579,7 @@ class TestValueSubset(TestHelperCase):
                 subset_of_trusted = io.StringIO('label\n'
                                                 'a\n'
                                                 'b\n')
-                _self.subjectData = CsvDataSource(subset_of_trusted)
+                _self.subjectData = CsvDataSource(subset_of_trusted, in_memory=True)
 
             def test_method(_self):
                 trusted_set = set(['a', 'b', 'c'])
@@ -597,7 +597,7 @@ class TestValueSubset(TestHelperCase):
                                                   'b\n'
                                                   'c\n'
                                                   'd\n')
-                _self.subjectData = CsvDataSource(superset_of_trusted)
+                _self.subjectData = CsvDataSource(superset_of_trusted, in_memory=True)
 
             def test_method(_self):
                 _self.assertValueSubset('label')  # <- test assert
@@ -613,7 +613,7 @@ class TestValueSuperset(TestHelperCase):
                           'a\n'
                           'b\n'
                           'c\n')
-        self.trusted = CsvDataSource(_fh)
+        self.trusted = CsvDataSource(_fh, in_memory=True)
 
     def test_same(self):
         class _TestClass(DataTestCase):
@@ -623,7 +623,7 @@ class TestValueSuperset(TestHelperCase):
                                               'a\n'
                                               'b\n'
                                               'c\n')
-                _self.subjectData = CsvDataSource(same_as_trusted)
+                _self.subjectData = CsvDataSource(same_as_trusted, in_memory=True)
 
             def test_method(_self):
                 _self.assertValueSuperset('label')  # <- test assert
@@ -640,7 +640,7 @@ class TestValueSuperset(TestHelperCase):
                                                   'b\n'
                                                   'c\n'
                                                   'd\n')
-                _self.subjectData = CsvDataSource(superset_of_trusted)
+                _self.subjectData = CsvDataSource(superset_of_trusted, in_memory=True)
 
             def test_method(_self):
                 _self.assertValueSuperset('label')  # <- test assert
@@ -657,7 +657,7 @@ class TestValueSuperset(TestHelperCase):
                                                   'b\n'
                                                   'c\n'
                                                   'd\n')
-                _self.subjectData = CsvDataSource(superset_of_trusted)
+                _self.subjectData = CsvDataSource(superset_of_trusted, in_memory=True)
 
             def test_method(_self):
                 trusted_set = set(['a', 'b', 'c'])
@@ -673,7 +673,7 @@ class TestValueSuperset(TestHelperCase):
                 subset_of_trusted = io.StringIO('label\n'
                                                 'a\n'
                                                 'b\n')
-                _self.subjectData = CsvDataSource(subset_of_trusted)
+                _self.subjectData = CsvDataSource(subset_of_trusted, in_memory=True)
 
             def test_method(_self):
                 _self.assertValueSuperset('label')  # <- test assert
@@ -693,7 +693,7 @@ class TestValueRegexAndValueNotRegex(TestHelperCase):
     def test_regex_passing(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.subjectData = CsvDataSource(self.source)
+                _self.subjectData = CsvDataSource(self.source, in_memory=True)
 
             def test_method(_self):
                 _self.assertValueRegex('label1', '\w\w\w')  # <- test assert
@@ -704,7 +704,7 @@ class TestValueRegexAndValueNotRegex(TestHelperCase):
     def test_regex_failing(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.subjectData = CsvDataSource(self.source)
+                _self.subjectData = CsvDataSource(self.source, in_memory=True)
 
             def test_method(_self):
                 _self.assertValueRegex('label2', '\d\d\d')  # <- test assert
@@ -716,7 +716,7 @@ class TestValueRegexAndValueNotRegex(TestHelperCase):
     def test_not_regex_passing(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.subjectData = CsvDataSource(self.source)
+                _self.subjectData = CsvDataSource(self.source, in_memory=True)
 
             def test_method(_self):
                 _self.assertValueNotRegex('label1', '\d\d\d')  # <- test assert
@@ -727,7 +727,7 @@ class TestValueRegexAndValueNotRegex(TestHelperCase):
     def test_not_regex_failing(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.subjectData = CsvDataSource(self.source)
+                _self.subjectData = CsvDataSource(self.source, in_memory=True)
 
             def test_method(_self):
                 _self.assertValueNotRegex('label2', '^\d{1,2}$')  # <- test assert
@@ -742,7 +742,7 @@ class TestAcceptDifference(TestHelperCase):
         _fh = io.StringIO('label1,value\n'
                           'a,65\n'
                           'b,70\n')
-        self.trusted = CsvDataSource(_fh)
+        self.trusted = CsvDataSource(_fh, in_memory=True)
 
         _fh = io.StringIO('label1,label2,value\n'
                           'a,x,18\n'  # <- off by +1
@@ -752,7 +752,7 @@ class TestAcceptDifference(TestHelperCase):
                           'b,z,4\n'   # <- off by -1
                           'b,y,40\n'
                           'b,x,25\n')
-        self.bad_subject = CsvDataSource(_fh)
+        self.bad_subject = CsvDataSource(_fh, in_memory=True)
 
     def test_accept_list(self):
         """Test should pass with expected difference."""
@@ -854,7 +854,7 @@ class TestAcceptTolerance(TestHelperCase):
         _fh = io.StringIO('label1,value\n'
                           'a,65\n'
                           'b,70\n')
-        self.trusted = CsvDataSource(_fh)
+        self.trusted = CsvDataSource(_fh, in_memory=True)
 
         _fh = io.StringIO('label1,label2,value\n'
                           'a,x,20\n'  # <- off by +3
@@ -864,7 +864,7 @@ class TestAcceptTolerance(TestHelperCase):
                           'b,z,4\n'   # <- off by -1
                           'b,y,40\n'
                           'b,x,25\n')
-        self.bad_subject = CsvDataSource(_fh)
+        self.bad_subject = CsvDataSource(_fh, in_memory=True)
 
     def test_absolute_tolerance(self):
         """If accepted differences not found, raise exception."""
@@ -931,7 +931,7 @@ class TestAcceptPercentTolerance(TestHelperCase):
         _fh = io.StringIO('label1,value\n'
                           'a,65\n'
                           'b,70\n')
-        self.trusted = CsvDataSource(_fh)
+        self.trusted = CsvDataSource(_fh, in_memory=True)
 
         _fh = io.StringIO('label1,label2,value\n'
                           'a,x,20\n'  # <- off by +3
@@ -941,7 +941,7 @@ class TestAcceptPercentTolerance(TestHelperCase):
                           'b,z,4\n'   # <- off by -1
                           'b,y,40\n'
                           'b,x,25\n')
-        self.bad_subject = CsvDataSource(_fh)
+        self.bad_subject = CsvDataSource(_fh, in_memory=True)
 
     def test_percent_tolerance(self):
         """If accepted differences not found, raise exception."""
@@ -994,7 +994,7 @@ class TestNestedAcceptBlocks(TestHelperCase):
         _fh = io.StringIO('label1,value\n'
                           'a,65\n'
                           'b,70\n')
-        self.trusted = CsvDataSource(_fh)
+        self.trusted = CsvDataSource(_fh, in_memory=True)
 
         _fh = io.StringIO('label1,label2,value\n'
                           'a,x,20\n'  # <- off by +3
@@ -1004,7 +1004,7 @@ class TestNestedAcceptBlocks(TestHelperCase):
                           'b,z,4\n'   # <- off by -1
                           'b,y,40\n'
                           'b,x,25\n')
-        self.bad_subject = CsvDataSource(_fh)
+        self.bad_subject = CsvDataSource(_fh, in_memory=True)
 
     def test_tolerance_in_difference(self):
         class _TestClass(DataTestCase):
