@@ -22,12 +22,16 @@ USE_TRUSTEDDATA = object()  # Token for default `trusted` argument.
 
 class DataAssertionError(AssertionError):
     """Data assertion failed."""
-    def __init__(self, msg, diff):
+    def __init__(self, msg, diff, trusted=None, subject=None):
         """Initialize self, store difference for later reference."""
         if not diff:
             raise ValueError('Missing difference.')
         self.diff = diff
         self.msg = msg
+        self.trusted = str(trusted)  # Trusted data source or object.
+        self.subject = str(subject)  # Subject data source.
+        self._verbose = False  # <- Set by DataTestResult if verbose.
+
         return AssertionError.__init__(self, msg)
 
     def __repr__(self):
@@ -39,7 +43,14 @@ class DataAssertionError(AssertionError):
                 diff.startswith('[') and diff.endswith(']'),
                 diff.startswith('(') and diff.endswith(')')]):
             diff = diff[1:-1]
-        return '{0}:\n {1}'.format(self.msg, diff)
+
+        if self._verbose:
+            msg_extras = '\n\nTRUSTED DATA:\n{0}\nSUBJECT DATA:\n{1}'
+            msg_extras = msg_extras.format(self.trusted, self.subject)
+        else:
+            msg_extras = ''
+
+        return '{0}:\n {1}{2}'.format(self.msg, diff, msg_extras)
 
 
 def _walk_diff(diff):
@@ -79,13 +90,15 @@ class _BaseAcceptContext(object):
 
     def _raiseFailure(self, standardMsg, difference):
         msg = self.test_case._formatMessage(self.msg, standardMsg)
+        subj = self.test_case.subjectData
+        trst = self.test_case.trustedData
         try:
             # For Python 3.x (some 3.2 builds will raise a TypeError
             # while 2.x will raise SyntaxError).
-            expr = 'raise DataAssertionError(msg, {0}) from None'
+            expr = 'raise DataAssertionError(msg, {0}, subj, trst) from None'
             exec(expr.format(repr(difference)))
         except (SyntaxError, TypeError):
-            raise DataAssertionError(msg, difference)  # For Python 2.x
+            raise DataAssertionError(msg, difference, subj, trst)  # For Python 2.x
 
     def handle(self, name, callable_obj, args, kwargs):
         """If callable_obj is None, assertRaises/Warns is being used as
@@ -172,7 +185,11 @@ class DataTestCase(TestCase):
     def fail(self, msg, diff=None):
         """Fail immediately, record failures, with the given message."""
         if diff:
-            raise DataAssertionError(msg, diff)
+            try:
+                trusted = self.trustedData
+            except NameError:
+                trusted = None
+            raise DataAssertionError(msg, diff, trusted, self.subjectData)
         else:
             raise self.failureException(msg)
 

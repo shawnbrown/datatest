@@ -125,6 +125,22 @@ class TestDataAssertionError(unittest.TestCase):
                    "             MissingColumn('baz')]")
         self.assertEqual(repr(error), pattern)
 
+    def test_verbose_repr(self):
+        trusted = 'trusted-data-source'
+        subject = 'subject-data-source'
+        error = DataAssertionError('different columns', [MissingColumn('foo')], trusted, subject)
+        error._verbose = True  # <- Set verbose flag, here!
+
+        pattern = ("DataAssertionError: different columns:\n"
+                   " MissingColumn('foo')\n"
+                   "\n"
+                   "TRUSTED DATA:\n"
+                   "trusted-data-source\n"
+                   "SUBJECT DATA:\n"
+                   "subject-data-source")
+        self.assertEqual(repr(error), pattern)
+
+
 
 class TestHelperCase(unittest.TestCase):
     """Helper class for subsequent cases."""

@@ -66,10 +66,10 @@ class HideInternalStackFrames(object):
 class DataTestResult(TextTestResult):
     def addFailure(self, test, err):
         if err[0] == DataAssertionError:
-            exctype, value, tb = err
-            tb = HideInternalStackFrames(tb)  # <- HIDES INTERNALS!!!
-            err = (exctype, value, tb)
-
+            exctype, value, tb = err          # Unpack tuple.
+            tb = HideInternalStackFrames(tb)  # Hide internal frames.
+            value._verbose = self.showAll     # Set verbose flag (True/False).
+            err = (exctype, value, tb)        # Repack tuple.
         TextTestResult.addFailure(self, test, err)
 
 

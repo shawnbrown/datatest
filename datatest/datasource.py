@@ -23,6 +23,10 @@ class BaseDataSource(object):
         """Initialize self."""
         return NotImplemented
 
+    def __str__(self):
+        """Return brief description (one row) of the data source."""
+        return NotImplemented
+
     def slow_iter(self):
         """Return iterable of dictionary rows (like csv.DictReader)."""
         return NotImplemented
@@ -77,6 +81,9 @@ class SqliteDataSource(BaseDataSource):
         self.__name__ = 'SQLite Table {0!r}'.format(table)
         self._connection = connection
         self._table = table
+
+    def __str__(self):
+        return 'Table {0!r} in {1}'.format(self._table, self._connection)
 
     def slow_iter(self):
         """Return iterable of dictionary rows (like csv.DictReader)."""
@@ -256,6 +263,7 @@ class CsvDataSource(SqliteDataSource):
             calling_file = inspect.getfile(calling_frame)
             base_path = os.path.dirname(calling_file)
             file = os.path.join(base_path, file)
+            file = os.path.normpath(file)
 
         # Create database (an empty string denotes use of a temp file).
         sqlite_path = ':memory:' if in_memory else ''
@@ -283,7 +291,11 @@ class CsvDataSource(SqliteDataSource):
                        'correct operation, please specify a text encoding.')
                 warnings.warn(msg.format(filename))
 
+        self._file = file
         SqliteDataSource.__init__(self, connection, 'main')
+
+    def __str__(self):
+        return str(self._file)
 
     @classmethod
     def _populate_database(cls, connection, reader, table='main'):
@@ -367,6 +379,10 @@ class MultiDataSource(BaseDataSource):
             msg = 'Sources must be derived from BaseDataSource'
             assert isinstance(source, BaseDataSource), msg
         self.sources = sources
+
+    def __str__(self):
+        all_sources = [str(src) for src in self.sources]
+        return '\n'.join(str(src) for src in self.sources)
 
     def slow_iter(self):
         """Return iterable of dictionary rows (like csv.DictReader)."""
