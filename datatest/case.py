@@ -251,7 +251,7 @@ class DataTestCase(TestCase):
         context = _AcceptPercentToleranceContext(tolerance, self, callableObj)
         return context.handle('acceptPercentTolerance', callableObj, args, kwargs)
 
-    def assertColumnSet(self, trusted=USE_TRUSTEDDATA, msg=None):
+    def assertDataColumnSet(self, trusted=USE_TRUSTEDDATA, msg=None):
         """Assert set of columns is equal to set of trusted columns."""
         if trusted == USE_TRUSTEDDATA:
             trusted = set(self.trustedData.columns())
@@ -264,7 +264,7 @@ class DataTestCase(TestCase):
                 msg = 'different column names'
             self.fail(msg, extra+missing)
 
-    def assertColumnSubset(self, trusted=USE_TRUSTEDDATA, msg=None):
+    def assertDataColumnSubset(self, trusted=USE_TRUSTEDDATA, msg=None):
         """Assert that set of columns is subset of trusted columns."""
         if trusted == USE_TRUSTEDDATA:
             trusted = set(self.trustedData.columns())
@@ -277,7 +277,7 @@ class DataTestCase(TestCase):
                 msg = 'different column names'  # found extra columns
             self.fail(msg, extra)
 
-    def assertColumnSuperset(self, trusted=USE_TRUSTEDDATA, msg=None):
+    def assertDataColumnSuperset(self, trusted=USE_TRUSTEDDATA, msg=None):
         """Assert that set of columns is superset of trusted columns."""
         if trusted == USE_TRUSTEDDATA:
             trusted = set(self.trustedData.columns())
@@ -290,7 +290,7 @@ class DataTestCase(TestCase):
                 msg = 'different column names'  # missing expected columns
             self.fail(msg, missing)
 
-    def assertValueSet(self, column, trusted=USE_TRUSTEDDATA, msg=None, **kwds):
+    def assertDataSet(self, column, trusted=USE_TRUSTEDDATA, msg=None, **kwds):
         """Assert that set of values is equal to set of trusted values."""
         if trusted == USE_TRUSTEDDATA:
             trusted = self.trustedData.set(column, **kwds)
@@ -303,7 +303,7 @@ class DataTestCase(TestCase):
                 msg = 'different {0!r} values'.format(column)
             self.fail(msg, extra+missing)
 
-    def assertValueSubset(self, column, trusted=USE_TRUSTEDDATA, msg=None, **kwds):
+    def assertDataSubset(self, column, trusted=USE_TRUSTEDDATA, msg=None, **kwds):
         """Assert that set of values is subset of trusted values."""
         if trusted == USE_TRUSTEDDATA:
             trusted = self.trustedData.set(column, **kwds)
@@ -316,7 +316,7 @@ class DataTestCase(TestCase):
                 msg = 'different {0!r} values'.format(column)
             self.fail(msg, extra)
 
-    def assertValueSuperset(self, column, trusted=USE_TRUSTEDDATA, msg=None, **kwds):
+    def assertDataSuperset(self, column, trusted=USE_TRUSTEDDATA, msg=None, **kwds):
         """Assert that set of values is superset of trusted values."""
         if trusted == USE_TRUSTEDDATA:
             trusted = self.trustedData.set(column, **kwds)
@@ -329,7 +329,7 @@ class DataTestCase(TestCase):
                 msg = 'different {0!r} values'.format(column)
             self.fail(msg, missing)
 
-    def assertValueSum(self, column, groupby, msg=None, **kwds):
+    def assertDataSum(self, column, groupby, msg=None, **kwds):
         """Assert that sums of values match sums of trusted values
            grouped by given columns."""
         trusted = self.trustedData
@@ -357,7 +357,7 @@ class DataTestCase(TestCase):
                 msg = 'different {0!r} sums'.format(column)
             self.fail(msg=msg, diff=failures)
 
-    def assertValueRegex(self, column, regex, msg=None, **kwds):
+    def assertDataRegex(self, column, regex, msg=None, **kwds):
         """Assert that set of values match regular expression."""
         subject = self.subjectData.set(column, **kwds)
         # !!! TODO: Add handling for pre-compiled regex.
@@ -368,7 +368,7 @@ class DataTestCase(TestCase):
                 msg = 'non-matching {0!r} values'.format(column)
             self.fail(msg=msg, diff=failures)
 
-    def assertValueNotRegex(self, column, regex, msg=None, **kwds):
+    def assertDataNotRegex(self, column, regex, msg=None, **kwds):
         """Assert that set of values do not match regular expression."""
         subject = self.subjectData.set(column, **kwds)
         # !!! TODO: Add handling for pre-compiled regex.
