@@ -14,8 +14,7 @@ if sys.argv[0].endswith('__main__.py'):
 __unittest = True
 __datatest = True
 
-#from unittest import main, TestProgram
-from unittest import main
-from datatest.runner import DataTestRunner
 
-main(module=None, testRunner=DataTestRunner)
+from datatest.main import main, DataTestProgram
+
+main(module=None)

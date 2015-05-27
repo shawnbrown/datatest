@@ -13,6 +13,8 @@ from datatest.diff import MissingColumn
 from datatest.diff import MissingValue
 from datatest.diff import MissingSum
 from datatest.runner import DataTestRunner
+from datatest.main import DataTestProgram
+from datatest.main import main
 
 __version__ = '0.0.1a'
 
@@ -35,6 +37,8 @@ __all__ = [
     'MissingValue',
     'MissingSum',
 
-    # Test runner.
+    # Test runner and command-line program.
     'DataTestRunner',
+    'DataTestProgram',
+    'main',
 ]
