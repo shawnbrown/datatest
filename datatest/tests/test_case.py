@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import re
 import datatest.tests._io as io
 #import datatest.tests._unittest as unittest  # Compatibility layer
 import unittest
@@ -729,6 +730,18 @@ class TestValueRegexAndValueNotRegex(TestHelperCase):
         pattern = "non-matching 'label2' values:\n ExtraValue\(u?'2'\)"
         self.assertRegex(failure, pattern)
 
+    def test_regex_precompiled(self):
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                _self.subjectData = CsvDataSource(self.source, in_memory=True)
+
+            def test_method(_self):
+                regex = re.compile('^[ABC]', re.IGNORECASE)  # <- pre-compiled
+                _self.assertDataRegex('label1', regex)  # <- test assert
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        self.assertIsNone(failure)
+
     def test_not_regex_passing(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
@@ -752,6 +765,17 @@ class TestValueRegexAndValueNotRegex(TestHelperCase):
         pattern = "matching 'label2' values:\n ExtraValue\(u?'2'\)"
         self.assertRegex(failure, pattern)
 
+    def test_not_regex_precompiled(self):
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                _self.subjectData = CsvDataSource(self.source, in_memory=True)
+
+            def test_method(_self):
+                regex = re.compile('^[ABC]')  # <- pre-compiled
+                _self.assertDataNotRegex('label1', regex)  # <- test assert
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        self.assertIsNone(failure)
 
 class TestAcceptDifference(TestHelperCase):
     def setUp(self):

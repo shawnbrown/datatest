@@ -19,6 +19,8 @@ __datatest = True  # Used to detect in-module stack frames (which are
 
 USE_TRUSTEDDATA = object()  # Token for default `trusted` argument.
 
+_re_type = type(re.compile(''))
+
 
 class DataAssertionError(AssertionError):
     """Data assertion failed."""
@@ -360,8 +362,9 @@ class DataTestCase(TestCase):
     def assertDataRegex(self, column, regex, msg=None, **kwds):
         """Assert that set of values match regular expression."""
         subject = self.subjectData.set(column, **kwds)
-        # !!! TODO: Add handling for pre-compiled regex.
-        failures = [x for x in subject if not re.match(regex, x)]
+        if not isinstance(regex, _re_type):
+            regex = re.compile(regex)
+        failures = [x for x in subject if not regex.match(x)]
         failures = [ExtraValue(x) for x in failures]
         if failures:
             if not msg:
@@ -371,8 +374,9 @@ class DataTestCase(TestCase):
     def assertDataNotRegex(self, column, regex, msg=None, **kwds):
         """Assert that set of values do not match regular expression."""
         subject = self.subjectData.set(column, **kwds)
-        # !!! TODO: Add handling for pre-compiled regex.
-        failures = [x for x in subject if re.match(regex, x)]
+        if not isinstance(regex, _re_type):
+            regex = re.compile(regex)
+        failures = [x for x in subject if regex.match(x)]
         failures = [ExtraValue(x) for x in failures]
         if failures:
             if not msg:
