@@ -172,18 +172,37 @@ class DataTestCase(TestCase):
     """This class wraps unittest.TestCase to add a number of convinience
     methods for testing data quality.
     """
-    def __getattr__(self, name):
-        if name in ('trustedData', 'subjectData'):
-            for record in inspect.stack():  # Bubble-up stack looking
-                frame = record[0]           # for data source.
-                if name in frame.f_globals:
-                    return frame.f_globals[name]  # <- EXIT!
-            raise NameError('name {0!r} is not defined'.format(name))
-        else:
-            obj = repr(self.__class__.__name__)
-            attr = repr(name)
-            message = '{0} object has no attribute {1}'.format(obj, attr)
-            raise AttributeError(message)
+    @property
+    def subjectData(self):
+        """A data source object of data that is being tested."""
+        if hasattr(self, '_subjectData'):
+            return self._subjectData
+        return self._find_data_source('subjectData')
+
+    @subjectData.setter
+    def subjectData(self, value):
+        self._subjectData = value
+
+    @property
+    def trustedData(self):
+        """A data source object of data that is trusted to be correct."""
+        if hasattr(self, '_trustedData'):
+            return self._trustedData
+        return self._find_data_source('trustedData')
+
+    @trustedData.setter
+    def trustedData(self, value):
+        self._trustedData = value
+
+    @staticmethod
+    def _find_data_source(name):
+        stack = inspect.stack()
+        stack.pop()  # Skip record of current frame.
+        for record in stack:   # Bubble-up stack looking for name.
+            frame = record[0]
+            if name in frame.f_globals:
+                return frame.f_globals[name]  # <- EXIT!
+        raise NameError('cannot find {0!r}'.format(name))
 
     def assertDataColumnSet(self, trusted=None, msg=None):
         """Test that set of subject column names matches set of trusted
