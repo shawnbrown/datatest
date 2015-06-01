@@ -17,8 +17,6 @@ from datatest.diff import MissingSum
 __datatest = True  # Used to detect in-module stack frames (which are
                    # omitted from output).
 
-USE_TRUSTEDDATA = object()  # Token for default `trusted` argument.
-
 _re_type = type(re.compile(''))
 
 
@@ -102,17 +100,17 @@ class _BaseAcceptContext(object):
         except (SyntaxError, TypeError):
             raise DataAssertionError(msg, difference, subj, trst)  # For Python 2.x
 
-    def handle(self, name, callable_obj, args, kwargs):
+    def handle(self, name, callable_obj, args, kwds):
         """If callable_obj is None, assertRaises/Warns is being used as
         a context manager, so check for a 'msg' kwarg and return self.
-        If callable_obj is not None, call it passing args and kwargs.
+        If callable_obj is not None, call it passing `args` and `kwds`.
 
         """
         if callable_obj is None:
-            self.msg = kwargs.pop('msg', None)
+            self.msg = kwds.pop('msg', None)
             return self
         with self:
-            callable_obj(*args, **kwargs)
+            callable_obj(*args, **kwds)
 
 
 class _AcceptDifferenceContext(_BaseAcceptContext):
@@ -185,7 +183,10 @@ class DataTestCase(TestCase):
             raise AttributeError(message)
 
     def fail(self, msg, diff=None):
-        """Fail immediately, record failures, with the given message."""
+        """Signals a test failure unconditionally, with `msg` for the
+        error message.  If `diff` is provided, a DataAssertionError is
+        raised instead of an AssertionError.
+        """
         if diff:
             try:
                 trusted = self.trustedData
@@ -195,67 +196,71 @@ class DataTestCase(TestCase):
         else:
             raise self.failureException(msg)
 
-    def acceptDifference(self, diffs, callableObj=None, *args, **kwargs):
-        """Fail unless a DataAssertionError with a matching collection
-           of differences is raised by callableObj when invoked with
-           `args` and keyword `kwargs`.  If the raised differences do
-           not match the accepted differences, the test case will fail
-           with a DataAssertionError of the remaining differences.
+    def acceptDifference(self, diffs, callableObj=None, *args, **kwds):
+        """Test that a DataAssertionError containing a matching
+        collection of differences is raised when `callable` is called
+        with `args` and keyword `kwds`. If the raised differences do not
+        match the accepted differences, the test case will fail with a
+        DataAssertionError of the remaining differences.
 
-           If called with callableObj omitted or None, will return a
-           context object used like this::
+        If called with `callableObj` omitted or None, will return a
+        context manager so that the code under test can be written
+        inline rather than as a function::
 
-                with self.acceptDifference(SomeDifferences):
-                    do_something()
+            with self.acceptDifference(SomeDifferences):
+                do_something()
 
-           An optional keyword argument 'msg' can be provided when
-           acceptDifference is used as a context object.
-
-           The context manager keeps a reference to the exception as
-           the 'exception' attribute. This allows you to inspect the
-           exception after the assertion::
-
-               with self.acceptDifference(SomeDifferences) as cm:
-                   do_something()
-               the_exception = cm.exception
-               self.assertEqual(the_exception.error_code, 3)  <- TODO! FIX THIS!!
+        An optional keyword argument `msg` can be provided when
+        acceptDifference is used as a context manager.
         """
+        # TODO: Test the following behavior.
+        #The context manager keeps a reference to the exception as
+        #the `exception` attribute. This allows you to inspect the
+        #exception after the assertion::
+        #
+        #    with self.acceptDifference(SomeDifferences) as cm:
+        #        do_something()
+        #    the_exception = cm.exception
+        #    self.assertEqual(the_exception.error_code, 3)
         context = _AcceptDifferenceContext(diffs, self, callableObj)
-        return context.handle('acceptDifference', callableObj, args, kwargs)
+        return context.handle('acceptDifference', callableObj, args, kwds)
 
-    def acceptTolerance(self, tolerance, callableObj=None, *args, **kwargs):
+    def acceptTolerance(self, tolerance, callableObj=None, *args, **kwds):
         """Only fail if DataAssertionError contains numeric differeces
-           greater than the given tolerance.  If differences exceed the
-           tolerance, the test case will fail with a DataAssertionError
-           containing the excessive differences.
+        greater than the given tolerance.  If differences exceed the
+        tolerance, the test case will fail with a DataAssertionError
+        containing the excessive differences.
 
-           Like acceptDifference, this method can be used as a context
-           object:
+        Like acceptDifference, this method can be used as a context
+        manager::
 
-                with self.acceptTolerance(SomeTolerance):
-                    do_something()
+            with self.acceptTolerance(SomeTolerance):
+                do_something()
         """
         context = _AcceptAbsoluteToleranceContext(tolerance, self, callableObj)
-        return context.handle('acceptTolerance', callableObj, args, kwargs)
+        return context.handle('acceptTolerance', callableObj, args, kwds)
 
-    def acceptPercentTolerance(self, tolerance, callableObj=None, *args, **kwargs):
+    def acceptPercentTolerance(self, tolerance, callableObj=None, *args, **kwds):
         """Only fail if DataAssertionError contains numeric differece
-           percents greater than the given tolerance.  If differences
-           exceed the tolerance, the test case will fail with a
-           DataAssertionError containing the excessive differences.
+        percentages greater than the given tolerance.  If differences
+        exceed the tolerance, the test case will fail with a
+        DataAssertionError containing the excessive differences.
 
-           Like acceptDifference, this method can be used as a context
-           object:
+        Like acceptDifference, this method can be used as a context
+        manager::
 
-                with self.acceptPercentTolerance(SomeTolerance):
-                    do_something()
+            with self.acceptPercentTolerance(SomeTolerance):
+                do_something()
         """
         context = _AcceptPercentToleranceContext(tolerance, self, callableObj)
-        return context.handle('acceptPercentTolerance', callableObj, args, kwargs)
+        return context.handle('acceptPercentTolerance', callableObj, args, kwds)
 
-    def assertDataColumnSet(self, trusted=USE_TRUSTEDDATA, msg=None):
-        """Assert set of columns is equal to set of trusted columns."""
-        if trusted == USE_TRUSTEDDATA:
+    def assertDataColumnSet(self, trusted=None, msg=None):
+        """Test that set of subject column names matches set of trusted
+        column names.  If `trusted` is None, values are loaded from
+        self.trustedData.
+        """
+        if trusted == None:
             trusted = set(self.trustedData.columns())
         subject = set(self.subjectData.columns())
 
@@ -266,9 +271,12 @@ class DataTestCase(TestCase):
                 msg = 'different column names'
             self.fail(msg, extra+missing)
 
-    def assertDataColumnSubset(self, trusted=USE_TRUSTEDDATA, msg=None):
-        """Assert that set of columns is subset of trusted columns."""
-        if trusted == USE_TRUSTEDDATA:
+    def assertDataColumnSubset(self, trusted=None, msg=None):
+        """Test that set of subject column names is subset of trusted
+        column names.  If `trusted` is None, values are loaded from
+        self.trustedData.
+        """
+        if trusted == None:
             trusted = set(self.trustedData.columns())
         subject = set(self.subjectData.columns())
 
@@ -279,9 +287,12 @@ class DataTestCase(TestCase):
                 msg = 'different column names'  # found extra columns
             self.fail(msg, extra)
 
-    def assertDataColumnSuperset(self, trusted=USE_TRUSTEDDATA, msg=None):
-        """Assert that set of columns is superset of trusted columns."""
-        if trusted == USE_TRUSTEDDATA:
+    def assertDataColumnSuperset(self, trusted=None, msg=None):
+        """Test that set of subject column names is superset of trusted
+        column names.  If `trusted` is None, values are loaded from
+        self.trustedData.
+        """
+        if trusted == None:
             trusted = set(self.trustedData.columns())
         subject = set(self.subjectData.columns())
 
@@ -292,9 +303,12 @@ class DataTestCase(TestCase):
                 msg = 'different column names'  # missing expected columns
             self.fail(msg, missing)
 
-    def assertDataSet(self, column, trusted=USE_TRUSTEDDATA, msg=None, **kwds):
-        """Assert that set of values is equal to set of trusted values."""
-        if trusted == USE_TRUSTEDDATA:
+    def assertDataSet(self, column, trusted=None, msg=None, **kwds):
+        """Test that set in subject `column` matches set in trusted
+        `column`.  If `trusted` is None, values are loaded from
+        self.trustedData.
+        """
+        if trusted == None:
             trusted = self.trustedData.set(column, **kwds)
         subject = self.subjectData.set(column, **kwds)
 
@@ -305,9 +319,12 @@ class DataTestCase(TestCase):
                 msg = 'different {0!r} values'.format(column)
             self.fail(msg, extra+missing)
 
-    def assertDataSubset(self, column, trusted=USE_TRUSTEDDATA, msg=None, **kwds):
-        """Assert that set of values is subset of trusted values."""
-        if trusted == USE_TRUSTEDDATA:
+    def assertDataSubset(self, column, trusted=None, msg=None, **kwds):
+        """Test that set in subject `column` is subset of trusted
+        `column`.  If `trusted` is None, values are loaded from
+        self.trustedData.
+        """
+        if trusted == None:
             trusted = self.trustedData.set(column, **kwds)
         subject = self.subjectData.set(column, **kwds)
 
@@ -318,9 +335,12 @@ class DataTestCase(TestCase):
                 msg = 'different {0!r} values'.format(column)
             self.fail(msg, extra)
 
-    def assertDataSuperset(self, column, trusted=USE_TRUSTEDDATA, msg=None, **kwds):
-        """Assert that set of values is superset of trusted values."""
-        if trusted == USE_TRUSTEDDATA:
+    def assertDataSuperset(self, column, trusted=None, msg=None, **kwds):
+        """Test that set in subject `column` is superset of trusted
+        `column`.  If `trusted` is None, values are loaded from
+        self.trustedData.
+        """
+        if trusted == None:
             trusted = self.trustedData.set(column, **kwds)
         subject = self.subjectData.set(column, **kwds)
 
@@ -332,8 +352,9 @@ class DataTestCase(TestCase):
             self.fail(msg, missing)
 
     def assertDataSum(self, column, groupby, msg=None, **kwds):
-        """Assert that sums of values match sums of trusted values
-           grouped by given columns."""
+        """Test that sum of subject `column` matches sum of trusted
+        `column` grouped by given columns.
+        """
         trusted = self.trustedData
         subject = self.subjectData
 
@@ -360,7 +381,9 @@ class DataTestCase(TestCase):
             self.fail(msg=msg, diff=failures)
 
     def assertDataRegex(self, column, regex, msg=None, **kwds):
-        """Assert that set of values match regular expression."""
+        """Test that values in subject `column` match `regex` pattern
+        search.
+        """
         subject = self.subjectData.set(column, **kwds)
         if not isinstance(regex, _re_type):
             regex = re.compile(regex)
@@ -372,7 +395,9 @@ class DataTestCase(TestCase):
             self.fail(msg=msg, diff=failures)
 
     def assertDataNotRegex(self, column, regex, msg=None, **kwds):
-        """Assert that set of values do not match regular expression."""
+        """Test that values in subject `column` do not match `regex`
+        pattern search.
+        """
         subject = self.subjectData.set(column, **kwds)
         if not isinstance(regex, _re_type):
             regex = re.compile(regex)
