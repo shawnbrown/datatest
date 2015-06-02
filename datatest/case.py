@@ -174,7 +174,9 @@ class DataTestCase(TestCase):
     """
     @property
     def subjectData(self):
-        """A data source object of data that is being tested."""
+        """A data source object of data that is being tested--should be
+        assigned in `setUpClass()` or `setUpModule()`.
+        """
         if hasattr(self, '_subjectData'):
             return self._subjectData
         return self._find_data_source('subjectData')
@@ -185,7 +187,10 @@ class DataTestCase(TestCase):
 
     @property
     def trustedData(self):
-        """A data source object of data that is trusted to be correct."""
+        """A data source object of data that is trusted to be
+        correct--should be assigned in `setUpClass()` or
+        `setUpModule()`.
+        """
         if hasattr(self, '_trustedData'):
             return self._trustedData
         return self._find_data_source('trustedData')
@@ -207,7 +212,7 @@ class DataTestCase(TestCase):
     def assertDataColumnSet(self, trusted=None, msg=None):
         """Test that set of subject column names matches set of trusted
         column names.  If `trusted` is None, values are loaded from
-        self.trustedData.
+        trustedData.
         """
         if trusted == None:
             trusted = set(self.trustedData.columns())
@@ -223,7 +228,7 @@ class DataTestCase(TestCase):
     def assertDataColumnSubset(self, trusted=None, msg=None):
         """Test that set of subject column names is subset of trusted
         column names.  If `trusted` is None, values are loaded from
-        self.trustedData.
+        trustedData.
         """
         if trusted == None:
             trusted = set(self.trustedData.columns())
@@ -239,7 +244,7 @@ class DataTestCase(TestCase):
     def assertDataColumnSuperset(self, trusted=None, msg=None):
         """Test that set of subject column names is superset of trusted
         column names.  If `trusted` is None, values are loaded from
-        self.trustedData.
+        trustedData.
         """
         if trusted == None:
             trusted = set(self.trustedData.columns())
@@ -255,7 +260,7 @@ class DataTestCase(TestCase):
     def assertDataSet(self, column, trusted=None, msg=None, **kwds):
         """Test that set in subject `column` matches set in trusted
         `column`.  If `trusted` is None, values are loaded from
-        self.trustedData.
+        trustedData.
         """
         if trusted == None:
             trusted = self.trustedData.set(column, **kwds)
@@ -271,7 +276,7 @@ class DataTestCase(TestCase):
     def assertDataSubset(self, column, trusted=None, msg=None, **kwds):
         """Test that set in subject `column` is subset of trusted
         `column`.  If `trusted` is None, values are loaded from
-        self.trustedData.
+        trustedData.
         """
         if trusted == None:
             trusted = self.trustedData.set(column, **kwds)
@@ -287,7 +292,7 @@ class DataTestCase(TestCase):
     def assertDataSuperset(self, column, trusted=None, msg=None, **kwds):
         """Test that set in subject `column` is superset of trusted
         `column`.  If `trusted` is None, values are loaded from
-        self.trustedData.
+        trustedData.
         """
         if trusted == None:
             trusted = self.trustedData.set(column, **kwds)
@@ -368,8 +373,12 @@ class DataTestCase(TestCase):
         context manager so that the code under test can be written
         inline rather than as a function::
 
-            with self.acceptDifference(SomeDifferences):
-                do_something()
+            diff = [
+                ExtraValue('foo'),
+                MissingValue('bar'),
+            ]
+            with self.acceptDifference(diff):
+                self.assertDataSet('column1')
 
         An optional keyword argument `msg` can be provided when
         acceptDifference is used as a context manager.
@@ -387,31 +396,31 @@ class DataTestCase(TestCase):
         return context.handle('acceptDifference', callableObj, args, kwds)
 
     def acceptTolerance(self, tolerance, callableObj=None, *args, **kwds):
-        """Only fail if DataAssertionError contains numeric differeces
-        greater than the given tolerance.  If differences exceed the
-        tolerance, the test case will fail with a DataAssertionError
-        containing the excessive differences.
+        """Only fail if DataAssertionError contains numeric differences
+        greater than `tolerance`.  If differences exceed `tolerance`,
+        the test case will fail with a DataAssertionError containing the
+        excessive differences.
 
         Like acceptDifference, this method can be used as a context
         manager::
 
-            with self.acceptTolerance(SomeTolerance):
-                do_something()
+            with self.acceptTolerance(5):  # Accepts +/- 5
+                self.assertDataSum('column2', groupby=['column1'])
         """
         context = _AcceptAbsoluteToleranceContext(tolerance, self, callableObj)
         return context.handle('acceptTolerance', callableObj, args, kwds)
 
     def acceptPercentTolerance(self, tolerance, callableObj=None, *args, **kwds):
-        """Only fail if DataAssertionError contains numeric differece
-        percentages greater than the given tolerance.  If differences
-        exceed the tolerance, the test case will fail with a
-        DataAssertionError containing the excessive differences.
+        """Only fail if DataAssertionError contains numeric difference
+        percentages greater than `tolerance`.  If differences exceed
+        `tolerance`, the test case will fail with a DataAssertionError
+        containing the excessive differences.
 
         Like acceptDifference, this method can be used as a context
         manager::
 
-            with self.acceptPercentTolerance(SomeTolerance):
-                do_something()
+            with self.acceptPercentTolerance(0.02):  # Accepts +/- 2%
+                self.assertDataSum('column2', groupby=['column1'])
         """
         context = _AcceptPercentToleranceContext(tolerance, self, callableObj)
         return context.handle('acceptPercentTolerance', callableObj, args, kwds)

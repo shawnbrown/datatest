@@ -17,42 +17,57 @@ prefix = 'test_'
 
 
 class BaseDataSource(object):
-    """Common base class for all data sources."""
-
+    """Common base class for all data sources.  Custom sources can be
+    created by subclassing BaseDataSource and implementing `__init__()`,
+    `__str__()`, `slow_iter()`, and `columns()`.  Performance can be
+    improved by implementing `set()`, `sum()`, `count()`, and `groups()`.
+    """
     def __init__(self):
-        """Initialize self."""
+        """NotImplemented
+
+        Initialize self.
+        """
         return NotImplemented
 
     def __str__(self):
-        """Return brief description (one row) of the data source."""
+        """NotImplemented
+
+        Should return a brief, one line, description of the data source.
+        """
         return NotImplemented
 
     def slow_iter(self):
-        """Return iterable of dictionary rows (like csv.DictReader)."""
+        """NotImplemented
+
+        Should return an iterable of dictionary rows (like csv.DictReader).
+        """
         return NotImplemented
 
     def columns(self):
-        """Return sequence or collection of column names."""
+        """NotImplemented
+
+        Should return a sequence or collection of column names.
+        """
         return NotImplemented
 
     def set(self, column, **kwds):
-        """Return set of values in column."""
+        """Return set of values in `column` (uses slow_iter)."""
         iterable = self._filtered(self.slow_iter(), **kwds)
         return set(x[column] for x in iterable)
 
     def sum(self, column, **kwds):
-        """Return sum of values in column."""
+        """Return sum of values in `column` (uses slow_iter)."""
         iterable = self._filtered(self.slow_iter(), **kwds)
         iterable = (x for x in iterable if x)
         return sum(Decimal(x[column]) for x in iterable)
 
     def count(self, column, **kwds):
-        """Return count of non-empty values in column."""
+        """Return count of non-empty values in `column` (uses slow_iter)."""
         iterable = self._filtered(self.slow_iter(), **kwds)
         return sum(bool(x[column]) for x in iterable)
 
     def groups(self, *columns, **kwds):
-        """Return iterable of unique dictionaries grouped by given columns."""
+        """Return iterable of unique dictionaries grouped by given columns (uses slow_iter)."""
         iterable = self._filtered(self.slow_iter(), **kwds)   # Filtered rows only.
         fn = lambda dic: tuple((k, dic[k]) for k in columns)  # Subset as item-tuples.
 
@@ -74,8 +89,9 @@ class BaseDataSource(object):
 
 
 class SqliteDataSource(BaseDataSource):
-    """SQLite data source."""
-
+    """SQLite interface, requires SQLite database `connection` and name
+    of database `table`.
+    """
     def __init__(self, connection, table):
         """Initialize self."""
         self.__name__ = 'SQLite Table {0!r}'.format(table)
