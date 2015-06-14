@@ -90,7 +90,10 @@ class BaseDataSource(object):
 
 class SqliteDataSource(BaseDataSource):
     """SQLite interface, requires SQLite database `connection` and name
-    of database `table`.
+    of database `table`::
+
+        conn = sqlite3.connect('mydatabase.sqlite3')
+        subjectData = datatest.SqliteDataSource(conn, 'mytable')
     """
     def __init__(self, connection, table):
         """Initialize self."""
@@ -269,7 +272,10 @@ if sys.version < '3':
 
 
 class CsvDataSource(SqliteDataSource):
-    """CSV file data source."""
+    """CSV file data source
+    ::
+        subjectData = datatest.CsvDataSource('mydata.csv')
+    """
 
     def __init__(self, file, encoding=None, in_memory=False):
         """Initialize self."""
@@ -387,7 +393,16 @@ class CsvDataSource(SqliteDataSource):
 
 
 class MultiDataSource(BaseDataSource):
-    """Composite of multiple data source objects."""
+    """Composite of multiple data source objects.  All `sources` must be
+    derived from BaseDataSource::
+
+        subjectData = datatest.MultiDataSource(
+            datatest.CsvDataSource('file1.csv'),
+            datatest.CsvDataSource('file2.csv'),
+            datatest.CsvDataSource('file3.csv')
+        )
+
+    """
 
     def __init__(self, *sources):
         """Initialize self."""

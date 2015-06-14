@@ -174,8 +174,9 @@ class DataTestCase(TestCase):
     """
     @property
     def subjectData(self):
-        """A data source object of data that is being tested--should be
-        assigned in `setUpClass()` or `setUpModule()`.
+        """A reference to the data being tested (the subject of our
+        tests).  Typically `subjectData` should be assigned in
+        `setUpClass()` or `setUpModule()`.
         """
         if hasattr(self, '_subjectData'):
             return self._subjectData
@@ -187,9 +188,9 @@ class DataTestCase(TestCase):
 
     @property
     def trustedData(self):
-        """A data source object of data that is trusted to be
-        correct--should be assigned in `setUpClass()` or
-        `setUpModule()`.
+        """A reference to data that is trusted to be correct (used for
+        cross-validation tests).  Typically `trustedData` should be
+        assigned in `setUpClass()` or `setUpModule()`.
         """
         if hasattr(self, '_trustedData'):
             return self._trustedData
@@ -210,9 +211,9 @@ class DataTestCase(TestCase):
         raise NameError('cannot find {0!r}'.format(name))
 
     def assertDataColumnSet(self, trusted=None, msg=None):
-        """Test that set of subject column names matches set of trusted
-        column names.  If `trusted` is None, values are loaded from
-        trustedData.
+        """Test that the set of subject columns matches set of trusted
+        columns.  If `trusted` is provided, it is used in-place of the
+        set from `trustedData`.
         """
         if trusted == None:
             trusted = set(self.trustedData.columns())
@@ -226,9 +227,9 @@ class DataTestCase(TestCase):
             self.fail(msg, extra+missing)
 
     def assertDataColumnSubset(self, trusted=None, msg=None):
-        """Test that set of subject column names is subset of trusted
-        column names.  If `trusted` is None, values are loaded from
-        trustedData.
+        """Test that the set of subject columns is a subset of trusted
+        columns.  If `trusted` is provided, it is used in-place of the
+        set from `trustedData`.
         """
         if trusted == None:
             trusted = set(self.trustedData.columns())
@@ -242,9 +243,9 @@ class DataTestCase(TestCase):
             self.fail(msg, extra)
 
     def assertDataColumnSuperset(self, trusted=None, msg=None):
-        """Test that set of subject column names is superset of trusted
-        column names.  If `trusted` is None, values are loaded from
-        trustedData.
+        """Test that the set of subject columns is a superset of trusted
+        columns.  If `trusted` is provided, it is used in-place of the
+        set from `trustedData`.
         """
         if trusted == None:
             trusted = set(self.trustedData.columns())
@@ -257,14 +258,14 @@ class DataTestCase(TestCase):
                 msg = 'different column names'  # missing expected columns
             self.fail(msg, missing)
 
-    def assertDataSet(self, column, trusted=None, msg=None, **kwds):
-        """Test that set in subject `column` matches set in trusted
-        `column`.  If `trusted` is None, values are loaded from
-        trustedData.
+    def assertDataSet(self, column, trusted=None, msg=None, **filter_by):
+        """Test that the set of subject values matches the set of
+        trusted values for the given `column`.  If `trusted` is
+        provided, it is used in-place of the set from `trustedData`.
         """
         if trusted == None:
-            trusted = self.trustedData.set(column, **kwds)
-        subject = self.subjectData.set(column, **kwds)
+            trusted = self.trustedData.set(column, **filter_by)
+        subject = self.subjectData.set(column, **filter_by)
 
         if subject != trusted:
             extra = [ExtraValue(x) for x in subject - trusted]
@@ -273,14 +274,14 @@ class DataTestCase(TestCase):
                 msg = 'different {0!r} values'.format(column)
             self.fail(msg, extra+missing)
 
-    def assertDataSubset(self, column, trusted=None, msg=None, **kwds):
-        """Test that set in subject `column` is subset of trusted
-        `column`.  If `trusted` is None, values are loaded from
-        trustedData.
+    def assertDataSubset(self, column, trusted=None, msg=None, **filter_by):
+        """Test that the set of subject values is a subset of trusted
+        values for the given `column`.  If `trusted` is provided, it is
+        used in-place of the set from `trustedData`.
         """
         if trusted == None:
-            trusted = self.trustedData.set(column, **kwds)
-        subject = self.subjectData.set(column, **kwds)
+            trusted = self.trustedData.set(column, **filter_by)
+        subject = self.subjectData.set(column, **filter_by)
 
         if not subject.issubset(trusted):
             extra = subject.difference(trusted)
@@ -289,14 +290,14 @@ class DataTestCase(TestCase):
                 msg = 'different {0!r} values'.format(column)
             self.fail(msg, extra)
 
-    def assertDataSuperset(self, column, trusted=None, msg=None, **kwds):
-        """Test that set in subject `column` is superset of trusted
-        `column`.  If `trusted` is None, values are loaded from
-        trustedData.
+    def assertDataSuperset(self, column, trusted=None, msg=None, **filter_by):
+        """Test that the set of subject values is a superset of trusted
+        values for the given `column`.  If `trusted` is provided, it is
+        used in-place of the set from `trustedData`.
         """
         if trusted == None:
-            trusted = self.trustedData.set(column, **kwds)
-        subject = self.subjectData.set(column, **kwds)
+            trusted = self.trustedData.set(column, **filter_by)
+        subject = self.subjectData.set(column, **filter_by)
 
         if not subject.issuperset(trusted):
             missing = trusted.difference(subject)
@@ -305,18 +306,26 @@ class DataTestCase(TestCase):
                 msg = 'different {0!r} values'.format(column)
             self.fail(msg, missing)
 
-    def assertDataSum(self, column, groupby, msg=None, **kwds):
-        """Test that sum of subject `column` matches sum of trusted
-        `column` grouped by given columns.
+    def assertDataSum(self, column, group_by, msg=None, **filter_by):
+        """Test that the sum of subject values matches the sum of
+        trusted values for the given `column` for each group in
+        `group_by`.
+
+        The following asserts that the sum of the subject's *income*
+        matches the sum of the trusted *income* for each group of
+        *department* and *year* values::
+
+            self.assertDataSum('income', ['department', 'year'])
+
         """
         trusted = self.trustedData
         subject = self.subjectData
 
         def test(group_dict):
-            all_kwds = kwds.copy()
-            all_kwds.update(group_dict)
-            subject_sum = subject.sum(column, **all_kwds)
-            trusted_sum = trusted.sum(column, **all_kwds)
+            all_filters = filter_by.copy()
+            all_filters.update(group_dict)
+            subject_sum = subject.sum(column, **all_filters)
+            trusted_sum = trusted.sum(column, **all_filters)
             s_sum = subject_sum if subject_sum else 0
             t_sum = trusted_sum if trusted_sum else 0
             difference = s_sum - t_sum
@@ -327,18 +336,18 @@ class DataTestCase(TestCase):
                     return MissingSum(difference, t_sum, **group_dict)
             return None
 
-        failures = [test(group_dict) for group_dict in trusted.groups(*groupby, **kwds)]
+        failures = [test(group_dict) for group_dict in trusted.groups(*group_by, **filter_by)]
         failures = [x for x in failures if x != None]  # Filter for failures.
         if failures:
             if not msg:
                 msg = 'different {0!r} sums'.format(column)
             self.fail(msg=msg, diff=failures)
 
-    def assertDataRegex(self, column, regex, msg=None, **kwds):
-        """Test that values in subject `column` match `regex` pattern
-        search.
+    def assertDataRegex(self, column, regex, msg=None, **filter_by):
+        """Test that all subject values in `column` match the `regex`
+        pattern search.
         """
-        subject = self.subjectData.set(column, **kwds)
+        subject = self.subjectData.set(column, **filter_by)
         if not isinstance(regex, _re_type):
             regex = re.compile(regex)
         failures = [x for x in subject if not regex.match(x)]
@@ -348,11 +357,11 @@ class DataTestCase(TestCase):
                 msg = 'non-matching {0!r} values'.format(column)
             self.fail(msg=msg, diff=failures)
 
-    def assertDataNotRegex(self, column, regex, msg=None, **kwds):
-        """Test that values in subject `column` do not match `regex`
-        pattern search.
+    def assertDataNotRegex(self, column, regex, msg=None, **filter_by):
+        """Test that all subject values in `column` do not match the
+        `regex` pattern search.
         """
-        subject = self.subjectData.set(column, **kwds)
+        subject = self.subjectData.set(column, **filter_by)
         if not isinstance(regex, _re_type):
             regex = re.compile(regex)
         failures = [x for x in subject if regex.match(x)]
@@ -405,7 +414,7 @@ class DataTestCase(TestCase):
         manager::
 
             with self.acceptTolerance(5):  # Accepts +/- 5
-                self.assertDataSum('column2', groupby=['column1'])
+                self.assertDataSum('column2', group_by=['column1'])
         """
         context = _AcceptAbsoluteToleranceContext(tolerance, self, callableObj)
         return context.handle('acceptTolerance', callableObj, args, kwds)
@@ -420,7 +429,7 @@ class DataTestCase(TestCase):
         manager::
 
             with self.acceptPercentTolerance(0.02):  # Accepts +/- 2%
-                self.assertDataSum('column2', groupby=['column1'])
+                self.assertDataSum('column2', group_by=['column1'])
         """
         context = _AcceptPercentToleranceContext(tolerance, self, callableObj)
         return context.handle('acceptPercentTolerance', callableObj, args, kwds)
