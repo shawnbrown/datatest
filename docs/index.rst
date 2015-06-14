@@ -1,17 +1,21 @@
 
-datatest: data testing tools for unittest
+`datatest`: Data Testing Tools for Python
 =========================================
 
-The `datatest` package provides data quality assurance tools for
-Python's standard `unittest` framework.  Convenience classes help
-load data, run tests, assert conditions, and allow for discrepancies
-where appropriate.
+The `datatest` package provides data testing tools for Python's standard
+`unittest` framework.  It provides classes for conveniently loading
+data, asserting validity, and allowing for discrepancies when
+appropriate.
+
 
 Contents:
 
 .. toctree::
    :maxdepth: 2
 
+   getting_started
+   data_processing
+   custom_datasources
    reference
 
 Index:
