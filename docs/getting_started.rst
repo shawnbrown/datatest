@@ -15,19 +15,19 @@ Basic Example
 As an example, assume we want to audit the data in the following CSV
 file (**myfile.csv**):
 
-    =========  =========  ======
-    member_id  region     active
-    =========  =========  ======
-    999        Midwest    Y
-    1000       South      Y
-    1001       Northeast  N
-    ...        ...        ...
-    =========  =========  ======
+    =========  ======  =========
+    member_id  active  region
+    =========  ======  =========
+    999        Y       Midwest
+    1000       Y       South
+    1001       N       Northeast
+    ...        ...     ...
+    =========  ======  =========
 
-With the following script, we can verify that the CSV file uses the
-correct column names, that `member_id` contains only numbers, `region`
-contains only valid region codes, and `active` contains only "Y" or "N"
-values (**test_myfile.py**)::
+With the following script, we can verify that our file uses the correct
+column names, that `member_id` contains only numbers, `active` contains
+only "Y" or "N" values, and `region` contains only valid region codes
+(**test_myfile.py**)::
 
     import datatest
 
@@ -42,18 +42,16 @@ values (**test_myfile.py**)::
             columns = {'member_id', 'region', 'active'}
             self.assertDataColumnSet(columns)
 
-        def test_member_id(self):
+        def test_format(self):
             """Test that 'member_id' contains only digits."""
             self.assertDataRegex('member_id', '\d+')
 
-        def test_region(self):
-            """Test that 'region' contains valid region names."""
+        def test_set_membership(self):
+            """Test that 'active' and 'region' use valid codes."""
+            self.assertDataSubset('active', {'Y', 'N'})
+
             regions = {'Midwest', 'Northeast', 'South', 'West'}
             self.assertDataSubset('region', regions)
-
-        def test_active(self):
-            """Test that 'active' contains 'Y' or 'N'."""
-            self.assertDataSubset('active', {'Y', 'N'})
 
     if __name__ == '__main__':
         datatest.main()
