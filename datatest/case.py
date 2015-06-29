@@ -210,7 +210,7 @@ class DataTestCase(TestCase):
                 return frame.f_globals[name]  # <- EXIT!
         raise NameError('cannot find {0!r}'.format(name))
 
-    def assertDataColumnSet(self, trusted=None, msg=None):
+    def assertColumnSet(self, trusted=None, msg=None):
         """Test that the set of subject columns matches set of trusted
         columns.  If `trusted` is provided, it is used in-place of the
         set from `trustedData`.
@@ -226,7 +226,7 @@ class DataTestCase(TestCase):
                 msg = 'different column names'
             self.fail(msg, extra+missing)
 
-    def assertDataColumnSubset(self, trusted=None, msg=None):
+    def assertColumnSubset(self, trusted=None, msg=None):
         """Test that the set of subject columns is a subset of trusted
         columns.  If `trusted` is provided, it is used in-place of the
         set from `trustedData`.
@@ -242,7 +242,7 @@ class DataTestCase(TestCase):
                 msg = 'different column names'  # found extra columns
             self.fail(msg, extra)
 
-    def assertDataColumnSuperset(self, trusted=None, msg=None):
+    def assertColumnSuperset(self, trusted=None, msg=None):
         """Test that the set of subject columns is a superset of trusted
         columns.  If `trusted` is provided, it is used in-place of the
         set from `trustedData`.
@@ -258,7 +258,7 @@ class DataTestCase(TestCase):
                 msg = 'different column names'  # missing expected columns
             self.fail(msg, missing)
 
-    def assertDataSet(self, column, trusted=None, msg=None, **filter_by):
+    def assertValueSet(self, column, trusted=None, msg=None, **filter_by):
         """Test that the set of subject values matches the set of
         trusted values for the given `column`.  If `trusted` is
         provided, it is used in-place of the set from `trustedData`.
@@ -274,7 +274,7 @@ class DataTestCase(TestCase):
                 msg = 'different {0!r} values'.format(column)
             self.fail(msg, extra+missing)
 
-    def assertDataSubset(self, column, trusted=None, msg=None, **filter_by):
+    def assertValueSubset(self, column, trusted=None, msg=None, **filter_by):
         """Test that the set of subject values is a subset of trusted
         values for the given `column`.  If `trusted` is provided, it is
         used in-place of the set from `trustedData`.
@@ -290,7 +290,7 @@ class DataTestCase(TestCase):
                 msg = 'different {0!r} values'.format(column)
             self.fail(msg, extra)
 
-    def assertDataSuperset(self, column, trusted=None, msg=None, **filter_by):
+    def assertValueSuperset(self, column, trusted=None, msg=None, **filter_by):
         """Test that the set of subject values is a superset of trusted
         values for the given `column`.  If `trusted` is provided, it is
         used in-place of the set from `trustedData`.
@@ -306,7 +306,7 @@ class DataTestCase(TestCase):
                 msg = 'different {0!r} values'.format(column)
             self.fail(msg, missing)
 
-    def assertDataSum(self, column, group_by, msg=None, **filter_by):
+    def assertValueSum(self, column, group_by, msg=None, **filter_by):
         """Test that the sum of subject values matches the sum of
         trusted values for the given `column` for each group in
         `group_by`.
@@ -343,7 +343,7 @@ class DataTestCase(TestCase):
                 msg = 'different {0!r} sums'.format(column)
             self.fail(msg=msg, diff=failures)
 
-    def assertDataRegex(self, column, regex, msg=None, **filter_by):
+    def assertValueRegex(self, column, regex, msg=None, **filter_by):
         """Test that all subject values in `column` match the `regex`
         pattern search.
         """
@@ -357,7 +357,7 @@ class DataTestCase(TestCase):
                 msg = 'non-matching {0!r} values'.format(column)
             self.fail(msg=msg, diff=failures)
 
-    def assertDataNotRegex(self, column, regex, msg=None, **filter_by):
+    def assertValueNotRegex(self, column, regex, msg=None, **filter_by):
         """Test that all subject values in `column` do not match the
         `regex` pattern search.
         """
@@ -371,7 +371,7 @@ class DataTestCase(TestCase):
                 msg = 'matching {0!r} values'.format(column)
             self.fail(msg=msg, diff=failures)
 
-    def acceptDifference(self, diffs, callableObj=None, *args, **kwds):
+    def acceptDifference(self, diff, callableObj=None, *args, **kwds):
         """Test that a DataAssertionError containing a matching
         collection of differences is raised when `callable` is called
         with `args` and keyword `kwds`. If the raised differences do not
@@ -401,7 +401,7 @@ class DataTestCase(TestCase):
         #        do_something()
         #    the_exception = cm.exception
         #    self.assertEqual(the_exception.error_code, 3)
-        context = _AcceptDifferenceContext(diffs, self, callableObj)
+        context = _AcceptDifferenceContext(diff, self, callableObj)
         return context.handle('acceptDifference', callableObj, args, kwds)
 
     def acceptTolerance(self, tolerance, callableObj=None, *args, **kwds):
@@ -447,3 +447,15 @@ class DataTestCase(TestCase):
             raise DataAssertionError(msg, diff, trusted, self.subjectData)
         else:
             raise self.failureException(msg)
+
+    # Deprecated Method Names
+    assertDataColumnSet = assertColumnSet
+    assertDataColumnSubset = assertColumnSubset
+    assertDataColumnSuperset = assertColumnSuperset
+    assertDataSet = assertValueSet
+    assertDataSubset = assertValueSubset
+    assertDataSuperset = assertValueSuperset
+    assertDataSum = assertValueSum
+    assertDataRegex = assertValueRegex
+    assertDataNotRegex = assertValueNotRegex
+

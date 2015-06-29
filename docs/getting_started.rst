@@ -40,18 +40,18 @@ only "Y" or "N" values, and `region` contains only valid region codes
         def test_columns(self):
             """Test for required column names."""
             columns = {'member_id', 'region', 'active'}
-            self.assertDataColumnSet(columns)
+            self.assertColumnSet(columns)
 
         def test_format(self):
             """Test that 'member_id' contains only digits."""
-            self.assertDataRegex('member_id', '\d+')
+            self.assertValueRegex('member_id', '\d+')
 
         def test_set_membership(self):
             """Test that 'active' and 'region' use valid codes."""
-            self.assertDataSubset('active', {'Y', 'N'})
+            self.assertValueSubset('active', {'Y', 'N'})
 
             regions = {'Midwest', 'Northeast', 'South', 'West'}
-            self.assertDataSubset('region', regions)
+            self.assertValueSubset('region', regions)
 
     if __name__ == '__main__':
         datatest.main()
@@ -73,14 +73,14 @@ is also acceptable::
             ...
 
 
-Using `trustedData`
--------------------
+Using Reference Data
+--------------------
 
 !!! TODO !!!
 
 
 Allowing Discrepancies
---------------------------
+----------------------
 
 !!! TODO !!!
 
