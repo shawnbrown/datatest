@@ -118,7 +118,7 @@ DataTestCase to access data and report meaningful failure messages.
 --------------
 
 .. autoclass:: datatest.BaseDataSource
-   :members: __init__, __str__, slow_iter, columns, set, sum, count, groups
+   :members: __init__, __str__, slow_iter, columns, unique, set, sum, count
 
 
 Errors and Differences

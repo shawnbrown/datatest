@@ -79,7 +79,7 @@ class TestBaseDataSource(unittest.TestCase):
         testdata = [dict(zip(self.fieldnames, x)) for x in self.testdata]
 
         # Filter by single value (where label1 is 'a').
-        results = self.datasource._filtered(testdata, label1='a')
+        results = self.datasource._filter_by(testdata, label1='a')
         results = list(results)
         expected = [
             {'label1': 'a', 'label2': 'x', 'value': '17'},
@@ -90,7 +90,7 @@ class TestBaseDataSource(unittest.TestCase):
         self.assertEqual(results, expected)
 
         # Filter by multiple values (where label2 is 'x' OR 'y').
-        results = self.datasource._filtered(testdata, label2=['x', 'y'])
+        results = self.datasource._filter_by(testdata, label2=['x', 'y'])
         results = list(results)
         expected = [
             {'label1': 'a', 'label2': 'x', 'value': '17'},
@@ -102,7 +102,7 @@ class TestBaseDataSource(unittest.TestCase):
         self.assertEqual(results, expected)
 
         # Filter by multiple columns (where label1 is 'a', label2 is 'x' OR 'y').
-        results = self.datasource._filtered(testdata,
+        results = self.datasource._filter_by(testdata,
                                             label1='a', label2=['x', 'y'])
         results = list(results)
         expected = [

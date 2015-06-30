@@ -50,20 +50,20 @@ class BaseDataSource(object):
         """
         return NotImplemented
 
-    def sum(self, column, **kwds):
+    def sum(self, column, **filter_by):
         """Return sum of values in `column` (uses slow_iter)."""
-        iterable = self._filtered(self.slow_iter(), **kwds)
+        iterable = self._filter_by(self.slow_iter(), **filter_by)
         iterable = (x for x in iterable if x)
         return sum(Decimal(x[column]) for x in iterable)
 
-    def count(self, column, **kwds):
+    def count(self, column, **filter_by):
         """Return count of non-empty values in `column` (uses slow_iter)."""
-        iterable = self._filtered(self.slow_iter(), **kwds)
+        iterable = self._filter_by(self.slow_iter(), **filter_by)
         return sum(bool(x[column]) for x in iterable)
 
     def unique(self, *column, **filter_by):
         """Return iterable of unique values in column (uses slow_iter)."""
-        iterable = self._filtered(self.slow_iter(), **filter_by)  # Filtered rows only.
+        iterable = self._filter_by(self.slow_iter(), **filter_by)  # Filtered rows only.
         fn = lambda row: tuple(row.get(col, '') for col in column)  # Gets columns.
         iterable = (fn(x) for x in iterable)
         seen = set()  # Using "unique_everseen" recipe from itertools.
@@ -77,12 +77,12 @@ class BaseDataSource(object):
         return set(x[0] for x in self.unique(column, **filter_by))
 
     @staticmethod
-    def _filtered(iterable, **kwds):
+    def _filter_by(iterable, **filter_by):
         """Filter iterable by keywords (column=value, etc.)."""
         mktup = lambda v: (v,) if not isinstance(v, (list, tuple)) else v
-        kwds = dict((k, mktup(v)) for k, v in kwds.items())
+        filter_by = dict((k, mktup(v)) for k, v in filter_by.items())
         for row in iterable:
-            if all(row[k] in v for k, v in kwds.items()):
+            if all(row[k] in v for k, v in filter_by.items()):
                 yield row
 
 
@@ -116,8 +116,8 @@ class SqliteDataSource(BaseDataSource):
         cursor.execute('PRAGMA table_info(' + self._table + ')')
         return [x[1] for x in cursor.fetchall()]
 
-    def unique(self, *column, **kwds):
-        """Return set of values in column."""
+    def unique(self, *column, **filter_by):
+        """Return iterable of unique values in column."""
         source_columns = self.columns()
         select_columns = [x for x in column if x in source_columns]
         if not select_columns:
@@ -126,7 +126,7 @@ class SqliteDataSource(BaseDataSource):
         select_clause = ['"{0}"'.format(x) for x in select_columns]
         select_clause = ', '.join(select_clause)
         select_clause = 'DISTINCT {0}'.format(select_clause)
-        cursor = self._execute_query(self._table, select_clause, **kwds)
+        cursor = self._execute_query(self._table, select_clause, **filter_by)
 
         def mkrow(row):
             def getval(col):
@@ -139,16 +139,16 @@ class SqliteDataSource(BaseDataSource):
 
         return (mkrow(x) for x in cursor)
 
-    def sum(self, column, **kwds):
+    def sum(self, column, **filter_by):
         """Return sum of values in column."""
         select_clause = 'SUM("' + column + '")'
-        cursor = self._execute_query(self._table, select_clause, **kwds)
+        cursor = self._execute_query(self._table, select_clause, **filter_by)
         return cursor.fetchone()[0]
 
-    def count(self, column, **kwds):
+    def count(self, column, **filter_by):
         """Return count of non-empty values in column."""
         select_clause = 'COUNT("' + column +  '")'
-        cursor = self._execute_query(self._table, select_clause, **kwds)
+        cursor = self._execute_query(self._table, select_clause, **filter_by)
         return cursor.fetchone()[0]
 
     def _execute_query(self, table, select_clause, trailing_clause=None, **kwds):
@@ -440,6 +440,7 @@ class MultiDataSource(BaseDataSource):
         return columns
 
     def unique(self, *column, **filter_by):
+        """Return iterable of unique values in column."""
         sub_results = []
         for source in self.sources:
             sub_cols = source.columns()
@@ -455,7 +456,7 @@ class MultiDataSource(BaseDataSource):
             seen_add(element)
             yield element
 
-    def sum(self, column, **kwds):
+    def sum(self, column, **filter_by):
         """Return sum of values in column."""
         if column not in self.columns():
             msg = 'No sub-sources not contain {0!r} column.'.format(column)
@@ -465,16 +466,16 @@ class MultiDataSource(BaseDataSource):
         for source in self.sources:
             subcols = source.columns()
             if column in subcols:
-                if any(v != '' for k, v in kwds.items() if k not in subcols):
+                if any(v != '' for k, v in filter_by.items() if k not in subcols):
                     continue
-                subkwds = dict((k, v) for k, v in kwds.items() if k in subcols)
+                subkwds = dict((k, v) for k, v in filter_by.items() if k in subcols)
                 result = source.sum(column, **subkwds)
                 if result:
                     total_result += result
 
         return total_result
 
-    def count(self, column, **kwds):
+    def count(self, column, **filter_by):
         """Return count of non-empty values in column."""
         if column not in self.columns():
             msg = 'No sub-sources not contain {0!r} column.'.format(column)
@@ -484,9 +485,9 @@ class MultiDataSource(BaseDataSource):
         for source in self.sources:
             subcols = source.columns()
             if column in subcols:
-                if any(v != '' for k, v in kwds.items() if k not in subcols):
+                if any(v != '' for k, v in filter_by.items() if k not in subcols):
                     continue
-                subkwds = dict((k, v) for k, v in kwds.items() if k in subcols)
+                subkwds = dict((k, v) for k, v in filter_by.items() if k in subcols)
                 total_result += source.count(column, **subkwds)
 
         return total_result
