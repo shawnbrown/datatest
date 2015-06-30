@@ -81,6 +81,10 @@ class BaseDataSource(object):
             seen_add(element)
             yield element
 
+    def set(self, column, **filter_by):
+        """Convenience function for unwrapping single column results."""
+        return set(x[0] for x in self.unique(column, **filter_by))
+
     @staticmethod
     def _filtered(iterable, **kwds):
         """Filter iterable by keywords (column=value, etc.)."""
