@@ -20,7 +20,7 @@ class BaseDataSource(object):
     """Common base class for all data sources.  Custom sources can be
     created by subclassing BaseDataSource and implementing `__init__()`,
     `__str__()`, `slow_iter()`, and `columns()`.  Performance can be
-    improved by implementing `set()`, `sum()`, `count()`, and `groups()`.
+    improved by implementing `set()`, `sum()`, `count()`, and `unique()`.
     """
     def __init__(self):
         """NotImplemented
@@ -60,15 +60,6 @@ class BaseDataSource(object):
         """Return count of non-empty values in `column` (uses slow_iter)."""
         iterable = self._filtered(self.slow_iter(), **kwds)
         return sum(bool(x[column]) for x in iterable)
-
-    def groups(self, *columns, **kwds):
-        """Return iterable of unique dictionaries grouped by given columns (uses slow_iter)."""
-        iterable = self._filtered(self.slow_iter(), **kwds)   # Filtered rows only.
-        fn = lambda dic: tuple((k, dic[k]) for k in columns)  # Subset as item-tuples.
-
-        iterable = set(fn(x) for x in iterable)               # Unique.
-        iterable = sorted(iterable)                           # Ordered.
-        return (dict(item) for item in iterable)              # Make dicts.
 
     def unique(self, *column, **filter_by):
         """Return iterable of unique values in column (uses slow_iter)."""
@@ -159,15 +150,6 @@ class SqliteDataSource(BaseDataSource):
         select_clause = 'COUNT("' + column +  '")'
         cursor = self._execute_query(self._table, select_clause, **kwds)
         return cursor.fetchone()[0]
-
-    def groups(self, *columns, **kwds):
-        """Return sorted iterable of unique dictionaries grouped by given columns."""
-        column_names = ['"{0}"'.format(x) for x in columns]
-        select_clause = 'DISTINCT ' + ', '.join(column_names)
-        trailing_clause = 'ORDER BY ' + ', '.join(column_names)
-        cursor = self._execute_query(self._table, select_clause,
-                                     trailing_clause, **kwds)
-        return (dict(zip(columns, x)) for x in cursor)
 
     def _execute_query(self, table, select_clause, trailing_clause=None, **kwds):
         try:
@@ -508,9 +490,6 @@ class MultiDataSource(BaseDataSource):
                 total_result += source.count(column, **subkwds)
 
         return total_result
-
-    #def groups(self, *columns, **kwds):
-    #    """Return unsorted iterable of unique dictionaries grouped by given columns."""
 
 
 #DefaultDataSource = CsvDataSource

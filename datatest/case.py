@@ -348,7 +348,10 @@ class DataTestCase(TestCase):
                     return MissingSum(difference, t_sum, **group_dict)
             return None
 
-        failures = [test(group_dict) for group_dict in trusted.groups(*group_by, **filter_by)]
+        groups = trusted.unique(*group_by, **filter_by)
+        groups = (dict(zip(group_by, x)) for x in groups)
+        failures = (test(x) for x in groups)
+
         failures = [x for x in failures if x != None]  # Filter for failures.
         if failures:
             if not msg:

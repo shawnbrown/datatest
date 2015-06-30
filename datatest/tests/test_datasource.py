@@ -137,46 +137,6 @@ class TestBaseDataSource(unittest.TestCase):
         result = self.datasource.count('value', label2='x')
         self.assertEqual(result, 3)
 
-    def test_groups(self):
-        # Test single column.
-        result = self.datasource.groups('label1')
-        expected = [{'label1': 'a'}, {'label1': 'b'}]
-        result_set = set(tuple(x.items()) for x in result)
-        expected_set = set(tuple(x.items()) for x in expected)
-        self.assertEqual(result_set, expected_set)
-
-        # Test multiple columns.
-        result = self.datasource.groups('label1', 'label2')
-        expected = [{'label1': 'a', 'label2': 'x'},
-                    {'label1': 'a', 'label2': 'y'},
-                    {'label1': 'a', 'label2': 'z'},
-                    {'label1': 'b', 'label2': 'x'},  # <- expect ordered.
-                    {'label1': 'b', 'label2': 'y'},  # <- expect ordered.
-                    {'label1': 'b', 'label2': 'z'},  # <- expect ordered.
-                   ]
-        result = [tuple(x.items()) for x in result]
-        expected = [tuple(x.items()) for x in expected]
-        self.assertEqual(result, expected)
-
-        # Test multiple columns with filter.
-        result = self.datasource.groups('label1', 'label2', label2=['x', 'y'])
-        expected = [{'label1': 'a', 'label2': 'x'},
-                    {'label1': 'a', 'label2': 'y'},
-                    {'label1': 'b', 'label2': 'x'},
-                    {'label1': 'b', 'label2': 'y'}]
-        result_set = set(tuple(x.items()) for x in result)
-        expected_set = set(tuple(x.items()) for x in expected)
-        self.assertEqual(result_set, expected_set)
-
-        # Test multiple columns with filter on non-grouped column.
-        result = self.datasource.groups('label1', 'value', label2='x')
-        expected = [{'label1': 'a', 'value': '17'},
-                    {'label1': 'a', 'value': '13'},
-                    {'label1': 'b', 'value': '25'}]
-        result_set = set(tuple(x.items()) for x in result)
-        expected_set = set(tuple(x.items()) for x in expected)
-        self.assertEqual(result_set, expected_set)
-
     def test_unique(self):
         # Test single column.
         result = self.datasource.unique('label1')
