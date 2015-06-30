@@ -3,7 +3,6 @@ import collections
 import csv
 import inspect
 import io
-import itertools
 import os
 import sqlite3
 import sys
@@ -11,6 +10,7 @@ import warnings
 from decimal import Decimal
 
 from datatest._builtins import *
+import datatest._itertools as itertools
 
 #pattern = 'test*.py'
 prefix = 'test_'
@@ -50,11 +50,6 @@ class BaseDataSource(object):
         """
         return NotImplemented
 
-    def set(self, column, **kwds):
-        """Return set of values in `column` (uses slow_iter)."""
-        iterable = self._filtered(self.slow_iter(), **kwds)
-        return set(x[column] for x in iterable)
-
     def sum(self, column, **kwds):
         """Return sum of values in `column` (uses slow_iter)."""
         iterable = self._filtered(self.slow_iter(), **kwds)
@@ -73,10 +68,18 @@ class BaseDataSource(object):
 
         iterable = set(fn(x) for x in iterable)               # Unique.
         iterable = sorted(iterable)                           # Ordered.
-        # Explore possible TODOs:
-        # replace unique with `unique_everseen` https://docs.python.org/3.4/library/itertools.html
-        # remove sorted() call and make sorting optional
         return (dict(item) for item in iterable)              # Make dicts.
+
+    def unique(self, *column, **filter_by):
+        """Return iterable of unique values in column (uses slow_iter)."""
+        iterable = self._filtered(self.slow_iter(), **filter_by)  # Filtered rows only.
+        fn = lambda row: tuple(row.get(col, '') for col in column)  # Gets columns.
+        iterable = (fn(x) for x in iterable)
+        seen = set()  # Using "unique_everseen" recipe from itertools.
+        seen_add = seen.add
+        for element in itertools.filterfalse(seen.__contains__, iterable):
+            seen_add(element)
+            yield element
 
     @staticmethod
     def _filtered(iterable, **kwds):
@@ -118,12 +121,28 @@ class SqliteDataSource(BaseDataSource):
         cursor.execute('PRAGMA table_info(' + self._table + ')')
         return [x[1] for x in cursor.fetchall()]
 
-    def set(self, column, **kwds):
+    def unique(self, *column, **kwds):
         """Return set of values in column."""
-        assert column in self.columns(), 'No column %r' % column
-        select_clause = 'DISTINCT "' + column + '"'
+        source_columns = self.columns()
+        select_columns = [x for x in column if x in source_columns]
+        if not select_columns:
+            return [('',) * len(column)]  # <- EXIT!
+
+        select_clause = ['"{0}"'.format(x) for x in select_columns]
+        select_clause = ', '.join(select_clause)
+        select_clause = 'DISTINCT {0}'.format(select_clause)
         cursor = self._execute_query(self._table, select_clause, **kwds)
-        return set(x[0] for x in cursor)
+
+        def mkrow(row):
+            def getval(col):
+                if col in source_columns:
+                    index = select_columns.index(col)
+                    return row[index]
+                else:
+                    return ''
+            return tuple(getval(col) for col in column)
+
+        return (mkrow(x) for x in cursor)
 
     def sum(self, column, **kwds):
         """Return sum of values in column."""
@@ -434,24 +453,21 @@ class MultiDataSource(BaseDataSource):
                     columns.append(col)  # TODO: Look at improving order!
         return columns
 
-    def set(self, column, **kwds):
-        """Return set of values in column."""
-        if column not in self.columns():
-            msg = 'No sub-sources not contain {0!r} column.'.format(column)
-            raise Exception(msg)
-
-        result_sets = []
+    def unique(self, *column, **filter_by):
+        sub_results = []
         for source in self.sources:
-            subcols = source.columns()
-            if column in subcols:
-                if any(v != '' for k, v in kwds.items() if k not in subcols):
-                    continue
-                subkwds = dict((k, v) for k, v in kwds.items() if k in subcols)
-                result_sets.append(source.set(column, **subkwds))
-            else:
-                result_sets.append(set(['']))
+            sub_cols = source.columns()
+            if any(v != '' for k, v in filter_by.items() if k not in sub_cols):
+                continue
+            sub_filter = dict((k, v) for k, v in filter_by.items() if k in sub_cols)
+            sub_results.append(source.unique(*column, **sub_filter))
 
-        return set(itertools.chain(*result_sets))
+        iterable = itertools.chain(*sub_results)
+        seen = set()  # Using "unique_everseen" recipe from itertools.
+        seen_add = seen.add
+        for element in itertools.filterfalse(seen.__contains__, iterable):
+            seen_add(element)
+            yield element
 
     def sum(self, column, **kwds):
         """Return sum of values in column."""

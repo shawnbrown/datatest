@@ -515,6 +515,23 @@ class TestValueSet(TestHelperCase):
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
 
+    def test_same_group_using_trusted_from_argument(self):
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                #_self.trustedData =   <- Not defined!
+                same_as_trusted = io.StringIO('label1,label2\n'
+                                              'a,x\n'
+                                              'b,y\n'
+                                              'c,z\n')
+                _self.subjectData = CsvDataSource(same_as_trusted, in_memory=True)
+
+            def test_method(_self):
+                trusted_set = set([('a', 'x'), ('b', 'y'), ('c', 'z')])
+                _self.assertDataSet(['label1', 'label2'], trusted=trusted_set)  # <- test assert
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        self.assertIsNone(failure)
+
     def test_missing(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
@@ -549,7 +566,6 @@ class TestValueSet(TestHelperCase):
         pattern = "different 'label' values:\n ExtraValue\(u?'d'\)"
         self.assertRegex(failure, pattern)
 
-    @unittest.skip('Not yet implemented.')
     def test_same_group(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
@@ -565,6 +581,22 @@ class TestValueSet(TestHelperCase):
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
+
+    def test_missing_group(self):
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                _self.trustedData = self.trusted
+                same_as_trusted = io.StringIO('label,label2\n'
+                                              'a,x\n'
+                                              'c,z\n')
+                _self.subjectData = CsvDataSource(same_as_trusted, in_memory=True)
+
+            def test_method(_self):
+                _self.assertDataSet(['label', 'label2'])  # <- test assert
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        pattern = "different \[u?'label', u?'label2'\] values:\n MissingValue\(\(u?'b', u?'y'\)\)"
+        self.assertRegex(failure, pattern)
 
 
 class TestValueSubset(TestHelperCase):

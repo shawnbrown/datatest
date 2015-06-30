@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
 
+import collections
 import inspect
 import pprint
 import re
@@ -258,14 +259,25 @@ class DataTestCase(TestCase):
                 msg = 'different column names'  # missing expected columns
             self.fail(msg, missing)
 
+    @staticmethod
+    def _get_set(source, column, **filter_by):
+        if isinstance(column, str) or not isinstance(column, collections.Container):
+            column = [column]
+        assert isinstance(column, collections.Sequence)
+
+        unique = source.unique(*column, **filter_by)
+        if len(column) == 1:
+            unique = (x[0] for x in unique)  # Unpack if single item.
+        return set(unique)
+
     def assertValueSet(self, column, trusted=None, msg=None, **filter_by):
         """Test that the set of subject values matches the set of
         trusted values for the given `column`.  If `trusted` is
         provided, it is used in-place of the set from `trustedData`.
         """
         if trusted == None:
-            trusted = self.trustedData.set(column, **filter_by)
-        subject = self.subjectData.set(column, **filter_by)
+            trusted = self._get_set(self.trustedData, column, **filter_by)
+        subject = self._get_set(self.subjectData, column, **filter_by)
 
         if subject != trusted:
             extra = [ExtraValue(x) for x in subject - trusted]
@@ -280,8 +292,8 @@ class DataTestCase(TestCase):
         used in-place of the set from `trustedData`.
         """
         if trusted == None:
-            trusted = self.trustedData.set(column, **filter_by)
-        subject = self.subjectData.set(column, **filter_by)
+            trusted = self._get_set(self.trustedData, column, **filter_by)
+        subject = self._get_set(self.subjectData, column, **filter_by)
 
         if not subject.issubset(trusted):
             extra = subject.difference(trusted)
@@ -296,8 +308,8 @@ class DataTestCase(TestCase):
         used in-place of the set from `trustedData`.
         """
         if trusted == None:
-            trusted = self.trustedData.set(column, **filter_by)
-        subject = self.subjectData.set(column, **filter_by)
+            trusted = self._get_set(self.trustedData, column, **filter_by)
+        subject = self._get_set(self.subjectData, column, **filter_by)
 
         if not subject.issuperset(trusted):
             missing = trusted.difference(subject)
@@ -347,7 +359,8 @@ class DataTestCase(TestCase):
         """Test that all subject values in `column` match the `regex`
         pattern search.
         """
-        subject = self.subjectData.set(column, **filter_by)
+        subject = self.subjectData.unique(column, **filter_by)
+        subject = (x[0] for x in subject)  # Unpack single item.
         if not isinstance(regex, _re_type):
             regex = re.compile(regex)
         failures = [x for x in subject if not regex.match(x)]
@@ -361,7 +374,8 @@ class DataTestCase(TestCase):
         """Test that all subject values in `column` do not match the
         `regex` pattern search.
         """
-        subject = self.subjectData.set(column, **filter_by)
+        subject = self.subjectData.unique(column, **filter_by)
+        subject = (x[0] for x in subject)  # Unpack single item.
         if not isinstance(regex, _re_type):
             regex = re.compile(regex)
         failures = [x for x in subject if regex.match(x)]

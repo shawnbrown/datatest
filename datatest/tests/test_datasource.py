@@ -116,12 +116,12 @@ class TestBaseDataSource(unittest.TestCase):
         header = self.datasource.columns()
         self.assertEqual(header, ['label1', 'label2', 'value'])
 
-    def test_set(self):
-        result = self.datasource.set('label1')
-        self.assertEqual(result, set(['a', 'b']))
+    def test_unique(self):
+        result = self.datasource.unique('label1')
+        self.assertEqual(list(result), [('a',), ('b',)])
 
-        result = self.datasource.set('value', label2='x')
-        self.assertEqual(result, set(['17', '13', '25']))
+        result = self.datasource.unique('value', label2='x')
+        self.assertEqual(list(result), [('17',), ('13',), ('25',)])
 
     def test_sum(self):
         result = self.datasource.sum('value')
@@ -176,6 +176,49 @@ class TestBaseDataSource(unittest.TestCase):
         result_set = set(tuple(x.items()) for x in result)
         expected_set = set(tuple(x.items()) for x in expected)
         self.assertEqual(result_set, expected_set)
+
+    def test_unique(self):
+        # Test single column.
+        result = self.datasource.unique('label1')
+        expected = [('a',), ('b',)]
+        self.assertEqual(list(result), expected)
+
+        # Test multiple columns.
+        result = self.datasource.unique('label1', 'label2')
+        expected = [
+            ('a', 'x'),
+            ('a', 'y'),
+            ('a', 'z'),
+            ('b', 'z'),  # <- ordered (if possible)
+            ('b', 'y'),  # <- ordered (if possible)
+            ('b', 'x'),  # <- ordered (if possible)
+        ]
+        self.assertEqual(set(result), set(expected))
+
+        # Test multiple columns with filter.
+        result = self.datasource.unique('label1', 'label2', label2=['x', 'y'])
+        expected = [('a', 'x'),
+                    ('a', 'y'),
+                    ('b', 'y'),
+                    ('b', 'x')]
+        self.assertEqual(set(result), set(expected))
+
+        # Test multiple columns with filter on non-grouped column.
+        result = self.datasource.unique('label1', 'value', label2='x')
+        expected = [('a', '17'),
+                    ('a', '13'),
+                    ('b', '25')]
+        self.assertEqual(set(result), set(expected))
+
+        # Test when specified column is missing.
+        result = self.datasource.unique('label1', 'label3', label2='x')
+        expected = [('a', ''), ('b', '')]
+        self.assertEqual(set(result), set(expected))
+
+        # Test when all specified columns are missing.
+        result = self.datasource.unique('label3', 'label4', label2='x')
+        expected = [('', '')]
+        self.assertEqual(list(result), expected)
 
 
 class TestSqliteDataSource(TestBaseDataSource):
@@ -429,28 +472,39 @@ class TestMultiDataSourceDifferentColumns(unittest.TestCase):
         result = self.datasource.columns()
         self.assertSetEqual(set(expected), set(result))
 
-    def test_set_method(self):
+    def test_unique_method(self):
         # Selected column exists in all sub-sources.
-        expected = set(['a', 'b'])
-        result = self.datasource.set('label1')
-        self.assertSetEqual(expected, result)
+        result = self.datasource.unique('label1')
+        expected = [('a',), ('b',)]
+        self.assertEqual(list(result), expected)
 
         # Selected column exists in only one sub-source.
-        expected = set(['x', 'y', 'z', ''])
-        result = self.datasource.set('label2')
+        expected = [('x',), ('y',), ('z',), ('',)]
+        result = self.datasource.unique('label2')
         msg = ("Should include empty string as subsrc2 doesn't have "
                "the specified column.")
-        self.assertSetEqual(expected, result, msg)
+        self.assertEqual(list(result), expected, msg)
+
+        # 1st in all sources, 2nd in only one sub-source, 3rd in none.
+        expected = [('a', 'x', ''),
+                    ('a', 'y', ''),
+                    ('b', 'z', ''),
+                    ('a', '',  ''),
+                    ('b', '',  '')]
+        result = self.datasource.unique('label1', 'label2', 'label4')
+        msg = ("Should include empty string as subsrc2 doesn't have "
+               "the specified column.")
+        self.assertEqual(list(result), expected, msg)
 
     def test_kwds_filter(self):
         # Filtered value spans sub-sources.
-        expected = set(['17', '13', '20', '15'])
-        result = self.datasource.set('value', label1='a')
-        self.assertSetEqual(expected, result)
+        expected = [('17',), ('13',), ('20',), ('15',)]
+        result = self.datasource.unique('value', label1='a')
+        self.assertEqual(list(result), expected)
 
         # Filter column exists in only one sub-source.
-        expected = set(['17', '13'])
-        result = self.datasource.set('value', label1='a', label2='x')
-        self.assertSetEqual(expected, result)
+        expected = [('17',), ('13',)]
+        result = self.datasource.unique('value', label1='a', label2='x')
+        self.assertEqual(list(result), expected)
 
 
