@@ -116,13 +116,6 @@ class TestBaseDataSource(unittest.TestCase):
         header = self.datasource.columns()
         self.assertEqual(header, ['label1', 'label2', 'value'])
 
-    def test_unique(self):
-        result = self.datasource.unique('label1')
-        self.assertEqual(list(result), [('a',), ('b',)])
-
-        result = self.datasource.unique('value', label2='x')
-        self.assertEqual(list(result), [('17',), ('13',), ('25',)])
-
     def test_sum(self):
         result = self.datasource.sum('value')
         self.assertEqual(result, 135)
