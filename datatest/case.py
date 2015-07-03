@@ -175,9 +175,9 @@ class DataTestCase(TestCase):
     """
     @property
     def subjectData(self):
-        """A reference to the data being tested (the subject of our
-        tests).  Typically `subjectData` should be assigned in
-        `setUpClass()` or `setUpModule()`.
+        """Property to access the data being tested---the subject of the
+        tests.  Typically, ``subjectData`` should be assigned in
+        ``setUpClass()`` or ``setUpModule()``.
         """
         if hasattr(self, '_subjectData'):
             return self._subjectData
@@ -189,9 +189,9 @@ class DataTestCase(TestCase):
 
     @property
     def trustedData(self):
-        """A reference to data that is trusted to be correct (used for
-        cross-validation tests).  Typically `trustedData` should be
-        assigned in `setUpClass()` or `setUpModule()`.
+        """Property to access data that is trusted to be correct (used
+        for cross-validation tests).  Typically, ``trustedData`` should
+        be assigned in ``setUpClass()`` or ``setUpModule()``.
         """
         if hasattr(self, '_trustedData'):
             return self._trustedData
@@ -213,8 +213,8 @@ class DataTestCase(TestCase):
 
     def assertColumnSet(self, trusted=None, msg=None):
         """Test that the set of subject columns matches set of trusted
-        columns.  If `trusted` is provided, it is used in-place of the
-        set from `trustedData`.
+        columns.  If *trusted* is provided, it is used in-place of the
+        set from ``trustedData``.
         """
         if trusted == None:
             trusted = set(self.trustedData.columns())
@@ -229,8 +229,8 @@ class DataTestCase(TestCase):
 
     def assertColumnSubset(self, trusted=None, msg=None):
         """Test that the set of subject columns is a subset of trusted
-        columns.  If `trusted` is provided, it is used in-place of the
-        set from `trustedData`.
+        columns.  If *trusted* is provided, it is used in-place of the
+        set from ``trustedData``.
         """
         if trusted == None:
             trusted = set(self.trustedData.columns())
@@ -245,8 +245,8 @@ class DataTestCase(TestCase):
 
     def assertColumnSuperset(self, trusted=None, msg=None):
         """Test that the set of subject columns is a superset of trusted
-        columns.  If `trusted` is provided, it is used in-place of the
-        set from `trustedData`.
+        columns.  If *trusted* is provided, it is used in-place of the
+        set from ``trustedData``.
         """
         if trusted == None:
             trusted = set(self.trustedData.columns())
@@ -272,8 +272,8 @@ class DataTestCase(TestCase):
 
     def assertValueSet(self, column, trusted=None, msg=None, **filter_by):
         """Test that the set of subject values matches the set of
-        trusted values for the given `column`.  If `trusted` is
-        provided, it is used in-place of the set from `trustedData`.
+        trusted values for the given *column*.  If *trusted* is
+        provided, it is used in-place of the set from ``trustedData``.
         """
         if trusted == None:
             trusted = self._get_set(self.trustedData, column, **filter_by)
@@ -288,8 +288,8 @@ class DataTestCase(TestCase):
 
     def assertValueSubset(self, column, trusted=None, msg=None, **filter_by):
         """Test that the set of subject values is a subset of trusted
-        values for the given `column`.  If `trusted` is provided, it is
-        used in-place of the set from `trustedData`.
+        values for the given *column*.  If *trusted* is provided, it is
+        used in-place of the set from ``trustedData``.
         """
         if trusted == None:
             trusted = self._get_set(self.trustedData, column, **filter_by)
@@ -304,8 +304,8 @@ class DataTestCase(TestCase):
 
     def assertValueSuperset(self, column, trusted=None, msg=None, **filter_by):
         """Test that the set of subject values is a superset of trusted
-        values for the given `column`.  If `trusted` is provided, it is
-        used in-place of the set from `trustedData`.
+        values for the given *column*.  If *trusted* is provided, it is
+        used in-place of the set from ``trustedData``.
         """
         if trusted == None:
             trusted = self._get_set(self.trustedData, column, **filter_by)
@@ -320,8 +320,8 @@ class DataTestCase(TestCase):
 
     def assertValueSum(self, column, group_by, msg=None, **filter_by):
         """Test that the sum of subject values matches the sum of
-        trusted values for the given `column` for each group in
-        `group_by`.
+        trusted values for the given *column* for each group in
+        *group_by*.
 
         The following asserts that the sum of the subject's *income*
         matches the sum of the trusted *income* for each group of
@@ -359,7 +359,7 @@ class DataTestCase(TestCase):
             self.fail(msg=msg, diff=failures)
 
     def assertValueRegex(self, column, regex, msg=None, **filter_by):
-        """Test that all subject values in `column` match the `regex`
+        """Test that all subject values in *column* match the *regex*
         pattern search.
         """
         subject = self.subjectData.unique(column, **filter_by)
@@ -374,8 +374,8 @@ class DataTestCase(TestCase):
             self.fail(msg=msg, diff=failures)
 
     def assertValueNotRegex(self, column, regex, msg=None, **filter_by):
-        """Test that all subject values in `column` do not match the
-        `regex` pattern search.
+        """Test that all subject values in *column* do not match the
+        *regex* pattern search.
         """
         subject = self.subjectData.unique(column, **filter_by)
         subject = (x[0] for x in subject)  # Unpack single item.
@@ -391,11 +391,11 @@ class DataTestCase(TestCase):
     def acceptDifference(self, diff, callableObj=None, *args, **kwds):
         """Test that a DataAssertionError containing a matching
         collection of differences is raised when `callable` is called
-        with `args` and keyword `kwds`. If the raised differences do not
+        with *args* and keyword *kwds*. If the raised differences do not
         match the accepted differences, the test case will fail with a
         DataAssertionError of the remaining differences.
 
-        If called with `callableObj` omitted or None, will return a
+        If called with *callableObj* omitted or None, will return a
         context manager so that the code under test can be written
         inline rather than as a function::
 
@@ -406,7 +406,7 @@ class DataTestCase(TestCase):
             with self.acceptDifference(diff):
                 self.assertDataSet('column1')
 
-        An optional keyword argument `msg` can be provided when
+        An optional keyword argument *msg* can be provided when
         acceptDifference is used as a context manager.
         """
         # TODO: Test the following behavior.
@@ -423,7 +423,7 @@ class DataTestCase(TestCase):
 
     def acceptTolerance(self, tolerance, callableObj=None, *args, **kwds):
         """Only fail if DataAssertionError contains numeric differences
-        greater than `tolerance`.  If differences exceed `tolerance`,
+        greater than *tolerance*.  If differences exceed *tolerance*,
         the test case will fail with a DataAssertionError containing the
         excessive differences.
 
@@ -438,8 +438,8 @@ class DataTestCase(TestCase):
 
     def acceptPercentTolerance(self, tolerance, callableObj=None, *args, **kwds):
         """Only fail if DataAssertionError contains numeric difference
-        percentages greater than `tolerance`.  If differences exceed
-        `tolerance`, the test case will fail with a DataAssertionError
+        percentages greater than *tolerance*.  If differences exceed
+        *tolerance*, the test case will fail with a DataAssertionError
         containing the excessive differences.
 
         Like acceptDifference, this method can be used as a context
@@ -452,8 +452,8 @@ class DataTestCase(TestCase):
         return context.handle('acceptPercentTolerance', callableObj, args, kwds)
 
     def fail(self, msg, diff=None):
-        """Signals a test failure unconditionally, with `msg` for the
-        error message.  If `diff` is provided, a DataAssertionError is
+        """Signals a test failure unconditionally, with *msg* for the
+        error message.  If *diff* is provided, a DataAssertionError is
         raised instead of an AssertionError.
         """
         if diff:

@@ -1,16 +1,14 @@
 
+*****************
 Package Reference
+*****************
+
+.. _assert-methods:
+
+Column Assertions
 =================
 
-
-Special Assertions
-------------------
-
-
-Column Methods
-~~~~~~~~~~~~~~
-
-Column methods operate on the column names (or header rows) of a data
+Column assertions operate on the column names (or header rows) of a data
 source:
 
 +---------------------------------------------------+----------------------------------------------+
@@ -27,59 +25,77 @@ source:
 +---------------------------------------------------+----------------------------------------------+
 
 
-Value Methods
-~~~~~~~~~~~~~
+Value Assertions
+================
 
-Value methods operate on the values within a given column:
+Value assertions operate on the values within a given column:
 
 +----------------------------------------------------------+----------------------------------------------------+
 | Value method                                             | Checks that                                        |
 +==========================================================+====================================================+
-| :meth:`assertValueSet(c, **filter_by)                    | subject vals == trusted vals in column `c`         |
+| :meth:`assertValueSet(c, **filter_by)                    | subject vals == trusted vals in column *c*         |
 | <datatest.DataTestCase.assertValueSet>`                  |                                                    |
 +----------------------------------------------------------+----------------------------------------------------+
-| :meth:`assertValueSubset(c, **filter_by)                 | subject vals <= trusted vals in column `c`         |
+| :meth:`assertValueSubset(c, **filter_by)                 | subject vals <= trusted vals in column *c*         |
 | <datatest.DataTestCase.assertValueSubset>`               |                                                    |
 +----------------------------------------------------------+----------------------------------------------------+
-| :meth:`assertValueSuperset(c, **filter_by)               | subject vals <= trusted vals in column `c`         |
+| :meth:`assertValueSuperset(c, **filter_by)               | subject vals <= trusted vals in column *c*         |
 | <datatest.DataTestCase.assertValueSuperset>`             |                                                    |
 +----------------------------------------------------------+----------------------------------------------------+
 | :meth:`assertValueSum(c, g, **filter_by)                 | sum of subject vals == sum of trusted vals in      |
-| <datatest.DataTestCase.assertValueSum>`                  | column `c` for each group of `g`                   |
+| <datatest.DataTestCase.assertValueSum>`                  | column *c* for each group of *g*                   |
 +----------------------------------------------------------+----------------------------------------------------+
-| :meth:`assertValueRegex(c, r, **filter_by)               | `r`.search(val) for subject vals in column `c`     |
+| :meth:`assertValueRegex(c, r, **filter_by)               | *r*.search(val) for subject vals in column *c*     |
 | <datatest.DataTestCase.assertValueRegex>`                |                                                    |
 +----------------------------------------------------------+----------------------------------------------------+
-| :meth:`assertValueNotRegex(c, r, **filter_by)            | not `r`.search(val) for subject vals in column `c` |
+| :meth:`assertValueNotRegex(c, r, **filter_by)            | not *r*.search(val) for subject vals in column *c* |
 | <datatest.DataTestCase.assertValueNotRegex>`             |                                                    |
 +----------------------------------------------------------+----------------------------------------------------+
 
 
 `**filter_by` Keyword Aguments
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------
 
 The value methods above accept optional keyword arguments to filter the
 rows being tested (e.g., ``mycolumn='someval'``).
 
 The following code will assert that the subject values match the trusted
-values for the `city` column but only for records where `state` equals
-"Ohio"::
+values for the ``city`` column but only for records where ``state``
+equals "Ohio"::
 
         self.assertDataSet('city', state='Ohio')
 
 
-DataTestCase
-------------
+Accept Methods
+==============
 
-This class inherits from `unittest.TestCase` and adds additional
-properties and methods to help with testing data.
++-------------------------------------------------+------------------------------------------+
+| Accept method                                   | Accepts that                             |
++=================================================+==========================================+
+| :meth:`acceptDifference(diff)                   | differences match those in *diff*        |
+| <datatest.DataTestCase.acceptDifference>`       |                                          |
++-------------------------------------------------+------------------------------------------+
+| :meth:`acceptTolerance(tolerance)               | absolute values of numeric differences   |
+| <datatest.DataTestCase.acceptTolerance>`        | are equal to or less than *tolerance*    |
++-------------------------------------------------+------------------------------------------+
+| :meth:`acceptPercentTolerance(tolerance)        | percentage values of numeric differences |
+| <datatest.DataTestCase.acceptPercentTolerance>` | are equal to or less than *tolerance*    |
++-------------------------------------------------+------------------------------------------+
+
+
+DataTestCase
+============
+
+This class inherits from
+`unittest.TestCase <http://docs.python.org/library/unittest.html#unittest.TestCase>`_
+and adds additional properties and methods to help with testing data.
 
 .. autoclass:: datatest.DataTestCase
    :members:
 
 
 Data Sources
-------------
+============
 
 Data sources implement a common set of methods which are used by
 DataTestCase to access data and report meaningful failure messages.
