@@ -52,18 +52,18 @@ class BaseDataSource(object):
 
     def sum(self, column, **filter_by):
         """Return sum of values in `column` (uses slow_iter)."""
-        iterable = self._filter_by(self.slow_iter(), **filter_by)
+        iterable = self._base_filter_by(self.slow_iter(), **filter_by)
         iterable = (x for x in iterable if x)
         return sum(Decimal(x[column]) for x in iterable)
 
     def count(self, column, **filter_by):
         """Return count of non-empty values in `column` (uses slow_iter)."""
-        iterable = self._filter_by(self.slow_iter(), **filter_by)
+        iterable = self._base_filter_by(self.slow_iter(), **filter_by)
         return sum(bool(x[column]) for x in iterable)
 
     def unique(self, *column, **filter_by):
         """Return iterable of unique values in column (uses slow_iter)."""
-        iterable = self._filter_by(self.slow_iter(), **filter_by)  # Filtered rows only.
+        iterable = self._base_filter_by(self.slow_iter(), **filter_by)  # Filtered rows only.
         fn = lambda row: tuple(row.get(col, '') for col in column)  # Gets columns.
         iterable = (fn(x) for x in iterable)
         seen = set()  # Using "unique_everseen" recipe from itertools.
@@ -77,7 +77,7 @@ class BaseDataSource(object):
         return set(x[0] for x in self.unique(column, **filter_by))
 
     @staticmethod
-    def _filter_by(iterable, **filter_by):
+    def _base_filter_by(iterable, **filter_by):
         """Filter iterable by keywords (column=value, etc.)."""
         mktup = lambda v: (v,) if not isinstance(v, (list, tuple)) else v
         filter_by = dict((k, mktup(v)) for k, v in filter_by.items())
