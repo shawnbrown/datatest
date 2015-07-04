@@ -71,7 +71,7 @@ if __name__ == '__main__':
             # the columns sorted by name.
             result = self.source.columns()
             self.assertTrue(isinstance(result), Sequence)
-            self.assertEqual(list(result), ['foo', 'bar', 'baz'])
+            self.assertEqual(['foo', 'bar', 'baz'], list(result))
 
         def test_3_slow_iter(self):
             """Test slow_iter() method."""
@@ -87,40 +87,55 @@ if __name__ == '__main__':
                 {'foo': 'b', 'bar': '',  'baz': '1'},
                 {'foo': 'b', 'bar': 'x', 'baz': '2'},
             ]
-            self.assertEqual(list(result), expecting)
+            self.assertEqual(expecting, list(result))
 
         def test_4_unique(self):
             """Test unique() method."""
-            # Select two columns.
             result = list(self.source.unique('foo', 'bar'))
             expecting = [('a', 'x'),
                          ('a', 'y'),
                          ('a', 'z'),
                          ('b', 'x'),
                          ('b', '' )]
-            self.assertEqual(result, expecting)
+            self.assertEqual(expecting, result)
 
-            # Select two columns with a filter.
+            result = list(self.source.unique('foo'))
+            self.assertEqual([('a',), ('b',)], result)
+
+            result = list(self.source.unique('foo', 'bar'), foo='a')
+            expecting = [('a', 'x'),
+                         ('a', 'y'),
+                         ('a', 'z')]
+            self.assertEqual(expecting, result)
+
             result = list(self.source.unique('foo', 'baz'), bar=['x', 'y'])
             expecting = [('a', 'x'),
                          ('a', 'y'),
                          ('b', 'x')]
-            self.assertEqual(result, expecting)
+            self.assertEqual(expecting, result)
 
-            # Select one column.
-            result = list(self.source.unique('foo'))
-            self.assertEqual(result, [('a',), ('b',)])
+            result = list(self.source.unique('foo', 'baz'), foo='a', bar=['x', 'y'])
+            expecting = [('a', 'x'),
+                         ('a', 'y')]
+            self.assertEqual(expecting, result)
+
+            # Selecting an unknown column ("qux") should raise an exception.
+            with assertRaises(Exception):
+                list(self.source.unique('foo', 'qux'))
 
         def test_5_sum(self):
             """Test sum() method."""
-            self.assertEqual(self.source.sum('baz'), 20)
+            self.assertEqual(20, self.source.sum('baz'))
             self.assertEqual(self.source.sum('baz', foo='a'), 12)
             self.assertEqual(self.source.sum('baz', bar=['x', 'y']), 19)
             self.assertEqual(self.source.sum('baz', foo='a', bar=['y', 'z']), 4)
 
         def test_6_count(self):
             """Test count() method."""
-            pass
+            self.assertEqual(self.source.count(), 6)
+            self.assertEqual(self.source.count(foo='a'), 3)
+            self.assertEqual(self.source.count(bar=['x', 'y']), 4)
+            self.assertEqual(self.source.count(foo='a', bar=['x', 'y']), 2)
 
         def test_7_set(self):
             """Test set() method."""
