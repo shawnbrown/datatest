@@ -1,4 +1,11 @@
 
+.. meta::
+    :description: Test-driven data processing can provide much-needed
+                  structure to guide the workflow of data processing,
+                  itself.
+    :keywords: test-driven data processing
+
+
 ***************************
 Test-Driven Data Processing
 ***************************

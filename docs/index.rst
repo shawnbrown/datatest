@@ -1,35 +1,13 @@
 
-
-Below are examples of section title styles:
-
-###############
- parts
-###############
-
-***************
- chapters
-***************
-
-sections
-=============
-
-subsections
--------------
-
-subsubsections
-^^^^^^^^^^^^^^^
-
-paragraphs
-"""""""""""""
-
-foo bar
-
-
+.. meta::
+    :description: datatest: Data testing tools for Python.
+    :keywords: datatest, unittest, testing, test-driven data processing
 
 .. module:: datatest
-   :synopsis: Data testing tools for Python.
+    :synopsis: Data testing tools for Python.
 .. moduleauthor:: Shawn Brown <sbrown@ncecservices.com>
 .. sectionauthor:: Shawn Brown <sbrown@ncecservices.com>
+
 
 #################################################
 :mod:`datatest` --- Data testing tools for Python
@@ -41,7 +19,7 @@ framework.  It provides classes for conveniently loading data, asserting
 validity, and allowing for discrepancies when appropriate.
 
 (If you're already familiar with the package, you might want to
-skip to :ref:`the list of assert methods <assert-methods>`.)
+skip to the :ref:`list of assert methods <assert-methods>`.)
 
 
 .. toctree::
@@ -52,7 +30,9 @@ skip to :ref:`the list of assert methods <assert-methods>`.)
    custom_datasources
    reference
 
-Index:
+
+Index
+=====
 
 * :ref:`genindex`
 * :ref:`search`

@@ -67,7 +67,7 @@ The following script implements these tests::
 The data we want to test is called the subject data and it should be
 defined as a module-level or class-level property named ``subjectData``.
 Typically, it is defined at the module level inside a  ``setUpModule()``
-function (as shown above).  However, if it is only referenced within a
+function (as above).  However, if it is only referenced within a
 single class, then defining it inside a ``setUpClass()`` method is also
 acceptable::
 
