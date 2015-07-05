@@ -411,10 +411,7 @@ class MultiDataSource(BaseDataSource):
         columns = self.columns()
         for source in self.sources:
             for row in source.slow_iter():
-                for col in columns:
-                    if col not in row:
-                        row[col] = ''
-                yield row
+                yield dict((col, row.get(col, '')) for col in columns)
 
     def columns(self):
         """Return sequence or collection of column names."""
@@ -427,27 +424,39 @@ class MultiDataSource(BaseDataSource):
 
     @staticmethod
     def _normalize_unique(allcols, subcols, unique):
-        for row in unique:
+        if tuple(allcols) == tuple(subcols):
+            return unique  # <- EXIT!
+
+        def fn(row):
             row = dict(zip(subcols, row))
-            yield tuple(row.get(col, '') for col in allcols)
+            return tuple(row.get(col, '') for col in allcols)
+        return (fn(row) for row in unique)
+
+    @staticmethod
+    def _filtered_call(source, method, *column, **filter_by):
+        subcols = source.columns()
+        column = [x for x in column if x in subcols]
+        if any(v != '' for k, v in filter_by.items() if k not in subcols):
+            return None  # <- EXIT!
+        sub_filter = dict((k, v) for k, v in filter_by.items() if k in subcols)
+        fn = getattr(source, method)
+        return fn(*column, **sub_filter)
 
     def unique(self, *column, **filter_by):
         """Return iterable of unique values in column."""
         assert set(column) <= set(self.columns())
         result = []
         for source in self.sources:
-            all_sub_cols = source.columns()
-            if any(v != '' for k, v in filter_by.items() if k not in all_sub_cols):
-                continue
-            sub_filter = dict((k, v) for k, v in filter_by.items() if k in all_sub_cols)
-            sub_col = [col for col in column if col in all_sub_cols]
+            source_columns = source.columns()
+            sub_col = [col for col in column if col in source_columns]
             if sub_col:
-                sub_result = source.unique(*sub_col, **sub_filter)
-                if sub_col != column:
+                sub_result = self._filtered_call(source, 'unique', *sub_col, **filter_by)
+                if sub_result:
                     sub_result = self._normalize_unique(column, sub_col, sub_result)
+                    result.append(sub_result)
             else:
-                sub_result = [('',) * len(column)]
-            result.append(sub_result)
+                result.append([('',) * len(column)])
+
         result = itertools.chain(*result)
 
         seen = set()  # Using "unique_everseen" recipe from itertools.
@@ -459,17 +468,13 @@ class MultiDataSource(BaseDataSource):
     def sum(self, column, **filter_by):
         """Return sum of values in column."""
         if column not in self.columns():
-            msg = 'No sub-sources not contain {0!r} column.'.format(column)
+            msg = 'No sub-source contains {0!r} column.'.format(column)
             raise Exception(msg)
 
         total_result = 0
         for source in self.sources:
-            subcols = source.columns()
-            if column in subcols:
-                if any(v != '' for k, v in filter_by.items() if k not in subcols):
-                    continue
-                subkwds = dict((k, v) for k, v in filter_by.items() if k in subcols)
-                result = source.sum(column, **subkwds)
+            if column in source.columns():
+                result = self._filtered_call(source, 'sum', column, **filter_by)
                 if result:
                     total_result += result
 
@@ -483,12 +488,10 @@ class MultiDataSource(BaseDataSource):
 
         total_result = 0
         for source in self.sources:
-            subcols = source.columns()
-            if column in subcols:
-                if any(v != '' for k, v in filter_by.items() if k not in subcols):
-                    continue
-                subkwds = dict((k, v) for k, v in filter_by.items() if k in subcols)
-                total_result += source.count(column, **subkwds)
+            if column in source.columns():
+                result = self._filtered_call(source, 'count', column, **filter_by)
+                if result:
+                    total_result += result
 
         return total_result
 
