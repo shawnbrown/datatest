@@ -14,13 +14,13 @@ source:
 +---------------------------------------------------+----------------------------------------------+
 | Column method                                     | Checks that                                  |
 +===================================================+==============================================+
-| :meth:`assertColumnSet()                          | subject columns == trusted columns           |
+| :meth:`assertColumnSet()                          | subject columns == reference columns         |
 | <datatest.DataTestCase.assertColumnSet>`          |                                              |
 +---------------------------------------------------+----------------------------------------------+
-| :meth:`assertColumnSubset()                       | subject columns <= trusted columns           |
+| :meth:`assertColumnSubset()                       | subject columns <= reference columns         |
 | <datatest.DataTestCase.assertColumnSubset>`       |                                              |
 +---------------------------------------------------+----------------------------------------------+
-| :meth:`assertColumnSuperset()                     | subject columns >= trusted columns           |
+| :meth:`assertColumnSuperset()                     | subject columns >= reference columns         |
 | <datatest.DataTestCase.assertColumnSuperset>`     |                                              |
 +---------------------------------------------------+----------------------------------------------+
 
@@ -30,27 +30,27 @@ Value Assertions
 
 Value assertions operate on the values within a given column:
 
-+----------------------------------------------------------+----------------------------------------------------+
-| Value method                                             | Checks that                                        |
-+==========================================================+====================================================+
-| :meth:`assertValueSet(c, **filter_by)                    | subject vals == trusted vals in column *c*         |
-| <datatest.DataTestCase.assertValueSet>`                  |                                                    |
-+----------------------------------------------------------+----------------------------------------------------+
-| :meth:`assertValueSubset(c, **filter_by)                 | subject vals <= trusted vals in column *c*         |
-| <datatest.DataTestCase.assertValueSubset>`               |                                                    |
-+----------------------------------------------------------+----------------------------------------------------+
-| :meth:`assertValueSuperset(c, **filter_by)               | subject vals <= trusted vals in column *c*         |
-| <datatest.DataTestCase.assertValueSuperset>`             |                                                    |
-+----------------------------------------------------------+----------------------------------------------------+
-| :meth:`assertValueSum(c, g, **filter_by)                 | sum of subject vals == sum of trusted vals in      |
-| <datatest.DataTestCase.assertValueSum>`                  | column *c* for each group of *g*                   |
-+----------------------------------------------------------+----------------------------------------------------+
-| :meth:`assertValueRegex(c, r, **filter_by)               | *r*.search(val) for subject vals in column *c*     |
-| <datatest.DataTestCase.assertValueRegex>`                |                                                    |
-+----------------------------------------------------------+----------------------------------------------------+
-| :meth:`assertValueNotRegex(c, r, **filter_by)            | not *r*.search(val) for subject vals in column *c* |
-| <datatest.DataTestCase.assertValueNotRegex>`             |                                                    |
-+----------------------------------------------------------+----------------------------------------------------+
++----------------------------------------------+----------------------------------------------------+
+| Value method                                 | Checks that                                        |
++==============================================+====================================================+
+| :meth:`assertValueSet(c)                     | subject vals == reference vals in column *c*       |
+| <datatest.DataTestCase.assertValueSet>`      |                                                    |
++----------------------------------------------+----------------------------------------------------+
+| :meth:`assertValueSubset(c)                  | subject vals <= reference vals in column *c*       |
+| <datatest.DataTestCase.assertValueSubset>`   |                                                    |
++----------------------------------------------+----------------------------------------------------+
+| :meth:`assertValueSuperset(c)                | subject vals <= reference vals in column *c*       |
+| <datatest.DataTestCase.assertValueSuperset>` |                                                    |
++----------------------------------------------+----------------------------------------------------+
+| :meth:`assertValueSum(c, g)                  | sum of subject vals == sum of reference vals in    |
+| <datatest.DataTestCase.assertValueSum>`      | column *c* for each group of *g*                   |
++----------------------------------------------+----------------------------------------------------+
+| :meth:`assertValueRegex(c, r)                | *r*.search(val) for subject vals in column *c*     |
+| <datatest.DataTestCase.assertValueRegex>`    |                                                    |
++----------------------------------------------+----------------------------------------------------+
+| :meth:`assertValueNotRegex(c, r)             | not *r*.search(val) for subject vals in column *c* |
+| <datatest.DataTestCase.assertValueNotRegex>` |                                                    |
++----------------------------------------------+----------------------------------------------------+
 
 
 `**filter_by` Keyword Aguments
@@ -59,9 +59,9 @@ Value assertions operate on the values within a given column:
 The value methods above accept optional keyword arguments to filter the
 rows being tested (e.g., ``mycolumn='someval'``).
 
-The following code will assert that the subject values match the trusted
-values for the ``city`` column but only for records where ``state``
-equals "Ohio"::
+The following code will assert that the subject values match the
+reference values for the ``city`` column but only for records where
+``state`` equals "Ohio"::
 
         self.assertDataSet('city', state='Ohio')
 

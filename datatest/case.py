@@ -23,13 +23,13 @@ _re_type = type(re.compile(''))
 
 class DataAssertionError(AssertionError):
     """Data assertion failed."""
-    def __init__(self, msg, diff, trusted=None, subject=None):
+    def __init__(self, msg, diff, reference=None, subject=None):
         """Initialize self, store difference for later reference."""
         if not diff:
             raise ValueError('Missing difference.')
         self.diff = diff
         self.msg = msg
-        self.trusted = str(trusted)  # Trusted data source or object.
+        self.reference = str(reference)  # Reference data source or object.
         self.subject = str(subject)  # Subject data source.
         self._verbose = False  # <- Set by DataTestResult if verbose.
 
@@ -46,8 +46,8 @@ class DataAssertionError(AssertionError):
             diff = diff[1:-1]
 
         if self._verbose:
-            msg_extras = '\n\nTRUSTED DATA:\n{0}\nSUBJECT DATA:\n{1}'
-            msg_extras = msg_extras.format(self.trusted, self.subject)
+            msg_extras = '\n\nREFERENCE DATA:\n{0}\nSUBJECT DATA:\n{1}'
+            msg_extras = msg_extras.format(self.reference, self.subject)
         else:
             msg_extras = ''
 
@@ -92,7 +92,7 @@ class _BaseAcceptContext(object):
     def _raiseFailure(self, standardMsg, difference):
         msg = self.test_case._formatMessage(self.msg, standardMsg)
         subj = self.test_case.subjectData
-        trst = self.test_case.trustedData
+        trst = self.test_case.referenceData
         try:
             # For Python 3.x (some 3.2 builds will raise a TypeError
             # while 2.x will raise SyntaxError).
@@ -177,7 +177,7 @@ class DataTestCase(TestCase):
     def subjectData(self):
         """Property to access the data being tested---the subject of the
         tests.  Typically, ``subjectData`` should be assigned in
-        ``setUpClass()`` or ``setUpModule()``.
+        ``setUpModule()`` or ``setUpClass()``.
         """
         if hasattr(self, '_subjectData'):
             return self._subjectData
@@ -188,18 +188,19 @@ class DataTestCase(TestCase):
         self._subjectData = value
 
     @property
-    def trustedData(self):
-        """Property to access data that is trusted to be correct (used
-        for cross-validation tests).  Typically, ``trustedData`` should
-        be assigned in ``setUpClass()`` or ``setUpModule()``.
+    def referenceData(self):
+        """Property to access reference data that is trusted to be
+        correct (used for cross-validation tests).  Typically,
+        ``referenceData`` should be assigned in ``setUpModule()`` or
+        ``setUpClass()``.
         """
-        if hasattr(self, '_trustedData'):
-            return self._trustedData
-        return self._find_data_source('trustedData')
+        if hasattr(self, '_referenceData'):
+            return self._referenceData
+        return self._find_data_source('referenceData')
 
-    @trustedData.setter
-    def trustedData(self, value):
-        self._trustedData = value
+    @referenceData.setter
+    def referenceData(self, value):
+        self._referenceData = value
 
     @staticmethod
     def _find_data_source(name):
@@ -211,49 +212,49 @@ class DataTestCase(TestCase):
                 return frame.f_globals[name]  # <- EXIT!
         raise NameError('cannot find {0!r}'.format(name))
 
-    def assertColumnSet(self, trusted=None, msg=None):
-        """Test that the set of subject columns matches set of trusted
-        columns.  If *trusted* is provided, it is used in-place of the
-        set from ``trustedData``.
+    def assertColumnSet(self, ref=None, msg=None):
+        """Test that the set of subject columns matches set of reference
+        columns.  If *ref* is provided, it is used in-place of the set
+        from ``referenceData``.
         """
-        if trusted == None:
-            trusted = set(self.trustedData.columns())
+        if ref == None:
+            ref = set(self.referenceData.columns())
         subject = set(self.subjectData.columns())
 
-        if subject != trusted:
-            extra = [ExtraColumn(x) for x in subject - trusted]
-            missing = [MissingColumn(x) for x in trusted - subject]
+        if subject != ref:
+            extra = [ExtraColumn(x) for x in subject - ref]
+            missing = [MissingColumn(x) for x in ref - subject]
             if msg is None:
                 msg = 'different column names'
             self.fail(msg, extra+missing)
 
-    def assertColumnSubset(self, trusted=None, msg=None):
-        """Test that the set of subject columns is a subset of trusted
-        columns.  If *trusted* is provided, it is used in-place of the
-        set from ``trustedData``.
+    def assertColumnSubset(self, ref=None, msg=None):
+        """Test that the set of subject columns is a subset of reference
+        columns.  If *ref* is provided, it is used in-place of the set
+        from ``referenceData``.
         """
-        if trusted == None:
-            trusted = set(self.trustedData.columns())
+        if ref == None:
+            ref = set(self.referenceData.columns())
         subject = set(self.subjectData.columns())
 
-        if not subject.issubset(trusted):
-            extra = subject.difference(trusted)
+        if not subject.issubset(ref):
+            extra = subject.difference(ref)
             extra = [ExtraColumn(x) for x in extra]
             if msg is None:
                 msg = 'different column names'  # found extra columns
             self.fail(msg, extra)
 
-    def assertColumnSuperset(self, trusted=None, msg=None):
-        """Test that the set of subject columns is a superset of trusted
-        columns.  If *trusted* is provided, it is used in-place of the
-        set from ``trustedData``.
+    def assertColumnSuperset(self, ref=None, msg=None):
+        """Test that the set of subject columns is a superset of reference
+        columns.  If *ref* is provided, it is used in-place of the set
+        from ``referenceData``.
         """
-        if trusted == None:
-            trusted = set(self.trustedData.columns())
+        if ref == None:
+            ref = set(self.referenceData.columns())
         subject = set(self.subjectData.columns())
 
-        if not subject.issuperset(trusted):
-            missing = trusted.difference(subject)
+        if not subject.issuperset(ref):
+            missing = ref.difference(subject)
             missing = [MissingColumn(x) for x in missing]
             if msg is None:
                 msg = 'different column names'  # missing expected columns
@@ -270,49 +271,49 @@ class DataTestCase(TestCase):
             unique = (x[0] for x in unique)  # Unpack if single item.
         return set(unique)
 
-    def assertValueSet(self, column, trusted=None, msg=None, **filter_by):
+    def assertValueSet(self, column, ref=None, msg=None, **filter_by):
         """Test that the set of subject values matches the set of
-        trusted values for the given *column*.  If *trusted* is
-        provided, it is used in-place of the set from ``trustedData``.
+        reference values for the given *column*.  If *ref* is provided,
+        it is used in-place of the set from ``referenceData``.
         """
-        if trusted == None:
-            trusted = self._get_set(self.trustedData, column, **filter_by)
+        if ref == None:
+            ref = self._get_set(self.referenceData, column, **filter_by)
         subject = self._get_set(self.subjectData, column, **filter_by)
 
-        if subject != trusted:
-            extra = [ExtraValue(x) for x in subject - trusted]
-            missing = [MissingValue(x) for x in trusted - subject]
+        if subject != ref:
+            extra = [ExtraValue(x) for x in subject - ref]
+            missing = [MissingValue(x) for x in ref - subject]
             if msg is None:
                 msg = 'different {0!r} values'.format(column)
             self.fail(msg, extra+missing)
 
-    def assertValueSubset(self, column, trusted=None, msg=None, **filter_by):
-        """Test that the set of subject values is a subset of trusted
-        values for the given *column*.  If *trusted* is provided, it is
-        used in-place of the set from ``trustedData``.
+    def assertValueSubset(self, column, ref=None, msg=None, **filter_by):
+        """Test that the set of subject values is a subset of reference
+        values for the given *column*.  If *ref* is provided, it is used
+        in-place of the set from ``referenceData``.
         """
-        if trusted == None:
-            trusted = self._get_set(self.trustedData, column, **filter_by)
+        if ref == None:
+            ref = self._get_set(self.referenceData, column, **filter_by)
         subject = self._get_set(self.subjectData, column, **filter_by)
 
-        if not subject.issubset(trusted):
-            extra = subject.difference(trusted)
+        if not subject.issubset(ref):
+            extra = subject.difference(ref)
             extra = [ExtraValue(x) for x in extra]
             if msg is None:
                 msg = 'different {0!r} values'.format(column)
             self.fail(msg, extra)
 
-    def assertValueSuperset(self, column, trusted=None, msg=None, **filter_by):
-        """Test that the set of subject values is a superset of trusted
-        values for the given *column*.  If *trusted* is provided, it is
-        used in-place of the set from ``trustedData``.
+    def assertValueSuperset(self, column, ref=None, msg=None, **filter_by):
+        """Test that the set of subject values is a superset of reference
+        values for the given *column*.  If *ref* is provided, it is used
+        in-place of the set from ``referenceData``.
         """
-        if trusted == None:
-            trusted = self._get_set(self.trustedData, column, **filter_by)
+        if ref == None:
+            ref = self._get_set(self.referenceData, column, **filter_by)
         subject = self._get_set(self.subjectData, column, **filter_by)
 
-        if not subject.issuperset(trusted):
-            missing = trusted.difference(subject)
+        if not subject.issuperset(ref):
+            missing = ref.difference(subject)
             missing = [MissingValue(x) for x in missing]
             if msg is None:
                 msg = 'different {0!r} values'.format(column)
@@ -320,26 +321,26 @@ class DataTestCase(TestCase):
 
     def assertValueSum(self, column, group_by, msg=None, **filter_by):
         """Test that the sum of subject values matches the sum of
-        trusted values for the given *column* for each group in
+        reference values for the given *column* for each group in
         *group_by*.
 
         The following asserts that the sum of the subject's *income*
-        matches the sum of the trusted *income* for each group of
+        matches the sum of the reference *income* for each group of
         *department* and *year* values::
 
             self.assertDataSum('income', ['department', 'year'])
 
         """
-        trusted = self.trustedData
+        ref = self.referenceData
         subject = self.subjectData
 
         def test(group_dict):
             all_filters = filter_by.copy()
             all_filters.update(group_dict)
             subject_sum = subject.sum(column, **all_filters)
-            trusted_sum = trusted.sum(column, **all_filters)
+            ref_sum = ref.sum(column, **all_filters)
             s_sum = subject_sum if subject_sum else 0
-            t_sum = trusted_sum if trusted_sum else 0
+            t_sum = ref_sum if ref_sum else 0
             difference = s_sum - t_sum
             if difference != 0:
                 if difference > 0:
@@ -348,7 +349,7 @@ class DataTestCase(TestCase):
                     return MissingSum(difference, t_sum, **group_dict)
             return None
 
-        groups = trusted.unique(*group_by, **filter_by)
+        groups = ref.unique(*group_by, **filter_by)
         groups = (dict(zip(group_by, x)) for x in groups)
         failures = (test(x) for x in groups)
 
@@ -390,7 +391,7 @@ class DataTestCase(TestCase):
 
     def acceptDifference(self, diff, callableObj=None, *args, **kwds):
         """Test that a DataAssertionError containing a matching
-        collection of differences is raised when `callable` is called
+        collection of differences is raised when *callableObj* is called
         with *args* and keyword *kwds*. If the raised differences do not
         match the accepted differences, the test case will fail with a
         DataAssertionError of the remaining differences.
@@ -458,14 +459,15 @@ class DataTestCase(TestCase):
         """
         if diff:
             try:
-                trusted = self.trustedData
+                reference = self.referenceData
             except NameError:
-                trusted = None
-            raise DataAssertionError(msg, diff, trusted, self.subjectData)
+                reference = None
+            raise DataAssertionError(msg, diff, reference, self.subjectData)
         else:
             raise self.failureException(msg)
 
     # Deprecated Method Names
+    trustedData = referenceData
     assertDataColumnSet = assertColumnSet
     assertDataColumnSubset = assertColumnSubset
     assertDataColumnSuperset = assertColumnSuperset
