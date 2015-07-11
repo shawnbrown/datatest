@@ -324,9 +324,9 @@ class DataTestCase(TestCase):
         reference values for the given *column* for each group in
         *group_by*.
 
-        The following asserts that the sum of the subject's *income*
-        matches the sum of the reference *income* for each group of
-        *department* and *year* values::
+        The following asserts that the sum of the subject's ``income``
+        matches the sum of the reference's ``income`` for each group of
+        ``department`` and ``year`` values::
 
             self.assertDataSum('income', ['department', 'year'])
 
