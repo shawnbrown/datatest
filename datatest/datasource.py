@@ -51,18 +51,18 @@ class BaseDataSource(object):
         return NotImplemented
 
     def sum(self, column, **filter_by):
-        """Return sum of values in `column` (uses slow_iter)."""
+        """Return sum of values in *column* (uses slow_iter)."""
         iterable = self._base_filter_by(self.slow_iter(), **filter_by)
         iterable = (x for x in iterable if x)
         return sum(Decimal(x[column]) for x in iterable)
 
-    def count(self, column, **filter_by):
-        """Return count of non-empty values in `column` (uses slow_iter)."""
+    def count(self, **filter_by):
+        """Return count of rows (uses slow_iter)"""
         iterable = self._base_filter_by(self.slow_iter(), **filter_by)
-        return sum(bool(x[column]) for x in iterable)
+        return sum(1 for x in iterable)
 
     def unique(self, *column, **filter_by):
-        """Return iterable of unique values in column (uses slow_iter)."""
+        """Return iterable of unique values in *column* (uses slow_iter)."""
         iterable = self._base_filter_by(self.slow_iter(), **filter_by)  # Filtered rows only.
         fn = lambda row: tuple(row[x] for x in column)
         iterable = (fn(row) for row in iterable)
@@ -131,10 +131,9 @@ class SqliteDataSource(BaseDataSource):
         cursor = self._execute_query(self._table, select_clause, **filter_by)
         return cursor.fetchone()[0]
 
-    def count(self, column, **filter_by):
-        """Return count of non-empty values in column."""
-        select_clause = 'COUNT("' + column +  '")'
-        cursor = self._execute_query(self._table, select_clause, **filter_by)
+    def count(self, **filter_by):
+        """Return count of rows."""
+        cursor = self._execute_query(self._table, 'COUNT(*)', **filter_by)
         return cursor.fetchone()[0]
 
     def _execute_query(self, table, select_clause, trailing_clause=None, **kwds):
@@ -480,18 +479,13 @@ class MultiDataSource(BaseDataSource):
 
         return total_result
 
-    def count(self, column, **filter_by):
-        """Return count of non-empty values in column."""
-        if column not in self.columns():
-            msg = 'No sub-sources not contain {0!r} column.'.format(column)
-            raise Exception(msg)
-
+    def count(self, **filter_by):
+        """Return count of rows."""
         total_result = 0
         for source in self.sources:
-            if column in source.columns():
-                result = self._filtered_call(source, 'count', column, **filter_by)
-                if result:
-                    total_result += result
+            result = self._filtered_call(source, 'count', **filter_by)
+            if result:
+                total_result += result
 
         return total_result
 

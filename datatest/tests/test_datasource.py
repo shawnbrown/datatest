@@ -124,10 +124,10 @@ class TestBaseDataSource(unittest.TestCase):
         self.assertEqual(result, 65)
 
     def test_count(self):
-        result = self.datasource.count('value')
+        result = self.datasource.count()
         self.assertEqual(result, 7)
 
-        result = self.datasource.count('value', label2='x')
+        result = self.datasource.count(label2='x')
         self.assertEqual(result, 3)
 
     def test_unique(self):
