@@ -751,9 +751,9 @@ class TestValueSuperset(TestHelperCase):
 class TestValueRegexAndValueNotRegex(TestHelperCase):
     def setUp(self):
         self.source = io.StringIO('label1,label2\n'
-                                  'aaa,001\n'
-                                  'bbb,2\n'
-                                  'ccc,003\n')
+                                  '0aaa,001\n'
+                                  'b9bb,2\n'
+                                  ' ccc,003\n')
 
     def test_regex_passing(self):
         class _TestClass(DataTestCase):
@@ -761,7 +761,7 @@ class TestValueRegexAndValueNotRegex(TestHelperCase):
                 _self.subjectData = CsvDataSource(self.source, in_memory=True)
 
             def test_method(_self):
-                _self.assertDataRegex('label1', '\w\w\w')  # <- test assert
+                _self.assertDataRegex('label1', '\w\w')  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
@@ -784,7 +784,7 @@ class TestValueRegexAndValueNotRegex(TestHelperCase):
                 _self.subjectData = CsvDataSource(self.source, in_memory=True)
 
             def test_method(_self):
-                regex = re.compile('^[ABC]', re.IGNORECASE)  # <- pre-compiled
+                regex = re.compile('[ABC]$', re.IGNORECASE)  # <- pre-compiled
                 _self.assertDataRegex('label1', regex)  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')

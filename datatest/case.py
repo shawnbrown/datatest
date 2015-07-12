@@ -367,7 +367,7 @@ class DataTestCase(TestCase):
         subject = (x[0] for x in subject)  # Unpack single item.
         if not isinstance(regex, _re_type):
             regex = re.compile(regex)
-        failures = [x for x in subject if not regex.match(x)]
+        failures = [x for x in subject if not regex.search(x)]
         failures = [ExtraValue(x) for x in failures]
         if failures:
             if not msg:
@@ -382,7 +382,7 @@ class DataTestCase(TestCase):
         subject = (x[0] for x in subject)  # Unpack single item.
         if not isinstance(regex, _re_type):
             regex = re.compile(regex)
-        failures = [x for x in subject if regex.match(x)]
+        failures = [x for x in subject if regex.search(x)]
         failures = [ExtraValue(x) for x in failures]
         if failures:
             if not msg:
