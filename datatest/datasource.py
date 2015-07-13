@@ -383,7 +383,7 @@ class CsvDataSource(SqliteDataSource):
 
 
 class MultiDataSource(BaseDataSource):
-    """Composite of multiple data source objects.  All `sources` must be
+    """Composite of multiple data source objects.  All *sources* must be
     derived from BaseDataSource::
 
         subjectData = datatest.MultiDataSource(
@@ -399,23 +399,22 @@ class MultiDataSource(BaseDataSource):
         for source in sources:
             msg = 'Sources must be derived from BaseDataSource'
             assert isinstance(source, BaseDataSource), msg
-        self.sources = sources
+        self.__wrapped__ = sources
 
     def __str__(self):
-        all_sources = [str(src) for src in self.sources]
-        return '\n'.join(str(src) for src in self.sources)
+        return '\n'.join(str(src) for src in self.__wrapped__)
 
     def slow_iter(self):
         """Return iterable of dictionary rows (like csv.DictReader)."""
         columns = self.columns()
-        for source in self.sources:
+        for source in self.__wrapped__:
             for row in source.slow_iter():
                 yield dict((col, row.get(col, '')) for col in columns)
 
     def columns(self):
         """Return sequence or collection of column names."""
         columns = []
-        for source in self.sources:
+        for source in self.__wrapped__:
             for col in source.columns():
                 if col not in columns:
                     columns.append(col)  # TODO: Look at improving order!
@@ -445,7 +444,7 @@ class MultiDataSource(BaseDataSource):
         """Return iterable of unique values in column."""
         assert set(column) <= set(self.columns())
         result = []
-        for source in self.sources:
+        for source in self.__wrapped__:
             source_columns = source.columns()
             sub_col = [col for col in column if col in source_columns]
             if sub_col:
@@ -471,7 +470,7 @@ class MultiDataSource(BaseDataSource):
             raise Exception(msg)
 
         total_result = 0
-        for source in self.sources:
+        for source in self.__wrapped__:
             if column in source.columns():
                 result = self._filtered_call(source, 'sum', column, **filter_by)
                 if result:
@@ -482,7 +481,7 @@ class MultiDataSource(BaseDataSource):
     def count(self, **filter_by):
         """Return count of rows."""
         total_result = 0
-        for source in self.sources:
+        for source in self.__wrapped__:
             result = self._filtered_call(source, 'count', **filter_by)
             if result:
                 total_result += result
