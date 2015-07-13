@@ -506,15 +506,3 @@ class DataTestCase(TestCase):
             raise DataAssertionError(msg, diff, reference, self.subjectData)
         else:
             raise self.failureException(msg)
-
-    # Deprecated Method Names
-    assertDataColumnSet = assertColumnSet
-    assertDataColumnSubset = assertColumnSubset
-    assertDataColumnSuperset = assertColumnSuperset
-    assertDataSet = assertValueSet
-    assertDataSubset = assertValueSubset
-    assertDataSuperset = assertValueSuperset
-    assertDataSum = assertValueSum
-    assertDataRegex = assertValueRegex
-    assertDataNotRegex = assertValueNotRegex
-

@@ -199,7 +199,7 @@ class TestValueSum(TestHelperCase):
                 _self.subjectData = self.src1_records
 
             def test_method(_self):
-                _self.assertDataSum('value', ['label1'])  # <- test assert
+                _self.assertValueSum('value', ['label1'])  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
@@ -212,7 +212,7 @@ class TestValueSum(TestHelperCase):
                 _self.subjectData = self.src2_records  # <- src1 != src2
 
             def test_method(_self):
-                _self.assertDataSum('value', ['label1'])  # <- test assert
+                _self.assertValueSum('value', ['label1'])  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ("DataAssertionError: different 'value' sums:\n"
@@ -253,7 +253,7 @@ class TestValueSumGroupsAndFilters(TestHelperCase):
                 _self.subjectData = self.src3_records  # <- src1 != src2
 
             def test_method(_self):
-                _self.assertDataSum('value', ['label1'], label2='y')  # <- test assert
+                _self.assertValueSum('value', ['label1'], label2='y')  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ("DataAssertionError: different 'value' sums:\n"
@@ -355,7 +355,7 @@ class TestColumnsSet(TestHelperCase):
                 _self.subjectData = CsvDataSource(same_as_reference, in_memory=True)
 
             def test_method(_self):
-                _self.assertDataColumnSet()  # <- test assert
+                _self.assertColumnSet()  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
@@ -371,7 +371,7 @@ class TestColumnsSet(TestHelperCase):
 
             def test_method(_self):
                 reference_set = set(['label1', 'value'])
-                _self.assertDataColumnSet(ref=reference_set)  # <- test assert
+                _self.assertColumnSet(ref=reference_set)  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
@@ -386,7 +386,7 @@ class TestColumnsSet(TestHelperCase):
                 _self.subjectData = CsvDataSource(too_many, in_memory=True)
 
             def test_method(_self):
-                _self.assertDataColumnSet()  # <- test assert
+                _self.assertColumnSet()  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = "different column names:\n ExtraColumn\(u?'label2'\)"
@@ -402,7 +402,7 @@ class TestColumnsSet(TestHelperCase):
                 _self.subjectData = CsvDataSource(too_few, in_memory=True)
 
             def test_method(_self):
-                _self.assertDataColumnSet()  # <- test assert
+                _self.assertColumnSet()  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = "different column names:\n MissingColumn\(u?'value'\)"
@@ -426,7 +426,7 @@ class TestColumnSubset(TestHelperCase):
                 _self.subjectData = CsvDataSource(same_as_reference, in_memory=True)
 
             def test_method(_self):
-                _self.assertDataColumnSubset()  # <- test assert
+                _self.assertColumnSubset()  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
@@ -441,7 +441,7 @@ class TestColumnSubset(TestHelperCase):
                 _self.subjectData = CsvDataSource(subset_of_reference, in_memory=True)
 
             def test_method(_self):
-                _self.assertDataColumnSubset()  # <- test assert
+                _self.assertColumnSubset()  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
@@ -457,7 +457,7 @@ class TestColumnSubset(TestHelperCase):
 
             def test_method(_self):
                 reference_set = set(['label1', 'value'])
-                _self.assertDataColumnSubset(reference_set)  # <- test assert
+                _self.assertColumnSubset(reference_set)  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
@@ -472,7 +472,7 @@ class TestColumnSubset(TestHelperCase):
                 _self.subjectData = CsvDataSource(superset_of_reference, in_memory=True)
 
             def test_method(_self):
-                _self.assertDataColumnSubset()  # <- test assert
+                _self.assertColumnSubset()  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = "different column names:\n ExtraColumn\(u?'label2'\)"
@@ -496,7 +496,7 @@ class TestColumnSuperset(TestHelperCase):
                 _self.subjectData = CsvDataSource(same_as_reference, in_memory=True)
 
             def test_method(_self):
-                _self.assertDataColumnSuperset()  # <- test assert
+                _self.assertColumnSuperset()  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
@@ -511,7 +511,7 @@ class TestColumnSuperset(TestHelperCase):
                 _self.subjectData = CsvDataSource(superset_of_reference, in_memory=True)
 
             def test_method(_self):
-                _self.assertDataColumnSuperset()  # <- test assert
+                _self.assertColumnSuperset()  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
@@ -527,7 +527,7 @@ class TestColumnSuperset(TestHelperCase):
 
             def test_method(_self):
                 reference_set = set(['label1', 'value'])
-                _self.assertDataColumnSuperset(reference_set)  # <- test assert
+                _self.assertColumnSuperset(reference_set)  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
@@ -542,7 +542,7 @@ class TestColumnSuperset(TestHelperCase):
                 _self.subjectData = CsvDataSource(subset_of_reference, in_memory=True)
 
             def test_method(_self):
-                _self.assertDataColumnSuperset()  # <- test assert
+                _self.assertColumnSuperset()  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = "different column names:\n MissingColumn\(u?'value'\)"
@@ -568,7 +568,7 @@ class TestValueSet(TestHelperCase):
                 _self.subjectData = CsvDataSource(same_as_reference, in_memory=True)
 
             def test_method(_self):
-                _self.assertDataSet('label')  # <- test assert
+                _self.assertValueSet('label')  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
@@ -585,7 +585,7 @@ class TestValueSet(TestHelperCase):
 
             def test_method(_self):
                 reference_set = set(['a', 'b', 'c'])
-                _self.assertDataSet('label', ref=reference_set)  # <- test assert
+                _self.assertValueSet('label', ref=reference_set)  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
@@ -602,7 +602,7 @@ class TestValueSet(TestHelperCase):
 
             def test_method(_self):
                 reference_set = set([('a', 'x'), ('b', 'y'), ('c', 'z')])
-                _self.assertDataSet(['label1', 'label2'], ref=reference_set)  # <- test assert
+                _self.assertValueSet(['label1', 'label2'], ref=reference_set)  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
@@ -617,7 +617,7 @@ class TestValueSet(TestHelperCase):
                 _self.subjectData = CsvDataSource(same_as_reference, in_memory=True)
 
             def test_method(_self):
-                _self.assertDataSet('label')  # <- test assert
+                _self.assertValueSet('label')  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = "different 'label' values:\n MissingValue\(u?'c'\)"
@@ -635,7 +635,7 @@ class TestValueSet(TestHelperCase):
                 _self.subjectData = CsvDataSource(same_as_reference, in_memory=True)
 
             def test_method(_self):
-                _self.assertDataSet('label')  # <- test assert
+                _self.assertValueSet('label')  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = "different 'label' values:\n ExtraValue\(u?'d'\)"
@@ -652,7 +652,7 @@ class TestValueSet(TestHelperCase):
                 _self.subjectData = CsvDataSource(same_as_reference, in_memory=True)
 
             def test_method(_self):
-                _self.assertDataSet(['label', 'label2'])  # <- test assert
+                _self.assertValueSet(['label', 'label2'])  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
@@ -667,7 +667,7 @@ class TestValueSet(TestHelperCase):
                 _self.subjectData = CsvDataSource(same_as_reference, in_memory=True)
 
             def test_method(_self):
-                _self.assertDataSet(['label', 'label2'])  # <- test assert
+                _self.assertValueSet(['label', 'label2'])  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = "different \[u?'label', u?'label2'\] values:\n MissingValue\(\(u?'b', u?'y'\)\)"
@@ -693,7 +693,7 @@ class TestValueSubset(TestHelperCase):
                 _self.subjectData = CsvDataSource(same_as_reference, in_memory=True)
 
             def test_method(_self):
-                _self.assertDataSubset('label')  # <- test assert
+                _self.assertValueSubset('label')  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
@@ -708,7 +708,7 @@ class TestValueSubset(TestHelperCase):
                 _self.subjectData = CsvDataSource(subset_of_reference, in_memory=True)
 
             def test_method(_self):
-                _self.assertDataSubset('label')  # <- test assert
+                _self.assertValueSubset('label')  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
@@ -724,7 +724,7 @@ class TestValueSubset(TestHelperCase):
 
             def test_method(_self):
                 reference_set = set(['a', 'b', 'c'])
-                _self.assertDataSubset('label', reference_set)  # <- test assert
+                _self.assertValueSubset('label', reference_set)  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
@@ -741,7 +741,7 @@ class TestValueSubset(TestHelperCase):
                 _self.subjectData = CsvDataSource(superset_of_reference, in_memory=True)
 
             def test_method(_self):
-                _self.assertDataSubset('label')  # <- test assert
+                _self.assertValueSubset('label')  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = "different 'label' values:\n ExtraValue\(u?'d'\)"
@@ -767,7 +767,7 @@ class TestValueSuperset(TestHelperCase):
                 _self.subjectData = CsvDataSource(same_as_reference, in_memory=True)
 
             def test_method(_self):
-                _self.assertDataSuperset('label')  # <- test assert
+                _self.assertValueSuperset('label')  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
@@ -784,7 +784,7 @@ class TestValueSuperset(TestHelperCase):
                 _self.subjectData = CsvDataSource(superset_of_reference, in_memory=True)
 
             def test_method(_self):
-                _self.assertDataSuperset('label')  # <- test assert
+                _self.assertValueSuperset('label')  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
@@ -802,7 +802,7 @@ class TestValueSuperset(TestHelperCase):
 
             def test_method(_self):
                 reference_set = set(['a', 'b', 'c'])
-                _self.assertDataSuperset('label', ref=reference_set)  # <- test assert
+                _self.assertValueSuperset('label', ref=reference_set)  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
@@ -817,7 +817,7 @@ class TestValueSuperset(TestHelperCase):
                 _self.subjectData = CsvDataSource(subset_of_reference, in_memory=True)
 
             def test_method(_self):
-                _self.assertDataSuperset('label')  # <- test assert
+                _self.assertValueSuperset('label')  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = "different 'label' values:\n MissingValue\(u?'c'\)"
@@ -837,7 +837,7 @@ class TestValueRegexAndValueNotRegex(TestHelperCase):
                 _self.subjectData = CsvDataSource(self.source, in_memory=True)
 
             def test_method(_self):
-                _self.assertDataRegex('label1', '\w\w')  # <- test assert
+                _self.assertValueRegex('label1', '\w\w')  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
@@ -848,7 +848,7 @@ class TestValueRegexAndValueNotRegex(TestHelperCase):
                 _self.subjectData = CsvDataSource(self.source, in_memory=True)
 
             def test_method(_self):
-                _self.assertDataRegex('label2', '\d\d\d')  # <- test assert
+                _self.assertValueRegex('label2', '\d\d\d')  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = "non-matching 'label2' values:\n ExtraValue\(u?'2'\)"
@@ -861,7 +861,7 @@ class TestValueRegexAndValueNotRegex(TestHelperCase):
 
             def test_method(_self):
                 regex = re.compile('[ABC]$', re.IGNORECASE)  # <- pre-compiled
-                _self.assertDataRegex('label1', regex)  # <- test assert
+                _self.assertValueRegex('label1', regex)  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
@@ -872,7 +872,7 @@ class TestValueRegexAndValueNotRegex(TestHelperCase):
                 _self.subjectData = CsvDataSource(self.source, in_memory=True)
 
             def test_method(_self):
-                _self.assertDataNotRegex('label1', '\d\d\d')  # <- test assert
+                _self.assertValueNotRegex('label1', '\d\d\d')  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
@@ -883,7 +883,7 @@ class TestValueRegexAndValueNotRegex(TestHelperCase):
                 _self.subjectData = CsvDataSource(self.source, in_memory=True)
 
             def test_method(_self):
-                _self.assertDataNotRegex('label2', '^\d{1,2}$')  # <- test assert
+                _self.assertValueNotRegex('label2', '^\d{1,2}$')  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = "matching 'label2' values:\n ExtraValue\(u?'2'\)"
@@ -896,7 +896,7 @@ class TestValueRegexAndValueNotRegex(TestHelperCase):
 
             def test_method(_self):
                 regex = re.compile('^[ABC]')  # <- pre-compiled
-                _self.assertDataNotRegex('label1', regex)  # <- test assert
+                _self.assertValueNotRegex('label1', regex)  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
@@ -931,7 +931,7 @@ class TestAcceptDifference(TestHelperCase):
                     MissingSum(-1, 70, label1='b'),
                 ]
                 with _self.acceptDifference(diff):
-                    _self.assertDataSum('value', ['label1'])  # <- test assert
+                    _self.assertValueSum('value', ['label1'])  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
@@ -949,7 +949,7 @@ class TestAcceptDifference(TestHelperCase):
                     'One missing.': MissingSum(-1, 70, label1='b'),
                 }
                 with _self.acceptDifference(diff):
-                    _self.assertDataSum('value', ['label1'])  # <- test assert
+                    _self.assertValueSum('value', ['label1'])  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
@@ -967,7 +967,7 @@ class TestAcceptDifference(TestHelperCase):
                                 MissingSum(-1, 70, label1='b')]
                 }
                 with _self.acceptDifference(diff):
-                    _self.assertDataSum('value', ['label1'])  # <- test assert
+                    _self.assertValueSum('value', ['label1'])  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
@@ -985,7 +985,7 @@ class TestAcceptDifference(TestHelperCase):
                     ExtraSum(+2, 65, label1='a'),
                 ]
                 with _self.acceptDifference(diff):
-                    _self.assertDataSum('value', ['label1'])  # <- test assert
+                    _self.assertValueSum('value', ['label1'])  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = "different 'value' sums:\n ExtraSum\(\+1, 65, label1=u?'a'\)"
@@ -1005,7 +1005,7 @@ class TestAcceptDifference(TestHelperCase):
                     ExtraSum(+2, 65, label1='a')
                 ]
                 with _self.acceptDifference(diff):
-                    _self.assertDataSum('value', ['label1'])  # <- test assert
+                    _self.assertValueSum('value', ['label1'])  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ("different 'value' sums, accepted difference not found:\n"
@@ -1039,7 +1039,7 @@ class TestAcceptTolerance(TestHelperCase):
 
             def test_method(_self):
                 with _self.acceptTolerance(3):  # <- test tolerance
-                    _self.assertDataSum('value', ['label1'])
+                    _self.assertValueSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
@@ -1053,7 +1053,7 @@ class TestAcceptTolerance(TestHelperCase):
 
             def test_method(_self):
                 with _self.acceptTolerance(3):  # <- test tolerance
-                    _self.assertDataSum('value', ['label1'])
+                    _self.assertValueSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
@@ -1067,7 +1067,7 @@ class TestAcceptTolerance(TestHelperCase):
 
             def test_method(_self):
                 with _self.acceptTolerance(2):  # <- test tolerance
-                    _self.assertDataSum('value', ['label1'])
+                    _self.assertValueSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ("DataAssertionError: different u?'value' sums:\n"
@@ -1083,7 +1083,7 @@ class TestAcceptTolerance(TestHelperCase):
 
             def test_method(_self):
                 with _self.acceptTolerance(-5):  # <- invalid
-                    _self.assertDataSum('value', ['label1'])
+                    _self.assertValueSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ('Tolerance cannot be defined with a negative number.')
@@ -1116,7 +1116,7 @@ class TestAcceptPercentTolerance(TestHelperCase):
 
             def test_method(_self):
                 with _self.acceptPercentTolerance(0.05):  # <- test tolerance
-                    _self.assertDataSum('value', ['label1'])
+                    _self.assertValueSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
@@ -1130,7 +1130,7 @@ class TestAcceptPercentTolerance(TestHelperCase):
 
             def test_method(_self):
                 with _self.acceptPercentTolerance(0.03):  # <- test tolerance
-                    _self.assertDataSum('value', ['label1'])
+                    _self.assertValueSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ("DataAssertionError: different u?'value' sums:\n"
@@ -1146,7 +1146,7 @@ class TestAcceptPercentTolerance(TestHelperCase):
 
             def test_method(_self):
                 with _self.acceptPercentTolerance(1.1):  # <- invalid
-                    _self.assertDataSum('value', ['label1'])
+                    _self.assertValueSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ('AssertionError: Percent tolerance must be between 0 and 1.')
@@ -1179,7 +1179,7 @@ class TestNestedAcceptBlocks(TestHelperCase):
             def test_method(_self):
                 with _self.acceptDifference(ExtraSum(+3, 65, label1='a')):
                     with _self.acceptTolerance(2):  # <- test tolerance
-                        _self.assertDataSum('value', ['label1'])
+                        _self.assertValueSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
@@ -1193,7 +1193,7 @@ class TestNestedAcceptBlocks(TestHelperCase):
             def test_method(_self):
                 with _self.acceptTolerance(2):  # <- test tolerance
                     with _self.acceptDifference(ExtraSum(+3, 65, label1='a')):
-                        _self.assertDataSum('value', ['label1'])
+                        _self.assertValueSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
