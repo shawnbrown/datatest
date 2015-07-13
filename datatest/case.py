@@ -170,7 +170,7 @@ class _AcceptPercentToleranceContext(_BaseAcceptContext):
 
 
 class DataTestCase(TestCase):
-    """This class wraps unittest.TestCase to add a number of convinience
+    """This class wraps ``unittest.TestCase`` to add properties and
     methods for testing data quality.
     """
     @property

@@ -18,9 +18,10 @@ prefix = 'test_'
 
 class BaseDataSource(object):
     """Common base class for all data sources.  Custom sources can be
-    created by subclassing BaseDataSource and implementing `__init__()`,
-    `__str__()`, `slow_iter()`, and `columns()`.  Performance can be
-    improved by implementing `set()`, `sum()`, `count()`, and `unique()`.
+    created by subclassing BaseDataSource and implementing
+    ``__init__()``, ``__str__()``, ``columns()``, and ``slow_iter()``.
+    Optionally, performance can be improved by implementing ``sum()``,
+    ``count()``, and ``unique()``.
     """
     def __init__(self):
         """NotImplemented
@@ -32,37 +33,39 @@ class BaseDataSource(object):
     def __str__(self):
         """NotImplemented
 
-        Should return a brief, one line, description of the data source.
-        """
-        return NotImplemented
-
-    def slow_iter(self):
-        """NotImplemented
-
-        Should return an iterable of dictionary rows (like csv.DictReader).
+        Return a short string describing the data source instance.
         """
         return NotImplemented
 
     def columns(self):
         """NotImplemented
 
-        Should return a sequence or collection of column names.
+        Return a list or tuple of column names.
+        """
+        return NotImplemented
+
+    def slow_iter(self):
+        """NotImplemented
+
+        Return an iterable of dictionary rows (like ``csv.DictReader``).
         """
         return NotImplemented
 
     def sum(self, column, **filter_by):
-        """Return sum of values in *column* (uses slow_iter)."""
+        """Return sum of values in *column* (uses ``slow_iter``)."""
         iterable = self._base_filter_by(self.slow_iter(), **filter_by)
         iterable = (x for x in iterable if x)
         return sum(Decimal(x[column]) for x in iterable)
 
     def count(self, **filter_by):
-        """Return count of rows (uses slow_iter)"""
+        """Return count of rows (uses ``slow_iter``)"""
         iterable = self._base_filter_by(self.slow_iter(), **filter_by)
         return sum(1 for x in iterable)
 
     def unique(self, *column, **filter_by):
-        """Return iterable of unique values in *column* (uses slow_iter)."""
+        """Return iterable of tuples containing unique *column* values
+        (uses ``slow_iter``).
+        """
         iterable = self._base_filter_by(self.slow_iter(), **filter_by)  # Filtered rows only.
         fn = lambda row: tuple(row[x] for x in column)
         iterable = (fn(row) for row in iterable)
@@ -73,7 +76,8 @@ class BaseDataSource(object):
             yield element
 
     def set(self, column, **filter_by):
-        """Convenience function for unwrapping single column results."""
+        """Convenience function for unwrapping single column results
+        from ``unique`` and returning as a set."""
         return set(x[0] for x in self.unique(column, **filter_by))
 
     @staticmethod
@@ -87,8 +91,8 @@ class BaseDataSource(object):
 
 
 class SqliteDataSource(BaseDataSource):
-    """SQLite interface, requires SQLite database `connection` and name
-    of database `table`::
+    """SQLite interface, requires SQLite database *connection* and name
+    of database *table*::
 
         conn = sqlite3.connect('mydatabase.sqlite3')
         subjectData = datatest.SqliteDataSource(conn, 'mytable')
@@ -178,8 +182,8 @@ class SqliteDataSource(BaseDataSource):
 
 
 class _UnicodeCsvReader:
-    """UnicodeCsvReader wraps the standard library's `csv.reader` object
-    to support unicode CSV files in both Python 3 and Python 2.
+    """UnicodeCsvReader wraps the standard library's ``csv.reader``
+    object to support unicode CSV files in both Python 3 and Python 2.
 
     Example usage:
 
@@ -187,7 +191,7 @@ class _UnicodeCsvReader:
             for row in reader:
                 process(row)
 
-    The `csvfile` argument can be a file path (as in the example above)
+    The *csvfile* argument can be a file path (as in the example above)
     or a file-like object.  When passing file objects, Python 3 requires
     them to be opened in text-mode ('r') while Python 2 requires them to
     be opened in binary-mode ('rb').  UnicodeCsvReader manages these
@@ -382,9 +386,15 @@ class CsvDataSource(SqliteDataSource):
             raise ValueError('Duplicate values: ' + ', '.join(duplicates))
 
 
+#class FilteredDataSource(BaseDataSource):
+
+
+#class MappedDataSource(BaseDataSource):
+
+
 class MultiDataSource(BaseDataSource):
-    """Composite of multiple data source objects.  All *sources* must be
-    derived from BaseDataSource::
+    """A wrapper class that allows multiple data sources to be treated
+    as a single, composite data source::
 
         subjectData = datatest.MultiDataSource(
             datatest.CsvDataSource('file1.csv'),
@@ -489,6 +499,9 @@ class MultiDataSource(BaseDataSource):
                 total_result += result
 
         return total_result
+
+
+#class UniqueDataSource(BaseDataSource):
 
 
 #DefaultDataSource = CsvDataSource
