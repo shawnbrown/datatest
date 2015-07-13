@@ -262,6 +262,82 @@ class TestValueSumGroupsAndFilters(TestHelperCase):
         self.assertRegex(failure, pattern)
 
 
+
+class TestValueCount(TestHelperCase):
+    def setUp(self):
+        _fh = io.StringIO('label1,label2,total_rows\n'
+                          'a,x,2\n'
+                          'a,y,1\n'
+                          'a,z,1\n'
+                          'b,x,3\n')
+        self.src1_totals = CsvDataSource(_fh, in_memory=True)
+
+        _fh = io.StringIO('label1,label2\n'
+                          'a,x\n'
+                          'a,x\n'
+                          'a,y\n'
+                          'a,z\n'
+                          'b,x\n'
+                          'b,x\n'
+                          'b,x\n')
+        self.src1_records = CsvDataSource(_fh, in_memory=True)
+
+        _fh = io.StringIO(
+            'label1,label2\n'
+            'a,x\n'
+            'a,x\n'
+            'a,x\n'  # <- one extra "a,x" row (compared to src1)
+            'a,y\n'
+            'a,z\n'
+            'b,x\n'
+            'b,x\n'
+            #'b,x\n'  # <-one missing "b,x" row (compared to src1)
+         )
+        self.src2_records = CsvDataSource(_fh, in_memory=True)
+
+    def test_passing_case(self):
+        """Subject counts match reference sums, test should pass."""
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                _self.referenceData = self.src1_totals
+                _self.subjectData = self.src1_records
+
+            def test_method(_self):
+                _self.assertValueCount('total_rows', ['label1'])  # <- test assert
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        self.assertIsNone(failure)
+
+    def test_missing_column(self):
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                _self.referenceData = self.src1_totals
+                _self.subjectData = self.src1_records
+
+            def test_method(_self):
+                _self.assertValueCount('bad_col_name', ['label1'])  # <- test assert
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        pattern = "no column named u?'bad_col_name'"
+        self.assertRegex(failure, pattern)
+
+    def test_failing_case(self):
+        """Counts do not match, test should fail."""
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                _self.referenceData = self.src1_totals
+                _self.subjectData = self.src2_records  # <- src1 != src2
+
+            def test_method(_self):
+                _self.assertValueCount('total_rows', ['label1'])  # <- test assert
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        pattern = ("DataAssertionError: row counts different than 'total_rows' sums:\n"
+                   " ExtraSum\(\+1, 4, label1=u?'a'\),\n"
+                   " MissingSum\(-1, 3, label1=u?'b'\)")
+        self.assertRegex(failure, pattern)
+
+
 class TestColumnsSet(TestHelperCase):
     def setUp(self):
         _fh = io.StringIO('label1,value\n'
