@@ -508,7 +508,6 @@ class DataTestCase(TestCase):
             raise self.failureException(msg)
 
     # Deprecated Method Names
-    trustedData = referenceData
     assertDataColumnSet = assertColumnSet
     assertDataColumnSubset = assertColumnSubset
     assertDataColumnSuperset = assertColumnSuperset
