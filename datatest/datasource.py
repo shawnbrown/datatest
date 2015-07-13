@@ -392,6 +392,8 @@ class MultiDataSource(BaseDataSource):
             datatest.CsvDataSource('file3.csv')
         )
 
+    The original sources are stored in the ``__wrapped__`` attribute.
+
     """
 
     def __init__(self, *sources):
