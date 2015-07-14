@@ -112,12 +112,7 @@ DataTestCase to access data and report meaningful failure messages.
 | :class:`SqliteDataSource(connection, table)  | SQLite *table* from given             |
 | <datatest.SqliteDataSource>`                 | *connection*                          |
 +----------------------------------------------+---------------------------------------+
-| :class:`FilteredDataSource(function, source) | wrapper that filters *source* to      |
-| <datatest.FilteredDataSource>`               | records where *function* returns true |
-+----------------------------------------------+---------------------------------------+
-| :class:`MultiDataSource(*sources)            | wrapper for multiple *sources* that   |
-| <datatest.MultiDataSource>`                  | act as a single data source           |
-+----------------------------------------------+---------------------------------------+
+
 
 Common Methods
 --------------
@@ -152,6 +147,7 @@ Common Methods
     Convenience function for unwrapping single *column* results from
     ``unique`` and returning as a set.
 
+-----------------------
 
 .. autoclass:: datatest.CsvDataSource
 
@@ -159,13 +155,35 @@ Common Methods
 .. autoclass:: datatest.SqliteDataSource
 
 
+.. autoclass:: datatest.BaseDataSource
+
+
+
+Data Source Wrappers
+====================
+
++----------------------------------------------+---------------------------------------+
+| Class                                        | Loads                                 |
++==============================================+=======================================+
+| :class:`FilteredDataSource(function, source) | wrapper that filters *source* to      |
+| <datatest.FilteredDataSource>`               | records where *function* returns true |
++----------------------------------------------+---------------------------------------+
+| :class:`MultiDataSource(*sources)            | wrapper for multiple *sources* that   |
+| <datatest.MultiDataSource>`                  | act as a single data source           |
++----------------------------------------------+---------------------------------------+
+| :class:`UniqueDataSource(source, columns)    | wrapper that filters *source* to      |
+| <datatest.UniqueDataSource>`                 | unique values in list of *columns*    |
++----------------------------------------------+---------------------------------------+
+
+|
+
 .. autoclass:: datatest.FilteredDataSource
 
 
 .. autoclass:: datatest.MultiDataSource
 
 
-.. autoclass:: datatest.BaseDataSource
+.. autoclass:: datatest.UniqueDataSource
 
 
 Errors and Differences

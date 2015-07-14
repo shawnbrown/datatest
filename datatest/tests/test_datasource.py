@@ -16,6 +16,7 @@ from datatest.datasource import SqliteDataSource
 from datatest.datasource import CsvDataSource
 from datatest.datasource import FilteredDataSource
 from datatest.datasource import MultiDataSource
+from datatest.datasource import UniqueDataSource
 
 
 class TestBaseDataSource(unittest.TestCase):
@@ -351,6 +352,42 @@ class TestFilteredDataSource(TestBaseDataSource):
             return row['label2'] != 'y'
         src = FilteredDataSource(not_y, self.orig_src)
         self.assertTrue(str(src).startswith('FilteredDataSource(not_y, '))
+
+
+class TestUniqueDataSource(TestBaseDataSource):
+    def setUp(self):
+        fh = self._make_csv_file(self.fieldnames, self.testdata)
+        self.orig_src = CsvDataSource(fh)
+        self.datasource = UniqueDataSource(self.orig_src, ['label1', 'label2', 'value'])
+
+    def test_unique(self):
+        # Two columns.
+        datasource = UniqueDataSource(self.orig_src, ['label1', 'label2'])
+        expected = [
+            {'label1': 'a', 'label2': 'x'},
+            {'label1': 'a', 'label2': 'y'},
+            {'label1': 'a', 'label2': 'z'},
+            {'label1': 'b', 'label2': 'z'},
+            {'label1': 'b', 'label2': 'y'},
+            {'label1': 'b', 'label2': 'x'}
+        ]
+        result = datasource.slow_iter()
+        self.assertEqual(expected, list(result))
+
+        # One column.
+        datasource = UniqueDataSource(self.orig_src, ['label2'])
+        expected = [
+            {'label2': 'x'},
+            {'label2': 'y'},
+            {'label2': 'z'},
+        ]
+        result = datasource.slow_iter()
+        self.assertEqual(expected, list(result))
+
+    def test_str(self):
+        src = UniqueDataSource(self.orig_src, ['label1', 'label2'])
+        self.assertTrue(str(src).startswith('UniqueDataSource('))
+        self.assertTrue(str(src).endswith(", ['label1', 'label2'])"))
 
 
 class TestMultiDataSource(TestBaseDataSource):
