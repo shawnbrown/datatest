@@ -14,6 +14,7 @@ from datatest.tests.common import MkdtempTestCase
 from datatest.datasource import BaseDataSource
 from datatest.datasource import SqliteDataSource
 from datatest.datasource import CsvDataSource
+from datatest.datasource import FilteredDataSource
 from datatest.datasource import MultiDataSource
 
 
@@ -323,6 +324,33 @@ class TestCsvDataSource_ActualFileHandling(MkdtempTestCase):
         with self.assertRaises(Exception):
             with open(filename, incorrect_mode) as fh:
                 CsvDataSource(fh, encoding='utf-8')  # Raise exception.
+
+
+class TestFilteredDataSource(TestBaseDataSource):
+    def setUp(self):
+        fh = self._make_csv_file(self.fieldnames, self.testdata)
+        self.orig_src = CsvDataSource(fh)
+        self.datasource = FilteredDataSource(None, self.orig_src)
+
+    def test_filter(self):
+        not_y = lambda row: row['label2'] != 'y'
+        self.datasource = FilteredDataSource(not_y, self.orig_src)
+
+        expected = [
+            {'label1': 'a', 'label2': 'x', 'value': '17'},
+            {'label1': 'a', 'label2': 'x', 'value': '13'},
+            {'label1': 'a', 'label2': 'z', 'value': '15'},
+            {'label1': 'b', 'label2': 'z', 'value': '5'},
+            {'label1': 'b', 'label2': 'x', 'value': '25'},
+        ]
+        result = self.datasource.slow_iter()
+        self.assertEqual(expected, list(result))
+
+    def test_str(self):
+        def not_y(row):
+            return row['label2'] != 'y'
+        src = FilteredDataSource(not_y, self.orig_src)
+        self.assertTrue(str(src).startswith('FilteredDataSource(not_y, '))
 
 
 class TestMultiDataSource(TestBaseDataSource):

@@ -5,6 +5,7 @@ from datatest.case import DataAssertionError
 from datatest.datasource import BaseDataSource
 from datatest.datasource import SqliteDataSource
 from datatest.datasource import CsvDataSource
+from datatest.datasource import FilteredDataSource
 from datatest.datasource import MultiDataSource
 from datatest.diff import ExtraColumn
 from datatest.diff import ExtraValue
@@ -27,6 +28,7 @@ __all__ = [
     'BaseDataSource',
     'SqliteDataSource',
     'CsvDataSource',
+    'FilteredDataSource',
     'MultiDataSource',
 
     # Differences.

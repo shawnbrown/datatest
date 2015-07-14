@@ -386,7 +386,48 @@ class CsvDataSource(SqliteDataSource):
             raise ValueError('Duplicate values: ' + ', '.join(duplicates))
 
 
-#class FilteredDataSource(BaseDataSource):
+class FilteredDataSource(BaseDataSource):
+    """A wrapper class to filter for those records of *source* for which
+    *function* returns true. If *function* is ``None``, the identity
+    function is assumed, that is, it filters for records of *source*
+    which contain at least one value that evaluates as true.
+
+    The following example filters the original data source to records
+    for which the "foo" column contains positive numeric values::
+
+        def pos_val(dict_row):
+            val = dict_row['foo']
+            return int(val) > 0
+
+        orig_src = datatest.CsvDataSource('mydata.csv')
+        subjectData = datatest.FilteredDataSource(pos_val, orig_src)
+
+    The original source is stored in the ``__wrapped__`` attribute.
+
+    """
+
+    def __init__(self, function, source):
+        msg = 'Sources must be derived from BaseDataSource'
+        assert isinstance(source, BaseDataSource), msg
+
+        if function is None:
+            function = lambda row: any(row.values())  # Identity function.
+            function.__name__ = '<identity function>'
+
+        self._function = function
+        self.__wrapped__ = source
+
+    def __str__(self):
+        cls_name = self.__class__.__name__
+        fun_name = self._function.__name__
+        src_name = self.__wrapped__
+        return '{0}({1}, {2})'.format(cls_name, fun_name, src_name)
+
+    def columns(self):
+        return self.__wrapped__.columns()
+
+    def slow_iter(self):
+        return (x for x in self.__wrapped__.slow_iter() if self._function(x))
 
 
 #class MappedDataSource(BaseDataSource):

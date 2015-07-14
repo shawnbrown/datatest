@@ -103,18 +103,21 @@ Data Sources
 Data sources implement a common set of methods which are used by
 DataTestCase to access data and report meaningful failure messages.
 
-+---------------------------------------------+--------------------------------------+
-| Class                                       | Loads                                |
-+=============================================+======================================+
-| :class:`CsvDataSource(file)                 | CSV file from file path or           |
-| <datatest.CsvDataSource>`                   | file-like object                     |
-+---------------------------------------------+--------------------------------------+
-| :class:`SqliteDataSource(connection, table) | SQLite table from given connection   |
-| <datatest.SqliteDataSource>`                | object                               |
-+---------------------------------------------+--------------------------------------+
-| :class:`MultiDataSource(*sources)           | wraps multiple data sources as a     |
-| <datatest.MultiDataSource>`                 | single data source                   |
-+---------------------------------------------+--------------------------------------+
++----------------------------------------------+---------------------------------------+
+| Class                                        | Loads                                 |
++==============================================+=======================================+
+| :class:`CsvDataSource(file)                  | CSV from *file* (path or file-like    |
+| <datatest.CsvDataSource>`                    | object)                               |
++----------------------------------------------+---------------------------------------+
+| :class:`SqliteDataSource(connection, table)  | SQLite *table* from given             |
+| <datatest.SqliteDataSource>`                 | *connection*                          |
++----------------------------------------------+---------------------------------------+
+| :class:`FilteredDataSource(function, source) | wrapper that filters *source* to      |
+| <datatest.FilteredDataSource>`               | records where *function* returns true |
++----------------------------------------------+---------------------------------------+
+| :class:`MultiDataSource(*sources)            | wrapper for multiple *sources* that   |
+| <datatest.MultiDataSource>`                  | act as a single data source           |
++----------------------------------------------+---------------------------------------+
 
 Common Methods
 --------------
@@ -154,6 +157,9 @@ Common Methods
 
 
 .. autoclass:: datatest.SqliteDataSource
+
+
+.. autoclass:: datatest.FilteredDataSource
 
 
 .. autoclass:: datatest.MultiDataSource
