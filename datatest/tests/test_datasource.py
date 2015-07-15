@@ -19,6 +19,23 @@ from datatest.datasource import MultiDataSource
 from datatest.datasource import UniqueDataSource
 
 
+class MinimalDataSource(BaseDataSource):
+    """Minimal data source implementation for testing."""
+    def __init__(self, data, fieldnames):
+        self._data = data
+        self._fieldnames = fieldnames
+
+    def __str__(self):
+        return self.__class__.__name__
+
+    def columns(self):
+        return self._fieldnames
+
+    def slow_iter(self):
+        for row in self._data:
+            yield dict(zip(self._fieldnames, row))
+
+
 class TestBaseDataSource(unittest.TestCase):
     fieldnames = ['label1', 'label2', 'value']
     testdata = [['a', 'x', '17'],
@@ -40,19 +57,6 @@ class TestBaseDataSource(unittest.TestCase):
         return io.StringIO(init_string)
 
     def setUp(self):
-        """Define and instantiate a minimal data source."""
-        class MinimalDataSource(BaseDataSource):
-            def __init__(self, data, fieldnames):
-                self._data = data
-                self._fieldnames = fieldnames
-
-            def slow_iter(self):
-                for row in self._data:
-                    yield dict(zip(self._fieldnames, row))
-
-            def columns(self):
-                return self._fieldnames
-
         self.datasource = MinimalDataSource(self.testdata, self.fieldnames)
 
     def test_for_datasource(self):
@@ -329,8 +333,7 @@ class TestCsvDataSource_ActualFileHandling(MkdtempTestCase):
 
 class TestFilteredDataSource(TestBaseDataSource):
     def setUp(self):
-        fh = self._make_csv_file(self.fieldnames, self.testdata)
-        self.orig_src = CsvDataSource(fh)
+        self.orig_src = MinimalDataSource(self.testdata, self.fieldnames)
         self.datasource = FilteredDataSource(None, self.orig_src)
 
     def test_filter(self):
@@ -356,13 +359,12 @@ class TestFilteredDataSource(TestBaseDataSource):
 
 class TestUniqueDataSource(TestBaseDataSource):
     def setUp(self):
-        fh = self._make_csv_file(self.fieldnames, self.testdata)
-        self.orig_src = CsvDataSource(fh)
-        self.datasource = UniqueDataSource(self.orig_src, ['label1', 'label2', 'value'])
+        self.minimal_source = MinimalDataSource(self.testdata, self.fieldnames)
+        self.datasource = UniqueDataSource(self.minimal_source, self.fieldnames)
 
     def test_unique(self):
         # Two columns.
-        datasource = UniqueDataSource(self.orig_src, ['label1', 'label2'])
+        datasource = UniqueDataSource(self.minimal_source, ['label1', 'label2'])
         expected = [
             {'label1': 'a', 'label2': 'x'},
             {'label1': 'a', 'label2': 'y'},
@@ -375,7 +377,7 @@ class TestUniqueDataSource(TestBaseDataSource):
         self.assertEqual(expected, list(result))
 
         # One column.
-        datasource = UniqueDataSource(self.orig_src, ['label2'])
+        datasource = UniqueDataSource(self.minimal_source, ['label2'])
         expected = [
             {'label2': 'x'},
             {'label2': 'y'},
@@ -385,7 +387,7 @@ class TestUniqueDataSource(TestBaseDataSource):
         self.assertEqual(expected, list(result))
 
     def test_str(self):
-        src = UniqueDataSource(self.orig_src, ['label1', 'label2'])
+        src = UniqueDataSource(self.minimal_source, ['label1', 'label2'])
         self.assertTrue(str(src).startswith('UniqueDataSource('))
         self.assertTrue(str(src).endswith(", ['label1', 'label2'])"))
 
@@ -403,18 +405,6 @@ class TestMultiDataSource(TestBaseDataSource):
                      ['b', 'y', '40'],
                      ['b', 'x', '25']]
 
-        class MinimalDataSource(BaseDataSource):
-            def __init__(self, data, fieldnames):
-                self._data = data
-                self._fieldnames = fieldnames
-
-            def slow_iter(self):
-                for row in self._data:
-                    yield dict(zip(self._fieldnames, row))
-
-            def columns(self):
-                return self._fieldnames
-
         source1 = MinimalDataSource(testdata1, fieldnames1)
         source2 = MinimalDataSource(testdata2, fieldnames2)
         self.datasource = MultiDataSource(source1, source2)
@@ -428,17 +418,6 @@ class TestMixedMultiDataSource(TestBaseDataSource):
                      ['a', 'x', '13'],
                      ['a', 'y', '20'],
                      ['a', 'z', '15']]
-
-        class MinimalDataSource(BaseDataSource):
-            def __init__(self, data, fieldnames):
-                self._data = data
-                self._fieldnames = fieldnames
-            def slow_iter(self):
-                for row in self._data:
-                    yield dict(zip(self._fieldnames, row))
-            def columns(self):
-                return self._fieldnames
-
         minimal_source = MinimalDataSource(testdata1, fieldnames1)
 
         fieldnames2 = ['label1', 'label2', 'value']
@@ -464,18 +443,6 @@ class TestMultiDataSourceDifferentColumns(unittest.TestCase):
         testdata2 = [['a',          'zzz',    '15',           '3'],
                      ['b',          'yyy',     '4',            ''],
                      ['b',          'xxx',     '2',           '2']]
-
-        class MinimalDataSource(BaseDataSource):
-            def __init__(self, data, fieldnames):
-                self._data = data
-                self._fieldnames = fieldnames
-
-            def slow_iter(self):
-                for row in self._data:
-                    yield dict(zip(self._fieldnames, row))
-
-            def columns(self):
-                return self._fieldnames
 
         subsrc1 = MinimalDataSource(testdata1, fieldnames1)
         subsrc2 = MinimalDataSource(testdata2, fieldnames2)
