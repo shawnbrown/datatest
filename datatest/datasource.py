@@ -22,7 +22,9 @@ class BaseDataSource(object):
     ``__init__()``, ``__str__()``, ``columns()``, and ``slow_iter()``.
     Optionally, performance can be improved by implementing ``sum()``,
     ``count()``, and ``unique()``.
+
     """
+
     def __init__(self):
         """NotImplemented
 
@@ -96,7 +98,9 @@ class SqliteDataSource(BaseDataSource):
 
         conn = sqlite3.connect('mydatabase.sqlite3')
         subjectData = datatest.SqliteDataSource(conn, 'mytable')
+
     """
+
     def __init__(self, connection, table):
         """Initialize self."""
         self.__name__ = 'SQLite Table {0!r}'.format(table)
@@ -109,6 +113,7 @@ class SqliteDataSource(BaseDataSource):
     def slow_iter(self):
         """Return iterable of dictionary rows (like csv.DictReader)."""
         cursor = self._connection.cursor()
+        cursor.execute('PRAGMA synchronous=OFF')
         cursor.execute('SELECT * FROM ' + self._table)
         column_names = self.columns()
         mkdict = lambda x: dict(zip(column_names, x))
@@ -146,6 +151,7 @@ class SqliteDataSource(BaseDataSource):
             if trailing_clause:
                 stmnt += '\n' + trailing_clause
             cursor = self._connection.cursor()
+            cursor.execute('PRAGMA synchronous=OFF')
             #print(stmnt, params)
             cursor.execute(stmnt, params)
         except Exception as e:
@@ -198,6 +204,7 @@ class _UnicodeCsvReader:
     differences automatically when given a file path.
 
     """
+
     def __init__(self, csvfile, encoding='utf-8', dialect='excel', **fmtparams):
         self.encoding = encoding
         self.dialect = dialect
@@ -269,6 +276,7 @@ class CsvDataSource(SqliteDataSource):
     """CSV file data source
     ::
         subjectData = datatest.CsvDataSource('mydata.csv')
+
     """
 
     def __init__(self, file, encoding=None, in_memory=False):
@@ -318,6 +326,7 @@ class CsvDataSource(SqliteDataSource):
         _isolation_level = connection.isolation_level
         connection.isolation_level = None
         cursor = connection.cursor()
+        cursor.execute('PRAGMA synchronous=OFF')
         cursor.execute('BEGIN TRANSACTION')
         try:
             csv_header = next(reader)
