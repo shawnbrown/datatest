@@ -6,19 +6,19 @@
     :keywords: test-driven data processing
 
 
+.. _test-driven-data_processing:
+
 ***************************
 Test-Driven Data Processing
 ***************************
 
-Data tests can provide much-needed structure to guide the workflow of
-data processing, itself.  *Test-driven data processing* can automate
-existing check-lists, help train new team members in the work required,
-and quickly re-acclimate users who have been away from the project for
-a time.
+The strucure of a :mod:`datatest` suite helps to guide the data
+processing workflow.  It can also help supplement or replace check-lists
+and progress reports.
 
 
-Data Processing Workflow
-========================
+Workflow
+========
 
 Using a quick edit-test cycle, users can:
 
@@ -28,23 +28,30 @@ Using a quick edit-test cycle, users can:
  4. then, move on to the next failing test
 
 The work of cleaning and formatting data takes place outside of the
-:mod:`datatest` package itself.  Users can work with with the tools
-they find the most productive (Excel, `pandas <http://pandas.pydata.org/>`_,
-R, sed, etc.).
+datatest package itself.  Users can work with with the tools they find
+the most productive (Excel, `pandas <http://pandas.pydata.org/>`_, R,
+sed, etc.).
 
 
 Structuring a Data Test Suite
 =============================
 
-Unlike most software testing, datatest runs tests *in-order* (by
-line number).  When testing software, this behavior is typically
-undesirable but it's an important feature when testing data.
+The structure of a datatest suite defines a data processing workflow.
+The first cases should address essential prerequisites and the following
+cases should focus on specific requirements.  Test cases and methods are
+run *in order* (by line number).
 
-Data tests range from unit tests to integration tests
+Typically, data tests should be defined in the following order:
 
- 1. load data sources
+ 1. load data sources (asserts that expected source data is present)
  2. check for expected column names
  3. validate format of values (data type or other regex)
- 4. check for set-membership requirements
- 5. assert sums or validate across multiple fields
+ 4. assert set-membership requirements
+ 5. assert sums, counts, or cross-column values
 
+.. note::
+
+    Ordered tests are useful when testing data but not so useful when
+    testing software.  In fact, ordered testing of sofware can lead to
+    problems if side-effects from one test affect the outcome of
+    following tests.

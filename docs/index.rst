@@ -14,13 +14,18 @@
 #################################################
 
 The :mod:`datatest` package provides data testing tools for Python's
-standard `unittest <http://docs.python.org/library/unittest.html>`_
+standard `unittest <http://docs.python.org/3/library/unittest.html>`_
 framework.  It provides classes for conveniently loading data, asserting
 validity, and allowing for discrepancies when appropriate.
 
+Data tests can provide much-needed structure to guide the workflow of
+data processing, itself. :ref:`Test-driven data processing <test-driven-data_processing>`
+can automate existing check-lists, help train new team members, and
+quickly re-acclimate users who have been away from a project for some
+time.
+
 (If you're already familiar with the package, you might want to
 skip to the :ref:`list of assert methods <assert-methods>`.)
-
 
 .. toctree::
    :maxdepth: 2

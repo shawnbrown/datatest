@@ -56,17 +56,22 @@ Value assertions operate on the values within a given column:
 +----------------------------------------------+----------------------------------------------------+
 
 
-``**filter_by`` Keyword Aguments
---------------------------------
+Optional Keyword Filters
+------------------------
 
-All of the value assertions listed above support optional keyword
+All of the value assertion methods, above, support optional keyword
 arguments for quickly filtering the rows to be tested.
 
-The following code will assert that the subject values match the
-reference values for the ``city`` column but only for records where
-``state`` equals "Ohio"::
+The following example asserts that the subject's ``postal_code`` values
+match the reference's ``postal_code`` values but only for records where
+the ``state`` equals ``'Ohio'`` and the ``city`` equals ``Columbus``::
 
-        self.assertDataSet('city', state='Ohio')
+    self.assertValueSet('postal_code', state='Ohio', city='Columbus')
+
+This next example makes the same assertion but for records where the
+``state`` equals ``'Indiana'`` *or* ``'Ohio'``::
+
+    self.assertValueSet('postal_code', state=['Indiana', 'Ohio'])
 
 
 Accept Methods

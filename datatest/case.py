@@ -170,8 +170,11 @@ class _AcceptPercentToleranceContext(_BaseAcceptContext):
 
 
 class DataTestCase(TestCase):
-    """This class wraps ``unittest.TestCase`` to add properties and
-    methods for testing data quality.
+    """This class wraps ``unittest.TestCase`` and implements additional
+    properties and methods for testing data quality.  When a data
+    assertion fails, this class raises a ``DataAssertionError``
+    containing the detected flaws.  When a non-data failure occurs, this
+    class raises a standard ``AssertionError``.
     """
     @property
     def subjectData(self):
@@ -190,9 +193,8 @@ class DataTestCase(TestCase):
     @property
     def referenceData(self):
         """Property to access reference data that is trusted to be
-        correct (used for cross-validation tests).  Typically,
-        ``referenceData`` should be assigned in ``setUpModule()`` or
-        ``setUpClass()``.
+        correct.  Typically, ``referenceData`` should be assigned in
+        ``setUpModule()`` or ``setUpClass()``.
         """
         if hasattr(self, '_referenceData'):
             return self._referenceData

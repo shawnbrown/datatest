@@ -37,41 +37,48 @@ The following script implements these tests::
 
     import datatest
 
+
     def setUpModule():
         global subjectData
         subjectData = datatest.CsvDataSource('members.csv')
 
-    class TestFormatAndLabels(datatest.DataTestCase):
 
+    class TestFormatAndLabels(datatest.DataTestCase):
         def test_columns(self):
             """Test for required column names."""
             columns = {'member_id', 'region', 'active', 'hours_volunteered'}
             self.assertColumnSet(columns)
 
-        def test_format(self):
-            """Test that 'member_id' & 'hours_volunteered' use only digits."""
+        def test_numeric(self):
+            """Test that numeric columns contain only digits."""
             self.assertValueRegex('member_id', '^\d+$')
             self.assertValueRegex('hours_volunteered', '^\d+$')
 
-        def test_label_sets(self):
-            """Test that 'active' and 'region' use valid codes."""
+        def test_active_labels(self):
+            """Test that 'active' column contains valid codes."""
             self.assertValueSubset('active', {'Y', 'N'})
 
+        def test_region_labels(self):
+            """Test that 'region' column contains valid codes."""
             regions = {'Midwest', 'Northeast', 'South', 'West'}
             self.assertValueSubset('region', regions)
+
 
     if __name__ == '__main__':
         datatest.main()
 
-
 The data we want to test is called the subject data and it should be
 defined as a module-level or class-level property named ``subjectData``.
-Typically, it is defined at the module level inside a  ``setUpModule()``
-function (as above).  However, if it is only referenced within a
-single class, then defining it inside a ``setUpClass()`` method is also
-acceptable::
+This property is referenced, internally, by the ``assertValue...()`` and
+``assertColumn...()`` methods.
+
+``subjectData`` is typically defined at the module-level inside a ``setUpModule()``
+function---as shown in the previous example.  However, if it is only
+referenced within a single class, then defining it inside a
+``setUpClass()`` method is also acceptable::
 
     import datatest
+
 
     class TestFormatAndLabels(datatest.DataTestCase):
         @classmethod
@@ -85,13 +92,13 @@ acceptable::
 Using Reference Data
 ====================
 
-In the previous example, the ``test_label_sets()`` method specifies its
-required values directly in the method itself. While this works for
-many situations, large collections of reference data will oftentimes
-need to be stored in an external source (a file or database).
+Datatest also supports the use of reference data from external sources
+(files or databases).  While the tests in our first example specify
+their required values directly in the methods themselves, doing so
+becomes inconvenient when working with large amounts of reference data.
 
-To continue our previous example, we can use the following table as
-reference data (**regional_report.csv**):
+To continue testing the data from our first example, we can use the
+following table as reference data (**regional_report.csv**):
 
     =========  ==============  ==================
     region     active_members   hours_volunteered
@@ -103,9 +110,10 @@ reference data (**regional_report.csv**):
     =========  ==============  ==================
 
 By loading this data into a variable named ``referenceData``, we can
-easily integrate it into our test script::
+easily integrate it into a test script::
 
     import datatest
+
 
     def setUpModule():
         global subjectData
@@ -113,23 +121,38 @@ easily integrate it into our test script::
         subjectData = datatest.CsvDataSource('members.csv')
         referenceData = datatest.CsvDataSource('regional_report.csv')
 
-    class TestTotals(datatest.DataTestCase):
 
-        def test_region(self):
-            """Test that subject 'region' matches reference 'region'."""
+    class TestLabels(datatest.DataTestCase):
+        def test_region_labels(self):
+            """Check that subject values equal reference values in
+               the 'region' column."""
             self.assertValueSet('region')
 
-        def test_active(self):
-            """Test for count of active members by region."""
-            self.assertValueCount('active_members', ['region'], active='Y')
 
+    class TestTotals(datatest.DataTestCase):
         def test_hours(self):
-            """Test that sum of 'hours_volunteered' matches by region."""
+            """Check that the sum of subject values equals the sum of
+               reference values in the 'hours_volunteered' column for
+               each 'region' group."""
             self.assertValueSum('hours_volunteered', ['region'])
 
+        def test_active(self):
+            """Check that the count of subject rows equals the total
+               reference value in the 'active_members' column for rows
+               where 'active' equals 'Y' for each 'region' group."""
+            self.assertValueCount('active_members', ['region'], active='Y')
 
-Acceptable Error
-================
+The tests in this example, automatically use the ``subjectData`` and
+``referenceData`` sources defined in the ``setUpModule()`` function.
+
+
+Errors
+======
+
+
+
+Acceptable Errors
+=================
 
 When encountering a :class:`DataAssertionError <datatest.DataAssertionError>`,
 a test fails with a list of detected differences.  Sometimes, these
@@ -161,12 +184,12 @@ Command-Line Interface
 ======================
 
 The datatest module can be used from the command line just like
-unittest. To run datatest with test discovery, use the following
+unittest. To run the program with test discovery, use the following
 command::
 
     python -m datatest
 
-Run tests from specific modules, classes or individual methods with::
+Run tests from specific modules, classes, or individual methods with::
 
     python -m datatest test_module1 test_module2
     python -m datatest test_module.TestClass

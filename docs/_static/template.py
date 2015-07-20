@@ -146,5 +146,5 @@ if __name__ == '__main__':
             self.assertEqual(result, {'x', 'y', 'z'})
 
 
-    unittest.main()
+    unittest.main(failfast=True)
 
