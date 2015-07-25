@@ -51,7 +51,8 @@ Typically, data tests should be defined in the following order:
 
 .. note::
 
-    Ordered tests are useful when testing data but not so useful when
-    testing software.  In fact, ordered testing of sofware can lead to
-    problems if side-effects from one test affect the outcome of
+    Datatest implements ordered tests but don't expect other tools to
+    do so.  Ordered tests are useful when testing data but not so useful
+    when testing software.  In fact, ordered testing of software can
+    lead to problems if side-effects from one test affect the outcome of
     following tests.

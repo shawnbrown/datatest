@@ -64,11 +64,11 @@ arguments for quickly filtering the rows to be tested.
 
 The following example asserts that the subject's ``postal_code`` values
 match the reference's ``postal_code`` values but only for records where
-the ``state`` equals ``'Ohio'`` and the ``city`` equals ``Columbus``::
+the ``state`` equals ``'Ohio'`` and the ``city`` equals ``'Columbus'``::
 
     self.assertValueSet('postal_code', state='Ohio', city='Columbus')
 
-This next example makes the same assertion but for records where the
+The next example makes this same assertion but for records where the
 ``state`` equals ``'Indiana'`` *or* ``'Ohio'``::
 
     self.assertValueSet('postal_code', state=['Indiana', 'Ohio'])

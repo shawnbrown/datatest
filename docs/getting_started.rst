@@ -7,8 +7,8 @@ Getting Started
 stored in spreadsheet files or database tables but it's also possible
 to create custom data sources for other data formats.  To use
 datatest effectively, users should be familiar with Python's standard
-`unittest <http://docs.python.org/library/unittest.html>`_ package,
-regular expressions, and with the data they want to audit.
+`unittest <http://docs.python.org/library/unittest.html>`_ package and
+the data they want to audit.
 
 
 Basic Example
@@ -26,7 +26,7 @@ file (**members.csv**):
     ...        ...     ...        ...
     =========  ======  =========  =================
 
-We want to test for the following conditions:
+We want to test that...
 
  * expected column names are present
  * **member_id** and **hours_volunteered** columns contain only numbers
@@ -67,15 +67,17 @@ The following script implements these tests::
     if __name__ == '__main__':
         datatest.main()
 
-The data we want to test is called the subject data and it should be
-defined as a module-level or class-level property named ``subjectData``.
-This property is referenced, internally, by the ``assertValue...()`` and
-``assertColumn...()`` methods.
+
+The data we want to test---the subject of our tests---is stored in
+a property named ``subjectData``.  This property is referenced,
+internally, by the ``assertValue...()`` and ``assertColumn...()``
+methods.
 
 ``subjectData`` is typically defined at the module-level inside a ``setUpModule()``
 function---as shown in the previous example.  However, if it is only
 referenced within a single class, then defining it inside a
 ``setUpClass()`` method is also acceptable::
+
 
     import datatest
 
@@ -142,33 +144,33 @@ easily integrate it into a test script::
                where 'active' equals 'Y' for each 'region' group."""
             self.assertValueCount('active_members', ['region'], active='Y')
 
-The tests in this example, automatically use the ``subjectData`` and
-``referenceData`` sources defined in the ``setUpModule()`` function.
+
+The tests in the above example automatically use the ``subjectData``
+and ``referenceData`` sources defined in the ``setUpModule()`` function.
 
 
 Errors
 ======
 
+When encountering a :class:`DataAssertionError <datatest.DataAssertionError>`,
+a data test fails with a list of detected differences.
 
 
 Acceptable Errors
 =================
 
-When encountering a :class:`DataAssertionError <datatest.DataAssertionError>`,
-a test fails with a list of detected differences.  Sometimes, these
-differences are acceptable and should not trigger a test failure.
-
-To explicitly accept individual differences, use the
+Sometimes, it's undesirable for certain differences to trigger a test
+failure.  To mark specific differences as acceptable, use the
 :meth:`acceptDifference <datatest.DataTestCase.acceptDifference>`
 context manager::
 
     def test_population(self):
         diff = [
-            ExtraSum(+8, 11771, county='Warren', city='Franklin'),
-            MissingSum(-27, 3184, county='Lake', city='Madison'),
+            ExtraSum(+8, 11771, county='Warren'),
+            MissingSum(-25, 3184, county='Lake'),
         ]
         with self.acceptDifference(diff):
-            self.assertValueSum('population', ['county', 'city'])
+            self.assertValueSum('population', ['county'])
 
 To accept several numeric differences at once, you can use the
 :meth:`acceptTolerance <datatest.DataTestCase.acceptTolerance>` or
@@ -176,8 +178,8 @@ To accept several numeric differences at once, you can use the
 methods::
 
     def test_households(self):
-        with self.acceptTolerance(10):
-            self.assertValueCount('households', ['county', 'city'])
+        with self.acceptTolerance(25):
+            self.assertValueCount('population', ['county'])
 
 
 Command-Line Interface

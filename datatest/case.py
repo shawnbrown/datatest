@@ -441,7 +441,7 @@ class DataTestCase(TestCase):
 
         If called with *callableObj* omitted or None, will return a
         context manager so that the code under test can be written
-        inline rather than as a function::
+        in-line rather than as a function::
 
             diff = [
                 ExtraValue('foo'),
