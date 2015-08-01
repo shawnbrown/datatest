@@ -436,12 +436,12 @@ class DataTestCase(TestCase):
         """Test that a DataAssertionError containing a matching
         collection of differences is raised when *callableObj* is called
         with *args* and keyword *kwds*. If the raised differences do not
-        match the accepted differences, the test case will fail with a
-        DataAssertionError of the remaining differences.
+        match *diff*, the test will fail with a DataAssertionError of
+        the remaining differences.
 
-        If called with *callableObj* omitted or None, will return a
-        context manager so that the code under test can be written
-        in-line rather than as a function::
+        If called with *callableObj* omitted or None, this method will
+        return a context manager so that the code under test can be
+        written in-line rather than as a function::
 
             diff = [
                 ExtraValue('foo'),
@@ -450,7 +450,7 @@ class DataTestCase(TestCase):
             with self.acceptDifference(diff):
                 self.assertDataSet('column1')
 
-        An optional keyword argument *msg* can be provided when
+        An optional keyword argument, *msg*, can be provided when
         acceptDifference is used as a context manager.
         """
         # TODO: Test the following behavior.
