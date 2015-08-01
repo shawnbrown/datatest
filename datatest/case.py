@@ -116,15 +116,22 @@ class _BaseAcceptContext(object):
 
 class _AcceptDifferenceContext(_BaseAcceptContext):
     def __exit__(self, exc_type, exc_value, tb):
-        difference = list(_walk_diff(exc_value.diff))
-        accepted = list(_walk_diff(self.accepted))
-        unaccepted = [x for x in difference if x not in accepted]
-        if unaccepted:
-            return self._raiseFailure(exc_value.msg, unaccepted)  # <- EXIT!
+        if exc_value:
+            diff = exc_value.diff
+            message = exc_value.msg
+        else:
+            diff = []
+            message = 'No error raised'
 
-        accepted_not_found = [x for x in accepted if x not in difference]
+        diff = list(_walk_diff(diff))
+        accepted = list(_walk_diff(self.accepted))
+        unaccepted = [x for x in diff if x not in accepted]
+        if unaccepted:
+            return self._raiseFailure(message, unaccepted)  # <- EXIT!
+
+        accepted_not_found = [x for x in accepted if x not in diff]
         if accepted_not_found:
-            message = exc_value.msg + ', accepted difference not found'
+            message = message + ', accepted difference not found'
             return self._raiseFailure(message, accepted_not_found)  # <- EXIT!
 
         return True
@@ -136,15 +143,23 @@ class _AcceptAbsoluteToleranceContext(_BaseAcceptContext):
         _BaseAcceptContext.__init__(self, accepted, test_case, callable_obj)
 
     def __exit__(self, exc_type, exc_value, tb):
-        difference = list(_walk_diff(exc_value.diff))
+        if exc_value:
+            difference = exc_value.diff
+            message = exc_value.msg
+        else:
+            difference = []
+            message = 'No error raised'
+
+        diff_list = list(_walk_diff(difference))
         accepted = self.accepted
 
         failed = []
-        for diff in difference:
-            if abs(diff.diff) > accepted:
-                failed.append(diff)
+        for diff_obj in diff_list:
+            diff_val = abs(diff_obj.diff)
+            if diff_val > accepted:
+                failed.append(diff_obj)
         if failed:
-            return self._raiseFailure(exc_value.msg, failed)  # <- EXIT!
+            return self._raiseFailure(message, failed)  # <- EXIT!
 
         return True
 

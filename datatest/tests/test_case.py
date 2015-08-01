@@ -991,7 +991,7 @@ class TestAcceptDifference(TestHelperCase):
         pattern = "different 'value' sums:\n ExtraSum\(\+1, 65, label1=u?'a'\)"
         self.assertRegex(failure, pattern)
 
-    def test_accepted_not_found(self):
+    def test_accepted_not_found_with_diff(self):
         """If accepted differences not found, raise exception."""
         class _TestClass(DataTestCase):
             def setUp(_self):
@@ -1009,6 +1009,23 @@ class TestAcceptDifference(TestHelperCase):
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ("different 'value' sums, accepted difference not found:\n"
+                   " ExtraSum\(\+2, 65, label1=u?'a'\)")
+        self.assertRegex(failure, pattern)
+
+    def test_accepted_not_found_without_diff(self):
+        """If accepted differences not found and no diff at all, raise exception."""
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                _self.referenceData = self.reference
+                _self.subjectData = self.reference
+
+            def test_method(_self):
+                diff = ExtraSum(+2, 65, label1='a')
+                with _self.acceptDifference(diff):
+                    _self.assertValueSum('value', ['label1'])  # <- test assert
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        pattern = ("DataAssertionError: No error raised, accepted difference not found:\n"
                    " ExtraSum\(\+2, 65, label1=u?'a'\)")
         self.assertRegex(failure, pattern)
 
@@ -1086,8 +1103,27 @@ class TestAcceptTolerance(TestHelperCase):
                     _self.assertValueSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = ('Tolerance cannot be defined with a negative number.')
+        pattern = 'Tolerance cannot be defined with a negative number.'
         self.assertRegex(failure, pattern)
+
+    # QUESTION: Should tolerances raise an error if there are no
+    #           observed differences or if the maximum oberved
+    #           difference is less than the acceptable tolerance?
+    #
+    #def test_tolerance_with_no_raised_difference(self):
+    #    """If accepted differences not found, raise exception."""
+    #    class _TestClass(DataTestCase):
+    #        def setUp(_self):
+    #            _self.referenceData = self.reference
+    #            _self.subjectData = self.reference
+    #
+    #        def test_method(_self):
+    #            with _self.acceptTolerance(3):  # <- test tolerance
+    #                _self.assertValueSum('value', ['label1'])
+    #
+    #    failure = self._run_one_test(_TestClass, 'test_method')
+    #    pattern = 'no errors...'
+    #    self.assertRegex(failure, pattern)
 
 
 class TestAcceptPercentTolerance(TestHelperCase):
@@ -1197,4 +1233,20 @@ class TestNestedAcceptBlocks(TestHelperCase):
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
+
+    def test_difference_not_found_in_tolerance(self):
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                _self.referenceData = self.reference
+                _self.subjectData = self.bad_subject
+
+            def test_method(_self):
+                with _self.acceptDifference(ExtraSum(+10, 999, label1='a')):
+                    with _self.acceptTolerance(3):
+                        _self.assertValueSum('value', ['label1'])
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        pattern = ("DataAssertionError: No error raised, accepted difference not found:\n"
+                   " ExtraSum\(\+10, 999, label1=u?'a'\)")
+        self.assertRegex(failure, pattern)
 
