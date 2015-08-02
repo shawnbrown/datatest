@@ -173,7 +173,6 @@ class TestBaseDataSource(unittest.TestCase):
         with self.assertRaises(Exception):
             result = self.datasource.unique('label1', 'label3', label2='x')
             result = list(result)  # Force evaluation of generator items.
-            print(result)
 
 
 class TestSqliteDataSource(TestBaseDataSource):
