@@ -471,11 +471,11 @@ class MultiDataSource(BaseDataSource):
         self.__wrapped__ = sources
 
     def __repr__(self):
-        """ """
+        """Return a string representation of the data source."""
         cls_name = self.__class__.__name__
         src_names = [repr(src) for src in self.__wrapped__]  # Get reprs.
         src_names = ['    ' + src for src in src_names]      # Prefix with 4 spaces.
-        src_names = ',\n'.join(src_name)                     # Join w/ comma & new-line.
+        src_names = ',\n'.join(src_names)                    # Join w/ comma & new-line.
         return '{0}(\n{1}\n)'.format(cls_name, src_names)
 
     def slow_iter(self):
