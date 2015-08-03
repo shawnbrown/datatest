@@ -19,7 +19,7 @@ prefix = 'test_'
 class BaseDataSource(object):
     """Common base class for all data sources.  Custom sources can be
     created by subclassing BaseDataSource and implementing
-    ``__init__()``, ``__str__()``, ``columns()``, and ``slow_iter()``.
+    ``__init__()``, ``__repr__()``, ``columns()``, and ``slow_iter()``.
     Optionally, performance can be improved by implementing ``sum()``,
     ``count()``, and ``unique()``.
 
@@ -32,17 +32,17 @@ class BaseDataSource(object):
         """
         return NotImplemented
 
-    def __str__(self):
+    def __repr__(self):
         """NotImplemented
 
-        Return a short string describing the data source instance.
+        Return a string representation of the data source.
         """
         return NotImplemented
 
     def columns(self):
         """NotImplemented
 
-        Return a list or tuple of column names.
+        Return a sequence (e.g. a list) of column names.
         """
         return NotImplemented
 
@@ -107,8 +107,12 @@ class SqliteDataSource(BaseDataSource):
         self._connection = connection
         self._table = table
 
-    def __str__(self):
-        return 'Table {0!r} in {1}'.format(self._table, self._connection)
+    def __repr__(self):
+        """Return a string representation of the data source."""
+        cls_name = self.__class__.__name__
+        conn_name = str(self._connection)
+        tbl_name = self._table
+        return '{0}({1}, table={2!r})'.format(cls_name, conn_name, tbl_name)
 
     def slow_iter(self):
         """Return iterable of dictionary rows (like csv.DictReader)."""
@@ -126,7 +130,7 @@ class SqliteDataSource(BaseDataSource):
         return [x[1] for x in cursor.fetchall()]
 
     def unique(self, *column, **filter_by):
-        """Return iterable of unique values in column."""
+        """Return iterable of tuples of unique column values."""
         assert set(column) <= set(self.columns())
         select_clause = ['"{0}"'.format(x) for x in column]
         select_clause = ', '.join(select_clause)
@@ -318,8 +322,11 @@ class CsvDataSource(SqliteDataSource):
         self._file = file
         SqliteDataSource.__init__(self, connection, 'main')
 
-    def __str__(self):
-        return str(self._file)
+    def __repr__(self):
+        """Return a string representation of the data source."""
+        cls_name = self.__class__.__name__
+        src_name = self._file
+        return '{0}({1!r})'.format(cls_name, src_name)
 
     @classmethod
     def _populate_database(cls, connection, reader, table='main'):
@@ -426,7 +433,7 @@ class FilteredDataSource(BaseDataSource):
         self._function = function
         self.__wrapped__ = source
 
-    def __str__(self):
+    def __repr__(self):
         cls_name = self.__class__.__name__
         fun_name = self._function.__name__
         src_name = self.__wrapped__
@@ -463,8 +470,13 @@ class MultiDataSource(BaseDataSource):
             assert isinstance(source, BaseDataSource), msg
         self.__wrapped__ = sources
 
-    def __str__(self):
-        return '\n'.join(str(src) for src in self.__wrapped__)
+    def __repr__(self):
+        """ """
+        cls_name = self.__class__.__name__
+        src_names = [repr(src) for src in self.__wrapped__]  # Get reprs.
+        src_names = ['    ' + src for src in src_names]      # Prefix with 4 spaces.
+        src_names = ',\n'.join(src_name)                     # Join w/ comma & new-line.
+        return '{0}(\n{1}\n)'.format(cls_name, src_names)
 
     def slow_iter(self):
         """Return iterable of dictionary rows (like csv.DictReader)."""
@@ -571,7 +583,7 @@ class UniqueDataSource(BaseDataSource):
         self.__wrapped__ = source
         self._columns = columns
 
-    def __str__(self):
+    def __repr__(self):
         cls_name = self.__class__.__name__
         src_name = self.__wrapped__
         col_name = repr(self._columns)

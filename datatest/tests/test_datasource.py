@@ -25,7 +25,7 @@ class MinimalDataSource(BaseDataSource):
         self._data = data
         self._fieldnames = fieldnames
 
-    def __str__(self):
+    def __repr__(self):
         return self.__class__.__name__
 
     def columns(self):
@@ -349,11 +349,11 @@ class TestFilteredDataSource(TestBaseDataSource):
         result = self.datasource.slow_iter()
         self.assertEqual(expected, list(result))
 
-    def test_str(self):
+    def test_repr(self):
         def not_y(row):
             return row['label2'] != 'y'
         src = FilteredDataSource(not_y, self.orig_src)
-        self.assertTrue(str(src).startswith('FilteredDataSource(not_y, '))
+        self.assertTrue(repr(src).startswith('FilteredDataSource(not_y, '))
 
 
 class TestUniqueDataSource(TestBaseDataSource):
@@ -385,10 +385,10 @@ class TestUniqueDataSource(TestBaseDataSource):
         result = datasource.slow_iter()
         self.assertEqual(expected, list(result))
 
-    def test_str(self):
+    def test_repr(self):
         src = UniqueDataSource(self.minimal_source, ['label1', 'label2'])
-        self.assertTrue(str(src).startswith('UniqueDataSource('))
-        self.assertTrue(str(src).endswith(", ['label1', 'label2'])"))
+        self.assertTrue(repr(src).startswith('UniqueDataSource('))
+        self.assertTrue(repr(src).endswith(", ['label1', 'label2'])"))
 
 
 class TestMultiDataSource(TestBaseDataSource):
