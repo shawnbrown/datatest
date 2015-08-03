@@ -1061,19 +1061,22 @@ class TestAcceptTolerance(TestHelperCase):
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
 
-    def test_absolute_tolerance_keyword(self):
-        """If accepted differences not found, raise exception."""
-        class _TestClass(DataTestCase):
-            def setUp(_self):
-                _self.referenceData = self.reference
-                _self.subjectData = self.bad_subject
-
-            def test_method(_self):
-                with _self.acceptTolerance(3):  # <- test tolerance
-                    _self.assertValueSum('value', ['label1'])
-
-        failure = self._run_one_test(_TestClass, 'test_method')
-        self.assertIsNone(failure)
+    #@unittest.skip('Waiting to implement this.')
+    #def test_absolute_tolerance_keyword(self):
+    #    """Using filter label1='a', MissingSum(...label1='b') should be raised."""
+    #    class _TestClass(DataTestCase):
+    #        def setUp(_self):
+    #            _self.referenceData = self.reference
+    #            _self.subjectData = self.bad_subject
+    #
+    #        def test_method(_self):
+    #            with _self.acceptTolerance(3, label1='a'):  # <- Filter to 'a' only.
+    #                _self.assertValueSum('value', ['label1'])
+    #
+    #    failure = self._run_one_test(_TestClass, 'test_method')
+    #    pattern = ("DataAssertionError: different u?'value' sums:\n"
+    #               " MissingSum\(-1, 70, label1=u?'b'\)")'\)")
+    #    self.assertRegex(failure, pattern)
 
     def test_inadequate_absolute_tolerance(self):
         """Given tolerance of 2, ExtraSum(+3) should still be raised."""
