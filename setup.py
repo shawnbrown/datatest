@@ -28,7 +28,7 @@ def get_version(filepath):
 if __name__ == '__main__':
     setup(name='datatest',
           version=get_version('datatest/__init__.py'),
-          description='Data quality audit and unit testing tools for Python.',
+          description='Data testing tools for Python.',
           author='Shawn Brown',
           #author_email='',
           #url='',
