@@ -60,7 +60,7 @@ Optional Keyword Filters
 ------------------------
 
 All of the value assertion methods, above, support optional keyword
-arguments for quickly filtering the rows to be tested.
+arguments to quickly filter the rows to be tested.
 
 The following example asserts that the subject's ``postal_code`` values
 match the reference's ``postal_code`` values but only for records where

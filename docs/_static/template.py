@@ -11,7 +11,7 @@ class MyDataSource(datatest.BaseDataSource):
         """Initialize self."""
         return NotImplemented
 
-    def __str__(self):
+    def __repr__(self):
         """Return a brief description of the data source."""
         return NotImplemented
 
@@ -102,19 +102,19 @@ if __name__ == '__main__':
             result = list(self.source.unique('foo'))
             self.assertEqual([('a',), ('b',)], result)
 
-            result = list(self.source.unique('foo', 'bar'), foo='a')
+            result = list(self.source.unique('foo', 'bar', foo='a'))
             expecting = [('a', 'x'),
                          ('a', 'y'),
                          ('a', 'z')]
             self.assertEqual(expecting, result)
 
-            result = list(self.source.unique('foo', 'baz'), bar=['x', 'y'])
+            result = list(self.source.unique('foo', 'baz', bar=['x', 'y']))
             expecting = [('a', 'x'),
                          ('a', 'y'),
                          ('b', 'x')]
             self.assertEqual(expecting, result)
 
-            result = list(self.source.unique('foo', 'baz'), foo='a', bar=['x', 'y'])
+            result = list(self.source.unique('foo', 'baz', foo='a', bar=['x', 'y']))
             expecting = [('a', 'x'),
                          ('a', 'y')]
             self.assertEqual(expecting, result)

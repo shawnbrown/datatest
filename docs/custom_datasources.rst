@@ -25,12 +25,12 @@ Class Template
             """Initialize self."""
             return NotImplemented
 
-        def __str__(self):
-            """Return a brief description of the data source."""
+        def __repr__(self):
+            """Return a string representation of the data source."""
             return NotImplemented
 
         def columns(self):
-            """Return a sequence of column names."""
+            """Return a sequence (e.g. a list) of column names."""
             return NotImplemented
 
         def slow_iter(self):
@@ -44,6 +44,6 @@ Class Template
         #    """Return count of non-empty values in column."""
 
         #def unique(*column, **filter_by)
-        #    """Return iterable of unique tuples of column values."""
+        #    """Return iterable of tuples of unique column values."""
 
 
