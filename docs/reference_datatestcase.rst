@@ -1,9 +1,15 @@
 
-*****************
-Package Reference
-*****************
+************
+DataTestCase
+************
+
+This class inherits from
+`unittest.TestCase <http://docs.python.org/library/unittest.html#unittest.TestCase>`_
+and adds additional properties and methods to help with testing data.
+
 
 .. _assert-methods:
+
 
 Column Assertions
 =================
@@ -91,151 +97,8 @@ Accept Methods
 +-------------------------------------------------+------------------------------------------+
 
 
-DataTestCase
-============
-
-This class inherits from
-`unittest.TestCase <http://docs.python.org/library/unittest.html#unittest.TestCase>`_
-and adds additional properties and methods to help with testing data.
+Reference
+=========
 
 .. autoclass:: datatest.DataTestCase
    :members:
-
-
-Data Sources
-============
-
-Data sources implement a common set of methods which are used by
-DataTestCase to access data and report meaningful failure messages.
-
-+----------------------------------------------+---------------------------------------+
-| Class                                        | Loads                                 |
-+==============================================+=======================================+
-| :class:`CsvDataSource(file)                  | CSV from *file* (path or file-like    |
-| <datatest.CsvDataSource>`                    | object)                               |
-+----------------------------------------------+---------------------------------------+
-| :class:`SqliteDataSource(connection, table)  | SQLite *table* from given             |
-| <datatest.SqliteDataSource>`                 | *connection*                          |
-+----------------------------------------------+---------------------------------------+
-
-
-Common Methods
---------------
-
-.. py:method:: columns()
-
-    Return a list or tuple of column names.
-
-
-.. py:method:: slow_iter()
-
-    Return an iterable of dictionary rows (like ``csv.DictReader``).
-
-
-.. py:method:: sum(column, **filter_by)
-
-    Return sum of values in *column*.
-
-
-.. py:method:: count(**filter_by)
-
-    Return count of rows.
-
-
-.. py:method:: unique(*column, **filter_by)
-
-    Return iterable of tuples containing unique *column* values
-
-
-.. py:method:: set(column, **filter_by)
-
-    Convenience function for unwrapping single *column* results from
-    ``unique`` and returning as a set.
-
------------------------
-
-.. autoclass:: datatest.CsvDataSource
-
-
-.. autoclass:: datatest.SqliteDataSource
-
-
-.. autoclass:: datatest.BaseDataSource
-
-
-
-Data Source Wrappers
-====================
-
-+----------------------------------------------+---------------------------------------+
-| Class                                        | Loads                                 |
-+==============================================+=======================================+
-| :class:`FilteredDataSource(function, source) | wrapper that filters *source* to      |
-| <datatest.FilteredDataSource>`               | records where *function* returns true |
-+----------------------------------------------+---------------------------------------+
-| :class:`MultiDataSource(*sources)            | wrapper for multiple *sources* that   |
-| <datatest.MultiDataSource>`                  | act as a single data source           |
-+----------------------------------------------+---------------------------------------+
-| :class:`UniqueDataSource(source, columns)    | wrapper that filters *source* to      |
-| <datatest.UniqueDataSource>`                 | unique values in list of *columns*    |
-+----------------------------------------------+---------------------------------------+
-
-|
-
-.. autoclass:: datatest.FilteredDataSource
-
-
-.. autoclass:: datatest.MultiDataSource
-
-
-.. autoclass:: datatest.UniqueDataSource
-
-
-Errors and Differences
-======================
-
-.. autoclass:: datatest.DataAssertionError
-   :members:
-
-
-.. autoclass:: datatest.ExtraColumn
-   :members:
-
-
-.. autoclass:: datatest.MissingColumn
-   :members:
-
-
-.. autoclass:: datatest.ExtraValue
-   :members:
-
-
-.. autoclass:: datatest.MissingValue
-   :members:
-
-
-.. autoclass:: datatest.ExtraSum
-   :members:
-
-
-.. autoclass:: datatest.MissingSum
-   :members:
-
-
-Test Runner Program
-===================
-
-.. autoclass:: datatest.DataTestRunner
-   :members:
-   :inherited-members:
-
-
-.. autoclass:: datatest.DataTestProgram(module='__main__', defaultTest=None, argv=None, testRunner=datatest.DataTestRunner, testLoader=unittest.TestLoader, exit=True, verbosity=1, failfast=None, catchbreak=None, buffer=None, warnings=None)
-   :members:
-   :inherited-members:
-
-|
-
-.. autoclass:: datatest.main
-   :members:
-   :inherited-members:
