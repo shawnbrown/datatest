@@ -147,9 +147,10 @@ class SqliteDataSource(BaseDataSource):
         cursor = self._execute_query(self._table, 'COUNT(*)', **filter_by)
         return cursor.fetchone()[0]
 
-    def _execute_query(self, table, select_clause, trailing_clause=None, **kwds):
+    def _execute_query(self, table, select_clause, trailing_clause=None, **filter_by):
+        """Execute query and return cursor object."""
         try:
-            stmnt, params = self._build_query(self._table, select_clause, **kwds)
+            stmnt, params = self._build_query(self._table, select_clause, **filter_by)
             if trailing_clause:
                 stmnt += '\n' + trailing_clause
             cursor = self._connection.cursor()
@@ -163,18 +164,20 @@ class SqliteDataSource(BaseDataSource):
         return cursor
 
     @classmethod
-    def _build_query(cls, table, select_clause, **kwds):
+    def _build_query(cls, table, select_clause, **filter_by):
+        """Return 'SELECT' query."""
         query = 'SELECT ' + select_clause + ' FROM ' + table
-        where_clause, params = cls._build_where_clause(**kwds)
+        where_clause, params = cls._build_where_clause(**filter_by)
         if where_clause:
             query = query + ' WHERE ' + where_clause
         return query, params
 
     @staticmethod
-    def _build_where_clause(**kwds):
+    def _build_where_clause(**filter_by):
+        """Return 'WHERE' clause that implements *filter_by* constraints."""
         clause = []
         params = []
-        items = kwds.items()
+        items = filter_by.items()
         items = sorted(items, key=lambda x: x[0])  # Ordered by key.
         for key, val in items:
             if hasattr(val, '__iter__') and not isinstance(val, str):
@@ -199,7 +202,7 @@ class CsvDataSource(SqliteDataSource):
 
     def __init__(self, file, encoding=None, in_memory=False):
         """Initialize self."""
-        # If `file` is relative path, uses directory of calling file as base.
+        # If *file* is relative path, uses directory of calling file as base.
         if isinstance(file, str) and not os.path.isabs(file):
             calling_frame = sys._getframe(1)
             calling_file = inspect.getfile(calling_frame)
@@ -244,6 +247,7 @@ class CsvDataSource(SqliteDataSource):
 
     @classmethod
     def _populate_database(cls, connection, reader, table='main'):
+        """Insert *reader* rows into given *table*."""
         _isolation_level = connection.isolation_level
         connection.isolation_level = None
         cursor = connection.cursor()
@@ -268,10 +272,10 @@ class CsvDataSource(SqliteDataSource):
                            ' params -> %s' % (row, statement, params))
                     msg = str(e).strip() + msg
                     raise exc_cls(msg)
-            connection.commit()
+            connection.commit()  # COMMIT TRANSACTION
 
         except Exception as e:
-            connection.rollback()
+            connection.rollback()  # ROLLBACK TRANSACTION
             raise e
 
         finally:
