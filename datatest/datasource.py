@@ -93,8 +93,8 @@ class BaseDataSource(object):
 
 
 class SqliteDataSource(BaseDataSource):
-    """SQLite interface, requires SQLite database *connection* and name
-    of database *table*::
+    """Loads *table* data from given SQLite *connection*:
+    ::
 
         conn = sqlite3.connect('mydatabase.sqlite3')
         subjectData = datatest.SqliteDataSource(conn, 'mytable')
@@ -277,8 +277,9 @@ if sys.version < '3':
 
 
 class CsvDataSource(SqliteDataSource):
-    """CSV file data source
+    """Loads CSV data from *file* (path or file-like object):
     ::
+
         subjectData = datatest.CsvDataSource('mydata.csv')
 
     """
