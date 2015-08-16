@@ -199,6 +199,11 @@ except AttributeError:
         TestCase.assertRaises = _assertRaises
         TestCase.assertRaisesRegexp = _assertRaisesRegexp
 
+try:
+    TestCase.assertRaisesRegex  # Renamed in 3.2 (previously assertRaisesRegexp)
+except AttributeError:
+    TestCase.assertRaisesRegex = TestCase.assertRaisesRegexp  # New in 2.7
+
 
 try:
     _sys.modules['unittest'].case._AssertWarnsContext  # New in 3.2
