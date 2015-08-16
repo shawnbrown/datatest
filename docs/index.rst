@@ -32,8 +32,8 @@ skip to the :ref:`list of assert methods <assert-methods>`.)
 
    getting_started
    data_processing
-   reference_datatestcase
-   reference_datasource
+   datatestcase
+   datasources
    reference_misc
 
 
