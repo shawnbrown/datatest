@@ -3,10 +3,10 @@
 Getting Started
 ***************
 
-:mod:`datatest` is designed to work, primarily, with tabular data
-stored in spreadsheet files or database tables but it's also possible
-to create custom data sources for other data formats.  To use
-datatest effectively, users should be familiar with Python's standard
+:mod:`datatest` is designed to work with tabular data stored in
+spreadsheet files or database tables but it's also possible to create
+custom data sources for other formats.  To use datatest effectively,
+users should be familiar with Python's standard
 `unittest <http://docs.python.org/library/unittest.html>`_ package and
 the data they want to audit.
 
@@ -156,30 +156,30 @@ The tests in the above example automatically use the ``subjectData``
 and ``referenceData`` sources defined in the ``setUpModule()`` function.
 
 
-Errors
-======
+Understanding Errors
+====================
 
 When data errors are found, tests will fail with a
 :class:`DataAssertionError <datatest.DataAssertionError>` that contains
 a list of detected differences::
 
     Traceback (most recent call last):
-      File "test_states.py", line 23, in test_codes
-        self.assertValueSet('state')
-    datatest.case.DataAssertionError: different 'state' values:
-     ExtraValue('OH'),
-     MissingValue('Ohio')
+      File "test_members.py", line 15, in test_region_labels
+        self.assertValueSet('region')
+    datatest.case.DataAssertionError: different 'region' values:
+     ExtraValue('North-east'),
+     MissingValue('Northeast')
 
-This error tells us that values in the "state" column of our
+This error tells us that values in the "region" column of our
 ``subjectData`` do not match the values of our ``referenceData``.  The
-``subjectData`` contains the extra value "OH" (which is not included in
-the ``referenceData``) and it's missing the value "Ohio" (which *is*
-included in the ``referenceData``).
+``subjectData`` contains the extra value "North-east" (which is not
+included in the ``referenceData``) and it's missing the value
+"Northeast" (which *is* included in the ``referenceData``).
 
 Pairs of conspicuous differences, as shown above, are common when the
-subject and reference files use differing codes.  Replacing "OH" with
-"Ohio" in the ``subjectData`` will correct this error and allow the test
-to pass.
+subject and reference files use differing codes.  Replacing "North-east"
+with "Northeast" in the ``subjectData`` will correct this error and
+allow the test to pass.
 
 
 .. note::
@@ -188,6 +188,10 @@ to pass.
     unittest assertion failure), then a standard
     :class:`unittest.AssertionError` is raised (rather than a
     :class:`DataAssertionError <datatest.DataAssertionError>`).
+
+
+TODO!!!:
+  * replace ``acceptDifference`` with ``acceptableDifference``.
 
 
 Acceptable Errors

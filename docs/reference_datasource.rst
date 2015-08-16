@@ -3,22 +3,64 @@
 Data Sources
 ************
 
-Data sources implement a common set of methods which are used by
-DataTestCase to access data and report meaningful failure messages.
+Data source objects are used to access data in various formats.
 
-+----------------------------------------------+---------------------------------------+
-| Class                                        | Loads                                 |
-+==============================================+=======================================+
-| :class:`CsvDataSource(file)                  | CSV from *file* (path or file-like    |
-| <datatest.CsvDataSource>`                    | object)                               |
-+----------------------------------------------+---------------------------------------+
-| :class:`SqliteDataSource(connection, table)  | SQLite *table* from given             |
-| <datatest.SqliteDataSource>`                 | *connection*                          |
-+----------------------------------------------+---------------------------------------+
++----------------------------------+---------------------------------------+
+| Class                            | Loads                                 |
++==================================+=======================================+
+| :class:`CsvDataSource(f)         | CSV file *f* (path or file-like       |
+| <datatest.CsvDataSource>`        | object)                               |
++----------------------------------+---------------------------------------+
+| :class:`SqliteDataSource(c, t)   | table *t* from SQLite connection *c*  |
+| <datatest.SqliteDataSource>`     |                                       |
++----------------------------------+---------------------------------------+
+
+|
+
+.. autoclass:: datatest.CsvDataSource
+
+.. autoclass:: datatest.SqliteDataSource
+
+
+The following "wrapper" classes can be used to alter an existing data
+source object:
+
++----------------------------------------------+-----------------------------------------+
+| Class                                        | Loads                                   |
++==============================================+=========================================+
+| :class:`FilteredDataSource(f, s)             | wrapper that filters source *s* to      |
+| <datatest.FilteredDataSource>`               | records where function *f* returns True |
++----------------------------------------------+-----------------------------------------+
+| :class:`MultiDataSource(*s)                  | wrapper for multiple sources *s* that   |
+| <datatest.MultiDataSource>`                  | act as a single data source             |
++----------------------------------------------+-----------------------------------------+
+| :class:`UniqueDataSource(s, c)               | wrapper that filters source *s* to      |
+| <datatest.UniqueDataSource>`                 | unique values in list of columns *c*    |
++----------------------------------------------+-----------------------------------------+
+
+These wrappers allow for a great deal of flexibility but extensive use
+could make testing slow.  If you find that testing has become slow
+because of a wrapper, you may be able to improve performance by loading
+it into a faster class that supports the :meth:`from_source`
+constructor::
+
+    subjectData = datatest.SqliteDataSource.from_source(subjectData)
+
+
+.. autoclass:: datatest.FilteredDataSource
+
+.. autoclass:: datatest.MultiDataSource
+
+.. autoclass:: datatest.UniqueDataSource
 
 
 Common Methods
 ==============
+Data sources implement a common set of methods which are used by
+DataTestCase to access data and report meaningful failure messages.
+Typically, these methods are used indirectly via DataTestCase but it is
+also possible to call them directly:
+
 
 .. py:method:: columns()
 
@@ -50,90 +92,31 @@ Common Methods
     Convenience function for unwrapping single *column* results from
     ``unique`` and returning as a set.
 
------------------------
-
-.. autoclass:: datatest.CsvDataSource
 
 
-.. autoclass:: datatest.SqliteDataSource
+*******************
+Custom Data Sources
+*******************
 
+If you need to test data in a format that's not currently supported,
+you can make your own custom data source.  You do this by subclassing
+:class:`BaseDataSource` and implementing the basic, common methods.
+
+As a starting point, you can use one of the following templates:
+
++-------------------------------+------------------------------------------+
+| Template File                 | Used for...                              |
++===============================+==========================================+
+| :download:`native_template.py | Formats with fast, built-in access to    |
+| <_static/template.py>`        | stored data (e.g., SQL, pandas, etc.)    |
++-------------------------------+------------------------------------------+
+| :download:`loader_template.py | Storage formats with no fast access to   |
+| <_static/template.py>`        | data (internally reuses SqliteDataSource |
+|                               | for faster performance).                 |
++-------------------------------+------------------------------------------+
+
+|
 
 .. autoclass:: datatest.BaseDataSource
-
-
-
-Data Source Wrappers
-====================
-
-+----------------------------------------------+---------------------------------------+
-| Class                                        | Loads                                 |
-+==============================================+=======================================+
-| :class:`FilteredDataSource(function, source) | wrapper that filters *source* to      |
-| <datatest.FilteredDataSource>`               | records where *function* returns true |
-+----------------------------------------------+---------------------------------------+
-| :class:`MultiDataSource(*sources)            | wrapper for multiple *sources* that   |
-| <datatest.MultiDataSource>`                  | act as a single data source           |
-+----------------------------------------------+---------------------------------------+
-| :class:`UniqueDataSource(source, columns)    | wrapper that filters *source* to      |
-| <datatest.UniqueDataSource>`                 | unique values in list of *columns*    |
-+----------------------------------------------+---------------------------------------+
-
-
-Reference
-=========
-
-.. autoclass:: datatest.FilteredDataSource
-
-
-.. autoclass:: datatest.MultiDataSource
-
-
-.. autoclass:: datatest.UniqueDataSource
-
-
-Custom Data Sources
-===================
-
-To make a custom data source, you need to write your own
-:class:`BaseDataSource <datatest.BaseDataSource>` subclass.  You can
-download :download:`template.py <_static/template.py>` to use as a
-starting point (includes basic methods and unit tests).
-
-
-How To
-------
-
-
-Class Template
-``````````````
-
-::
-
-    import datatest
-
-    class MyDataSource(datatest.BaseDataSource):
-        def __init__(self):
-            """Initialize self."""
-            return NotImplemented
-
-        def __repr__(self):
-            """Return a string representation of the data source."""
-            return NotImplemented
-
-        def columns(self):
-            """Return a sequence (e.g. a list) of column names."""
-            return NotImplemented
-
-        def slow_iter(self):
-            """Return iterable of dict rows (like csv.DictReader)."""
-            return NotImplemented
-
-        #def sum(column, **filter_by):
-        #    """Return sum of values in column."""
-
-        #def count(column, **filter_by):
-        #    """Return count of non-empty values in column."""
-
-        #def unique(*column, **filter_by)
-        #    """Return iterable of tuples of unique column values."""
+    :members: __init__, __repr__, columns, slow_iter, sum, count, unique
 
