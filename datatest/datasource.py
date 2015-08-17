@@ -192,6 +192,51 @@ class SqliteDataSource(BaseDataSource):
         clause = ' AND '.join(clause) if clause else ''
         return clause, params
 
+    def create_index(self, *columns):
+        """Creating an index for certain columns can speed up data
+        testing in many cases.
+
+        Indexes should be added one-be-one to tune a test suite's
+        over-all performance.  Creating several indexes before testing
+        even begins could lead to worse performance so use them with
+        discretion.
+
+        For example:  If "town" is a commonly used key-word filter in
+        many of your tests (like
+        ``self.assertValueSet('zipcode', town='Columbus')``), then you
+        might be able to improve performance by adding an index for the
+        "town" column::
+
+            subjectData.create_index('town')
+
+        Using two or more columns creates a multi-column index::
+
+            subjectData.create_index('town', 'zipcode')
+
+        Calling the function multiple times will create multiple indexes::
+
+            subjectData.create_index('town')
+            subjectData.create_index('zipcode')
+
+        """
+        # Build index name.
+        whitelist = lambda col: ''.join(x for x in col if x.isalnum())
+        idx_name = '_'.join(whitelist(col) for col in columns)
+        idx_name = 'idx_{0}_{1}'.format(self._table, idx_name)
+
+        # Build column names.
+        col_names = [self._from_records_normalize_column(x) for x in columns]
+        col_names = ', '.join(col_names)
+
+        # Prepare statement.
+        statement = 'CREATE INDEX IF NOT EXISTS {0} ON {1} ({2})'
+        statement = statement.format(idx_name, self._table, col_names)
+
+        # Create index.
+        cursor = self._connection.cursor()
+        cursor.execute('PRAGMA synchronous=OFF')
+        cursor.execute(statement)
+
     @classmethod
     def from_source(cls, source, in_memory=False):
         """Alternate constructor to load an existing data source:
@@ -369,6 +414,16 @@ class CsvDataSource(BaseDataSource):
         """Convenience function for unwrapping single column results
         from ``unique()`` and returning as a set."""
         return self._source.set(column, **filter_by)
+
+    def create_index(self, *columns):
+        """Creating an index for certain columns can speed up data
+        testing in many cases.
+
+        See :meth:`SqliteDataSource.create_index
+        <datatest.SqliteDataSource.create_index>` for more details.
+
+        """
+        self._source.create_index(*columns)
 
 
 class FilteredDataSource(BaseDataSource):

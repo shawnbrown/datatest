@@ -312,6 +312,31 @@ class TestSqliteDataSource(TestBaseDataSource):
         result = source.slow_iter()
         self.assertEqual(expected, list(result))
 
+    def test_create_index(self):
+        cursor = self.datasource._connection.cursor()
+
+        # There should be no indexes initially.
+        cursor.execute("PRAGMA INDEX_LIST('testtable')")
+        self.assertEqual(cursor.fetchall(), [])
+
+        # Add single-column index.
+        self.datasource.create_index('label1')  # <- CREATE INDEX!
+        cursor.execute("PRAGMA INDEX_LIST('testtable')")
+        results = [tup[1] for tup in cursor.fetchall()]
+        self.assertEqual(results, ['idx_testtable_label1'])
+
+        # Add multi-column index.
+        self.datasource.create_index('label2', 'value')  # <- CREATE INDEX!
+        cursor.execute("PRAGMA INDEX_LIST('testtable')")
+        results = sorted(tup[1] for tup in cursor.fetchall())
+        self.assertEqual(results, ['idx_testtable_label1', 'idx_testtable_label2_value'])
+
+        # Duplicate of first, single-column index should have no effect.
+        self.datasource.create_index('label1')  # <- CREATE INDEX!
+        cursor.execute("PRAGMA INDEX_LIST('testtable')")
+        results = sorted(tup[1] for tup in cursor.fetchall())
+        self.assertEqual(results, ['idx_testtable_label1', 'idx_testtable_label2_value'])
+
 
 class TestCsvDataSource(TestBaseDataSource):
     def setUp(self):
