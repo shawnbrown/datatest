@@ -213,6 +213,105 @@ class TestSqliteDataSource(TestBaseDataSource):
         self.assertEqual(clause, 'label1 IN (?, ?) AND label2=?')
         self.assertEqual(params, ['a', 'b', 'x'])
 
+    def test_from_records_assert_unique(self):
+        # Pass without error.
+        SqliteDataSource._from_records_assert_unique(['foo', 'bar'])
+
+        with self.assertRaises(ValueError):
+            SqliteDataSource._from_records_assert_unique(['foo', 'foo'])
+
+    def test_from_records_normalize_column(self):
+        result = SqliteDataSource._from_records_normalize_column('foo')
+        self.assertEqual('"foo"', result)
+
+        result = SqliteDataSource._from_records_normalize_column('foo bar')
+        self.assertEqual('"foo bar"', result)
+
+        result = SqliteDataSource._from_records_normalize_column('foo "bar" baz')
+        self.assertEqual('"foo ""bar"" baz"', result)
+
+    def test_from_records_build_insert_statement(self):
+        stmnt, param = SqliteDataSource._from_records_build_insert_statement('mytable', ['val1a', 'val2a'])
+        self.assertEqual('INSERT INTO mytable VALUES (?, ?)', stmnt)
+        self.assertEqual(['val1a', 'val2a'], param)
+
+        with self.assertRaisesRegex(AssertionError, 'must be list or tuple, not str'):
+            SqliteDataSource._from_records_build_insert_statement('mytable', 'val1')
+
+    def test_from_records_build_create_statement(self):
+        stmnt = SqliteDataSource._from_records_build_create_statement('mytable', ['col1', 'col2'])
+        self.assertEqual('CREATE TABLE mytable ("col1", "col2")', stmnt)
+
+    def test_from_records_tuple(self):
+        # Test list of tuples.
+        columns = ['foo', 'bar', 'baz']
+        data = [
+            ('a', 'x', '1'),
+            ('b', 'y', '2'),
+            ('c', 'z', '3'),
+        ]
+        source = SqliteDataSource.from_records(data, columns)
+
+        expected = [
+            {'foo': 'a', 'bar': 'x', 'baz': '1'},
+            {'foo': 'b', 'bar': 'y', 'baz': '2'},
+            {'foo': 'c', 'bar': 'z', 'baz': '3'},
+        ]
+        result = source.slow_iter()
+        self.assertEqual(expected, list(result))
+
+        # Test too few columns.
+        columns = ['foo', 'bar']
+        with self.assertRaises(sqlite3.OperationalError):
+            source = SqliteDataSource.from_records(data, columns)
+
+        # Test too many columns.
+        columns = ['foo', 'bar', 'baz', 'qux']
+        with self.assertRaises(sqlite3.OperationalError):
+            source = SqliteDataSource.from_records(data, columns)
+
+    def test_from_records_dict(self):
+        columns = ['foo', 'bar', 'baz']
+        data = [
+            {'foo': 'a', 'bar': 'x', 'baz': '1'},
+            {'foo': 'b', 'bar': 'y', 'baz': '2'},
+            {'foo': 'c', 'bar': 'z', 'baz': '3'},
+        ]
+        source = SqliteDataSource.from_records(data, columns)
+
+        result = source.slow_iter()
+        self.assertEqual(data, list(result))
+
+        # Test too few columns.
+        #columns = ['foo', 'bar']
+        #with self.assertRaises(AssertionError):
+        #    source = SqliteDataSource.from_records(data, columns)
+
+        # Test too many columns.
+        columns = ['foo', 'bar', 'baz', 'qux']
+        with self.assertRaises(KeyError):
+            source = SqliteDataSource.from_records(data, columns)
+
+    def test_from_source(self):
+        columns = ['foo', 'bar', 'baz']
+        data = [
+            ('a', 'x', '1'),
+            ('b', 'y', '2'),
+            ('c', 'z', '3'),
+        ]
+        source = MinimalDataSource(data, columns)
+        source = SqliteDataSource.from_source(source)
+
+        self.assertIsInstance(source, SqliteDataSource)
+
+        expected = [
+            {'foo': 'a', 'bar': 'x', 'baz': '1'},
+            {'foo': 'b', 'bar': 'y', 'baz': '2'},
+            {'foo': 'c', 'bar': 'z', 'baz': '3'},
+        ]
+        result = source.slow_iter()
+        self.assertEqual(expected, list(result))
+
 
 class TestCsvDataSource(TestBaseDataSource):
     def setUp(self):
