@@ -170,7 +170,8 @@ class TestBaseDataSource(unittest.TestCase):
         self.assertEqual(set(result), set(expected))
 
         # Test when specified column is missing.
-        with self.assertRaises(Exception):
+        msg = 'Error should reference missing column.'
+        with self.assertRaisesRegex(Exception, "label3", msg=msg):
             result = self.datasource.unique('label1', 'label3', label2='x')
             result = list(result)  # Force evaluation of generator items.
 

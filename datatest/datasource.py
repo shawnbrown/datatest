@@ -141,7 +141,11 @@ class SqliteDataSource(BaseDataSource):
 
     def unique(self, *column, **filter_by):
         """Return iterable of tuples of unique column values."""
-        assert set(column) <= set(self.columns())
+        all_cols = self.columns()
+        not_found = [x for x in column if x not in all_cols]
+        if not_found:
+            raise KeyError(not_found[0])
+
         select_clause = ['"{0}"'.format(x) for x in column]
         select_clause = ', '.join(select_clause)
         select_clause = 'DISTINCT {0}'.format(select_clause)
@@ -539,7 +543,11 @@ class MultiDataSource(BaseDataSource):
 
     def unique(self, *column, **filter_by):
         """Return iterable of unique values in column."""
-        assert set(column) <= set(self.columns())
+        all_cols = self.columns()
+        not_found = [x for x in column if x not in all_cols]
+        if not_found:
+            raise KeyError(not_found[0])
+
         result = []
         for source in self.__wrapped__:
             source_columns = source.columns()
