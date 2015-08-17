@@ -78,7 +78,7 @@ class BaseDataSource(object):
 
     def set(self, column, **filter_by):
         """Convenience function for unwrapping single column results
-        from ``unique`` and returning as a set."""
+        from ``unique()`` and returning as a set."""
         return set(x[0] for x in self.unique(column, **filter_by))
 
     @staticmethod
@@ -113,6 +113,12 @@ class SqliteDataSource(BaseDataSource):
         tbl_name = self._table
         return '{0}({1}, table={2!r})'.format(cls_name, conn_name, tbl_name)
 
+    def columns(self):
+        """Return list of column names."""
+        cursor = self._connection.cursor()
+        cursor.execute('PRAGMA table_info(' + self._table + ')')
+        return [x[1] for x in cursor.fetchall()]
+
     def slow_iter(self):
         """Return iterable of dictionary rows (like csv.DictReader)."""
         cursor = self._connection.cursor()
@@ -121,21 +127,6 @@ class SqliteDataSource(BaseDataSource):
         column_names = self.columns()
         mkdict = lambda x: dict(zip(column_names, x))
         return (mkdict(row) for row in cursor.fetchall())
-
-    def columns(self):
-        """Return list of column names."""
-        cursor = self._connection.cursor()
-        cursor.execute('PRAGMA table_info(' + self._table + ')')
-        return [x[1] for x in cursor.fetchall()]
-
-    def unique(self, *column, **filter_by):
-        """Return iterable of tuples of unique column values."""
-        assert set(column) <= set(self.columns())
-        select_clause = ['"{0}"'.format(x) for x in column]
-        select_clause = ', '.join(select_clause)
-        select_clause = 'DISTINCT {0}'.format(select_clause)
-        cursor = self._execute_query(self._table, select_clause, **filter_by)
-        return (x for x in cursor)
 
     def sum(self, column, **filter_by):
         """Return sum of values in column."""
@@ -147,6 +138,15 @@ class SqliteDataSource(BaseDataSource):
         """Return count of rows."""
         cursor = self._execute_query(self._table, 'COUNT(*)', **filter_by)
         return cursor.fetchone()[0]
+
+    def unique(self, *column, **filter_by):
+        """Return iterable of tuples of unique column values."""
+        assert set(column) <= set(self.columns())
+        select_clause = ['"{0}"'.format(x) for x in column]
+        select_clause = ', '.join(select_clause)
+        select_clause = 'DISTINCT {0}'.format(select_clause)
+        cursor = self._execute_query(self._table, select_clause, **filter_by)
+        return (x for x in cursor)
 
     def _execute_query(self, table, select_clause, trailing_clause=None, **filter_by):
         """Execute query and return cursor object."""
@@ -192,77 +192,47 @@ class SqliteDataSource(BaseDataSource):
         clause = ' AND '.join(clause) if clause else ''
         return clause, params
 
+    @classmethod
+    def from_source(cls, source, in_memory=False):
+        """Alternate constructor to load an existing data source:
+        ::
 
-class CsvDataSource(SqliteDataSource):
-    """Loads CSV data from *file* (path or file-like object):
-    ::
+            subjectData = datatest.SqliteDataSource.from_source(source)
 
-        subjectData = datatest.CsvDataSource('mydata.csv')
+        """
+        data = source.slow_iter()
+        columns = source.columns()
+        return cls.from_records(data, columns, in_memory)
 
-    """
+    @classmethod
+    def from_records(cls, data, columns, in_memory=False):
+        """Alternate constructor to load an existing collection of
+        records.  Loads *data* (an iterable of lists, tuples, or dicts)
+        into a new SQLite database with the given *columns*::
 
-    def __init__(self, file, encoding=None, in_memory=False):
-        """Initialize self."""
-        # If *file* is relative path, uses directory of calling file as base.
-        if isinstance(file, str) and not os.path.isabs(file):
-            calling_frame = sys._getframe(1)
-            calling_file = inspect.getfile(calling_frame)
-            base_path = os.path.dirname(calling_file)
-            file = os.path.join(base_path, file)
-            file = os.path.normpath(file)
+            subjectData = datatest.SqliteDataSource.from_records(records, columns)
 
+        """
         # Create database (an empty string denotes use of a temp file).
         sqlite_path = ':memory:' if in_memory else ''
         connection = sqlite3.connect(sqlite_path)
 
-        # Populate database.
-        if encoding:
-            with _UnicodeCsvReader(file, encoding=encoding) as reader:
-                self._populate_database(connection, reader)
-        else:
-            try:
-                with _UnicodeCsvReader(file, encoding='utf-8') as reader:
-                    self._populate_database(connection, reader)
-
-            except UnicodeDecodeError:
-                with _UnicodeCsvReader(file, encoding='iso8859-1') as reader:
-                    self._populate_database(connection, reader)
-
-                try:
-                    filename = os.path.basename(file)
-                except AttributeError:
-                    filename = repr(file)
-                msg = ('\nData in file {0!r} does not appear to be encoded '
-                       'as UTF-8 (used ISO-8859-1 as fallback). To assure '
-                       'correct operation, please specify a text encoding.')
-                warnings.warn(msg.format(filename))
-
-        self._file = file
-        SqliteDataSource.__init__(self, connection, 'main')
-
-    def __repr__(self):
-        """Return a string representation of the data source."""
-        cls_name = self.__class__.__name__
-        src_name = self._file
-        return '{0}({1!r})'.format(cls_name, src_name)
-
-    @classmethod
-    def _populate_database(cls, connection, reader, table='main'):
-        """Insert *reader* rows into given *table*."""
+        # Set isolation_level to None for proper transaction handling.
         _isolation_level = connection.isolation_level
         connection.isolation_level = None
+
         cursor = connection.cursor()
-        cursor.execute('PRAGMA synchronous=OFF')
+        cursor.execute('PRAGMA synchronous=OFF')  # For faster loading.
         cursor.execute('BEGIN TRANSACTION')
         try:
-            csv_header = next(reader)
-            statement = cls._build_create_statement(table, csv_header)
+            table = 'main'
+            statement = cls._from_records_build_create_statement(table, columns)
             cursor.execute(statement)
 
-            for row in reader:  # Insert all rows.
-                if not row:
-                    continue  # Skip if row is empty.
-                statement, params = cls._build_insert_statement(table, row)
+            for row in data:  # Insert all rows.
+                if isinstance(row, dict):
+                    row = [row[x] for x in columns]
+                statement, params = cls._from_records_build_insert_statement(table, row)
                 try:
                     cursor.execute(statement, params)
                 except Exception as e:
@@ -270,7 +240,7 @@ class CsvDataSource(SqliteDataSource):
                     msg = ('\n'
                            '    row -> %s\n'
                            '    sql -> %s\n'
-                           ' params -> %s' % (row, statement, params))
+                           ' params -> %s') % (row, statement, params)
                     msg = str(e).strip() + msg
                     raise exc_cls(msg)
             connection.commit()  # COMMIT TRANSACTION
@@ -282,22 +252,25 @@ class CsvDataSource(SqliteDataSource):
         finally:
             connection.isolation_level = _isolation_level  # Restore original.
 
+        return cls(connection, table)
+
     @classmethod
-    def _build_create_statement(cls, table, columns):
+    def _from_records_build_create_statement(cls, table, columns):
         """Return 'CREATE TABLE' statement."""
-        cls._assert_unique(columns)
-        columns = [cls._normalize_column(x) for x in columns]
+        cls._from_records_assert_unique(columns)
+        columns = [cls._from_records_normalize_column(x) for x in columns]
         return 'CREATE TABLE %s (%s)' % (table, ', '.join(columns))
 
     @staticmethod
-    def _build_insert_statement(table, row):
+    def _from_records_build_insert_statement(table, row):
         """Return 'INSERT INTO' statement."""
+        assert not isinstance(row, str), '`row` must be list or tuple, not str'
         statement = 'INSERT INTO ' + table + ' VALUES (' + ', '.join(['?'] * len(row)) + ')'
         parameters = row
         return statement, parameters
 
     @staticmethod
-    def _normalize_column(name):
+    def _from_records_normalize_column(name):
         """Normalize value for use as SQLite column name."""
         name = name.strip()
         name = name.replace('"', '""')  # Escape quotes.
@@ -306,7 +279,7 @@ class CsvDataSource(SqliteDataSource):
         return '"' + name + '"'
 
     @staticmethod
-    def _assert_unique(lst):
+    def _from_records_assert_unique(lst):
         """Asserts that list of items is unique, raises Exception if not."""
         values = []
         duplicates = []
@@ -321,6 +294,83 @@ class CsvDataSource(SqliteDataSource):
             raise ValueError('Duplicate values: ' + ', '.join(duplicates))
 
 
+class CsvDataSource(BaseDataSource):
+    """Loads CSV data from *file* (path or file-like object):
+    ::
+
+        subjectData = datatest.CsvDataSource('mydata.csv')
+
+    """
+    def __init__(self, file, encoding=None, in_memory=False):
+        """Initialize self."""
+        self._file_repr = repr(file)
+
+        # If *file* is relative path, uses directory of calling file as base.
+        if isinstance(file, str) and not os.path.isabs(file):
+            calling_frame = sys._getframe(1)
+            calling_file = inspect.getfile(calling_frame)
+            base_path = os.path.dirname(calling_file)
+            file = os.path.join(base_path, file)
+            file = os.path.normpath(file)
+
+        # Populate database.
+        if encoding:
+            with _UnicodeCsvReader(file, encoding=encoding) as reader:
+                columns = next(reader)  # Header row.
+                self._source = SqliteDataSource.from_records(reader, columns)
+
+        else:
+            try:
+                with _UnicodeCsvReader(file, encoding='utf-8') as reader:
+                    columns = next(reader)  # Header row.
+                    self._source = SqliteDataSource.from_records(reader, columns)
+
+            except UnicodeDecodeError:
+                with _UnicodeCsvReader(file, encoding='iso8859-1') as reader:
+                    columns = next(reader)  # Header row.
+                    self._source = SqliteDataSource.from_records(reader, columns)
+
+                try:
+                    filename = os.path.basename(file)
+                except AttributeError:
+                    filename = repr(file)
+                msg = ('\nData in file {0!r} does not appear to be encoded '
+                       'as UTF-8 (used ISO-8859-1 as fallback). To assure '
+                       'correct operation, please specify a text encoding.')
+                warnings.warn(msg.format(filename))
+
+    def __repr__(self):
+        """Return a string representation of the data source."""
+        cls_name = self.__class__.__name__
+        src_file = self._file_repr
+        return '{0}({1})'.format(cls_name, src_file)
+
+    def columns(self):
+        """Return list of column names."""
+        return self._source.columns()
+
+    def slow_iter(self):
+        """Return iterable of dictionary rows (like csv.DictReader)."""
+        return self._source.slow_iter()
+
+    def sum(self, column, **filter_by):
+        """Return sum of values in column."""
+        return self._source.sum(column, **filter_by)
+
+    def count(self, **filter_by):
+        """Return count of rows."""
+        return self._source.count(**filter_by)
+
+    def unique(self, *column, **filter_by):
+        """Return iterable of tuples of unique column values."""
+        return self._source.unique(*column, **filter_by)
+
+    def set(self, column, **filter_by):
+        """Convenience function for unwrapping single column results
+        from ``unique()`` and returning as a set."""
+        return self._source.set(column, **filter_by)
+
+
 class FilteredDataSource(BaseDataSource):
     """A wrapper class to filter for those records of *source* for which
     *function* returns true. If *function* is ``None``, the identity
@@ -330,12 +380,12 @@ class FilteredDataSource(BaseDataSource):
     The following example filters the original data source to records
     for which the "foo" column contains positive numeric values::
 
-        def pos_val(dict_row):
+        def is_positive(dict_row):
             val = dict_row['foo']
             return int(val) > 0
 
         orig_src = datatest.CsvDataSource('mydata.csv')
-        subjectData = datatest.FilteredDataSource(pos_val, orig_src)
+        subjectData = datatest.FilteredDataSource(is_positive, orig_src)
 
     The original source is stored in the ``__wrapped__`` attribute.
 
