@@ -8,6 +8,8 @@ from datatest.datasource import CsvDataSource
 from datatest.datasource import FilteredDataSource
 from datatest.datasource import MultiDataSource
 from datatest.datasource import UniqueDataSource
+from datatest.datasource_extras import ExcelDataSource
+
 from datatest.diff import ExtraColumn
 from datatest.diff import ExtraValue
 from datatest.diff import ExtraSum
@@ -31,6 +33,7 @@ __all__ = [
     'CsvDataSource',
     'FilteredDataSource',
     'MultiDataSource',
+    'ExcelDataSource',
 
     # Differences.
     'ExtraColumn',
