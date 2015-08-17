@@ -201,11 +201,10 @@ class SqliteDataSource(BaseDataSource):
         even begins could lead to worse performance so use them with
         discretion.
 
-        For example:  If "town" is a commonly used key-word filter in
-        many of your tests (like
-        ``self.assertValueSet('zipcode', town='Columbus')``), then you
-        might be able to improve performance by adding an index for the
-        "town" column::
+        For example:  If you're using "town" to group aggregation
+        tests (like ``self.assertValueSum('population', ['town'])``),
+        then you might be able to improve performance by adding an index
+        for the "town" column::
 
             subjectData.create_index('town')
 
