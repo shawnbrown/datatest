@@ -198,9 +198,9 @@ class SqliteDataSource(BaseDataSource):
 
     def create_index(self, *columns):
         """Creating an index for certain columns can speed up data
-        testing in many cases.
+        testing in some cases.
 
-        Indexes should be added one-be-one to tune a test suite's
+        Indexes should be added one-by-one to tune a test suite's
         over-all performance.  Creating several indexes before testing
         even begins could lead to worse performance so use them with
         discretion.
@@ -423,7 +423,7 @@ class CsvDataSource(BaseDataSource):
 
     def create_index(self, *columns):
         """Creating an index for certain columns can speed up data
-        testing in many cases.
+        testing in some cases.
 
         See :meth:`SqliteDataSource.create_index
         <datatest.SqliteDataSource.create_index>` for more details.
