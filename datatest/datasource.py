@@ -295,8 +295,10 @@ class SqliteDataSource(BaseDataSource):
 
         except Exception as e:
             connection.rollback()  # ROLLBACK TRANSACTION
-            cls = e.__class__
-            raise cls('{0}\n{1}'.format(e, statement))
+            if isinstance(e, UnicodeDecodeError):
+                e.reason += '\n{0}'.format(statement)
+                raise e
+            raise e.__class__('{0}\n{1}'.format(e, statement))
 
         finally:
             connection.isolation_level = _isolation_level  # Restore original.
