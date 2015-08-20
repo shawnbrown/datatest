@@ -295,7 +295,8 @@ class SqliteDataSource(BaseDataSource):
 
         except Exception as e:
             connection.rollback()  # ROLLBACK TRANSACTION
-            raise e
+            cls = e.__class__
+            raise cls('{0}\n{1}'.format(e, statement))
 
         finally:
             connection.isolation_level = _isolation_level  # Restore original.
