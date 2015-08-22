@@ -41,7 +41,7 @@ class BaseDataSource(object):
     def columns(self):
         """NotImplemented
 
-        Return a sequence (e.g. a list) of column names.
+        Return list of column names.
         """
         return NotImplemented
 
@@ -434,7 +434,7 @@ class CsvDataSource(BaseDataSource):
 
 class FilteredDataSource(BaseDataSource):
     """A wrapper class to filter for those records of *source* for which
-    *function* returns true. If *function* is ``None``, the identity
+    *function* returns true.  If *function* is ``None``, the identity
     function is assumed, that is, it filters for records of *source*
     which contain at least one value that evaluates as true.
 
@@ -470,13 +470,126 @@ class FilteredDataSource(BaseDataSource):
         return '{0}({1}, {2})'.format(cls_name, fun_name, src_name)
 
     def columns(self):
+        """Return list of column names."""
         return self.__wrapped__.columns()
 
     def slow_iter(self):
+        """Return iterable of dictionary rows (like csv.DictReader)."""
         return (x for x in self.__wrapped__.slow_iter() if self._function(x))
 
 
-#class MappedDataSource(BaseDataSource):
+class GroupedDataSource(BaseDataSource):
+    """A wrapper class to group and aggregate *source* values.  If
+    provided, the *aggregate* function must operate on an iterable of
+    dicts and return a single dict as its result---result values are
+    automatically appended as new columns.  If *aggregate* is omitted,
+    unique groups are returned by themselves.
+
+    The following example aggregates the "population" column grouped
+    by the "state" and "county" columns::
+
+        def agg(group):
+            total = sum(float(row['population']) for row in group)
+            return {'total_pop': total}
+
+        src = CsvDataSource('mydata.csv')
+        subjectData = GroupedDataSource(src, ['state', 'county'], agg)
+
+    The original source is stored in the ``__wrapped__`` attribute.
+
+    """
+
+    def __init__(self, source, group_by, aggregate=None):
+        msg = 'Sources must be derived from BaseDataSource'
+        assert isinstance(source, BaseDataSource), msg
+        self.__wrapped__ = source
+        self._group_by = list(group_by)
+        self._aggregate = aggregate
+
+    def __repr__(self):
+        cls_name = self.__class__.__name__
+        src_name = self.__wrapped__
+        col_name = repr(self._group_by)
+        if self._aggregate:
+            agg_name = ', ' + self._aggregate.__name__
+        else:
+            agg_name = ''
+        return '{0}({1}, {2}{3})'.format(cls_name, src_name, col_name, agg_name)
+
+    def columns(self):
+        """Return list of column names."""
+        if self._aggregate:
+            one_row = next(self.__wrapped__.slow_iter())
+            sample_result = self._aggregate(one_row)
+            agg_keys = sorted(sample_result.keys())
+        else:
+            agg_keys = []
+
+        return self._group_by + agg_keys
+
+    def slow_iter(self):
+        """Return iterable of dictionary rows (like csv.DictReader)."""
+        for row in self.__wrapped__.unique(*self._group_by):
+            group_by = dict(zip(self._group_by, row))
+
+            if self._aggregate:
+                iterable = self.__wrapped__.slow_iter()
+                group = BaseDataSource._base_filter_by(iterable, **group_by)
+                aggregate = self._aggregate(group)
+                group_by.update(aggregate)
+
+            yield group_by
+
+
+class MappedDataSource(BaseDataSource):
+    """A wrapper to apply *function* to every row in *source* and
+    return a new source using these results.  *function* must accept a
+    single dict and return a dict.  This class can be used to remove
+    columns, rename columns, and create new columns.
+
+    The following example calculates the percentage of hispanic
+    population and appends the result as a new column::
+
+        def make_percent(row):
+            hisp = float(row['hisp_population'])
+            total = float(row['total_population'])
+            row['hisp_percent'] = hisp / total
+            return row
+
+        orig_src = datatest.CsvDataSource('mydata.csv')
+        subjectData = datatest.MappedDataSource(orig_src, make_percent)
+
+    The original source is stored in the ``__wrapped__`` attribute.
+
+    """
+
+    def __init__(self, source, function):
+        msg = 'Sources must be derived from BaseDataSource'
+        assert isinstance(source, BaseDataSource), msg
+        self._function = function
+        self.__wrapped__ = source
+
+    def __repr__(self):
+        cls_name = self.__class__.__name__
+        fun_name = self._function.__name__
+        src_name = self.__wrapped__
+        return '{0}({1}, {2})'.format(cls_name, fun_name, src_name)
+
+    def columns(self):
+        """Return list of column names."""
+        one_row = next(self.slow_iter())
+        keys = list(one_row.keys())
+
+        cols = []
+        for col in self.__wrapped__.columns():
+            if col in keys:
+                cols.append(keys.pop(keys.index(col)))
+        return cols + sorted(keys)
+
+    def slow_iter(self):
+        """Return iterable of dictionary rows (like csv.DictReader)."""
+        for row in self.__wrapped__.slow_iter():
+            yield self._function(row)
 
 
 class MultiDataSource(BaseDataSource):
@@ -516,7 +629,7 @@ class MultiDataSource(BaseDataSource):
                 yield dict((col, row.get(col, '')) for col in columns)
 
     def columns(self):
-        """Return sequence or collection of column names."""
+        """Return list of column names."""
         columns = []
         for source in self.__wrapped__:
             for col in source.columns():
@@ -624,9 +737,11 @@ class UniqueDataSource(BaseDataSource):
         return '{0}({1}, {2})'.format(cls_name, src_name, col_name)
 
     def columns(self):
+        """Return list of column names."""
         return self._columns
 
     def slow_iter(self):
+        """Return iterable of dictionary rows (like csv.DictReader)."""
         columns = self._columns
         for row in self.__wrapped__.unique(*columns):
             yield dict(zip(columns, row))

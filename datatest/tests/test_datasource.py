@@ -15,6 +15,8 @@ from datatest.datasource import BaseDataSource
 from datatest.datasource import SqliteDataSource
 from datatest.datasource import CsvDataSource
 from datatest.datasource import FilteredDataSource
+from datatest.datasource import GroupedDataSource
+from datatest.datasource import MappedDataSource
 from datatest.datasource import MultiDataSource
 from datatest.datasource import UniqueDataSource
 
@@ -82,7 +84,15 @@ class TestBaseDataSource(unittest.TestCase):
 
     def test_filter_iter(self):
         """Test filter iterator."""
-        testdata = [dict(zip(self.fieldnames, x)) for x in self.testdata]
+        testdata = [
+            {'label1': 'a', 'label2': 'x', 'value': '17'},
+            {'label1': 'a', 'label2': 'x', 'value': '13'},
+            {'label1': 'a', 'label2': 'y', 'value': '20'},
+            {'label1': 'a', 'label2': 'z', 'value': '15'},
+            {'label1': 'b', 'label2': 'z', 'value': '5' },
+            {'label1': 'b', 'label2': 'y', 'value': '40'},
+            {'label1': 'b', 'label2': 'x', 'value': '25'},
+        ]
 
         # Filter by single value (where label1 is 'a').
         results = self.datasource._base_filter_by(testdata, label1='a')
@@ -615,4 +625,131 @@ class TestMultiDataSourceDifferentColumns(unittest.TestCase):
         result = self.datasource.unique('value', label1='a', label2='x')
         self.assertEqual(expected, list(result))
 
+
+class TestGroupedDataSource(TestBaseDataSource):
+    def setUp(self):
+        self.minimal_source = MinimalDataSource(self.testdata, self.fieldnames)
+        self.datasource = GroupedDataSource(self.minimal_source, self.fieldnames)
+
+    def test_grouped_no_aggregate(self):
+        # Two columns, no aggregate.
+        datasource = GroupedDataSource(self.minimal_source, ['label1', 'label2'])
+        expected = [
+            {'label1': 'a', 'label2': 'x'},
+            {'label1': 'a', 'label2': 'y'},
+            {'label1': 'a', 'label2': 'z'},
+            {'label1': 'b', 'label2': 'z'},
+            {'label1': 'b', 'label2': 'y'},
+            {'label1': 'b', 'label2': 'x'}
+        ]
+        result = datasource.slow_iter()
+        self.assertEqual(expected, list(result))
+
+        # One column, no aggregate.
+        datasource = GroupedDataSource(self.minimal_source, ['label2'])
+        expected = [
+            {'label2': 'x'},
+            {'label2': 'y'},
+            {'label2': 'z'},
+        ]
+        result = datasource.slow_iter()
+        self.assertEqual(expected, list(result))
+
+    def test_repr(self):
+        # Test with aggregate.
+        agg = lambda grp: sum(float(x) for x in grp)
+        src = GroupedDataSource(self.minimal_source, ['label1', 'label2'], agg)
+        self.assertTrue(repr(src).startswith('GroupedDataSource('))
+        self.assertTrue(repr(src).endswith(", ['label1', 'label2'], <lambda>)"))
+
+        # Test without aggregate.
+        src = GroupedDataSource(self.minimal_source, ['label1', 'label2'])
+        self.assertTrue(repr(src).startswith('GroupedDataSource('))
+        self.assertTrue(repr(src).endswith(", ['label1', 'label2'])"))
+
+    def test_grouped_with_aggregate(self):
+        # Group by 'label1' and 'label2'.
+        def totalpop(group):
+            values = [float(row['value']) for row in group]
+            return {'total': sum(values)}
+        datasource = GroupedDataSource(self.minimal_source,
+                                       ['label1', 'label2'],
+                                       aggregate=totalpop)
+
+        expected = [
+            {'label1': 'a', 'label2': 'x', 'total': 30},  # <- 17 + 13
+            {'label1': 'a', 'label2': 'y', 'total': 20},
+            {'label1': 'a', 'label2': 'z', 'total': 15},
+            {'label1': 'b', 'label2': 'z', 'total': 5 },
+            {'label1': 'b', 'label2': 'y', 'total': 40},
+            {'label1': 'b', 'label2': 'x', 'total': 25},
+        ]
+        result = datasource.slow_iter()
+        self.assertEqual(expected, list(result))
+
+        # Group by 'label1' only.
+        fn = lambda grp: {'value': sum(float(row['value']) for row in grp)}
+        datasource = GroupedDataSource(self.minimal_source,
+                                       ['label1'],
+                                       aggregate=fn)
+
+        expected = [
+            {'label1': 'a', 'value': 65.0},
+            {'label1': 'b', 'value': 70.0},
+        ]
+        result = datasource.slow_iter()
+        self.assertEqual(expected, list(result))
+
+
+class TestMappedDataSource(TestBaseDataSource):
+    def setUp(self):
+        self.fieldnames = ['label1', 'label2', 'value_a', 'value_b']
+        self.testdata = [
+            ['a', 'x', '17', '23'],
+            ['a', 'x', '13', '12'],
+            ['a', 'y', '20', '30'],
+            ['a', 'z', '15', '15'],
+            ['b', 'z',  '5', '11'],
+            ['b', 'y', '40', '24'],
+            ['b', 'x', '25', '39'],
+        ]
+        self.minimal_source = MinimalDataSource(self.testdata, self.fieldnames)
+
+        fn = lambda row: {
+            'label1': row['label1'],
+            'label2': row['label2'],
+            'value':  row['value_a'],  # <- 'value_a' mapped to 'value'
+        }
+        self.datasource = MappedDataSource(self.minimal_source, fn)
+
+    def test_mapped_basic(self):
+        def fn(row):
+            value_a = float(row['value_a']) if row['value_a'] else 0.0
+            value_b = float(row['value_b']) if row['value_b'] else 0.0
+
+            if value_a != None and value_b != None:
+                pct = value_a / (value_a + value_b)
+            else:
+                pct = None
+
+            dic = {
+                'label1': row['label1'],
+                'label2': row['label2'],
+                'percent_a': pct
+            }
+            return dic
+
+        datasource = MappedDataSource(self.minimal_source, fn)
+        result = datasource.slow_iter()
+
+        expected = [
+            {'label1': 'a', 'label2': 'x', 'percent_a': 0.425},
+            {'label1': 'a', 'label2': 'x', 'percent_a': 0.52},
+            {'label1': 'a', 'label2': 'y', 'percent_a': 0.4},
+            {'label1': 'a', 'label2': 'z', 'percent_a': 0.5},
+            {'label1': 'b', 'label2': 'z', 'percent_a': 0.3125},
+            {'label1': 'b', 'label2': 'y', 'percent_a': 0.625},
+            {'label1': 'b', 'label2': 'x', 'percent_a': 0.390625},
+        ]
+        self.assertEqual(list(result), expected)
 

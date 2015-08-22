@@ -25,18 +25,24 @@ Data source objects are used to access data in various formats.
 The following "wrapper" classes can be used to alter an existing data
 source object:
 
-+----------------------------------------------+-----------------------------------------+
-| Class                                        | Loads                                   |
-+==============================================+=========================================+
-| :class:`FilteredDataSource(f, s)             | wrapper that filters source *s* to      |
-| <datatest.FilteredDataSource>`               | records where function *f* returns True |
-+----------------------------------------------+-----------------------------------------+
-| :class:`MultiDataSource(*s)                  | wrapper for multiple sources *s* that   |
-| <datatest.MultiDataSource>`                  | act as a single data source             |
-+----------------------------------------------+-----------------------------------------+
-| :class:`UniqueDataSource(s, c)               | wrapper that filters source *s* to      |
-| <datatest.UniqueDataSource>`                 | unique values in list of columns *c*    |
-+----------------------------------------------+-----------------------------------------+
++----------------------------------------------+------------------------------------------+
+| Class                                        | Loads                                    |
++==============================================+==========================================+
+| :class:`FilteredDataSource(f, s)             | wrapper that filters source *s* to       |
+| <datatest.FilteredDataSource>`               | records where function *f* returns True  |
++----------------------------------------------+------------------------------------------+
+| :class:`GroupedDataSource(s, g, a=None)      | wrapper that groups source *s* by groups |
+| <datatest.GroupedDataSource>`                | *g* and applies aggregate function *a*   |
++----------------------------------------------+------------------------------------------+
+| :class:`MappedDataSource(s, f)               | wrapper that applies function *f* to     |
+| <datatest.MappedDataSource>`                 | every row of source *s*                  |
++----------------------------------------------+------------------------------------------+
+| :class:`MultiDataSource(*s)                  | wrapper for multiple sources *s* that    |
+| <datatest.MultiDataSource>`                  | acts as a single data source             |
++----------------------------------------------+------------------------------------------+
+| :class:`UniqueDataSource(s, c)               | wrapper that filters source *s* to       |
+| <datatest.UniqueDataSource>`                 | unique values in list of columns *c*     |
++----------------------------------------------+------------------------------------------+
 
 These wrappers allow for a great deal of flexibility but extensive use
 could make testing slow.  If you find that testing has become slow
@@ -48,6 +54,10 @@ constructor::
 
 
 .. autoclass:: datatest.FilteredDataSource
+
+.. autoclass:: datatest.GroupedDataSource
+
+.. autoclass:: datatest.MappedDataSource
 
 .. autoclass:: datatest.MultiDataSource
 

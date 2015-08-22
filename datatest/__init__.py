@@ -6,6 +6,8 @@ from datatest.datasource import BaseDataSource
 from datatest.datasource import SqliteDataSource
 from datatest.datasource import CsvDataSource
 from datatest.datasource import FilteredDataSource
+from datatest.datasource import GroupedDataSource
+from datatest.datasource import MappedDataSource
 from datatest.datasource import MultiDataSource
 from datatest.datasource import UniqueDataSource
 from datatest.datasource_extras import ExcelDataSource
@@ -32,7 +34,10 @@ __all__ = [
     'SqliteDataSource',
     'CsvDataSource',
     'FilteredDataSource',
+    'GroupedDataSource',
+    'MappedDataSource',
     'MultiDataSource',
+    'UniqueDataSource',
     'ExcelDataSource',
 
     # Differences.
