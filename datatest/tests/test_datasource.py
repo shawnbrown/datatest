@@ -467,11 +467,11 @@ class TestCsvDataSource_ActualFileHandling(MkdtempTestCase):
 class TestFilteredDataSource(TestBaseDataSource):
     def setUp(self):
         self.orig_src = MinimalDataSource(self.testdata, self.fieldnames)
-        self.datasource = FilteredDataSource(None, self.orig_src)
+        self.datasource = FilteredDataSource(self.orig_src)
 
     def test_filter(self):
         not_y = lambda row: row['label2'] != 'y'
-        self.datasource = FilteredDataSource(not_y, self.orig_src)
+        self.datasource = FilteredDataSource(self.orig_src, not_y)
 
         expected = [
             {'label1': 'a', 'label2': 'x', 'value': '17'},
@@ -486,8 +486,8 @@ class TestFilteredDataSource(TestBaseDataSource):
     def test_repr(self):
         def not_y(row):
             return row['label2'] != 'y'
-        src = FilteredDataSource(not_y, self.orig_src)
-        self.assertTrue(repr(src).startswith('FilteredDataSource(not_y, '))
+        src = FilteredDataSource(self.orig_src, not_y)
+        self.assertEqual(repr(src), 'FilteredDataSource(MinimalDataSource, not_y)')
 
 
 class TestMultiDataSource(TestBaseDataSource):

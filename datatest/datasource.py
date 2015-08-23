@@ -446,13 +446,14 @@ class FilteredDataSource(BaseDataSource):
             return int(val) > 0
 
         orig_src = datatest.CsvDataSource('mydata.csv')
-        subjectData = datatest.FilteredDataSource(is_positive, orig_src)
+        subjectData = datatest.FilteredDataSource(orig_src, is_positive)
 
     The original source is stored in the ``__wrapped__`` attribute.
 
     """
 
-    def __init__(self, function, source):
+    def __init__(self, source, function=None):
+        """Initialize self."""
         msg = 'Sources must be derived from BaseDataSource'
         assert isinstance(source, BaseDataSource), msg
 
@@ -464,10 +465,11 @@ class FilteredDataSource(BaseDataSource):
         self.__wrapped__ = source
 
     def __repr__(self):
+        """Return a string representation of the data source."""
         cls_name = self.__class__.__name__
+        src_name = repr(self.__wrapped__)
         fun_name = self._function.__name__
-        src_name = self.__wrapped__
-        return '{0}({1}, {2})'.format(cls_name, fun_name, src_name)
+        return '{0}({1}, {2})'.format(cls_name, src_name, fun_name)
 
     def columns(self):
         """Return list of column names."""
@@ -500,6 +502,7 @@ class GroupedDataSource(BaseDataSource):
     """
 
     def __init__(self, source, group_by, aggregate=None):
+        """Initialize self."""
         msg = 'Sources must be derived from BaseDataSource'
         assert isinstance(source, BaseDataSource), msg
         self.__wrapped__ = source
@@ -507,6 +510,7 @@ class GroupedDataSource(BaseDataSource):
         self._aggregate = aggregate
 
     def __repr__(self):
+        """Return a string representation of the data source."""
         cls_name = self.__class__.__name__
         src_name = self.__wrapped__
         col_name = repr(self._group_by)
@@ -564,12 +568,14 @@ class MappedDataSource(BaseDataSource):
     """
 
     def __init__(self, source, function):
+        """Initialize self."""
         msg = 'Sources must be derived from BaseDataSource'
         assert isinstance(source, BaseDataSource), msg
         self._function = function
         self.__wrapped__ = source
 
     def __repr__(self):
+        """Return a string representation of the data source."""
         cls_name = self.__class__.__name__
         fun_name = self._function.__name__
         src_name = self.__wrapped__

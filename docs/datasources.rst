@@ -28,7 +28,7 @@ source object:
 +----------------------------------------------+------------------------------------------+
 | Class                                        | Loads                                    |
 +==============================================+==========================================+
-| :class:`FilteredDataSource(f, s)             | wrapper that filters source *s* to       |
+| :class:`FilteredDataSource(s, f)             | wrapper that filters source *s* to       |
 | <datatest.FilteredDataSource>`               | records where function *f* returns True  |
 +----------------------------------------------+------------------------------------------+
 | :class:`GroupedDataSource(s, g, a=None)      | wrapper that groups source *s* by groups |
