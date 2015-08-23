@@ -10,15 +10,16 @@ except ImportError:
 
 
 class ExcelDataSource(BaseDataSource):
-    """Loads XLSX or XLS *worksheet* from file *path*::
-
-        subjectData = datatest.ExcelDataSource('mydata.xlsx', 'Sheet 2')
-
-    If *worksheet* is not specified, defaults to the the first worksheet::
+    """Loads first worksheet from XLSX or XLS file *path*::
 
         subjectData = datatest.ExcelDataSource('mydata.xlsx')
 
+    Specific worksheets can be accessed by name::
+
+        subjectData = datatest.ExcelDataSource('mydata.xlsx', 'Sheet 2')
+
     """
+
     def __init__(self, path, worksheet=None, in_memory=False):
         """Initialize self."""
         self._file_repr = repr(path)
