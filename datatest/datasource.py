@@ -710,41 +710,4 @@ class MultiDataSource(BaseDataSource):
         return total_result
 
 
-class UniqueDataSource(BaseDataSource):
-    """A wrapper class to filter *source* for unique values in the given
-    list of *columns*.
-
-    The following example accesses the unique "state" and "county"
-    values contained in the original source::
-
-        orig_src = datatest.CsvDataSource('mydata.csv')
-        subjectData = UniqueDataSource(orig_src, ['state', 'county'])
-
-    The original source is stored in the ``__wrapped__`` attribute.
-
-    """
-
-    def __init__(self, source, columns):
-        msg = 'Sources must be derived from BaseDataSource'
-        assert isinstance(source, BaseDataSource), msg
-        self.__wrapped__ = source
-        self._columns = columns
-
-    def __repr__(self):
-        cls_name = self.__class__.__name__
-        src_name = self.__wrapped__
-        col_name = repr(self._columns)
-        return '{0}({1}, {2})'.format(cls_name, src_name, col_name)
-
-    def columns(self):
-        """Return list of column names."""
-        return self._columns
-
-    def slow_iter(self):
-        """Return iterable of dictionary rows (like csv.DictReader)."""
-        columns = self._columns
-        for row in self.__wrapped__.unique(*columns):
-            yield dict(zip(columns, row))
-
-
 #DefaultDataSource = CsvDataSource

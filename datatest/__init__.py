@@ -9,7 +9,6 @@ from datatest.datasource import FilteredDataSource
 from datatest.datasource import GroupedDataSource
 from datatest.datasource import MappedDataSource
 from datatest.datasource import MultiDataSource
-from datatest.datasource import UniqueDataSource
 from datatest.datasource_extras import ExcelDataSource
 
 from datatest.diff import ExtraColumn
@@ -37,7 +36,6 @@ __all__ = [
     'GroupedDataSource',
     'MappedDataSource',
     'MultiDataSource',
-    'UniqueDataSource',
     'ExcelDataSource',
 
     # Differences.

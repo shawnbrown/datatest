@@ -40,9 +40,6 @@ source object:
 | :class:`MultiDataSource(*s)                  | wrapper for multiple sources *s* that    |
 | <datatest.MultiDataSource>`                  | acts as a single data source             |
 +----------------------------------------------+------------------------------------------+
-| :class:`UniqueDataSource(s, c)               | wrapper that filters source *s* to       |
-| <datatest.UniqueDataSource>`                 | unique values in list of columns *c*     |
-+----------------------------------------------+------------------------------------------+
 
 These wrappers allow for a great deal of flexibility but extensive use
 could make testing slow.  If you find that testing has become slow
@@ -60,8 +57,6 @@ constructor::
 .. autoclass:: datatest.MappedDataSource
 
 .. autoclass:: datatest.MultiDataSource
-
-.. autoclass:: datatest.UniqueDataSource
 
 
 Common Methods
