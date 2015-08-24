@@ -55,8 +55,9 @@ class BaseDataSource(object):
     def sum(self, column, **filter_by):
         """Return sum of values in *column* (uses ``slow_iter``)."""
         iterable = self._base_filter_by(self.slow_iter(), **filter_by)
-        iterable = (x for x in iterable if x)
-        return sum(Decimal(x[column]) for x in iterable)
+        iterable = (x[column] for x in iterable)
+        make_decimal = lambda x: Decimal(x) if x else Decimal('0')
+        return sum(make_decimal(x) for x in iterable)
 
     def count(self, **filter_by):
         """Return count of rows (uses ``slow_iter``)"""
