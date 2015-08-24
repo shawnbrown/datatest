@@ -149,6 +149,16 @@ class PandasDataSource(BaseDataSource):
         return df
 
     @classmethod
+    def from_source(cls, source):
+        """Alternate constructor to load an existing data source:
+        ::
+
+            subjectData = datatest.PandasDataSource.from_source(source)
+
+        """
+        return cls.from_records(source.slow_iter(), source.columns())
+
+    @classmethod
     def from_records(cls, data, columns):
         """Alternate constructor to load an existing collection of
         records.  Loads *data* (an iterable of lists, tuples, or dicts)
@@ -159,14 +169,3 @@ class PandasDataSource(BaseDataSource):
         """
         df = pandas.DataFrame(data, columns=columns)
         return cls(df)
-
-    @classmethod
-    def from_source(cls, source):
-        """Alternate constructor to load an existing data source:
-        ::
-
-            subjectData = datatest.PandasDataSource.from_source(source)
-
-        """
-        return cls.from_records(source.slow_iter(), source.columns())
-
