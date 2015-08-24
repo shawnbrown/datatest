@@ -158,6 +158,18 @@ class TestSumDiffs(unittest.TestCase):
         diff2 = _SumBase(1, 100)
         self.assertEqual(diff1, diff2)
 
+        diff1 = _SumBase(1.0, 100.0)
+        diff2 = _SumBase(1.0, 100.0)
+        self.assertEqual(diff1, diff2)
+
+        diff1 = _SumBase(1.0, 100)
+        diff2 = _SumBase(1,   100)
+        self.assertEqual(diff1, diff2)
+
+        diff1 = _SumBase(1, 100.0)
+        diff2 = _SumBase(1, 100)
+        self.assertEqual(diff1, diff2)
+
         diff1 = _SumBase(1, 100, foo='aaa', bar='bbb')
         diff2 = _SumBase(1, 100, bar='bbb', foo='aaa')
         self.assertEqual(diff1, diff2)

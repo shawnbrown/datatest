@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+from decimal import Decimal as _Decimal
+
+
 class DiffBase(object):
     def __init__(self):
         raise NotImplementedError('Do not instantiate directly -- use '
@@ -56,17 +59,29 @@ class ExtraValue(_ValueBase): pass
 class MissingValue(_ValueBase): pass
 
 
+def _make_decimal(d):
+    if isinstance(d, float):
+        d = str(d)
+    d = _Decimal(d)
+
+    # Remove_exponent (from official docs: 9.4.10. Decimal FAQ).
+    if d == d.to_integral():
+        return d.quantize(_Decimal(1))
+    return d.normalize()
+
+
 class _SumBase(DiffBase):
     def __init__(self, diff, sum, **kwds):
-        self.diff = diff
-        self.sum = sum
+        self.diff = _make_decimal(diff)
+        self.sum = _make_decimal(sum)
         self.kwds = kwds
 
     def __repr__(self):
         clsname = self.__class__.__name__
         kwds = self._kwds_format()
         diff = '+' + str(self.diff) if self.diff > 0 else str(self.diff)
-        return '{0}({1}, {2!r}{3})'.format(clsname, diff, self.sum, kwds)
+        #return '{0}({1}, {2!r}{3})'.format(clsname, diff, self.sum, kwds)
+        return '{0}({1}, {2}{3})'.format(clsname, diff, self.sum, kwds)
 
 class ExtraSum(_SumBase):
     def __init__(self, diff, sum, **kwds):

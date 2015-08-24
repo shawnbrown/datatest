@@ -14,6 +14,7 @@ from datatest.diff import ExtraSum
 from datatest.diff import MissingColumn
 from datatest.diff import MissingValue
 from datatest.diff import MissingSum
+from datatest.diff import _make_decimal
 
 __datatest = True  # Used to detect in-module stack frames (which are
                    # omitted from output).
@@ -492,6 +493,7 @@ class DataTestCase(TestCase):
             with self.acceptTolerance(5):  # Accepts +/- 5
                 self.assertDataSum('column2', group_by=['column1'])
         """
+        tolerance = _make_decimal(tolerance)
         context = _AcceptAbsoluteToleranceContext(tolerance, self, callableObj)
         return context.handle('acceptTolerance', callableObj, args, kwds)
 
@@ -507,6 +509,7 @@ class DataTestCase(TestCase):
             with self.acceptPercentTolerance(0.02):  # Accepts +/- 2%
                 self.assertDataSum('column2', group_by=['column1'])
         """
+        tolerance = _make_decimal(tolerance)
         context = _AcceptPercentToleranceContext(tolerance, self, callableObj)
         return context.handle('acceptPercentTolerance', callableObj, args, kwds)
 
