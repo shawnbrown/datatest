@@ -283,3 +283,51 @@ except AttributeError:
         return context.handle('assertWarns', callable_obj, args, kwargs)
     TestCase.assertWarns = _assertWarns
 
+
+try:
+    skip  # New in 2.7 and 3.1
+    skipIf
+    skipUnless
+except NameError:
+    # The following code was adapted from the Python 2.7 standard library.
+    import functools
+
+    def _id(obj):
+        return obj
+
+    def skip(reason):
+        """Unconditionally skip a test."""
+        import types
+        def decorator(test_item):
+            #if not isinstance(test_item, (type, types.ClassType)):
+            #    @functools.wraps(test_item)
+            #    def skip_wrapper(*args, **kwargs):
+            #        raise SkipTest(reason)
+            #    test_item = skip_wrapper
+            #
+            #test_item.__unittest_skip__ = True
+            #test_item.__unittest_skip_why__ = reason
+            #return test_item
+
+            # In older version of Python, tracking skipped tests is
+            # problematic since the test loader and runner handle this
+            # internally.  For this reason, this compatibility wrapper
+            # simply wraps skipped tests in a functoin that passes
+            # silently:
+            @functools.wraps(test_item)
+            def skip_wrapper(*args, **kwargs):
+                pass
+            return skip_wrapper
+        return decorator
+
+    def skipIf(condition, reason):
+        """Skip a test if the condition is true."""
+        if condition:
+            return skip(reason)
+        return _id
+
+    def skipUnless(condition, reason):
+        """Skip a test unless the condition is true."""
+        if not condition:
+            return skip(reason)
+        return _id
