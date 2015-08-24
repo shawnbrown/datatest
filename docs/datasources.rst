@@ -18,9 +18,38 @@ Data source objects are used to access data in various formats.
 |
 
 .. autoclass:: datatest.CsvDataSource
+   :members: create_index
 
 .. autoclass:: datatest.SqliteDataSource
+   :members: create_index, from_source, from_records
 
+
+--------
+
+If you have the appropriate, optional dependencies installed, datatest
+provides a variety of other data sources:
+
++-----------------------------------------------+---------------------------------------------+
+| Class                                         | Loads                                       |
++===============================================+=============================================+
+| :class:`ExcelDataSource(p, worksheet=None)    | Excel *worksheet* from XLSX or XLS path *p* |
+| <datatest.ExcelDataSource>`                   | (defaults to the first worksheet if None),  |
+|                                               | requires `xlrd                              |
+|                                               | <http://pypi.python.org/pypi/xlrd>`_        |
++-----------------------------------------------+---------------------------------------------+
+| :class:`PandasDataSource(df)                  | DataFrame *df*, requires `pandas            |
+| <datatest.PandasDataSource>`                  | <http://pypi.python.org/pypi/pandas>`_      |
++-----------------------------------------------+---------------------------------------------+
+
+|
+
+.. autoclass:: datatest.ExcelDataSource
+
+.. autoclass:: datatest.PandasDataSource
+   :members: from_source, from_records
+
+
+--------
 
 The following "wrapper" classes can be used to alter an existing data
 source object:
