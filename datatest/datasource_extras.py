@@ -10,6 +10,10 @@ except ImportError:
 
 try:
     import pandas
+    _mkver = lambda ver: tuple(int(i) for i in ver.split('.'))
+    if (_mkver(pandas.__version__) < (0, 13, 0)
+            or _mkver(pandas.np.__version__) < (1, 7, 1)):
+        pandas = None
 except ImportError:
     pandas = None
 
@@ -27,12 +31,15 @@ class ExcelDataSource(BaseDataSource):
 
     def __init__(self, path, worksheet=None, in_memory=False):
         """Initialize self."""
-        self._file_repr = repr(path)
-
         if not xlrd:
-            raise ImportError("No module named 'xlrd'\n\n"
-                              "This is an optional data source that "
-                              "requires the third-party library 'xlrd'.")
+            raise ImportError(
+                "No module named 'xlrd'\n"
+                "\n"
+                "This is an optional data source that requires the "
+                "third-party library 'xlrd'."
+            )
+
+        self._file_repr = repr(path)
 
         # Open Excel file and get worksheet.
         book = xlrd.open_workbook(path, on_demand=True)
@@ -90,6 +97,15 @@ class PandasDataSource(BaseDataSource):
     """
     def __init__(self, df):
         """Initialize self."""
+        if not pandas:
+            raise ImportError(
+                "No module named 'pandas'\n"
+                "\n"
+                "This is an optional data source that requires the "
+                "third-party libraries 'pandas' (0.13.0 or greater) "
+                "and 'numpy' (1.7.1 or greater)."
+            )
+
         self._df = df
         self._default_index = (df.index.names == [None])
 
