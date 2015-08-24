@@ -3,7 +3,6 @@ import csv
 import os
 import sqlite3
 import sys
-import unittest
 import tempfile
 import warnings
 
@@ -79,7 +78,7 @@ class TestBaseDataSource(unittest.TestCase):
             {'label1': 'b', 'label2': 'y', 'value': '40'},
             {'label1': 'b', 'label2': 'x', 'value': '25'},
         ]
-        self.assertEqual(results, expected)
+        self.assertEqual(expected, results)
 
     def test_filter_iter(self):
         """Test filter iterator."""
@@ -102,7 +101,7 @@ class TestBaseDataSource(unittest.TestCase):
             {'label1': 'a', 'label2': 'y', 'value': '20'},
             {'label1': 'a', 'label2': 'z', 'value': '15'},
         ]
-        self.assertEqual(results, expected)
+        self.assertEqual(expected, results)
 
         # Filter by multiple values (where label2 is 'x' OR 'y').
         results = self.datasource._base_filter_by(testdata, label2=['x', 'y'])
@@ -114,7 +113,7 @@ class TestBaseDataSource(unittest.TestCase):
             {'label1': 'b', 'label2': 'y', 'value': '40'},
             {'label1': 'b', 'label2': 'x', 'value': '25'},
         ]
-        self.assertEqual(results, expected)
+        self.assertEqual(expected, results)
 
         # Filter by multiple columns (where label1 is 'a', label2 is 'x' OR 'y').
         results = self.datasource._base_filter_by(testdata,
