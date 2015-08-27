@@ -11,8 +11,11 @@ from datatest._builtins import *
 from datatest._unicodecsvreader import UnicodeCsvReader as _UnicodeCsvReader
 import datatest._itertools as itertools
 
+
 #pattern = 'test*.py'
 prefix = 'test_'
+
+sqlite3.register_adapter(Decimal, str)
 
 
 class BaseDataSource(object):
@@ -501,14 +504,13 @@ class GroupedDataSource(BaseDataSource):
     The original source is stored in the ``__wrapped__`` attribute.
 
     """
-
-    def __init__(self, source, group_by, aggregate=None):
+    def __init__(self, source, group_by, **kwds):
         """Initialize self."""
         msg = 'Sources must be derived from BaseDataSource'
         assert isinstance(source, BaseDataSource), msg
         self.__wrapped__ = source
         self._group_by = list(group_by)
-        self._aggregate = aggregate
+        self._aggregate = kwds
 
     def __repr__(self):
         """Return a string representation of the data source."""
@@ -516,34 +518,39 @@ class GroupedDataSource(BaseDataSource):
         src_name = self.__wrapped__
         col_name = repr(self._group_by)
         if self._aggregate:
-            agg_name = ', ' + self._aggregate.__name__
+            agg_repr = sorted(self._aggregate.items())
+            agg_repr = ['{0}={1!r}'.format(k, v) for k, v in agg_repr]
+            agg_repr = ', {0}'.format(', '.join(agg_repr))
         else:
-            agg_name = ''
-        return '{0}({1}, {2}{3})'.format(cls_name, src_name, col_name, agg_name)
+            agg_repr = ''
+        return '{0}({1}, {2}{3})'.format(cls_name, src_name, col_name, agg_repr)
 
     def columns(self):
         """Return list of column names."""
-        if self._aggregate:
-            one_row = next(self.__wrapped__.slow_iter())
-            sample_result = self._aggregate([one_row])
-            agg_keys = sorted(sample_result.keys())
-        else:
-            agg_keys = []
-
+        agg_keys = sorted(self._aggregate.keys())
         return self._group_by + agg_keys
 
     def slow_iter(self):
         """Return iterable of dictionary rows (like csv.DictReader)."""
         for row in self.__wrapped__.unique(*self._group_by):
-            group_by = dict(zip(self._group_by, row))
+            row = dict(zip(self._group_by, row))
+            for col, meth_name in self._aggregate.items():
+                fn = self._get_function(meth_name)
+                row[col] = fn(col, **row)  # <- Using dict-row as filter_by.
+            yield row
 
-            if self._aggregate:
-                iterable = self.__wrapped__.slow_iter()
-                group = BaseDataSource._base_filter_by(iterable, **group_by)
-                aggregate = self._aggregate(group)
-                group_by.update(aggregate)
+    def _get_function(self, name):
+        if name == 'sum':
+            return self.__wrapped__.sum  # <- EXIT!
 
-            yield group_by
+        if name == 'average':
+            def average(column, **filter_by):
+                total = self.__wrapped__.sum(column, **filter_by)
+                count = self.__wrapped__.count(**filter_by)
+                return total / count if count else None
+            return average  # <- EXIT!
+
+        raise Exception('Unsupported aggregate function {0!r}'.format(name))
 
 
 class MappedDataSource(BaseDataSource):

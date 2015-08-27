@@ -594,43 +594,58 @@ class TestGroupedDataSource(TestBaseDataSource):
         self.minimal_source = MinimalDataSource(self.testdata, self.fieldnames)
         self.datasource = GroupedDataSource(self.minimal_source, self.fieldnames)
 
-    def test_grouped_with_aggregate(self):
+    def test_grouped_with_aggregate_sum(self):
         # Group by 'label1' and 'label2'.
-        def totalpop(group):
-            values = [float(row['value']) for row in group]
-            return {'total': sum(values)}
         datasource = GroupedDataSource(self.minimal_source,
                                        ['label1', 'label2'],
-                                       aggregate=totalpop)
+                                       value='sum')
 
         expected = [
-            {'label1': 'a', 'label2': 'x', 'total': 30},  # <- 17 + 13
-            {'label1': 'a', 'label2': 'y', 'total': 20},
-            {'label1': 'a', 'label2': 'z', 'total': 15},
-            {'label1': 'b', 'label2': 'z', 'total': 5 },
-            {'label1': 'b', 'label2': 'y', 'total': 40},
-            {'label1': 'b', 'label2': 'x', 'total': 25},
+            {'label1': 'a', 'label2': 'x', 'value': 30},  # <- 17 + 13
+            {'label1': 'a', 'label2': 'y', 'value': 20},
+            {'label1': 'a', 'label2': 'z', 'value': 15},
+            {'label1': 'b', 'label2': 'z', 'value': 5 },
+            {'label1': 'b', 'label2': 'y', 'value': 40},
+            {'label1': 'b', 'label2': 'x', 'value': 25},
         ]
         result = datasource.slow_iter()
         self.assertEqual(expected, list(result))
 
-        expected = ['label1', 'label2', 'total']
+        expected = ['label1', 'label2', 'value']
         self.assertEqual(expected, datasource.columns())
 
         # Group by 'label1' only.
-        fn = lambda grp: {'total': sum(float(row['value']) for row in grp)}
         datasource = GroupedDataSource(self.minimal_source,
                                        ['label1'],
-                                       aggregate=fn)
-
+                                       value='sum')
         expected = [
-            {'label1': 'a', 'total': 65.0},
-            {'label1': 'b', 'total': 70.0},
+            {'label1': 'a', 'value': 65.0},
+            {'label1': 'b', 'value': 70.0},
         ]
         result = datasource.slow_iter()
         self.assertEqual(expected, list(result))
 
-        expected = ['label1', 'total']
+        expected = ['label1', 'value']
+        self.assertEqual(expected, datasource.columns())
+
+    def test_grouped_with_aggregate_average(self):
+        # Group by 'label1' and 'label2'.
+        datasource = GroupedDataSource(self.minimal_source,
+                                       ['label1', 'label2'],
+                                       value='average')
+        expected = [
+            {'label2': 'x', 'label1': 'a', 'value': 15},  # <- average of 17 and 13.
+            {'label2': 'y', 'label1': 'a', 'value': 20},
+            {'label2': 'z', 'label1': 'a', 'value': 15},
+            {'label2': 'z', 'label1': 'b', 'value': 5},
+            {'label2': 'y', 'label1': 'b', 'value': 40},
+            {'label2': 'x', 'label1': 'b', 'value': 25}
+        ]
+
+        result = datasource.slow_iter()
+        self.assertEqual(expected, list(result))
+
+        expected = ['label1', 'label2', 'value']
         self.assertEqual(expected, datasource.columns())
 
     def test_grouped_no_aggregate(self):
@@ -665,15 +680,14 @@ class TestGroupedDataSource(TestBaseDataSource):
 
     def test_repr(self):
         # Test with aggregate.
-        agg = lambda grp: sum(float(x) for x in grp)
-        src = GroupedDataSource(self.minimal_source, ['label1', 'label2'], agg)
-        self.assertTrue(repr(src).startswith('GroupedDataSource('))
-        self.assertTrue(repr(src).endswith(", ['label1', 'label2'], <lambda>)"))
+        src = GroupedDataSource(self.minimal_source, ['label1', 'label2'], value='sum')
+        expected = "GroupedDataSource(MinimalDataSource, ['label1', 'label2'], value='sum')"
+        self.assertEqual(repr(src), expected)
 
         # Test without aggregate.
         src = GroupedDataSource(self.minimal_source, ['label1', 'label2'])
-        self.assertTrue(repr(src).startswith('GroupedDataSource('))
-        self.assertTrue(repr(src).endswith(", ['label1', 'label2'])"))
+        expected = "GroupedDataSource(MinimalDataSource, ['label1', 'label2'])"
+        self.assertEqual(repr(src), expected)
 
 
 class TestMappedDataSource(TestBaseDataSource):
