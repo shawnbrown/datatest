@@ -614,18 +614,24 @@ class TestGroupedDataSource(TestBaseDataSource):
         result = datasource.slow_iter()
         self.assertEqual(expected, list(result))
 
+        expected = ['label1', 'label2', 'total']
+        self.assertEqual(expected, datasource.columns())
+
         # Group by 'label1' only.
-        fn = lambda grp: {'value': sum(float(row['value']) for row in grp)}
+        fn = lambda grp: {'total': sum(float(row['value']) for row in grp)}
         datasource = GroupedDataSource(self.minimal_source,
                                        ['label1'],
                                        aggregate=fn)
 
         expected = [
-            {'label1': 'a', 'value': 65.0},
-            {'label1': 'b', 'value': 70.0},
+            {'label1': 'a', 'total': 65.0},
+            {'label1': 'b', 'total': 70.0},
         ]
         result = datasource.slow_iter()
         self.assertEqual(expected, list(result))
+
+        expected = ['label1', 'total']
+        self.assertEqual(expected, datasource.columns())
 
     def test_grouped_no_aggregate(self):
         # Two columns, no aggregate.
@@ -641,6 +647,9 @@ class TestGroupedDataSource(TestBaseDataSource):
         result = datasource.slow_iter()
         self.assertEqual(expected, list(result))
 
+        expected = ['label1', 'label2']
+        self.assertEqual(expected, datasource.columns())
+
         # One column, no aggregate.
         datasource = GroupedDataSource(self.minimal_source, ['label2'])
         expected = [
@@ -650,6 +659,9 @@ class TestGroupedDataSource(TestBaseDataSource):
         ]
         result = datasource.slow_iter()
         self.assertEqual(expected, list(result))
+
+        expected = ['label2']
+        self.assertEqual(expected, datasource.columns())
 
     def test_repr(self):
         # Test with aggregate.
@@ -662,7 +674,6 @@ class TestGroupedDataSource(TestBaseDataSource):
         src = GroupedDataSource(self.minimal_source, ['label1', 'label2'])
         self.assertTrue(repr(src).startswith('GroupedDataSource('))
         self.assertTrue(repr(src).endswith(", ['label1', 'label2'])"))
-
 
 
 class TestMappedDataSource(TestBaseDataSource):

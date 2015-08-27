@@ -525,7 +525,7 @@ class GroupedDataSource(BaseDataSource):
         """Return list of column names."""
         if self._aggregate:
             one_row = next(self.__wrapped__.slow_iter())
-            sample_result = self._aggregate(one_row)
+            sample_result = self._aggregate([one_row])
             agg_keys = sorted(sample_result.keys())
         else:
             agg_keys = []
