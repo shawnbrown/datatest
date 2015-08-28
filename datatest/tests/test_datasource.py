@@ -619,8 +619,8 @@ class TestGroupedDataSource(TestBaseDataSource):
                                        ['label1'],
                                        value='sum')
         expected = [
-            {'label1': 'a', 'value': 65.0},
-            {'label1': 'b', 'value': 70.0},
+            {'label1': 'a', 'value': 65},
+            {'label1': 'b', 'value': 70},
         ]
         result = datasource.slow_iter()
         self.assertEqual(expected, list(result))
@@ -641,7 +641,6 @@ class TestGroupedDataSource(TestBaseDataSource):
             {'label2': 'y', 'label1': 'b', 'value': 40},
             {'label2': 'x', 'label1': 'b', 'value': 25}
         ]
-
         result = datasource.slow_iter()
         self.assertEqual(expected, list(result))
 
