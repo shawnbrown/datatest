@@ -72,17 +72,13 @@ def _walk_diff(diff):
             yield item
 
 
-class _BaseAcceptContext(object):
-    def __init__(self, accepted, test_case, callable_obj=None):
+class _AcceptableBaseContext(object):
+    """Base class for DataTestCase.acceptable...() context managers."""
+    def __init__(self, accepted, test_case, msg=None):
         self.accepted = accepted
         self.test_case = test_case
-        if callable_obj is not None:
-            try:
-                self.obj_name = callable_obj.__name__
-            except AttributeError:
-                self.obj_name = str(callable_obj)
-        else:
-            self.obj_name = None
+        self.obj_name = None
+        self.msg = msg
 
     def __enter__(self):
         return self
@@ -102,20 +98,9 @@ class _BaseAcceptContext(object):
         except (SyntaxError, TypeError):
             raise DataAssertionError(msg, difference, subj, trst)  # For Python 2.x
 
-    def handle(self, name, callable_obj, args, kwds):
-        """If callable_obj is None, assertRaises/Warns is being used as
-        a context manager, so check for a 'msg' kwarg and return self.
-        If callable_obj is not None, call it passing `args` and `kwds`.
 
-        """
-        if callable_obj is None:
-            self.msg = kwds.pop('msg', None)
-            return self
-        with self:
-            callable_obj(*args, **kwds)
-
-
-class _AcceptDifferenceContext(_BaseAcceptContext):
+class _AcceptableDifference(_AcceptableBaseContext):
+    """Context manager for DataTestCase.acceptableDifference() method."""
     def __exit__(self, exc_type, exc_value, tb):
         if exc_value:
             diff = exc_value.diff
@@ -138,10 +123,11 @@ class _AcceptDifferenceContext(_BaseAcceptContext):
         return True
 
 
-class _AcceptAbsoluteToleranceContext(_BaseAcceptContext):
-    def __init__(self, accepted, test_case, callable_obj=None):
+class _AcceptableAbsoluteTolerance(_AcceptableBaseContext):
+    """Context manager for DataTestCase.acceptableTolerance() method."""
+    def __init__(self, accepted, test_case, msg):
         assert accepted >= 0, 'Tolerance cannot be defined with a negative number.'
-        _BaseAcceptContext.__init__(self, accepted, test_case, callable_obj)
+        _AcceptableBaseContext.__init__(self, accepted, test_case, msg)
 
     def __exit__(self, exc_type, exc_value, tb):
         if exc_value:
@@ -165,10 +151,11 @@ class _AcceptAbsoluteToleranceContext(_BaseAcceptContext):
         return True
 
 
-class _AcceptPercentToleranceContext(_BaseAcceptContext):
-    def __init__(self, accepted, test_case, callable_obj=None):
+class _AcceptablePercentTolerance(_AcceptableBaseContext):
+    """Context manager for DataTestCase.acceptablePercentTolerance() method."""
+    def __init__(self, accepted, test_case, msg):
         assert 1 >= accepted >= 0, 'Percent tolerance must be between 0 and 1.'
-        _BaseAcceptContext.__init__(self, accepted, test_case, callable_obj)
+        _AcceptableBaseContext.__init__(self, accepted, test_case, msg)
 
     def __exit__(self, exc_type, exc_value, tb):
         difference = list(_walk_diff(exc_value.diff))
@@ -448,70 +435,54 @@ class DataTestCase(TestCase):
                 msg = 'matching {0!r} values'.format(column)
             self.fail(msg=msg, diff=failures)
 
-    def acceptDifference(self, diff, callableObj=None, *args, **kwds):
-        """Test that a DataAssertionError containing a matching
-        collection of differences is raised when *callableObj* is called
-        with *args* and keyword *kwds*. If the raised differences do not
-        match *diff*, the test will fail with a DataAssertionError of
-        the remaining differences.
-
-        If called with *callableObj* omitted or None, this method will
-        return a context manager so that the code under test can be
-        written in-line rather than as a function::
+    def acceptableDifference(self, diff, msg=None):
+        """Context manager to accept a given list of differences
+        without triggering a test failure::
 
             diff = [
                 ExtraValue('foo'),
                 MissingValue('bar'),
             ]
-            with self.acceptDifference(diff):
+            with self.acceptableDifference(diff):
                 self.assertDataSet('column1')
 
-        An optional keyword argument, *msg*, can be provided when
-        acceptDifference is used as a context manager.
+        If the raised differences do not match *diff*, the test will
+        fail with a DataAssertionError of the remaining differences.
         """
-        # TODO: Test the following behavior.
-        #The context manager keeps a reference to the exception as
-        #the `exception` attribute. This allows you to inspect the
-        #exception after the assertion::
-        #
-        #    with self.acceptDifference(SomeDifferences) as cm:
-        #        do_something()
-        #    the_exception = cm.exception
-        #    self.assertEqual(the_exception.error_code, 3)
-        context = _AcceptDifferenceContext(diff, self, callableObj)
-        return context.handle('acceptDifference', callableObj, args, kwds)
+        return _AcceptableDifference(diff, self, msg)
 
-    def acceptTolerance(self, tolerance, callableObj=None, *args, **kwds):
-        """Only fail if DataAssertionError contains numeric differences
-        greater than *tolerance*.  If differences exceed *tolerance*,
-        the test case will fail with a DataAssertionError containing the
-        excessive differences.
+    def acceptableTolerance(self, tolerance, msg=None):
+        """Context manager to accept numeric differences less than or
+        equal to the given *tolerance*::
 
-        Like acceptDifference, this method can be used as a context
-        manager::
-
-            with self.acceptTolerance(5):  # Accepts +/- 5
+            with self.acceptableTolerance(5):  # Accepts +/- 5
                 self.assertDataSum('column2', group_by=['column1'])
+
+        If differences exceed *tolerance*, the test case will fail with
+        a DataAssertionError containing the excessive differences.
         """
         tolerance = _make_decimal(tolerance)
-        context = _AcceptAbsoluteToleranceContext(tolerance, self, callableObj)
-        return context.handle('acceptTolerance', callableObj, args, kwds)
+        return _AcceptableAbsoluteTolerance(tolerance, self, msg)
 
-    def acceptPercentTolerance(self, tolerance, callableObj=None, *args, **kwds):
-        """Only fail if DataAssertionError contains numeric difference
-        percentages greater than *tolerance*.  If differences exceed
-        *tolerance*, the test case will fail with a DataAssertionError
-        containing the excessive differences.
+    def acceptablePercentTolerance(self, tolerance, msg=None):
+        """Context manager to accept numeric difference percentages less
+        than or equal to the given *tolerance*::
 
-        Like acceptDifference, this method can be used as a context
-        manager::
-
-            with self.acceptPercentTolerance(0.02):  # Accepts +/- 2%
+            with self.acceptablePercentTolerance(0.02):  # Accepts +/- 2%
                 self.assertDataSum('column2', group_by=['column1'])
+
+        If differences exceed *tolerance*, the test case will fail with
+        a DataAssertionError containing the excessive differences.
         """
         tolerance = _make_decimal(tolerance)
-        context = _AcceptPercentToleranceContext(tolerance, self, callableObj)
-        return context.handle('acceptPercentTolerance', callableObj, args, kwds)
+        return _AcceptablePercentTolerance(tolerance, self, msg)
+
+
+    # TODO: REMOVE BEFORE INITIAL RELEASE (DEPRECATED):
+    acceptDifference = acceptableDifference
+    acceptTolerance = acceptableTolerance
+    acceptPercentTolerance = acceptablePercentTolerance
+
 
     def fail(self, msg, diff=None):
         """Signals a test failure unconditionally, with *msg* for the

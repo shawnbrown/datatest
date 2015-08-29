@@ -75,22 +75,22 @@ In addition to the new functionality, the familiar ``TestCase`` methods
     .. automethod:: assertValueRegex
     .. automethod:: assertValueNotRegex
 
-    +-------------------------------------------------+------------------------------------------+
-    | Accept method                                   | Accepts that                             |
-    +=================================================+==========================================+
-    | :meth:`acceptDifference(diff)                   | differences match those in *diff*        |
-    | <datatest.DataTestCase.acceptDifference>`       |                                          |
-    +-------------------------------------------------+------------------------------------------+
-    | :meth:`acceptTolerance(tolerance)               | absolute values of numeric differences   |
-    | <datatest.DataTestCase.acceptTolerance>`        | are equal to or less than *tolerance*    |
-    +-------------------------------------------------+------------------------------------------+
-    | :meth:`acceptPercentTolerance(tolerance)        | percentage values of numeric differences |
-    | <datatest.DataTestCase.acceptPercentTolerance>` | are equal to or less than *tolerance*    |
-    +-------------------------------------------------+------------------------------------------+
+    +-----------------------------------------------------+------------------------------------------+
+    | Accept method                                       | Accepts that                             |
+    +=====================================================+==========================================+
+    | :meth:`acceptableDifference(diff)                   | differences match those in *diff*        |
+    | <datatest.DataTestCase.acceptableDifference>`       |                                          |
+    +-----------------------------------------------------+------------------------------------------+
+    | :meth:`acceptableTolerance(tolerance)               | absolute values of numeric differences   |
+    | <datatest.DataTestCase.acceptableTolerance>`        | are equal to or less than *tolerance*    |
+    +-----------------------------------------------------+------------------------------------------+
+    | :meth:`acceptablePercentTolerance(tolerance)        | percentage values of numeric differences |
+    | <datatest.DataTestCase.acceptablePercentTolerance>` | are equal to or less than *tolerance*    |
+    +-----------------------------------------------------+------------------------------------------+
 
-    .. automethod:: acceptDifference
-    .. automethod:: acceptTolerance
-    .. automethod:: acceptPercentTolerance
+    .. automethod:: acceptableDifference
+    .. automethod:: acceptableTolerance
+    .. automethod:: acceptablePercentTolerance
 
 
 Optional Keyword Filters (using \*\*filter_by)
