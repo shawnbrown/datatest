@@ -125,8 +125,11 @@ class _AcceptableDifference(_AcceptableBaseContext):
 
 class _AcceptableAbsoluteTolerance(_AcceptableBaseContext):
     """Context manager for DataTestCase.acceptableTolerance() method."""
-    def __init__(self, accepted, test_case, msg):
+    def __init__(self, accepted, test_case, msg, **filter_by):
         assert accepted >= 0, 'Tolerance cannot be defined with a negative number.'
+        wrap = lambda v: [v] if isinstance(v, str) else v
+        self._filter_by = dict((k, wrap(v)) for k, v in filter_by.items())
+
         _AcceptableBaseContext.__init__(self, accepted, test_case, msg)
 
     def __exit__(self, exc_type, exc_value, tb):
@@ -138,38 +141,50 @@ class _AcceptableAbsoluteTolerance(_AcceptableBaseContext):
             message = 'No error raised'
 
         diff_list = list(_walk_diff(difference))
-        accepted = self.accepted
+        failed = [obj for obj in diff_list if not self._acceptable(obj)]
 
-        failed = []
-        for diff_obj in diff_list:
-            diff_val = abs(diff_obj.diff)
-            if diff_val > accepted:
-                failed.append(diff_obj)
         if failed:
             return self._raiseFailure(message, failed)  # <- EXIT!
 
         return True
 
+    def _acceptable(self, obj):
+        for k, v in self._filter_by.items():
+            if (k not in obj.kwds) or (obj.kwds[k] not in v):
+                return False
+        return abs(obj.diff) <= self.accepted
+
 
 class _AcceptablePercentTolerance(_AcceptableBaseContext):
     """Context manager for DataTestCase.acceptablePercentTolerance() method."""
-    def __init__(self, accepted, test_case, msg):
+    def __init__(self, accepted, test_case, msg, **filter_by):
         assert 1 >= accepted >= 0, 'Percent tolerance must be between 0 and 1.'
+        wrap = lambda v: [v] if isinstance(v, str) else v
+        self._filter_by = dict((k, wrap(v)) for k, v in filter_by.items())
         _AcceptableBaseContext.__init__(self, accepted, test_case, msg)
 
     def __exit__(self, exc_type, exc_value, tb):
-        difference = list(_walk_diff(exc_value.diff))
-        accepted = self.accepted
+        if exc_value:
+            difference = exc_value.diff
+            message = exc_value.msg
+        else:
+            difference = []
+            message = 'No error raised'
 
-        failed = []
-        for diff in difference:
-            percent = diff.diff / diff.sum
-            if abs(percent) > accepted:
-                failed.append(diff)
+        diff_list = list(_walk_diff(difference))
+        failed = [obj for obj in diff_list if not self._acceptable(obj)]
+
         if failed:
             return self._raiseFailure(exc_value.msg, failed)  # <- EXIT!
 
         return True
+
+    def _acceptable(self, obj):
+        for k, v in self._filter_by.items():
+            if (k not in obj.kwds) or (obj.kwds[k] not in v):
+                return False
+        percent = obj.diff / obj.sum
+        return abs(percent) <= self.accepted
 
 
 class DataTestCase(TestCase):
@@ -451,7 +466,7 @@ class DataTestCase(TestCase):
         """
         return _AcceptableDifference(diff, self, msg)
 
-    def acceptableTolerance(self, tolerance, msg=None):
+    def acceptableTolerance(self, tolerance, msg=None, **filter_by):
         """Context manager to accept numeric differences less than or
         equal to the given *tolerance*::
 
@@ -462,9 +477,9 @@ class DataTestCase(TestCase):
         a DataAssertionError containing the excessive differences.
         """
         tolerance = _make_decimal(tolerance)
-        return _AcceptableAbsoluteTolerance(tolerance, self, msg)
+        return _AcceptableAbsoluteTolerance(tolerance, self, msg, **filter_by)
 
-    def acceptablePercentTolerance(self, tolerance, msg=None):
+    def acceptablePercentTolerance(self, tolerance, msg=None, **filter_by):
         """Context manager to accept numeric difference percentages less
         than or equal to the given *tolerance*::
 
@@ -475,7 +490,7 @@ class DataTestCase(TestCase):
         a DataAssertionError containing the excessive differences.
         """
         tolerance = _make_decimal(tolerance)
-        return _AcceptablePercentTolerance(tolerance, self, msg)
+        return _AcceptablePercentTolerance(tolerance, self, msg, **filter_by)
 
 
     # TODO: REMOVE BEFORE INITIAL RELEASE (DEPRECATED):

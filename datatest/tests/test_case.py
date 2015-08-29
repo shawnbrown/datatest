@@ -1061,22 +1061,34 @@ class TestAcceptableTolerance(TestHelperCase):
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
 
-    #@unittest.skip('Waiting to implement this.')
-    #def test_absolute_tolerance_keyword(self):
-    #    """Using filter label1='a', MissingSum(...label1='b') should be raised."""
-    #    class _TestClass(DataTestCase):
-    #        def setUp(_self):
-    #            _self.referenceData = self.reference
-    #            _self.subjectData = self.bad_subject
-    #
-    #        def test_method(_self):
-    #            with _self.acceptableTolerance(3, label1='a'):  # <- Filter to 'a' only.
-    #                _self.assertValueSum('value', ['label1'])
-    #
-    #    failure = self._run_one_test(_TestClass, 'test_method')
-    #    pattern = ("DataAssertionError: different u?'value' sums:\n"
-    #               " MissingSum\(-1, 70, label1=u?'b'\)")'\)")
-    #    self.assertRegex(failure, pattern)
+    def test_absolute_tolerance_with_filter(self):
+        """Using filter label1='a', MissingSum(...label1='b') should be raised."""
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                _self.referenceData = self.reference
+                _self.subjectData = self.bad_subject
+
+            def test_method(_self):
+                with _self.acceptableTolerance(3, label1='a'):  # <- Allow label1='a' only.
+                    _self.assertValueSum('value', ['label1'])
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        pattern = ("DataAssertionError: different u?'value' sums:\n"
+                   " MissingSum\(-1, 70, label1=u?'b'\)")
+        self.assertRegex(failure, pattern)
+
+
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                _self.referenceData = self.reference
+                _self.subjectData = self.bad_subject
+
+            def test_method(_self):
+                with _self.acceptableTolerance(3, label1=['a', 'b']):  # <- Filter to 'a' or 'b' only.
+                    _self.assertValueSum('value', ['label1'])
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        self.assertIsNone(failure)
 
     def test_inadequate_absolute_tolerance(self):
         """Given tolerance of 2, ExtraSum(+3) should still be raised."""
@@ -1159,6 +1171,22 @@ class TestAcceptablePercentTolerance(TestHelperCase):
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
+
+    def test_percent_tolerance_with_filter(self):
+        """If accepted differences not found, raise exception."""
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                _self.referenceData = self.reference
+                _self.subjectData = self.bad_subject
+
+            def test_method(_self):
+                with _self.acceptablePercentTolerance(0.05, label1='a'):  # <- Allow label1='a' only.
+                    _self.assertValueSum('value', ['label1'])
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        pattern = ("DataAssertionError: different u?'value' sums:\n"
+                   " MissingSum\(-1, 70, label1=u?'b'\)")
+        self.assertRegex(failure, pattern)
 
     def test_inadequate_percent_tolerance(self):
         """If accepted differences not found, raise exception."""
