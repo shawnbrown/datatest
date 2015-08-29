@@ -492,13 +492,6 @@ class DataTestCase(TestCase):
         tolerance = _make_decimal(tolerance)
         return _AcceptablePercentTolerance(tolerance, self, msg, **filter_by)
 
-
-    # TODO: REMOVE BEFORE INITIAL RELEASE (DEPRECATED):
-    acceptDifference = acceptableDifference
-    acceptTolerance = acceptableTolerance
-    acceptPercentTolerance = acceptablePercentTolerance
-
-
     def fail(self, msg, diff=None):
         """Signals a test failure unconditionally, with *msg* for the
         error message.  If *diff* is provided, a DataAssertionError is

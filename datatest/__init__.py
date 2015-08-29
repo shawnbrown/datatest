@@ -54,3 +54,9 @@ __all__ = [
     'DataTestProgram',
     'main',
 ]
+
+
+# TODO: REMOVE BEFORE INITIAL RELEASE (DEPRECATED):
+DataTestCase.acceptDifference = DataTestCase.acceptableDifference
+DataTestCase.acceptTolerance = DataTestCase.acceptableTolerance
+DataTestCase.acceptPercentTolerance = DataTestCase.acceptablePercentTolerance
