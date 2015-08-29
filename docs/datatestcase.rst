@@ -93,8 +93,8 @@ In addition to the new functionality, the familiar ``TestCase`` methods
     .. automethod:: acceptPercentTolerance
 
 
-Optional Keyword Filters
-------------------------
+Optional Keyword Filters (using \*\*filter_by)
+----------------------------------------------
 
 All of the value assertion methods, above, support optional keyword
 arguments to quickly filter the rows to be tested.
