@@ -19,10 +19,10 @@ framework.  It provides classes for conveniently loading data, asserting
 validity, and allowing for discrepancies when appropriate.
 
 Data tests can provide much-needed structure to guide the workflow of
-data processing, itself. :ref:`Test-driven data processing <test-driven-data_processing>`
-can automate existing check-lists, help train new team members, and
-quickly re-acclimate users who have been away from a project for some
-time.
+data processing, itself. :ref:`Test-driven data processing
+<test-driven-data-processing>` can automate existing check-lists,
+measure progress, help train new team members, and quickly re-acclimate
+users who have been away from a project for some time.
 
 (If you're already familiar with the package, you might want to
 skip to the :ref:`list of assert methods <assert-methods>`.)

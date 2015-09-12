@@ -6,7 +6,7 @@
     :keywords: test-driven data processing
 
 
-.. _test-driven-data_processing:
+.. _test-driven-data-processing:
 
 ***************************
 Test-Driven Data Processing
