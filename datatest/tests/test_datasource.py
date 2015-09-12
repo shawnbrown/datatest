@@ -19,6 +19,19 @@ from datatest.datasource import MappedDataSource
 from datatest.datasource import MultiDataSource
 
 
+def _make_csv_file(fieldnames, datarows):
+    """Helper function to make CSV file-like object using *fieldnames*
+    (a list of field names) and *datarows* (a list of lists containing
+    the row values).
+    """
+    init_string = []
+    init_string.append(','.join(fieldnames)) # Concat cells into row.
+    for row in datarows:
+        init_string.append(','.join(row))    # Concat cells into row.
+    init_string = '\n'.join(init_string)     # Concat rows into final string.
+    return io.StringIO(init_string)
+
+
 class MinimalDataSource(BaseDataSource):
     """Minimal data source implementation for testing."""
     def __init__(self, data, fieldnames):
@@ -45,16 +58,6 @@ class TestBaseDataSource(unittest.TestCase):
                 ['b', 'z', '5' ],
                 ['b', 'y', '40'],
                 ['b', 'x', '25']]
-
-    @staticmethod
-    def _make_csv_file(fieldnames, testdata):
-        """Build CSV file from source data."""
-        init_string = []
-        init_string.append(','.join(fieldnames)) # Concat cells into row.
-        for row in testdata:
-            init_string.append(','.join(row))    # Concat cells into row.
-        init_string = '\n'.join(init_string)     # Concat rows into final string.
-        return io.StringIO(init_string)
 
     def setUp(self):
         self.datasource = MinimalDataSource(self.testdata, self.fieldnames)
@@ -349,7 +352,7 @@ class TestSqliteDataSource(TestBaseDataSource):
 
 class TestCsvDataSource(TestBaseDataSource):
     def setUp(self):
-        fh = self._make_csv_file(self.fieldnames, self.testdata)
+        fh = _make_csv_file(self.fieldnames, self.testdata)
         self.datasource = CsvDataSource(fh)
 
     def test_empty_file(self):
@@ -521,7 +524,7 @@ class TestMixedMultiDataSource(TestBaseDataSource):
         testdata2 = [['b', 'z', '5' ],
                      ['b', 'y', '40'],
                      ['b', 'x', '25']]
-        fh = self._make_csv_file(fieldnames2, testdata2)
+        fh = _make_csv_file(fieldnames2, testdata2)
         csv_source = CsvDataSource(fh)
 
         self.datasource = MultiDataSource(minimal_source, csv_source)
