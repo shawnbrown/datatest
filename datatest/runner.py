@@ -13,6 +13,22 @@ except ImportError:
     from unittest import _TextTestResult as TextTestResult
 
 
+class DataTestResult(TextTestResult):
+    """A datatest result class that can print formatted text results to
+    a stream.
+
+    Used by DataTestRunner.
+
+    """
+    def addFailure(self, test, err):
+        if err[0] == DataAssertionError:
+            exctype, value, tb = err          # Unpack tuple.
+            tb = HideInternalStackFrames(tb)  # Hide internal frames.
+            value._verbose = self.showAll     # Set verbose flag (True/False).
+            err = (exctype, value, tb)        # Repack tuple.
+        TextTestResult.addFailure(self, test, err)
+
+
 class HideInternalStackFrames(object):
     """Wrapper for traceback to hide extraneous stack frames that
     originate from within the datatest module itself.
@@ -63,51 +79,6 @@ class HideInternalStackFrames(object):
         return self.__class__(self._tb.tb_next)
 
 
-class DataTestResult(TextTestResult):
-    def addFailure(self, test, err):
-        if err[0] == DataAssertionError:
-            exctype, value, tb = err          # Unpack tuple.
-            tb = HideInternalStackFrames(tb)  # Hide internal frames.
-            value._verbose = self.showAll     # Set verbose flag (True/False).
-            err = (exctype, value, tb)        # Repack tuple.
-        TextTestResult.addFailure(self, test, err)
-
-
-def _sort_key(test):
-    """Accepts test method, returns module name and line number."""
-    method = getattr(test, test._testMethodName)
-    while hasattr(method, '_wrapped'):  # If object is wrapped with a
-        method = method._wrapped        # decorator, unwrap it.
-
-    try:
-        lineno = inspect.getsourcelines(method)[1]
-    except IOError:
-        warnings.warn('Unable to sort {0}'.format(method))
-        lineno = 0
-    return (method.__module__, lineno)
-
-
-def _sort_tests(suite, key=_sort_key):
-    """Return suite of tests sorted by line number."""
-    def flatten(ste):
-        for tst in ste:
-            if isinstance(tst, unittest.TestSuite):
-                for sub in flatten(tst):
-                    yield sub
-            else:
-                yield tst
-    flattened = flatten(suite)
-    flattened = sorted(flattened, key=key)
-    return unittest.TestSuite(flattened)
-
-
-def _get_module(one_test):
-    method = getattr(one_test, one_test._testMethodName)
-    while hasattr(method, '_wrapped'):  # If object is wrapped with a
-        method = method._wrapped        # decorator, unwrap it.
-    return sys.modules[method.__module__]
-
-
 class DataTestRunner(unittest.TextTestRunner):
     """A data test runner (wraps unittest.TextTestRunner) that displays
     results in textual form.
@@ -141,3 +112,39 @@ class DataTestRunner(unittest.TextTestRunner):
         self.stream.writeln(separator)
         self.stream.writeln(docstrings)
         return unittest.TextTestRunner.run(self, test)
+
+
+def _sort_key(test):
+    """Accepts test method, returns module name and line number."""
+    method = getattr(test, test._testMethodName)
+    while hasattr(method, '_wrapped'):  # If object is wrapped with a
+        method = method._wrapped        # decorator, unwrap it.
+
+    try:
+        lineno = inspect.getsourcelines(method)[1]
+    except IOError:
+        warnings.warn('Unable to sort {0}'.format(method))
+        lineno = 0
+    return (method.__module__, lineno)
+
+
+def _sort_tests(suite, key=_sort_key):
+    """Return suite of tests sorted by line number."""
+    def flatten(ste):
+        for tst in ste:
+            if isinstance(tst, unittest.TestSuite):
+                for sub in flatten(tst):
+                    yield sub
+            else:
+                yield tst
+    flattened = flatten(suite)
+    flattened = sorted(flattened, key=key)
+    return unittest.TestSuite(flattened)
+
+
+def _get_module(one_test):
+    """Accepts a single test, returns module name."""
+    method = getattr(one_test, one_test._testMethodName)
+    while hasattr(method, '_wrapped'):  # If object is wrapped with a
+        method = method._wrapped        # decorator, unwrap it.
+    return sys.modules[method.__module__]
