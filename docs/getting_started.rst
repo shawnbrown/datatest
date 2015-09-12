@@ -184,14 +184,10 @@ allow the test to pass.
 
 .. note::
 
-    If a non-data failure occurs (e.g., a syntax error or a standard
-    unittest assertion failure), then a standard
-    :class:`unittest.AssertionError` is raised (rather than a
-    :class:`DataAssertionError <datatest.DataAssertionError>`).
-
-
-TODO!!!:
-  * replace ``acceptDifference`` with ``acceptableDifference``.
+    If a non-data failure occurs (like a syntax error or a standard
+    unittest failure), then a standard :class:`AssertionError` is raised
+    rather than a :class:`DataAssertionError
+    <datatest.DataAssertionError>`.
 
 
 Acceptable Errors
@@ -199,24 +195,24 @@ Acceptable Errors
 
 Sometimes, it's undesirable for certain differences to trigger a test
 failure.  To mark specific differences as acceptable, use the
-:meth:`acceptDifference <datatest.DataTestCase.acceptDifference>`
-context manager::
+:meth:`acceptableDifference
+<datatest.DataTestCase.acceptableDifference>` context manager::
 
     def test_population(self):
         diff = [
             ExtraSum(+8, 11771, county='Warren'),
             MissingSum(-25, 3184, county='Lake'),
         ]
-        with self.acceptDifference(diff):
+        with self.acceptableDifference(diff):
             self.assertValueSum('population', ['county'])
 
 To accept several numeric differences at once, you can use the
-:meth:`acceptTolerance <datatest.DataTestCase.acceptTolerance>` or
-:meth:`acceptPercentTolerance <datatest.DataTestCase.acceptPercentTolerance>`
-methods::
+:meth:`acceptableTolerance <datatest.DataTestCase.acceptableTolerance>`
+or :meth:`acceptablePercentTolerance
+<datatest.DataTestCase.acceptablePercentTolerance>` methods::
 
     def test_households(self):
-        with self.acceptTolerance(25):
+        with self.acceptableTolerance(25):
             self.assertValueCount('population', ['county'])
 
 

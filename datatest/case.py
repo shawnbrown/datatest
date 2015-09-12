@@ -348,7 +348,7 @@ class DataTestCase(TestCase):
         matches the sum of the reference's ``income`` for each group of
         ``department`` and ``year`` values::
 
-            self.assertDataSum('income', ['department', 'year'])
+            self.assertValueSum('income', ['department', 'year'])
 
         """
         ref = self.referenceData
@@ -459,7 +459,7 @@ class DataTestCase(TestCase):
                 MissingValue('bar'),
             ]
             with self.acceptableDifference(diff):
-                self.assertDataSet('column1')
+                self.assertValueSet('column1')
 
         If the raised differences do not match *diff*, the test will
         fail with a DataAssertionError of the remaining differences.
@@ -471,7 +471,7 @@ class DataTestCase(TestCase):
         equal to the given *tolerance*::
 
             with self.acceptableTolerance(5):  # Accepts +/- 5
-                self.assertDataSum('column2', group_by=['column1'])
+                self.assertValueSum('column2', group_by=['column1'])
 
         If differences exceed *tolerance*, the test case will fail with
         a DataAssertionError containing the excessive differences.
@@ -484,7 +484,7 @@ class DataTestCase(TestCase):
         than or equal to the given *tolerance*::
 
             with self.acceptablePercentTolerance(0.02):  # Accepts +/- 2%
-                self.assertDataSum('column2', group_by=['column1'])
+                self.assertValueSum('column2', group_by=['column1'])
 
         If differences exceed *tolerance*, the test case will fail with
         a DataAssertionError containing the excessive differences.
