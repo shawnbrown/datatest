@@ -3,21 +3,6 @@ from .datasource import BaseDataSource
 from .datasource import SqliteDataSource
 
 
-try:
-    import xlrd
-except ImportError:
-    xlrd = None
-
-try:
-    import pandas
-    _mkver = lambda ver: tuple(int(i) for i in ver.split('.'))
-    if (_mkver(pandas.__version__) < (0, 13, 0)
-            or _mkver(pandas.np.__version__) < (1, 7, 1)):
-        pandas = None
-except ImportError:
-    pandas = None
-
-
 class ExcelDataSource(BaseDataSource):
     """Loads first worksheet from XLSX or XLS file *path*::
 
@@ -31,7 +16,9 @@ class ExcelDataSource(BaseDataSource):
 
     def __init__(self, path, worksheet=None, in_memory=False):
         """Initialize self."""
-        if not xlrd:
+        try:
+            import xlrd
+        except ImportError:
             raise ImportError(
                 "No module named 'xlrd'\n"
                 "\n"
@@ -97,17 +84,24 @@ class PandasDataSource(BaseDataSource):
     """
     def __init__(self, df):
         """Initialize self."""
-        if not pandas:
-            raise ImportError(
-                "No module named 'pandas'\n"
-                "\n"
-                "This is an optional data source that requires the "
-                "third-party libraries 'pandas' (0.13.0 or greater) "
-                "and 'numpy' (1.7.1 or greater)."
-            )
-
         self._df = df
         self._default_index = (df.index.names == [None])
+        try:
+            try:
+                import numpy
+                assert _version_info(numpy) >= (1, 7, 1)
+            except AssertionError:
+                raise AssertionError(
+                    "Requires 'numpy' version 1.7.1 or greater."
+                )
+        except ImportError:
+            raise ImportError(
+                "No module named 'numpy'\n"
+                "\n"
+                "This is an optional data source that requires the "
+                "third-party library 'numpy' (1.7.1 or greater)."
+            )
+        self._np = numpy
 
     def __repr__(self):
         """Return a string representation of the data source."""
@@ -143,8 +137,8 @@ class PandasDataSource(BaseDataSource):
     def sum(self, column, **filter_by):
         """Return sum of values in column."""
         df = self._filter_by(self._df, self._default_index, **filter_by)
-        s = df[column].replace('', pandas.np.nan)
-        return s.astype(pandas.np.float).sum()
+        s = df[column].replace('', self._np.nan)
+        return s.astype(self._np.float).sum()
 
     def count(self, **filter_by):
         """Return count of rows."""
@@ -183,5 +177,30 @@ class PandasDataSource(BaseDataSource):
             subjectData = datatest.PandasDataSource.from_records(records, columns)
 
         """
+        try:
+            try:
+                import pandas
+                assert _version_info(pandas) >= (0, 13, 0)
+            except AssertionError:
+                raise AssertionError(
+                    "Requires 'pandas' version 0.13.0 or greater."
+                )
+        except ImportError:
+            raise ImportError(
+                "No module named 'pandas'\n"
+                "\n"
+                "This is an optional data source that requires the "
+                "third-party libraries 'pandas' (0.13.0 or greater) "
+                "and 'numpy' (1.7.1 or greater)."
+            )
         df = pandas.DataFrame(data, columns=columns)
         return cls(df)
+
+
+def _version_info(module):
+    """Helper function returns a tuple containing the version number
+    components for a given module.
+
+    """
+    version = module.__version__
+    return tuple(int(i) for i in version.split('.'))
