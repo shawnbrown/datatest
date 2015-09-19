@@ -11,6 +11,36 @@ users should be familiar with Python's standard
 the data they want to audit.
 
 
+Command-Line Interface
+======================
+
+The datatest module can be used from the command line just like
+unittest. To run the program with :ref:`test discovery <test-discovery>`,
+use the following command::
+
+    python -m datatest
+
+Run tests from specific modules, classes, or individual methods with::
+
+    python -m datatest test_module1 test_module2
+    python -m datatest test_module.TestClass
+    python -m datatest test_module.TestClass.test_method
+
+The syntax and command-line options (``-f``, ``-v``, etc.) are the same
+as unittest---see the
+`unittest documentation <http://docs.python.org/library/unittest.html#command-line-interface>`_
+for full details.
+
+.. _test-discovery:
+.. note::
+
+    The **test discovery** process searches for tests in the current
+    directory (including package folders and sub-package folders) or in
+    a specified directory.  To learn more, see the unittest
+    documentation on `Test Discovery
+    <https://docs.python.org/3/library/unittest.html#test-discovery>`_.
+
+
 Basic Example
 =============
 
@@ -193,10 +223,26 @@ allow the test to pass.
 Acceptable Errors
 =================
 
-Sometimes, it's undesirable for certain differences to trigger a test
-failure.  To mark specific differences as acceptable, use the
-:meth:`acceptableDifference
-<datatest.DataTestCase.acceptableDifference>` context manager::
+Sometimes differences cannot be reconciled---they could represent a
+disagreement between two authoratative sources or lack of information
+could make correction impossible.  In any case, there are situations
+where it is legitimate to mark certain differences as "acceptable"
+for the purposes of data processing.
+
+In the following example, there are two differences (eight more in
+Warren County and 25 less in Lake County)::
+
+    Traceback (most recent call last):
+      File "test_survey.py", line 35, in test_population
+        self.assertValueSum('population', ['county'])
+    datatest.case.DataAssertionError: different 'population' values:
+     ExtraSum(+8, 11771, county='Warren'),
+     MissingSum(-25, 3184, county='Lake')
+
+If we've determined that these differences are acceptable, we can use
+the :meth:`acceptableDifference
+<datatest.DataTestCase.acceptableDifference>` context manager so the
+test runs without failing::
 
     def test_population(self):
         diff = [
@@ -214,24 +260,3 @@ or :meth:`acceptablePercentTolerance
     def test_households(self):
         with self.acceptableTolerance(25):
             self.assertValueCount('population', ['county'])
-
-
-Command-Line Interface
-======================
-
-The datatest module can be used from the command line just like
-unittest. To run the program with test discovery, use the following
-command::
-
-    python -m datatest
-
-Run tests from specific modules, classes, or individual methods with::
-
-    python -m datatest test_module1 test_module2
-    python -m datatest test_module.TestClass
-    python -m datatest test_module.TestClass.test_method
-
-The syntax and command-line options (``-f``, ``-v``, etc.) are the same
-as unittest---see the
-`unittest documentation <http://docs.python.org/library/unittest.html#command-line-interface>`_
-for full details.
