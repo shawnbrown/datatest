@@ -7,9 +7,9 @@ import sys
 import warnings
 from decimal import Decimal
 
-from datatest._builtins import *
-from datatest._unicodecsvreader import UnicodeCsvReader as _UnicodeCsvReader
-import datatest._itertools as itertools
+from ._builtins import *
+from ._unicodecsvreader import UnicodeCsvReader as _UnicodeCsvReader
+from . import _itertools as itertools
 
 
 #pattern = 'test*.py'

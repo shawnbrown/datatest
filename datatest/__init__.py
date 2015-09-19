@@ -1,27 +1,30 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from datatest.case import DataTestCase
-from datatest.case import DataAssertionError
-from datatest.datasource import BaseDataSource
-from datatest.datasource import SqliteDataSource
-from datatest.datasource import CsvDataSource
-from datatest.datasource import FilteredDataSource
-from datatest.datasource import GroupedDataSource
-from datatest.datasource import MappedDataSource
-from datatest.datasource import MultiDataSource
-from datatest.datasource_extras import ExcelDataSource
-from datatest.datasource_extras import PandasDataSource
+from .case import DataTestCase
+from .case import DataAssertionError
 
+from .datasource import BaseDataSource
+from .datasource import SqliteDataSource
+from .datasource import CsvDataSource
+from .datasource import FilteredDataSource
+from .datasource import GroupedDataSource
+from .datasource import MappedDataSource
+from .datasource import MultiDataSource
 
-from datatest.diff import ExtraColumn
-from datatest.diff import ExtraValue
-from datatest.diff import ExtraSum
-from datatest.diff import MissingColumn
-from datatest.diff import MissingValue
-from datatest.diff import MissingSum
-from datatest.runner import DataTestRunner
-from datatest.main import DataTestProgram
-from datatest.main import main
+from .datasource_extras import ExcelDataSource
+from .datasource_extras import PandasDataSource
+
+from .diff import ExtraColumn
+from .diff import ExtraValue
+from .diff import ExtraSum
+from .diff import MissingColumn
+from .diff import MissingValue
+from .diff import MissingSum
+
+from .runner import DataTestRunner
+
+from .main import DataTestProgram
+from .main import main
+
 
 __version__ = '0.0.1a'
 

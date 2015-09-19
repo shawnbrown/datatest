@@ -15,6 +15,6 @@ __unittest = True
 __datatest = True
 
 
-from datatest.main import main, DataTestProgram
+from .main import main, DataTestProgram
 
 main(module=None)

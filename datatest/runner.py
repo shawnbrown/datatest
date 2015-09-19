@@ -5,7 +5,8 @@ import re
 import sys
 import unittest
 import warnings
-from datatest import DataAssertionError
+from .case import DataAssertionError
+
 
 try:
     from unittest import TextTestResult

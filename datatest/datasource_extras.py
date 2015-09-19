@@ -1,6 +1,6 @@
 
-from datatest.datasource import BaseDataSource
-from datatest.datasource import SqliteDataSource
+from .datasource import BaseDataSource
+from .datasource import SqliteDataSource
 
 
 try:

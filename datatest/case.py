@@ -7,14 +7,14 @@ import pprint
 import re
 from unittest import TestCase
 
-from datatest.diff import DiffBase
-from datatest.diff import ExtraColumn
-from datatest.diff import ExtraValue
-from datatest.diff import ExtraSum
-from datatest.diff import MissingColumn
-from datatest.diff import MissingValue
-from datatest.diff import MissingSum
-from datatest.diff import _make_decimal
+from .diff import DiffBase
+from .diff import ExtraColumn
+from .diff import ExtraValue
+from .diff import ExtraSum
+from .diff import MissingColumn
+from .diff import MissingValue
+from .diff import MissingSum
+from .diff import _make_decimal
 
 __datatest = True  # Used to detect in-module stack frames (which are
                    # omitted from output).
