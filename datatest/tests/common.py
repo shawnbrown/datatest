@@ -4,7 +4,7 @@ import os
 import shutil
 import tempfile
 
-from datatest.tests import _unittest as unittest
+from . import _unittest as unittest
 
 
 class MkdtempTestCase(unittest.TestCase):

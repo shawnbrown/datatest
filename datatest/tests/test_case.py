@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
 import re
-import datatest.tests._io as io
-#import datatest.tests._unittest as unittest  # Compatibility layer
-import unittest
-from unittest import TestCase as _TestCase  # Orig TestCase, not
+from unittest import TestCase as _TestCase  # Originial TestCase, not
                                             # compatibility layer.
 
+# Import compatiblity layers.
+from . import _io as io
+from . import _unittest as unittest
+
+# Import code to test.
 from datatest.case import DataTestCase
 from datatest.case import DataAssertionError
 from datatest.case import _walk_diff
-
 from datatest import ExtraColumn
 from datatest import ExtraValue
 from datatest import ExtraSum

@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 import re
 
-import datatest.tests._io as io
-import datatest.tests._unittest as unittest  # Compatibility layer
+# Import compatibility layers.
+from . import _io as io
+from . import _unittest as unittest
 
 from datatest.diff import DiffBase
 

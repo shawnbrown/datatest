@@ -1,7 +1,7 @@
 
-from datatest.tests import _unittest as unittest
-from datatest.tests.test_datasource import TestBaseDataSource
-from datatest.tests.test_datasource import MinimalDataSource
+from . import _unittest as unittest
+from .test_datasource import TestBaseDataSource
+from .test_datasource import MinimalDataSource
 
 from datatest.datasource_extras import xlrd
 from datatest.datasource_extras import pandas

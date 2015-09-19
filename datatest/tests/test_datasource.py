@@ -6,10 +6,12 @@ import sys
 import tempfile
 import warnings
 
-from datatest.tests import _io as io
-from datatest.tests import _unittest as unittest
-from datatest.tests.common import MkdtempTestCase
+# Import compatiblity layers and helpers.
+from . import _io as io
+from . import _unittest as unittest
+from .common import MkdtempTestCase
 
+# Import code to test.
 from datatest.datasource import BaseDataSource
 from datatest.datasource import SqliteDataSource
 from datatest.datasource import CsvDataSource
