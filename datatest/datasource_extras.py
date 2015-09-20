@@ -77,7 +77,7 @@ class ExcelDataSource(BaseDataSource):
 
 
 class PandasDataSource(BaseDataSource):
-    """Loads pandas DataFrame:
+    """Loads pandas DataFrame as a data source:
     ::
         subjectData = datatest.PandasDataSource(df)
 
@@ -87,13 +87,12 @@ class PandasDataSource(BaseDataSource):
         self._df = df
         self._default_index = (df.index.names == [None])
         try:
+            import numpy
             try:
-                import numpy
                 assert _version_info(numpy) >= (1, 7, 1)
             except AssertionError:
-                raise AssertionError(
-                    "Requires 'numpy' version 1.7.1 or greater."
-                )
+                raise AssertionError("Requires 'numpy' version 1.7.1 "
+                                     "or greater.")
         except ImportError:
             raise ImportError(
                 "No module named 'numpy'\n"
@@ -178,13 +177,12 @@ class PandasDataSource(BaseDataSource):
 
         """
         try:
+            import pandas
             try:
-                import pandas
                 assert _version_info(pandas) >= (0, 13, 0)
             except AssertionError:
-                raise AssertionError(
-                    "Requires 'pandas' version 0.13.0 or greater."
-                )
+                raise AssertionError("Requires 'pandas' version 0.13.0 "
+                                     "or greater.")
         except ImportError:
             raise ImportError(
                 "No module named 'pandas'\n"
