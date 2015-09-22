@@ -688,7 +688,9 @@ class MultiDataSource(BaseDataSource):
                     sub_result = self._normalize_unique(column, sub_col, sub_result)
                     result.append(sub_result)
             else:
-                result.append([('',) * len(column)])
+                count = self._filtered_call(source, 'count', **filter_by)
+                if count:
+                    result.append([('',) * len(column)])
 
         result = itertools.chain(*result)
 

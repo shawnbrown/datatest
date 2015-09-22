@@ -594,6 +594,42 @@ class TestMultiDataSourceDifferentColumns(unittest.TestCase):
         self.assertEqual(expected, list(result))
 
 
+class TestMultiDataSourceDifferentColumns2(unittest.TestCase):
+    """Test MultiDataSource with sub-sources that use different columns."""
+    def setUp(self):
+        fieldnames1 = ['label1', 'label2', 'value']
+        testdata1 = [['a',            'x',    '17'],
+                     ['a',            'x',    '13'],
+                     ['a',            'y',    '20'],
+                     ['b',            'z',     '5']]
+
+        fieldnames2 = ['label1', 'label3', 'value', 'other_value']
+        testdata2 = [['a',          'zzz',    '15',           '3'],
+                     ['b',          'yyy',     '4',           '0'],
+                     ['b',          'xxx',     '2',           '2']]
+
+        subsrc1 = MinimalDataSource(testdata1, fieldnames1)
+        subsrc2 = MinimalDataSource(testdata2, fieldnames2)
+        self.datasource = MultiDataSource(subsrc1, subsrc2)
+
+    def test_select_missing_columns(self):
+        expected = [('',), ('3',), ('0',), ('2',)]
+        result = self.datasource.unique('other_value')
+        self.assertEqual(expected, list(result))
+
+        expected = [('3',)]
+        result = self.datasource.unique('other_value', label3='zzz')
+        self.assertEqual(expected, list(result))
+
+        expected = [('',)]
+        result = self.datasource.unique('other_value', label3='')
+        self.assertEqual(expected, list(result))
+
+        expected = [('',)]
+        result = self.datasource.unique('other_value', label2='x')
+        self.assertEqual(expected, list(result))
+
+
 class TestGroupedDataSource(TestBaseDataSource):
     def setUp(self):
         self.minimal_source = MinimalDataSource(self.testdata, self.fieldnames)
