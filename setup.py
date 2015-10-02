@@ -45,6 +45,7 @@ if __name__ == '__main__':
                           'Programming Language :: Python :: 3.2',
                           'Programming Language :: Python :: 3.3',
                           'Programming Language :: Python :: 3.4',
+                          'Programming Language :: Python :: 3.5',
                          ],
           # Restrict unintended upload of private code to public PyPI:
           cmdclass={'register':    RestrictedCommand,
