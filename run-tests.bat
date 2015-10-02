@@ -10,6 +10,7 @@ REM Run test suite in all supported versions of Python.
 REM ********************************************************************
 SET GLOBAL_ERRORLEVEL=0
 
+CALL :runCommand "C:\Program Files\Python 3.5\python.exe -B -m unittest %*"
 CALL :runCommand "C:\Python34\python.exe -B -m unittest %*"
 CALL :runCommand "C:\Python33\python.exe -B -m unittest %*"
 CALL :runCommand "C:\Python32\python.exe -B -m unittest %*"
@@ -32,7 +33,7 @@ REM ********************************************************************
     ECHO ======================================================================
     ECHO %~1
     ECHO ======================================================================
-    CALL %~1
+    CALL %~fs1
     IF %ERRORLEVEL% NEQ 0 (
         ECHO.
         ECHO Failed Command: %~1
