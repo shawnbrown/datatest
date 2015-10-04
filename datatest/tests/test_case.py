@@ -13,10 +13,9 @@ from datatest.case import DataAssertionError
 from datatest.case import _walk_diff
 from datatest import ExtraColumn
 from datatest import ExtraValue
-from datatest import ExtraSum
 from datatest import MissingColumn
 from datatest import MissingValue
-from datatest import MissingSum
+from datatest import InvalidNumber
 from datatest import CsvDataSource
 
 
@@ -217,8 +216,8 @@ class TestValueSum(TestHelperCase):
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ("DataAssertionError: different 'value' sums:\n"
-                   " ExtraSum\(\+1, 65, label1=u?'a'\),\n"
-                   " MissingSum\(-1, 70, label1=u?'b'\)")
+                   " InvalidNumber\(\+1, 65, label1=u?'a'\),\n"
+                   " InvalidNumber\(-1, 70, label1=u?'b'\)")
         self.assertRegex(failure, pattern)
 
 
@@ -258,8 +257,8 @@ class TestValueSumGroupsAndFilters(TestHelperCase):
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ("DataAssertionError: different 'value' sums:\n"
-                   " ExtraSum\(\+1, 20, label1=u?'a'\),\n"
-                   " MissingSum\(-1, 40, label1=u?'b'\)")
+                   " InvalidNumber\(\+1, 20, label1=u?'a'\),\n"
+                   " InvalidNumber\(-1, 40, label1=u?'b'\)")
         self.assertRegex(failure, pattern)
 
 
@@ -334,8 +333,8 @@ class TestValueCount(TestHelperCase):
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ("DataAssertionError: row counts different than 'total_rows' sums:\n"
-                   " ExtraSum\(\+1, 4, label1=u?'a'\),\n"
-                   " MissingSum\(-1, 3, label1=u?'b'\)")
+                   " InvalidNumber\(\+1, 4, label1=u?'a'\),\n"
+                   " InvalidNumber\(-1, 3, label1=u?'b'\)")
         self.assertRegex(failure, pattern)
 
 
@@ -928,8 +927,8 @@ class TestAcceptableDifference(TestHelperCase):
 
             def test_method(_self):
                 diff = [
-                    ExtraSum(+1, 65, label1='a'),
-                    MissingSum(-1, 70, label1='b'),
+                    InvalidNumber(+1, 65, label1='a'),
+                    InvalidNumber(-1, 70, label1='b'),
                 ]
                 with _self.acceptableDifference(diff):
                     _self.assertValueSum('value', ['label1'])  # <- test assert
@@ -946,8 +945,8 @@ class TestAcceptableDifference(TestHelperCase):
 
             def test_method(_self):
                 diff = {
-                    'One extra.': ExtraSum(+1, 65, label1='a'),
-                    'One missing.': MissingSum(-1, 70, label1='b'),
+                    'One extra.': InvalidNumber(+1, 65, label1='a'),
+                    'One missing.': InvalidNumber(-1, 70, label1='b'),
                 }
                 with _self.acceptableDifference(diff):
                     _self.assertValueSum('value', ['label1'])  # <- test assert
@@ -964,8 +963,8 @@ class TestAcceptableDifference(TestHelperCase):
 
             def test_method(_self):
                 diff = {
-                    'Omitted': [ExtraSum(+1, 65, label1='a'),
-                                MissingSum(-1, 70, label1='b')]
+                    'Omitted': [InvalidNumber(+1, 65, label1='a'),
+                                InvalidNumber(-1, 70, label1='b')]
                 }
                 with _self.acceptableDifference(diff):
                     _self.assertValueSum('value', ['label1'])  # <- test assert
@@ -982,14 +981,14 @@ class TestAcceptableDifference(TestHelperCase):
 
             def test_method(_self):
                 diff = [
-                    MissingSum(-1, 70, label1='b'),
-                    ExtraSum(+2, 65, label1='a'),
+                    InvalidNumber(-1, 70, label1='b'),
+                    InvalidNumber(+2, 65, label1='a'),
                 ]
                 with _self.acceptableDifference(diff):
                     _self.assertValueSum('value', ['label1'])  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = "different 'value' sums:\n ExtraSum\(\+1, 65, label1=u?'a'\)"
+        pattern = "different 'value' sums:\n InvalidNumber\(\+1, 65, label1=u?'a'\)"
         self.assertRegex(failure, pattern)
 
     def test_accepted_not_found_with_diff(self):
@@ -1001,16 +1000,16 @@ class TestAcceptableDifference(TestHelperCase):
 
             def test_method(_self):
                 diff = [
-                    MissingSum(-1, 70, label1='b'),
-                    ExtraSum(+1, 65, label1='a'),
-                    ExtraSum(+2, 65, label1='a')
+                    InvalidNumber(-1, 70, label1='b'),
+                    InvalidNumber(+1, 65, label1='a'),
+                    InvalidNumber(+2, 65, label1='a')
                 ]
                 with _self.acceptableDifference(diff):
                     _self.assertValueSum('value', ['label1'])  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ("different 'value' sums, accepted difference not found:\n"
-                   " ExtraSum\(\+2, 65, label1=u?'a'\)")
+                   " InvalidNumber\(\+2, 65, label1=u?'a'\)")
         self.assertRegex(failure, pattern)
 
     def test_accepted_not_found_without_diff(self):
@@ -1021,13 +1020,13 @@ class TestAcceptableDifference(TestHelperCase):
                 _self.subjectData = self.reference
 
             def test_method(_self):
-                diff = ExtraSum(+2, 65, label1='a')
+                diff = InvalidNumber(+2, 65, label1='a')
                 with _self.acceptableDifference(diff):
                     _self.assertValueSum('value', ['label1'])  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ("DataAssertionError: No error raised, accepted difference not found:\n"
-                   " ExtraSum\(\+2, 65, label1=u?'a'\)")
+                   " InvalidNumber\(\+2, 65, label1=u?'a'\)")
         self.assertRegex(failure, pattern)
 
 
@@ -1063,7 +1062,7 @@ class TestAcceptableTolerance(TestHelperCase):
         self.assertIsNone(failure)
 
     def test_absolute_tolerance_with_filter(self):
-        """Using filter label1='a', MissingSum(...label1='b') should be raised."""
+        """Using filter label1='a', InvalidNumber(...label1='b') should be raised."""
         class _TestClass(DataTestCase):
             def setUp(_self):
                 _self.referenceData = self.reference
@@ -1075,7 +1074,7 @@ class TestAcceptableTolerance(TestHelperCase):
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ("DataAssertionError: different u?'value' sums:\n"
-                   " MissingSum\(-1, 70, label1=u?'b'\)")
+                   " InvalidNumber\(-1, 70, label1=u?'b'\)")
         self.assertRegex(failure, pattern)
 
 
@@ -1092,7 +1091,7 @@ class TestAcceptableTolerance(TestHelperCase):
         self.assertIsNone(failure)
 
     def test_inadequate_absolute_tolerance(self):
-        """Given tolerance of 2, ExtraSum(+3) should still be raised."""
+        """Given tolerance of 2, InvalidNumber(+3) should still be raised."""
         class _TestClass(DataTestCase):
             def setUp(_self):
                 _self.referenceData = self.reference
@@ -1104,7 +1103,7 @@ class TestAcceptableTolerance(TestHelperCase):
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ("DataAssertionError: different u?'value' sums:\n"
-                   " ExtraSum\(\+3, 65, label1=u?'a'\)")
+                   " InvalidNumber\(\+3, 65, label1=u?'a'\)")
         self.assertRegex(failure, pattern)
 
     def test_tolerance_error(self):
@@ -1186,7 +1185,7 @@ class TestAcceptablePercentTolerance(TestHelperCase):
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ("DataAssertionError: different u?'value' sums:\n"
-                   " MissingSum\(-1, 70, label1=u?'b'\)")
+                   " InvalidNumber\(-1, 70, label1=u?'b'\)")
         self.assertRegex(failure, pattern)
 
     def test_inadequate_percent_tolerance(self):
@@ -1202,7 +1201,7 @@ class TestAcceptablePercentTolerance(TestHelperCase):
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ("DataAssertionError: different u?'value' sums:\n"
-                   " ExtraSum\(\+3, 65, label1=u?'a'\)")
+                   " InvalidNumber\(\+3, 65, label1=u?'a'\)")
         self.assertRegex(failure, pattern)
 
     def test_tolerance_error(self):
@@ -1245,7 +1244,7 @@ class TestNestedAcceptBlocks(TestHelperCase):
                 _self.subjectData = self.bad_subject
 
             def test_method(_self):
-                with _self.acceptableDifference(ExtraSum(+3, 65, label1='a')):
+                with _self.acceptableDifference(InvalidNumber(+3, 65, label1='a')):
                     with _self.acceptableTolerance(2):  # <- test tolerance
                         _self.assertValueSum('value', ['label1'])
 
@@ -1260,7 +1259,7 @@ class TestNestedAcceptBlocks(TestHelperCase):
 
             def test_method(_self):
                 with _self.acceptableTolerance(2):  # <- test tolerance
-                    with _self.acceptableDifference(ExtraSum(+3, 65, label1='a')):
+                    with _self.acceptableDifference(InvalidNumber(+3, 65, label1='a')):
                         _self.assertValueSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')
@@ -1273,12 +1272,11 @@ class TestNestedAcceptBlocks(TestHelperCase):
                 _self.subjectData = self.bad_subject
 
             def test_method(_self):
-                with _self.acceptableDifference(ExtraSum(+10, 999, label1='a')):
+                with _self.acceptableDifference(InvalidNumber(+10, 999, label1='a')):
                     with _self.acceptableTolerance(3):
                         _self.assertValueSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ("DataAssertionError: No error raised, accepted difference not found:\n"
-                   " ExtraSum\(\+10, 999, label1=u?'a'\)")
+                   " InvalidNumber\(\+10, 999, label1=u?'a'\)")
         self.assertRegex(failure, pattern)
-

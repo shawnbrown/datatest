@@ -10,11 +10,11 @@ from unittest import TestCase
 from .diff import DiffBase
 from .diff import ExtraColumn
 from .diff import ExtraValue
-from .diff import ExtraSum
 from .diff import MissingColumn
 from .diff import MissingValue
-from .diff import MissingSum
 from .diff import _make_decimal
+from .diff import InvalidNumber
+
 
 __datatest = True  # Used to detect in-module stack frames (which are
                    # omitted from output).
@@ -363,10 +363,7 @@ class DataTestCase(TestCase):
             t_sum = ref_sum if ref_sum else 0
             difference = s_sum - t_sum
             if difference != 0:
-                if difference > 0:
-                    return ExtraSum(difference, t_sum, **group_dict)
-                else:
-                    return MissingSum(difference, t_sum, **group_dict)
+                return InvalidNumber(difference, t_sum, **group_dict)
             return None
 
         groups = ref.unique(*group_by, **filter_by)
@@ -404,10 +401,7 @@ class DataTestCase(TestCase):
             t_sum = ref_sum if ref_sum else 0
             difference = s_count - t_sum
             if difference != 0:
-                if difference > 0:
-                    return ExtraSum(difference, t_sum, **group_dict)
-                else:
-                    return MissingSum(difference, t_sum, **group_dict)
+                return InvalidNumber(difference, t_sum, **group_dict)
             return None
 
         groups = ref.unique(*group_by, **filter_by)

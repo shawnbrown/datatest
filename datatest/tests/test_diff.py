@@ -14,10 +14,7 @@ from datatest.diff import MissingColumn
 from datatest.diff import _ValueBase
 from datatest.diff import ExtraValue
 from datatest.diff import MissingValue
-
-from datatest.diff import _SumBase
-from datatest.diff import ExtraSum
-from datatest.diff import MissingSum
+from datatest.diff import InvalidNumber
 
 
 class TestDiffBase(unittest.TestCase):
@@ -131,75 +128,61 @@ class TestValueDiffs(unittest.TestCase):
         self.assertEqual(diff, eval(repr(diff)))  # Test __repr__ eval
 
 
-class TestSumDiffs(unittest.TestCase):
-    """Test _SumBase, ExtraSum, and MissingSum."""
+class TestInvalidNumber(unittest.TestCase):
+    """Test InvalidNumber."""
     def test_instantiation(self):
-        _SumBase(1, 100)  # Pass without error.
+        InvalidNumber(1, 100)  # Pass without error.
 
     def test_repr(self):
-        diff = _SumBase(1, 100)  # Simple.
-        self.assertEqual(repr(diff), "_SumBase(+1, 100)")
+        diff = InvalidNumber(1, 100)  # Simple.
+        self.assertEqual("InvalidNumber(+1, 100)", repr(diff))
 
-        diff = _SumBase(-1, 100)  # Simple negative.
-        self.assertEqual(repr(diff), "_SumBase(-1, 100)")
+        diff = InvalidNumber(-1, 100)  # Simple negative.
+        self.assertEqual("InvalidNumber(-1, 100)", repr(diff))
 
-        diff = _SumBase(3, 50, col1='a', col2='b')  # Using kwds.
-        self.assertRegex(repr(diff), "_SumBase\(\+3, 50, col1=u?'a', col2=u?'b'\)")
+        diff = InvalidNumber(3, 50, col1='a', col2='b')  # Using kwds.
+        self.assertRegex(repr(diff), "InvalidNumber\(\+3, 50, col1=u?'a', col2=u?'b'\)")
 
     def test_str(self):
-        diff = _SumBase(5, 75, col1='a')
+        diff = InvalidNumber(5, 75, col1='a')
         self.assertEqual(str(diff), repr(diff))
 
     def test_hash(self):
-        diff = _SumBase(1, 100, col1='a', col2='b')
+        diff = InvalidNumber(1, 100, col1='a', col2='b')
         self.assertIsInstance(hash(diff), int)
 
     def test_eq(self):
-        diff1 = _SumBase(1, 100)
-        diff2 = _SumBase(1, 100)
+        diff1 = InvalidNumber(1, 100)
+        diff2 = InvalidNumber(1, 100)
         self.assertEqual(diff1, diff2)
 
-        diff1 = _SumBase(1.0, 100.0)
-        diff2 = _SumBase(1.0, 100.0)
+        diff1 = InvalidNumber(1.0, 100.0)
+        diff2 = InvalidNumber(1.0, 100.0)
         self.assertEqual(diff1, diff2)
 
-        diff1 = _SumBase(1.0, 100)
-        diff2 = _SumBase(1,   100)
+        diff1 = InvalidNumber(1.0, 100)
+        diff2 = InvalidNumber(1,   100)
         self.assertEqual(diff1, diff2)
 
-        diff1 = _SumBase(1, 100.0)
-        diff2 = _SumBase(1, 100)
+        diff1 = InvalidNumber(1, 100.0)
+        diff2 = InvalidNumber(1, 100)
         self.assertEqual(diff1, diff2)
 
-        diff1 = _SumBase(1, 100, foo='aaa', bar='bbb')
-        diff2 = _SumBase(1, 100, bar='bbb', foo='aaa')
+        diff1 = InvalidNumber(1, 100, foo='aaa', bar='bbb')
+        diff2 = InvalidNumber(1, 100, bar='bbb', foo='aaa')
         self.assertEqual(diff1, diff2)
 
-        diff1 = _SumBase(1, 100)
-        diff2 = _SumBase(1, 250)
+        diff1 = InvalidNumber(1, 100)
+        diff2 = InvalidNumber(1, 250)
         self.assertNotEqual(diff1, diff2)
 
-        diff1 = _SumBase(+1, 100)
-        diff2 = "_SumBase(+1, 100)"
+        diff1 = InvalidNumber(+1, 100)
+        diff2 = "InvalidNumber(+1, 100)"
         self.assertNotEqual(diff1, diff2)
-
-    def test_subclass(self):
-        self.assertTrue(issubclass(ExtraSum, _SumBase))
-        self.assertTrue(issubclass(MissingSum, _SumBase))
-
-    def test_exceptions(self):
-        ExtraSum(+1, 100)  # Pass without error.
-        with self.assertRaises(ValueError, msg='Extra diff must be positive.'):
-            ExtraSum(-1, 100)
-
-        MissingSum(-2, 100)  # Pass without error.
-        with self.assertRaises(ValueError, msg='Missing diff must be positive.'):
-            MissingSum(+2, 100)
 
     def test_repr_eval(self):
-        diff = _SumBase(+1, 100)
+        diff = InvalidNumber(+1, 100)
         self.assertEqual(diff, eval(repr(diff)))  # Test __repr__ eval
 
-        diff = _SumBase(-1, 100, col4='foo', col5='bar')
+        diff = InvalidNumber(-1, 100, col4='foo', col5='bar')
         self.assertEqual(diff, eval(repr(diff)))  # Test __repr__ eval
-

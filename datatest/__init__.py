@@ -14,11 +14,11 @@ from .datasource_extras import ExcelDataSource
 from .datasource_extras import PandasDataSource
 
 from .diff import ExtraColumn
-from .diff import ExtraValue
-from .diff import ExtraSum
 from .diff import MissingColumn
+
+from .diff import ExtraValue
 from .diff import MissingValue
-from .diff import MissingSum
+from .diff import InvalidNumber
 
 from .runner import DataTestRunner
 
@@ -47,10 +47,9 @@ __all__ = [
     # Differences.
     'ExtraColumn',
     'ExtraValue',
-    'ExtraSum',
     'MissingColumn',
     'MissingValue',
-    'MissingSum',
+    'InvalidNumber',
 
     # Test runner and command-line program.
     'DataTestRunner',
@@ -63,3 +62,6 @@ __all__ = [
 DataTestCase.acceptDifference = DataTestCase.acceptableDifference
 DataTestCase.acceptTolerance = DataTestCase.acceptableTolerance
 DataTestCase.acceptPercentTolerance = DataTestCase.acceptablePercentTolerance
+
+ExtraSum = InvalidNumber
+MissingSum = InvalidNumber

@@ -70,28 +70,14 @@ def _make_decimal(d):
     return d.normalize()
 
 
-class _SumBase(DiffBase):
-    def __init__(self, diff, sum, **kwds):
+class InvalidNumber(DiffBase):
+    def __init__(self, diff, value, **kwds):
         self.diff = _make_decimal(diff)
-        self.sum = _make_decimal(sum)
+        self.sum = _make_decimal(value)
         self.kwds = kwds
 
     def __repr__(self):
         clsname = self.__class__.__name__
         kwds = self._kwds_format()
         diff = '+' + str(self.diff) if self.diff > 0 else str(self.diff)
-        #return '{0}({1}, {2!r}{3})'.format(clsname, diff, self.sum, kwds)
         return '{0}({1}, {2}{3})'.format(clsname, diff, self.sum, kwds)
-
-class ExtraSum(_SumBase):
-    def __init__(self, diff, sum, **kwds):
-        if not diff > 0:
-            raise ValueError('Difference must be greater than zero.')
-        return _SumBase.__init__(self, diff, sum, **kwds)
-
-class MissingSum(_SumBase):
-    def __init__(self, diff, sum, **kwds):
-        if not diff < 0:
-            raise ValueError('Difference must be less than zero.')
-        return _SumBase.__init__(self, diff, sum, **kwds)
-
