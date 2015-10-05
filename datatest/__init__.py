@@ -63,5 +63,5 @@ DataTestCase.acceptDifference = DataTestCase.acceptableDifference
 DataTestCase.acceptTolerance = DataTestCase.acceptableTolerance
 DataTestCase.acceptPercentTolerance = DataTestCase.acceptablePercentTolerance
 
-ExtraSum = InvalidNumber
-MissingSum = InvalidNumber
+#ExtraSum = InvalidNumber
+#MissingSum = InvalidNumber

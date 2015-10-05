@@ -236,8 +236,8 @@ Warren County and 25 less in Lake County)::
       File "test_survey.py", line 35, in test_population
         self.assertValueSum('population', ['county'])
     datatest.case.DataAssertionError: different 'population' values:
-     ExtraSum(+8, 11771, county='Warren'),
-     MissingSum(-25, 3184, county='Lake')
+     InvalidNumber(-25, 3184, county='Lake'),
+     InvalidNumber(+8, 11771, county='Warren')
 
 If we've determined that these differences are acceptable, we can use
 the :meth:`acceptableDifference
@@ -246,8 +246,8 @@ test runs without failing::
 
     def test_population(self):
         diff = [
-            ExtraSum(+8, 11771, county='Warren'),
-            MissingSum(-25, 3184, county='Lake'),
+            InvalidNumber(-25, 3184, county='Lake'),
+            InvalidNumber(+8, 11771, county='Warren'),
         ]
         with self.acceptableDifference(diff):
             self.assertValueSum('population', ['county'])
