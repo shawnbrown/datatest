@@ -5,6 +5,7 @@ from functools import wraps
 
 from .diff import MissingValue
 from .diff import ExtraValue
+from .diff import InvalidValue
 
 
 def _coerce_other(f):

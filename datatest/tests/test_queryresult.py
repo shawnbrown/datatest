@@ -7,6 +7,7 @@ from datatest.queryresult import ResultMapping
 
 from datatest import MissingValue
 from datatest import ExtraValue
+from datatest import InvalidValue
 
 
 class TestMethodDecorator(unittest.TestCase):

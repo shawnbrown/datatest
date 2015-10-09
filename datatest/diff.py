@@ -57,7 +57,7 @@ class _ValueBase(DiffBase):
 
 class ExtraValue(_ValueBase): pass
 class MissingValue(_ValueBase): pass
-class InvalidString(_ValueBase): pass
+class InvalidValue(_ValueBase): pass
 
 
 def _make_decimal(d):

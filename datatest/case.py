@@ -12,7 +12,7 @@ from .diff import ExtraColumn
 from .diff import MissingColumn
 from .diff import _make_decimal
 from .diff import InvalidNumber
-from .diff import InvalidString
+from .diff import InvalidValue
 from .queryresult import ResultSet
 from .queryresult import ResultMapping
 
@@ -427,7 +427,7 @@ class DataTestCase(TestCase):
         if not isinstance(regex, _re_type):
             regex = re.compile(regex)
         failures = [x for x in subject if not regex.search(x)]
-        failures = [InvalidString(x) for x in failures]
+        failures = [InvalidValue(x) for x in failures]
         if failures:
             if not msg:
                 msg = 'non-matching {0!r} values'.format(column)
@@ -442,7 +442,7 @@ class DataTestCase(TestCase):
         if not isinstance(regex, _re_type):
             regex = re.compile(regex)
         failures = [x for x in subject if regex.search(x)]
-        failures = [InvalidString(x) for x in failures]
+        failures = [InvalidValue(x) for x in failures]
         if failures:
             if not msg:
                 msg = 'matching {0!r} values'.format(column)
