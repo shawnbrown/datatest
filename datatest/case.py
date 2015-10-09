@@ -11,9 +11,10 @@ from .diff import DiffBase
 from .diff import ExtraColumn
 from .diff import ExtraValue
 from .diff import MissingColumn
-from .diff import MissingValue
 from .diff import _make_decimal
 from .diff import InvalidNumber
+from .queryresult import ResultSet
+from .queryresult import ResultMapping
 
 
 __datatest = True  # Used to detect in-module stack frames (which are
@@ -300,12 +301,13 @@ class DataTestCase(TestCase):
             ref = self._get_set(self.referenceData, column, **filter_by)
         subject = self._get_set(self.subjectData, column, **filter_by)
 
+        ref = ResultSet(ref, column)
+        subject = ResultSet(subject, column)
+
         if subject != ref:
-            extra = [ExtraValue(x) for x in subject - ref]
-            missing = [MissingValue(x) for x in ref - subject]
             if msg is None:
                 msg = 'different {0!r} values'.format(column)
-            self.fail(msg, extra+missing)
+            self.fail(msg, subject.compare(ref))
 
     def assertValueSubset(self, column, ref=None, msg=None, **filter_by):
         """Test that the set of subject values is a subset of reference
@@ -316,12 +318,13 @@ class DataTestCase(TestCase):
             ref = self._get_set(self.referenceData, column, **filter_by)
         subject = self._get_set(self.subjectData, column, **filter_by)
 
-        if not subject.issubset(ref):
-            extra = subject.difference(ref)
-            extra = [ExtraValue(x) for x in extra]
+        ref = ResultSet(ref, column)
+        subject = ResultSet(subject, column)
+
+        if not subject <= ref:
             if msg is None:
                 msg = 'different {0!r} values'.format(column)
-            self.fail(msg, extra)
+            self.fail(msg, subject.compare(ref))
 
     def assertValueSuperset(self, column, ref=None, msg=None, **filter_by):
         """Test that the set of subject values is a superset of reference
@@ -332,12 +335,13 @@ class DataTestCase(TestCase):
             ref = self._get_set(self.referenceData, column, **filter_by)
         subject = self._get_set(self.subjectData, column, **filter_by)
 
-        if not subject.issuperset(ref):
-            missing = ref.difference(subject)
-            missing = [MissingValue(x) for x in missing]
+        ref = ResultSet(ref, column)
+        subject = ResultSet(subject, column)
+
+        if not subject >= ref:
             if msg is None:
                 msg = 'different {0!r} values'.format(column)
-            self.fail(msg, missing)
+            self.fail(msg, subject.compare(ref))
 
     def assertValueSum(self, column, group_by, msg=None, **filter_by):
         """Test that the sum of subject values matches the sum of

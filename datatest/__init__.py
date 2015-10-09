@@ -20,6 +20,9 @@ from .diff import ExtraValue
 from .diff import MissingValue
 from .diff import InvalidNumber
 
+from .queryresult import ResultSet
+from .queryresult import ResultMapping
+
 from .runner import DataTestRunner
 
 from .main import DataTestProgram
@@ -43,6 +46,10 @@ __all__ = [
     'MultiDataSource',
     'ExcelDataSource',
     'PandasDataSource',
+
+    # Query results.
+    'ResultSet',
+    'ResultMapping',
 
     # Differences.
     'ExtraColumn',
