@@ -16,7 +16,7 @@ def _coerce_other(f):
     def wrapped(self, other):
         if not isinstance(other, ResultSet):
             try:
-                other = ResultSet(other, None)
+                other = ResultSet(other)
             except TypeError:
                 return NotImplemented
         return f(self, other)
@@ -25,17 +25,13 @@ def _coerce_other(f):
 
 class ResultSet(object):
     """DataSource query result set."""
-    def __init__(self, values, column):
+    def __init__(self, values):
         """Initialize object."""
         if not isinstance(values, Set):
             if isinstance(values, Mapping):
                 raise TypeError('cannot be mapping')
             values = set(values)
         self.values = values
-
-        if isinstance(column, str):
-            column = [column]
-        self.column = column
 
     @_coerce_other
     def __eq__(self, other):
@@ -66,7 +62,7 @@ class ResultSet(object):
 
     @_coerce_other
     def compare(self, other):
-        """"""
+        """Build a list of differences between *self* and *other* sets."""
         extra = self.values - other.values
         extra = [ExtraValue(x) for x in extra]
 

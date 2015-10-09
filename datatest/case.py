@@ -9,10 +9,10 @@ from unittest import TestCase
 
 from .diff import DiffBase
 from .diff import ExtraColumn
-from .diff import ExtraValue
 from .diff import MissingColumn
 from .diff import _make_decimal
 from .diff import InvalidNumber
+from .diff import InvalidString
 from .queryresult import ResultSet
 from .queryresult import ResultMapping
 
@@ -301,8 +301,8 @@ class DataTestCase(TestCase):
             ref = self._get_set(self.referenceData, column, **filter_by)
         subject = self._get_set(self.subjectData, column, **filter_by)
 
-        ref = ResultSet(ref, column)
-        subject = ResultSet(subject, column)
+        ref = ResultSet(ref)
+        subject = ResultSet(subject)
 
         if subject != ref:
             if msg is None:
@@ -318,8 +318,8 @@ class DataTestCase(TestCase):
             ref = self._get_set(self.referenceData, column, **filter_by)
         subject = self._get_set(self.subjectData, column, **filter_by)
 
-        ref = ResultSet(ref, column)
-        subject = ResultSet(subject, column)
+        ref = ResultSet(ref)
+        subject = ResultSet(subject)
 
         if not subject <= ref:
             if msg is None:
@@ -335,8 +335,8 @@ class DataTestCase(TestCase):
             ref = self._get_set(self.referenceData, column, **filter_by)
         subject = self._get_set(self.subjectData, column, **filter_by)
 
-        ref = ResultSet(ref, column)
-        subject = ResultSet(subject, column)
+        ref = ResultSet(ref)
+        subject = ResultSet(subject)
 
         if not subject >= ref:
             if msg is None:
@@ -427,7 +427,7 @@ class DataTestCase(TestCase):
         if not isinstance(regex, _re_type):
             regex = re.compile(regex)
         failures = [x for x in subject if not regex.search(x)]
-        failures = [ExtraValue(x) for x in failures]
+        failures = [InvalidString(x) for x in failures]
         if failures:
             if not msg:
                 msg = 'non-matching {0!r} values'.format(column)
@@ -442,7 +442,7 @@ class DataTestCase(TestCase):
         if not isinstance(regex, _re_type):
             regex = re.compile(regex)
         failures = [x for x in subject if regex.search(x)]
-        failures = [ExtraValue(x) for x in failures]
+        failures = [InvalidString(x) for x in failures]
         if failures:
             if not msg:
                 msg = 'matching {0!r} values'.format(column)

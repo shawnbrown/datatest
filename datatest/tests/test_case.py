@@ -16,6 +16,7 @@ from datatest import ExtraValue
 from datatest import MissingColumn
 from datatest import MissingValue
 from datatest import InvalidNumber
+from datatest import InvalidString
 from datatest import CsvDataSource
 
 
@@ -851,7 +852,7 @@ class TestValueRegexAndValueNotRegex(TestHelperCase):
                 _self.assertValueRegex('label2', '\d\d\d')  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = "non-matching 'label2' values:\n ExtraValue\(u?'2'\)"
+        pattern = "non-matching 'label2' values:\n InvalidString\(u?'2'\)"
         self.assertRegex(failure, pattern)
 
     def test_regex_precompiled(self):
@@ -886,7 +887,7 @@ class TestValueRegexAndValueNotRegex(TestHelperCase):
                 _self.assertValueNotRegex('label2', '^\d{1,2}$')  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = "matching 'label2' values:\n ExtraValue\(u?'2'\)"
+        pattern = "matching 'label2' values:\n InvalidString\(u?'2'\)"
         self.assertRegex(failure, pattern)
 
     def test_not_regex_precompiled(self):

@@ -19,16 +19,16 @@ class TestMethodDecorator(unittest.TestCase):
 
         values = set([1, 2, 3, 4])
 
-        other = wrapped(None, values)         # Values set.
+        other = wrapped(None, values)            # Values set.
         self.assertIsInstance(other, ResultSet)
 
-        other = wrapped(None, list(values))   # Values list.
+        other = wrapped(None, list(values))      # Values list.
         self.assertIsInstance(other, ResultSet)
 
-        other = wrapped(None, tuple(values))  # Values tuple.
+        other = wrapped(None, tuple(values))     # Values tuple.
         self.assertIsInstance(other, ResultSet)
 
-        values_gen = (v for v in values)      # Values generator.
+        values_gen = (v for v in values)         # Values generator.
         other = wrapped(None, values_gen)
         self.assertIsInstance(other, ResultSet)
 
@@ -41,49 +41,44 @@ class TestResultSet(unittest.TestCase):
     def test_init(self):
         values = set([1, 2, 3, 4])
 
-        x = ResultSet(values, 'col1')         # Values set.
+        x = ResultSet(values)               # Values set.
         self.assertEqual(values, x.values)
 
-        x = ResultSet(list(values), 'col1')   # Values list.
+        x = ResultSet(list(values))         # Values list.
         self.assertEqual(values, x.values)
 
-        x = ResultSet(tuple(values), 'col1')  # Values tuple.
+        x = ResultSet(tuple(values))        # Values tuple.
         self.assertEqual(values, x.values)
 
-        values_gen = (v for v in values)      # Values generator.
-        x = ResultSet(values_gen, 'col1')
+        values_gen = (v for v in values)    # Values generator.
+        x = ResultSet(values_gen)
         self.assertEqual(values, x.values)
 
         # Values mapping (type error).
         values_dict = dict(enumerate(values))
         with self.assertRaises(TypeError):
-            x = ResultSet(values_dict, 'col1')
+            x = ResultSet(values_dict)
 
     def test_eq(self):
         values = set([1, 2, 3, 4])
 
-        a = ResultSet(values, 'col1')
-        b = ResultSet(values, 'col1')
+        a = ResultSet(values)
+        b = ResultSet(values)
         self.assertEqual(a, b)
 
-        a = ResultSet(values, 'col1')
-        b = ResultSet(values, 'col2')
-        self.assertEqual(a, b, ('Different column names should not '
-                                'affect set equivalency.'))
-
     def test_ne(self):
-        a = ResultSet(set([1, 2, 3]), 'col1')
-        b = ResultSet(set([1, 2, 3, 4]), 'col1')
+        a = ResultSet(set([1, 2, 3]))
+        b = ResultSet(set([1, 2, 3, 4]))
         self.assertTrue(a != b)
 
     def test_compare(self):
-        a = ResultSet(['a','b','d'], 'col1')
-        b = ResultSet(['a','b','c'], 'col1')
+        a = ResultSet(['a','b','d'])
+        b = ResultSet(['a','b','c'])
         expected = [ExtraValue('d'), MissingValue('c')]
         self.assertEqual(expected, a.compare(b))
 
-        a = ResultSet(['a','b','c'], 'col1')
-        b = ResultSet(['a','b','c'], 'col1')
+        a = ResultSet(['a','b','c'])
+        b = ResultSet(['a','b','c'])
         self.assertEqual([], a.compare(b), ('When there is no difference, '
                                             'compare should return an empty '
                                             'list.'))
