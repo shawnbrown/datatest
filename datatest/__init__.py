@@ -19,6 +19,7 @@ from .diff import MissingColumn
 from .diff import ExtraValue
 from .diff import MissingValue
 from .diff import InvalidNumber
+from .diff import InvalidString
 
 from .queryresult import ResultSet
 from .queryresult import ResultMapping
@@ -57,6 +58,7 @@ __all__ = [
     'MissingColumn',
     'MissingValue',
     'InvalidNumber',
+    'InvalidString',
 
     # Test runner and command-line program.
     'DataTestRunner',
