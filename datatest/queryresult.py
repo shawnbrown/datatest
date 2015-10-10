@@ -42,7 +42,7 @@ class ResultSet(object):
 
     @_coerce_other
     def __ne__(self, other):
-        return self.values != other.values
+        return not self.__eq__(other)
 
     @_coerce_other
     def __lt__(self, other):
