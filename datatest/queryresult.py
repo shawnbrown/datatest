@@ -1,4 +1,5 @@
 """Scratchpad for DataSource query result objects."""
+import itertools
 from collections import Mapping
 from collections import Set
 from functools import wraps
@@ -72,16 +73,16 @@ class ResultSet(object):
 
         """
         if callable(other):
-            differences = [InvalidValue(x) for x in self.values if not other(x)]
+            differences = (InvalidValue(x) for x in self.values if not other(x))
         else:
             if not isinstance(other, ResultSet):
                 other = ResultSet(other)
-            extra = self.values - other.values
-            extra = [ExtraValue(x) for x in extra]
-            missing = other.values - self.values
-            missing = [MissingValue(x) for x in missing]
-            differences = extra + missing
-        return differences
+            extra = self.values.difference(other.values)
+            extra = (ExtraValue(x) for x in extra)
+            missing = other.values.difference(self.values)
+            missing = (MissingValue(x) for x in missing)
+            differences = itertools.chain(extra, missing)
+        return list(differences)
 
     def all(self, func):
         """Return True if *func* evaluates to True for all items in set."""
