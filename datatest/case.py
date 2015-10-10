@@ -8,8 +8,6 @@ import re
 from unittest import TestCase
 
 from .diff import DiffBase
-from .diff import ExtraColumn
-from .diff import MissingColumn
 from .diff import _make_decimal
 from .diff import InvalidNumber
 from .queryresult import ResultSet
@@ -238,15 +236,15 @@ class DataTestCase(TestCase):
         from ``referenceData``.
         """
         if ref == None:
-            ref = set(self.referenceData.columns())
-        subject = set(self.subjectData.columns())
+            ref = self.referenceData.columns()
+        ref = ResultSet(ref)
+        subject = self.subjectData.columns()
+        subject = ResultSet(subject)
 
         if subject != ref:
-            extra = [ExtraColumn(x) for x in subject - ref]
-            missing = [MissingColumn(x) for x in ref - subject]
             if msg is None:
                 msg = 'different column names'
-            self.fail(msg, extra+missing)
+            self.fail(msg, subject.compare(ref))
 
     def assertColumnSubset(self, ref=None, msg=None):
         """Test that the set of subject columns is a subset of reference
@@ -254,15 +252,15 @@ class DataTestCase(TestCase):
         from ``referenceData``.
         """
         if ref == None:
-            ref = set(self.referenceData.columns())
-        subject = set(self.subjectData.columns())
+            ref = self.referenceData.columns()
+        ref = ResultSet(ref)
+        subject = self.subjectData.columns()
+        subject = ResultSet(subject)
 
-        if not subject.issubset(ref):
-            extra = subject.difference(ref)
-            extra = [ExtraColumn(x) for x in extra]
+        if not subject <= ref:
             if msg is None:
                 msg = 'different column names'  # found extra columns
-            self.fail(msg, extra)
+            self.fail(msg, subject.compare(ref))
 
     def assertColumnSuperset(self, ref=None, msg=None):
         """Test that the set of subject columns is a superset of reference
@@ -270,15 +268,15 @@ class DataTestCase(TestCase):
         from ``referenceData``.
         """
         if ref == None:
-            ref = set(self.referenceData.columns())
-        subject = set(self.subjectData.columns())
+            ref = self.referenceData.columns()
+        ref = ResultSet(ref)
+        subject = self.subjectData.columns()
+        subject = ResultSet(subject)
 
-        if not subject.issuperset(ref):
-            missing = ref.difference(subject)
-            missing = [MissingColumn(x) for x in missing]
+        if not subject >= ref:
             if msg is None:
                 msg = 'different column names'  # missing expected columns
-            self.fail(msg, missing)
+            self.fail(msg, subject.compare(ref))
 
     @staticmethod
     def _get_set(source, column, **filter_by):
@@ -298,9 +296,8 @@ class DataTestCase(TestCase):
         """
         if ref == None:
             ref = self._get_set(self.referenceData, column, **filter_by)
-        subject = self._get_set(self.subjectData, column, **filter_by)
-
         ref = ResultSet(ref)
+        subject = self._get_set(self.subjectData, column, **filter_by)
         subject = ResultSet(subject)
 
         if subject != ref:
@@ -315,9 +312,8 @@ class DataTestCase(TestCase):
         """
         if ref == None:
             ref = self._get_set(self.referenceData, column, **filter_by)
-        subject = self._get_set(self.subjectData, column, **filter_by)
-
         ref = ResultSet(ref)
+        subject = self._get_set(self.subjectData, column, **filter_by)
         subject = ResultSet(subject)
 
         if not subject <= ref:
@@ -332,9 +328,8 @@ class DataTestCase(TestCase):
         """
         if ref == None:
             ref = self._get_set(self.referenceData, column, **filter_by)
-        subject = self._get_set(self.subjectData, column, **filter_by)
-
         ref = ResultSet(ref)
+        subject = self._get_set(self.subjectData, column, **filter_by)
         subject = ResultSet(subject)
 
         if not subject >= ref:

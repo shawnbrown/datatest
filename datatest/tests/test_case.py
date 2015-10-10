@@ -11,13 +11,15 @@ from . import _unittest as unittest
 from datatest.case import DataTestCase
 from datatest.case import DataAssertionError
 from datatest.case import _walk_diff
-from datatest import ExtraColumn
 from datatest import ExtraValue
-from datatest import MissingColumn
 from datatest import MissingValue
-from datatest import InvalidNumber
 from datatest import InvalidValue
+from datatest import InvalidNumber
 from datatest import CsvDataSource
+
+# TODO: Deprecate these two:
+from datatest import ExtraColumn
+from datatest import MissingColumn
 
 
 class TestWalkValues(unittest.TestCase):
@@ -92,49 +94,58 @@ class TestDataAssertionError(unittest.TestCase):
         self.assertTrue(issubclass(DataAssertionError, AssertionError))
 
     def test_instantiation(self):
-        DataAssertionError('column names', MissingColumn('foo'))
-        DataAssertionError('column names', [MissingColumn('foo')])
-        DataAssertionError('column names', {'Explanation here.': MissingColumn('foo')})
-        DataAssertionError('column names', {'Explanation here.': [MissingColumn('foo')]})
+        DataAssertionError('column names', MissingValue('foo'))
+        DataAssertionError('column names', [MissingValue('foo')])
+        DataAssertionError('column names', {'Explanation here.': MissingValue('foo')})
+        DataAssertionError('column names', {'Explanation here.': [MissingValue('foo')]})
 
         with self.assertRaises(ValueError, msg='Empty error should raise exception.'):
             DataAssertionError(msg='', diff={})
 
-    def test_repr(self):
+    def test_deprecated_classe_names(self):
         error = DataAssertionError('different columns', [MissingColumn('foo')])
-        pattern = "DataAssertionError: different columns:\n MissingColumn('foo')"
+        pattern = "DataAssertionError: different columns:\n MissingValue('foo')"
         self.assertEqual(repr(error), pattern)
 
-        error = DataAssertionError('different columns', MissingColumn('foo'))
-        pattern = "DataAssertionError: different columns:\n MissingColumn('foo')"
+        error = DataAssertionError('different columns', [ExtraColumn('bar')])
+        pattern = "DataAssertionError: different columns:\n ExtraValue('bar')"
+        self.assertEqual(repr(error), pattern)
+
+    def test_repr(self):
+        error = DataAssertionError('different columns', [MissingValue('foo')])
+        pattern = "DataAssertionError: different columns:\n MissingValue('foo')"
+        self.assertEqual(repr(error), pattern)
+
+        error = DataAssertionError('different columns', MissingValue('foo'))
+        pattern = "DataAssertionError: different columns:\n MissingValue('foo')"
         self.assertEqual(repr(error), pattern)
 
         # Test pprint lists.
-        error = DataAssertionError('different columns', [MissingColumn('foo'),
-                                                         MissingColumn('bar')])
+        error = DataAssertionError('different columns', [MissingValue('foo'),
+                                                         MissingValue('bar')])
         pattern = ("DataAssertionError: different columns:\n"
-                   " MissingColumn('foo'),\n"
-                   " MissingColumn('bar')")
+                   " MissingValue('foo'),\n"
+                   " MissingValue('bar')")
         self.assertEqual(repr(error), pattern)
 
         # Test dictionary with nested list.
-        error = DataAssertionError('different columns', {'Omitted': [MissingColumn('foo'),
-                                                                     MissingColumn('bar'),
-                                                                     MissingColumn('baz')]})
+        error = DataAssertionError('different columns', {'Omitted': [MissingValue('foo'),
+                                                                     MissingValue('bar'),
+                                                                     MissingValue('baz')]})
         pattern = ("DataAssertionError: different columns:\n"
-                   " 'Omitted': [MissingColumn('foo'),\n"
-                   "             MissingColumn('bar'),\n"
-                   "             MissingColumn('baz')]")
+                   " 'Omitted': [MissingValue('foo'),\n"
+                   "             MissingValue('bar'),\n"
+                   "             MissingValue('baz')]")
         self.assertEqual(repr(error), pattern)
 
     def test_verbose_repr(self):
         reference = 'reference-data-source'
         subject = 'subject-data-source'
-        error = DataAssertionError('different columns', [MissingColumn('foo')], reference, subject)
+        error = DataAssertionError('different columns', [MissingValue('foo')], reference, subject)
         error._verbose = True  # <- Set verbose flag, here!
 
         pattern = ("DataAssertionError: different columns:\n"
-                   " MissingColumn('foo')\n"
+                   " MissingValue('foo')\n"
                    "\n"
                    "REFERENCE DATA:\n"
                    "reference-data-source\n"
@@ -390,7 +401,7 @@ class TestColumnsSet(TestHelperCase):
                 _self.assertColumnSet()  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = "different column names:\n ExtraColumn\(u?'label2'\)"
+        pattern = "different column names:\n ExtraValue\(u?'label2'\)"
         self.assertRegex(failure, pattern)
 
     def test_missing(self):
@@ -406,7 +417,7 @@ class TestColumnsSet(TestHelperCase):
                 _self.assertColumnSet()  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = "different column names:\n MissingColumn\(u?'value'\)"
+        pattern = "different column names:\n MissingValue\(u?'value'\)"
         self.assertRegex(failure, pattern)
 
 
@@ -476,7 +487,7 @@ class TestColumnSubset(TestHelperCase):
                 _self.assertColumnSubset()  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = "different column names:\n ExtraColumn\(u?'label2'\)"
+        pattern = "different column names:\n ExtraValue\(u?'label2'\)"
         self.assertRegex(failure, pattern)
 
 
@@ -546,7 +557,7 @@ class TestColumnSuperset(TestHelperCase):
                 _self.assertColumnSuperset()  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = "different column names:\n MissingColumn\(u?'value'\)"
+        pattern = "different column names:\n MissingValue\(u?'value'\)"
         self.assertRegex(failure, pattern)
 
 
