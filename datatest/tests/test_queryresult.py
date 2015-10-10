@@ -1,4 +1,4 @@
-"""Scratchpad for DataSource query result objects."""
+"""Result objects for DataSource queries."""
 from . import _unittest as unittest
 
 from datatest.queryresult import _coerce_other
@@ -83,6 +83,26 @@ class TestResultSet(unittest.TestCase):
         self.assertEqual([], a.compare(b), ('When there is no difference, '
                                             'compare should return an empty '
                                             'list.'))
+
+        # Test callable other (all True).
+        result = a.compare(lambda x: len(x) == 1)
+        self.assertEqual([], result)
+
+        # Test callable other (some False).
+        result = a.compare(lambda x: x.startswith('b'))
+        expected = set([InvalidValue('a'), InvalidValue('c')])
+        self.assertEqual(expected, set(result))
+
+    def test_all(self):
+        a = ResultSet(['foo', 'bar', 'baz'])
+
+        # Test True.
+        result = a.all(lambda x: len(x) == 3)
+        self.assertTrue(result)
+
+        # Test False.
+        result = a.all(lambda x: x.startswith('b'))
+        self.assertFalse(result)
 
 
 if __name__ == '__main__':

@@ -3,6 +3,8 @@ from collections import Mapping
 from collections import Set
 from functools import wraps
 
+from ._builtins import *
+
 from .diff import MissingValue
 from .diff import ExtraValue
 from .diff import InvalidValue
@@ -61,16 +63,29 @@ class ResultSet(object):
     def __contains__(self, item):
         return item in self.values
 
-    @_coerce_other
     def compare(self, other):
-        """Build a list of differences between *self* and *other* sets."""
-        extra = self.values - other.values
-        extra = [ExtraValue(x) for x in extra]
+        """Compare *self* to *other* and return a list of difference objects.
+        If *other* is callable, constructs a list of InvalidValue objects
+        for values where *other* returns False.  If *other* is a ResultSet or
+        other collection, differences are compiled as a list of ExtraValue and
+        MissingValue objects.
 
-        missing = other.values - self.values
-        missing = [MissingValue(x) for x in missing]
+        """
+        if callable(other):
+            differences = [InvalidValue(x) for x in self.values if not other(x)]
+        else:
+            if not isinstance(other, ResultSet):
+                other = ResultSet(other)
+            extra = self.values - other.values
+            extra = [ExtraValue(x) for x in extra]
+            missing = other.values - self.values
+            missing = [MissingValue(x) for x in missing]
+            differences = extra + missing
+        return differences
 
-        return extra + missing
+    def all(self, func):
+        """Return True if *func* evaluates to True for all items in set."""
+        return all(func(x) for x in self.values)
 
 
 class ResultMapping(object):

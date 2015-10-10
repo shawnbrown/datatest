@@ -12,7 +12,6 @@ from .diff import ExtraColumn
 from .diff import MissingColumn
 from .diff import _make_decimal
 from .diff import InvalidNumber
-from .diff import InvalidValue
 from .queryresult import ResultSet
 from .queryresult import ResultMapping
 
@@ -424,14 +423,16 @@ class DataTestCase(TestCase):
         """
         subject = self.subjectData.unique(column, **filter_by)
         subject = (x[0] for x in subject)  # Unpack single item.
+        subject = ResultSet(subject)
+        #result = self.subjectData.distinct(column, **filter_by)
         if not isinstance(regex, _re_type):
             regex = re.compile(regex)
-        failures = [x for x in subject if not regex.search(x)]
-        failures = [InvalidValue(x) for x in failures]
-        if failures:
+        func = lambda x: regex.search(x) is not None
+        invalid = subject.compare(func)
+        if invalid:
             if not msg:
                 msg = 'non-matching {0!r} values'.format(column)
-            self.fail(msg=msg, diff=failures)
+            self.fail(msg=msg, diff=invalid)
 
     def assertValueNotRegex(self, column, regex, msg=None, **filter_by):
         """Test that all subject values in *column* do not match the
@@ -439,14 +440,15 @@ class DataTestCase(TestCase):
         """
         subject = self.subjectData.unique(column, **filter_by)
         subject = (x[0] for x in subject)  # Unpack single item.
+        subject = ResultSet(subject)
         if not isinstance(regex, _re_type):
             regex = re.compile(regex)
-        failures = [x for x in subject if regex.search(x)]
-        failures = [InvalidValue(x) for x in failures]
-        if failures:
+        func = lambda x: regex.search(x) is None
+        invalid = subject.compare(func)
+        if invalid:
             if not msg:
                 msg = 'matching {0!r} values'.format(column)
-            self.fail(msg=msg, diff=failures)
+            self.fail(msg=msg, diff=invalid)
 
     def acceptableDifference(self, diff, msg=None):
         """Context manager to accept a given list of differences
