@@ -9,7 +9,7 @@ def _make_decimal(d):
     d = _Decimal(d)
 
     if d == d.to_integral():             # Remove_exponent (from official
-        return d.quantize(_Decimal(1))   #  docs: 9.4.10. Decimal FAQ).
+        return d.quantize(_Decimal(1))   # docs: 9.4.10. Decimal FAQ).
     return d.normalize()
 
 
