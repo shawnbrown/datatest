@@ -20,7 +20,7 @@ class ItemBase(object):
 
     def __repr__(self):
         clsname = self.__class__.__name__
-        kwds = self._kwds_format()
+        kwds = self._format_kwds(self.kwds)
         return '{0}({1!r}{2})'.format(clsname, self.item, kwds)
 
     def __hash__(self):
@@ -29,10 +29,11 @@ class ItemBase(object):
     def __eq__(self, other):
         return hash(self) == hash(other)
 
-    def _kwds_format(self):
-        if not hasattr(self, 'kwds') or self.kwds == {}:
+    @staticmethod
+    def _format_kwds(kwds):
+        if not kwds:
             return ''  # <- EXIT!
-        kwds = sorted(self.kwds.items())
+        kwds = sorted(kwds.items())
         try:
             kwds = [(k, unicode(v)) for k, v in kwds]  # Only if `unicode` is defined.
         except NameError:
@@ -62,6 +63,6 @@ class InvalidNumber(ItemBase):
 
     def __repr__(self):
         clsname = self.__class__.__name__
-        kwds = self._kwds_format()
+        kwds = self._format_kwds(self.kwds)
         diff = '+' + str(self.diff) if self.diff > 0 else str(self.diff)
         return '{0}({1}, {2}{3})'.format(clsname, diff, self.number, kwds)
