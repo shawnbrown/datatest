@@ -5,127 +5,56 @@ import re
 from . import _io as io
 from . import _unittest as unittest
 
-from datatest.diff import DiffBase
-
-from datatest.diff import _ColumnBase
-from datatest.diff import ExtraColumn
-from datatest.diff import MissingColumn
-
-from datatest.diff import _ValueBase
-from datatest.diff import ExtraValue
-from datatest.diff import MissingValue
+from datatest.diff import ItemBase
+from datatest.diff import ExtraItem
+from datatest.diff import MissingItem
 from datatest.diff import InvalidNumber
 
 
-class TestDiffBase(unittest.TestCase):
-    def test_init_error(self):
-        with self.assertRaises(NotImplementedError):
-            DiffBase()  # Calls __init__.
-
-    def test_repr_error(self):
-        class MockDiff(DiffBase):
-            def __init__(self):
-                pass  # Knock-out __init__.
-
-        mocked = MockDiff()
-        with self.assertRaises(NotImplementedError):
-            mocked.__repr__()
-
-    def test_minimal(self):
-        class MinimalSubclass(DiffBase):
-            def __init__(self, diff):
-                self.diff = diff
-
-            def __repr__(self):
-                return 'MinimalSubclass({0})'.format(self.diff)
-
-        minimal = MinimalSubclass(3)
-        self.assertEqual(repr(minimal), 'MinimalSubclass(3)')  # Test __repr__
-        self.assertEqual(repr(minimal), str(minimal))  # Test __repr__ and __str__
-        self.assertIsInstance(hash(minimal), int)
-        self.assertEqual(minimal, MinimalSubclass(3))  # Test __eq__
-        self.assertEqual(minimal, eval(repr(minimal)))  # Test __repr__ eval
-
-
-class TestColumnDiffs(unittest.TestCase):
-    """Test _ColumnBase, ExtraColumn, and MissingColumn."""
+class TestItemBase(unittest.TestCase):
     def test_repr(self):
-        diff = _ColumnBase('col3')
-        self.assertEqual(repr(diff), "_ColumnBase('col3')")
+        item = ItemBase('foo')
+        self.assertEqual(repr(item), "ItemBase('foo')")
+
+        item = ItemBase(item='foo')  # As kwds.
+        self.assertEqual(repr(item), "ItemBase('foo')")
+
+        item = ItemBase('foo', col4='bar')  # Using kwds for filtering.
+        self.assertRegex(repr(item), "ItemBase\(u?'foo', col4=u?'bar'\)")
 
     def test_str(self):
-        diff = _ColumnBase('col3')
+        diff = ItemBase('foo', col4='bar')
         self.assertEqual(str(diff), repr(diff))
 
     def test_hash(self):
-        diff = _ColumnBase('col3')
+        diff = ItemBase('foo')
         self.assertIsInstance(hash(diff), int)
 
     def test_eq(self):
-        diff1 = _ColumnBase('col1')
-        diff2 = _ColumnBase('col1')
+        diff1 = ItemBase('foo')
+        diff2 = ItemBase('foo')
         self.assertEqual(diff1, diff2)
 
-        diff1 = _ColumnBase('col1')
-        diff2 = _ColumnBase('col2')
+        diff1 = ItemBase('foo')
+        diff2 = ItemBase('bar')
         self.assertNotEqual(diff1, diff2)
 
-        diff1 = _ColumnBase('col1')
-        diff2 = "_ColumnBase('col1')"
+        diff1 = ItemBase('foo')
+        diff2 = "ItemBase('foo')"
         self.assertNotEqual(diff1, diff2)
-
-    def test_subclass(self):
-        self.assertTrue(issubclass(ExtraColumn, _ColumnBase))
-        self.assertTrue(issubclass(MissingColumn, _ColumnBase))
 
     def test_repr_eval(self):
-        diff = _ColumnBase('col3')
+        diff = ItemBase('someval')
+        self.assertEqual(diff, eval(repr(diff)))  # Test __repr__ eval
+
+        diff = ItemBase('someval', col4='foo', col5='bar')
         self.assertEqual(diff, eval(repr(diff)))  # Test __repr__ eval
 
 
-class TestValueDiffs(unittest.TestCase):
-    """Test _BaseDiffValue, ExtraValue, and MissingValue."""
-    def test_repr(self):
-        diff = _ValueBase('foo')
-        self.assertEqual(repr(diff), "_ValueBase('foo')")
-
-        diff = _ValueBase(diff='foo')  # As kwds.
-        self.assertEqual(repr(diff), "_ValueBase('foo')")
-
-        diff = _ValueBase('foo', col4='bar')  # Using kwds for filtering.
-        self.assertRegex(repr(diff), "_ValueBase\(u?'foo', col4=u?'bar'\)")
-
-    def test_str(self):
-        diff = _ValueBase('foo', col4='bar')
-        self.assertEqual(str(diff), repr(diff))
-
-    def test_hash(self):
-        diff = _ValueBase('foo')
-        self.assertIsInstance(hash(diff), int)
-
-    def test_eq(self):
-        diff1 = _ValueBase('foo')
-        diff2 = _ValueBase('foo')
-        self.assertEqual(diff1, diff2)
-
-        diff1 = _ValueBase('foo')
-        diff2 = _ValueBase('bar')
-        self.assertNotEqual(diff1, diff2)
-
-        diff1 = _ValueBase('foo')
-        diff2 = "_ValueBase('foo')"
-        self.assertNotEqual(diff1, diff2)
-
+class TestExtraAndMissing(unittest.TestCase):
     def test_subclass(self):
-        self.assertTrue(issubclass(ExtraValue, _ValueBase))
-        self.assertTrue(issubclass(MissingValue, _ValueBase))
-
-    def test_repr_eval(self):
-        diff = _ValueBase('someval')
-        self.assertEqual(diff, eval(repr(diff)))  # Test __repr__ eval
-
-        diff = _ValueBase('someval', col4='foo', col5='bar')
-        self.assertEqual(diff, eval(repr(diff)))  # Test __repr__ eval
+        self.assertTrue(issubclass(ExtraItem, ItemBase))
+        self.assertTrue(issubclass(MissingItem, ItemBase))
 
 
 class TestInvalidNumber(unittest.TestCase):

@@ -13,10 +13,10 @@ from .datasource import MultiDataSource
 from .datasource_extras import ExcelDataSource
 from .datasource_extras import PandasDataSource
 
-from .diff import ExtraValue
-from .diff import MissingValue
+from .diff import ExtraItem
+from .diff import MissingItem
+from .diff import InvalidItem
 from .diff import InvalidNumber
-from .diff import InvalidValue
 
 from .queryresult import ResultSet
 from .queryresult import ResultMapping
@@ -50,9 +50,9 @@ __all__ = [
     'ResultMapping',
 
     # Differences.
-    'ExtraValue',
-    'MissingValue',
-    'InvalidValue',
+    'ExtraItem',
+    'MissingItem',
+    'InvalidItem',
     'InvalidNumber',
 
     # Test runner and command-line program.
@@ -69,5 +69,9 @@ DataTestCase.acceptPercentTolerance = DataTestCase.acceptablePercentTolerance
 
 #ExtraSum = InvalidNumber
 #MissingSum = InvalidNumber
-ExtraColumn = ExtraValue
-MissingColumn = MissingValue
+
+ExtraColumn = ExtraItem
+MissingColumn = MissingItem
+ExtraValue = ExtraItem
+MissingValue = MissingItem
+InvalidValue = InvalidItem

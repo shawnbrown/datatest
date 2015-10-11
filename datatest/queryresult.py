@@ -6,10 +6,11 @@ from functools import wraps
 
 from ._builtins import *
 
-from .diff import MissingValue
-from .diff import ExtraValue
-from .diff import InvalidValue
+from .diff import ExtraItem
+from .diff import MissingItem
+from .diff import InvalidItem
 
+ExtraValue = ExtraItem
 
 def _coerce_other(f):
     """Decorator for comparison methods to convert 'other' argument into
@@ -66,21 +67,21 @@ class ResultSet(object):
 
     def compare(self, other):
         """Compare *self* to *other* and return a list of difference objects.
-        If *other* is callable, constructs a list of InvalidValue objects
+        If *other* is callable, constructs a list of InvalidItem objects
         for values where *other* returns False.  If *other* is a ResultSet or
-        other collection, differences are compiled as a list of ExtraValue and
-        MissingValue objects.
+        other collection, differences are compiled as a list of ExtraItem and
+        MissingItem objects.
 
         """
         if callable(other):
-            differences = (InvalidValue(x) for x in self.values if not other(x))
+            differences = (InvalidItem(x) for x in self.values if not other(x))
         else:
             if not isinstance(other, ResultSet):
                 other = ResultSet(other)
             extra = self.values.difference(other.values)
-            extra = (ExtraValue(x) for x in extra)
+            extra = (ExtraItem(x) for x in extra)
             missing = other.values.difference(self.values)
-            missing = (MissingValue(x) for x in missing)
+            missing = (MissingItem(x) for x in missing)
             differences = itertools.chain(extra, missing)
         return list(differences)
 

@@ -11,58 +11,54 @@ from . import _unittest as unittest
 from datatest.case import DataTestCase
 from datatest.case import DataAssertionError
 from datatest.case import _walk_diff
-from datatest import ExtraValue
-from datatest import MissingValue
-from datatest import InvalidValue
+from datatest import ExtraItem
+from datatest import MissingItem
+from datatest import InvalidItem
 from datatest import InvalidNumber
 from datatest import CsvDataSource
-
-# TODO: Deprecate these two:
-from datatest import ExtraColumn
-from datatest import MissingColumn
 
 
 class TestWalkValues(unittest.TestCase):
     def test_list_input(self):
         # Flat.
-        generator = _walk_diff([MissingValue('val1'),
-                                MissingValue('val2')])
-        self.assertEqual(list(generator), [MissingValue('val1'),
-                                           MissingValue('val2')])
+        generator = _walk_diff([MissingItem('val1'),
+                                MissingItem('val2')])
+        self.assertEqual(list(generator), [MissingItem('val1'),
+                                           MissingItem('val2')])
 
         # Nested.
-        generator = _walk_diff([MissingValue('val1'),
-                                [MissingValue('val2')]])
-        self.assertEqual(list(generator), [MissingValue('val1'),
-                                           MissingValue('val2')])
+        generator = _walk_diff([MissingItem('val1'),
+                                [MissingItem('val2')]])
+        self.assertEqual(list(generator), [MissingItem('val1'),
+                                           MissingItem('val2')])
 
     def test_dict_input(self):
         # Flat dictionary input.
-        generator = _walk_diff({'key1': MissingValue('val1'),
-                                'key2': MissingValue('val2')})
-        self.assertEqual(set(generator), set([MissingValue('val1'),
-                                              MissingValue('val2')]))
+        generator = _walk_diff({'key1': MissingItem('val1'),
+                                'key2': MissingItem('val2')})
+        self.assertEqual(set(generator), set([MissingItem('val1'),
+                                              MissingItem('val2')]))
 
         # Nested dictionary input.
-        generator = _walk_diff({'key1': MissingValue('val1'),
-                                'key2': {'key3': MissingValue('baz')}})
-        self.assertEqual(set(generator), set([MissingValue('val1'),
-                                              MissingValue('baz')]))
+        generator = _walk_diff({'key1': MissingItem('val1'),
+                                'key2': {'key3': MissingItem('baz')}})
+        self.assertEqual(set(generator), set([MissingItem('val1'),
+                                              MissingItem('baz')]))
 
     def test_unwrapped_input(self):
-        generator = _walk_diff(MissingValue('val1'))
-        self.assertEqual(list(generator), [MissingValue('val1')])
+        generator = _walk_diff(MissingItem('val1'))
+        self.assertEqual(list(generator), [MissingItem('val1')])
 
     def test_mixed_input(self):
         # Nested collection of dict, list, and unwrapped items.
-        generator = _walk_diff({'key1': MissingValue('val1'),
-                                'key2': [MissingValue('val2'),
-                                         [MissingValue('val3'),
-                                          MissingValue('val4')]]})
-        self.assertEqual(set(generator), set([MissingValue('val1'),
-                                              MissingValue('val2'),
-                                              MissingValue('val3'),
-                                              MissingValue('val4')]))
+        generator = _walk_diff({'key1': MissingItem('val1'),
+                                'key2': [MissingItem('val2'),
+                                         [MissingItem('val3'),
+                                          MissingItem('val4')]]})
+        self.assertEqual(set(generator), set([MissingItem('val1'),
+                                              MissingItem('val2'),
+                                              MissingItem('val3'),
+                                              MissingItem('val4')]))
 
     def test_nondiff_items(self):
         # Flat list.
@@ -77,14 +73,14 @@ class TestWalkValues(unittest.TestCase):
 
         # Nested list.
         with self.assertRaises(TypeError):
-            generator = _walk_diff([MissingValue('val1'), ['val2']])
+            generator = _walk_diff([MissingItem('val1'), ['val2']])
             list(generator)
 
         # Nested collection of dict, list, and unwrapped items.
         with self.assertRaises(TypeError):
-            generator = _walk_diff({'key1': MissingValue('val1'),
-                                    'key2': [MissingValue('val2'),
-                                             [MissingValue('val3'),
+            generator = _walk_diff({'key1': MissingItem('val1'),
+                                    'key2': [MissingItem('val2'),
+                                             [MissingItem('val3'),
                                               'val4']]})
             list(generator)
 
@@ -94,58 +90,70 @@ class TestDataAssertionError(unittest.TestCase):
         self.assertTrue(issubclass(DataAssertionError, AssertionError))
 
     def test_instantiation(self):
-        DataAssertionError('column names', MissingValue('foo'))
-        DataAssertionError('column names', [MissingValue('foo')])
-        DataAssertionError('column names', {'Explanation here.': MissingValue('foo')})
-        DataAssertionError('column names', {'Explanation here.': [MissingValue('foo')]})
+        DataAssertionError('column names', MissingItem('foo'))
+        DataAssertionError('column names', [MissingItem('foo')])
+        DataAssertionError('column names', {'Explanation here.': MissingItem('foo')})
+        DataAssertionError('column names', {'Explanation here.': [MissingItem('foo')]})
 
         with self.assertRaises(ValueError, msg='Empty error should raise exception.'):
             DataAssertionError(msg='', diff={})
 
-    def test_deprecated_classe_names(self):
-        error = DataAssertionError('different columns', [MissingColumn('foo')])
-        pattern = "DataAssertionError: different columns:\n MissingValue('foo')"
-        self.assertEqual(repr(error), pattern)
+    def test_deprecated_class_names(self):
+        # ExtraColumn (now ExtraItem)
+        from datatest import ExtraColumn
+        self.assertEqual('ExtraItem', ExtraColumn.__name__)
 
-        error = DataAssertionError('different columns', [ExtraColumn('bar')])
-        pattern = "DataAssertionError: different columns:\n ExtraValue('bar')"
-        self.assertEqual(repr(error), pattern)
+        # MissingColumn (now MissingItem)
+        from datatest import MissingColumn
+        self.assertEqual('MissingItem', MissingColumn.__name__)
+
+        # ExtraValue (now ExtraItem)
+        from datatest import ExtraValue
+        self.assertEqual('ExtraItem', ExtraValue.__name__)
+
+        # MissingValue (now MissingItem)
+        from datatest import MissingValue
+        self.assertEqual('MissingItem', MissingValue.__name__)
+
+        # InvalidValue (now InvalidItem)
+        from datatest import InvalidValue
+        self.assertEqual('InvalidItem', InvalidItem.__name__)
 
     def test_repr(self):
-        error = DataAssertionError('different columns', [MissingValue('foo')])
-        pattern = "DataAssertionError: different columns:\n MissingValue('foo')"
+        error = DataAssertionError('different columns', [MissingItem('foo')])
+        pattern = "DataAssertionError: different columns:\n MissingItem('foo')"
         self.assertEqual(repr(error), pattern)
 
-        error = DataAssertionError('different columns', MissingValue('foo'))
-        pattern = "DataAssertionError: different columns:\n MissingValue('foo')"
+        error = DataAssertionError('different columns', MissingItem('foo'))
+        pattern = "DataAssertionError: different columns:\n MissingItem('foo')"
         self.assertEqual(repr(error), pattern)
 
         # Test pprint lists.
-        error = DataAssertionError('different columns', [MissingValue('foo'),
-                                                         MissingValue('bar')])
+        error = DataAssertionError('different columns', [MissingItem('foo'),
+                                                         MissingItem('bar')])
         pattern = ("DataAssertionError: different columns:\n"
-                   " MissingValue('foo'),\n"
-                   " MissingValue('bar')")
+                   " MissingItem('foo'),\n"
+                   " MissingItem('bar')")
         self.assertEqual(repr(error), pattern)
 
         # Test dictionary with nested list.
-        error = DataAssertionError('different columns', {'Omitted': [MissingValue('foo'),
-                                                                     MissingValue('bar'),
-                                                                     MissingValue('baz')]})
+        error = DataAssertionError('different columns', {'Omitted': [MissingItem('foo'),
+                                                                     MissingItem('bar'),
+                                                                     MissingItem('baz')]})
         pattern = ("DataAssertionError: different columns:\n"
-                   " 'Omitted': [MissingValue('foo'),\n"
-                   "             MissingValue('bar'),\n"
-                   "             MissingValue('baz')]")
+                   " 'Omitted': [MissingItem('foo'),\n"
+                   "             MissingItem('bar'),\n"
+                   "             MissingItem('baz')]")
         self.assertEqual(repr(error), pattern)
 
     def test_verbose_repr(self):
         reference = 'reference-data-source'
         subject = 'subject-data-source'
-        error = DataAssertionError('different columns', [MissingValue('foo')], reference, subject)
+        error = DataAssertionError('different columns', [MissingItem('foo')], reference, subject)
         error._verbose = True  # <- Set verbose flag, here!
 
         pattern = ("DataAssertionError: different columns:\n"
-                   " MissingValue('foo')\n"
+                   " MissingItem('foo')\n"
                    "\n"
                    "REFERENCE DATA:\n"
                    "reference-data-source\n"
@@ -401,7 +409,7 @@ class TestColumnsSet(TestHelperCase):
                 _self.assertColumnSet()  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = "different column names:\n ExtraValue\(u?'label2'\)"
+        pattern = "different column names:\n ExtraItem\(u?'label2'\)"
         self.assertRegex(failure, pattern)
 
     def test_missing(self):
@@ -417,7 +425,7 @@ class TestColumnsSet(TestHelperCase):
                 _self.assertColumnSet()  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = "different column names:\n MissingValue\(u?'value'\)"
+        pattern = "different column names:\n MissingItem\(u?'value'\)"
         self.assertRegex(failure, pattern)
 
 
@@ -487,7 +495,7 @@ class TestColumnSubset(TestHelperCase):
                 _self.assertColumnSubset()  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = "different column names:\n ExtraValue\(u?'label2'\)"
+        pattern = "different column names:\n ExtraItem\(u?'label2'\)"
         self.assertRegex(failure, pattern)
 
 
@@ -557,7 +565,7 @@ class TestColumnSuperset(TestHelperCase):
                 _self.assertColumnSuperset()  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = "different column names:\n MissingValue\(u?'value'\)"
+        pattern = "different column names:\n MissingItem\(u?'value'\)"
         self.assertRegex(failure, pattern)
 
 
@@ -632,7 +640,7 @@ class TestValueSet(TestHelperCase):
                 _self.assertValueSet('label')  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = "different 'label' values:\n MissingValue\(u?'c'\)"
+        pattern = "different 'label' values:\n MissingItem\(u?'c'\)"
         self.assertRegex(failure, pattern)
 
     def test_extra(self):
@@ -650,7 +658,7 @@ class TestValueSet(TestHelperCase):
                 _self.assertValueSet('label')  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = "different 'label' values:\n ExtraValue\(u?'d'\)"
+        pattern = "different 'label' values:\n ExtraItem\(u?'d'\)"
         self.assertRegex(failure, pattern)
 
     def test_same_group(self):
@@ -682,7 +690,7 @@ class TestValueSet(TestHelperCase):
                 _self.assertValueSet(['label', 'label2'])  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = "different \[u?'label', u?'label2'\] values:\n MissingValue\(\(u?'b', u?'y'\)\)"
+        pattern = "different \[u?'label', u?'label2'\] values:\n MissingItem\(\(u?'b', u?'y'\)\)"
         self.assertRegex(failure, pattern)
 
 
@@ -756,7 +764,7 @@ class TestValueSubset(TestHelperCase):
                 _self.assertValueSubset('label')  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = "different 'label' values:\n ExtraValue\(u?'d'\)"
+        pattern = "different 'label' values:\n ExtraItem\(u?'d'\)"
         self.assertRegex(failure, pattern)
 
 
@@ -832,7 +840,7 @@ class TestValueSuperset(TestHelperCase):
                 _self.assertValueSuperset('label')  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = "different 'label' values:\n MissingValue\(u?'c'\)"
+        pattern = "different 'label' values:\n MissingItem\(u?'c'\)"
         self.assertRegex(failure, pattern)
 
 
@@ -863,7 +871,7 @@ class TestValueRegexAndValueNotRegex(TestHelperCase):
                 _self.assertValueRegex('label2', '\d\d\d')  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = "non-matching 'label2' values:\n InvalidValue\(u?'2'\)"
+        pattern = "non-matching 'label2' values:\n InvalidItem\(u?'2'\)"
         self.assertRegex(failure, pattern)
 
     def test_regex_precompiled(self):
@@ -898,7 +906,7 @@ class TestValueRegexAndValueNotRegex(TestHelperCase):
                 _self.assertValueNotRegex('label2', '^\d{1,2}$')  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = "matching 'label2' values:\n InvalidValue\(u?'2'\)"
+        pattern = "matching 'label2' values:\n InvalidItem\(u?'2'\)"
         self.assertRegex(failure, pattern)
 
     def test_not_regex_precompiled(self):

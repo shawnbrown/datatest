@@ -7,8 +7,8 @@ import pprint
 import re
 from unittest import TestCase
 
-from .diff import DiffBase
 from .diff import _make_decimal
+from .diff import ItemBase
 from .diff import InvalidNumber
 from .queryresult import ResultSet
 from .queryresult import ResultMapping
@@ -57,7 +57,7 @@ def _walk_diff(diff):
     """Iterate over difference or collection of differences."""
     if isinstance(diff, dict):
         diff = diff.values()
-    elif isinstance(diff, DiffBase):
+    elif isinstance(diff, ItemBase):
         diff = (diff,)
 
     for item in diff:
@@ -65,8 +65,8 @@ def _walk_diff(diff):
             for elt2 in _walk_diff(item):
                 yield elt2
         else:
-            if not isinstance(item, DiffBase):
-                raise TypeError('Object {0!r} is not derived from DiffBase.'.format(item))
+            if not isinstance(item, ItemBase):
+                raise TypeError('Object {0!r} is not derived from ItemBase.'.format(item))
             yield item
 
 
@@ -181,7 +181,7 @@ class _AcceptablePercentTolerance(_AcceptableBaseContext):
         for k, v in self._filter_by.items():
             if (k not in obj.kwds) or (obj.kwds[k] not in v):
                 return False
-        percent = obj.diff / obj.sum
+        percent = obj.diff / obj.number
         return abs(percent) <= self.accepted
 
 
@@ -450,8 +450,8 @@ class DataTestCase(TestCase):
         without triggering a test failure::
 
             diff = [
-                ExtraValue('foo'),
-                MissingValue('bar'),
+                ExtraItem('foo'),
+                MissingItem('bar'),
             ]
             with self.acceptableDifference(diff):
                 self.assertValueSet('column1')

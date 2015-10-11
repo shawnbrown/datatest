@@ -5,9 +5,9 @@ from datatest.queryresult import _coerce_other
 from datatest.queryresult import ResultSet
 from datatest.queryresult import ResultMapping
 
-from datatest import MissingValue
-from datatest import ExtraValue
-from datatest import InvalidValue
+from datatest import ExtraItem
+from datatest import MissingItem
+from datatest import InvalidItem
 
 
 class TestMethodDecorator(unittest.TestCase):
@@ -75,7 +75,7 @@ class TestResultSet(unittest.TestCase):
     def test_compare(self):
         a = ResultSet(['a','b','d'])
         b = ResultSet(['a','b','c'])
-        expected = [ExtraValue('d'), MissingValue('c')]
+        expected = [ExtraItem('d'), MissingItem('c')]
         self.assertEqual(expected, a.compare(b))
 
         a = ResultSet(['a','b','c'])
@@ -90,7 +90,7 @@ class TestResultSet(unittest.TestCase):
 
         # Test callable other (some False).
         result = a.compare(lambda x: x.startswith('b'))
-        expected = set([InvalidValue('a'), InvalidValue('c')])
+        expected = set([InvalidItem('a'), InvalidItem('c')])
         self.assertEqual(expected, set(result))
 
     def test_all(self):
