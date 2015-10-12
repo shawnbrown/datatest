@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-
-from decimal import Decimal as _Decimal
+from ._decimal import Decimal as _Decimal
 
 
 def _make_decimal(d):
@@ -57,12 +56,16 @@ class InvalidItem(ItemBase):
 
 class InvalidNumber(ItemBase):
     def __init__(self, diff, number, **kwds):
+        if not diff:
+            raise ValueError('diff must be positive or negative number')
         self.diff = _make_decimal(diff)
-        self.number = _make_decimal(number)
+        if number != None:
+            number = _make_decimal(number)
+        self.number = number
         self.kwds = kwds
 
     def __repr__(self):
         clsname = self.__class__.__name__
         kwds = self._format_kwds(self.kwds)
-        diff = '+' + str(self.diff) if self.diff > 0 else str(self.diff)
+        diff = '{0:+}'.format(self.diff)  # Apply +/- sign.
         return '{0}({1}, {2}{3})'.format(clsname, diff, self.number, kwds)

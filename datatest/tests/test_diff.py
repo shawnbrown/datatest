@@ -72,6 +72,15 @@ class TestInvalidNumber(unittest.TestCase):
         diff = InvalidNumber(3, 50, col1='a', col2='b')  # Using kwds.
         self.assertRegex(repr(diff), "InvalidNumber\(\+3, 50, col1=u?'a', col2=u?'b'\)")
 
+        with self.assertRaises(ValueError):
+            diff = InvalidNumber(0, 100)  # Zero diff.
+
+        with self.assertRaises(ValueError):
+            diff = InvalidNumber(None, 100)  # None diff.
+
+        diff = InvalidNumber(1, None, col1='a')  # None reference.
+        self.assertRegex(repr(diff), "InvalidNumber\(\+1, None, col1=u?'a'\)")
+
     def test_str(self):
         diff = InvalidNumber(5, 75, col1='a')
         self.assertEqual(str(diff), repr(diff))
