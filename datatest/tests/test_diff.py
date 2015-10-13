@@ -74,8 +74,13 @@ class TestInvalidItem(unittest.TestCase):
         item = InvalidItem(2)
         self.assertEqual("InvalidItem(2)", repr(item))
 
-        item = InvalidItem('foo', expected='FOO')
+    def test_expected_handling(self):
+        item = InvalidItem('foo', 'FOO')
         self.assertEqual("InvalidItem('foo', 'FOO')", repr(item))
+
+        # QUESTION: How should kwds be handled if keys match item or expected?
+        with self.assertRaises(TypeError):
+            item = InvalidItem('foo', 'FOO', expected='bar')
 
 
 class TestInvalidNumber(unittest.TestCase):

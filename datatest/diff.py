@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from ._decimal import Decimal as _Decimal
 
-NotProvided = object()  # Sentinel for InvalidItem init.
 
 def _make_decimal(d):
     if isinstance(d, float):
@@ -52,7 +51,7 @@ class MissingItem(ItemBase):
 
 
 class InvalidItem(ItemBase):
-    def __init__(self, item, expected=NotProvided, **kwds):
+    def __init__(self, item, expected=None, **kwds):
         self.item = item
         self.expected = expected
         self.kwds = kwds
@@ -60,7 +59,7 @@ class InvalidItem(ItemBase):
     def __repr__(self):
         clsname = self.__class__.__name__
         kwds = self._format_kwds(self.kwds)
-        if self.expected == NotProvided:
+        if self.expected == None:
             expected = ''
         else:
             expected = ', ' + repr(self.expected)
