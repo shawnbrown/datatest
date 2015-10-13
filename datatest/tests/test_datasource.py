@@ -60,7 +60,6 @@ class TestBaseDataSource(unittest.TestCase):
                 ['b', 'z', '5' ],
                 ['b', 'y', '40'],
                 ['b', 'x', '25']]
-
     def setUp(self):
         self.datasource = MinimalDataSource(self.testdata, self.fieldnames)
 
@@ -142,6 +141,30 @@ class TestBaseDataSource(unittest.TestCase):
 
         result = self.datasource.sum('value', label1='a')
         self.assertEqual(result, 65)
+
+    def test_sum2(self):
+        result = self.datasource.sum2('value')
+        self.assertEqual(135, result)
+
+        result = self.datasource.sum2('value', 'label1')
+        self.assertEqual({'a': 65, 'b': 70}, result)
+
+        result = self.datasource.sum2('value', ['label1'])
+        self.assertEqual({('a',): 65, ('b',): 70}, result)
+
+        expected = {
+            ('a', 'x'): 30,
+            ('a', 'y'): 20,
+            ('a', 'z'): 15,
+            ('b', 'z'): 5,
+            ('b', 'y'): 40,
+            ('b', 'x'): 25,
+        }
+        result = self.datasource.sum2('value', ['label1', 'label2'])
+        self.assertEqual(expected, result)
+
+        result = self.datasource.sum2('value', 'label2', label1='a')
+        self.assertEqual({'x': 30, 'y': 20, 'z': 15}, result)
 
     def test_count(self):
         result = self.datasource.count()

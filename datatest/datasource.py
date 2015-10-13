@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
-import collections
 import inspect
 import os
 import sqlite3
 import sys
 import warnings
-from decimal import Decimal
 
 from ._builtins import *
+from ._decimal import Decimal
 from ._unicodecsvreader import UnicodeCsvReader as _UnicodeCsvReader
+from . import _collections as collections
 from . import _itertools as itertools
 
+from .queryresult import ResultMapping
 
 #pattern = 'test*.py'
 prefix = 'test_'
@@ -61,6 +62,24 @@ class BaseDataSource(object):
         iterable = (x[column] for x in iterable)
         make_decimal = lambda x: Decimal(x) if x else Decimal('0')
         return sum(make_decimal(x) for x in iterable)
+
+    def sum2(self, column, group_by=None, **filter_by):
+        if group_by == None:
+            getkey = lambda row: None
+        elif isinstance(group_by, str):
+            getkey = lambda row: row[group_by]
+        else:
+            getkey = lambda row: tuple(row[x] for x in group_by)
+
+        make_decimal = lambda x: Decimal(x) if x else Decimal('0')
+        iterable = self.__filter_by(self.slow_iter(), **filter_by)
+        counter = collections.Counter()
+        for row in iterable:
+            counter[getkey(row)] += make_decimal(row[column])
+
+        if group_by == None:
+            return counter[None]
+        return ResultMapping(counter, group_by)
 
     def count(self, **filter_by):
         """Return count of rows (uses ``slow_iter``)"""
