@@ -79,7 +79,11 @@ except AssertionError:
 
     def _ne(self, other, context=None):
         self, other = _convert_for_comparison(self, other, equality_op=True)
-        return not self.__eq__(other, context)
+        if other is NotImplemented:
+            return other
+        if self._check_nans(other, context):
+            return True
+        return self._cmp(other) != 0
     Decimal.__ne__ = _ne
 
     def _lt(self, other, context=None):
