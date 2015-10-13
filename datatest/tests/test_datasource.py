@@ -98,7 +98,7 @@ class TestBaseDataSource(unittest.TestCase):
         ]
 
         # Filter by single value (where label1 is 'a').
-        results = self.datasource._base_filter_by(testdata, label1='a')
+        results = self.datasource._BaseDataSource__filter_by(testdata, label1='a')
         results = list(results)
         expected = [
             {'label1': 'a', 'label2': 'x', 'value': '17'},
@@ -109,7 +109,7 @@ class TestBaseDataSource(unittest.TestCase):
         self.assertEqual(expected, results)
 
         # Filter by multiple values (where label2 is 'x' OR 'y').
-        results = self.datasource._base_filter_by(testdata, label2=['x', 'y'])
+        results = self.datasource._BaseDataSource__filter_by(testdata, label2=['x', 'y'])
         results = list(results)
         expected = [
             {'label1': 'a', 'label2': 'x', 'value': '17'},
@@ -121,8 +121,9 @@ class TestBaseDataSource(unittest.TestCase):
         self.assertEqual(expected, results)
 
         # Filter by multiple columns (where label1 is 'a', label2 is 'x' OR 'y').
-        results = self.datasource._base_filter_by(testdata,
-                                                  label1='a', label2=['x', 'y'])
+        results = self.datasource._BaseDataSource__filter_by(testdata,
+                                                             label1='a',
+                                                             label2=['x', 'y'])
         results = list(results)
         expected = [
             {'label1': 'a', 'label2': 'x', 'value': '17'},
@@ -781,4 +782,3 @@ class TestMappedDataSource(TestBaseDataSource):
             {'label1': 'b', 'label2': 'x', 'percent_a': 0.390625},
         ]
         self.assertEqual(list(result), expected)
-
