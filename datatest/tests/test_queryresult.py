@@ -16,7 +16,8 @@ class TestMethodDecorator(unittest.TestCase):
         # Mock comparison method.
         def fn(self, other):
             return other
-        wrapped = _coerce_other(fn)
+        decorator = _coerce_other(ResultSet)
+        wrapped = decorator(fn)
 
         values = set([1, 2, 3, 4])
 
@@ -65,6 +66,11 @@ class TestResultSet(unittest.TestCase):
 
         a = ResultSet(values)
         b = ResultSet(values)
+        self.assertEqual(a, b)
+
+        # Test coersion.
+        a = ResultSet(values)
+        b = [1, 2, 3, 4]  # <- Should be coerced into ResultSet internally.
         self.assertEqual(a, b)
 
     def test_ne(self):
