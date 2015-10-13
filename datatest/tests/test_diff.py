@@ -8,6 +8,7 @@ from . import _unittest as unittest
 from datatest.diff import ItemBase
 from datatest.diff import ExtraItem
 from datatest.diff import MissingItem
+from datatest.diff import InvalidItem
 from datatest.diff import InvalidNumber
 
 
@@ -55,6 +56,26 @@ class TestExtraAndMissing(unittest.TestCase):
     def test_subclass(self):
         self.assertTrue(issubclass(ExtraItem, ItemBase))
         self.assertTrue(issubclass(MissingItem, ItemBase))
+
+
+class TestInvalidItem(unittest.TestCase):
+    """Test InvalidItem."""
+    def test_instantiation(self):
+        InvalidItem('foo')
+        InvalidItem('foo', expected='FOO')
+
+    def test_repr(self):
+        item = InvalidItem('foo')
+        self.assertEqual("InvalidItem('foo')", repr(item))
+
+        item = InvalidItem(None)
+        self.assertEqual("InvalidItem(None)", repr(item))
+
+        item = InvalidItem(2)
+        self.assertEqual("InvalidItem(2)", repr(item))
+
+        item = InvalidItem('foo', expected='FOO')
+        self.assertEqual("InvalidItem('foo', 'FOO')", repr(item))
 
 
 class TestInvalidNumber(unittest.TestCase):

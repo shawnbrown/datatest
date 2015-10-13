@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from ._decimal import Decimal as _Decimal
 
+NotProvided = object()  # Sentinel for InvalidItem init.
 
 def _make_decimal(d):
     if isinstance(d, float):
@@ -51,21 +52,33 @@ class MissingItem(ItemBase):
 
 
 class InvalidItem(ItemBase):
-    pass
+    def __init__(self, item, expected=NotProvided, **kwds):
+        self.item = item
+        self.expected = expected
+        self.kwds = kwds
+
+    def __repr__(self):
+        clsname = self.__class__.__name__
+        kwds = self._format_kwds(self.kwds)
+        if self.expected == NotProvided:
+            expected = ''
+        else:
+            expected = ', ' + repr(self.expected)
+        return '{0}({1!r}{2}{3})'.format(clsname, self.item, expected, kwds)
 
 
 class InvalidNumber(ItemBase):
-    def __init__(self, diff, number, **kwds):
+    def __init__(self, diff, expected, **kwds):
         if not diff:
             raise ValueError('diff must be positive or negative number')
         self.diff = _make_decimal(diff)
-        if number != None:
-            number = _make_decimal(number)
-        self.number = number
+        if expected != None:
+            expected = _make_decimal(expected)
+        self.expected = expected
         self.kwds = kwds
 
     def __repr__(self):
         clsname = self.__class__.__name__
         kwds = self._format_kwds(self.kwds)
         diff = '{0:+}'.format(self.diff)  # Apply +/- sign.
-        return '{0}({1}, {2}{3})'.format(clsname, diff, self.number, kwds)
+        return '{0}({1}, {2}{3})'.format(clsname, diff, self.expected, kwds)

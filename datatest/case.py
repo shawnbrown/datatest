@@ -178,12 +178,12 @@ class _AcceptablePercentTolerance(_AcceptableBaseContext):
         return True
 
     def _acceptable(self, obj):
-        if not obj.number:
+        if not obj.expected:
             return False  # <- EXIT!
         for k, v in self._filter_by.items():
             if (k not in obj.kwds) or (obj.kwds[k] not in v):
                 return False
-        percent = obj.diff / obj.number
+        percent = obj.diff / obj.expected
         return abs(percent) <= self.accepted
 
 
