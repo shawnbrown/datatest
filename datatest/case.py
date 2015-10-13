@@ -351,30 +351,14 @@ class DataTestCase(TestCase):
             self.assertValueSum('income', ['department', 'year'])
 
         """
-        ref = self.referenceData
-        subject = self.subjectData
+        subj_vals = self.subjectData.sum2(column, group_by, **filter_by)
+        ref_vals = self.referenceData.sum2(column, group_by, **filter_by)
 
-        def test(group_dict):
-            all_filters = filter_by.copy()
-            all_filters.update(group_dict)
-            subject_sum = subject.sum(column, **all_filters)
-            ref_sum = ref.sum(column, **all_filters)
-            s_sum = subject_sum if subject_sum else 0
-            t_sum = ref_sum if ref_sum else 0
-            difference = s_sum - t_sum
-            if difference != 0:
-                return InvalidNumber(difference, t_sum, **group_dict)
-            return None
-
-        groups = ref.unique(*group_by, **filter_by)
-        groups = (dict(zip(group_by, x)) for x in groups)
-        failures = (test(x) for x in groups)
-
-        failures = [x for x in failures if x != None]  # Filter for failures.
-        if failures:
+        differences = subj_vals.compare(ref_vals)
+        if differences:
             if not msg:
                 msg = 'different {0!r} sums'.format(column)
-            self.fail(msg=msg, diff=failures)
+            self.fail(msg=msg, diff=differences)
 
     def assertValueCount(self, column, group_by, msg=None, **filter_by):
         """Test that the count of subject rows matches the sum of
