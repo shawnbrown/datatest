@@ -1192,7 +1192,7 @@ class TestAcceptablePercentTolerance(TestHelperCase):
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
 
-    def test_percent_tolerance_with_filter(self):
+    def test_with_filter(self):
         """If accepted differences not found, raise exception."""
         class _TestClass(DataTestCase):
             def setUp(_self):
@@ -1208,7 +1208,7 @@ class TestAcceptablePercentTolerance(TestHelperCase):
                    " InvalidNumber\(-1, 70, label1=u?'b'\)")
         self.assertRegex(failure, pattern)
 
-    def test_inadequate_percent_tolerance(self):
+    def test_inadequate_tolerance(self):
         """If accepted differences not found, raise exception."""
         class _TestClass(DataTestCase):
             def setUp(_self):
@@ -1224,7 +1224,7 @@ class TestAcceptablePercentTolerance(TestHelperCase):
                    " InvalidNumber\(\+3, 65, label1=u?'a'\)")
         self.assertRegex(failure, pattern)
 
-    def test_tolerance_error(self):
+    def test_error(self):
         """Tolerance must throw error if invalid parameter."""
         class _TestClass(DataTestCase):
             def setUp(_self):
@@ -1237,6 +1237,32 @@ class TestAcceptablePercentTolerance(TestHelperCase):
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ('AssertionError: Percent tolerance must be between 0 and 1.')
+        self.assertRegex(failure, pattern)
+
+    def test_zero_denominator(self):
+        """Test for divide-by-zero condition."""
+        _fh1 = io.StringIO('label1,value\n'
+                          'a,65\n'
+                          'b,70\n')
+        subject = CsvDataSource(_fh1, in_memory=True)
+
+        _fh2 = io.StringIO('label1,value\n'
+                          'a,64\n'
+                          'b,0\n')
+        reference = CsvDataSource(_fh2, in_memory=True)
+
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                _self.referenceData = reference
+                _self.subjectData = subject
+
+            def test_method(_self):
+                with _self.acceptablePercentTolerance(0.03):  # <- test tolerance
+                    _self.assertValueSum('value', ['label1'])
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        pattern = ("DataAssertionError: different u?'value' sums:\n"
+                   " InvalidNumber\(\+70, 0, label1=u?'b'\)")
         self.assertRegex(failure, pattern)
 
 
