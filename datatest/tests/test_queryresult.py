@@ -8,6 +8,7 @@ from datatest.queryresult import ResultMapping
 from datatest import ExtraItem
 from datatest import MissingItem
 from datatest import InvalidItem
+from datatest import InvalidNumber
 
 
 class TestMethodDecorator(unittest.TestCase):
@@ -109,6 +110,129 @@ class TestResultSet(unittest.TestCase):
         # Test False.
         result = a.all(lambda x: x.startswith('b'))
         self.assertFalse(result)
+
+
+class TestResultMapping(unittest.TestCase):
+    def test_init(self):
+        values = {'a': 1, 'b': 2, 'c': 3, 'd': 4}
+
+        x = ResultMapping(values, 'foo')                # dict.
+        self.assertEqual(values, x.values)
+
+        x = ResultMapping(list(values.items()), 'foo')  # list of tuples.
+        self.assertEqual(values, x.values)
+
+        # Non-mapping values (values error).
+        values_list = ['a', 'b', 'c', 'd']
+        with self.assertRaises(ValueError):
+            x = ResultMapping(values_list, 'foo')
+
+    def test_eq(self):
+        values1 = {'a': 1, 'b': 2, 'c': 3, 'd': 4}
+        a = ResultMapping(values1, 'foo')
+        b = ResultMapping(values1, 'foo')
+        self.assertTrue(a == b)
+
+        values2 = {'a': 1, 'b': 2.5, 'c': 3, 'd': 4}
+        a = ResultMapping(values1, 'foo')
+        b = ResultMapping(values2, 'foo')
+        self.assertFalse(a == b)
+
+        # Test coersion of mapping.
+        values1 = {'a': 1, 'b': 2, 'c': 3, 'd': 4}
+        a = ResultMapping(values1, 'foo')
+        self.assertTrue(a == {'a': 1, 'b': 2, 'c': 3, 'd': 4})
+
+        # Test coersion of list of tuples.
+        values1 = {'a': 1, 'b': 2, 'c': 3, 'd': 4}
+        values2 = [('a', 1),  # <- Should be coerced
+                   ('b', 2),  #    into ResultMapping
+                   ('c', 3),  #    internally.
+                   ('d', 4)]
+        a = ResultMapping(values1, 'foo')
+        b = values2
+        self.assertTrue(a == b)
+
+    def test_ne(self):
+        values1 = {'a': 1, 'b': 2, 'c': 3, 'd': 4}
+        a = ResultMapping(values1, 'foo')
+        b = ResultMapping(values1, 'foo')
+        self.assertFalse(a != b)
+
+        values2 = {'a': 1, 'b': 2.5, 'c': 3, 'd': 4}
+        a = ResultMapping(values1, 'foo')
+        b = ResultMapping(values2, 'foo')
+        self.assertTrue(a != b)
+
+    def test_compare_numbers(self):
+        a = ResultMapping({'a': 1, 'b': 2, 'c': 3, 'd': 4}, 'foo')
+        b = ResultMapping({'a': 1, 'b': 2, 'c': 3, 'd': 4}, 'foo')
+        self.assertEqual([], a.compare(b), ('When there is no difference, '
+                                            'compare should return an empty '
+                                            'list.'))
+
+        a = ResultMapping({'a': 1, 'b': 2, 'c': 3, 'd': 4}, 'foo')
+        b = ResultMapping({'a': 1, 'b': 2.5, 'c': 3, 'd': 4}, 'foo')
+        expected = [InvalidNumber(-0.5, 2.5, foo='b')]
+        self.assertEqual(expected, a.compare(b))
+
+        # 'b' is zero in self/subject.
+        a = ResultMapping({'a': 1, 'b':   0, 'c': 3, 'd': 4}, 'foo')
+        b = ResultMapping({'a': 1, 'b': 2.5, 'c': 3, 'd': 4}, 'foo')
+        expected = [InvalidNumber(-2.5, 2.5, foo='b')]
+        self.assertEqual(expected, a.compare(b))
+
+        # 'b' is missing from self/subject.
+        a = ResultMapping({'a': 1,           'c': 3, 'd': 4}, 'foo')
+        b = ResultMapping({'a': 1, 'b': 2.5, 'c': 3, 'd': 4}, 'foo')
+        expected = [InvalidNumber(-2.5, 2.5, foo='b')]
+        self.assertEqual(expected, a.compare(b))
+
+        # 'b' is zero in other/reference.
+        a = ResultMapping({'a': 1, 'b': 2, 'c': 3, 'd': 4}, 'foo')
+        b = ResultMapping({'a': 1, 'b': 0, 'c': 3, 'd': 4}, 'foo')
+        expected = [InvalidNumber(+2, 0, foo='b')]
+        self.assertEqual(expected, a.compare(b))
+
+        # 'b' is missing from other/reference.
+        a = ResultMapping({'a': 1, 'b': 2, 'c': 3, 'd': 4}, 'foo')
+        b = ResultMapping({'a': 1,         'c': 3, 'd': 4}, 'foo')
+        expected = [InvalidNumber(+2, None, foo='b')]
+        self.assertEqual(expected, a.compare(b))
+
+        # Test coersion of *other*.
+        a = ResultMapping({'a': 1, 'b': 2, 'c': 3, 'd': 4}, 'foo')
+        b = {'a': 1, 'b': 2.5, 'c': 3, 'd': 4}
+        expected = [InvalidNumber(-0.5, 2.5, foo='b')]
+        self.assertEqual(expected, a.compare(b))
+
+    def test_compare_strings(self):
+        a = ResultMapping({'a': 'x', 'b': 'y', 'c': 'z'}, 'foo')
+        b = ResultMapping({'a': 'x', 'b': 'z', 'c': 'z'}, 'foo')
+        expected = [InvalidItem('y', 'z', foo='b')]
+        self.assertEqual(expected, a.compare(b))
+
+    def test_compare_function(self):
+        a = ResultMapping({'a': 'x', 'b': 'y', 'c': 'z'}, 'foo')
+
+        # All True.
+        result = a.compare(lambda x: len(x) == 1)
+        self.assertEqual([], result)
+
+        # Some False.
+        result = a.compare(lambda a: a in ('x', 'y'))
+        expected = [InvalidItem('z', foo='c')]
+        self.assertEqual(expected, result)
+
+    def test_compare_mixed_types(self):
+        a = ResultMapping({'a':  2,  'b': 3,   'c': 'z'}, 'foo')
+        b = ResultMapping({'a': 'y', 'b': 4.0, 'c':  5 }, 'foo')
+        expected = set([
+            InvalidItem(2, 'y', foo='a'),
+            InvalidNumber(-1, 4, foo='b'),
+            InvalidItem('z', 5, foo='c'),
+        ])
+        self.assertEqual(expected, set(a.compare(b)))
 
 
 if __name__ == '__main__':
