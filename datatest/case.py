@@ -280,32 +280,19 @@ class DataTestCase(TestCase):
                 msg = 'different column names'  # missing expected columns
             self.fail(msg, subject.compare(ref))
 
-    @staticmethod
-    def _get_set(source, column, **filter_by):
-        if isinstance(column, str) or not isinstance(column, collections.Container):
-            column = [column]
-        assert isinstance(column, collections.Sequence)
-
-        unique = source.unique(*column, **filter_by)
-        if len(column) == 1:
-            unique = (x[0] for x in unique)  # Unpack if single item.
-        return set(unique)
-
     def assertValueSet(self, column, ref=None, msg=None, **filter_by):
         """Test that the set of subject values matches the set of
         reference values for the given *column*.  If *ref* is provided,
-        it is used in-place of the set from ``referenceData``.
+        it is used in place of the set from ``referenceData``.
         """
         if ref == None:
-            ref = self._get_set(self.referenceData, column, **filter_by)
-        ref = ResultSet(ref)
-        subject = self._get_set(self.subjectData, column, **filter_by)
-        subject = ResultSet(subject)
+            ref = self.referenceData.distinct(column, **filter_by)
+        subj = self.subjectData.distinct(column, **filter_by)
 
-        if subject != ref:
+        if subj != ref:
             if msg is None:
                 msg = 'different {0!r} values'.format(column)
-            self.fail(msg, subject.compare(ref))
+            self.fail(msg, subj.compare(ref))
 
     def assertValueSubset(self, column, ref=None, msg=None, **filter_by):
         """Test that the set of subject values is a subset of reference
@@ -313,15 +300,13 @@ class DataTestCase(TestCase):
         in-place of the set from ``referenceData``.
         """
         if ref == None:
-            ref = self._get_set(self.referenceData, column, **filter_by)
-        ref = ResultSet(ref)
-        subject = self._get_set(self.subjectData, column, **filter_by)
-        subject = ResultSet(subject)
+            ref = self.referenceData.distinct(column, **filter_by)
+        subj = self.subjectData.distinct(column, **filter_by)
 
-        if not subject <= ref:
+        if not subj <= ref:
             if msg is None:
                 msg = 'different {0!r} values'.format(column)
-            self.fail(msg, subject.compare(ref))
+            self.fail(msg, subj.compare(ref))
 
     def assertValueSuperset(self, column, ref=None, msg=None, **filter_by):
         """Test that the set of subject values is a superset of reference
@@ -329,15 +314,13 @@ class DataTestCase(TestCase):
         in-place of the set from ``referenceData``.
         """
         if ref == None:
-            ref = self._get_set(self.referenceData, column, **filter_by)
-        ref = ResultSet(ref)
-        subject = self._get_set(self.subjectData, column, **filter_by)
-        subject = ResultSet(subject)
+            ref = self.referenceData.distinct(column, **filter_by)
+        subj = self.subjectData.distinct(column, **filter_by)
 
-        if not subject >= ref:
+        if not subj >= ref:
             if msg is None:
                 msg = 'different {0!r} values'.format(column)
-            self.fail(msg, subject.compare(ref))
+            self.fail(msg, subj.compare(ref))
 
     def assertValueSum(self, column, group_by, msg=None, **filter_by):
         """Test that the sum of subject values matches the sum of
@@ -402,14 +385,11 @@ class DataTestCase(TestCase):
         """Test that all subject values in *column* match the *regex*
         pattern search.
         """
-        subject = self.subjectData.unique(column, **filter_by)
-        subject = (x[0] for x in subject)  # Unpack single item.
-        subject = ResultSet(subject)
-        #result = self.subjectData.distinct(column, **filter_by)
+        subj = self.subjectData.distinct(column, **filter_by)
         if not isinstance(regex, _re_type):
             regex = re.compile(regex)
         func = lambda x: regex.search(x) is not None
-        invalid = subject.compare(func)
+        invalid = subj.compare(func)
         if invalid:
             if not msg:
                 msg = 'non-matching {0!r} values'.format(column)
@@ -419,13 +399,11 @@ class DataTestCase(TestCase):
         """Test that all subject values in *column* do not match the
         *regex* pattern search.
         """
-        subject = self.subjectData.unique(column, **filter_by)
-        subject = (x[0] for x in subject)  # Unpack single item.
-        subject = ResultSet(subject)
+        subj = self.subjectData.distinct(column, **filter_by)
         if not isinstance(regex, _re_type):
             regex = re.compile(regex)
         func = lambda x: regex.search(x) is None
-        invalid = subject.compare(func)
+        invalid = subj.compare(func)
         if invalid:
             if not msg:
                 msg = 'matching {0!r} values'.format(column)
