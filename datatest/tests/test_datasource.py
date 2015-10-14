@@ -166,6 +166,49 @@ class TestBaseDataSource(unittest.TestCase):
         result = self.datasource.sum2('value', 'label2', label1='a')
         self.assertEqual({'x': 30, 'y': 20, 'z': 15}, result)
 
+    def test_distinct(self):
+        # Test single column.
+        result = self.datasource.distinct('label1')
+        expected = ['a', 'b']
+        self.assertEqual(expected, result)
+
+        # Test single column wrapped in iterable (list).
+        result = self.datasource.distinct(['label1'])
+        expected = [('a',), ('b',)]
+        self.assertEqual(expected, result)
+
+        # Test multiple columns.
+        result = self.datasource.distinct(['label1', 'label2'])
+        expected = [
+            ('a', 'x'),
+            ('a', 'y'),
+            ('a', 'z'),
+            ('b', 'z'),  # <- ordered (if possible)
+            ('b', 'y'),  # <- ordered (if possible)
+            ('b', 'x'),  # <- ordered (if possible)
+        ]
+        self.assertEqual(result, set(expected))
+
+        # Test multiple columns with filter.
+        result = self.datasource.distinct(['label1', 'label2'], label2=['x', 'y'])
+        expected = [('a', 'x'),
+                    ('a', 'y'),
+                    ('b', 'y'),
+                    ('b', 'x')]
+        self.assertEqual(result, set(expected))
+
+        # Test multiple columns with filter on non-grouped column.
+        result = self.datasource.distinct(['label1', 'value'], label2='x')
+        expected = [('a', '17'),
+                    ('a', '13'),
+                    ('b', '25')]
+        self.assertEqual(result, set(expected))
+
+        # Test when specified column is missing.
+        msg = 'Error should reference missing column.'
+        with self.assertRaisesRegex(Exception, "label3", msg=msg):
+            result = self.datasource.distinct(['label1', 'label3'], label2='x')
+
     def test_count(self):
         result = self.datasource.count()
         self.assertEqual(result, 7)

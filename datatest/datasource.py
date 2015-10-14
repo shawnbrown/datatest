@@ -12,6 +12,7 @@ from . import _collections as collections
 from . import _itertools as itertools
 
 from .queryresult import ResultMapping
+from .queryresult import ResultSet
 
 #pattern = 'test*.py'
 prefix = 'test_'
@@ -98,6 +99,19 @@ class BaseDataSource(object):
         for element in itertools.filterfalse(seen.__contains__, iterable):
             seen_add(element)
             yield element
+
+    def distinct(self, column, **filter_by):
+        """Return iterable of tuples containing distinct *column* values
+        (uses ``slow_iter``).
+        """
+        iterable = self.__filter_by(self.slow_iter(), **filter_by)  # Filtered rows only.
+
+        if isinstance(column, str) or not isinstance(column, collections.Iterable):
+            iterable = (row[column] for row in iterable)
+        else:
+            iterable = (tuple(row[c] for c in column) for row in iterable)
+
+        return ResultSet(iterable)
 
     def set(self, column, **filter_by):
         """Convenience function for unwrapping single column results
