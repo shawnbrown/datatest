@@ -11,6 +11,8 @@ from .diff import ExtraItem
 from .diff import MissingItem
 from .diff import InvalidItem
 from .diff import InvalidNumber
+from .diff import NotProperSubset
+from .diff import NotProperSuperset
 
 
 def _coerce_other(target_type, *type_args, **type_kwds):
@@ -63,7 +65,7 @@ class ResultSet(object):
     def __contains__(self, item):
         return item in self.values
 
-    def compare(self, other):
+    def compare(self, other, op='=='):
         """Compare *self* to *other* and return a list of difference objects.
         If *other* is callable, constructs a list of InvalidItem objects
         for values where *other* returns False.  If *other* is a ResultSet or
@@ -76,11 +78,27 @@ class ResultSet(object):
         else:
             if not isinstance(other, ResultSet):
                 other = ResultSet(other)
-            extra = self.values.difference(other.values)
-            extra = (ExtraItem(x) for x in extra)
-            missing = other.values.difference(self.values)
-            missing = (MissingItem(x) for x in missing)
+
+            if op in ('==', '<=', '<'):
+                extra = self.values.difference(other.values)
+                if op == '<' and not (extra or other.values.difference(self.values)):
+                    extra = [NotProperSubset()]
+                else:
+                    extra = (ExtraItem(x) for x in extra)
+            else:
+                extra = []
+
+            if op in ('==', '>=', '>'):
+                missing = other.values.difference(self.values)
+                if op == '>' and not (missing or self.values.difference(other.values)):
+                    missing = [NotProperSuperset()]
+                else:
+                    missing = (MissingItem(x) for x in missing)
+            else:
+                missing = []
+
             differences = list(itertools.chain(extra, missing))
+
         return differences
 
     def all(self, func):

@@ -9,6 +9,8 @@ from datatest import ExtraItem
 from datatest import MissingItem
 from datatest import InvalidItem
 from datatest import InvalidNumber
+from datatest import NotProperSubset
+from datatest import NotProperSuperset
 
 
 class TestMethodDecorator(unittest.TestCase):
@@ -99,6 +101,38 @@ class TestResultSet(unittest.TestCase):
         result = a.compare(lambda x: x.startswith('b'))
         expected = set([InvalidItem('a'), InvalidItem('c')])
         self.assertEqual(expected, set(result))
+
+        # Test subset (less-than-or-equal).
+        a = ResultSet(['a','b','d'])
+        b = ResultSet(['a','b','c'])
+        expected = [ExtraItem('d')]
+        self.assertEqual(expected, a.compare(b, op='<='))
+
+        # Test strict subset (less-than).
+        a = ResultSet(['a','b'])
+        b = ResultSet(['a','b','c'])
+        self.assertEqual([], a.compare(b, op='<'))
+
+        # Test strict subset (less-than) assertion violation.
+        a = ResultSet(['a','b','c'])
+        b = ResultSet(['a','b','c'])
+        self.assertEqual([NotProperSubset()], a.compare(b, op='<'))
+
+        # Test superset (greater-than-or-equal).
+        a = ResultSet(['a','b','c'])
+        b = ResultSet(['a','b','d'])
+        expected = [MissingItem('d')]
+        self.assertEqual(expected, a.compare(b, op='>='))
+
+        # Test superset subset (greater-than).
+        a = ResultSet(['a','b','c'])
+        b = ResultSet(['a','b'])
+        self.assertEqual([], a.compare(b, op='>'))
+
+        # Test superset subset (greater-than) assertion violation.
+        a = ResultSet(['a','b','c'])
+        b = ResultSet(['a','b','c'])
+        self.assertEqual([NotProperSuperset()], a.compare(b, op='>'))
 
     def test_all(self):
         a = ResultSet(['foo', 'bar', 'baz'])

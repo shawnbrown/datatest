@@ -262,7 +262,7 @@ class DataTestCase(TestCase):
         if not subject <= ref:
             if msg is None:
                 msg = 'different column names'  # found extra columns
-            self.fail(msg, subject.compare(ref))
+            self.fail(msg, subject.compare(ref, op='<='))
 
     def assertColumnSuperset(self, ref=None, msg=None):
         """Test that the set of subject columns is a superset of reference
@@ -278,7 +278,7 @@ class DataTestCase(TestCase):
         if not subject >= ref:
             if msg is None:
                 msg = 'different column names'  # missing expected columns
-            self.fail(msg, subject.compare(ref))
+            self.fail(msg, subject.compare(ref, op='>='))
 
     def assertValueSet(self, column, ref=None, msg=None, **filter_by):
         """Test that the set of subject values matches the set of
@@ -306,7 +306,7 @@ class DataTestCase(TestCase):
         if not subj <= ref:
             if msg is None:
                 msg = 'different {0!r} values'.format(column)
-            self.fail(msg, subj.compare(ref))
+            self.fail(msg, subj.compare(ref, '<='))
 
     def assertValueSuperset(self, column, ref=None, msg=None, **filter_by):
         """Test that the set of subject values is a superset of reference
@@ -320,7 +320,7 @@ class DataTestCase(TestCase):
         if not subj >= ref:
             if msg is None:
                 msg = 'different {0!r} values'.format(column)
-            self.fail(msg, subj.compare(ref))
+            self.fail(msg, subj.compare(ref, '>='))
 
     def assertValueSum(self, column, group_by, msg=None, **filter_by):
         """Test that the sum of subject values matches the sum of

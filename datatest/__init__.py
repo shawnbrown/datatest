@@ -17,6 +17,8 @@ from .diff import ExtraItem
 from .diff import MissingItem
 from .diff import InvalidItem
 from .diff import InvalidNumber
+from .diff import NotProperSubset
+from .diff import NotProperSuperset
 
 from .queryresult import ResultSet
 from .queryresult import ResultMapping

@@ -81,3 +81,22 @@ class InvalidNumber(ItemBase):
         kwds = self._format_kwds(self.kwds)
         diff = '{0:+}'.format(self.diff)  # Apply +/- sign.
         return '{0}({1}, {2}{3})'.format(clsname, diff, self.expected, kwds)
+
+
+class NonStrictRelation(ItemBase):
+    """Base class for to indicate non-strict subset or superset relationships."""
+    def __init__(self, **kwds):
+        self.kwds = kwds
+
+    def __repr__(self):
+        clsname = self.__class__.__name__
+        kwds = self._format_kwds(self.kwds)
+        return '{0}({1})'.format(clsname, kwds)
+
+
+class NotProperSubset(NonStrictRelation):
+    pass
+
+
+class NotProperSuperset(NonStrictRelation):
+    pass

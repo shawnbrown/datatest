@@ -753,18 +753,17 @@ class TestValueSubset(TestHelperCase):
         class _TestClass(DataTestCase):
             def setUp(_self):
                 _self.referenceData = self.reference
-                superset_of_reference = io.StringIO('label\n'
-                                                    'a\n'
-                                                    'b\n'
-                                                    'c\n'
-                                                    'd\n')
-                _self.subjectData = CsvDataSource(superset_of_reference, in_memory=True)
+                different_subj = io.StringIO('label\n'
+                                             'b\n'
+                                             'c\n'
+                                             'd\n')
+                _self.subjectData = CsvDataSource(different_subj, in_memory=True)
 
             def test_method(_self):
                 _self.assertValueSubset('label')  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = "different 'label' values:\n ExtraItem\(u?'d'\)"
+        pattern = "different 'label' values:\n ExtraItem\(u?'d'\)$"
         self.assertRegex(failure, pattern)
 
 
