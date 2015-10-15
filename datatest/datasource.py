@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import collections
 import inspect
 import os
 import sqlite3
@@ -8,7 +9,6 @@ import warnings
 from ._builtins import *
 from ._decimal import Decimal
 from ._unicodecsvreader import UnicodeCsvReader as _UnicodeCsvReader
-from . import _collections as collections
 from . import _itertools as itertools
 
 from .queryresult import ResultMapping
@@ -58,29 +58,40 @@ class BaseDataSource(object):
         return NotImplemented
 
     def sum(self, column, **filter_by):
-        """Return sum of values in *column* (uses ``slow_iter``)."""
+        """Return sum of values in *column* (uses ``slow_iter``).  This method
+        is deprecated and will be removed.
+
+        """
         iterable = self.__filter_by(self.slow_iter(), **filter_by)
         iterable = (x[column] for x in iterable)
         make_decimal = lambda x: Decimal(x) if x else Decimal('0')
         return sum(make_decimal(x) for x in iterable)
 
     def sum2(self, column, group_by=None, **filter_by):
-        if group_by == None:
-            getkey = lambda row: None
-        elif isinstance(group_by, str):
-            getkey = lambda row: row[group_by]
-        else:
-            getkey = lambda row: tuple(row[x] for x in group_by)
+        """Return sum of values in *column* (uses ``slow_iter``)."""
+        fn = lambda iterable: sum(Decimal(x) for x in iterable if x)
+        return self.aggregate(fn, column, group_by, **filter_by)
 
-        make_decimal = lambda x: Decimal(x) if x else Decimal('0')
+    def aggregate(self, function, column, group_by=None, **filter_by):
+        """Aggregates values in the given *column*.  If group_by is omitted,
+        the result is returned as-is, otherwise returns a ResultMapping
+        object.  The *function* should take an iterable and return a single
+        summary value.
+
+        """
         iterable = self.__filter_by(self.slow_iter(), **filter_by)
-        counter = collections.Counter()
-        for row in iterable:
-            counter[getkey(row)] += make_decimal(row[column])
 
         if group_by == None:
-            return counter[None]
-        return ResultMapping(counter, group_by)
+            return function(row[column] for row in iterable)  # <- EXIT!
+
+        if isinstance(group_by, str):
+            keyfn = lambda row: row[group_by]
+        else:
+            keyfn = lambda row: tuple(row[x] for x in group_by)
+        iterable = sorted(iterable, key=keyfn)
+        fn = lambda g: function(row[column] for row in g)
+        iterable = ((k, fn(g)) for k, g in itertools.groupby(iterable, keyfn))
+        return ResultMapping(iterable, group_by)
 
     def count(self, **filter_by):
         """Return count of rows (uses ``slow_iter``)"""

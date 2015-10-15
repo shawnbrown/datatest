@@ -10,6 +10,7 @@ import warnings
 from . import _io as io
 from . import _unittest as unittest
 from .common import MkdtempTestCase
+from .._decimal import Decimal
 
 # Import code to test.
 from datatest.datasource import BaseDataSource
@@ -141,6 +142,37 @@ class TestBaseDataSource(unittest.TestCase):
 
         result = self.datasource.sum('value', label1='a')
         self.assertEqual(result, 65)
+
+    def test_aggregate(self):
+        # Aggregate function for testing.
+        concat = lambda iterable: ' '.join(str(x) for x in iterable)
+
+        result = self.datasource.aggregate(concat, 'value')
+        self.assertEqual('17 13 20 15 5 40 25', result)
+
+        result = self.datasource.aggregate(concat, 'value', 'label1')
+        self.assertEqual({'a': '17 13 20 15', 'b': '5 40 25'}, result)
+
+        result = self.datasource.aggregate(concat, 'value', ['label1'])
+        self.assertEqual({('a',): '17 13 20 15', ('b',): '5 40 25'}, result)
+
+        expected = {
+            ('a', 'x'): '17 13',
+            ('a', 'y'): '20',
+            ('a', 'z'): '15',
+            ('b', 'z'): '5',
+            ('b', 'y'): '40',
+            ('b', 'x'): '25',
+        }
+        result = self.datasource.aggregate(concat, 'value', ['label1', 'label2'])
+        self.assertEqual(expected, result)
+
+        result = self.datasource.aggregate(concat, 'value', 'label2', label1='a')
+        self.assertEqual({'x': '17 13', 'y': '20', 'z': '15'}, result)
+
+        #with self.assertRaisesRegex(KeyError, "no column named 'value_x'"):
+        with self.assertRaises(KeyError):
+            result = self.datasource.aggregate(concat, 'value_x')
 
     def test_sum2(self):
         result = self.datasource.sum2('value')
