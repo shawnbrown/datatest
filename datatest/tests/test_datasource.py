@@ -144,17 +144,17 @@ class TestBaseDataSource(unittest.TestCase):
         self.assertEqual(result, 65)
 
     def test_aggregate(self):
-        # Aggregate function for testing.
+        aggregate = self.datasource.aggregate
         concat = lambda iterable: ' '.join(str(x) for x in iterable)
 
-        result = self.datasource.aggregate(concat, 'value')
-        self.assertEqual('17 13 20 15 5 40 25', result)
+        expected = '17 13 20 15 5 40 25'
+        self.assertEqual(expected, aggregate(concat, 'value'))
 
-        result = self.datasource.aggregate(concat, 'value', 'label1')
-        self.assertEqual({'a': '17 13 20 15', 'b': '5 40 25'}, result)
+        expected = {'a': '17 13 20 15', 'b': '5 40 25'}
+        self.assertEqual(expected, aggregate(concat, 'value', 'label1'))
 
-        result = self.datasource.aggregate(concat, 'value', ['label1'])
-        self.assertEqual({('a',): '17 13 20 15', ('b',): '5 40 25'}, result)
+        expected = {('a',): '17 13 20 15', ('b',): '5 40 25'}
+        self.assertEqual(expected, aggregate(concat, 'value', ['label1']))
 
         expected = {
             ('a', 'x'): '17 13',
@@ -164,25 +164,24 @@ class TestBaseDataSource(unittest.TestCase):
             ('b', 'y'): '40',
             ('b', 'x'): '25',
         }
-        result = self.datasource.aggregate(concat, 'value', ['label1', 'label2'])
-        self.assertEqual(expected, result)
+        self.assertEqual(expected, aggregate(concat, 'value', ['label1', 'label2']))
 
-        result = self.datasource.aggregate(concat, 'value', 'label2', label1='a')
-        self.assertEqual({'x': '17 13', 'y': '20', 'z': '15'}, result)
+        expected = {'x': '17 13', 'y': '20', 'z': '15'}
+        self.assertEqual(expected, aggregate(concat, 'value', 'label2', label1='a'))
 
-        #with self.assertRaisesRegex(KeyError, "no column named 'value_x'"):
         with self.assertRaises(KeyError):
-            result = self.datasource.aggregate(concat, 'value_x')
+            result = aggregate(concat, 'value_x')
 
     def test_sum2(self):
-        result = self.datasource.sum2('value')
-        self.assertEqual(135, result)
+        sum2 = self.datasource.sum2
 
-        result = self.datasource.sum2('value', 'label1')
-        self.assertEqual({'a': 65, 'b': 70}, result)
+        self.assertEqual(135, sum2('value'))
 
-        result = self.datasource.sum2('value', ['label1'])
-        self.assertEqual({('a',): 65, ('b',): 70}, result)
+        expected = {'a': 65, 'b': 70}
+        self.assertEqual(expected, sum2('value', 'label1'))
+
+        expected = {('a',): 65, ('b',): 70}
+        self.assertEqual(expected, sum2('value', ['label1']))
 
         expected = {
             ('a', 'x'): 30,
@@ -192,25 +191,23 @@ class TestBaseDataSource(unittest.TestCase):
             ('b', 'y'): 40,
             ('b', 'x'): 25,
         }
-        result = self.datasource.sum2('value', ['label1', 'label2'])
-        self.assertEqual(expected, result)
+        self.assertEqual(expected, sum2('value', ['label1', 'label2']))
 
-        result = self.datasource.sum2('value', 'label2', label1='a')
-        self.assertEqual({'x': 30, 'y': 20, 'z': 15}, result)
+        expected = {'x': 30, 'y': 20, 'z': 15}
+        self.assertEqual(expected, sum2('value', 'label2', label1='a'))
 
     def test_distinct(self):
+        distinct = self.datasource.distinct
+
         # Test single column.
-        result = self.datasource.distinct('label1')
         expected = ['a', 'b']
-        self.assertEqual(expected, result)
+        self.assertEqual(expected, distinct('label1'))
 
         # Test single column wrapped in iterable (list).
-        result = self.datasource.distinct(['label1'])
         expected = [('a',), ('b',)]
-        self.assertEqual(expected, result)
+        self.assertEqual(expected, distinct(['label1']))
 
         # Test multiple columns.
-        result = self.datasource.distinct(['label1', 'label2'])
         expected = [
             ('a', 'x'),
             ('a', 'y'),
@@ -219,27 +216,25 @@ class TestBaseDataSource(unittest.TestCase):
             ('b', 'y'),  # <- ordered (if possible)
             ('b', 'x'),  # <- ordered (if possible)
         ]
-        self.assertEqual(result, set(expected))
+        self.assertEqual(expected, distinct(['label1', 'label2']))
 
         # Test multiple columns with filter.
-        result = self.datasource.distinct(['label1', 'label2'], label2=['x', 'y'])
         expected = [('a', 'x'),
                     ('a', 'y'),
                     ('b', 'y'),
                     ('b', 'x')]
-        self.assertEqual(result, set(expected))
+        self.assertEqual(expected, distinct(['label1', 'label2'], label2=['x', 'y']))
 
         # Test multiple columns with filter on non-grouped column.
-        result = self.datasource.distinct(['label1', 'value'], label2='x')
         expected = [('a', '17'),
                     ('a', '13'),
                     ('b', '25')]
-        self.assertEqual(result, set(expected))
+        self.assertEqual(expected, distinct(['label1', 'value'], label2='x'))
 
         # Test when specified column is missing.
         msg = 'Error should reference missing column.'
-        with self.assertRaisesRegex(Exception, "label3", msg=msg):
-            result = self.datasource.distinct(['label1', 'label3'], label2='x')
+        with self.assertRaisesRegex(Exception, 'label3', msg=msg):
+            result = distinct(['label1', 'label3'], label2='x')
 
     def test_count(self):
         result = self.datasource.count()
