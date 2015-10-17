@@ -238,57 +238,57 @@ class DataTestCase(TestCase):
         columns.  If *ref* is provided, it is used in-place of the set
         from ``referenceData``.
         """
+        subj = self.subjectData.columns()
         if ref == None:
             ref = self.referenceData.columns()
-        ref = ResultSet(ref)
-        subject = self.subjectData.columns()
-        subject = ResultSet(subject)
 
-        if subject != ref:
+        subj = ResultSet(subj)
+        ref = ResultSet(ref)
+        if subj != ref:
             if msg is None:
                 msg = 'different column names'
-            self.fail(msg, subject.compare(ref))
+            self.fail(msg, subj.compare(ref))
 
     def assertColumnSubset(self, ref=None, msg=None):
         """Test that the set of subject columns is a subset of reference
         columns.  If *ref* is provided, it is used in-place of the set
         from ``referenceData``.
         """
+        subj = self.subjectData.columns()
         if ref == None:
             ref = self.referenceData.columns()
-        ref = ResultSet(ref)
-        subject = self.subjectData.columns()
-        subject = ResultSet(subject)
 
-        if not subject <= ref:
+        subj = ResultSet(subj)
+        ref = ResultSet(ref)
+        if not subj <= ref:
             if msg is None:
                 msg = 'different column names'  # found extra columns
-            self.fail(msg, subject.compare(ref, op='<='))
+            self.fail(msg, subj.compare(ref, op='<='))
 
     def assertColumnSuperset(self, ref=None, msg=None):
         """Test that the set of subject columns is a superset of reference
         columns.  If *ref* is provided, it is used in-place of the set
         from ``referenceData``.
         """
+        subj = self.subjectData.columns()
         if ref == None:
             ref = self.referenceData.columns()
-        ref = ResultSet(ref)
-        subject = self.subjectData.columns()
-        subject = ResultSet(subject)
 
-        if not subject >= ref:
+        subj = ResultSet(subj)
+        ref = ResultSet(ref)
+        if not subj >= ref:
             if msg is None:
                 msg = 'different column names'  # missing expected columns
-            self.fail(msg, subject.compare(ref, op='>='))
+            self.fail(msg, subj.compare(ref, op='>='))
 
     def assertValueSet(self, column, ref=None, msg=None, **filter_by):
         """Test that the set of subject values matches the set of
         reference values for the given *column*.  If *ref* is provided,
         it is used in place of the set from ``referenceData``.
         """
+        subj = self.subjectData.distinct(column, **filter_by)
         if ref == None:
             ref = self.referenceData.distinct(column, **filter_by)
-        subj = self.subjectData.distinct(column, **filter_by)
 
         if subj != ref:
             if msg is None:
@@ -300,9 +300,9 @@ class DataTestCase(TestCase):
         values for the given *column*.  If *ref* is provided, it is used
         in-place of the set from ``referenceData``.
         """
+        subj = self.subjectData.distinct(column, **filter_by)
         if ref == None:
             ref = self.referenceData.distinct(column, **filter_by)
-        subj = self.subjectData.distinct(column, **filter_by)
 
         if not subj <= ref:
             if msg is None:
@@ -314,9 +314,9 @@ class DataTestCase(TestCase):
         values for the given *column*.  If *ref* is provided, it is used
         in-place of the set from ``referenceData``.
         """
+        subj = self.subjectData.distinct(column, **filter_by)
         if ref == None:
             ref = self.referenceData.distinct(column, **filter_by)
-        subj = self.subjectData.distinct(column, **filter_by)
 
         if not subj >= ref:
             if msg is None:
@@ -390,6 +390,7 @@ class DataTestCase(TestCase):
         if not isinstance(regex, _re_type):
             regex = re.compile(regex)
         func = lambda x: regex.search(x) is not None
+
         invalid = subj.compare(func)
         if invalid:
             if not msg:
@@ -404,6 +405,7 @@ class DataTestCase(TestCase):
         if not isinstance(regex, _re_type):
             regex = re.compile(regex)
         func = lambda x: regex.search(x) is None
+
         invalid = subj.compare(func)
         if invalid:
             if not msg:
