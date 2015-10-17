@@ -73,10 +73,10 @@ class BaseDataSource(object):
         return self.aggregate(fn, column, group_by, **filter_by)
 
     def aggregate(self, function, column, group_by=None, **filter_by):
-        """Aggregates values in the given *column*.  If group_by is omitted,
-        the result is returned as-is, otherwise returns a ResultMapping
-        object.  The *function* should take an iterable and return a single
-        summary value.
+        """Aggregates values in the given *column* (uses ``slow_iter``).
+        If group_by is omitted, the result is returned as-is, otherwise
+        returns a ResultMapping object.  The *function* should take an
+        iterable and return a single summary value.
 
         """
         iterable = self.__filter_by(self.slow_iter(), **filter_by)
@@ -182,10 +182,62 @@ class SqliteDataSource(BaseDataSource):
         cursor = self._execute_query(self._table, select_clause, **filter_by)
         return cursor.fetchone()[0]
 
+    def sum2(self, column, group_by=None, **filter_by):
+        """Return sum of values in *column*."""
+        if group_by == None:
+            column = self._from_records_normalize_column(column)
+            select_clause = 'SUM({0})'.format(column)
+            cursor = self._execute_query(self._table, select_clause, **filter_by)
+            return cursor.fetchone()[0]  # <- EXIT!
+        if isinstance(group_by, str):
+            group_clause = self._from_records_normalize_column(group_by)
+        else:
+            group_clause = [self._from_records_normalize_column(x) for x in group_by]
+            group_clause = ', '.join(group_clause)
+
+        column = self._from_records_normalize_column(column)
+        select_clause = '{0}, SUM({1})'.format(group_clause, column)
+        trailing_clause = 'GROUP BY ' + group_clause
+
+        cursor = self._execute_query(self._table, select_clause, trailing_clause, **filter_by)
+
+        if not isinstance(group_by, str):
+            mktup = lambda row: (row[:len(group_by)], row[-1])
+            cursor = (mktup(x) for x in cursor)
+
+        return ResultMapping(cursor, group_by)
+        #mapping =  ResultMapping(cursor, group_by)
+        #print(mapping.values)
+        #return mapping
+
     def count(self, **filter_by):
         """Return count of rows."""
         cursor = self._execute_query(self._table, 'COUNT(*)', **filter_by)
         return cursor.fetchone()[0]
+
+    def distinct(self, column, **filter_by):
+        """Return iterable of tuples containing distinct *column* values."""
+        all_cols = self.columns()
+        if isinstance(column, str) or not isinstance(column, collections.Iterable):
+            not_found = [column] if column not in all_cols else []
+        else:
+            not_found = [x for x in column if x not in all_cols]
+        if not_found:
+            raise KeyError(not_found[0])
+
+        if isinstance(column, str):
+            select_clause = self._from_records_normalize_column(column)
+        else:
+            select_clause = [self._from_records_normalize_column(x) for x in column]
+            select_clause = ', '.join(select_clause)
+        select_clause = 'DISTINCT ' + select_clause
+
+        cursor = self._execute_query(self._table, select_clause, **filter_by)
+
+        if isinstance(column, str):
+            cursor = (x[0] for x in cursor)
+
+        return ResultSet(x for x in cursor)
 
     def unique(self, *column, **filter_by):
         """Return iterable of tuples of unique column values."""
@@ -456,9 +508,15 @@ class CsvDataSource(BaseDataSource):
         """Return sum of values in column."""
         return self._source.sum(column, **filter_by)
 
+    def sum2(self, column, group_by=None, **filter_by):
+        return self._source.sum2(column, group_by, **filter_by)
+
     def count(self, **filter_by):
         """Return count of rows."""
         return self._source.count(**filter_by)
+
+    def distinct(self, column, **filter_by):
+        return self._source.distinct(column, **filter_by)
 
     def unique(self, *column, **filter_by):
         """Return iterable of tuples of unique column values."""
@@ -743,6 +801,11 @@ class MultiDataSource(BaseDataSource):
         for element in itertools.filterfalse(seen.__contains__, result):
             seen_add(element)
             yield element
+
+    def distinct(self, column, **filter_by):
+        if isinstance(column, str):
+            return ResultSet(self.set(column, **filter_by))
+        return ResultSet(self.unique(*column, **filter_by))
 
     def sum(self, column, **filter_by):
         """Return sum of values in column."""
