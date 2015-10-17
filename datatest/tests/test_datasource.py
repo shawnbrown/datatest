@@ -605,6 +605,28 @@ class TestMultiDataSource(TestBaseDataSource):
         source2 = MinimalDataSource(testdata2, fieldnames2)
         self.datasource = MultiDataSource(source1, source2)
 
+    def test_sum2_heterogeneous_columns(self):
+        testdata1 = [['a', 'x', '1'],
+                     ['a', 'y', '1']]
+        src1 = MinimalDataSource(testdata1, ['label1', 'label2', 'value'])
+
+        testdata2 = [['a', '5', '1'],
+                     ['b', '5', '1'],
+                     ['b', '5', '1']]
+        src2 = MinimalDataSource(testdata2, ['label1', 'altval', 'value'])
+        source = MultiDataSource(src1, src2)
+
+        self.assertEqual(5, source.sum2('value'))
+
+        expected = {'a': 3, 'b': 2}
+        self.assertEqual(expected, source.sum2('value', 'label1'))
+
+        expected = {'a': 5, 'b': 10}
+        self.assertEqual(expected, source.sum2('altval', 'label1'))
+
+        expected = {'a': 1}
+        self.assertEqual(expected, source.sum2('value', 'label1', label2='x'))
+
 
 class TestMixedMultiDataSource(TestBaseDataSource):
     """Test MultiDataSource with sub-sources of different types."""
