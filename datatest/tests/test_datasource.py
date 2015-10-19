@@ -12,6 +12,10 @@ from . import _unittest as unittest
 from .common import MkdtempTestCase
 from .._decimal import Decimal
 
+# Import related objects.
+from datatest.queryresult import ResultSet
+from datatest.queryresult import ResultMapping
+
 # Import code to test.
 from datatest.datasource import BaseDataSource
 from datatest.datasource import SqliteDataSource
@@ -728,7 +732,7 @@ class TestMultiDataSourceDifferentColumns2(unittest.TestCase):
         subsrc2 = MinimalDataSource(testdata2, fieldnames2)
         self.datasource = MultiDataSource(subsrc1, subsrc2)
 
-    def test_select_missing_columns(self):
+    def test_unique_missing_columns(self):
         expected = [('',), ('3',), ('0',), ('2',)]
         result = self.datasource.unique('other_value')
         self.assertEqual(expected, list(result))
@@ -744,6 +748,109 @@ class TestMultiDataSourceDifferentColumns2(unittest.TestCase):
         expected = [('',)]
         result = self.datasource.unique('other_value', label2='x')
         self.assertEqual(expected, list(result))
+
+    def test_distinct_missing_columns(self):
+        distinct = self.datasource.distinct
+
+        expected = ['', '3', '0', '2']
+        self.assertEqual(expected, distinct('other_value'))
+
+        expected = [('',), ('3',), ('0',), ('2',)]
+        self.assertEqual(expected, distinct(['other_value']))
+
+        expected = ['3']
+        self.assertEqual(expected, distinct('other_value', label3='zzz'))
+
+        expected = ['']
+        self.assertEqual(expected, distinct('other_value', label3=''))
+
+        expected = ['']
+        self.assertEqual(expected, distinct('other_value', label2='x'))
+
+        expected = [('a', 'x'), ('a', 'y'), ('b', 'z'), ('a', ''), ('b', '')]
+        self.assertEqual(expected, distinct(['label1', 'label2']))
+
+    def test_make_sub_filter(self):
+        make_sub_filter = self.datasource._make_sub_filter
+
+        filter_by = {'foo': 'a', 'bar': ''}
+        self.assertEqual({'foo': 'a'}, make_sub_filter(['foo'], **filter_by))
+
+        filter_by = {'foo': 'a', 'bar': ''}
+        self.assertEqual({'foo': 'a'}, make_sub_filter(['foo', 'baz'], **filter_by))
+
+        filter_by = {'qux': '', 'quux': ''}
+        self.assertEqual({}, make_sub_filter(['foo', 'bar'], **filter_by))
+
+        filter_by = {'foo': 'a', 'bar': 'b'}
+        self.assertIsNone(make_sub_filter(['foo', 'baz'], **filter_by))
+
+    def test_normalize_resultset(self):
+        normalize_result = self.datasource._normalize_result
+
+        result = ResultSet([('a', 'x'), ('b', 'y'), ('c', 'z')])
+
+        # Append empty column.
+        expected = ResultSet([('a', 'x', ''), ('b', 'y', ''), ('c', 'z', '')])
+        self.assertEqual(expected, normalize_result(result, ['foo', 'bar'], ['foo', 'bar', 'baz']))
+
+        # Insert empty column into middle.
+        expected = ResultSet([('a', '', 'x'), ('b', '', 'y'), ('c', '', 'z')])
+        self.assertEqual(expected, normalize_result(result, ['foo', 'bar'], ['foo', 'baz', 'bar']))
+
+        # Insert empty column, reorder existing columns.
+        expected = ResultSet([('x', '', 'a'), ('y', '', 'b'), ('z', '', 'c')])
+        self.assertEqual(expected, normalize_result(result, ['foo', 'bar'], ['bar', 'baz', 'foo']))
+
+        # Test error condition.
+        with self.assertRaises(Exception):
+            normalized = normalize_result(result, ['foo', 'bar'], ['bar'])
+
+        # Single-item set, insert empty columns.
+        result = ResultSet(['a', 'b', 'c'])
+        expected = ResultSet([('', 'a', ''), ('', 'b', ''), ('', 'c', '')])
+        self.assertEqual(expected, normalize_result(result, 'foo', ['qux', 'foo', 'corge']))
+
+    def test_normalize_resultmapping(self):
+        """."""
+        normalize_result = self.datasource._normalize_result
+
+        result = ResultMapping({('a', 'x'): 1, ('b', 'y'): 2, ('c', 'z'): 3}, grouped_by=['foo', 'bar'])
+
+        # Append empty column.
+        expected = ResultMapping({('a', 'x', ''): 1,
+                                  ('b', 'y', ''): 2,
+                                  ('c', 'z', ''): 3},
+                                 grouped_by=['foo', 'bar', 'baz'])
+        self.assertEqual(expected, normalize_result(result, ['foo', 'bar'], ['foo', 'bar', 'baz']))
+
+        # Insert empty column into middle.
+        expected = ResultMapping({('a', '', 'x'): 1,
+                                  ('b', '', 'y'): 2,
+                                  ('c', '', 'z'): 3},
+                                 grouped_by=['foo', 'bar', 'baz'])
+        self.assertEqual(expected, normalize_result(result, ['foo', 'bar'], ['foo', 'baz', 'bar']))
+
+        # Insert empty column, reorder existing columns.
+        expected = ResultMapping({('x', '', 'a'): 1,
+                                  ('y', '', 'b'): 2,
+                                  ('z', '', 'c'): 3},
+                                 grouped_by=['foo', 'bar', 'baz'])
+        self.assertEqual(expected, normalize_result(result, ['foo', 'bar'], ['bar', 'baz', 'foo']))
+
+        # Test error condition.
+        with self.assertRaises(Exception):
+            normalized = normalize_result(result, ['foo', 'bar'], ['bar'])
+
+        # Single-item key, insert empty columns.
+        result = ResultMapping({('a',): 1, ('b',): 2, ('c',): 3}, grouped_by='foo')
+        expected = ResultMapping({('', 'a', ''): 1, ('', 'b', ''): 2, ('', 'c', ''): 3}, grouped_by=['qux', 'foo', 'corge'])
+        self.assertEqual(expected, normalize_result(result, ['foo'], ['qux', 'foo', 'corge']))
+
+        # String key, insert empty columns.
+        result = ResultMapping({'a': 1, 'b': 2, 'c': 3}, grouped_by='foo')
+        expected = ResultMapping({('', 'a', ''): 1, ('', 'b', ''): 2, ('', 'c', ''): 3}, grouped_by=['qux', 'foo', 'corge'])
+        self.assertEqual(expected, normalize_result(result, ['foo'], ['qux', 'foo', 'corge']))
 
 
 class TestGroupedDataSource(TestBaseDataSource):

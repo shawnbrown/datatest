@@ -64,6 +64,9 @@ class TestResultSet(unittest.TestCase):
         with self.assertRaises(TypeError):
             x = ResultSet(values_dict)
 
+        x = ResultSet(set())
+        self.assertEqual(set(), x.values)
+
     def test_eq(self):
         values = set([1, 2, 3, 4])
 
@@ -160,6 +163,17 @@ class TestResultMapping(unittest.TestCase):
         values_list = ['a', 'b', 'c', 'd']
         with self.assertRaises(ValueError):
             x = ResultMapping(values_list, 'foo')
+
+        # Single-item wrapped in collection.
+        values = {('a',): 1, ('b',): 2, ('c',): 3, ('d',): 4}
+        x = ResultMapping(values, ['foo'])
+        self.assertEqual(values, x.values)
+
+        # IMPLEMENT THIS?
+        # Mis-matched group_by and keys.
+        #with self.assertRaises(ValueError):
+        #    values = {('a',): 1, ('b',): 2, ('c',): 3, ('d',): 4}
+        #    x = ResultMapping(values, 'foo')
 
     def test_eq(self):
         values1 = {'a': 1, 'b': 2, 'c': 3, 'd': 4}

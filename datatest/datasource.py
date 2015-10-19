@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import collections
 import inspect
 import os
 import sqlite3
@@ -7,6 +6,8 @@ import sys
 import warnings
 
 from ._builtins import *
+from ._collections import Counter
+from ._collections import Iterable
 from ._decimal import Decimal
 from ._unicodecsvreader import UnicodeCsvReader as _UnicodeCsvReader
 from . import _itertools as itertools
@@ -117,7 +118,7 @@ class BaseDataSource(object):
         """
         iterable = self.__filter_by(self.slow_iter(), **filter_by)  # Filtered rows only.
 
-        if isinstance(column, str) or not isinstance(column, collections.Iterable):
+        if isinstance(column, str) or not isinstance(column, Iterable):
             iterable = (row[column] for row in iterable)
         else:
             iterable = (tuple(row[c] for c in column) for row in iterable)
@@ -206,9 +207,6 @@ class SqliteDataSource(BaseDataSource):
             cursor = (mktup(x) for x in cursor)
 
         return ResultMapping(cursor, group_by)
-        #mapping =  ResultMapping(cursor, group_by)
-        #print(mapping.values)
-        #return mapping
 
     def count(self, **filter_by):
         """Return count of rows."""
@@ -218,7 +216,7 @@ class SqliteDataSource(BaseDataSource):
     def distinct(self, column, **filter_by):
         """Return iterable of tuples containing distinct *column* values."""
         all_cols = self.columns()
-        if isinstance(column, str) or not isinstance(column, collections.Iterable):
+        if isinstance(column, str) or not isinstance(column, Iterable):
             not_found = [column] if column not in all_cols else []
         else:
             not_found = [x for x in column if x not in all_cols]
@@ -754,16 +752,6 @@ class MultiDataSource(BaseDataSource):
         return columns
 
     @staticmethod
-    def _normalize_unique(allcols, subcols, unique):
-        if tuple(allcols) == tuple(subcols):
-            return unique  # <- EXIT!
-
-        def fn(row):
-            row = dict(zip(subcols, row))
-            return tuple(row.get(col, '') for col in allcols)
-        return (fn(row) for row in unique)
-
-    @staticmethod
     def _filtered_call(source, method, *column, **filter_by):
         subcols = source.columns()
         column = [x for x in column if x in subcols]
@@ -773,39 +761,108 @@ class MultiDataSource(BaseDataSource):
         fn = getattr(source, method)
         return fn(*column, **sub_filter)
 
-    def unique(self, *column, **filter_by):
-        """Return iterable of unique values in column."""
-        all_cols = self.columns()
-        not_found = [x for x in column if x not in all_cols]
-        if not_found:
-            raise KeyError(not_found[0])
-
-        result = []
-        for source in self.__wrapped__:
-            source_columns = source.columns()
-            sub_col = [col for col in column if col in source_columns]
-            if sub_col:
-                sub_result = self._filtered_call(source, 'unique', *sub_col, **filter_by)
-                if sub_result:
-                    sub_result = self._normalize_unique(column, sub_col, sub_result)
-                    result.append(sub_result)
-            else:
-                count = self._filtered_call(source, 'count', **filter_by)
-                if count:
-                    result.append([('',) * len(column)])
-
-        result = itertools.chain(*result)
-
-        seen = set()  # Using "unique_everseen" recipe from itertools.
-        seen_add = seen.add
-        for element in itertools.filterfalse(seen.__contains__, result):
-            seen_add(element)
-            yield element
-
     def distinct(self, column, **filter_by):
-        if isinstance(column, str):
-            return ResultSet(self.set(column, **filter_by))
-        return ResultSet(self.unique(*column, **filter_by))
+        """Return iterable of tuples containing distinct *column* values."""
+        noncollection_column = isinstance(column, str)
+        if noncollection_column:
+            column = [column]
+
+        self_columns = self.columns()
+        for col in column:
+            if col not in self_columns:  # Must be in at least one sub-source.
+                raise KeyError(col)
+
+        results = []
+        for subsrc in self.__wrapped__:
+            subsrc_columns = subsrc.columns()
+            subfltr = self._make_sub_filter(subsrc_columns, **filter_by)
+            if subfltr is not None:
+                subcol = [x for x in column if x in subsrc_columns]
+                if subcol:
+                    subres = subsrc.distinct(subcol, **subfltr)
+                    subres = self._normalize_result(subres, subcol, column)
+                    results.append(subres)
+                else:
+                    tst = subsrc.distinct(subfltr.keys(), **subfltr)
+                    if tst.values:
+                        subres = ResultSet([tuple(['']) * len(column)])
+                        results.append(subres)
+        results = (x.values for x in results)  # Unwrap values property.
+        results = itertools.chain(*results)
+
+        if noncollection_column:
+            results = (x[0] for x in results)  # Unpack 1-tuple into string.
+        return ResultSet(results)
+
+    def sum2(self, column, group_by=None, **filter_by):
+        """Return sum of values in *column* grouped by *group_by*."""
+        if column not in self.columns():
+            raise KeyError(column)
+
+        if group_by is None:
+            total = 0
+            for subsrc in self.__wrapped__:
+                subsrc_columns = subsrc.columns()
+                if column in subsrc_columns:
+                    subfltr = self._make_sub_filter(subsrc_columns, **filter_by)
+                    if subfltr is not None:
+                        total = total + subsrc.sum2(column, **subfltr)
+            return total
+        else:
+            noncollection_group = isinstance(group_by, str)
+            if noncollection_group:
+                group_by = [group_by]
+
+            counter = Counter()
+            for subsrc in self.__wrapped__:
+                subsrc_columns = subsrc.columns()
+                if column in subsrc_columns:
+                    subfltr = self._make_sub_filter(subsrc_columns, **filter_by)
+                    if subfltr is not None:
+                        subgrp = [x for x in group_by if x in subsrc_columns]
+                        subres = subsrc.sum2(column, subgrp, **subfltr)
+                        subres = self._normalize_result(subres, subgrp, group_by)
+                        for k, v in subres.values.items():
+                            counter[k] += v
+            if noncollection_group:  # Unpack 1-tuple key into string.
+                counter = dict((k[0], v) for k, v in counter.items())
+            return ResultMapping(counter, group_by)
+
+    @staticmethod
+    def _make_sub_filter(columns, **filter_by):
+        """."""
+        subcols = columns
+        missing = [k for k in filter_by if k not in subcols]
+        if any(filter_by[k] != '' for k in missing):
+            return None  # <- EXIT!
+        subfltr = dict((k, v) for k, v in filter_by.items() if k in subcols)
+        return subfltr
+
+    @staticmethod
+    def _normalize_result(result_obj, orig_cols, targ_cols):
+        """."""
+        if list(orig_cols) == list(targ_cols):
+            return result_obj  # If columns are same, return result unchanged.
+
+        if isinstance(orig_cols, str):
+            orig_cols = [orig_cols]
+
+        if not all(x in targ_cols for x in orig_cols):
+            raise ValueError('Target columns must include all original columns.')
+
+        def normalize(orig):
+            orig_dict = dict(zip(orig_cols, orig))
+            return tuple(orig_dict.get(col, '') for col in targ_cols)
+
+        if isinstance(result_obj, ResultSet):
+            normalized = ResultSet(normalize(v) for v in result_obj.values)
+        elif isinstance(result_obj, ResultMapping):
+            item_gen = ((normalize(k), v) for k, v in result_obj.values.items())
+            normalized = ResultMapping(item_gen, grouped_by=targ_cols)
+        else:
+            raise ValueError('Result object must be ResultSet or ResultMapping.')
+
+        return normalized
 
     def sum(self, column, **filter_by):
         """Return sum of values in column."""
