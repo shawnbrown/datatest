@@ -62,18 +62,3 @@ __all__ = [
     'DataTestProgram',
     'main',
 ]
-
-
-# TODO: REMOVE BEFORE INITIAL RELEASE (DEPRECATED):
-DataTestCase.acceptDifference = DataTestCase.acceptableDifference
-DataTestCase.acceptTolerance = DataTestCase.acceptableTolerance
-DataTestCase.acceptPercentTolerance = DataTestCase.acceptablePercentTolerance
-
-#ExtraSum = InvalidNumber
-#MissingSum = InvalidNumber
-
-ExtraColumn = ExtraItem
-MissingColumn = MissingItem
-ExtraValue = ExtraItem
-MissingValue = MissingItem
-InvalidValue = InvalidItem

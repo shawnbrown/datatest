@@ -98,27 +98,6 @@ class TestDataAssertionError(unittest.TestCase):
         with self.assertRaises(ValueError, msg='Empty error should raise exception.'):
             DataAssertionError(msg='', diff={})
 
-    def test_deprecated_class_names(self):
-        # ExtraColumn (now ExtraItem)
-        from datatest import ExtraColumn
-        self.assertEqual('ExtraItem', ExtraColumn.__name__)
-
-        # MissingColumn (now MissingItem)
-        from datatest import MissingColumn
-        self.assertEqual('MissingItem', MissingColumn.__name__)
-
-        # ExtraValue (now ExtraItem)
-        from datatest import ExtraValue
-        self.assertEqual('ExtraItem', ExtraValue.__name__)
-
-        # MissingValue (now MissingItem)
-        from datatest import MissingValue
-        self.assertEqual('MissingItem', MissingValue.__name__)
-
-        # InvalidValue (now InvalidItem)
-        from datatest import InvalidValue
-        self.assertEqual('InvalidItem', InvalidItem.__name__)
-
     def test_repr(self):
         error = DataAssertionError('different columns', [MissingItem('foo')])
         pattern = "DataAssertionError: different columns:\n MissingItem('foo')"
