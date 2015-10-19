@@ -9,6 +9,8 @@ from unittest import TestCase
 
 from .diff import _make_decimal
 from .diff import ItemBase
+from .diff import MissingItem
+from .diff import ExtraItem
 from .diff import InvalidItem
 from .diff import InvalidNumber
 from .queryresult import ResultSet
