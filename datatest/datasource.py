@@ -127,8 +127,12 @@ class BaseDataSource(object):
 
     def set(self, column, **filter_by):
         """Convenience function for unwrapping single column results
-        from ``unique()`` and returning as a set."""
-        return set(x[0] for x in self.unique(column, **filter_by))
+        from ``unique()`` and returning as a set.  This method is
+        deprecated and will be removed.
+
+        """
+        #return set(x[0] for x in self.unique(column, **filter_by))
+        return self.distinct(column, **filter_by)
 
     @staticmethod
     def __filter_by(iterable, **filter_by):
@@ -783,10 +787,24 @@ class MultiDataSource(BaseDataSource):
                     subres = self._normalize_result(subres, subcol, column)
                     results.append(subres)
                 else:
-                    tst = subsrc.distinct(subfltr.keys(), **subfltr)
-                    if tst.values:
-                        subres = ResultSet([tuple(['']) * len(column)])
-                        results.append(subres)
+                    if subfltr != {}:
+                        tst = subsrc.distinct(subfltr.keys(), **subfltr)
+                        if tst.values:
+                            subres = ResultSet([tuple(['']) * len(column)])
+                            results.append(subres)
+                    else:
+                        # If subsrc contains at least 1 item, then
+                        # add an empty row to the result list.  If
+                        # subsrc is completely empty, then don't add
+                        # anything.
+                        iterable = subsrc.slow_iter()
+                        try:
+                            next(iterable)
+                            subres = ResultSet([tuple(['']) * len(column)])
+                            results.append(subres)
+                        except StopIteration:
+                            pass
+
         results = (x.values for x in results)  # Unwrap values property.
         results = itertools.chain(*results)
 
