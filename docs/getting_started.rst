@@ -197,8 +197,8 @@ a list of detected differences::
       File "test_members.py", line 15, in test_region_labels
         self.assertValueSet('region')
     datatest.case.DataAssertionError: different 'region' values:
-     ExtraValue('North-east'),
-     MissingValue('Northeast')
+     ExtraItem('North-east'),
+     MissingItem('Northeast')
 
 This error tells us that values in the "region" column of our
 ``subjectData`` do not match the values of our ``referenceData``.  The

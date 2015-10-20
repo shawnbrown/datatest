@@ -106,6 +106,23 @@ also possible to call them directly:
     Return an iterable of dictionary rows (like ``csv.DictReader``).
 
 
+.. py:method:: distinct(column, **filter_by)
+
+    Return ResultSet containing distinct *column* values.
+
+
+.. py:method:: aggregate(function, column, group_by=None, **filter_by)
+
+    Aggregates values in the given *column*.  If *group_by* is omitted, the
+    result is returned as-is, otherwise returns a ResultMapping object.  The
+    *function* should take an iterable and return a single summary value.
+
+
+.. py:method:: sum2(column, group_by=None, **filter_by)
+
+    Returns sum of *column* grouped by *group_by* as ResultMapping.
+
+
 .. py:method:: sum(column, **filter_by)
 
     Return sum of values in *column*.
@@ -154,3 +171,11 @@ As a starting point, you can use one of the following templates:
 .. autoclass:: datatest.BaseDataSource
     :members: __init__, __repr__, columns, slow_iter, sum, count, unique
 
+
+*************
+Query Results
+*************
+
+.. autoclass:: datatest.ResultSet
+
+.. autoclass:: datatest.ResultMapping

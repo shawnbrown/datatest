@@ -3,32 +3,23 @@
 Errors and Differences
 **********************
 
-
 .. autoclass:: datatest.DataAssertionError
    :members:
 
 
-.. autoclass:: datatest.ExtraColumn
+.. autoclass:: datatest.ExtraItem
    :members:
 
 
-.. autoclass:: datatest.MissingColumn
+.. autoclass:: datatest.MissingItem
    :members:
 
 
-.. autoclass:: datatest.ExtraValue
+.. autoclass:: datatest.InvalidItem
    :members:
 
 
-.. autoclass:: datatest.MissingValue
-   :members:
-
-
-.. autoclass:: datatest.ExtraSum
-   :members:
-
-
-.. autoclass:: datatest.MissingSum
+.. autoclass:: datatest.InvalidNumber
    :members:
 
 
