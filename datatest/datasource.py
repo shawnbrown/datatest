@@ -69,9 +69,27 @@ class BaseDataSource(object):
         return sum(make_decimal(x) for x in iterable)
 
     def sum2(self, column, group_by=None, **filter_by):
-        """Return sum of values in *column* (uses ``slow_iter``)."""
+        """Return sum of values in *column* (uses ``aggregate``)."""
         fn = lambda iterable: sum(Decimal(x) for x in iterable if x)
         return self.aggregate(fn, column, group_by, **filter_by)
+
+    def count2(self, group_by=None, **filter_by):
+        """Return count of rows (uses ``aggregate``)."""
+        function = lambda iterable: sum(1 for x in iterable if x)
+
+        iterable = self.__filter_by(self.slow_iter(), **filter_by)
+
+        if group_by == None:
+            return function(1 for row in iterable)  # <- EXIT!    # <- REPLACE WITH SUM
+
+        if isinstance(group_by, str):
+            keyfn = lambda row: row[group_by]
+        else:
+            keyfn = lambda row: tuple(row[x] for x in group_by)
+        iterable = sorted(iterable, key=keyfn)
+        fn = lambda g: function(1 for row in g)                   # <- REPLACE WITH SUM
+        iterable = ((k, fn(g)) for k, g in itertools.groupby(iterable, keyfn))
+        return ResultMapping(iterable, group_by)
 
     def aggregate(self, function, column, group_by=None, **filter_by):
         """Aggregates values in the given *column* (uses ``slow_iter``).
@@ -194,6 +212,7 @@ class SqliteDataSource(BaseDataSource):
             select_clause = 'SUM({0})'.format(column)
             cursor = self._execute_query(self._table, select_clause, **filter_by)
             return cursor.fetchone()[0]  # <- EXIT!
+
         if isinstance(group_by, str):
             group_clause = self._from_records_normalize_column(group_by)
         else:

@@ -348,41 +348,27 @@ class DataTestCase(TestCase):
 
     def assertValueCount(self, column, group_by, msg=None, **filter_by):
         """Test that the count of subject rows matches the sum of
-        reference values for the given reference *column* for each group
-        in *group_by*.
+        reference *column* for each group in *group_by*.
 
         The following asserts that the count of the subject's rows
-        matches the sum of the reference's ``employees`` for each
-        group of ``department`` and ``project`` values::
+        matches the sum of the reference's ``employees`` column for
+        each group of ``department`` and ``project`` values::
 
             self.assertValueCount('employees', ['department', 'project'])
 
         """
-        ref = self.referenceData
-        assert column in ref.columns(), 'no column named {0!r} in referenceData'.format(column)
-        subj = self.subjectData
+        if column not in self.referenceData.columns():
+            msg = 'no column named {0!r} in referenceData'.format(column)
+            raise AssertionError(msg)
 
-        def test(group_dict):
-            all_filters = filter_by.copy()
-            all_filters.update(group_dict)
-            subj_count = subj.count(**all_filters)
-            ref_sum = ref.sum(column, **all_filters)
-            s_count = subj_count if subj_count else 0
-            t_sum = ref_sum if ref_sum else 0
-            difference = s_count - t_sum
-            if difference != 0:
-                return InvalidNumber(difference, t_sum, **group_dict)
-            return None
+        subj_vals = self.subjectData.count2(group_by, **filter_by)
+        ref_vals = self.referenceData.sum2(column, group_by, **filter_by)
 
-        groups = ref.unique(*group_by, **filter_by)
-        groups = (dict(zip(group_by, x)) for x in groups)
-        failures = (test(x) for x in groups)
-
-        failures = [x for x in failures if x != None]  # Filter for failures.
-        if failures:
+        differences = subj_vals.compare(ref_vals)
+        if differences:
             if not msg:
                 msg = 'row counts different than {0!r} sums'.format(column)
-            self.fail(msg=msg, diff=failures)
+            self.fail(msg=msg, diff=differences)
 
     def assertValueRegex(self, column, regex, msg=None, **filter_by):
         """Test that all subject values in *column* match the *regex*
