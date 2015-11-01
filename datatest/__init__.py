@@ -6,7 +6,6 @@ from .datasource import BaseDataSource
 from .datasource import SqliteDataSource
 from .datasource import CsvDataSource
 from .datasource import FilteredDataSource
-from .datasource import GroupedDataSource
 from .datasource import MappedDataSource
 from .datasource import MultiDataSource
 
