@@ -424,6 +424,76 @@ class TestSqliteDataSource(TestBaseDataSource):
         result = source.slow_iter()
         self.assertEqual(expected, list(result))
 
+    def test_from_result(self):
+        # Single-column ResultSet.
+        result = ResultSet(['a', 'b', 'c'])
+        source = SqliteDataSource.from_result(result, 'foo')
+
+        expected = [{'foo': 'a'}, {'foo': 'b'}, {'foo': 'c'}]
+        source_iter = source.slow_iter()
+        make_set = lambda iterable: set(tuple(row.items()) for row in iterable)
+        self.assertEqual(make_set(expected), make_set(source_iter))
+
+        # Multi-column ResultSet.
+        result = ResultSet([
+            ('a', 'x', '1'),
+            ('b', 'y', '2'),
+            ('c', 'z', '3'),
+        ])
+        source = SqliteDataSource.from_result(result, ['foo', 'bar', 'baz'])
+
+        self.assertIsInstance(source, SqliteDataSource)
+
+        expected = [
+            {'foo': 'a', 'bar': 'x', 'baz': '1'},
+            {'foo': 'b', 'bar': 'y', 'baz': '2'},
+            {'foo': 'c', 'bar': 'z', 'baz': '3'},
+        ]
+        source_iter = source.slow_iter()
+        make_set = lambda iterable: set(tuple(row.items()) for row in iterable)
+        self.assertEqual(make_set(expected), make_set(source_iter))
+
+        # Single-key and single-value ResultMapping.
+        result = ResultMapping({'a': 1, 'b': 2, 'c': 3}, grouped_by='foo')
+        source = SqliteDataSource.from_result(result, ['baz'])
+
+        expected = [{'foo': 'a', 'baz': 1},
+                    {'foo': 'b', 'baz': 2},
+                    {'foo': 'c', 'baz': 3}]
+        source_iter = source.slow_iter()
+        make_set = lambda iterable: set(tuple(row.items()) for row in iterable)
+        self.assertEqual(make_set(expected), make_set(source_iter))
+
+        # Multi-key and single-value ResultMapping.
+        result = ResultMapping({('a', 'x'): 1,
+                                ('b', 'y'): 2,
+                                ('c', 'z'): 3}, grouped_by=['foo', 'bar'])
+        source = SqliteDataSource.from_result(result, ['baz'])
+
+        expected = [
+            {'foo': 'a', 'bar': 'x', 'baz': 1},
+            {'foo': 'b', 'bar': 'y', 'baz': 2},
+            {'foo': 'c', 'bar': 'z', 'baz': 3},
+        ]
+        source_iter = source.slow_iter()
+        make_set = lambda iterable: set(tuple(row.items()) for row in iterable)
+        self.assertEqual(make_set(expected), make_set(source_iter))
+
+        # Multi-key and multi-value ResultMapping.
+        result = ResultMapping({('a', 'x'): (1, 10),
+                                ('b', 'y'): (2, 20),
+                                ('c', 'z'): (3, 30)}, grouped_by=['foo', 'bar'])
+        source = SqliteDataSource.from_result(result, ['baz', 'qux'])
+
+        expected = [
+            {'foo': 'a', 'bar': 'x', 'baz': 1, 'qux': 10},
+            {'foo': 'b', 'bar': 'y', 'baz': 2, 'qux': 20},
+            {'foo': 'c', 'bar': 'z', 'baz': 3, 'qux': 30},
+        ]
+        source_iter = source.slow_iter()
+        make_set = lambda iterable: set(tuple(row.items()) for row in iterable)
+        self.assertEqual(make_set(expected), make_set(source_iter))
+
     def test_create_index(self):
         cursor = self.datasource._connection.cursor()
 

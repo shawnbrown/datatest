@@ -374,6 +374,48 @@ class SqliteDataSource(BaseDataSource):
         return cls.from_records(data, columns, in_memory)
 
     @classmethod
+    def from_result(cls, result, columns, in_memory=False):
+        """Alternate constructor to load an existing ResultSet or
+        ResultMapping::
+
+            original = CsvDataSource('mydata.csv')
+            result = original.distinct(['state', 'county'])
+            subjectData = CsvDataSource.from_result(result, ['state', 'county'])
+
+        """
+        if isinstance(columns, str):
+            columns = [columns]
+            values = [(x,) for x in result.values]
+        else:
+            values = result.values
+
+        if isinstance(result, ResultSet):
+            source =  cls.from_records(values, columns, in_memory)
+        elif isinstance(result, ResultMapping):
+            items = result.values.items()
+            items = iter(items)
+            first_item = next(items)  # Get first item.
+            items = itertools.chain([first_item], items)  # Rebuild original.
+
+            first_k, first_v = first_item
+            if not isinstance(first_k, tuple):
+                items = (((k,), v) for k, v in items)
+            if not isinstance(first_v, tuple):
+                items = ((k, (v,)) for k, v in items)
+            items = (k + v for k, v in items)
+
+            kcols = result.grouped_by
+            if not isinstance(kcols, (tuple, list)):
+                kcols = [kcols]
+            combined = list(kcols) + list(columns)
+
+            source =  cls.from_records(items, combined, in_memory)
+        else:
+            raise TypeError('requires ResultSet or ResultMapping')
+
+        return source
+
+    @classmethod
     def from_records(cls, data, columns, in_memory=False):
         """Alternate constructor to load an existing collection of
         records.  Loads *data* (an iterable of lists, tuples, or dicts)
