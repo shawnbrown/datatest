@@ -10,6 +10,7 @@ import warnings
 from . import _io as io
 from . import _unittest as unittest
 from .common import MkdtempTestCase
+from .._collections import namedtuple
 from .._decimal import Decimal
 
 # Import related objects.
@@ -20,8 +21,6 @@ from datatest.queryresult import ResultMapping
 from datatest.datasource import BaseDataSource
 from datatest.datasource import SqliteDataSource
 from datatest.datasource import CsvDataSource
-from datatest.datasource import FilteredDataSource
-from datatest.datasource import MappedDataSource
 from datatest.datasource import MultiDataSource
 
 
@@ -403,6 +402,36 @@ class TestSqliteDataSource(TestBaseDataSource):
         with self.assertRaises(KeyError):
             source = SqliteDataSource.from_records(data, columns)
 
+    def test_from_records_no_columns_arg(self):
+        data_dict = [
+            {'foo': 'a', 'bar': 'x', 'baz': '1'},
+            {'foo': 'b', 'bar': 'y', 'baz': '2'},
+            {'foo': 'c', 'bar': 'z', 'baz': '3'},
+        ]
+
+        # Iterable of dict-rows.
+        source = SqliteDataSource.from_records(data_dict)
+        result = source.slow_iter()
+        self.assertEqual(data_dict, list(result))
+
+        # Iterable of namedtuple-rows.
+        row = namedtuple('row', ['foo', 'bar', 'baz'])
+        data_namedtuple = [
+            row('a', 'x', '1'),
+            row('b', 'y', '2'),
+            row('c', 'z', '3'),
+        ]
+        source = SqliteDataSource.from_records(data_namedtuple)
+        result = source.slow_iter()
+        self.assertEqual(data_dict, list(result))
+
+        # Type that doesn't support omitted columns (should raise TypeError).
+        data_tuple = [('a', 'x', '1'), ('b', 'y', '2'), ('c', 'z', '3')]
+        regex = ('columns argument can only be omitted if data '
+                 'contains dict-rows or namedtuple-rows')
+        with self.assertRaisesRegex(TypeError, regex):
+            source = SqliteDataSource.from_records(data_tuple)
+
     def test_from_source(self):
         columns = ['foo', 'bar', 'baz']
         data = [
@@ -633,32 +662,6 @@ class TestCsvDataSource_ActualFileHandling(MkdtempTestCase):
         with self.assertRaises(Exception):
             with open(filename, incorrect_mode) as fh:
                 CsvDataSource(fh, encoding='utf-8')  # Raise exception.
-
-
-class TestFilteredDataSource(TestBaseDataSource):
-    def setUp(self):
-        self.orig_src = MinimalDataSource(self.testdata, self.fieldnames)
-        self.datasource = FilteredDataSource(self.orig_src)
-
-    def test_filter(self):
-        not_y = lambda row: row['label2'] != 'y'
-        self.datasource = FilteredDataSource(self.orig_src, not_y)
-
-        expected = [
-            {'label1': 'a', 'label2': 'x', 'value': '17'},
-            {'label1': 'a', 'label2': 'x', 'value': '13'},
-            {'label1': 'a', 'label2': 'z', 'value': '15'},
-            {'label1': 'b', 'label2': 'z', 'value': '5'},
-            {'label1': 'b', 'label2': 'x', 'value': '25'},
-        ]
-        result = self.datasource.slow_iter()
-        self.assertEqual(expected, list(result))
-
-    def test_repr(self):
-        def not_y(row):
-            return row['label2'] != 'y'
-        src = FilteredDataSource(self.orig_src, not_y)
-        self.assertEqual(repr(src), 'FilteredDataSource(MinimalDataSource, not_y)')
 
 
 class TestMultiDataSource(TestBaseDataSource):
@@ -920,56 +923,3 @@ class TestMultiDataSourceDifferentColumns2(unittest.TestCase):
         result = ResultMapping({'a': 1, 'b': 2, 'c': 3}, grouped_by='foo')
         expected = ResultMapping({('', 'a', ''): 1, ('', 'b', ''): 2, ('', 'c', ''): 3}, grouped_by=['qux', 'foo', 'corge'])
         self.assertEqual(expected, normalize_result(result, ['foo'], ['qux', 'foo', 'corge']))
-
-
-class TestMappedDataSource(TestBaseDataSource):
-    def setUp(self):
-        self.fieldnames = ['label1', 'label2', 'value_a', 'value_b']
-        self.testdata = [
-            ['a', 'x', '17', '23'],
-            ['a', 'x', '13', '12'],
-            ['a', 'y', '20', '30'],
-            ['a', 'z', '15', '15'],
-            ['b', 'z',  '5', '11'],
-            ['b', 'y', '40', '24'],
-            ['b', 'x', '25', '39'],
-        ]
-        self.minimal_source = MinimalDataSource(self.testdata, self.fieldnames)
-
-        fn = lambda row: {
-            'label1': row['label1'],
-            'label2': row['label2'],
-            'value':  row['value_a'],  # <- 'value_a' mapped to 'value'
-        }
-        self.datasource = MappedDataSource(self.minimal_source, fn)
-
-    def test_mapped_basic(self):
-        def fn(row):
-            value_a = float(row['value_a']) if row['value_a'] else 0.0
-            value_b = float(row['value_b']) if row['value_b'] else 0.0
-
-            if value_a != None and value_b != None:
-                pct = value_a / (value_a + value_b)
-            else:
-                pct = None
-
-            dic = {
-                'label1': row['label1'],
-                'label2': row['label2'],
-                'percent_a': pct
-            }
-            return dic
-
-        datasource = MappedDataSource(self.minimal_source, fn)
-        result = datasource.slow_iter()
-
-        expected = [
-            {'label1': 'a', 'label2': 'x', 'percent_a': 0.425},
-            {'label1': 'a', 'label2': 'x', 'percent_a': 0.52},
-            {'label1': 'a', 'label2': 'y', 'percent_a': 0.4},
-            {'label1': 'a', 'label2': 'z', 'percent_a': 0.5},
-            {'label1': 'b', 'label2': 'z', 'percent_a': 0.3125},
-            {'label1': 'b', 'label2': 'y', 'percent_a': 0.625},
-            {'label1': 'b', 'label2': 'x', 'percent_a': 0.390625},
-        ]
-        self.assertEqual(list(result), expected)

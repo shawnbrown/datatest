@@ -416,7 +416,7 @@ class SqliteDataSource(BaseDataSource):
         return source
 
     @classmethod
-    def from_records(cls, data, columns, in_memory=False):
+    def from_records(cls, data, columns=None, in_memory=False):
         """Alternate constructor to load an existing collection of
         records.  Loads *data* (an iterable of lists, tuples, or dicts)
         into a new SQLite database with the given *columns*::
@@ -424,6 +424,19 @@ class SqliteDataSource(BaseDataSource):
             subjectData = datatest.SqliteDataSource.from_records(records, columns)
 
         """
+        if not columns:
+            data = iter(data)
+            first_row = next(data)
+            if hasattr(first_row, 'keys'):  # Dict-like rows.
+                columns = tuple(first_row.keys())
+            elif hasattr(first_row, '_fields'):  # Namedtuple-like rows.
+                columns = first_row._fields
+            else:
+                msg = ('columns argument can only be omitted if data '
+                       'contains dict-rows or namedtuple-rows')
+                raise TypeError(msg)
+            data = itertools.chain([first_row], data)  # Rebuild original.
+
         # Create database (an empty string denotes use of a temp file).
         sqlite_path = ':memory:' if in_memory else ''
         connection = sqlite3.connect(sqlite_path)
@@ -599,107 +612,6 @@ class CsvDataSource(BaseDataSource):
 
         """
         self._source.create_index(*columns)
-
-
-class FilteredDataSource(BaseDataSource):
-    """A wrapper class to filter for those records of *source* for which
-    *function* returns true.  If *function* is ``None``, the identity
-    function is assumed, that is, it filters for records of *source*
-    which contain at least one value that evaluates as true.
-
-    The following example filters the original data source to records
-    for which the "foo" column contains positive numeric values::
-
-        def is_positive(dict_row):
-            val = dict_row['foo']
-            return int(val) > 0
-
-        orig_src = datatest.CsvDataSource('mydata.csv')
-        subjectData = datatest.FilteredDataSource(orig_src, is_positive)
-
-    The original source is stored in the ``__wrapped__`` attribute.
-
-    """
-
-    def __init__(self, source, function=None):
-        """Initialize self."""
-        msg = 'Sources must be derived from BaseDataSource'
-        assert isinstance(source, BaseDataSource), msg
-
-        if function is None:
-            function = lambda row: any(row.values())  # Identity function.
-            function.__name__ = '<identity function>'
-
-        self._function = function
-        self.__wrapped__ = source
-
-    def __repr__(self):
-        """Return a string representation of the data source."""
-        cls_name = self.__class__.__name__
-        src_name = repr(self.__wrapped__)
-        fun_name = self._function.__name__
-        return '{0}({1}, {2})'.format(cls_name, src_name, fun_name)
-
-    def columns(self):
-        """Return list of column names."""
-        return self.__wrapped__.columns()
-
-    def slow_iter(self):
-        """Return iterable of dictionary rows (like csv.DictReader)."""
-        return (x for x in self.__wrapped__.slow_iter() if self._function(x))
-
-
-class MappedDataSource(BaseDataSource):
-    """A wrapper to apply *function* to every row in *source* and
-    return a new source using these results.  *function* must accept a
-    single dict and return a dict.  This class can be used to remove
-    columns, rename columns, and create new columns.
-
-    The following example calculates the percentage of hispanic
-    population and appends the result as a new column::
-
-        def make_percent(row):
-            hisp = float(row['hisp_population'])
-            total = float(row['total_population'])
-            row['hisp_percent'] = hisp / total
-            return row
-
-        orig_src = datatest.CsvDataSource('mydata.csv')
-        subjectData = datatest.MappedDataSource(orig_src, make_percent)
-
-    The original source is stored in the ``__wrapped__`` attribute.
-
-    """
-
-    def __init__(self, source, function):
-        """Initialize self."""
-        msg = 'Sources must be derived from BaseDataSource'
-        assert isinstance(source, BaseDataSource), msg
-        self._function = function
-        self.__wrapped__ = source
-
-    def __repr__(self):
-        """Return a string representation of the data source."""
-        cls_name = self.__class__.__name__
-        fun_name = self._function.__name__
-        src_name = self.__wrapped__
-        return '{0}({1}, {2})'.format(cls_name, fun_name, src_name)
-
-    def columns(self):
-        """Return list of column names."""
-        one_row = next(self.slow_iter())
-        keys = list(one_row.keys())
-
-        cols = []
-        for col in self.__wrapped__.columns():
-            if col in keys:
-                cols.append(keys.pop(keys.index(col)))
-        return cols + sorted(keys)
-
-    def slow_iter(self):
-        """Return iterable of dictionary rows (like csv.DictReader)."""
-        for row in self.__wrapped__.slow_iter():
-            yield self._function(row)
 
 
 class MultiDataSource(BaseDataSource):
