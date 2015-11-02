@@ -58,22 +58,17 @@ class ExcelDataSource(BaseDataSource):
         """Return iterable of dictionary rows (like csv.DictReader)."""
         return self._source.slow_iter()
 
-    def sum(self, column, **filter_by):
-        """Return sum of values in column."""
-        return self._source.sum(column, **filter_by)
+    def sum2(self, column, group_by=None, **filter_by):
+        return self._source.sum2(column, group_by, **filter_by)
 
-    def count(self, **filter_by):
-        """Return count of rows."""
-        return self._source.count(**filter_by)
+    def count2(self, group_by=None, **filter_by):
+        return self._source.count2(group_by, **filter_by)
 
-    def unique(self, *column, **filter_by):
-        """Return iterable of tuples of unique column values."""
-        return self._source.unique(*column, **filter_by)
+    def aggregate(self, function, column, group_by=None, **filter_by):
+        return self._source.aggregate(function, column, group_by, **filter_by)
 
-    def set(self, column, **filter_by):
-        """Convenience function for unwrapping single column results
-        from ``unique()`` and returning as a set."""
-        return self._source.set(column, **filter_by)
+    def distinct(self, column, **filter_by):
+        return self._source.distinct(column, **filter_by)
 
 
 class PandasDataSource(BaseDataSource):
@@ -126,26 +121,26 @@ class PandasDataSource(BaseDataSource):
             for row in self._df.itertuples(index=not self._default_index):
                 yield dict(zip(columns, addtup(row)))
 
-    def unique(self, *column, **filter_by):
-        """Return iterable of unique tuples of column values."""
-        df = self._filter_by(self._df, self._default_index, **filter_by)
-        df = df[list(column)].drop_duplicates()
-        for row in df.itertuples(index=False):
-            yield row
+    #def unique(self, *column, **filter_by):
+    #    """Return iterable of unique tuples of column values."""
+    #    df = self.__filter_by(self._df, self._default_index, **filter_by)
+    #    df = df[list(column)].drop_duplicates()
+    #    for row in df.itertuples(index=False):
+    #        yield row
 
-    def sum(self, column, **filter_by):
-        """Return sum of values in column."""
-        df = self._filter_by(self._df, self._default_index, **filter_by)
-        s = df[column].replace('', self._np.nan)
-        return s.astype(self._np.float).sum()
+    #def sum(self, column, **filter_by):
+    #    """Return sum of values in column."""
+    #    df = self.__filter_by(self._df, self._default_index, **filter_by)
+    #    s = df[column].replace('', self._np.nan)
+    #    return s.astype(self._np.float).sum()
 
-    def count(self, **filter_by):
-        """Return count of rows."""
-        df = self._filter_by(self._df, self._default_index, **filter_by)
-        return len(df)
+    #def count(self, **filter_by):
+    #    """Return count of rows."""
+    #    df = self.__filter_by(self._df, self._default_index, **filter_by)
+    #    return len(df)
 
     @staticmethod
-    def _filter_by(df, default_index, **filter_by):
+    def __filter_by(df, default_index, **filter_by):
         """Filter iterable by keywords (column=value, etc.)."""
         if not default_index:
             df = df.reset_index()

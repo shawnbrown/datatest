@@ -25,8 +25,8 @@ class BaseDataSource(object):
     """Common base class for all data sources.  Custom sources can be
     created by subclassing BaseDataSource and implementing
     ``__init__()``, ``__repr__()``, ``columns()``, and ``slow_iter()``.
-    Optionally, performance can be improved by implementing ``sum()``,
-    ``count()``, and ``unique()``.
+    Optionally, performance can be improved by implementing ``sum2()``,
+    ``count2()``, and ``distinct()``.
 
     """
 
@@ -57,16 +57,6 @@ class BaseDataSource(object):
         Return an iterable of dictionary rows (like ``csv.DictReader``).
         """
         return NotImplemented
-
-    def sum(self, column, **filter_by):
-        """Return sum of values in *column* (uses ``slow_iter``).  This method
-        is deprecated and will be removed.
-
-        """
-        iterable = self.__filter_by(self.slow_iter(), **filter_by)
-        iterable = (x[column] for x in iterable)
-        make_decimal = lambda x: Decimal(x) if x else Decimal('0')
-        return sum(make_decimal(x) for x in iterable)
 
     def sum2(self, column, group_by=None, **filter_by):
         """Return sum of values in *column* (uses ``aggregate``)."""
@@ -112,24 +102,6 @@ class BaseDataSource(object):
         iterable = ((k, fn(g)) for k, g in itertools.groupby(iterable, keyfn))
         return ResultMapping(iterable, group_by)
 
-    def count(self, **filter_by):
-        """Return count of rows (uses ``slow_iter``)"""
-        iterable = self.__filter_by(self.slow_iter(), **filter_by)
-        return sum(1 for x in iterable)
-
-    def unique(self, *column, **filter_by):
-        """Return iterable of tuples containing unique *column* values
-        (uses ``slow_iter``).
-        """
-        iterable = self.__filter_by(self.slow_iter(), **filter_by)  # Filtered rows only.
-        fn = lambda row: tuple(row[x] for x in column)
-        iterable = (fn(row) for row in iterable)
-        seen = set()  # Using "unique_everseen" recipe from itertools.
-        seen_add = seen.add
-        for element in itertools.filterfalse(seen.__contains__, iterable):
-            seen_add(element)
-            yield element
-
     def distinct(self, column, **filter_by):
         """Return iterable of tuples containing distinct *column* values
         (uses ``slow_iter``).
@@ -142,15 +114,6 @@ class BaseDataSource(object):
             iterable = (tuple(row[c] for c in column) for row in iterable)
 
         return ResultSet(iterable)
-
-    def set(self, column, **filter_by):
-        """Convenience function for unwrapping single column results
-        from ``unique()`` and returning as a set.  This method is
-        deprecated and will be removed.
-
-        """
-        #return set(x[0] for x in self.unique(column, **filter_by))
-        return self.distinct(column, **filter_by)
 
     @staticmethod
     def __filter_by(iterable, **filter_by):
@@ -199,12 +162,6 @@ class SqliteDataSource(BaseDataSource):
         mkdict = lambda x: dict(zip(column_names, x))
         return (mkdict(row) for row in cursor.fetchall())
 
-    def sum(self, column, **filter_by):
-        """Return sum of values in column."""
-        select_clause = 'SUM("' + column + '")'
-        cursor = self._execute_query(self._table, select_clause, **filter_by)
-        return cursor.fetchone()[0]
-
     def sum2(self, column, group_by=None, **filter_by):
         """Return sum of values in *column*."""
         if group_by == None:
@@ -231,11 +188,6 @@ class SqliteDataSource(BaseDataSource):
 
         return ResultMapping(cursor, group_by)
 
-    def count(self, **filter_by):
-        """Return count of rows."""
-        cursor = self._execute_query(self._table, 'COUNT(*)', **filter_by)
-        return cursor.fetchone()[0]
-
     def distinct(self, column, **filter_by):
         """Return iterable of tuples containing distinct *column* values."""
         all_cols = self.columns()
@@ -259,19 +211,6 @@ class SqliteDataSource(BaseDataSource):
             cursor = (x[0] for x in cursor)
 
         return ResultSet(x for x in cursor)
-
-    def unique(self, *column, **filter_by):
-        """Return iterable of tuples of unique column values."""
-        all_cols = self.columns()
-        not_found = [x for x in column if x not in all_cols]
-        if not_found:
-            raise KeyError(not_found[0])
-
-        select_clause = ['"{0}"'.format(x) for x in column]
-        select_clause = ', '.join(select_clause)
-        select_clause = 'DISTINCT {0}'.format(select_clause)
-        cursor = self._execute_query(self._table, select_clause, **filter_by)
-        return (x for x in cursor)
 
     def _execute_query(self, table, select_clause, trailing_clause=None, **filter_by):
         """Execute query and return cursor object."""
@@ -580,28 +519,11 @@ class CsvDataSource(BaseDataSource):
         """Return iterable of dictionary rows (like csv.DictReader)."""
         return self._source.slow_iter()
 
-    def sum(self, column, **filter_by):
-        """Return sum of values in column."""
-        return self._source.sum(column, **filter_by)
-
     def sum2(self, column, group_by=None, **filter_by):
         return self._source.sum2(column, group_by, **filter_by)
 
-    def count(self, **filter_by):
-        """Return count of rows."""
-        return self._source.count(**filter_by)
-
     def distinct(self, column, **filter_by):
         return self._source.distinct(column, **filter_by)
-
-    def unique(self, *column, **filter_by):
-        """Return iterable of tuples of unique column values."""
-        return self._source.unique(*column, **filter_by)
-
-    def set(self, column, **filter_by):
-        """Convenience function for unwrapping single column results
-        from ``unique()`` and returning as a set."""
-        return self._source.set(column, **filter_by)
 
     def create_index(self, *columns):
         """Creating an index for certain columns can speed up data
@@ -785,31 +707,6 @@ class MultiDataSource(BaseDataSource):
             raise ValueError('Result object must be ResultSet or ResultMapping.')
 
         return normalized
-
-    def sum(self, column, **filter_by):
-        """Return sum of values in column."""
-        if column not in self.columns():
-            msg = 'No sub-source contains {0!r} column.'.format(column)
-            raise Exception(msg)
-
-        total_result = 0
-        for source in self.__wrapped__:
-            if column in source.columns():
-                result = self._filtered_call(source, 'sum', column, **filter_by)
-                if result:
-                    total_result += result
-
-        return total_result
-
-    def count(self, **filter_by):
-        """Return count of rows."""
-        total_result = 0
-        for source in self.__wrapped__:
-            result = self._filtered_call(source, 'count', **filter_by)
-            if result:
-                total_result += result
-
-        return total_result
 
 
 #DefaultDataSource = CsvDataSource
