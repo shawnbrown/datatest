@@ -23,10 +23,10 @@ sqlite3.register_adapter(Decimal, str)
 
 class BaseDataSource(object):
     """Common base class for all data sources.  Custom sources can be
-    created by subclassing BaseDataSource and implementing
-    ``__init__()``, ``__repr__()``, ``columns()``, and ``slow_iter()``.
-    Optionally, performance can be improved by implementing ``sum2()``,
-    ``count2()``, and ``distinct()``.
+    created by subclassing BaseDataSource and implementing ``__init__()``,
+    ``__repr__()``, ``__iter__()``, and ``columns()``.  Optionally,
+    performance can be improved by implementing ``sum2()``, ``count2()``,
+    and ``distinct()``.
 
     """
 
@@ -44,17 +44,17 @@ class BaseDataSource(object):
         """
         return NotImplemented
 
+    def __iter__(self):
+        """NotImplemented
+
+        Return an iterable of dictionary rows (like ``csv.DictReader``).
+        """
+        return NotImplemented
+
     def columns(self):
         """NotImplemented
 
         Return list of column names.
-        """
-        return NotImplemented
-
-    def slow_iter(self):
-        """NotImplemented
-
-        Return an iterable of dictionary rows (like ``csv.DictReader``).
         """
         return NotImplemented
 
@@ -67,7 +67,7 @@ class BaseDataSource(object):
         """Returns count of *column* grouped by *group_by* as ResultMapping."""
         function = lambda iterable: sum(1 for x in iterable if x)
 
-        iterable = self.__filter_by(self.slow_iter(), **filter_by)
+        iterable = self.__filter_by(**filter_by)
 
         if group_by == None:
             return function(1 for row in iterable)  # <- EXIT!    # <- REPLACE WITH SUM
@@ -82,13 +82,13 @@ class BaseDataSource(object):
         return ResultMapping(iterable, group_by)
 
     def aggregate(self, function, column, group_by=None, **filter_by):
-        """Aggregates values in the given *column* (uses ``slow_iter``).
+        """Aggregates values in the given *column* (uses slow ``__iter__``).
         If group_by is omitted, the result is returned as-is, otherwise
         returns a ResultMapping object.  The *function* should take an
         iterable and return a single summary value.
 
         """
-        iterable = self.__filter_by(self.slow_iter(), **filter_by)
+        iterable = self.__filter_by(**filter_by)
 
         if group_by == None:
             return function(row[column] for row in iterable)  # <- EXIT!
@@ -104,9 +104,9 @@ class BaseDataSource(object):
 
     def distinct(self, column, **filter_by):
         """Return iterable of tuples containing distinct *column* values
-        (uses ``slow_iter``).
+        (uses slow ``__iter__``).
         """
-        iterable = self.__filter_by(self.slow_iter(), **filter_by)  # Filtered rows only.
+        iterable = self.__filter_by(**filter_by)  # Filtered rows only.
 
         if isinstance(column, str) or not isinstance(column, Iterable):
             iterable = (row[column] for row in iterable)
@@ -115,12 +115,11 @@ class BaseDataSource(object):
 
         return ResultSet(iterable)
 
-    @staticmethod
-    def __filter_by(iterable, **filter_by):
+    def __filter_by(self, **filter_by):
         """Filter iterable by keywords (column=value, etc.)."""
         mktup = lambda v: (v,) if not isinstance(v, (list, tuple)) else v
         filter_by = dict((k, mktup(v)) for k, v in filter_by.items())
-        for row in iterable:
+        for row in self:
             if all(row[k] in v for k, v in filter_by.items()):
                 yield row
 
@@ -153,7 +152,7 @@ class SqliteDataSource(BaseDataSource):
         cursor.execute('PRAGMA table_info(' + self._table + ')')
         return [x[1] for x in cursor.fetchall()]
 
-    def slow_iter(self):
+    def __iter__(self):
         """Return iterable of dictionary rows (like csv.DictReader)."""
         cursor = self._connection.cursor()
         cursor.execute('PRAGMA synchronous=OFF')
@@ -308,7 +307,7 @@ class SqliteDataSource(BaseDataSource):
             subjectData = datatest.SqliteDataSource.from_source(source)
 
         """
-        data = source.slow_iter()
+        data = iter(source)
         columns = source.columns()
         return cls.from_records(data, columns, in_memory)
 
@@ -515,9 +514,9 @@ class CsvDataSource(BaseDataSource):
         """Return list of column names."""
         return self._source.columns()
 
-    def slow_iter(self):
+    def __iter__(self):
         """Return iterable of dictionary rows (like csv.DictReader)."""
-        return self._source.slow_iter()
+        return self._source.__iter__()
 
     def sum2(self, column, group_by=None, **filter_by):
         return self._source.sum2(column, group_by, **filter_by)
@@ -568,11 +567,11 @@ class MultiDataSource(BaseDataSource):
         src_names = ',\n'.join(src_names)                    # Join w/ comma & new-line.
         return '{0}(\n{1}\n)'.format(cls_name, src_names)
 
-    def slow_iter(self):
+    def __iter__(self):
         """Return iterable of dictionary rows (like csv.DictReader)."""
         columns = self.columns()
         for source in self.__wrapped__:
-            for row in source.slow_iter():
+            for row in source.__iter__():
                 yield dict((col, row.get(col, '')) for col in columns)
 
     def columns(self):
@@ -626,7 +625,7 @@ class MultiDataSource(BaseDataSource):
                         # add an empty row to the result list.  If
                         # subsrc is completely empty, then don't add
                         # anything.
-                        iterable = subsrc.slow_iter()
+                        iterable = iter(subsrc)
                         try:
                             next(iterable)
                             subres = ResultSet([tuple(['']) * len(column)])

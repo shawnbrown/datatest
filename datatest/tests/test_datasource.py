@@ -46,12 +46,12 @@ class MinimalDataSource(BaseDataSource):
     def __repr__(self):
         return self.__class__.__name__
 
-    def columns(self):
-        return self._fieldnames
-
-    def slow_iter(self):
+    def __iter__(self):
         for row in self._data:
             yield dict(zip(self._fieldnames, row))
+
+    def columns(self):
+        return self._fieldnames
 
 
 class TestBaseDataSource(unittest.TestCase):
@@ -71,11 +71,10 @@ class TestBaseDataSource(unittest.TestCase):
         msg = msg.format(self.__class__.__name__)
         self.assertTrue(hasattr(self, 'datasource'), msg)
 
-    def test_slow_iter(self):
-        """Test slow iterator."""
-        results = self.datasource.slow_iter()
+    def test_iter(self):
+        """Test __iter__."""
+        results = [row for row in self.datasource]
 
-        results = list(results)
         expected = [
             {'label1': 'a', 'label2': 'x', 'value': '17'},
             {'label1': 'a', 'label2': 'x', 'value': '13'},
@@ -100,7 +99,7 @@ class TestBaseDataSource(unittest.TestCase):
         ]
 
         # Filter by single value (where label1 is 'a').
-        results = self.datasource._BaseDataSource__filter_by(testdata, label1='a')
+        results = self.datasource._BaseDataSource__filter_by(label1='a')
         results = list(results)
         expected = [
             {'label1': 'a', 'label2': 'x', 'value': '17'},
@@ -111,7 +110,7 @@ class TestBaseDataSource(unittest.TestCase):
         self.assertEqual(expected, results)
 
         # Filter by multiple values (where label2 is 'x' OR 'y').
-        results = self.datasource._BaseDataSource__filter_by(testdata, label2=['x', 'y'])
+        results = self.datasource._BaseDataSource__filter_by(label2=['x', 'y'])
         results = list(results)
         expected = [
             {'label1': 'a', 'label2': 'x', 'value': '17'},
@@ -123,8 +122,7 @@ class TestBaseDataSource(unittest.TestCase):
         self.assertEqual(expected, results)
 
         # Filter by multiple columns (where label1 is 'a', label2 is 'x' OR 'y').
-        results = self.datasource._BaseDataSource__filter_by(testdata,
-                                                             label1='a',
+        results = self.datasource._BaseDataSource__filter_by(label1='a',
                                                              label2=['x', 'y'])
         results = list(results)
         expected = [
@@ -314,8 +312,7 @@ class TestSqliteDataSource(TestBaseDataSource):
             {'foo': 'b', 'bar': 'y', 'baz': '2'},
             {'foo': 'c', 'bar': 'z', 'baz': '3'},
         ]
-        result = source.slow_iter()
-        self.assertEqual(expected, list(result))
+        self.assertEqual(expected, list(source))
 
         # Test too few columns.
         columns = ['foo', 'bar']
@@ -335,9 +332,7 @@ class TestSqliteDataSource(TestBaseDataSource):
             {'foo': 'c', 'bar': 'z', 'baz': '3'},
         ]
         source = SqliteDataSource.from_records(data, columns)
-
-        result = source.slow_iter()
-        self.assertEqual(data, list(result))
+        self.assertEqual(data, list(source))
 
         # Test too few columns.
         #columns = ['foo', 'bar']
@@ -358,8 +353,7 @@ class TestSqliteDataSource(TestBaseDataSource):
 
         # Iterable of dict-rows.
         source = SqliteDataSource.from_records(data_dict)
-        result = source.slow_iter()
-        self.assertEqual(data_dict, list(result))
+        self.assertEqual(data_dict, list(source))
 
         # Iterable of namedtuple-rows.
         row = namedtuple('row', ['foo', 'bar', 'baz'])
@@ -369,8 +363,7 @@ class TestSqliteDataSource(TestBaseDataSource):
             row('c', 'z', '3'),
         ]
         source = SqliteDataSource.from_records(data_namedtuple)
-        result = source.slow_iter()
-        self.assertEqual(data_dict, list(result))
+        self.assertEqual(data_dict, list(source))
 
         # Type that doesn't support omitted columns (should raise TypeError).
         data_tuple = [('a', 'x', '1'), ('b', 'y', '2'), ('c', 'z', '3')]
@@ -396,8 +389,7 @@ class TestSqliteDataSource(TestBaseDataSource):
             {'foo': 'b', 'bar': 'y', 'baz': '2'},
             {'foo': 'c', 'bar': 'z', 'baz': '3'},
         ]
-        result = source.slow_iter()
-        self.assertEqual(expected, list(result))
+        self.assertEqual(expected, list(source))
 
     def test_from_result(self):
         # Single-column ResultSet.
@@ -405,9 +397,8 @@ class TestSqliteDataSource(TestBaseDataSource):
         source = SqliteDataSource.from_result(result, 'foo')
 
         expected = [{'foo': 'a'}, {'foo': 'b'}, {'foo': 'c'}]
-        source_iter = source.slow_iter()
-        make_set = lambda iterable: set(tuple(row.items()) for row in iterable)
-        self.assertEqual(make_set(expected), make_set(source_iter))
+        make_set = lambda data: set(tuple(row.items()) for row in data)
+        self.assertEqual(make_set(expected), make_set(source))
 
         # Multi-column ResultSet.
         result = ResultSet([
@@ -424,9 +415,8 @@ class TestSqliteDataSource(TestBaseDataSource):
             {'foo': 'b', 'bar': 'y', 'baz': '2'},
             {'foo': 'c', 'bar': 'z', 'baz': '3'},
         ]
-        source_iter = source.slow_iter()
-        make_set = lambda iterable: set(tuple(row.items()) for row in iterable)
-        self.assertEqual(make_set(expected), make_set(source_iter))
+        make_set = lambda data: set(tuple(row.items()) for row in data)
+        self.assertEqual(make_set(expected), make_set(source))
 
         # Single-key and single-value ResultMapping.
         result = ResultMapping({'a': 1, 'b': 2, 'c': 3}, grouped_by='foo')
@@ -435,9 +425,8 @@ class TestSqliteDataSource(TestBaseDataSource):
         expected = [{'foo': 'a', 'baz': 1},
                     {'foo': 'b', 'baz': 2},
                     {'foo': 'c', 'baz': 3}]
-        source_iter = source.slow_iter()
-        make_set = lambda iterable: set(tuple(row.items()) for row in iterable)
-        self.assertEqual(make_set(expected), make_set(source_iter))
+        make_set = lambda data: set(tuple(row.items()) for row in data)
+        self.assertEqual(make_set(expected), make_set(source))
 
         # Multi-key and single-value ResultMapping.
         result = ResultMapping({('a', 'x'): 1,
@@ -450,9 +439,8 @@ class TestSqliteDataSource(TestBaseDataSource):
             {'foo': 'b', 'bar': 'y', 'baz': 2},
             {'foo': 'c', 'bar': 'z', 'baz': 3},
         ]
-        source_iter = source.slow_iter()
-        make_set = lambda iterable: set(tuple(row.items()) for row in iterable)
-        self.assertEqual(make_set(expected), make_set(source_iter))
+        make_set = lambda data: set(tuple(row.items()) for row in data)
+        self.assertEqual(make_set(expected), make_set(source))
 
         # Multi-key and multi-value ResultMapping.
         result = ResultMapping({('a', 'x'): (1, 10),
@@ -465,9 +453,8 @@ class TestSqliteDataSource(TestBaseDataSource):
             {'foo': 'b', 'bar': 'y', 'baz': 2, 'qux': 20},
             {'foo': 'c', 'bar': 'z', 'baz': 3, 'qux': 30},
         ]
-        source_iter = source.slow_iter()
-        make_set = lambda iterable: set(tuple(row.items()) for row in iterable)
-        self.assertEqual(make_set(expected), make_set(source_iter))
+        make_set = lambda data: set(tuple(row.items()) for row in data)
+        self.assertEqual(make_set(expected), make_set(source))
 
     def test_create_index(self):
         cursor = self.datasource._connection.cursor()

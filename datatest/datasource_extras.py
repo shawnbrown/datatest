@@ -50,13 +50,13 @@ class ExcelDataSource(BaseDataSource):
         src_file = self._file_repr
         return '{0}({1})'.format(cls_name, src_file)
 
+    def __iter__(self):
+        """Return iterable of dictionary rows (like csv.DictReader)."""
+        return iter(self._source)
+
     def columns(self):
         """Return list of column names."""
         return self._source.columns()
-
-    def slow_iter(self):
-        """Return iterable of dictionary rows (like csv.DictReader)."""
-        return self._source.slow_iter()
 
     def sum2(self, column, group_by=None, **filter_by):
         return self._source.sum2(column, group_by, **filter_by)
@@ -103,13 +103,7 @@ class PandasDataSource(BaseDataSource):
         hex_id = hex(id(self._df))
         return "{0}(<pandas.DataFrame object at {1}>)".format(cls_name, hex_id)
 
-    def columns(self):
-        """Return list of column names."""
-        if self._default_index:
-            return list(self._df.columns)
-        return list(self._df.index.names) + list(self._df.columns)
-
-    def slow_iter(self):
+    def __iter__(self):
         """Return iterable of dictionary rows (like csv.DictReader)."""
         columns = self.columns()
         if self._default_index:
@@ -120,6 +114,12 @@ class PandasDataSource(BaseDataSource):
             addtup = lambda x: gettup(x[0]) + gettup(x[1:])
             for row in self._df.itertuples(index=not self._default_index):
                 yield dict(zip(columns, addtup(row)))
+
+    def columns(self):
+        """Return list of column names."""
+        if self._default_index:
+            return list(self._df.columns)
+        return list(self._df.index.names) + list(self._df.columns)
 
     #def unique(self, *column, **filter_by):
     #    """Return iterable of unique tuples of column values."""
@@ -160,7 +160,7 @@ class PandasDataSource(BaseDataSource):
             subjectData = datatest.PandasDataSource.from_source(source)
 
         """
-        return cls.from_records(source.slow_iter(), source.columns())
+        return cls.from_records(iter(source), source.columns())
 
     @classmethod
     def from_records(cls, data, columns):

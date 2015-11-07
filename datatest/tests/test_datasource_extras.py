@@ -46,13 +46,13 @@ class TestPandasDataSource(TestBaseDataSource):
 
         # Test from_records():
         source = PandasDataSource.from_records(self.testdata, self.fieldnames)
-        results = source.slow_iter()
+        results = iter(source)
         self.assertEqual(expected, list(results))
 
         # Test from_source():
         source = MinimalDataSource(self.testdata, self.fieldnames)
         source = PandasDataSource.from_source(source)
-        results = source.slow_iter()
+        results = iter(source)
         self.assertEqual(expected, list(results))
 
 
@@ -77,12 +77,11 @@ class TestPandasDataSourceWithIndex(TestBaseDataSource):
 
         # Test from_records():
         source = PandasDataSource.from_records(self.testdata, self.fieldnames)
-        results = source.slow_iter()
+        results = iter(source)
         self.assertEqual(expected, list(results))
 
         # Test from_source():
         source = MinimalDataSource(self.testdata, self.fieldnames)
         source = PandasDataSource.from_source(source)
-        results = source.slow_iter()
+        results = iter(source)
         self.assertEqual(expected, list(results))
-
