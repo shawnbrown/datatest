@@ -372,25 +372,6 @@ class TestSqliteDataSource(TestBaseDataSource):
         with self.assertRaisesRegex(TypeError, regex):
             source = SqliteDataSource.from_records(data_tuple)
 
-    def test_from_source(self):
-        columns = ['foo', 'bar', 'baz']
-        data = [
-            ('a', 'x', '1'),
-            ('b', 'y', '2'),
-            ('c', 'z', '3'),
-        ]
-        source = MinimalDataSource(data, columns)
-        source = SqliteDataSource.from_source(source)
-
-        self.assertIsInstance(source, SqliteDataSource)
-
-        expected = [
-            {'foo': 'a', 'bar': 'x', 'baz': '1'},
-            {'foo': 'b', 'bar': 'y', 'baz': '2'},
-            {'foo': 'c', 'bar': 'z', 'baz': '3'},
-        ]
-        self.assertEqual(expected, list(source))
-
     def test_from_result(self):
         # Single-column ResultSet.
         result = ResultSet(['a', 'b', 'c'])

@@ -24,7 +24,7 @@ Data source objects are used to access data in various formats.
    :members: create_index
 
 .. autoclass:: datatest.SqliteDataSource
-   :members: create_index, from_source, from_records
+   :members: create_index, from_records
 
 .. autoclass:: datatest.MultiDataSource
 
@@ -51,7 +51,7 @@ provides a variety of other data sources:
 .. autoclass:: datatest.ExcelDataSource
 
 .. autoclass:: datatest.PandasDataSource
-   :members: from_source, from_records
+   :members: from_records
 
 
 Common Methods

@@ -33,7 +33,7 @@ class TestPandasDataSource(TestBaseDataSource):
         df = pandas.DataFrame(self.testdata, columns=self.fieldnames)
         self.datasource = PandasDataSource(df)
 
-    def test_from_records_and_source(self):
+    def test_from_records(self):
         expected = [
             {'label1': 'a', 'label2': 'x', 'value': '17'},
             {'label1': 'a', 'label2': 'x', 'value': '13'},
@@ -44,14 +44,14 @@ class TestPandasDataSource(TestBaseDataSource):
             {'label1': 'b', 'label2': 'x', 'value': '25'},
         ]
 
-        # Test from_records():
+        # Test with columns/fieldnames:
         source = PandasDataSource.from_records(self.testdata, self.fieldnames)
         results = iter(source)
         self.assertEqual(expected, list(results))
 
-        # Test from_source():
+        # Test using dict (gets *columns* from dict-keys):
         source = MinimalDataSource(self.testdata, self.fieldnames)
-        source = PandasDataSource.from_source(source)
+        source = PandasDataSource.from_records(source)
         results = iter(source)
         self.assertEqual(expected, list(results))
 
@@ -64,7 +64,7 @@ class TestPandasDataSourceWithIndex(TestBaseDataSource):
         #df = df.set_index(['label1'])
         self.datasource = PandasDataSource(df)
 
-    def test_from_records_and_source(self):
+    def test_from_records(self):
         expected = [
             {'label1': 'a', 'label2': 'x', 'value': '17'},
             {'label1': 'a', 'label2': 'x', 'value': '13'},
@@ -75,13 +75,12 @@ class TestPandasDataSourceWithIndex(TestBaseDataSource):
             {'label1': 'b', 'label2': 'x', 'value': '25'},
         ]
 
-        # Test from_records():
+        # Test with columns/fieldnames:
         source = PandasDataSource.from_records(self.testdata, self.fieldnames)
-        results = iter(source)
-        self.assertEqual(expected, list(results))
+        self.assertEqual(expected, list(source))
 
-        # Test from_source():
+        # Test without columns (gets columns from dict-keys):
         source = MinimalDataSource(self.testdata, self.fieldnames)
-        source = PandasDataSource.from_source(source)
+        source = PandasDataSource.from_records(source)
         results = iter(source)
         self.assertEqual(expected, list(results))

@@ -300,18 +300,6 @@ class SqliteDataSource(BaseDataSource):
         cursor.execute(statement)
 
     @classmethod
-    def from_source(cls, source, in_memory=False):
-        """Alternate constructor to load an existing data source:
-        ::
-
-            subjectData = datatest.SqliteDataSource.from_source(source)
-
-        """
-        data = iter(source)
-        columns = source.columns()
-        return cls.from_records(data, columns, in_memory)
-
-    @classmethod
     def from_result(cls, result, columns, in_memory=False):
         """Alternate constructor to load an existing ResultSet or
         ResultMapping::

@@ -1,4 +1,5 @@
 
+from . import _itertools as itertools
 from .datasource import BaseDataSource
 from .datasource import SqliteDataSource
 
@@ -153,17 +154,7 @@ class PandasDataSource(BaseDataSource):
         return df
 
     @classmethod
-    def from_source(cls, source):
-        """Alternate constructor to load an existing data source:
-        ::
-
-            subjectData = datatest.PandasDataSource.from_source(source)
-
-        """
-        return cls.from_records(iter(source), source.columns())
-
-    @classmethod
-    def from_records(cls, data, columns):
+    def from_records(cls, data, columns=None):
         """Alternate constructor to load an existing collection of
         records.  Loads *data* (an iterable of lists, tuples, or dicts)
         as a DataFrame with the given *columns*::
@@ -186,7 +177,21 @@ class PandasDataSource(BaseDataSource):
                 "third-party libraries 'pandas' (0.13.0 or greater) "
                 "and 'numpy' (1.7.1 or greater)."
             )
-        df = pandas.DataFrame(data, columns=columns)
+
+        data = iter(data)
+        if not columns:
+            first_row = next(data)
+            if hasattr(first_row, 'keys'):  # Dict-like rows.
+                columns = tuple(first_row.keys())
+            elif hasattr(first_row, '_fields'):  # Namedtuple-like rows.
+                columns = first_row._fields
+            else:
+                msg = ('columns argument can only be omitted if data '
+                       'contains dict-rows or namedtuple-rows')
+                raise TypeError(msg)
+            data = itertools.chain([first_row], data)  # Rebuild original.
+
+        df = pandas.DataFrame.from_records(data, columns=columns)
         return cls(df)
 
 
