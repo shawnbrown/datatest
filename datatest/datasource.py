@@ -59,12 +59,12 @@ class BaseDataSource(object):
         return NotImplemented
 
     def sum2(self, column, group_by=None, **filter_by):
-        """Return sum of values in *column* (uses ``aggregate``)."""
+        """Returns sum of *column* grouped by *group_by* as ResultMapping."""
         fn = lambda iterable: sum(Decimal(x) for x in iterable if x)
         return self.aggregate(fn, column, group_by, **filter_by)
 
     def count2(self, group_by=None, **filter_by):
-        """Return count of rows (uses ``aggregate``)."""
+        """Returns count of *column* grouped by *group_by* as ResultMapping."""
         function = lambda iterable: sum(1 for x in iterable if x)
 
         iterable = self.__filter_by(self.slow_iter(), **filter_by)
@@ -521,6 +521,9 @@ class CsvDataSource(BaseDataSource):
 
     def sum2(self, column, group_by=None, **filter_by):
         return self._source.sum2(column, group_by, **filter_by)
+
+    def count2(self, group_by=None, **filter_by):
+        return self._source.count2(group_by, **filter_by)
 
     def distinct(self, column, **filter_by):
         return self._source.distinct(column, **filter_by)

@@ -14,6 +14,9 @@ Data source objects are used to access data in various formats.
 | :class:`SqliteDataSource(c, t)   | table *t* from SQLite connection *c*  |
 | <datatest.SqliteDataSource>`     |                                       |
 +----------------------------------+---------------------------------------+
+| :class:`MultiDataSource(*s)      | wrapper for multiple sources *s* that |
+| <datatest.MultiDataSource>`      | acts as a single data source          |
++----------------------------------+---------------------------------------+
 
 |
 
@@ -22,6 +25,8 @@ Data source objects are used to access data in various formats.
 
 .. autoclass:: datatest.SqliteDataSource
    :members: create_index, from_source, from_records
+
+.. autoclass:: datatest.MultiDataSource
 
 
 --------
@@ -47,45 +52,6 @@ provides a variety of other data sources:
 
 .. autoclass:: datatest.PandasDataSource
    :members: from_source, from_records
-
-
---------
-
-The following "wrapper" classes can be used to alter an existing data
-source object:
-
-+----------------------------------------------+------------------------------------------+
-| Class                                        | Loads                                    |
-+==============================================+==========================================+
-| :class:`FilteredDataSource(s, f)             | wrapper that filters source *s* to       |
-| <datatest.FilteredDataSource>`               | records where function *f* returns True  |
-+----------------------------------------------+------------------------------------------+
-| :class:`GroupedDataSource(s, g, a=None)      | wrapper that groups source *s* by groups |
-| <datatest.GroupedDataSource>`                | *g* and applies aggregate function *a*   |
-+----------------------------------------------+------------------------------------------+
-| :class:`MappedDataSource(s, f)               | wrapper that applies function *f* to     |
-| <datatest.MappedDataSource>`                 | every row of source *s*                  |
-+----------------------------------------------+------------------------------------------+
-| :class:`MultiDataSource(*s)                  | wrapper for multiple sources *s* that    |
-| <datatest.MultiDataSource>`                  | acts as a single data source             |
-+----------------------------------------------+------------------------------------------+
-
-These wrappers allow for a great deal of flexibility but extensive use
-could make testing slow.  If you find that testing has become slow
-because of a wrapper, you may be able to improve performance by loading
-it into a faster class that supports the :meth:`from_source`
-constructor::
-
-    subjectData = datatest.SqliteDataSource.from_source(subjectData)
-
-
-.. autoclass:: datatest.FilteredDataSource
-
-.. autoclass:: datatest.GroupedDataSource
-
-.. autoclass:: datatest.MappedDataSource
-
-.. autoclass:: datatest.MultiDataSource
 
 
 Common Methods
@@ -123,26 +89,9 @@ also possible to call them directly:
     Returns sum of *column* grouped by *group_by* as ResultMapping.
 
 
-.. py:method:: sum(column, **filter_by)
+.. py:method:: count2(group_by=None, **filter_by)
 
-    Return sum of values in *column*.
-
-
-.. py:method:: count(**filter_by)
-
-    Return count of rows.
-
-
-.. py:method:: unique(*column, **filter_by)
-
-    Return iterable of tuples containing unique *column* values
-
-
-.. py:method:: set(column, **filter_by)
-
-    Convenience function for unwrapping single *column* results from
-    ``unique`` and returning as a set.
-
+    Returns count of rows grouped by *group_by* as ResultMapping.
 
 
 *******************
@@ -169,7 +118,7 @@ As a starting point, you can use one of the following templates:
 |
 
 .. autoclass:: datatest.BaseDataSource
-    :members: __init__, __repr__, columns, slow_iter, sum, count, unique
+    :members: __init__, __repr__, columns, slow_iter, distinct, aggregate, sum2, count2
 
 
 *************
