@@ -116,10 +116,12 @@ class BaseDataSource(object):
         return ResultSet(iterable)
 
     def __filter_by(self, **filter_by):
-        """Filter iterable by keywords (column=value, etc.)."""
+        """Filter data by keywords, returns iterable.  E.g., where
+        column1=value1, column2=value2, etc. (uses slow ``__iter__``).
+        """
         mktup = lambda v: (v,) if not isinstance(v, (list, tuple)) else v
         filter_by = dict((k, mktup(v)) for k, v in filter_by.items())
-        for row in self:
+        for row in self.__iter__():
             if all(row[k] in v for k, v in filter_by.items()):
                 yield row
 
