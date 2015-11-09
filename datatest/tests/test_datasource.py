@@ -195,9 +195,11 @@ class TestBaseDataSource(unittest.TestCase):
         # Test single column.
         expected = ['a', 'b']
         self.assertEqual(expected, distinct('label1'))
+        self.assertEqual(expected, distinct(['label1']))
 
         # Test single column wrapped in iterable (list).
         expected = [('a',), ('b',)]
+        self.assertEqual(expected, distinct('label1'))
         self.assertEqual(expected, distinct(['label1']))
 
         # Test multiple columns.
@@ -697,8 +699,10 @@ class TestMultiDataSourceDifferentColumns2(unittest.TestCase):
 
         expected = ['', '3', '0', '2']
         self.assertEqual(expected, distinct('other_value'))
+        self.assertEqual(expected, distinct(['other_value']))
 
         expected = [('',), ('3',), ('0',), ('2',)]
+        self.assertEqual(expected, distinct('other_value'))
         self.assertEqual(expected, distinct(['other_value']))
 
         expected = ['3']

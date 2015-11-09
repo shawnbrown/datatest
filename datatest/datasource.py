@@ -65,19 +65,17 @@ class BaseDataSource(object):
 
     def count2(self, group_by=None, **filter_by):
         """Returns count of *column* grouped by *group_by* as ResultMapping."""
-        function = lambda iterable: sum(1 for x in iterable if x)
-
         iterable = self.__filter_by(**filter_by)
 
         if group_by == None:
-            return function(1 for row in iterable)  # <- EXIT!    # <- REPLACE WITH SUM
+            return sum(1 for row in iterable)  # <- EXIT!
 
         if isinstance(group_by, str):
-            keyfn = lambda row: row[group_by]
-        else:
-            keyfn = lambda row: tuple(row[x] for x in group_by)
+            group_by = [group_by]
+
+        keyfn = lambda row: tuple(row[x] for x in group_by)
         iterable = sorted(iterable, key=keyfn)
-        fn = lambda g: function(1 for row in g)                   # <- REPLACE WITH SUM
+        fn = lambda g: sum(1 for row in g)
         iterable = ((k, fn(g)) for k, g in itertools.groupby(iterable, keyfn))
         return ResultMapping(iterable, group_by)
 
@@ -94,9 +92,9 @@ class BaseDataSource(object):
             return function(row[column] for row in iterable)  # <- EXIT!
 
         if isinstance(group_by, str):
-            keyfn = lambda row: row[group_by]
-        else:
-            keyfn = lambda row: tuple(row[x] for x in group_by)
+            group_by = [group_by]
+
+        keyfn = lambda row: tuple(row[x] for x in group_by)
         iterable = sorted(iterable, key=keyfn)
         fn = lambda g: function(row[column] for row in g)
         iterable = ((k, fn(g)) for k, g in itertools.groupby(iterable, keyfn))
@@ -107,12 +105,9 @@ class BaseDataSource(object):
         (uses slow ``__iter__``).
         """
         iterable = self.__filter_by(**filter_by)  # Filtered rows only.
-
-        if isinstance(column, str) or not isinstance(column, Iterable):
-            iterable = (row[column] for row in iterable)
-        else:
-            iterable = (tuple(row[c] for c in column) for row in iterable)
-
+        if isinstance(column, str):
+            column = [column]
+        iterable = (tuple(row[c] for c in column) for row in iterable)
         return ResultSet(iterable)
 
     def __filter_by(self, **filter_by):
@@ -172,46 +167,34 @@ class SqliteDataSource(BaseDataSource):
             return cursor.fetchone()[0]  # <- EXIT!
 
         if isinstance(group_by, str):
-            group_clause = self._from_records_normalize_column(group_by)
-        else:
-            group_clause = [self._from_records_normalize_column(x) for x in group_by]
-            group_clause = ', '.join(group_clause)
+            group_by = [group_by]
+        group_clause = [self._from_records_normalize_column(x) for x in group_by]
+        group_clause = ', '.join(group_clause)
 
         column = self._from_records_normalize_column(column)
         select_clause = '{0}, SUM({1})'.format(group_clause, column)
         trailing_clause = 'GROUP BY ' + group_clause
 
         cursor = self._execute_query(self._table, select_clause, trailing_clause, **filter_by)
-
-        if not isinstance(group_by, str):
-            mktup = lambda row: (row[:len(group_by)], row[-1])
-            cursor = (mktup(x) for x in cursor)
-
-        return ResultMapping(cursor, group_by)
+        iterable = ((row[:-1], row[-1]) for row in cursor)
+        return ResultMapping(iterable, group_by)
 
     def distinct(self, column, **filter_by):
         """Return iterable of tuples containing distinct *column* values."""
-        all_cols = self.columns()
         if isinstance(column, str) or not isinstance(column, Iterable):
-            not_found = [column] if column not in all_cols else []
-        else:
-            not_found = [x for x in column if x not in all_cols]
+            column = [column]
+
+        all_cols = self.columns()
+        not_found = [x for x in column if x not in all_cols]
         if not_found:
             raise KeyError(not_found[0])
 
-        if isinstance(column, str):
-            select_clause = self._from_records_normalize_column(column)
-        else:
-            select_clause = [self._from_records_normalize_column(x) for x in column]
-            select_clause = ', '.join(select_clause)
+        select_clause = [self._from_records_normalize_column(x) for x in column]
+        select_clause = ', '.join(select_clause)
         select_clause = 'DISTINCT ' + select_clause
 
         cursor = self._execute_query(self._table, select_clause, **filter_by)
-
-        if isinstance(column, str):
-            cursor = (x[0] for x in cursor)
-
-        return ResultSet(x for x in cursor)
+        return ResultSet(cursor)
 
     def _execute_query(self, table, select_clause, trailing_clause=None, **filter_by):
         """Execute query and return cursor object."""
@@ -585,8 +568,7 @@ class MultiDataSource(BaseDataSource):
 
     def distinct(self, column, **filter_by):
         """Return iterable of tuples containing distinct *column* values."""
-        noncollection_column = isinstance(column, str)
-        if noncollection_column:
+        if isinstance(column, str):
             column = [column]
 
         self_columns = self.columns()
@@ -625,9 +607,6 @@ class MultiDataSource(BaseDataSource):
 
         results = (x.values for x in results)  # Unwrap values property.
         results = itertools.chain(*results)
-
-        if noncollection_column:
-            results = (x[0] for x in results)  # Unpack 1-tuple into string.
         return ResultSet(results)
 
     def sum2(self, column, group_by=None, **filter_by):
@@ -645,8 +624,7 @@ class MultiDataSource(BaseDataSource):
                         total = total + subsrc.sum2(column, **subfltr)
             return total
         else:
-            noncollection_group = isinstance(group_by, str)
-            if noncollection_group:
+            if isinstance(group_by, str):
                 group_by = [group_by]
 
             counter = Counter()
@@ -660,8 +638,6 @@ class MultiDataSource(BaseDataSource):
                         subres = self._normalize_result(subres, subgrp, group_by)
                         for k, v in subres.values.items():
                             counter[k] += v
-            if noncollection_group:  # Unpack 1-tuple key into string.
-                counter = dict((k[0], v) for k, v in counter.items())
             return ResultMapping(counter, group_by)
 
     @staticmethod

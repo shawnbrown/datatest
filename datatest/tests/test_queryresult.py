@@ -85,56 +85,56 @@ class TestResultSet(unittest.TestCase):
         self.assertTrue(a != b)
 
     def test_compare(self):
-        a = ResultSet(['a','b','d'])
-        b = ResultSet(['a','b','c'])
-        expected = [ExtraItem('d'), MissingItem('c')]
+        a = ResultSet(['aaa','bbb','ddd'])
+        b = ResultSet(['aaa','bbb','ccc'])
+        expected = [ExtraItem('ddd'), MissingItem('ccc')]
         self.assertEqual(expected, a.compare(b))
 
-        a = ResultSet(['a','b','c'])
-        b = ResultSet(['a','b','c'])
+        a = ResultSet(['aaa','bbb','ccc'])
+        b = ResultSet(['aaa','bbb','ccc'])
         self.assertEqual([], a.compare(b), ('When there is no difference, '
                                             'compare should return an empty '
                                             'list.'))
 
         # Test callable other (all True).
-        result = a.compare(lambda x: len(x) == 1)
+        result = a.compare(lambda x: len(x) == 3)
         self.assertEqual([], result)
 
         # Test callable other (some False).
         result = a.compare(lambda x: x.startswith('b'))
-        expected = set([InvalidItem('a'), InvalidItem('c')])
+        expected = set([InvalidItem('aaa'), InvalidItem('ccc')])
         self.assertEqual(expected, set(result))
 
         # Test subset (less-than-or-equal).
-        a = ResultSet(['a','b','d'])
-        b = ResultSet(['a','b','c'])
-        expected = [ExtraItem('d')]
+        a = ResultSet(['aaa','bbb','ddd'])
+        b = ResultSet(['aaa','bbb','ccc'])
+        expected = [ExtraItem('ddd')]
         self.assertEqual(expected, a.compare(b, op='<='))
 
         # Test strict subset (less-than).
-        a = ResultSet(['a','b'])
-        b = ResultSet(['a','b','c'])
+        a = ResultSet(['aaa','bbb'])
+        b = ResultSet(['aaa','bbb','ccc'])
         self.assertEqual([], a.compare(b, op='<'))
 
         # Test strict subset (less-than) assertion violation.
-        a = ResultSet(['a','b','c'])
-        b = ResultSet(['a','b','c'])
+        a = ResultSet(['aaa','bbb','ccc'])
+        b = ResultSet(['aaa','bbb','ccc'])
         self.assertEqual([NotProperSubset()], a.compare(b, op='<'))
 
         # Test superset (greater-than-or-equal).
-        a = ResultSet(['a','b','c'])
-        b = ResultSet(['a','b','d'])
-        expected = [MissingItem('d')]
+        a = ResultSet(['aaa','bbb','ccc'])
+        b = ResultSet(['aaa','bbb','ddd'])
+        expected = [MissingItem('ddd')]
         self.assertEqual(expected, a.compare(b, op='>='))
 
         # Test superset subset (greater-than).
-        a = ResultSet(['a','b','c'])
-        b = ResultSet(['a','b'])
+        a = ResultSet(['aaa','bbb','ccc'])
+        b = ResultSet(['aaa','bbb'])
         self.assertEqual([], a.compare(b, op='>'))
 
         # Test superset subset (greater-than) assertion violation.
-        a = ResultSet(['a','b','c'])
-        b = ResultSet(['a','b','c'])
+        a = ResultSet(['aaa','bbb','ccc'])
+        b = ResultSet(['aaa','bbb','ccc'])
         self.assertEqual([NotProperSuperset()], a.compare(b, op='>'))
 
     def test_all(self):
@@ -167,7 +167,8 @@ class TestResultMapping(unittest.TestCase):
         # Single-item wrapped in collection.
         values = {('a',): 1, ('b',): 2, ('c',): 3, ('d',): 4}
         x = ResultMapping(values, ['foo'])
-        self.assertEqual(values, x.values)
+        unwrapped = {'a': 1, 'b': 2, 'c': 3, 'd': 4}
+        self.assertEqual(unwrapped, x.values)
 
         # IMPLEMENT THIS?
         # Mis-matched group_by and keys.
@@ -213,55 +214,55 @@ class TestResultMapping(unittest.TestCase):
         self.assertTrue(a != b)
 
     def test_compare_numbers(self):
-        a = ResultMapping({'a': 1, 'b': 2, 'c': 3, 'd': 4}, 'foo')
-        b = ResultMapping({'a': 1, 'b': 2, 'c': 3, 'd': 4}, 'foo')
+        a = ResultMapping({'aaa': 1, 'bbb': 2, 'ccc': 3, 'ddd': 4}, 'foo')
+        b = ResultMapping({'aaa': 1, 'bbb': 2, 'ccc': 3, 'ddd': 4}, 'foo')
         self.assertEqual([], a.compare(b), ('When there is no difference, '
                                             'compare should return an empty '
                                             'list.'))
 
-        a = ResultMapping({'a': 1, 'b': 2, 'c': 3, 'd': 4}, 'foo')
-        b = ResultMapping({'a': 1, 'b': 2.5, 'c': 3, 'd': 4}, 'foo')
-        expected = [InvalidNumber(-0.5, 2.5, foo='b')]
+        a = ResultMapping({'aaa': 1, 'bbb': 2, 'ccc': 3, 'ddd': 4}, 'foo')
+        b = ResultMapping({'aaa': 1, 'bbb': 2.5, 'ccc': 3, 'ddd': 4}, 'foo')
+        expected = [InvalidNumber(-0.5, 2.5, foo='bbb')]
         self.assertEqual(expected, a.compare(b))
 
         # 'b' is zero in self/subject.
-        a = ResultMapping({'a': 1, 'b':   0, 'c': 3, 'd': 4}, 'foo')
-        b = ResultMapping({'a': 1, 'b': 2.5, 'c': 3, 'd': 4}, 'foo')
-        expected = [InvalidNumber(-2.5, 2.5, foo='b')]
+        a = ResultMapping({'aaa': 1, 'bbb':   0, 'ccc': 3, 'ddd': 4}, 'foo')
+        b = ResultMapping({'aaa': 1, 'bbb': 2.5, 'ccc': 3, 'ddd': 4}, 'foo')
+        expected = [InvalidNumber(-2.5, 2.5, foo='bbb')]
         self.assertEqual(expected, a.compare(b))
 
         # 'b' is missing from self/subject.
-        a = ResultMapping({'a': 1,           'c': 3, 'd': 4}, 'foo')
-        b = ResultMapping({'a': 1, 'b': 2.5, 'c': 3, 'd': 4}, 'foo')
-        expected = [InvalidNumber(-2.5, 2.5, foo='b')]
+        a = ResultMapping({'aaa': 1,             'ccc': 3, 'ddd': 4}, 'foo')
+        b = ResultMapping({'aaa': 1, 'bbb': 2.5, 'ccc': 3, 'ddd': 4}, 'foo')
+        expected = [InvalidNumber(-2.5, 2.5, foo='bbb')]
         self.assertEqual(expected, a.compare(b))
 
         # 'b' is zero in other/reference.
-        a = ResultMapping({'a': 1, 'b': 2, 'c': 3, 'd': 4}, 'foo')
-        b = ResultMapping({'a': 1, 'b': 0, 'c': 3, 'd': 4}, 'foo')
-        expected = [InvalidNumber(+2, 0, foo='b')]
+        a = ResultMapping({'aaa': 1, 'bbb': 2, 'ccc': 3, 'ddd': 4}, 'foo')
+        b = ResultMapping({'aaa': 1, 'bbb': 0, 'ccc': 3, 'ddd': 4}, 'foo')
+        expected = [InvalidNumber(+2, 0, foo='bbb')]
         self.assertEqual(expected, a.compare(b))
 
         # 'b' is missing from other/reference.
-        a = ResultMapping({'a': 1, 'b': 2, 'c': 3, 'd': 4}, 'foo')
-        b = ResultMapping({'a': 1,         'c': 3, 'd': 4}, 'foo')
-        expected = [InvalidNumber(+2, None, foo='b')]
+        a = ResultMapping({'aaa': 1, 'bbb': 2, 'ccc': 3, 'ddd': 4}, 'foo')
+        b = ResultMapping({'aaa': 1,           'ccc': 3, 'ddd': 4}, 'foo')
+        expected = [InvalidNumber(+2, None, foo='bbb')]
         self.assertEqual(expected, a.compare(b))
 
         # Test coersion of *other*.
-        a = ResultMapping({'a': 1, 'b': 2, 'c': 3, 'd': 4}, 'foo')
-        b = {'a': 1, 'b': 2.5, 'c': 3, 'd': 4}
-        expected = [InvalidNumber(-0.5, 2.5, foo='b')]
+        a = ResultMapping({'aaa': 1, 'bbb': 2, 'ccc': 3, 'ddd': 4}, 'foo')
+        b = {'aaa': 1, 'bbb': 2.5, 'ccc': 3, 'ddd': 4}
+        expected = [InvalidNumber(-0.5, 2.5, foo='bbb')]
         self.assertEqual(expected, a.compare(b))
 
     def test_compare_strings(self):
-        a = ResultMapping({'a': 'x', 'b': 'y', 'c': 'z'}, 'foo')
-        b = ResultMapping({'a': 'x', 'b': 'z', 'c': 'z'}, 'foo')
-        expected = [InvalidItem('y', 'z', foo='b')]
+        a = ResultMapping({'aaa': 'x', 'bbb': 'y', 'ccc': 'z'}, 'foo')
+        b = ResultMapping({'aaa': 'x', 'bbb': 'z', 'ccc': 'z'}, 'foo')
+        expected = [InvalidItem('y', 'z', foo='bbb')]
         self.assertEqual(expected, a.compare(b))
 
     def test_compare_function(self):
-        a = ResultMapping({'a': 'x', 'b': 'y', 'c': 'z'}, 'foo')
+        a = ResultMapping({'aaa': 'x', 'bbb': 'y', 'ccc': 'z'}, 'foo')
 
         # All True.
         result = a.compare(lambda x: len(x) == 1)
@@ -269,16 +270,16 @@ class TestResultMapping(unittest.TestCase):
 
         # Some False.
         result = a.compare(lambda a: a in ('x', 'y'))
-        expected = [InvalidItem('z', foo='c')]
+        expected = [InvalidItem('z', foo='ccc')]
         self.assertEqual(expected, result)
 
     def test_compare_mixed_types(self):
-        a = ResultMapping({'a':  2,  'b': 3,   'c': 'z'}, 'foo')
-        b = ResultMapping({'a': 'y', 'b': 4.0, 'c':  5 }, 'foo')
+        a = ResultMapping({'aaa':  2,  'bbb': 3,   'ccc': 'z'}, 'foo')
+        b = ResultMapping({'aaa': 'y', 'bbb': 4.0, 'ccc':  5 }, 'foo')
         expected = set([
-            InvalidItem(2, 'y', foo='a'),
-            InvalidNumber(-1, 4, foo='b'),
-            InvalidItem('z', 5, foo='c'),
+            InvalidItem(2, 'y', foo='aaa'),
+            InvalidNumber(-1, 4, foo='bbb'),
+            InvalidItem('z', 5, foo='ccc'),
         ])
         self.assertEqual(expected, set(a.compare(b)))
 

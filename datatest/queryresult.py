@@ -1,11 +1,11 @@
-"""Scratchpad for DataSource query result objects."""
-import itertools
-from collections import Mapping
-from collections import Set
+"""Result objects from data source queries."""
 from functools import wraps
 from numbers import Number
-
 from ._builtins import *
+
+from ._collections import Mapping
+from ._collections import Set
+from . import _itertools as itertools
 
 from .diff import ExtraItem
 from .diff import MissingItem
@@ -38,10 +38,24 @@ class ResultSet(object):
     """DataSource query result set."""
     def __init__(self, values):
         """Initialize object."""
-        if not isinstance(values, Set):
-            if isinstance(values, Mapping):
-                raise TypeError('cannot be mapping')
+        if isinstance(values, Mapping):
+            raise TypeError('cannot be mapping')
+
+        try:
+            if isinstance(values, Set):
+                first_value = next(iter(values))
+            else:
+                values = iter(values)
+                first_value = next(values)
+                values = itertools.chain([first_value], values)  # Rebuild original.
+        except StopIteration:
+            first_value = None
+
+        if isinstance(first_value, tuple) and len(first_value) == 1:
+            values = set(x[0] for x in values)  # Unpack single-item tuple.
+        elif not isinstance(values, Set):
             values = set(values)
+
         self.values = values
 
     def __eq__(self, other):
@@ -123,10 +137,20 @@ class ResultMapping(object):
         """Initialize object."""
         if not isinstance(values, Mapping):
             values = dict(values)
-        self.values = values
-
         if isinstance(grouped_by, str):
             grouped_by = [grouped_by]
+
+        try:
+            iterable = iter(values.items())
+            first_key, first_value = next(iterable)
+            if isinstance(first_key, tuple) and len(first_key) == 1:
+                iterable = itertools.chain([(first_key, first_value)], iterable)
+                iterable = ((k[0], v) for k, v in iterable)
+                values = dict(iterable)
+        except StopIteration:
+            pass
+
+        self.values = values
         self.grouped_by = grouped_by
 
     def __eq__(self, other):
@@ -150,6 +174,8 @@ class ResultMapping(object):
             for key in keys:
                 value = self.values[key]
                 if not other(value):
+                    if isinstance(key, str):
+                        key = (key,)
                     kwds = dict(zip(self.grouped_by, key))
                     differences.append(InvalidItem(value, **kwds))
         # Compare self.values to other.values.
@@ -162,6 +188,8 @@ class ResultMapping(object):
             for key in keys:
                 self_val = self.values.get(key)
                 other_val = other.values.get(key)
+                if isinstance(key, str):
+                    key = (key,)
                 one_num = any((
                     isinstance(self_val, Number),
                     isinstance(other_val, Number),
