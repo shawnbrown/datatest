@@ -25,7 +25,7 @@ class BaseDataSource(object):
     """Common base class for all data sources.  Custom sources can be
     created by subclassing BaseDataSource and implementing ``__init__()``,
     ``__repr__()``, ``__iter__()``, and ``columns()``.  Optionally,
-    performance can be improved by implementing ``sum2()``, ``count2()``,
+    performance can be improved by implementing ``sum()``, ``count()``,
     and ``distinct()``.
 
     """
@@ -58,12 +58,12 @@ class BaseDataSource(object):
         """
         return NotImplemented
 
-    def sum2(self, column, group_by=None, **filter_by):
+    def sum(self, column, group_by=None, **filter_by):
         """Returns sum of *column* grouped by *group_by* as ResultMapping."""
         fn = lambda iterable: sum(Decimal(x) for x in iterable if x)
         return self.aggregate(fn, column, group_by, **filter_by)
 
-    def count2(self, group_by=None, **filter_by):
+    def count(self, group_by=None, **filter_by):
         """Returns count of *column* grouped by *group_by* as ResultMapping."""
         fn = lambda iterable: sum(1 for x in iterable)
         return self.aggregate(fn, column=None, group_by=group_by, **filter_by)
@@ -152,7 +152,7 @@ class SqliteDataSource(BaseDataSource):
         mkdict = lambda x: dict(zip(column_names, x))
         return (mkdict(row) for row in cursor.fetchall())
 
-    def sum2(self, column, group_by=None, **filter_by):
+    def sum(self, column, group_by=None, **filter_by):
         """Return sum of values in *column*."""
         if group_by == None:
             column = self._from_records_normalize_column(column)
@@ -485,11 +485,11 @@ class CsvDataSource(BaseDataSource):
         """Return iterable of dictionary rows (like csv.DictReader)."""
         return self._source.__iter__()
 
-    def sum2(self, column, group_by=None, **filter_by):
-        return self._source.sum2(column, group_by, **filter_by)
+    def sum(self, column, group_by=None, **filter_by):
+        return self._source.sum(column, group_by, **filter_by)
 
-    def count2(self, group_by=None, **filter_by):
-        return self._source.count2(group_by, **filter_by)
+    def count(self, group_by=None, **filter_by):
+        return self._source.count(group_by, **filter_by)
 
     def distinct(self, column, **filter_by):
         return self._source.distinct(column, **filter_by)
@@ -603,7 +603,7 @@ class MultiDataSource(BaseDataSource):
         results = itertools.chain(*results)
         return ResultSet(results)
 
-    def sum2(self, column, group_by=None, **filter_by):
+    def sum(self, column, group_by=None, **filter_by):
         """Return sum of values in *column* grouped by *group_by*."""
         if column not in self.columns():
             raise KeyError(column)
@@ -615,7 +615,7 @@ class MultiDataSource(BaseDataSource):
                 if column in subsrc_columns:
                     subfltr = self._make_sub_filter(subsrc_columns, **filter_by)
                     if subfltr is not None:
-                        total = total + subsrc.sum2(column, **subfltr)
+                        total = total + subsrc.sum(column, **subfltr)
             return total
         else:
             if isinstance(group_by, str):
@@ -628,7 +628,7 @@ class MultiDataSource(BaseDataSource):
                     subfltr = self._make_sub_filter(subsrc_columns, **filter_by)
                     if subfltr is not None:
                         subgrp = [x for x in group_by if x in subsrc_columns]
-                        subres = subsrc.sum2(column, subgrp, **subfltr)
+                        subres = subsrc.sum(column, subgrp, **subfltr)
                         subres = self._normalize_result(subres, subgrp, group_by)
                         for k, v in subres.values.items():
                             counter[k] += v

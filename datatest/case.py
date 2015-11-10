@@ -337,8 +337,8 @@ class DataTestCase(TestCase):
             self.assertValueSum('income', ['department', 'year'])
 
         """
-        subj_vals = self.subjectData.sum2(column, group_by, **filter_by)
-        ref_vals = self.referenceData.sum2(column, group_by, **filter_by)
+        subj_vals = self.subjectData.sum(column, group_by, **filter_by)
+        ref_vals = self.referenceData.sum(column, group_by, **filter_by)
 
         differences = subj_vals.compare(ref_vals)
         if differences:
@@ -361,8 +361,8 @@ class DataTestCase(TestCase):
             msg = 'no column named {0!r} in referenceData'.format(column)
             raise AssertionError(msg)
 
-        subj_vals = self.subjectData.count2(group_by, **filter_by)
-        ref_vals = self.referenceData.sum2(column, group_by, **filter_by)
+        subj_vals = self.subjectData.count(group_by, **filter_by)
+        ref_vals = self.referenceData.sum(column, group_by, **filter_by)
 
         differences = subj_vals.compare(ref_vals)
         if differences:

@@ -168,16 +168,16 @@ class TestBaseDataSource(unittest.TestCase):
         with self.assertRaises(KeyError):
             result = aggregate(concat, 'value_x')
 
-    def test_sum2(self):
-        sum2 = self.datasource.sum2
+    def test_sum(self):
+        sum = self.datasource.sum
 
-        self.assertEqual(135, sum2('value'))
+        self.assertEqual(135, sum('value'))
 
         expected = {'a': 65, 'b': 70}
-        self.assertEqual(expected, sum2('value', 'label1'))
+        self.assertEqual(expected, sum('value', 'label1'))
 
         expected = {('a',): 65, ('b',): 70}
-        self.assertEqual(expected, sum2('value', ['label1']))
+        self.assertEqual(expected, sum('value', ['label1']))
 
         expected = {
             ('a', 'x'): 30,
@@ -187,10 +187,10 @@ class TestBaseDataSource(unittest.TestCase):
             ('b', 'y'): 40,
             ('b', 'x'): 25,
         }
-        self.assertEqual(expected, sum2('value', ['label1', 'label2']))
+        self.assertEqual(expected, sum('value', ['label1', 'label2']))
 
         expected = {'x': 30, 'y': 20, 'z': 15}
-        self.assertEqual(expected, sum2('value', 'label2', label1='a'))
+        self.assertEqual(expected, sum('value', 'label2', label1='a'))
 
     def test_distinct(self):
         distinct = self.datasource.distinct
@@ -601,7 +601,7 @@ class TestMultiDataSource(TestBaseDataSource):
         source2 = MinimalDataSource(testdata2, fieldnames2)
         self.datasource = MultiDataSource(source1, source2)
 
-    def test_sum2_heterogeneous_columns(self):
+    def test_sum_heterogeneous_columns(self):
         testdata1 = [['a', 'x', '1'],
                      ['a', 'y', '1']]
         src1 = MinimalDataSource(testdata1, ['label1', 'label2', 'value'])
@@ -612,16 +612,16 @@ class TestMultiDataSource(TestBaseDataSource):
         src2 = MinimalDataSource(testdata2, ['label1', 'altval', 'value'])
         source = MultiDataSource(src1, src2)
 
-        self.assertEqual(5, source.sum2('value'))
+        self.assertEqual(5, source.sum('value'))
 
         expected = {'a': 3, 'b': 2}
-        self.assertEqual(expected, source.sum2('value', 'label1'))
+        self.assertEqual(expected, source.sum('value', 'label1'))
 
         expected = {'a': 5, 'b': 10}
-        self.assertEqual(expected, source.sum2('altval', 'label1'))
+        self.assertEqual(expected, source.sum('altval', 'label1'))
 
         expected = {'a': 1}
-        self.assertEqual(expected, source.sum2('value', 'label1', label2='x'))
+        self.assertEqual(expected, source.sum('value', 'label1', label2='x'))
 
 
 class TestMixedMultiDataSource(TestBaseDataSource):

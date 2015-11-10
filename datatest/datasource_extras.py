@@ -59,11 +59,11 @@ class ExcelDataSource(BaseDataSource):
         """Return list of column names."""
         return self._source.columns()
 
-    def sum2(self, column, group_by=None, **filter_by):
-        return self._source.sum2(column, group_by, **filter_by)
+    def sum(self, column, group_by=None, **filter_by):
+        return self._source.sum(column, group_by, **filter_by)
 
-    def count2(self, group_by=None, **filter_by):
-        return self._source.count2(group_by, **filter_by)
+    def count(self, group_by=None, **filter_by):
+        return self._source.count(group_by, **filter_by)
 
     def aggregate(self, function, column, group_by=None, **filter_by):
         return self._source.aggregate(function, column, group_by, **filter_by)

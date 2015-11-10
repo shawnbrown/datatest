@@ -84,12 +84,12 @@ also possible to call them directly:
     *function* should take an iterable and return a single summary value.
 
 
-.. py:method:: sum2(column, group_by=None, **filter_by)
+.. py:method:: sum(column, group_by=None, **filter_by)
 
     Returns sum of *column* grouped by *group_by* as ResultMapping.
 
 
-.. py:method:: count2(group_by=None, **filter_by)
+.. py:method:: count(group_by=None, **filter_by)
 
     Returns count of rows grouped by *group_by* as ResultMapping.
 
@@ -118,7 +118,7 @@ As a starting point, you can use one of the following templates:
 |
 
 .. autoclass:: datatest.BaseDataSource
-    :members: __init__, __repr__, columns, slow_iter, distinct, aggregate, sum2, count2
+    :members: __init__, __repr__, columns, slow_iter, distinct, aggregate, sum, count
 
 
 *************
