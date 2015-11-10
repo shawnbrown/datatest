@@ -143,6 +143,9 @@ class TestBaseDataSource(unittest.TestCase):
         expected = '17 13 20 15 5 40 25'
         self.assertEqual(expected, aggregate(concat, 'value'))
 
+        expected = 'None None None None None None None'
+        self.assertEqual(expected, aggregate(concat))  # No column specified.
+
         expected = {'a': '17 13 20 15', 'b': '5 40 25'}
         self.assertEqual(expected, aggregate(concat, 'value', 'label1'))
 

@@ -65,21 +65,10 @@ class BaseDataSource(object):
 
     def count2(self, group_by=None, **filter_by):
         """Returns count of *column* grouped by *group_by* as ResultMapping."""
-        iterable = self.__filter_by(**filter_by)
+        fn = lambda iterable: sum(1 for x in iterable)
+        return self.aggregate(fn, column=None, group_by=group_by, **filter_by)
 
-        if group_by == None:
-            return sum(1 for row in iterable)  # <- EXIT!
-
-        if isinstance(group_by, str):
-            group_by = [group_by]
-
-        keyfn = lambda row: tuple(row[x] for x in group_by)
-        iterable = sorted(iterable, key=keyfn)
-        fn = lambda g: sum(1 for row in g)
-        iterable = ((k, fn(g)) for k, g in itertools.groupby(iterable, keyfn))
-        return ResultMapping(iterable, group_by)
-
-    def aggregate(self, function, column, group_by=None, **filter_by):
+    def aggregate(self, function, column=None, group_by=None, **filter_by):
         """Aggregates values in the given *column* (uses slow ``__iter__``).
         If group_by is omitted, the result is returned as-is, otherwise
         returns a ResultMapping object.  The *function* should take an
@@ -88,16 +77,21 @@ class BaseDataSource(object):
         """
         iterable = self.__filter_by(**filter_by)
 
+        if column:
+            fn = lambda grp: function(row[column] for row in grp)
+        else:
+            fn = lambda grp: function(None for row in grp)
+
         if group_by == None:
-            return function(row[column] for row in iterable)  # <- EXIT!
+            return fn(iterable)  # <- EXIT!
 
         if isinstance(group_by, str):
             group_by = [group_by]
 
         keyfn = lambda row: tuple(row[x] for x in group_by)
         iterable = sorted(iterable, key=keyfn)
-        fn = lambda g: function(row[column] for row in g)
-        iterable = ((k, fn(g)) for k, g in itertools.groupby(iterable, keyfn))
+        iterable = itertools.groupby(iterable, keyfn)
+        iterable = ((k, fn(g)) for k, g in iterable)
         return ResultMapping(iterable, group_by)
 
     def distinct(self, column, **filter_by):
