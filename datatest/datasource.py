@@ -58,6 +58,16 @@ class BaseDataSource(object):
         """
         return NotImplemented
 
+    def distinct(self, column, **filter_by):
+        """Return iterable of tuples containing distinct *column* values
+        (uses slow ``__iter__``).
+        """
+        iterable = self.__filter_by(**filter_by)  # Filtered rows only.
+        if isinstance(column, str):
+            column = [column]
+        iterable = (tuple(row[c] for c in column) for row in iterable)
+        return ResultSet(iterable)
+
     def sum(self, column, group_by=None, **filter_by):
         """Returns sum of *column* grouped by *group_by* as ResultMapping."""
         fn = lambda iterable: sum(Decimal(x) for x in iterable if x)
@@ -94,16 +104,6 @@ class BaseDataSource(object):
         iterable = ((k, fn(g)) for k, g in iterable)
         return ResultMapping(iterable, group_by)
 
-    def distinct(self, column, **filter_by):
-        """Return iterable of tuples containing distinct *column* values
-        (uses slow ``__iter__``).
-        """
-        iterable = self.__filter_by(**filter_by)  # Filtered rows only.
-        if isinstance(column, str):
-            column = [column]
-        iterable = (tuple(row[c] for c in column) for row in iterable)
-        return ResultSet(iterable)
-
     def __filter_by(self, **filter_by):
         """Filter data by keywords, returns iterable.  E.g., where
         column1=value1, column2=value2, etc. (uses slow ``__iter__``).
@@ -137,12 +137,6 @@ class SqliteDataSource(BaseDataSource):
         tbl_name = self._table
         return '{0}({1}, table={2!r})'.format(cls_name, conn_name, tbl_name)
 
-    def columns(self):
-        """Return list of column names."""
-        cursor = self._connection.cursor()
-        cursor.execute('PRAGMA table_info(' + self._table + ')')
-        return [x[1] for x in cursor.fetchall()]
-
     def __iter__(self):
         """Return iterable of dictionary rows (like csv.DictReader)."""
         cursor = self._connection.cursor()
@@ -152,26 +146,11 @@ class SqliteDataSource(BaseDataSource):
         mkdict = lambda x: dict(zip(column_names, x))
         return (mkdict(row) for row in cursor.fetchall())
 
-    def sum(self, column, group_by=None, **filter_by):
-        """Return sum of values in *column*."""
-        if group_by == None:
-            column = self._from_records_normalize_column(column)
-            select_clause = 'SUM({0})'.format(column)
-            cursor = self._execute_query(self._table, select_clause, **filter_by)
-            return cursor.fetchone()[0]  # <- EXIT!
-
-        if isinstance(group_by, str):
-            group_by = [group_by]
-        group_clause = [self._from_records_normalize_column(x) for x in group_by]
-        group_clause = ', '.join(group_clause)
-
-        column = self._from_records_normalize_column(column)
-        select_clause = '{0}, SUM({1})'.format(group_clause, column)
-        trailing_clause = 'GROUP BY ' + group_clause
-
-        cursor = self._execute_query(self._table, select_clause, trailing_clause, **filter_by)
-        iterable = ((row[:-1], row[-1]) for row in cursor)
-        return ResultMapping(iterable, group_by)
+    def columns(self):
+        """Return list of column names."""
+        cursor = self._connection.cursor()
+        cursor.execute('PRAGMA table_info(' + self._table + ')')
+        return [x[1] for x in cursor.fetchall()]
 
     def distinct(self, column, **filter_by):
         """Return iterable of tuples containing distinct *column* values."""
@@ -189,6 +168,71 @@ class SqliteDataSource(BaseDataSource):
 
         cursor = self._execute_query(self._table, select_clause, **filter_by)
         return ResultSet(cursor)
+
+    def sum(self, column, group_by=None, **filter_by):
+        """Returns sum of *column* grouped by *group_by* as ResultMapping."""
+        column = self._from_records_normalize_column(column)
+        sql_function = 'SUM({0})'.format(column)
+        return self._sql_aggregate(sql_function, group_by, **filter_by)
+
+    def count(self, group_by=None, **filter_by):
+        """Returns count of *column* grouped by *group_by* as ResultMapping."""
+        return self._sql_aggregate('COUNT(*)', group_by, **filter_by)
+
+    def _sql_aggregate(self, sql_function, group_by=None, **filter_by):
+        """Aggregates values using SQL function select--e.g., 'COUNT(*)',
+        'SUM(col1)', etc.
+
+        """
+        if group_by == None:
+            cursor = self._execute_query(self._table, sql_function, **filter_by)
+            return cursor.fetchone()[0]  # <- EXIT!
+
+        if isinstance(group_by, str):
+            group_by = [group_by]
+        group_clause = [self._from_records_normalize_column(x) for x in group_by]
+        group_clause = ', '.join(group_clause)
+
+        select_clause = '{0}, {1}'.format(group_clause, sql_function)
+        trailing_clause = 'GROUP BY ' + group_clause
+
+        cursor = self._execute_query(self._table, select_clause, trailing_clause, **filter_by)
+        iterable = ((row[:-1], row[-1]) for row in cursor)
+        return ResultMapping(iterable, group_by)
+
+    def aggregate(self, function, column=None, group_by=None, **filter_by):
+        """Aggregates values in the given *column*.  If group_by is omitted,
+        the result is returned as-is, otherwise returns a ResultMapping
+        object.  The *function* should take an iterable and return a single
+        summary value.
+
+        """
+        normalize = self._from_records_normalize_column
+
+        if column:
+            if column not in self.columns():
+                raise KeyError(column)
+            select_clause = normalize(column)
+            fn = lambda grp: function(row[0] for row in grp)
+        else:
+            select_clause = 'NULL'
+            fn = lambda grp: function(None for row in grp)
+
+        if group_by == None:
+            cursor = self._execute_query(self._table, select_clause, **filter_by)
+            return fn(cursor)  # <- EXIT!
+
+        if isinstance(group_by, str):
+            group_by = [group_by]
+
+        result = {}
+        groups = self.distinct(group_by, **filter_by)
+        for group in groups.values:
+            subfilter_by = dict(zip(group_by, group))
+            subfilter_by.update(filter_by)
+            cursor = self._execute_query(self._table, select_clause, **subfilter_by)
+            result[group] = fn(cursor)
+        return ResultMapping(result, group_by)
 
     def _execute_query(self, table, select_clause, trailing_clause=None, **filter_by):
         """Execute query and return cursor object."""
