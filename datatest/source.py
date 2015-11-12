@@ -12,8 +12,8 @@ from ._decimal import Decimal
 from ._unicodecsvreader import UnicodeCsvReader as _UnicodeCsvReader
 from . import _itertools as itertools
 
-from .queryresult import ResultMapping
-from .queryresult import ResultSet
+from .sourceresult import ResultMapping
+from .sourceresult import ResultSet
 
 #pattern = 'test*.py'
 prefix = 'test_'

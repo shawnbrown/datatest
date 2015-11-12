@@ -14,14 +14,14 @@ from .._collections import namedtuple
 from .._decimal import Decimal
 
 # Import related objects.
-from datatest.queryresult import ResultSet
-from datatest.queryresult import ResultMapping
+from datatest.sourceresult import ResultSet
+from datatest.sourceresult import ResultMapping
 
 # Import code to test.
-from datatest.datasource import BaseSource
-from datatest.datasource import SqliteSource
-from datatest.datasource import CsvSource
-from datatest.datasource import MultiSource
+from datatest.source import BaseSource
+from datatest.source import SqliteSource
+from datatest.source import CsvSource
+from datatest.source import MultiSource
 
 
 def _make_csv_file(fieldnames, datarows):

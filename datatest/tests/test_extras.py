@@ -1,11 +1,11 @@
 
 from . import _unittest as unittest
-from .test_datasource import TestBaseSource
-from .test_datasource import MinimalSource
+from .test_source import TestBaseSource
+from .test_source import MinimalSource
 
-from datatest.datasource_extras import ExcelSource
-from datatest.datasource_extras import PandasSource
-from datatest.datasource_extras import _version_info
+from datatest.extras import ExcelSource
+from datatest.extras import PandasSource
+from datatest.extras import _version_info
 
 try:
     import xlrd

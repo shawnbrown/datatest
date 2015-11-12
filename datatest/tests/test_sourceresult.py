@@ -1,9 +1,9 @@
 """Result objects for DataSource queries."""
 from . import _unittest as unittest
 
-from datatest.queryresult import _coerce_other
-from datatest.queryresult import ResultSet
-from datatest.queryresult import ResultMapping
+from datatest.sourceresult import _coerce_other
+from datatest.sourceresult import ResultSet
+from datatest.sourceresult import ResultMapping
 
 from datatest import ExtraItem
 from datatest import MissingItem

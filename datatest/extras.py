@@ -1,7 +1,7 @@
 
 from . import _itertools as itertools
-from .datasource import BaseSource
-from .datasource import SqliteSource
+from .source import BaseSource
+from .source import SqliteSource
 
 
 def _version_info(module):

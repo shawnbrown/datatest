@@ -13,8 +13,8 @@ from .diff import MissingItem
 from .diff import ExtraItem
 from .diff import InvalidItem
 from .diff import InvalidNumber
-from .queryresult import ResultSet
-from .queryresult import ResultMapping
+from .sourceresult import ResultSet
+from .sourceresult import ResultMapping
 
 
 __datatest = True  # Used to detect in-module stack frames (which are

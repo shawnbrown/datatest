@@ -2,13 +2,13 @@
 from .case import DataTestCase
 from .case import DataAssertionError
 
-from .datasource import BaseSource
-from .datasource import SqliteSource
-from .datasource import CsvSource
-from .datasource import MultiSource
+from .source import BaseSource
+from .source import SqliteSource
+from .source import CsvSource
+from .source import MultiSource
 
-from .datasource_extras import ExcelSource
-from .datasource_extras import PandasSource
+from .extras import ExcelSource
+from .extras import PandasSource
 
 from .diff import ExtraItem
 from .diff import MissingItem
@@ -17,8 +17,8 @@ from .diff import InvalidNumber
 from .diff import NotProperSubset
 from .diff import NotProperSuperset
 
-from .queryresult import ResultSet
-from .queryresult import ResultMapping
+from .sourceresult import ResultSet
+from .sourceresult import ResultMapping
 
 from .runner import DataTestRunner
 
