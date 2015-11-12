@@ -5,28 +5,28 @@ Data Sources
 
 Data source objects are used to access data in various formats.
 
-+----------------------------------+---------------------------------------+
-| Class                            | Loads                                 |
-+==================================+=======================================+
-| :class:`CsvDataSource(f)         | CSV file *f* (path or file-like       |
-| <datatest.CsvDataSource>`        | object)                               |
-+----------------------------------+---------------------------------------+
-| :class:`SqliteDataSource(c, t)   | table *t* from SQLite connection *c*  |
-| <datatest.SqliteDataSource>`     |                                       |
-+----------------------------------+---------------------------------------+
-| :class:`MultiDataSource(*s)      | wrapper for multiple sources *s* that |
-| <datatest.MultiDataSource>`      | acts as a single data source          |
-+----------------------------------+---------------------------------------+
++------------------------------+---------------------------------------+
+| Class                        | Loads                                 |
++==============================+=======================================+
+| :class:`CsvSource(f)         | CSV file *f* (path or file-like       |
+| <datatest.CsvSource>`        | object)                               |
++------------------------------+---------------------------------------+
+| :class:`SqliteSource(c, t)   | table *t* from SQLite connection *c*  |
+| <datatest.SqliteSource>`     |                                       |
++------------------------------+---------------------------------------+
+| :class:`MultiSource(*s)      | wrapper for multiple sources *s* that |
+| <datatest.MultiSource>`      | acts as a single data source          |
++------------------------------+---------------------------------------+
 
 |
 
-.. autoclass:: datatest.CsvDataSource
+.. autoclass:: datatest.CsvSource
    :members: create_index
 
-.. autoclass:: datatest.SqliteDataSource
+.. autoclass:: datatest.SqliteSource
    :members: create_index, from_records
 
-.. autoclass:: datatest.MultiDataSource
+.. autoclass:: datatest.MultiSource
 
 
 --------
@@ -34,23 +34,23 @@ Data source objects are used to access data in various formats.
 If you have the appropriate, optional dependencies installed, datatest
 provides a variety of other data sources:
 
-+-----------------------------------------------+---------------------------------------------+
-| Class                                         | Loads                                       |
-+===============================================+=============================================+
-| :class:`ExcelDataSource(p, worksheet=None)    | Excel *worksheet* from XLSX or XLS path *p* |
-| <datatest.ExcelDataSource>`                   | (defaults to the first worksheet if None),  |
-|                                               | requires `xlrd                              |
-|                                               | <http://pypi.python.org/pypi/xlrd>`_        |
-+-----------------------------------------------+---------------------------------------------+
-| :class:`PandasDataSource(df)                  | DataFrame *df*, requires `pandas            |
-| <datatest.PandasDataSource>`                  | <http://pypi.python.org/pypi/pandas>`_      |
-+-----------------------------------------------+---------------------------------------------+
++-------------------------------------------+---------------------------------------------+
+| Class                                     | Loads                                       |
++===========================================+=============================================+
+| :class:`ExcelSource(p, worksheet=None)    | Excel *worksheet* from XLSX or XLS path *p* |
+| <datatest.ExcelSource>`                   | (defaults to the first worksheet if None),  |
+|                                           | requires `xlrd                              |
+|                                           | <http://pypi.python.org/pypi/xlrd>`_        |
++-------------------------------------------+---------------------------------------------+
+| :class:`PandasSource(df)                  | DataFrame *df*, requires `pandas            |
+| <datatest.PandasSource>`                  | <http://pypi.python.org/pypi/pandas>`_      |
++-------------------------------------------+---------------------------------------------+
 
 |
 
-.. autoclass:: datatest.ExcelDataSource
+.. autoclass:: datatest.ExcelSource
 
-.. autoclass:: datatest.PandasDataSource
+.. autoclass:: datatest.PandasSource
    :members: from_records
 
 
@@ -62,26 +62,19 @@ Typically, these methods are used indirectly via DataTestCase but it is
 also possible to call them directly:
 
 
+.. py:method:: __iter__()
+
+    Return an iterable of dictionary rows (like ``csv.DictReader``).
+
+
 .. py:method:: columns()
 
     Return a list or tuple of column names.
 
 
-.. py:method:: slow_iter()
-
-    Return an iterable of dictionary rows (like ``csv.DictReader``).
-
-
 .. py:method:: distinct(column, **filter_by)
 
     Return ResultSet containing distinct *column* values.
-
-
-.. py:method:: aggregate(function, column, group_by=None, **filter_by)
-
-    Aggregates values in the given *column*.  If *group_by* is omitted, the
-    result is returned as-is, otherwise returns a ResultMapping object.  The
-    *function* should take an iterable and return a single summary value.
 
 
 .. py:method:: sum(column, group_by=None, **filter_by)
@@ -94,13 +87,20 @@ also possible to call them directly:
     Returns count of rows grouped by *group_by* as ResultMapping.
 
 
+.. py:method:: aggregate(function, column, group_by=None, **filter_by)
+
+    Aggregates values in the given *column*.  If *group_by* is omitted, the
+    result is returned as-is, otherwise returns a ResultMapping object.  The
+    *function* should take an iterable and return a single summary value.
+
+
 *******************
 Custom Data Sources
 *******************
 
 If you need to test data in a format that's not currently supported,
 you can make your own custom data source.  You do this by subclassing
-:class:`BaseDataSource` and implementing the basic, common methods.
+:class:`BaseSource` and implementing the basic, common methods.
 
 As a starting point, you can use one of the following templates:
 
@@ -111,14 +111,14 @@ As a starting point, you can use one of the following templates:
 | <_static/template.py>`        | stored data (e.g., SQL, pandas, etc.)    |
 +-------------------------------+------------------------------------------+
 | :download:`loader_template.py | Storage formats with no fast access to   |
-| <_static/template.py>`        | data (internally reuses SqliteDataSource |
+| <_static/template.py>`        | data (internally reuses SqliteSource     |
 |                               | for faster performance).                 |
 +-------------------------------+------------------------------------------+
 
 |
 
-.. autoclass:: datatest.BaseDataSource
-    :members: __init__, __repr__, columns, slow_iter, distinct, aggregate, sum, count
+.. autoclass:: datatest.BaseSource
+    :members: __init__, __repr__, __iter__, columns, distinct, sum, count, aggregate
 
 
 *************

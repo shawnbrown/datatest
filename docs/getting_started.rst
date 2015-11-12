@@ -70,7 +70,7 @@ The following script implements these tests::
 
     def setUpModule():
         global subjectData
-        subjectData = datatest.CsvDataSource('members.csv')
+        subjectData = datatest.CsvSource('members.csv')
 
 
     class TestFormatAndLabels(datatest.DataTestCase):
@@ -115,7 +115,7 @@ referenced within a single class, then defining it inside a
     class TestFormatAndLabels(datatest.DataTestCase):
         @classmethod
         def setUpClass(cls):
-            cls.subjectData = datatest.CsvDataSource('members.csv')
+            cls.subjectData = datatest.CsvSource('members.csv')
 
         def test_columns(self):
             ...
@@ -123,7 +123,7 @@ referenced within a single class, then defining it inside a
 
 .. note::
 
-    These examples use a :class:`CsvDataSource <datatest.CsvDataSource>`
+    These examples use a :class:`CsvSource <datatest.CsvSource>`
     to access data from a CSV file.  Other data sources can access data
     in a variety of formats (Excel, pandas, SQL, etc.).
 
@@ -157,8 +157,8 @@ easily integrate it into a test script::
     def setUpModule():
         global subjectData
         global referenceData
-        subjectData = datatest.CsvDataSource('members.csv')
-        referenceData = datatest.CsvDataSource('regional_report.csv')
+        subjectData = datatest.CsvSource('members.csv')
+        referenceData = datatest.CsvSource('regional_report.csv')
 
 
     class TestLabels(datatest.DataTestCase):

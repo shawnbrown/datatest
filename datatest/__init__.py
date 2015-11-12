@@ -2,13 +2,13 @@
 from .case import DataTestCase
 from .case import DataAssertionError
 
-from .datasource import BaseDataSource
-from .datasource import SqliteDataSource
-from .datasource import CsvDataSource
-from .datasource import MultiDataSource
+from .datasource import BaseSource
+from .datasource import SqliteSource
+from .datasource import CsvSource
+from .datasource import MultiSource
 
-from .datasource_extras import ExcelDataSource
-from .datasource_extras import PandasDataSource
+from .datasource_extras import ExcelSource
+from .datasource_extras import PandasSource
 
 from .diff import ExtraItem
 from .diff import MissingItem
@@ -34,12 +34,12 @@ __all__ = [
     'DataAssertionError',
 
     # Data sources.
-    'BaseDataSource',
-    'SqliteDataSource',
-    'CsvDataSource',
-    'MultiDataSource',
-    'ExcelDataSource',
-    'PandasDataSource',
+    'BaseSource',
+    'SqliteSource',
+    'CsvSource',
+    'MultiSource',
+    'ExcelSource',
+    'PandasSource',
 
     # Query results.
     'ResultSet',

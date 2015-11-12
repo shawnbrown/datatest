@@ -21,12 +21,12 @@ prefix = 'test_'
 sqlite3.register_adapter(Decimal, str)
 
 
-class BaseDataSource(object):
+class BaseSource(object):
     """Common base class for all data sources.  Custom sources can be
-    created by subclassing BaseDataSource and implementing ``__init__()``,
+    created by subclassing BaseSource and implementing ``__init__()``,
     ``__repr__()``, ``__iter__()``, and ``columns()``.  Optionally,
-    performance can be improved by implementing ``sum()``, ``count()``,
-    and ``distinct()``.
+    performance can be improved by implementing ``distinct()``,
+    ``sum()``, ``count()``, and ``aggregate()``.
 
     """
 
@@ -69,12 +69,16 @@ class BaseDataSource(object):
         return ResultSet(iterable)
 
     def sum(self, column, group_by=None, **filter_by):
-        """Returns sum of *column* grouped by *group_by* as ResultMapping."""
+        """Returns sum of *column* grouped by *group_by* as ResultMapping
+        (uses ``aggregate`` method).
+        """
         fn = lambda iterable: sum(Decimal(x) for x in iterable if x)
         return self.aggregate(fn, column, group_by, **filter_by)
 
     def count(self, group_by=None, **filter_by):
-        """Returns count of *column* grouped by *group_by* as ResultMapping."""
+        """Returns count of *column* grouped by *group_by* as ResultMapping
+        (uses ``aggregate`` method).
+        """
         fn = lambda iterable: sum(1 for x in iterable)
         return self.aggregate(fn, column=None, group_by=group_by, **filter_by)
 
@@ -115,12 +119,12 @@ class BaseDataSource(object):
                 yield row
 
 
-class SqliteDataSource(BaseDataSource):
+class SqliteSource(BaseSource):
     """Loads *table* data from given SQLite *connection*:
     ::
 
         conn = sqlite3.connect('mydatabase.sqlite3')
-        subjectData = datatest.SqliteDataSource(conn, 'mytable')
+        subjectData = datatest.SqliteSource(conn, 'mytable')
 
     """
 
@@ -327,9 +331,9 @@ class SqliteDataSource(BaseDataSource):
         """Alternate constructor to load an existing ResultSet or
         ResultMapping::
 
-            original = CsvDataSource('mydata.csv')
+            original = CsvSource('mydata.csv')
             result = original.distinct(['state', 'county'])
-            subjectData = CsvDataSource.from_result(result, ['state', 'county'])
+            subjectData = CsvSource.from_result(result, ['state', 'county'])
 
         """
         if isinstance(columns, str):
@@ -370,7 +374,7 @@ class SqliteDataSource(BaseDataSource):
         records.  Loads *data* (an iterable of lists, tuples, or dicts)
         into a new SQLite database with the given *columns*::
 
-            subjectData = datatest.SqliteDataSource.from_records(records, columns)
+            subjectData = datatest.SqliteSource.from_records(records, columns)
 
         """
         if not columns:
@@ -470,11 +474,11 @@ class SqliteDataSource(BaseDataSource):
             raise ValueError('Duplicate values: ' + ', '.join(duplicates))
 
 
-class CsvDataSource(BaseDataSource):
+class CsvSource(BaseSource):
     """Loads CSV data from *file* (path or file-like object):
     ::
 
-        subjectData = datatest.CsvDataSource('mydata.csv')
+        subjectData = datatest.CsvSource('mydata.csv')
 
     """
     def __init__(self, file, encoding=None, in_memory=False):
@@ -493,18 +497,18 @@ class CsvDataSource(BaseDataSource):
         if encoding:
             with _UnicodeCsvReader(file, encoding=encoding) as reader:
                 columns = next(reader)  # Header row.
-                self._source = SqliteDataSource.from_records(reader, columns)
+                self._source = SqliteSource.from_records(reader, columns)
 
         else:
             try:
                 with _UnicodeCsvReader(file, encoding='utf-8') as reader:
                     columns = next(reader)  # Header row.
-                    self._source = SqliteDataSource.from_records(reader, columns)
+                    self._source = SqliteSource.from_records(reader, columns)
 
             except UnicodeDecodeError:
                 with _UnicodeCsvReader(file, encoding='iso8859-1') as reader:
                     columns = next(reader)  # Header row.
-                    self._source = SqliteDataSource.from_records(reader, columns)
+                    self._source = SqliteSource.from_records(reader, columns)
 
                 try:
                     filename = os.path.basename(file)
@@ -542,21 +546,21 @@ class CsvDataSource(BaseDataSource):
         """Creating an index for certain columns can speed up data
         testing in some cases.
 
-        See :meth:`SqliteDataSource.create_index
-        <datatest.SqliteDataSource.create_index>` for more details.
+        See :meth:`SqliteSource.create_index
+        <datatest.SqliteSource.create_index>` for more details.
 
         """
         self._source.create_index(*columns)
 
 
-class MultiDataSource(BaseDataSource):
+class MultiSource(BaseSource):
     """A wrapper class that allows multiple data sources to be treated
     as a single, composite data source::
 
-        subjectData = datatest.MultiDataSource(
-            datatest.CsvDataSource('file1.csv'),
-            datatest.CsvDataSource('file2.csv'),
-            datatest.CsvDataSource('file3.csv')
+        subjectData = datatest.MultiSource(
+            datatest.CsvSource('file1.csv'),
+            datatest.CsvSource('file2.csv'),
+            datatest.CsvSource('file3.csv')
         )
 
     The original sources are stored in the ``__wrapped__`` attribute.
@@ -566,8 +570,8 @@ class MultiDataSource(BaseDataSource):
     def __init__(self, *sources):
         """Initialize self."""
         for source in sources:
-            msg = 'Sources must be derived from BaseDataSource'
-            assert isinstance(source, BaseDataSource), msg
+            msg = 'Sources must be derived from BaseSource'
+            assert isinstance(source, BaseSource), msg
         self.__wrapped__ = sources
 
     def __repr__(self):
@@ -715,4 +719,4 @@ class MultiDataSource(BaseDataSource):
         return normalized
 
 
-#DefaultDataSource = CsvDataSource
+#DefaultDataSource = CsvSource

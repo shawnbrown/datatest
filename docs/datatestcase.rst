@@ -51,7 +51,7 @@ In addition to the new functionality, the familiar ``TestCase`` methods
     | :meth:`assertValueSubset(c)                  | subject vals <= reference vals in column *c*       |
     | <datatest.DataTestCase.assertValueSubset>`   |                                                    |
     +----------------------------------------------+----------------------------------------------------+
-    | :meth:`assertValueSuperset(c)                | subject vals <= reference vals in column *c*       |
+    | :meth:`assertValueSuperset(c)                | subject vals >= reference vals in column *c*       |
     | <datatest.DataTestCase.assertValueSuperset>` |                                                    |
     +----------------------------------------------+----------------------------------------------------+
     | :meth:`assertValueSum(c, g)                  | sum of subject vals == sum of reference vals in    |
@@ -109,4 +109,3 @@ The next example makes this same assertion but for records where the
 ``state`` equals ``'Indiana'`` *or* ``'Ohio'``::
 
     self.assertValueSet('postal_code', state=['Indiana', 'Ohio'])
-

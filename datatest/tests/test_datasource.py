@@ -18,10 +18,10 @@ from datatest.queryresult import ResultSet
 from datatest.queryresult import ResultMapping
 
 # Import code to test.
-from datatest.datasource import BaseDataSource
-from datatest.datasource import SqliteDataSource
-from datatest.datasource import CsvDataSource
-from datatest.datasource import MultiDataSource
+from datatest.datasource import BaseSource
+from datatest.datasource import SqliteSource
+from datatest.datasource import CsvSource
+from datatest.datasource import MultiSource
 
 
 def _make_csv_file(fieldnames, datarows):
@@ -37,7 +37,7 @@ def _make_csv_file(fieldnames, datarows):
     return io.StringIO(init_string)
 
 
-class MinimalDataSource(BaseDataSource):
+class MinimalSource(BaseSource):
     """Minimal data source implementation for testing."""
     def __init__(self, data, fieldnames):
         self._data = data
@@ -54,7 +54,7 @@ class MinimalDataSource(BaseDataSource):
         return self._fieldnames
 
 
-class TestBaseDataSource(unittest.TestCase):
+class TestBaseSource(unittest.TestCase):
     fieldnames = ['label1', 'label2', 'value']
     testdata = [['a', 'x', '17'],
                 ['a', 'x', '13'],
@@ -64,7 +64,7 @@ class TestBaseDataSource(unittest.TestCase):
                 ['b', 'y', '40'],
                 ['b', 'x', '25']]
     def setUp(self):
-        self.datasource = MinimalDataSource(self.testdata, self.fieldnames)
+        self.datasource = MinimalSource(self.testdata, self.fieldnames)
 
     def test_for_datasource(self):
         msg = '{0} missing `datasource` attribute.'
@@ -99,7 +99,7 @@ class TestBaseDataSource(unittest.TestCase):
         ]
 
         # Filter by single value (where label1 is 'a').
-        results = self.datasource._BaseDataSource__filter_by(label1='a')
+        results = self.datasource._BaseSource__filter_by(label1='a')
         results = list(results)
         expected = [
             {'label1': 'a', 'label2': 'x', 'value': '17'},
@@ -110,7 +110,7 @@ class TestBaseDataSource(unittest.TestCase):
         self.assertEqual(expected, results)
 
         # Filter by multiple values (where label2 is 'x' OR 'y').
-        results = self.datasource._BaseDataSource__filter_by(label2=['x', 'y'])
+        results = self.datasource._BaseSource__filter_by(label2=['x', 'y'])
         results = list(results)
         expected = [
             {'label1': 'a', 'label2': 'x', 'value': '17'},
@@ -122,7 +122,7 @@ class TestBaseDataSource(unittest.TestCase):
         self.assertEqual(expected, results)
 
         # Filter by multiple columns (where label1 is 'a', label2 is 'x' OR 'y').
-        results = self.datasource._BaseDataSource__filter_by(label1='a',
+        results = self.datasource._BaseSource__filter_by(label1='a',
                                                              label2=['x', 'y'])
         results = list(results)
         expected = [
@@ -235,7 +235,7 @@ class TestBaseDataSource(unittest.TestCase):
             result = distinct(['label1', 'label3'], label2='x')
 
 
-class TestSqliteDataSource(TestBaseDataSource):
+class TestSqliteSource(TestBaseSource):
     def setUp(self):
         tablename = 'testtable'
         connection = sqlite3.connect(':memory:')
@@ -245,61 +245,61 @@ class TestSqliteDataSource(TestBaseDataSource):
             cursor.execute("INSERT INTO testtable VALUES (?, ?, ?)", values)
         connection.commit()
 
-        self.datasource = SqliteDataSource(connection, tablename)
+        self.datasource = SqliteSource(connection, tablename)
 
     def test_where_clause(self):
         # No key-word args.
-        clause, params = SqliteDataSource._build_where_clause()
+        clause, params = SqliteSource._build_where_clause()
         self.assertEqual(clause, '')
         self.assertEqual(params, [])
 
         # Single condition (where label1 equals 'a').
-        clause, params = SqliteDataSource._build_where_clause(label1='a')
+        clause, params = SqliteSource._build_where_clause(label1='a')
         self.assertEqual(clause, 'label1=?')
         self.assertEqual(params, ['a'])
 
         # Multiple conditions (where label1 equals 'a' AND label2 equals 'x').
-        clause, params = SqliteDataSource._build_where_clause(label1='a', label2='x')
+        clause, params = SqliteSource._build_where_clause(label1='a', label2='x')
         self.assertEqual(clause, 'label1=? AND label2=?')
         self.assertEqual(params, ['a', 'x'])
 
         # Compound condition (where label1 equals 'a' OR 'b').
-        clause, params = SqliteDataSource._build_where_clause(label1=('a', 'b'))
+        clause, params = SqliteSource._build_where_clause(label1=('a', 'b'))
         self.assertEqual(clause, 'label1 IN (?, ?)')
         self.assertEqual(params, ['a', 'b'])
 
         # Mixed conditions (where label1 equals 'a' OR 'b' AND label2 equals 'x').
-        clause, params = SqliteDataSource._build_where_clause(label1=('a', 'b'), label2='x')
+        clause, params = SqliteSource._build_where_clause(label1=('a', 'b'), label2='x')
         self.assertEqual(clause, 'label1 IN (?, ?) AND label2=?')
         self.assertEqual(params, ['a', 'b', 'x'])
 
     def test_from_records_assert_unique(self):
         # Pass without error.
-        SqliteDataSource._from_records_assert_unique(['foo', 'bar'])
+        SqliteSource._from_records_assert_unique(['foo', 'bar'])
 
         with self.assertRaises(ValueError):
-            SqliteDataSource._from_records_assert_unique(['foo', 'foo'])
+            SqliteSource._from_records_assert_unique(['foo', 'foo'])
 
     def test_from_records_normalize_column(self):
-        result = SqliteDataSource._from_records_normalize_column('foo')
+        result = SqliteSource._from_records_normalize_column('foo')
         self.assertEqual('"foo"', result)
 
-        result = SqliteDataSource._from_records_normalize_column('foo bar')
+        result = SqliteSource._from_records_normalize_column('foo bar')
         self.assertEqual('"foo bar"', result)
 
-        result = SqliteDataSource._from_records_normalize_column('foo "bar" baz')
+        result = SqliteSource._from_records_normalize_column('foo "bar" baz')
         self.assertEqual('"foo ""bar"" baz"', result)
 
     def test_from_records_build_insert_statement(self):
-        stmnt, param = SqliteDataSource._from_records_build_insert_statement('mytable', ['val1a', 'val2a'])
+        stmnt, param = SqliteSource._from_records_build_insert_statement('mytable', ['val1a', 'val2a'])
         self.assertEqual('INSERT INTO mytable VALUES (?, ?)', stmnt)
         self.assertEqual(['val1a', 'val2a'], param)
 
         with self.assertRaisesRegex(AssertionError, 'must be list or tuple, not str'):
-            SqliteDataSource._from_records_build_insert_statement('mytable', 'val1')
+            SqliteSource._from_records_build_insert_statement('mytable', 'val1')
 
     def test_from_records_build_create_statement(self):
-        stmnt = SqliteDataSource._from_records_build_create_statement('mytable', ['col1', 'col2'])
+        stmnt = SqliteSource._from_records_build_create_statement('mytable', ['col1', 'col2'])
         self.assertEqual('CREATE TABLE mytable ("col1", "col2")', stmnt)
 
     def test_from_records_tuple(self):
@@ -310,7 +310,7 @@ class TestSqliteDataSource(TestBaseDataSource):
             ('b', 'y', '2'),
             ('c', 'z', '3'),
         ]
-        source = SqliteDataSource.from_records(data, columns)
+        source = SqliteSource.from_records(data, columns)
 
         expected = [
             {'foo': 'a', 'bar': 'x', 'baz': '1'},
@@ -322,12 +322,12 @@ class TestSqliteDataSource(TestBaseDataSource):
         # Test too few columns.
         columns = ['foo', 'bar']
         with self.assertRaises(sqlite3.OperationalError):
-            source = SqliteDataSource.from_records(data, columns)
+            source = SqliteSource.from_records(data, columns)
 
         # Test too many columns.
         columns = ['foo', 'bar', 'baz', 'qux']
         with self.assertRaises(sqlite3.OperationalError):
-            source = SqliteDataSource.from_records(data, columns)
+            source = SqliteSource.from_records(data, columns)
 
     def test_from_records_dict(self):
         columns = ['foo', 'bar', 'baz']
@@ -336,18 +336,18 @@ class TestSqliteDataSource(TestBaseDataSource):
             {'foo': 'b', 'bar': 'y', 'baz': '2'},
             {'foo': 'c', 'bar': 'z', 'baz': '3'},
         ]
-        source = SqliteDataSource.from_records(data, columns)
+        source = SqliteSource.from_records(data, columns)
         self.assertEqual(data, list(source))
 
         # Test too few columns.
         #columns = ['foo', 'bar']
         #with self.assertRaises(AssertionError):
-        #    source = SqliteDataSource.from_records(data, columns)
+        #    source = SqliteSource.from_records(data, columns)
 
         # Test too many columns.
         columns = ['foo', 'bar', 'baz', 'qux']
         with self.assertRaises(KeyError):
-            source = SqliteDataSource.from_records(data, columns)
+            source = SqliteSource.from_records(data, columns)
 
     def test_from_records_no_columns_arg(self):
         data_dict = [
@@ -357,7 +357,7 @@ class TestSqliteDataSource(TestBaseDataSource):
         ]
 
         # Iterable of dict-rows.
-        source = SqliteDataSource.from_records(data_dict)
+        source = SqliteSource.from_records(data_dict)
         self.assertEqual(data_dict, list(source))
 
         # Iterable of namedtuple-rows.
@@ -367,7 +367,7 @@ class TestSqliteDataSource(TestBaseDataSource):
             row('b', 'y', '2'),
             row('c', 'z', '3'),
         ]
-        source = SqliteDataSource.from_records(data_namedtuple)
+        source = SqliteSource.from_records(data_namedtuple)
         self.assertEqual(data_dict, list(source))
 
         # Type that doesn't support omitted columns (should raise TypeError).
@@ -375,12 +375,12 @@ class TestSqliteDataSource(TestBaseDataSource):
         regex = ('columns argument can only be omitted if data '
                  'contains dict-rows or namedtuple-rows')
         with self.assertRaisesRegex(TypeError, regex):
-            source = SqliteDataSource.from_records(data_tuple)
+            source = SqliteSource.from_records(data_tuple)
 
     def test_from_result(self):
         # Single-column ResultSet.
         result = ResultSet(['a', 'b', 'c'])
-        source = SqliteDataSource.from_result(result, 'foo')
+        source = SqliteSource.from_result(result, 'foo')
 
         expected = [{'foo': 'a'}, {'foo': 'b'}, {'foo': 'c'}]
         make_set = lambda data: set(tuple(row.items()) for row in data)
@@ -392,9 +392,9 @@ class TestSqliteDataSource(TestBaseDataSource):
             ('b', 'y', '2'),
             ('c', 'z', '3'),
         ])
-        source = SqliteDataSource.from_result(result, ['foo', 'bar', 'baz'])
+        source = SqliteSource.from_result(result, ['foo', 'bar', 'baz'])
 
-        self.assertIsInstance(source, SqliteDataSource)
+        self.assertIsInstance(source, SqliteSource)
 
         expected = [
             {'foo': 'a', 'bar': 'x', 'baz': '1'},
@@ -406,7 +406,7 @@ class TestSqliteDataSource(TestBaseDataSource):
 
         # Single-key and single-value ResultMapping.
         result = ResultMapping({'a': 1, 'b': 2, 'c': 3}, grouped_by='foo')
-        source = SqliteDataSource.from_result(result, ['baz'])
+        source = SqliteSource.from_result(result, ['baz'])
 
         expected = [{'foo': 'a', 'baz': 1},
                     {'foo': 'b', 'baz': 2},
@@ -418,7 +418,7 @@ class TestSqliteDataSource(TestBaseDataSource):
         result = ResultMapping({('a', 'x'): 1,
                                 ('b', 'y'): 2,
                                 ('c', 'z'): 3}, grouped_by=['foo', 'bar'])
-        source = SqliteDataSource.from_result(result, ['baz'])
+        source = SqliteSource.from_result(result, ['baz'])
 
         expected = [
             {'foo': 'a', 'bar': 'x', 'baz': 1},
@@ -432,7 +432,7 @@ class TestSqliteDataSource(TestBaseDataSource):
         result = ResultMapping({('a', 'x'): (1, 10),
                                 ('b', 'y'): (2, 20),
                                 ('c', 'z'): (3, 30)}, grouped_by=['foo', 'bar'])
-        source = SqliteDataSource.from_result(result, ['baz', 'qux'])
+        source = SqliteSource.from_result(result, ['baz', 'qux'])
 
         expected = [
             {'foo': 'a', 'bar': 'x', 'baz': 1, 'qux': 10},
@@ -468,17 +468,17 @@ class TestSqliteDataSource(TestBaseDataSource):
         self.assertEqual(results, ['idx_testtable_label1', 'idx_testtable_label2_value'])
 
 
-class TestCsvDataSource(TestBaseDataSource):
+class TestCsvSource(TestBaseSource):
     def setUp(self):
         fh = _make_csv_file(self.fieldnames, self.testdata)
-        self.datasource = CsvDataSource(fh)
+        self.datasource = CsvSource(fh)
 
     def test_empty_file(self):
         pass
         #file exists but is empty should fail, too!
 
 
-class TestCsvDataSource_FileHandling(unittest.TestCase):
+class TestCsvSource_FileHandling(unittest.TestCase):
     @staticmethod
     def _get_filelike(string, encoding=None):
         """Return file-like stream object."""
@@ -493,21 +493,21 @@ class TestCsvDataSource_FileHandling(unittest.TestCase):
                                 b'a,x,13\n'
                                 b'a,y,20\n'
                                 b'a,z,15\n', encoding='ascii')
-        CsvDataSource(fh)  # Pass without error.
+        CsvSource(fh)  # Pass without error.
 
         fh = self._get_filelike(b'label1,label2,value\n'
                                 b'a,x,18\n'
                                 b'a,x,13\n'
                                 b'a,\xc3\xb1,20\n'  # \xc3\xb1 is utf-8 literal for ñ
                                 b'a,z,15\n', encoding='utf-8')
-        CsvDataSource(fh)  # Pass without error.
+        CsvSource(fh)  # Pass without error.
 
         fh = self._get_filelike(b'label1,label2,value\n'
                                 b'a,x,18\n'
                                 b'a,x,13\n'
                                 b'a,\xf1,20\n'  # '\xf1' is iso8859-1 for ñ
                                 b'a,z,15\n', encoding='iso8859-1')
-        CsvDataSource(fh, encoding='iso8859-1')  # Pass without error.
+        CsvSource(fh, encoding='iso8859-1')  # Pass without error.
 
     def test_bad_filelike_object(self):
         with self.assertRaises(UnicodeDecodeError):
@@ -516,10 +516,10 @@ class TestCsvDataSource_FileHandling(unittest.TestCase):
                                     b'a,x,13\n'
                                     b'a,\xf1,20\n'  # '\xf1' is iso8859-1 for ñ, not utf-8!
                                     b'a,z,15\n', encoding='utf-8')
-            CsvDataSource(fh, encoding='utf-8')  # Raises exception!
+            CsvSource(fh, encoding='utf-8')  # Raises exception!
 
 
-class TestCsvDataSource_ActualFileHandling(MkdtempTestCase):
+class TestCsvSource_ActualFileHandling(MkdtempTestCase):
     def test_utf8(self):
         with open('utf8file.csv', 'wb') as fh:
             filecontents = (b'label1,label2,value\n'
@@ -530,13 +530,13 @@ class TestCsvDataSource_ActualFileHandling(MkdtempTestCase):
             fh.write(filecontents)
             abspath = os.path.abspath(fh.name)
 
-        CsvDataSource(abspath)  # Pass without error.
+        CsvSource(abspath)  # Pass without error.
 
-        CsvDataSource(abspath, encoding='utf-8')  # Pass without error.
+        CsvSource(abspath, encoding='utf-8')  # Pass without error.
 
         msg = 'If wrong encoding is specified, should raise exception.'
         with self.assertRaises(UnicodeDecodeError, msg=msg):
-            CsvDataSource(abspath, encoding='ascii')
+            CsvSource(abspath, encoding='ascii')
 
     def test_iso88591(self):
         with open('iso88591file.csv', 'wb') as fh:
@@ -548,16 +548,16 @@ class TestCsvDataSource_ActualFileHandling(MkdtempTestCase):
             fh.write(filecontents)
             abspath = os.path.abspath(fh.name)
 
-        CsvDataSource(abspath, encoding='iso8859-1')  # Pass without error.
+        CsvSource(abspath, encoding='iso8859-1')  # Pass without error.
 
         msg = ('When encoding us unspecified, tries UTF-8 first then '
                'fallsback to ISO-8859-1 and raises a Warning.')
         with self.assertWarns(UserWarning, msg=msg):
-            CsvDataSource(abspath)
+            CsvSource(abspath)
 
         msg = 'If wrong encoding is specified, should raise exception.'
         with self.assertRaises(UnicodeDecodeError, msg=msg):
-            CsvDataSource(abspath, encoding='utf-8')
+            CsvSource(abspath, encoding='utf-8')
 
     def test_file_handle(self):
         if sys.version_info[0] > 2:
@@ -577,14 +577,14 @@ class TestCsvDataSource_ActualFileHandling(MkdtempTestCase):
             fh.write(filecontents)
 
         with open(filename, correct_mode) as fh:
-            CsvDataSource(fh, encoding='utf-8')  # Pass without error.
+            CsvSource(fh, encoding='utf-8')  # Pass without error.
 
         with self.assertRaises(Exception):
             with open(filename, incorrect_mode) as fh:
-                CsvDataSource(fh, encoding='utf-8')  # Raise exception.
+                CsvSource(fh, encoding='utf-8')  # Raise exception.
 
 
-class TestMultiDataSource(TestBaseDataSource):
+class TestMultiSource(TestBaseSource):
     def setUp(self):
         fieldnames1 = ['label1', 'label2', 'value']
         testdata1 = [['a', 'x', '17'],
@@ -597,20 +597,20 @@ class TestMultiDataSource(TestBaseDataSource):
                      ['b', 'y', '40'],
                      ['b', 'x', '25']]
 
-        source1 = MinimalDataSource(testdata1, fieldnames1)
-        source2 = MinimalDataSource(testdata2, fieldnames2)
-        self.datasource = MultiDataSource(source1, source2)
+        source1 = MinimalSource(testdata1, fieldnames1)
+        source2 = MinimalSource(testdata2, fieldnames2)
+        self.datasource = MultiSource(source1, source2)
 
     def test_sum_heterogeneous_columns(self):
         testdata1 = [['a', 'x', '1'],
                      ['a', 'y', '1']]
-        src1 = MinimalDataSource(testdata1, ['label1', 'label2', 'value'])
+        src1 = MinimalSource(testdata1, ['label1', 'label2', 'value'])
 
         testdata2 = [['a', '5', '1'],
                      ['b', '5', '1'],
                      ['b', '5', '1']]
-        src2 = MinimalDataSource(testdata2, ['label1', 'altval', 'value'])
-        source = MultiDataSource(src1, src2)
+        src2 = MinimalSource(testdata2, ['label1', 'altval', 'value'])
+        source = MultiSource(src1, src2)
 
         self.assertEqual(5, source.sum('value'))
 
@@ -624,28 +624,28 @@ class TestMultiDataSource(TestBaseDataSource):
         self.assertEqual(expected, source.sum('value', 'label1', label2='x'))
 
 
-class TestMixedMultiDataSource(TestBaseDataSource):
-    """Test MultiDataSource with sub-sources of different types."""
+class TestMixedMultiSource(TestBaseSource):
+    """Test MultiSource with sub-sources of different types."""
     def setUp(self):
         fieldnames1 = ['label1', 'label2', 'value']
         testdata1 = [['a', 'x', '17'],
                      ['a', 'x', '13'],
                      ['a', 'y', '20'],
                      ['a', 'z', '15']]
-        minimal_source = MinimalDataSource(testdata1, fieldnames1)
+        minimal_source = MinimalSource(testdata1, fieldnames1)
 
         fieldnames2 = ['label1', 'label2', 'value']
         testdata2 = [['b', 'z', '5' ],
                      ['b', 'y', '40'],
                      ['b', 'x', '25']]
         fh = _make_csv_file(fieldnames2, testdata2)
-        csv_source = CsvDataSource(fh)
+        csv_source = CsvSource(fh)
 
-        self.datasource = MultiDataSource(minimal_source, csv_source)
+        self.datasource = MultiSource(minimal_source, csv_source)
 
 
-class TestMultiDataSourceDifferentColumns(unittest.TestCase):
-    """Test MultiDataSource with sub-sources that use different columns."""
+class TestMultiSourceDifferentColumns(unittest.TestCase):
+    """Test MultiSource with sub-sources that use different columns."""
     def setUp(self):
         fieldnames1 = ['label1', 'label2', 'value']
         testdata1 = [['a',            'x',    '17'],
@@ -658,9 +658,9 @@ class TestMultiDataSourceDifferentColumns(unittest.TestCase):
                      ['b',          'yyy',     '4',            ''],
                      ['b',          'xxx',     '2',           '2']]
 
-        subsrc1 = MinimalDataSource(testdata1, fieldnames1)
-        subsrc2 = MinimalDataSource(testdata2, fieldnames2)
-        self.datasource = MultiDataSource(subsrc1, subsrc2)
+        subsrc1 = MinimalSource(testdata1, fieldnames1)
+        subsrc2 = MinimalSource(testdata2, fieldnames2)
+        self.datasource = MultiSource(subsrc1, subsrc2)
 
     def test_combined_columns(self):
         expected = ['label1', 'label2', 'value', 'label3', 'other_value']
@@ -679,8 +679,8 @@ class TestMultiDataSourceDifferentColumns(unittest.TestCase):
         self.assertEqual(expected, result)
 
 
-class TestMultiDataSourceDifferentColumns2(unittest.TestCase):
-    """Test MultiDataSource with sub-sources that use different columns."""
+class TestMultiSourceDifferentColumns2(unittest.TestCase):
+    """Test MultiSource with sub-sources that use different columns."""
     def setUp(self):
         fieldnames1 = ['label1', 'label2', 'value']
         testdata1 = [['a',            'x',    '17'],
@@ -693,9 +693,9 @@ class TestMultiDataSourceDifferentColumns2(unittest.TestCase):
                      ['b',          'yyy',     '4',           '0'],
                      ['b',          'xxx',     '2',           '2']]
 
-        subsrc1 = MinimalDataSource(testdata1, fieldnames1)
-        subsrc2 = MinimalDataSource(testdata2, fieldnames2)
-        self.datasource = MultiDataSource(subsrc1, subsrc2)
+        subsrc1 = MinimalSource(testdata1, fieldnames1)
+        subsrc2 = MinimalSource(testdata2, fieldnames2)
+        self.datasource = MultiSource(subsrc1, subsrc2)
 
     def test_distinct_missing_columns(self):
         distinct = self.datasource.distinct

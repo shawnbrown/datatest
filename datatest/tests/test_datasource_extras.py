@@ -1,10 +1,10 @@
 
 from . import _unittest as unittest
-from .test_datasource import TestBaseDataSource
-from .test_datasource import MinimalDataSource
+from .test_datasource import TestBaseSource
+from .test_datasource import MinimalSource
 
-from datatest.datasource_extras import ExcelDataSource
-from datatest.datasource_extras import PandasDataSource
+from datatest.datasource_extras import ExcelSource
+from datatest.datasource_extras import PandasSource
 from datatest.datasource_extras import _version_info
 
 try:
@@ -21,17 +21,17 @@ except (ImportError, AssertionError):
 
 
 #@unittest.skipIf(xlrd is None, 'xlrd not installed')
-#class TestExcelDataSource(TestBaseDataSource):
+#class TestExcelSource(TestBaseSource):
 #    def setUp(self):
 #        path =
-#        self.datasource = ExcelDataSource(path)
+#        self.datasource = ExcelSource(path)
 
 
 @unittest.skipIf(pandas is None, 'pandas not found')
-class TestPandasDataSource(TestBaseDataSource):
+class TestPandasSource(TestBaseSource):
     def setUp(self):
         df = pandas.DataFrame(self.testdata, columns=self.fieldnames)
-        self.datasource = PandasDataSource(df)
+        self.datasource = PandasSource(df)
 
     def test_from_records(self):
         expected = [
@@ -45,24 +45,24 @@ class TestPandasDataSource(TestBaseDataSource):
         ]
 
         # Test with columns/fieldnames:
-        source = PandasDataSource.from_records(self.testdata, self.fieldnames)
+        source = PandasSource.from_records(self.testdata, self.fieldnames)
         results = iter(source)
         self.assertEqual(expected, list(results))
 
         # Test using dict (gets *columns* from dict-keys):
-        source = MinimalDataSource(self.testdata, self.fieldnames)
-        source = PandasDataSource.from_records(source)
+        source = MinimalSource(self.testdata, self.fieldnames)
+        source = PandasSource.from_records(source)
         results = iter(source)
         self.assertEqual(expected, list(results))
 
 
 @unittest.skipIf(pandas is None, 'pandas not found')
-class TestPandasDataSourceWithIndex(TestBaseDataSource):
+class TestPandasSourceWithIndex(TestBaseSource):
     def setUp(self):
         df = pandas.DataFrame(self.testdata, columns=self.fieldnames)
         df = df.set_index(['label1', 'label2'])
         #df = df.set_index(['label1'])
-        self.datasource = PandasDataSource(df)
+        self.datasource = PandasSource(df)
 
     def test_from_records(self):
         expected = [
@@ -76,11 +76,11 @@ class TestPandasDataSourceWithIndex(TestBaseDataSource):
         ]
 
         # Test with columns/fieldnames:
-        source = PandasDataSource.from_records(self.testdata, self.fieldnames)
+        source = PandasSource.from_records(self.testdata, self.fieldnames)
         self.assertEqual(expected, list(source))
 
         # Test without columns (gets columns from dict-keys):
-        source = MinimalDataSource(self.testdata, self.fieldnames)
-        source = PandasDataSource.from_records(source)
+        source = MinimalSource(self.testdata, self.fieldnames)
+        source = PandasSource.from_records(source)
         results = iter(source)
         self.assertEqual(expected, list(results))
