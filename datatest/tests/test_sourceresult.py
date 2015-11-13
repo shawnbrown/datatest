@@ -22,60 +22,94 @@ class TestMethodDecorator(unittest.TestCase):
         decorator = _coerce_other(ResultSet)
         wrapped = decorator(fn)
 
-        values = set([1, 2, 3, 4])
+        data = set([1, 2, 3, 4])
 
-        other = wrapped(None, values)            # Values set.
+        other = wrapped(None, data)            # Data set.
         self.assertIsInstance(other, ResultSet)
 
-        other = wrapped(None, list(values))      # Values list.
+        other = wrapped(None, list(data))      # Data list.
         self.assertIsInstance(other, ResultSet)
 
-        other = wrapped(None, tuple(values))     # Values tuple.
+        other = wrapped(None, tuple(data))     # Data tuple.
         self.assertIsInstance(other, ResultSet)
 
-        values_gen = (v for v in values)         # Values generator.
-        other = wrapped(None, values_gen)
+        data_gen = (v for v in data)         # Data generator.
+        other = wrapped(None, data_gen)
         self.assertIsInstance(other, ResultSet)
 
-        # Values mapping (not implemented).
-        other = wrapped(None, dict(enumerate(values)))
+        # Data mapping (not implemented).
+        other = wrapped(None, dict(enumerate(data)))
         self.assertEqual(NotImplemented, other)
 
 
 class TestResultSet(unittest.TestCase):
     def test_init(self):
-        values = set([1, 2, 3, 4])
+        data = set([1, 2, 3, 4])
 
-        x = ResultSet(values)               # Values set.
-        self.assertEqual(values, x.values)
+        x = ResultSet(data)               # Data set.
+        self.assertEqual(data, x._data)
 
-        x = ResultSet(list(values))         # Values list.
-        self.assertEqual(values, x.values)
+        x = ResultSet(list(data))         # Data list.
+        self.assertEqual(data, x._data)
 
-        x = ResultSet(tuple(values))        # Values tuple.
-        self.assertEqual(values, x.values)
+        x = ResultSet(tuple(data))        # Data tuple.
+        self.assertEqual(data, x._data)
 
-        values_gen = (v for v in values)    # Values generator.
-        x = ResultSet(values_gen)
-        self.assertEqual(values, x.values)
+        data_gen = (v for v in data)      # Data generator.
+        x = ResultSet(data_gen)
+        self.assertEqual(data, x._data)
 
-        # Values mapping (type error).
-        values_dict = dict(enumerate(values))
+        # Data mapping (type error).
+        data_dict = dict(enumerate(data))
         with self.assertRaises(TypeError):
-            x = ResultSet(values_dict)
+            x = ResultSet(data_dict)
 
         x = ResultSet(set())
-        self.assertEqual(set(), x.values)
+        self.assertEqual(set(), x._data)
+
+    def test_make_iter(self):
+        make_set = lambda data: set(frozenset(row.items()) for row in data)
+
+        result = ResultSet(['aaa', 'bbb', 'ccc'])
+        iterable = result.make_iter('foo')
+        expected = [{'foo': 'aaa'}, {'foo': 'bbb'}, {'foo': 'ccc'}]
+        self.assertEqual(make_set(expected), make_set(iterable))
+
+        result = ResultSet(['aaa', 'bbb', 'ccc'])
+        iterable = result.make_iter(['foo'])  # <- Single-item list.
+        expected = [{'foo': 'aaa'}, {'foo': 'bbb'}, {'foo': 'ccc'}]
+        self.assertEqual(make_set(expected), make_set(iterable))
+
+        result = ResultSet([
+            ('aaa', 1),
+            ('bbb', 2),
+            ('ccc', 3)
+        ])
+        iterable = result.make_iter(['foo', 'bar'])
+        expected = [
+            {'foo': 'aaa', 'bar': 1},
+            {'foo': 'bbb', 'bar': 2},
+            {'foo': 'ccc', 'bar': 3},
+        ]
+        self.assertEqual(make_set(expected), make_set(iterable))
+
+        result = ResultSet(['aaa', 'bbb', 'ccc'])
+        with self.assertRaises(AssertionError):
+            iterable = result.make_iter(['foo', 'bar'])  # Too many *names*.
+
+        result = ResultSet([('aaa', 1), ('bbb', 2), ('ccc', 3)])
+        with self.assertRaises(AssertionError):
+            iterable = result.make_iter(['foo'])  # Too few *names*.
 
     def test_eq(self):
-        values = set([1, 2, 3, 4])
+        data = set([1, 2, 3, 4])
 
-        a = ResultSet(values)
-        b = ResultSet(values)
+        a = ResultSet(data)
+        b = ResultSet(data)
         self.assertEqual(a, b)
 
         # Test coersion.
-        a = ResultSet(values)
+        a = ResultSet(data)
         b = [1, 2, 3, 4]  # <- Should be coerced into ResultSet internally.
         self.assertEqual(a, b)
 
@@ -151,66 +185,117 @@ class TestResultSet(unittest.TestCase):
 
 class TestResultMapping(unittest.TestCase):
     def test_init(self):
-        values = {'a': 1, 'b': 2, 'c': 3, 'd': 4}
+        data = {'a': 1, 'b': 2, 'c': 3, 'd': 4}
 
-        x = ResultMapping(values, 'foo')                # dict.
-        self.assertEqual(values, x.values)
+        x = ResultMapping(data, 'foo')                # dict.
+        self.assertEqual(data, x._data)
 
-        x = ResultMapping(list(values.items()), 'foo')  # list of tuples.
-        self.assertEqual(values, x.values)
+        x = ResultMapping(list(data.items()), 'foo')  # list of tuples.
+        self.assertEqual(data, x._data)
 
-        # Non-mapping values (values error).
-        values_list = ['a', 'b', 'c', 'd']
+        # Non-mapping data (data error).
+        data_list = ['a', 'b', 'c', 'd']
         with self.assertRaises(ValueError):
-            x = ResultMapping(values_list, 'foo')
+            x = ResultMapping(data_list, 'foo')
 
         # Single-item wrapped in collection.
-        values = {('a',): 1, ('b',): 2, ('c',): 3, ('d',): 4}
-        x = ResultMapping(values, ['foo'])
+        data = {('a',): 1, ('b',): 2, ('c',): 3, ('d',): 4}
+        x = ResultMapping(data, ['foo'])
         unwrapped = {'a': 1, 'b': 2, 'c': 3, 'd': 4}
-        self.assertEqual(unwrapped, x.values)
+        self.assertEqual(unwrapped, x._data)
 
         # IMPLEMENT THIS?
         # Mis-matched group_by and keys.
         #with self.assertRaises(ValueError):
-        #    values = {('a',): 1, ('b',): 2, ('c',): 3, ('d',): 4}
-        #    x = ResultMapping(values, 'foo')
+        #    data = {('a',): 1, ('b',): 2, ('c',): 3, ('d',): 4}
+        #    x = ResultMapping(data, 'foo')
+
+    def test_make_iter(self):
+        make_set = lambda data: set(frozenset(row.items()) for row in data)
+
+        # Single-item keys, single-item values.
+        data = {'aaa': 1, 'bbb': 2, 'ccc': 3}
+        result = ResultMapping(data, 'foo')
+        iterable = result.make_iter('bar')
+        expected = [
+            {'foo': 'aaa', 'bar': 1},
+            {'foo': 'bbb', 'bar': 2},
+            {'foo': 'ccc', 'bar': 3},
+        ]
+        self.assertEqual(make_set(expected), make_set(iterable))
+
+        # Composite keys.
+        data = {('aaa', 'xxx'): 1, ('bbb', 'yyy'): 2, ('ccc', 'zzz'): 3}
+        result = ResultMapping(data, ['foo', 'bar'])
+        iterable = result.make_iter('baz')
+        expected = [
+            {'foo': 'aaa', 'bar': 'xxx', 'baz': 1},
+            {'foo': 'bbb', 'bar': 'yyy', 'baz': 2},
+            {'foo': 'ccc', 'bar': 'zzz', 'baz': 3},
+        ]
+        self.assertEqual(make_set(expected), make_set(iterable))
+
+        # Composite values.
+        data = {'aaa': ('xxx', 1), 'bbb': ('yyy', 2), 'ccc': ('zzz', 3)}
+        result = ResultMapping(data, 'foo')
+        iterable = result.make_iter(['bar', 'baz'])
+        expected = [
+            {'foo': 'aaa', 'bar': 'xxx', 'baz': 1},
+            {'foo': 'bbb', 'bar': 'yyy', 'baz': 2},
+            {'foo': 'ccc', 'bar': 'zzz', 'baz': 3},
+        ]
+        self.assertEqual(make_set(expected), make_set(iterable))
+
+        data = {'aaa': 1, 'bbb': 2, 'ccc': 3}
+        result = ResultMapping(data, 'foo')
+        with self.assertRaises(AssertionError):
+            iterable = result.make_iter(['bar', 'baz'])  # Too many *names*.
+
+        data = {'aaa': (1, 2, 3), 'bbb': (2, 4, 6), 'ccc': (3, 6, 9)}
+        result = ResultMapping(data, 'foo')
+        with self.assertRaises(AssertionError):
+            iterable = result.make_iter('bar')  # Too few *names*.
+
+        data = {'aaa': 1, 'bbb': 2, 'ccc': 3}
+        result = ResultMapping(data, 'foo')
+        with self.assertRaises(ValueError):
+            iterable = result.make_iter('foo')  # 'foo' conflicts with group_by.
 
     def test_eq(self):
-        values1 = {'a': 1, 'b': 2, 'c': 3, 'd': 4}
-        a = ResultMapping(values1, 'foo')
-        b = ResultMapping(values1, 'foo')
+        data1 = {'a': 1, 'b': 2, 'c': 3, 'd': 4}
+        a = ResultMapping(data1, 'foo')
+        b = ResultMapping(data1, 'foo')
         self.assertTrue(a == b)
 
-        values2 = {'a': 1, 'b': 2.5, 'c': 3, 'd': 4}
-        a = ResultMapping(values1, 'foo')
-        b = ResultMapping(values2, 'foo')
+        data2 = {'a': 1, 'b': 2.5, 'c': 3, 'd': 4}
+        a = ResultMapping(data1, 'foo')
+        b = ResultMapping(data2, 'foo')
         self.assertFalse(a == b)
 
         # Test coersion of mapping.
-        values1 = {'a': 1, 'b': 2, 'c': 3, 'd': 4}
-        a = ResultMapping(values1, 'foo')
+        data1 = {'a': 1, 'b': 2, 'c': 3, 'd': 4}
+        a = ResultMapping(data1, 'foo')
         self.assertTrue(a == {'a': 1, 'b': 2, 'c': 3, 'd': 4})
 
         # Test coersion of list of tuples.
-        values1 = {'a': 1, 'b': 2, 'c': 3, 'd': 4}
-        values2 = [('a', 1),  # <- Should be coerced
+        data1 = {'a': 1, 'b': 2, 'c': 3, 'd': 4}
+        data2 = [('a', 1),  # <- Should be coerced
                    ('b', 2),  #    into ResultMapping
                    ('c', 3),  #    internally.
                    ('d', 4)]
-        a = ResultMapping(values1, 'foo')
-        b = values2
+        a = ResultMapping(data1, 'foo')
+        b = data2
         self.assertTrue(a == b)
 
     def test_ne(self):
-        values1 = {'a': 1, 'b': 2, 'c': 3, 'd': 4}
-        a = ResultMapping(values1, 'foo')
-        b = ResultMapping(values1, 'foo')
+        data1 = {'a': 1, 'b': 2, 'c': 3, 'd': 4}
+        a = ResultMapping(data1, 'foo')
+        b = ResultMapping(data1, 'foo')
         self.assertFalse(a != b)
 
-        values2 = {'a': 1, 'b': 2.5, 'c': 3, 'd': 4}
-        a = ResultMapping(values1, 'foo')
-        b = ResultMapping(values2, 'foo')
+        data2 = {'a': 1, 'b': 2.5, 'c': 3, 'd': 4}
+        a = ResultMapping(data1, 'foo')
+        b = ResultMapping(data2, 'foo')
         self.assertTrue(a != b)
 
     def test_compare_numbers(self):

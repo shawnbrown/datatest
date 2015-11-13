@@ -231,7 +231,7 @@ class SqliteSource(BaseSource):
 
         result = {}
         groups = self.distinct(group_by, **filter_by)
-        for group in groups.values:
+        for group in groups._data:
             subfilter_by = dict(zip(group_by, group))
             subfilter_by.update(filter_by)
             cursor = self._execute_query(self._table, select_clause, **subfilter_by)
@@ -338,14 +338,14 @@ class SqliteSource(BaseSource):
         """
         if isinstance(columns, str):
             columns = [columns]
-            values = [(x,) for x in result.values]
+            values = [(x,) for x in result._data]
         else:
-            values = result.values
+            values = result._data
 
         if isinstance(result, ResultSet):
             source =  cls.from_records(values, columns, in_memory)
         elif isinstance(result, ResultMapping):
-            items = result.values.items()
+            items = result._data.items()
             items = iter(items)
             first_item = next(items)  # Get first item.
             items = itertools.chain([first_item], items)  # Rebuild original.
@@ -631,7 +631,7 @@ class MultiSource(BaseSource):
                 else:
                     if subfltr != {}:
                         tst = subsrc.distinct(subfltr.keys(), **subfltr)
-                        if tst.values:
+                        if tst._data:
                             subres = ResultSet([tuple(['']) * len(column)])
                             results.append(subres)
                     else:
@@ -647,7 +647,7 @@ class MultiSource(BaseSource):
                         except StopIteration:
                             pass
 
-        results = (x.values for x in results)  # Unwrap values property.
+        results = (x._data for x in results)  # Unwrap data property.
         results = itertools.chain(*results)
         return ResultSet(results)
 
@@ -678,7 +678,7 @@ class MultiSource(BaseSource):
                         subgrp = [x for x in group_by if x in subsrc_columns]
                         subres = subsrc.sum(column, subgrp, **subfltr)
                         subres = self._normalize_result(subres, subgrp, group_by)
-                        for k, v in subres.values.items():
+                        for k, v in subres._data.items():
                             counter[k] += v
             return ResultMapping(counter, group_by)
 
@@ -709,9 +709,9 @@ class MultiSource(BaseSource):
             return tuple(orig_dict.get(col, '') for col in targ_cols)
 
         if isinstance(result_obj, ResultSet):
-            normalized = ResultSet(normalize(v) for v in result_obj.values)
+            normalized = ResultSet(normalize(v) for v in result_obj._data)
         elif isinstance(result_obj, ResultMapping):
-            item_gen = ((normalize(k), v) for k, v in result_obj.values.items())
+            item_gen = ((normalize(k), v) for k, v in result_obj._data.items())
             normalized = ResultMapping(item_gen, grouped_by=targ_cols)
         else:
             raise ValueError('Result object must be ResultSet or ResultMapping.')

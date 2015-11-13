@@ -5,6 +5,7 @@ from ._builtins import *
 
 from ._collections import Mapping
 from ._collections import Set
+from ._collections import Sequence
 from . import _itertools as itertools
 
 from .diff import ExtraItem
@@ -36,48 +37,65 @@ def _coerce_other(target_type, *type_args, **type_kwds):
 
 class ResultSet(object):
     """DataSource query result set."""
-    def __init__(self, values):
+    def __init__(self, data):
         """Initialize object."""
-        if isinstance(values, Mapping):
+        if isinstance(data, Mapping):
             raise TypeError('cannot be mapping')
 
         try:
-            if isinstance(values, Set):
-                first_value = next(iter(values))
+            if isinstance(data, Set):
+                first_value = next(iter(data))
             else:
-                values = iter(values)
-                first_value = next(values)
-                values = itertools.chain([first_value], values)  # Rebuild original.
+                data = iter(data)
+                first_value = next(data)
+                data = itertools.chain([first_value], data)  # Rebuild original.
         except StopIteration:
             first_value = None
 
         if isinstance(first_value, tuple) and len(first_value) == 1:
-            values = set(x[0] for x in values)  # Unpack single-item tuple.
-        elif not isinstance(values, Set):
-            values = set(values)
+            data = set(x[0] for x in data)  # Unpack single-item tuple.
+        elif not isinstance(data, Set):
+            data = set(data)
 
-        self.values = values
+        self._data = data
 
     def __eq__(self, other):
-        return self.values == other.values
+        return self._data == other._data
 
     def __ne__(self, other):
         return not self.__eq__(other)
 
     def __lt__(self, other):
-        return self.values < other.values
+        return self._data < other._data
 
     def __gt__(self, other):
-        return self.values > other.values
+        return self._data > other._data
 
     def __le__(self, other):
-        return self.values <= other.values
+        return self._data <= other._data
 
     def __ge__(self, other):
-        return self.values >= other.values
+        return self._data >= other._data
 
     def __contains__(self, item):
-        return item in self.values
+        return item in self._data
+
+    def make_iter(self, names):
+        """Return an iterable of dictionary rows (like ``csv.DictReader``)
+        using *names* to construct dictionary keys.
+
+        """
+        is_container = lambda x: not isinstance(x, str) and isinstance(x, Sequence)
+        single_value = next(iter(self._data))
+        if is_container(single_value):
+            assert len(names) == len(single_value), "length of 'names' must match data items"
+            iterable = iter(dict(zip(names, values)) for values in self._data)
+        else:
+            if is_container(names):
+                assert len(names) == 1, "length of 'names' must match data items"
+                names = names[0]  # Unwrap names value.
+            iterable = iter({names: value} for value in self._data)
+        return iterable
 
     def compare(self, other, op='=='):
         """Compare *self* to *other* and return a list of difference objects.
@@ -88,14 +106,14 @@ class ResultSet(object):
 
         """
         if callable(other):
-            differences = [InvalidItem(x) for x in self.values if not other(x)]
+            differences = [InvalidItem(x) for x in self._data if not other(x)]
         else:
             if not isinstance(other, ResultSet):
                 other = ResultSet(other)
 
             if op in ('==', '<=', '<'):
-                extra = self.values.difference(other.values)
-                if op == '<' and not (extra or other.values.difference(self.values)):
+                extra = self._data.difference(other._data)
+                if op == '<' and not (extra or other._data.difference(self._data)):
                     extra = [NotProperSubset()]
                 else:
                     extra = (ExtraItem(x) for x in extra)
@@ -103,8 +121,8 @@ class ResultSet(object):
                 extra = []
 
             if op in ('==', '>=', '>'):
-                missing = other.values.difference(self.values)
-                if op == '>' and not (missing or self.values.difference(other.values)):
+                missing = other._data.difference(self._data)
+                if op == '>' and not (missing or self._data.difference(other._data)):
                     missing = [NotProperSuperset()]
                 else:
                     missing = (MissingItem(x) for x in missing)
@@ -117,7 +135,7 @@ class ResultSet(object):
 
     def all(self, func):
         """Return True if *func* evaluates to True for all items in set."""
-        return all(func(x) for x in self.values)
+        return all(func(x) for x in self._data)
 
 
 # Decorate ResultSet comparison magic methods (cannot be decorated in-line as
@@ -133,31 +151,68 @@ ResultSet.__ge__ = _other_to_resultset(ResultSet.__ge__)
 
 class ResultMapping(object):
     """DataSource query result mapping."""
-    def __init__(self, values, grouped_by):
+    def __init__(self, data, grouped_by):
         """Initialize object."""
-        if not isinstance(values, Mapping):
-            values = dict(values)
+        if not isinstance(data, Mapping):
+            data = dict(data)
         if isinstance(grouped_by, str):
             grouped_by = [grouped_by]
 
         try:
-            iterable = iter(values.items())
+            iterable = iter(data.items())
             first_key, first_value = next(iterable)
             if isinstance(first_key, tuple) and len(first_key) == 1:
                 iterable = itertools.chain([(first_key, first_value)], iterable)
                 iterable = ((k[0], v) for k, v in iterable)
-                values = dict(iterable)
+                data = dict(iterable)
         except StopIteration:
             pass
 
-        self.values = values
+        self._data = data
         self.grouped_by = grouped_by
 
     def __eq__(self, other):
-        return self.values == other.values
+        return self._data == other._data
 
     def __ne__(self, other):
         return not self.__eq__(other)
+
+    def make_iter(self, names):
+        """Return an iterable of dictionary rows (like ``csv.DictReader``)
+        using *names* to construct dictionary keys.
+
+        """
+        is_container = lambda x: not isinstance(x, str) and isinstance(x, Sequence)
+
+        if not is_container(names):
+            names = (names,)
+
+        grouped_by = self.grouped_by
+        if not is_container(grouped_by):
+            grouped_by = (grouped_by,)
+
+        collision = set(names) & set(grouped_by)
+        if collision:
+            collision = ', '.join(collision)
+            raise ValueError("names conflict: {0}".format(collision))
+
+        single_key, single_value = next(iter(self._data.items()))
+        iterable = self._data.items()
+        if not is_container(single_key):
+            iterable = (((k,), v) for k, v in iterable)
+            single_key = (single_key,)
+        if not is_container(single_value):
+            iterable = ((k, (v,)) for k, v in iterable)
+            single_value = (single_value,)
+
+        assert len(single_key) == len(grouped_by)
+        assert len(single_value) == len(names)
+
+        def make_dictrow(k, v):
+            x = dict(zip(grouped_by, k))
+            x.update(dict(zip(names, v)))
+            return x
+        return iter(make_dictrow(k, v) for k, v in iterable)
 
     def compare(self, other):
         """Compare *self* to *other* and return a list of difference objects.
@@ -167,27 +222,27 @@ class ResultMapping(object):
         list of InvalidNumber and InvalidItem objects.
 
         """
-        # Evaluate self.values with function.
+        # Evaluate self._data with function.
         if callable(other):
-            keys = sorted(self.values.keys())
+            keys = sorted(self._data.keys())
             differences = []
             for key in keys:
-                value = self.values[key]
+                value = self._data[key]
                 if not other(value):
                     if isinstance(key, str):
                         key = (key,)
                     kwds = dict(zip(self.grouped_by, key))
                     differences.append(InvalidItem(value, **kwds))
-        # Compare self.values to other.values.
+        # Compare self._data to other._data.
         else:
             if not isinstance(other, ResultMapping):
                 other = ResultMapping(other, grouped_by=None)
-            keys = itertools.chain(self.values.keys(), other.values.keys())
+            keys = itertools.chain(self._data.keys(), other._data.keys())
             keys = sorted(set(keys))
             differences = []
             for key in keys:
-                self_val = self.values.get(key)
-                other_val = other.values.get(key)
+                self_val = self._data.get(key)
+                other_val = other._data.get(key)
                 if isinstance(key, str):
                     key = (key,)
                 one_num = any((

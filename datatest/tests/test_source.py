@@ -383,7 +383,7 @@ class TestSqliteSource(TestBaseSource):
         source = SqliteSource.from_result(result, 'foo')
 
         expected = [{'foo': 'a'}, {'foo': 'b'}, {'foo': 'c'}]
-        make_set = lambda data: set(tuple(row.items()) for row in data)
+        make_set = lambda data: set(frozenset(row.items()) for row in data)
         self.assertEqual(make_set(expected), make_set(source))
 
         # Multi-column ResultSet.
@@ -401,7 +401,7 @@ class TestSqliteSource(TestBaseSource):
             {'foo': 'b', 'bar': 'y', 'baz': '2'},
             {'foo': 'c', 'bar': 'z', 'baz': '3'},
         ]
-        make_set = lambda data: set(tuple(row.items()) for row in data)
+        make_set = lambda data: set(frozenset(row.items()) for row in data)
         self.assertEqual(make_set(expected), make_set(source))
 
         # Single-key and single-value ResultMapping.
@@ -411,7 +411,7 @@ class TestSqliteSource(TestBaseSource):
         expected = [{'foo': 'a', 'baz': 1},
                     {'foo': 'b', 'baz': 2},
                     {'foo': 'c', 'baz': 3}]
-        make_set = lambda data: set(tuple(row.items()) for row in data)
+        make_set = lambda data: set(frozenset(row.items()) for row in data)
         self.assertEqual(make_set(expected), make_set(source))
 
         # Multi-key and single-value ResultMapping.
@@ -425,7 +425,7 @@ class TestSqliteSource(TestBaseSource):
             {'foo': 'b', 'bar': 'y', 'baz': 2},
             {'foo': 'c', 'bar': 'z', 'baz': 3},
         ]
-        make_set = lambda data: set(tuple(row.items()) for row in data)
+        make_set = lambda data: set(frozenset(row.items()) for row in data)
         self.assertEqual(make_set(expected), make_set(source))
 
         # Multi-key and multi-value ResultMapping.
@@ -439,7 +439,7 @@ class TestSqliteSource(TestBaseSource):
             {'foo': 'b', 'bar': 'y', 'baz': 2, 'qux': 20},
             {'foo': 'c', 'bar': 'z', 'baz': 3, 'qux': 30},
         ]
-        make_set = lambda data: set(tuple(row.items()) for row in data)
+        make_set = lambda data: set(frozenset(row.items()) for row in data)
         self.assertEqual(make_set(expected), make_set(source))
 
     def test_create_index(self):
