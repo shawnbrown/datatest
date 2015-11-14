@@ -124,7 +124,7 @@ ResultSet.__le__ = _other_to_resultset(ResultSet.__le__)
 ResultSet.__ge__ = _other_to_resultset(ResultSet.__ge__)
 
 
-class ResultMapping(object):
+class ResultMapping(dict):
     """DataSource query result mapping."""
     def __init__(self, data, grouped_by):
         """Initialize object."""
@@ -143,14 +143,8 @@ class ResultMapping(object):
         except StopIteration:
             pass
 
-        self._data = data
+        dict.__init__(self, data)
         self.grouped_by = grouped_by
-
-    def __eq__(self, other):
-        return self._data == other._data
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
     def make_iter(self, names):
         """Return an iterable of dictionary rows (like ``csv.DictReader``)
@@ -171,8 +165,8 @@ class ResultMapping(object):
             collision = ', '.join(collision)
             raise ValueError("names conflict: {0}".format(collision))
 
-        single_key, single_value = next(iter(self._data.items()))
-        iterable = self._data.items()
+        single_key, single_value = next(iter(self.items()))
+        iterable = self.items()
         if not is_container(single_key):
             iterable = (((k,), v) for k, v in iterable)
             single_key = (single_key,)
@@ -199,25 +193,25 @@ class ResultMapping(object):
         """
         # Evaluate self._data with function.
         if callable(other):
-            keys = sorted(self._data.keys())
+            keys = sorted(self.keys())
             differences = []
             for key in keys:
-                value = self._data[key]
+                value = self[key]
                 if not other(value):
                     if isinstance(key, str):
                         key = (key,)
                     kwds = dict(zip(self.grouped_by, key))
                     differences.append(InvalidItem(value, **kwds))
-        # Compare self._data to other._data.
+        # Compare self to other.
         else:
             if not isinstance(other, ResultMapping):
                 other = ResultMapping(other, grouped_by=None)
-            keys = itertools.chain(self._data.keys(), other._data.keys())
+            keys = itertools.chain(self.keys(), other.keys())
             keys = sorted(set(keys))
             differences = []
             for key in keys:
-                self_val = self._data.get(key)
-                other_val = other._data.get(key)
+                self_val = self.get(key)
+                other_val = other.get(key)
                 if isinstance(key, str):
                     key = (key,)
                 one_num = any((

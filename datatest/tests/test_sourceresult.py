@@ -177,10 +177,10 @@ class TestResultMapping(unittest.TestCase):
         data = {'a': 1, 'b': 2, 'c': 3, 'd': 4}
 
         x = ResultMapping(data, 'foo')                # dict.
-        self.assertEqual(data, x._data)
+        self.assertEqual(data, x)
 
         x = ResultMapping(list(data.items()), 'foo')  # list of tuples.
-        self.assertEqual(data, x._data)
+        self.assertEqual(data, x)
 
         # Non-mapping data (data error).
         data_list = ['a', 'b', 'c', 'd']
@@ -191,7 +191,7 @@ class TestResultMapping(unittest.TestCase):
         data = {('a',): 1, ('b',): 2, ('c',): 3, ('d',): 4}
         x = ResultMapping(data, ['foo'])
         unwrapped = {'a': 1, 'b': 2, 'c': 3, 'd': 4}
-        self.assertEqual(unwrapped, x._data)
+        self.assertEqual(unwrapped, x)
 
         # IMPLEMENT THIS?
         # Mis-matched group_by and keys.

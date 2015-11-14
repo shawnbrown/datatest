@@ -345,8 +345,7 @@ class SqliteSource(BaseSource):
         if isinstance(result, ResultSet):
             source =  cls.from_records(values, columns, in_memory)
         elif isinstance(result, ResultMapping):
-            items = result._data.items()
-            items = iter(items)
+            items = iter(result.items())
             first_item = next(items)  # Get first item.
             items = itertools.chain([first_item], items)  # Rebuild original.
 
@@ -678,7 +677,7 @@ class MultiSource(BaseSource):
                         subgrp = [x for x in group_by if x in subsrc_columns]
                         subres = subsrc.sum(column, subgrp, **subfltr)
                         subres = self._normalize_result(subres, subgrp, group_by)
-                        for k, v in subres._data.items():
+                        for k, v in subres.items():
                             counter[k] += v
             return ResultMapping(counter, group_by)
 
@@ -711,7 +710,7 @@ class MultiSource(BaseSource):
         if isinstance(result_obj, ResultSet):
             normalized = ResultSet(normalize(v) for v in result_obj)
         elif isinstance(result_obj, ResultMapping):
-            item_gen = ((normalize(k), v) for k, v in result_obj._data.items())
+            item_gen = ((normalize(k), v) for k, v in result_obj.items())
             normalized = ResultMapping(item_gen, grouped_by=targ_cols)
         else:
             raise ValueError('Result object must be ResultSet or ResultMapping.')
