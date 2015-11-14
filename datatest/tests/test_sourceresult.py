@@ -67,16 +67,16 @@ class TestResultSet(unittest.TestCase):
         x = ResultSet(set())
         self.assertEqual(set(), x)
 
-    def test_make_iter(self):
+    def test_make_rows(self):
         make_set = lambda data: set(frozenset(row.items()) for row in data)
 
         result = ResultSet(['aaa', 'bbb', 'ccc'])
-        iterable = result.make_iter('foo')
+        iterable = result.make_rows('foo')
         expected = [{'foo': 'aaa'}, {'foo': 'bbb'}, {'foo': 'ccc'}]
         self.assertEqual(make_set(expected), make_set(iterable))
 
         result = ResultSet(['aaa', 'bbb', 'ccc'])
-        iterable = result.make_iter(['foo'])  # <- Single-item list.
+        iterable = result.make_rows(['foo'])  # <- Single-item list.
         expected = [{'foo': 'aaa'}, {'foo': 'bbb'}, {'foo': 'ccc'}]
         self.assertEqual(make_set(expected), make_set(iterable))
 
@@ -85,7 +85,7 @@ class TestResultSet(unittest.TestCase):
             ('bbb', 2),
             ('ccc', 3)
         ])
-        iterable = result.make_iter(['foo', 'bar'])
+        iterable = result.make_rows(['foo', 'bar'])
         expected = [
             {'foo': 'aaa', 'bar': 1},
             {'foo': 'bbb', 'bar': 2},
@@ -95,11 +95,11 @@ class TestResultSet(unittest.TestCase):
 
         result = ResultSet(['aaa', 'bbb', 'ccc'])
         with self.assertRaises(AssertionError):
-            iterable = result.make_iter(['foo', 'bar'])  # Too many *names*.
+            iterable = result.make_rows(['foo', 'bar'])  # Too many *names*.
 
         result = ResultSet([('aaa', 1), ('bbb', 2), ('ccc', 3)])
         with self.assertRaises(AssertionError):
-            iterable = result.make_iter(['foo'])  # Too few *names*.
+            iterable = result.make_rows(['foo'])  # Too few *names*.
 
     def test_eq(self):
         data = set([1, 2, 3, 4])
@@ -199,13 +199,13 @@ class TestResultMapping(unittest.TestCase):
         #    data = {('a',): 1, ('b',): 2, ('c',): 3, ('d',): 4}
         #    x = ResultMapping(data, 'foo')
 
-    def test_make_iter(self):
+    def test_make_rows(self):
         make_set = lambda data: set(frozenset(row.items()) for row in data)
 
         # Single-item keys, single-item values.
         data = {'aaa': 1, 'bbb': 2, 'ccc': 3}
         result = ResultMapping(data, 'foo')
-        iterable = result.make_iter('bar')
+        iterable = result.make_rows('bar')
         expected = [
             {'foo': 'aaa', 'bar': 1},
             {'foo': 'bbb', 'bar': 2},
@@ -216,7 +216,7 @@ class TestResultMapping(unittest.TestCase):
         # Composite keys.
         data = {('aaa', 'xxx'): 1, ('bbb', 'yyy'): 2, ('ccc', 'zzz'): 3}
         result = ResultMapping(data, ['foo', 'bar'])
-        iterable = result.make_iter('baz')
+        iterable = result.make_rows('baz')
         expected = [
             {'foo': 'aaa', 'bar': 'xxx', 'baz': 1},
             {'foo': 'bbb', 'bar': 'yyy', 'baz': 2},
@@ -227,7 +227,7 @@ class TestResultMapping(unittest.TestCase):
         # Composite values.
         data = {'aaa': ('xxx', 1), 'bbb': ('yyy', 2), 'ccc': ('zzz', 3)}
         result = ResultMapping(data, 'foo')
-        iterable = result.make_iter(['bar', 'baz'])
+        iterable = result.make_rows(['bar', 'baz'])
         expected = [
             {'foo': 'aaa', 'bar': 'xxx', 'baz': 1},
             {'foo': 'bbb', 'bar': 'yyy', 'baz': 2},
@@ -238,17 +238,17 @@ class TestResultMapping(unittest.TestCase):
         data = {'aaa': 1, 'bbb': 2, 'ccc': 3}
         result = ResultMapping(data, 'foo')
         with self.assertRaises(AssertionError):
-            iterable = result.make_iter(['bar', 'baz'])  # Too many *names*.
+            iterable = result.make_rows(['bar', 'baz'])  # Too many *names*.
 
         data = {'aaa': (1, 2, 3), 'bbb': (2, 4, 6), 'ccc': (3, 6, 9)}
         result = ResultMapping(data, 'foo')
         with self.assertRaises(AssertionError):
-            iterable = result.make_iter('bar')  # Too few *names*.
+            iterable = result.make_rows('bar')  # Too few *names*.
 
         data = {'aaa': 1, 'bbb': 2, 'ccc': 3}
         result = ResultMapping(data, 'foo')
         with self.assertRaises(ValueError):
-            iterable = result.make_iter('foo')  # 'foo' conflicts with group_by.
+            iterable = result.make_rows('foo')  # 'foo' conflicts with group_by.
 
     def test_eq(self):
         data1 = {'a': 1, 'b': 2, 'c': 3, 'd': 4}

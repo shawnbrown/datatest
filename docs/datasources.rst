@@ -121,10 +121,15 @@ As a starting point, you can use one of the following templates:
     :members: __init__, __repr__, __iter__, columns, distinct, sum, count, aggregate
 
 
-*************
-Query Results
-*************
+*******************
+Data Source Results
+*******************
+
+Querying a data source with various methods will return a ResultSet or a
+ResultMapping.
 
 .. autoclass:: datatest.ResultSet
+    :members: make_rows, compare
 
 .. autoclass:: datatest.ResultMapping
+    :members: group_by, make_rows, compare

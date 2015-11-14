@@ -59,7 +59,7 @@ class ResultSet(set):
 
         set.__init__(self, data)
 
-    def make_iter(self, names):
+    def make_rows(self, names):
         """Return an iterable of dictionary rows (like ``csv.DictReader``)
         using *names* to construct dictionary keys.
 
@@ -146,7 +146,7 @@ class ResultMapping(dict):
         dict.__init__(self, data)
         self.grouped_by = grouped_by
 
-    def make_iter(self, names):
+    def make_rows(self, names):
         """Return an iterable of dictionary rows (like ``csv.DictReader``)
         using *names* to construct dictionary keys.
 
