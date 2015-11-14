@@ -231,7 +231,7 @@ class SqliteSource(BaseSource):
 
         result = {}
         groups = self.distinct(group_by, **filter_by)
-        for group in groups._data:
+        for group in groups:
             subfilter_by = dict(zip(group_by, group))
             subfilter_by.update(filter_by)
             cursor = self._execute_query(self._table, select_clause, **subfilter_by)
@@ -338,9 +338,9 @@ class SqliteSource(BaseSource):
         """
         if isinstance(columns, str):
             columns = [columns]
-            values = [(x,) for x in result._data]
+            values = ((x,) for x in result)
         else:
-            values = result._data
+            values = result
 
         if isinstance(result, ResultSet):
             source =  cls.from_records(values, columns, in_memory)
@@ -631,8 +631,9 @@ class MultiSource(BaseSource):
                 else:
                     if subfltr != {}:
                         tst = subsrc.distinct(subfltr.keys(), **subfltr)
-                        if tst._data:
-                            subres = ResultSet([tuple(['']) * len(column)])
+                        if tst:
+                            empty_row = ('',) * len(column)
+                            subres = ResultSet([empty_row])
                             results.append(subres)
                     else:
                         # If subsrc contains at least 1 item, then
@@ -647,7 +648,6 @@ class MultiSource(BaseSource):
                         except StopIteration:
                             pass
 
-        results = (x._data for x in results)  # Unwrap data property.
         results = itertools.chain(*results)
         return ResultSet(results)
 
@@ -709,7 +709,7 @@ class MultiSource(BaseSource):
             return tuple(orig_dict.get(col, '') for col in targ_cols)
 
         if isinstance(result_obj, ResultSet):
-            normalized = ResultSet(normalize(v) for v in result_obj._data)
+            normalized = ResultSet(normalize(v) for v in result_obj)
         elif isinstance(result_obj, ResultMapping):
             item_gen = ((normalize(k), v) for k, v in result_obj._data.items())
             normalized = ResultMapping(item_gen, grouped_by=targ_cols)

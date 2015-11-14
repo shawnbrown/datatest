@@ -1,11 +1,11 @@
 """Result objects from data source queries."""
-from functools import wraps
 from numbers import Number
-from ._builtins import *
 
+from ._builtins import *
 from ._collections import Mapping
 from ._collections import Set
 from ._collections import Sequence
+from ._functools import wraps
 from . import _itertools as itertools
 
 from .diff import ExtraItem
@@ -35,7 +35,7 @@ def _coerce_other(target_type, *type_args, **type_kwds):
     return callable
 
 
-class ResultSet(object):
+class ResultSet(set):
     """DataSource query result set."""
     def __init__(self, data):
         """Initialize object."""
@@ -57,28 +57,7 @@ class ResultSet(object):
         elif not isinstance(data, Set):
             data = set(data)
 
-        self._data = data
-
-    def __eq__(self, other):
-        return self._data == other._data
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
-    def __lt__(self, other):
-        return self._data < other._data
-
-    def __gt__(self, other):
-        return self._data > other._data
-
-    def __le__(self, other):
-        return self._data <= other._data
-
-    def __ge__(self, other):
-        return self._data >= other._data
-
-    def __contains__(self, item):
-        return item in self._data
+        set.__init__(self, data)
 
     def make_iter(self, names):
         """Return an iterable of dictionary rows (like ``csv.DictReader``)
@@ -86,15 +65,15 @@ class ResultSet(object):
 
         """
         is_container = lambda x: not isinstance(x, str) and isinstance(x, Sequence)
-        single_value = next(iter(self._data))
+        single_value = next(iter(self))
         if is_container(single_value):
             assert len(names) == len(single_value), "length of 'names' must match data items"
-            iterable = iter(dict(zip(names, values)) for values in self._data)
+            iterable = iter(dict(zip(names, values)) for values in self)
         else:
             if is_container(names):
                 assert len(names) == 1, "length of 'names' must match data items"
                 names = names[0]  # Unwrap names value.
-            iterable = iter({names: value} for value in self._data)
+            iterable = iter({names: value} for value in self)
         return iterable
 
     def compare(self, other, op='=='):
@@ -106,14 +85,14 @@ class ResultSet(object):
 
         """
         if callable(other):
-            differences = [InvalidItem(x) for x in self._data if not other(x)]
+            differences = [InvalidItem(x) for x in self if not other(x)]
         else:
             if not isinstance(other, ResultSet):
                 other = ResultSet(other)
 
             if op in ('==', '<=', '<'):
-                extra = self._data.difference(other._data)
-                if op == '<' and not (extra or other._data.difference(self._data)):
+                extra = self.difference(other)
+                if op == '<' and not (extra or other.difference(self)):
                     extra = [NotProperSubset()]
                 else:
                     extra = (ExtraItem(x) for x in extra)
@@ -121,8 +100,8 @@ class ResultSet(object):
                 extra = []
 
             if op in ('==', '>=', '>'):
-                missing = other._data.difference(self._data)
-                if op == '>' and not (missing or self._data.difference(other._data)):
+                missing = other.difference(self)
+                if op == '>' and not (missing or self.difference(other)):
                     missing = [NotProperSuperset()]
                 else:
                     missing = (MissingItem(x) for x in missing)
@@ -132,10 +111,6 @@ class ResultSet(object):
             differences = list(itertools.chain(extra, missing))
 
         return differences
-
-    def all(self, func):
-        """Return True if *func* evaluates to True for all items in set."""
-        return all(func(x) for x in self._data)
 
 
 # Decorate ResultSet comparison magic methods (cannot be decorated in-line as

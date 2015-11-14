@@ -47,17 +47,17 @@ class TestResultSet(unittest.TestCase):
         data = set([1, 2, 3, 4])
 
         x = ResultSet(data)               # Data set.
-        self.assertEqual(data, x._data)
+        self.assertEqual(data, x)
 
         x = ResultSet(list(data))         # Data list.
-        self.assertEqual(data, x._data)
+        self.assertEqual(data, x)
 
         x = ResultSet(tuple(data))        # Data tuple.
-        self.assertEqual(data, x._data)
+        self.assertEqual(data, x)
 
         data_gen = (v for v in data)      # Data generator.
         x = ResultSet(data_gen)
-        self.assertEqual(data, x._data)
+        self.assertEqual(data, x)
 
         # Data mapping (type error).
         data_dict = dict(enumerate(data))
@@ -65,7 +65,7 @@ class TestResultSet(unittest.TestCase):
             x = ResultSet(data_dict)
 
         x = ResultSet(set())
-        self.assertEqual(set(), x._data)
+        self.assertEqual(set(), x)
 
     def test_make_iter(self):
         make_set = lambda data: set(frozenset(row.items()) for row in data)
@@ -170,17 +170,6 @@ class TestResultSet(unittest.TestCase):
         a = ResultSet(['aaa','bbb','ccc'])
         b = ResultSet(['aaa','bbb','ccc'])
         self.assertEqual([NotProperSuperset()], a.compare(b, op='>'))
-
-    def test_all(self):
-        a = ResultSet(['foo', 'bar', 'baz'])
-
-        # Test True.
-        result = a.all(lambda x: len(x) == 3)
-        self.assertTrue(result)
-
-        # Test False.
-        result = a.all(lambda x: x.startswith('b'))
-        self.assertFalse(result)
 
 
 class TestResultMapping(unittest.TestCase):
