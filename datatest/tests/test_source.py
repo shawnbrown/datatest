@@ -295,7 +295,7 @@ class TestSqliteSource(TestBaseSource):
         self.assertEqual('INSERT INTO mytable VALUES (?, ?)', stmnt)
         self.assertEqual(['val1a', 'val2a'], param)
 
-        with self.assertRaisesRegex(AssertionError, 'must be list or tuple, not str'):
+        with self.assertRaisesRegex(AssertionError, 'must be non-string container'):
             SqliteSource._from_records_build_insert_statement('mytable', 'val1')
 
     def test_from_records_build_create_statement(self):

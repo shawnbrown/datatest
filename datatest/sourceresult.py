@@ -2,9 +2,9 @@
 from numbers import Number
 
 from ._builtins import *
+from ._collections import Container
 from ._collections import Mapping
 from ._collections import Set
-from ._collections import Sequence
 from ._functools import wraps
 from . import _itertools as itertools
 
@@ -14,6 +14,11 @@ from .diff import InvalidItem
 from .diff import InvalidNumber
 from .diff import NotProperSubset
 from .diff import NotProperSuperset
+
+
+def _is_nscontainer(x):
+    """Returns True if *x* is a non-string container object."""
+    return not isinstance(x, str) and isinstance(x, Container)
 
 
 def _coerce_other(target_type, *type_args, **type_kwds):
@@ -52,10 +57,8 @@ class ResultSet(set):
         except StopIteration:
             first_value = None
 
-        if isinstance(first_value, tuple) and len(first_value) == 1:
-            data = set(x[0] for x in data)  # Unpack single-item tuple.
-        elif not isinstance(data, Set):
-            data = set(data)
+        if _is_nscontainer(first_value) and len(first_value) == 1:
+            data = (x[0] for x in data)  # Unpack single-item tuple.
 
         set.__init__(self, data)
 
@@ -64,13 +67,12 @@ class ResultSet(set):
         using *names* to construct dictionary keys.
 
         """
-        is_container = lambda x: not isinstance(x, str) and isinstance(x, Sequence)
         single_value = next(iter(self))
-        if is_container(single_value):
+        if _is_nscontainer(single_value):
             assert len(names) == len(single_value), "length of 'names' must match data items"
             iterable = iter(dict(zip(names, values)) for values in self)
         else:
-            if is_container(names):
+            if _is_nscontainer(names):
                 assert len(names) == 1, "length of 'names' must match data items"
                 names = names[0]  # Unwrap names value.
             iterable = iter({names: value} for value in self)
@@ -130,13 +132,13 @@ class ResultMapping(dict):
         """Initialize object."""
         if not isinstance(data, Mapping):
             data = dict(data)
-        if isinstance(grouped_by, str):
-            grouped_by = [grouped_by]
+        if not _is_nscontainer(grouped_by):
+            grouped_by = (grouped_by,)
 
         try:
             iterable = iter(data.items())
             first_key, first_value = next(iterable)
-            if isinstance(first_key, tuple) and len(first_key) == 1:
+            if _is_nscontainer(first_key) and len(first_key) == 1:
                 iterable = itertools.chain([(first_key, first_value)], iterable)
                 iterable = ((k[0], v) for k, v in iterable)
                 data = dict(iterable)
@@ -151,13 +153,11 @@ class ResultMapping(dict):
         using *names* to construct dictionary keys.
 
         """
-        is_container = lambda x: not isinstance(x, str) and isinstance(x, Sequence)
-
-        if not is_container(names):
+        if not _is_nscontainer(names):
             names = (names,)
 
         grouped_by = self.grouped_by
-        if not is_container(grouped_by):
+        if not _is_nscontainer(grouped_by):
             grouped_by = (grouped_by,)
 
         collision = set(names) & set(grouped_by)
@@ -167,10 +167,10 @@ class ResultMapping(dict):
 
         single_key, single_value = next(iter(self.items()))
         iterable = self.items()
-        if not is_container(single_key):
+        if not _is_nscontainer(single_key):
             iterable = (((k,), v) for k, v in iterable)
             single_key = (single_key,)
-        if not is_container(single_value):
+        if not _is_nscontainer(single_value):
             iterable = ((k, (v,)) for k, v in iterable)
             single_value = (single_value,)
 
@@ -198,7 +198,7 @@ class ResultMapping(dict):
             for key in keys:
                 value = self[key]
                 if not other(value):
-                    if isinstance(key, str):
+                    if not _is_nscontainer(key):
                         key = (key,)
                     kwds = dict(zip(self.grouped_by, key))
                     differences.append(InvalidItem(value, **kwds))
@@ -212,7 +212,7 @@ class ResultMapping(dict):
             for key in keys:
                 self_val = self.get(key)
                 other_val = other.get(key)
-                if isinstance(key, str):
+                if not _is_nscontainer(key):
                     key = (key,)
                 one_num = any((
                     isinstance(self_val, Number),

@@ -14,6 +14,7 @@ from . import _itertools as itertools
 
 from .sourceresult import ResultMapping
 from .sourceresult import ResultSet
+from .sourceresult import _is_nscontainer
 
 #pattern = 'test*.py'
 prefix = 'test_'
@@ -112,7 +113,7 @@ class BaseSource(object):
         """Filter data by keywords, returns iterable.  E.g., where
         column1=value1, column2=value2, etc. (uses slow ``__iter__``).
         """
-        mktup = lambda v: (v,) if not isinstance(v, (list, tuple)) else v
+        mktup = lambda v: (v,) if not _is_nscontainer(v) else v
         filter_by = dict((k, mktup(v)) for k, v in filter_by.items())
         for row in self.__iter__():
             if all(row[k] in v for k, v in filter_by.items()):
@@ -158,7 +159,7 @@ class SqliteSource(BaseSource):
 
     def distinct(self, column, **filter_by):
         """Return iterable of tuples containing distinct *column* values."""
-        if isinstance(column, str) or not isinstance(column, Iterable):
+        if isinstance(column, str):
             column = [column]
 
         all_cols = self.columns()
@@ -271,7 +272,7 @@ class SqliteSource(BaseSource):
         items = filter_by.items()
         items = sorted(items, key=lambda x: x[0])  # Ordered by key.
         for key, val in items:
-            if hasattr(val, '__iter__') and not isinstance(val, str):
+            if _is_nscontainer(val):
                 clause.append(key + ' IN (%s)' % (', '.join('?' * len(val))))
                 for x in val:
                     params.append(x)
@@ -350,14 +351,14 @@ class SqliteSource(BaseSource):
             items = itertools.chain([first_item], items)  # Rebuild original.
 
             first_k, first_v = first_item
-            if not isinstance(first_k, tuple):
+            if not _is_nscontainer(first_k):
                 items = (((k,), v) for k, v in items)
-            if not isinstance(first_v, tuple):
+            if not _is_nscontainer(first_v):
                 items = ((k, (v,)) for k, v in items)
             items = (k + v for k, v in items)
 
             kcols = result.grouped_by
-            if not isinstance(kcols, (tuple, list)):
+            if not _is_nscontainer(kcols):
                 kcols = [kcols]
             combined = list(kcols) + list(columns)
 
@@ -407,7 +408,7 @@ class SqliteSource(BaseSource):
 
             for row in data:  # Insert all rows.
                 if isinstance(row, dict):
-                    row = [row[x] for x in columns]
+                    row = tuple(row[x] for x in columns)
                 statement, params = cls._from_records_build_insert_statement(table, row)
                 try:
                     cursor.execute(statement, params)
@@ -443,7 +444,7 @@ class SqliteSource(BaseSource):
     @staticmethod
     def _from_records_build_insert_statement(table, row):
         """Return 'INSERT INTO' statement."""
-        assert not isinstance(row, str), '`row` must be list or tuple, not str'
+        assert not isinstance(row, str), "row must be non-string container"
         statement = 'INSERT INTO ' + table + ' VALUES (' + ', '.join(['?'] * len(row)) + ')'
         parameters = row
         return statement, parameters
