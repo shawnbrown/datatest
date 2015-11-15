@@ -357,7 +357,7 @@ class SqliteSource(BaseSource):
                 items = ((k, (v,)) for k, v in items)
             items = (k + v for k, v in items)
 
-            kcols = result.grouped_by
+            kcols = result.key_names
             if not _is_nscontainer(kcols):
                 kcols = [kcols]
             combined = list(kcols) + list(columns)
@@ -712,7 +712,7 @@ class MultiSource(BaseSource):
             normalized = ResultSet(normalize(v) for v in result_obj)
         elif isinstance(result_obj, ResultMapping):
             item_gen = ((normalize(k), v) for k, v in result_obj.items())
-            normalized = ResultMapping(item_gen, grouped_by=targ_cols)
+            normalized = ResultMapping(item_gen, key_names=targ_cols)
         else:
             raise ValueError('Result object must be ResultSet or ResultMapping.')
 

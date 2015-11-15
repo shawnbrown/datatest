@@ -128,12 +128,12 @@ ResultSet.__ge__ = _other_to_resultset(ResultSet.__ge__)
 
 class ResultMapping(dict):
     """DataSource query result mapping."""
-    def __init__(self, data, grouped_by):
+    def __init__(self, data, key_names):
         """Initialize object."""
         if not isinstance(data, Mapping):
             data = dict(data)
-        if not _is_nscontainer(grouped_by):
-            grouped_by = (grouped_by,)
+        if not _is_nscontainer(key_names):
+            key_names = (key_names,)
 
         try:
             iterable = iter(data.items())
@@ -146,7 +146,7 @@ class ResultMapping(dict):
             pass
 
         dict.__init__(self, data)
-        self.grouped_by = grouped_by
+        self.key_names = key_names
 
     def make_rows(self, names):
         """Return an iterable of dictionary rows (like ``csv.DictReader``)
@@ -156,11 +156,9 @@ class ResultMapping(dict):
         if not _is_nscontainer(names):
             names = (names,)
 
-        grouped_by = self.grouped_by
-        if not _is_nscontainer(grouped_by):
-            grouped_by = (grouped_by,)
+        key_names = self.key_names
 
-        collision = set(names) & set(grouped_by)
+        collision = set(names) & set(key_names)
         if collision:
             collision = ', '.join(collision)
             raise ValueError("names conflict: {0}".format(collision))
@@ -174,11 +172,11 @@ class ResultMapping(dict):
             iterable = ((k, (v,)) for k, v in iterable)
             single_value = (single_value,)
 
-        assert len(single_key) == len(grouped_by)
+        assert len(single_key) == len(key_names)
         assert len(single_value) == len(names)
 
         def make_dictrow(k, v):
-            x = dict(zip(grouped_by, k))
+            x = dict(zip(key_names, k))
             x.update(dict(zip(names, v)))
             return x
         return iter(make_dictrow(k, v) for k, v in iterable)
@@ -200,12 +198,12 @@ class ResultMapping(dict):
                 if not other(value):
                     if not _is_nscontainer(key):
                         key = (key,)
-                    kwds = dict(zip(self.grouped_by, key))
+                    kwds = dict(zip(self.key_names, key))
                     differences.append(InvalidItem(value, **kwds))
         # Compare self to other.
         else:
             if not isinstance(other, ResultMapping):
-                other = ResultMapping(other, grouped_by=None)
+                other = ResultMapping(other, key_names=None)
             keys = itertools.chain(self.keys(), other.keys())
             keys = sorted(set(keys))
             differences = []
@@ -228,13 +226,13 @@ class ResultMapping(dict):
                     other_num = other_val if other_val != None else 0
                     if self_num != other_num:
                         diff = self_num - other_num
-                        kwds = dict(zip(self.grouped_by, key))
+                        kwds = dict(zip(self.key_names, key))
                         invalid = InvalidNumber(diff, other_val, **kwds)
                         differences.append(InvalidNumber(diff, other_val, **kwds))
                 # Object comparison.
                 else:
                     if self_val != other_val:
-                        kwds = dict(zip(self.grouped_by, key))
+                        kwds = dict(zip(self.key_names, key))
                         differences.append(InvalidItem(self_val, other_val, **kwds))
 
         return differences
@@ -242,6 +240,6 @@ class ResultMapping(dict):
 
 # Decorate ResultMapping comparison magic methods (cannot be decorated in-line
 # as class must first be defined).
-_other_to_resultmapping = _coerce_other(ResultMapping, grouped_by=None)
+_other_to_resultmapping = _coerce_other(ResultMapping, key_names=None)
 ResultMapping.__eq__ = _other_to_resultmapping(ResultMapping.__eq__)
 ResultMapping.__ne__ = _other_to_resultmapping(ResultMapping.__ne__)

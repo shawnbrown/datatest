@@ -405,7 +405,7 @@ class TestSqliteSource(TestBaseSource):
         self.assertEqual(make_set(expected), make_set(source))
 
         # Single-key and single-value ResultMapping.
-        result = ResultMapping({'a': 1, 'b': 2, 'c': 3}, grouped_by='foo')
+        result = ResultMapping({'a': 1, 'b': 2, 'c': 3}, key_names='foo')
         source = SqliteSource.from_result(result, ['baz'])
 
         expected = [{'foo': 'a', 'baz': 1},
@@ -417,7 +417,7 @@ class TestSqliteSource(TestBaseSource):
         # Multi-key and single-value ResultMapping.
         result = ResultMapping({('a', 'x'): 1,
                                 ('b', 'y'): 2,
-                                ('c', 'z'): 3}, grouped_by=['foo', 'bar'])
+                                ('c', 'z'): 3}, key_names=['foo', 'bar'])
         source = SqliteSource.from_result(result, ['baz'])
 
         expected = [
@@ -431,7 +431,7 @@ class TestSqliteSource(TestBaseSource):
         # Multi-key and multi-value ResultMapping.
         result = ResultMapping({('a', 'x'): (1, 10),
                                 ('b', 'y'): (2, 20),
-                                ('c', 'z'): (3, 30)}, grouped_by=['foo', 'bar'])
+                                ('c', 'z'): (3, 30)}, key_names=['foo', 'bar'])
         source = SqliteSource.from_result(result, ['baz', 'qux'])
 
         expected = [
@@ -765,27 +765,27 @@ class TestMultiSourceDifferentColumns2(unittest.TestCase):
         """."""
         normalize_result = self.datasource._normalize_result
 
-        result = ResultMapping({('a', 'x'): 1, ('b', 'y'): 2, ('c', 'z'): 3}, grouped_by=['foo', 'bar'])
+        result = ResultMapping({('a', 'x'): 1, ('b', 'y'): 2, ('c', 'z'): 3}, key_names=['foo', 'bar'])
 
         # Append empty column.
         expected = ResultMapping({('a', 'x', ''): 1,
                                   ('b', 'y', ''): 2,
                                   ('c', 'z', ''): 3},
-                                 grouped_by=['foo', 'bar', 'baz'])
+                                 key_names=['foo', 'bar', 'baz'])
         self.assertEqual(expected, normalize_result(result, ['foo', 'bar'], ['foo', 'bar', 'baz']))
 
         # Insert empty column into middle.
         expected = ResultMapping({('a', '', 'x'): 1,
                                   ('b', '', 'y'): 2,
                                   ('c', '', 'z'): 3},
-                                 grouped_by=['foo', 'bar', 'baz'])
+                                 key_names=['foo', 'bar', 'baz'])
         self.assertEqual(expected, normalize_result(result, ['foo', 'bar'], ['foo', 'baz', 'bar']))
 
         # Insert empty column, reorder existing columns.
         expected = ResultMapping({('x', '', 'a'): 1,
                                   ('y', '', 'b'): 2,
                                   ('z', '', 'c'): 3},
-                                 grouped_by=['foo', 'bar', 'baz'])
+                                 key_names=['foo', 'bar', 'baz'])
         self.assertEqual(expected, normalize_result(result, ['foo', 'bar'], ['bar', 'baz', 'foo']))
 
         # Test error condition.
@@ -793,11 +793,11 @@ class TestMultiSourceDifferentColumns2(unittest.TestCase):
             normalized = normalize_result(result, ['foo', 'bar'], ['bar'])
 
         # Single-item key, insert empty columns.
-        result = ResultMapping({('a',): 1, ('b',): 2, ('c',): 3}, grouped_by='foo')
-        expected = ResultMapping({('', 'a', ''): 1, ('', 'b', ''): 2, ('', 'c', ''): 3}, grouped_by=['qux', 'foo', 'corge'])
+        result = ResultMapping({('a',): 1, ('b',): 2, ('c',): 3}, key_names='foo')
+        expected = ResultMapping({('', 'a', ''): 1, ('', 'b', ''): 2, ('', 'c', ''): 3}, key_names=['qux', 'foo', 'corge'])
         self.assertEqual(expected, normalize_result(result, ['foo'], ['qux', 'foo', 'corge']))
 
         # String key, insert empty columns.
-        result = ResultMapping({'a': 1, 'b': 2, 'c': 3}, grouped_by='foo')
-        expected = ResultMapping({('', 'a', ''): 1, ('', 'b', ''): 2, ('', 'c', ''): 3}, grouped_by=['qux', 'foo', 'corge'])
+        result = ResultMapping({'a': 1, 'b': 2, 'c': 3}, key_names='foo')
+        expected = ResultMapping({('', 'a', ''): 1, ('', 'b', ''): 2, ('', 'c', ''): 3}, key_names=['qux', 'foo', 'corge'])
         self.assertEqual(expected, normalize_result(result, ['foo'], ['qux', 'foo', 'corge']))
