@@ -163,6 +163,53 @@ class TestSubclass(TestHelperCase):
         self.assertTrue(issubclass(DataTestCase, _TestCase))
 
 
+class TestNormalizeReference(TestHelperCase):
+    def setUp(self):
+        _fh = io.StringIO('label1,value\n'
+                          'a,65\n'
+                          'b,70\n')
+        self.test_reference = CsvSource(_fh, in_memory=True)
+
+        _fh = io.StringIO('label1,label2,value\n'
+                          'a,x,17\n'
+                          'a,x,13\n'
+                          'a,y,20\n'
+                          'a,z,15\n'
+                          'b,z,5\n'
+                          'b,y,40\n'
+                          'b,x,25\n')
+        self.test_subject = CsvSource(_fh, in_memory=True)
+
+    def test_normalize_reference(self):
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                _self.referenceData = self.test_reference
+                _self.subjectData = self.test_subject
+
+            def test_method(_self):  # Dummy method for instantiation.
+                pass
+
+        instance = _TestClass('test_method')
+
+        #original = set(['x', 'y', 'z'])
+        #normalized = instance._normalize_reference(None, 'distinct', 'label2')
+        #self.assertIsNot(original, normalized)
+        #self.assertEqual(original, normalized)
+
+        # Set object should return unchanged.
+        original = set(['x', 'y', 'z'])
+        normalized = instance._normalize_reference(original, 'distinct', 'label2')
+        self.assertIs(original, normalized)
+
+        # Alternate reference source.
+        _fh = io.StringIO('label1,value\n'
+                          'c,75\n'
+                          'd,80\n')
+        altsrc = CsvSource(_fh, in_memory=True)
+        normalized = instance._normalize_reference(altsrc, 'distinct', 'label1')
+        self.assertEqual(set(['c', 'd']), normalized)
+
+
 class TestValueSum(TestHelperCase):
     def setUp(self):
         _fh = io.StringIO('label1,value\n'
@@ -359,7 +406,7 @@ class TestColumnsSet(TestHelperCase):
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
 
-    def test_pass_using_reference_from_argument(self):
+    def test_pass_using_set_arg_reference(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
                 #_self.referenceData =   <- Not defined!
@@ -371,6 +418,25 @@ class TestColumnsSet(TestHelperCase):
             def test_method(_self):
                 reference_set = set(['label1', 'value'])
                 _self.assertColumnSet(ref=reference_set)  # <- test assert
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        self.assertIsNone(failure)
+
+    def test_pass_using_source_arg_reference(self):
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                #_self.referenceData =   <- Not defined!
+                subject = io.StringIO('label1,value\n'
+                                      'a,6\n'
+                                      'b,7\n')
+                _self.subjectData = CsvSource(subject, in_memory=True)
+
+            def test_method(_self):
+                reference = io.StringIO('label1,value\n'
+                                        'a,6\n'
+                                        'b,7\n')
+                ref_source = CsvSource(reference, in_memory=True)
+                _self.assertColumnSet(ref=ref_source)  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)

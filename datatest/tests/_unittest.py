@@ -86,6 +86,26 @@ except AttributeError:
 
 
 try:
+    TestCase.assertIs  # New in 2.7
+except AttributeError:
+    def _assertIs(self, expr1, expr2, msg=None):
+        """Just like self.assertTrue(a is b), but with a nicer default
+        message."""
+        if not expr1 is expr2:
+            standardMsg = '%s is not %s' % (safe_repr(expr1), safe_repr(expr2))
+            self.fail(self._formatMessage(msg, standardMsg))
+    TestCase.assertIs = _assertIs
+
+    def _assertIsNot(self, expr1, expr2, msg=None):
+        """Just like self.assertTrue(a is not b), but with a nicer default
+        message."""
+        if not expr1 is not expr2:
+            standardMsg = '%s is not %s' % (safe_repr(expr1), safe_repr(expr2))
+            self.fail(self._formatMessage(msg, standardMsg))
+    TestCase.assertIsNot = _assertIsNot
+
+
+try:
     TestCase._formatMessage
 except AttributeError:
     def _formatMessage(self, msg, standardMsg):
