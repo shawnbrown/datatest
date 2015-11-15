@@ -3,7 +3,9 @@
 Data Sources
 ************
 
-Data source objects are used to access data in various formats.
+Data source objects are used to access data in various formats.  For
+additional sources, see :ref:`optional data sources <extra-sources>`
+(below).
 
 +------------------------------+---------------------------------------+
 | Class                        | Loads                                 |
@@ -28,8 +30,14 @@ Data source objects are used to access data in various formats.
 
 .. autoclass:: datatest.MultiSource
 
+    Data is aligned by column name and missing values are filled with empty
+    strings:
+
+        .. image:: _static/multisource.*
 
 --------
+
+.. _extra-sources:
 
 If you have the appropriate, optional dependencies installed, datatest
 provides a variety of other data sources:
@@ -132,4 +140,8 @@ ResultMapping.
     :members: make_rows, compare
 
 .. autoclass:: datatest.ResultMapping
-    :members: group_by, make_rows, compare
+    :members: make_rows, compare
+
+    .. py:attribute:: key_names
+
+        Column names for result keys.
