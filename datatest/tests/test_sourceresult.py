@@ -67,6 +67,11 @@ class TestResultSet(unittest.TestCase):
         x = ResultSet(set())
         self.assertEqual(set(), x)
 
+    def test_repr(self):
+        result = ResultSet(set([1]))
+        regex = r'^ResultSet\([\[\{]1[\}\]]\)$'
+        self.assertRegex(repr(result), regex)
+
     def test_make_rows(self):
         make_set = lambda data: set(frozenset(row.items()) for row in data)
 
@@ -198,6 +203,18 @@ class TestResultMapping(unittest.TestCase):
         #with self.assertRaises(ValueError):
         #    data = {('a',): 1, ('b',): 2, ('c',): 3, ('d',): 4}
         #    x = ResultMapping(data, 'foo')
+
+    def test_repr(self):
+        expected = "ResultMapping({'a': 1}, key_names='foo')"
+        result = ResultMapping({'a': 1}, 'foo')
+        self.assertEqual(expected, repr(result))
+
+        result = ResultMapping({('a',): 1}, ['foo'])  # <- Single-item containers.
+        self.assertEqual(expected, repr(result))  # Same "expected" as above.
+
+        expected = "ResultMapping({('a', 'b'): 1}, key_names=['foo', 'bar'])"
+        result = ResultMapping({('a', 'b'): 1}, ['foo', 'bar'])
+        self.assertEqual(expected, repr(result))
 
     def test_make_rows(self):
         make_set = lambda data: set(frozenset(row.items()) for row in data)

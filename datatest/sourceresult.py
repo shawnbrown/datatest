@@ -148,6 +148,14 @@ class ResultMapping(dict):
         dict.__init__(self, data)
         self.key_names = key_names
 
+    def __repr__(self):
+        cls_name = self.__class__.__name__
+        key_names = self.key_names
+        if _is_nscontainer(key_names) and len(key_names) == 1:
+            key_names = key_names[0]
+        dict_repr = dict.__repr__(self)
+        return '{0}({1}, key_names={2!r})'.format(cls_name, dict_repr, key_names)
+
     def make_rows(self, names):
         """Return an iterable of dictionary rows (like ``csv.DictReader``)
         using *names* to construct dictionary keys.
