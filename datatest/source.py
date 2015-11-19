@@ -131,7 +131,6 @@ class SqliteSource(BaseSource):
 
     def __init__(self, connection, table):
         """Initialize self."""
-        self.__name__ = 'SQLite Table {0!r}'.format(table)
         self._connection = connection
         self._table = table
 
@@ -167,7 +166,7 @@ class SqliteSource(BaseSource):
         if not_found:
             raise KeyError(not_found[0])
 
-        select_clause = [self._from_records_normalize_column(x) for x in column]
+        select_clause = [self._normalize_column(x) for x in column]
         select_clause = ', '.join(select_clause)
         select_clause = 'DISTINCT ' + select_clause
 
@@ -176,7 +175,7 @@ class SqliteSource(BaseSource):
 
     def sum(self, column, group_by=None, **filter_by):
         """Returns sum of *column* grouped by *group_by* as ResultMapping."""
-        column = self._from_records_normalize_column(column)
+        column = self._normalize_column(column)
         sql_function = 'SUM({0})'.format(column)
         return self._sql_aggregate(sql_function, group_by, **filter_by)
 
@@ -195,7 +194,7 @@ class SqliteSource(BaseSource):
 
         if isinstance(group_by, str):
             group_by = [group_by]
-        group_clause = [self._from_records_normalize_column(x) for x in group_by]
+        group_clause = [self._normalize_column(x) for x in group_by]
         group_clause = ', '.join(group_clause)
 
         select_clause = '{0}, {1}'.format(group_clause, sql_function)
@@ -212,7 +211,7 @@ class SqliteSource(BaseSource):
         summary value.
 
         """
-        normalize = self._from_records_normalize_column
+        normalize = self._normalize_column
 
         if column:
             if column not in self.columns():
@@ -315,7 +314,7 @@ class SqliteSource(BaseSource):
         idx_name = 'idx_{0}_{1}'.format(self._table, idx_name)
 
         # Build column names.
-        col_names = [self._from_records_normalize_column(x) for x in columns]
+        col_names = [self._normalize_column(x) for x in columns]
         col_names = ', '.join(col_names)
 
         # Prepare statement.
@@ -394,6 +393,13 @@ class SqliteSource(BaseSource):
         sqlite_path = ':memory:' if in_memory else ''
         connection = sqlite3.connect(sqlite_path)
 
+        # Load data into table and return new instance.
+        table = 'main'
+        cls._load_table(connection, table, columns, data)
+        return cls(connection, table)
+
+    @classmethod
+    def _load_table(cls, connection, table, columns, data):
         # Set isolation_level to None for proper transaction handling.
         _isolation_level = connection.isolation_level
         connection.isolation_level = None
@@ -402,14 +408,13 @@ class SqliteSource(BaseSource):
         cursor.execute('PRAGMA synchronous=OFF')  # For faster loading.
         cursor.execute('BEGIN TRANSACTION')
         try:
-            table = 'main'
-            statement = cls._from_records_build_create_statement(table, columns)
+            statement = cls._create_table_statement(table, columns)
             cursor.execute(statement)
 
             for row in data:  # Insert all rows.
                 if isinstance(row, dict):
                     row = tuple(row[x] for x in columns)
-                statement, params = cls._from_records_build_insert_statement(table, row)
+                statement, params = cls._insert_into_statement(table, row)
                 try:
                     cursor.execute(statement, params)
                 except Exception as e:
@@ -432,17 +437,15 @@ class SqliteSource(BaseSource):
         finally:
             connection.isolation_level = _isolation_level  # Restore original.
 
-        return cls(connection, table)
-
     @classmethod
-    def _from_records_build_create_statement(cls, table, columns):
+    def _create_table_statement(cls, table, columns):
         """Return 'CREATE TABLE' statement."""
-        cls._from_records_assert_unique(columns)
-        columns = [cls._from_records_normalize_column(x) for x in columns]
+        cls._assert_unique(columns)
+        columns = [cls._normalize_column(x) for x in columns]
         return 'CREATE TABLE %s (%s)' % (table, ', '.join(columns))
 
     @staticmethod
-    def _from_records_build_insert_statement(table, row):
+    def _insert_into_statement(table, row):
         """Return 'INSERT INTO' statement."""
         assert not isinstance(row, str), "row must be non-string container"
         statement = 'INSERT INTO ' + table + ' VALUES (' + ', '.join(['?'] * len(row)) + ')'
@@ -450,7 +453,7 @@ class SqliteSource(BaseSource):
         return statement, parameters
 
     @staticmethod
-    def _from_records_normalize_column(name):
+    def _normalize_column(name):
         """Normalize value for use as SQLite column name."""
         name = name.strip()
         name = name.replace('"', '""')  # Escape quotes.
@@ -459,7 +462,7 @@ class SqliteSource(BaseSource):
         return '"' + name + '"'
 
     @staticmethod
-    def _from_records_assert_unique(lst):
+    def _assert_unique(lst):
         """Asserts that list of items is unique, raises Exception if not."""
         values = []
         duplicates = []

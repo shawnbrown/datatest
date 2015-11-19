@@ -275,31 +275,31 @@ class TestSqliteSource(TestBaseSource):
 
     def test_from_records_assert_unique(self):
         # Pass without error.
-        SqliteSource._from_records_assert_unique(['foo', 'bar'])
+        SqliteSource._assert_unique(['foo', 'bar'])
 
         with self.assertRaises(ValueError):
-            SqliteSource._from_records_assert_unique(['foo', 'foo'])
+            SqliteSource._assert_unique(['foo', 'foo'])
 
-    def test_from_records_normalize_column(self):
-        result = SqliteSource._from_records_normalize_column('foo')
+    def test_normalize_column(self):
+        result = SqliteSource._normalize_column('foo')
         self.assertEqual('"foo"', result)
 
-        result = SqliteSource._from_records_normalize_column('foo bar')
+        result = SqliteSource._normalize_column('foo bar')
         self.assertEqual('"foo bar"', result)
 
-        result = SqliteSource._from_records_normalize_column('foo "bar" baz')
+        result = SqliteSource._normalize_column('foo "bar" baz')
         self.assertEqual('"foo ""bar"" baz"', result)
 
-    def test_from_records_build_insert_statement(self):
-        stmnt, param = SqliteSource._from_records_build_insert_statement('mytable', ['val1a', 'val2a'])
+    def test_insert_into_statement(self):
+        stmnt, param = SqliteSource._insert_into_statement('mytable', ['val1a', 'val2a'])
         self.assertEqual('INSERT INTO mytable VALUES (?, ?)', stmnt)
         self.assertEqual(['val1a', 'val2a'], param)
 
         with self.assertRaisesRegex(AssertionError, 'must be non-string container'):
-            SqliteSource._from_records_build_insert_statement('mytable', 'val1')
+            SqliteSource._insert_into_statement('mytable', 'val1')
 
-    def test_from_records_build_create_statement(self):
-        stmnt = SqliteSource._from_records_build_create_statement('mytable', ['col1', 'col2'])
+    def test_create_table_statement(self):
+        stmnt = SqliteSource._create_table_statement('mytable', ['col1', 'col2'])
         self.assertEqual('CREATE TABLE mytable ("col1", "col2")', stmnt)
 
     def test_from_records_tuple(self):
