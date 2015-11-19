@@ -120,15 +120,11 @@ class BaseSource(object):
                 yield row
 
 
-class SqliteSource(BaseSource):
-    """Loads *table* data from given SQLite *connection*:
-    ::
-
-        conn = sqlite3.connect('mydatabase.sqlite3')
-        subjectData = datatest.SqliteSource(conn, 'mytable')
+class _SqliteSource(BaseSource):
+    """Base class four SqliteSource and CsvSource (not intended to be
+    instantiated directly.)
 
     """
-
     def __init__(self, connection, table):
         """Initialize self."""
         self._connection = connection
@@ -327,78 +323,6 @@ class SqliteSource(BaseSource):
         cursor.execute(statement)
 
     @classmethod
-    def from_result(cls, result, columns, in_memory=False):
-        """Alternate constructor to load an existing ResultSet or
-        ResultMapping::
-
-            original = CsvSource('mydata.csv')
-            result = original.distinct(['state', 'county'])
-            subjectData = CsvSource.from_result(result, ['state', 'county'])
-
-        """
-        if isinstance(columns, str):
-            columns = [columns]
-            values = ((x,) for x in result)
-        else:
-            values = result
-
-        if isinstance(result, ResultSet):
-            source =  cls.from_records(values, columns, in_memory)
-        elif isinstance(result, ResultMapping):
-            items = iter(result.items())
-            first_item = next(items)  # Get first item.
-            items = itertools.chain([first_item], items)  # Rebuild original.
-
-            first_k, first_v = first_item
-            if not _is_nscontainer(first_k):
-                items = (((k,), v) for k, v in items)
-            if not _is_nscontainer(first_v):
-                items = ((k, (v,)) for k, v in items)
-            items = (k + v for k, v in items)
-
-            kcols = result.key_names
-            if not _is_nscontainer(kcols):
-                kcols = [kcols]
-            combined = list(kcols) + list(columns)
-
-            source =  cls.from_records(items, combined, in_memory)
-        else:
-            raise TypeError('requires ResultSet or ResultMapping')
-
-        return source
-
-    @classmethod
-    def from_records(cls, data, columns=None, in_memory=False):
-        """Alternate constructor to load an existing collection of
-        records.  Loads *data* (an iterable of lists, tuples, or dicts)
-        into a new SQLite database with the given *columns*::
-
-            subjectData = datatest.SqliteSource.from_records(records, columns)
-
-        """
-        if not columns:
-            data = iter(data)
-            first_row = next(data)
-            if hasattr(first_row, 'keys'):  # Dict-like rows.
-                columns = tuple(first_row.keys())
-            elif hasattr(first_row, '_fields'):  # Namedtuple-like rows.
-                columns = first_row._fields
-            else:
-                msg = ('columns argument can only be omitted if data '
-                       'contains dict-rows or namedtuple-rows')
-                raise TypeError(msg)
-            data = itertools.chain([first_row], data)  # Rebuild original.
-
-        # Create database (an empty string denotes use of a temp file).
-        sqlite_path = ':memory:' if in_memory else ''
-        connection = sqlite3.connect(sqlite_path)
-
-        # Load data into table and return new instance.
-        table = 'main'
-        cls._load_table(connection, table, columns, data)
-        return cls(connection, table)
-
-    @classmethod
     def _load_table(cls, connection, table, columns, data):
         # Set isolation_level to None for proper transaction handling.
         _isolation_level = connection.isolation_level
@@ -477,7 +401,48 @@ class SqliteSource(BaseSource):
             raise ValueError('Duplicate values: ' + ', '.join(duplicates))
 
 
-class CsvSource(BaseSource):
+class SqliteSource(_SqliteSource):
+    """Loads *table* data from given SQLite *connection*:
+    ::
+
+        conn = sqlite3.connect('mydatabase.sqlite3')
+        subjectData = datatest.SqliteSource(conn, 'mytable')
+
+    """
+
+    @classmethod
+    def from_records(cls, data, columns=None, in_memory=False):
+        """Alternate constructor to load an existing collection of
+        records.  Loads *data* (an iterable of lists, tuples, or dicts)
+        into a new SQLite database with the given *columns*::
+
+            subjectData = datatest.SqliteSource.from_records(records, columns)
+
+        """
+        if not columns:
+            data = iter(data)
+            first_row = next(data)
+            if hasattr(first_row, 'keys'):  # Dict-like rows.
+                columns = tuple(first_row.keys())
+            elif hasattr(first_row, '_fields'):  # Namedtuple-like rows.
+                columns = first_row._fields
+            else:
+                msg = ('columns argument can only be omitted if data '
+                       'contains dict-rows or namedtuple-rows')
+                raise TypeError(msg)
+            data = itertools.chain([first_row], data)  # Rebuild original.
+
+        # Create database (an empty string denotes use of a temp file).
+        sqlite_path = ':memory:' if in_memory else ''
+        connection = sqlite3.connect(sqlite_path)
+
+        # Load data into table and return new instance.
+        table = 'main'
+        cls._load_table(connection, table, columns, data)
+        return cls(connection, table)
+
+
+class CsvSource(_SqliteSource):
     """Loads CSV data from *file* (path or file-like object):
     ::
 
@@ -496,22 +461,27 @@ class CsvSource(BaseSource):
             file = os.path.join(base_path, file)
             file = os.path.normpath(file)
 
+        # Create database (an empty string denotes use of a temp file).
+        sqlite_path = ':memory:' if in_memory else ''
+        connection = sqlite3.connect(sqlite_path)
+        table = 'main'
+
         # Populate database.
         if encoding:
             with _UnicodeCsvReader(file, encoding=encoding) as reader:
                 columns = next(reader)  # Header row.
-                self._source = SqliteSource.from_records(reader, columns)
+                self._load_table(connection, table, columns, reader)
 
         else:
             try:
                 with _UnicodeCsvReader(file, encoding='utf-8') as reader:
                     columns = next(reader)  # Header row.
-                    self._source = SqliteSource.from_records(reader, columns)
+                    self._load_table(connection, table, columns, reader)
 
             except UnicodeDecodeError:
                 with _UnicodeCsvReader(file, encoding='iso8859-1') as reader:
                     columns = next(reader)  # Header row.
-                    self._source = SqliteSource.from_records(reader, columns)
+                    self._load_table(connection, table, columns, reader)
 
                 try:
                     filename = os.path.basename(file)
@@ -522,28 +492,14 @@ class CsvSource(BaseSource):
                        'correct operation, please specify a text encoding.')
                 warnings.warn(msg.format(filename))
 
+        self._connection = connection
+        self._table = table
+
     def __repr__(self):
         """Return a string representation of the data source."""
         cls_name = self.__class__.__name__
         src_file = self._file_repr
         return '{0}({1})'.format(cls_name, src_file)
-
-    def columns(self):
-        """Return list of column names."""
-        return self._source.columns()
-
-    def __iter__(self):
-        """Return iterable of dictionary rows (like csv.DictReader)."""
-        return self._source.__iter__()
-
-    def sum(self, column, group_by=None, **filter_by):
-        return self._source.sum(column, group_by, **filter_by)
-
-    def count(self, group_by=None, **filter_by):
-        return self._source.count(group_by, **filter_by)
-
-    def distinct(self, column, **filter_by):
-        return self._source.distinct(column, **filter_by)
 
     def create_index(self, *columns):
         """Creating an index for certain columns can speed up data
@@ -553,7 +509,8 @@ class CsvSource(BaseSource):
         <datatest.SqliteSource.create_index>` for more details.
 
         """
-        self._source.create_index(*columns)
+        # Calling super() with older convention to support Python 2.7 & 2.6.
+        super(self.__class__, self).create_index(*columns)
 
 
 class MultiSource(BaseSource):
