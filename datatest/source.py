@@ -565,12 +565,12 @@ class MultiSource(BaseSource):
 
     def columns(self):
         """Return list of column names."""
-        columns = []
+        all_columns = []
         for source in self.__wrapped__:
-            for col in source.columns():
-                if col not in columns:
-                    columns.append(col)  # TODO: Look at improving order!
-        return columns
+            for c in source.columns():
+                if c not in all_columns:
+                    all_columns.append(c)
+        return all_columns
 
     @staticmethod
     def _filtered_call(source, method, *column, **filter_by):
