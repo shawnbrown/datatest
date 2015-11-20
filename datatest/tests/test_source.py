@@ -165,7 +165,7 @@ class TestBaseSource(unittest.TestCase):
         expected = {'x': '17 13', 'y': '20', 'z': '15'}
         self.assertEqual(expected, aggregate(concat, 'value', 'label2', label1='a'))
 
-        with self.assertRaises(KeyError):
+        with self.assertRaises(LookupError):
             result = aggregate(concat, 'value_x')
 
     def test_sum(self):
@@ -233,6 +233,14 @@ class TestBaseSource(unittest.TestCase):
         msg = 'Error should reference missing column.'
         with self.assertRaisesRegex(Exception, 'label3', msg=msg):
             result = distinct(['label1', 'label3'], label2='x')
+
+    def test_assert_columns_exist(self):
+        self.datasource._assert_columns_exist('label1')
+        self.datasource._assert_columns_exist(['label1'])
+        self.datasource._assert_columns_exist(['label1', 'label2'])
+
+        with self.assertRaisesRegex(LookupError, "'label_x' not in \w+Source"):
+            self.datasource._assert_columns_exist('label_x')
 
 
 class TestSqliteSource(TestBaseSource):

@@ -63,9 +63,10 @@ class BaseSource(object):
         """Return iterable of tuples containing distinct *column* values
         (uses slow ``__iter__``).
         """
+        if not _is_nscontainer(column):
+            column = (column,)
+        self._assert_columns_exist(column)
         iterable = self.__filter_by(**filter_by)  # Filtered rows only.
-        if isinstance(column, str):
-            column = [column]
         iterable = (tuple(row[c] for c in column) for row in iterable)
         return ResultSet(iterable)
 
@@ -90,18 +91,19 @@ class BaseSource(object):
         iterable and return a single summary value.
 
         """
-        iterable = self.__filter_by(**filter_by)
-
         if column:
+            self._assert_columns_exist(column)
             fn = lambda grp: function(row[column] for row in grp)
         else:
             fn = lambda grp: function(None for row in grp)
 
+        iterable = self.__filter_by(**filter_by)
+
         if group_by == None:
             return fn(iterable)  # <- EXIT!
 
-        if isinstance(group_by, str):
-            group_by = [group_by]
+        if not _is_nscontainer(group_by):
+            group_by = (group_by,)
 
         keyfn = lambda row: tuple(row[x] for x in group_by)
         iterable = sorted(iterable, key=keyfn)
@@ -118,6 +120,21 @@ class BaseSource(object):
         for row in self.__iter__():
             if all(row[k] in v for k, v in filter_by.items()):
                 yield row
+
+    def _assert_columns_exist(self, columns):
+        """Asserts that given columns are present in data source, raises
+        LookupError if columns are missing.
+
+        """
+        if not _is_nscontainer(columns):
+            columns = (columns,)
+        self_cols = self.columns()
+        is_missing = lambda col: col not in self_cols
+        missing = [c for c in columns if is_missing(c)]
+        if missing:
+            missing = ', '.join(repr(x) for x in missing)
+            msg = '{0} not in {1}'.format(missing, self.__repr__())
+            raise LookupError(msg)
 
 
 class _SqliteSource(BaseSource):
@@ -154,14 +171,9 @@ class _SqliteSource(BaseSource):
 
     def distinct(self, column, **filter_by):
         """Return iterable of tuples containing distinct *column* values."""
-        if isinstance(column, str):
-            column = [column]
-
-        all_cols = self.columns()
-        not_found = [x for x in column if x not in all_cols]
-        if not_found:
-            raise KeyError(not_found[0])
-
+        if not _is_nscontainer(column):
+            column = (column,)
+        self._assert_columns_exist(column)
         select_clause = [self._normalize_column(x) for x in column]
         select_clause = ', '.join(select_clause)
         select_clause = 'DISTINCT ' + select_clause
@@ -171,6 +183,7 @@ class _SqliteSource(BaseSource):
 
     def sum(self, column, group_by=None, **filter_by):
         """Returns sum of *column* grouped by *group_by* as ResultMapping."""
+        self._assert_columns_exist(column)
         column = self._normalize_column(column)
         sql_function = 'SUM({0})'.format(column)
         return self._sql_aggregate(sql_function, group_by, **filter_by)
@@ -188,8 +201,8 @@ class _SqliteSource(BaseSource):
             cursor = self._execute_query(self._table, sql_function, **filter_by)
             return cursor.fetchone()[0]  # <- EXIT!
 
-        if isinstance(group_by, str):
-            group_by = [group_by]
+        if not _is_nscontainer(group_by):
+            group_by = (group_by,)
         group_clause = [self._normalize_column(x) for x in group_by]
         group_clause = ', '.join(group_clause)
 
@@ -210,8 +223,7 @@ class _SqliteSource(BaseSource):
         normalize = self._normalize_column
 
         if column:
-            if column not in self.columns():
-                raise KeyError(column)
+            self._assert_columns_exist(column)
             select_clause = normalize(column)
             fn = lambda grp: function(row[0] for row in grp)
         else:
@@ -222,8 +234,8 @@ class _SqliteSource(BaseSource):
             cursor = self._execute_query(self._table, select_clause, **filter_by)
             return fn(cursor)  # <- EXIT!
 
-        if isinstance(group_by, str):
-            group_by = [group_by]
+        if not _is_nscontainer(group_by):
+            group_by = (group_by,)
 
         result = {}
         groups = self.distinct(group_by, **filter_by)
@@ -304,6 +316,8 @@ class _SqliteSource(BaseSource):
             subjectData.create_index('zipcode')
 
         """
+        self._assert_columns_exist(columns)
+
         # Build index name.
         whitelist = lambda col: ''.join(x for x in col if x.isalnum())
         idx_name = '_'.join(whitelist(col) for col in columns)
@@ -570,13 +584,10 @@ class MultiSource(BaseSource):
 
     def distinct(self, column, **filter_by):
         """Return iterable of tuples containing distinct *column* values."""
-        if isinstance(column, str):
-            column = [column]
+        if not _is_nscontainer(column):
+            column = (column,)
 
-        self_columns = self.columns()
-        for col in column:
-            if col not in self_columns:  # Must be in at least one sub-source.
-                raise KeyError(col)
+        self._assert_columns_exist(column)  # Must be in at least one sub-source.
 
         results = []
         for subsrc in self.__wrapped__:
@@ -613,8 +624,7 @@ class MultiSource(BaseSource):
 
     def sum(self, column, group_by=None, **filter_by):
         """Return sum of values in *column* grouped by *group_by*."""
-        if column not in self.columns():
-            raise KeyError(column)
+        self._assert_columns_exist(column)
 
         if group_by is None:
             total = 0
@@ -626,8 +636,8 @@ class MultiSource(BaseSource):
                         total = total + subsrc.sum(column, **subfltr)
             return total
         else:
-            if isinstance(group_by, str):
-                group_by = [group_by]
+            if not _is_nscontainer(group_by):
+                group_by = (group_by,)
 
             counter = Counter()
             for subsrc in self.__wrapped__:
@@ -658,8 +668,8 @@ class MultiSource(BaseSource):
         if list(orig_cols) == list(targ_cols):
             return result_obj  # If columns are same, return result unchanged.
 
-        if isinstance(orig_cols, str):
-            orig_cols = [orig_cols]
+        if not _is_nscontainer(orig_cols):
+            orig_cols = (orig_cols,)
 
         if not all(x in targ_cols for x in orig_cols):
             raise ValueError('Target columns must include all original columns.')
