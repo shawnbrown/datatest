@@ -413,8 +413,8 @@ class DataTestCase(TestCase):
             self.fail(msg=msg, diff=invalid)
 
     def acceptableDifference(self, diff, msg=None):
-        """Context manager to accept a given list of differences
-        without triggering a test failure::
+        """Context manager to accept given differences *diff* without
+        triggering a test failure::
 
             diff = [
                 ExtraItem('foo'),
@@ -425,6 +425,32 @@ class DataTestCase(TestCase):
 
         If the raised differences do not match *diff*, the test will
         fail with a DataAssertionError of the remaining differences.
+
+        In the above example, *diff* is a list of differences but it is also
+        possible to pass a single difference or a dictionary of differences.
+
+        Using a single difference::
+
+            with self.acceptableDifference(ExtraItem('foo')):
+                self.assertValueSet('column2')
+
+        When using a dictionary of differences, the keys are strings that
+        provide context (for future reference and derived reports) and the
+        values are the differences themselves::
+
+            diff = {
+                'Totals from state do not match totals from county.': [
+                    InvalidNumber(+436, 38032, town='Springfield'),
+                    InvalidNumber(-83, 8631, town='Union')
+                ],
+                'Some small towns were omitted from county report.': [
+                    InvalidNumber(-102, 102, town='Anderson'),
+                    InvalidNumber(-177, 177, town='Westfield')
+                ]
+            }
+            with self.acceptableDifference(diff):
+                self.assertValueSum('population', ['town'])
+
         """
         return _AcceptableDifference(diff, self, msg)
 
