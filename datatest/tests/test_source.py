@@ -123,7 +123,7 @@ class TestBaseSource(unittest.TestCase):
 
         # Filter by multiple columns (where label1 is 'a', label2 is 'x' OR 'y').
         results = self.datasource._BaseSource__filter_by(label1='a',
-                                                             label2=['x', 'y'])
+                                                         label2=['x', 'y'])
         results = list(results)
         expected = [
             {'label1': 'a', 'label2': 'x', 'value': '17'},
@@ -136,37 +136,50 @@ class TestBaseSource(unittest.TestCase):
         header = self.datasource.columns()
         self.assertEqual(header, ['label1', 'label2', 'value'])
 
-    def test_aggregate(self):
-        aggregate = self.datasource.aggregate
-        concat = lambda iterable: ' '.join(str(x) for x in iterable)
+    def test_reduce(self):
+        reduce = self.datasource.reduce
 
-        expected = '17 13 20 15 5 40 25'
-        self.assertEqual(expected, aggregate(concat, 'value'))
+        def maximum(x, y):
+            vals = tuple(float(a) for a in (x, y) if a)
+            if vals:
+                return max(vals)
+            return None
 
-        expected = 'None None None None None None None'
-        self.assertEqual(expected, aggregate(concat))  # No column specified.
+        # No group_by.
+        msg = 'when group_by is omitted, should return raw result not a ResultMapping'
+        self.assertEqual(40.0, reduce(maximum, 'value'), msg=msg)
 
-        expected = {'a': '17 13 20 15', 'b': '5 40 25'}
-        self.assertEqual(expected, aggregate(concat, 'value', 'label1'))
+        # No group_by, no column.
+        msg = 'when no row is provided, function receives None value for each row'
+        self.assertEqual(None, reduce(maximum), msg=msg)
 
-        expected = {('a',): '17 13 20 15', ('b',): '5 40 25'}
-        self.assertEqual(expected, aggregate(concat, 'value', ['label1']))
+        # No group_by, no column (using count).
+        count = lambda x, y: x + 1
+        self.assertEqual(7, reduce(count, initializer=0))
 
+        # Single group_by column.
+        expected = {'a': 20.0, 'b': 40.0}
+        self.assertEqual(expected, reduce(maximum, 'value', 'label1'))
+        self.assertEqual(expected, reduce(maximum, 'value', ['label1']))  # 1-item container
+
+        # Two group_by columns.
         expected = {
-            ('a', 'x'): '17 13',
-            ('a', 'y'): '20',
-            ('a', 'z'): '15',
-            ('b', 'z'): '5',
-            ('b', 'y'): '40',
-            ('b', 'x'): '25',
+            ('a', 'x'): 17.0,
+            ('a', 'y'): 20.0,
+            ('a', 'z'): 15.0,
+            ('b', 'z'):  5.0,
+            ('b', 'y'): 40.0,
+            ('b', 'x'): 25.0,
         }
-        self.assertEqual(expected, aggregate(concat, 'value', ['label1', 'label2']))
+        self.assertEqual(expected, reduce(maximum, 'value', ['label1', 'label2']))
 
-        expected = {'x': '17 13', 'y': '20', 'z': '15'}
-        self.assertEqual(expected, aggregate(concat, 'value', 'label2', label1='a'))
+        # Group by with filter.
+        expected = {'x': 17.0, 'y': 20.0, 'z': 15.0}
+        self.assertEqual(expected, reduce(maximum, 'value', 'label2', label1='a'))
 
+        # Attempt to reduce column that does not exist.
         with self.assertRaises(LookupError):
-            result = aggregate(concat, 'value_x')
+            result = reduce(maximum, 'value_x')
 
     def test_sum(self):
         sum = self.datasource.sum

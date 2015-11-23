@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import functools
 import inspect
 import os
 import sqlite3
@@ -27,7 +28,7 @@ class BaseSource(object):
     created by subclassing BaseSource and implementing ``__init__()``,
     ``__repr__()``, ``__iter__()``, and ``columns()``.  Optionally,
     performance can be improved by implementing ``distinct()``,
-    ``sum()``, ``count()``, and ``aggregate()``.
+    ``sum()``, ``count()``, and ``reduce()``.
 
     """
 
@@ -72,44 +73,48 @@ class BaseSource(object):
 
     def sum(self, column, group_by=None, **filter_by):
         """Returns sum of *column* grouped by *group_by* as ResultMapping
-        (uses ``aggregate`` method).
+        (uses ``reduce`` method).
         """
-        fn = lambda iterable: sum(Decimal(x) for x in iterable if x)
-        return self.aggregate(fn, column, group_by, **filter_by)
+        fn = lambda x, y: x + (Decimal(y) if y else 0)
+        return self.reduce(fn, column, group_by, initializer=0, **filter_by)
 
     def count(self, group_by=None, **filter_by):
         """Returns count of *column* grouped by *group_by* as ResultMapping
-        (uses ``aggregate`` method).
+        (uses ``reduce`` method).
         """
-        fn = lambda iterable: sum(1 for x in iterable)
-        return self.aggregate(fn, column=None, group_by=group_by, **filter_by)
+        fn = lambda x, y: x + 1  # Value of *y* is ignored.
+        return self.reduce(fn, None, group_by, initializer=0, **filter_by)
 
-    def aggregate(self, function, column=None, group_by=None, **filter_by):
-        """Aggregates values in the given *column* (uses slow ``__iter__``).
-        If group_by is omitted, the result is returned as-is, otherwise
-        returns a ResultMapping object.  The *function* should take an
-        iterable and return a single summary value.
+    def reduce(self, function, column=None, group_by=None, initializer=None, **filter_by):
+        """Apply *function* of two arguments cumulatively to the items of
+        *column*, from left to right, so as to reduce the iterable to a single
+        value (uses slow ``__iter__``).  If *group_by* is omitted, the raw
+        result is returned, otherwise returns a ResultMapping object.
 
         """
         if column:
             self._assert_columns_exist(column)
-            fn = lambda grp: function(row[column] for row in grp)
+            getval = lambda row: row[column]
         else:
-            fn = lambda grp: function(None for row in grp)
+            getval = lambda row: None
 
-        iterable = self.__filter_by(**filter_by)
+        iterable = self.__filter_by(**filter_by)  # Uses slow __iter__().
 
-        if group_by == None:
-            return fn(iterable)  # <- EXIT!
+        if not group_by:
+            vals = (getval(row) for row in iterable)
+            return functools.reduce(function, vals, initializer)  # <- EXIT!
 
         if not _is_nscontainer(group_by):
             group_by = (group_by,)
 
-        keyfn = lambda row: tuple(row[x] for x in group_by)
-        iterable = sorted(iterable, key=keyfn)
-        iterable = itertools.groupby(iterable, keyfn)
-        iterable = ((k, fn(g)) for k, g in iterable)
-        return ResultMapping(iterable, group_by)
+        result = {}                                # Do not remove this loop
+        for row in iterable:                       # without a good reason!
+            key = tuple(row[x] for x in group_by)  # Accumulating with a dict
+            x = result.get(key, initializer)       # is more memory efficient
+            y = getval(row)                        # than using sorted() plus
+            result[key] = function(x, y)           # itertools.groupby() plus
+                                                   # functools.reduce().
+        return ResultMapping(result, group_by)
 
     def __filter_by(self, **filter_by):
         """Filter data by keywords, returns iterable.  E.g., where
@@ -213,6 +218,7 @@ class _SqliteSource(BaseSource):
         iterable = ((row[:-1], row[-1]) for row in cursor)
         return ResultMapping(iterable, group_by)
 
+    # TODO: Remove aggregate() method, add reduce() method.
     def aggregate(self, function, column=None, group_by=None, **filter_by):
         """Aggregates values in the given *column*.  If group_by is omitted,
         the result is returned as-is, otherwise returns a ResultMapping
