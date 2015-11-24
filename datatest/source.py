@@ -218,38 +218,47 @@ class _SqliteSource(BaseSource):
         iterable = ((row[:-1], row[-1]) for row in cursor)
         return ResultMapping(iterable, group_by)
 
-    # TODO: Remove aggregate() method, add reduce() method.
-    def aggregate(self, function, column=None, group_by=None, **filter_by):
-        """Aggregates values in the given *column*.  If group_by is omitted,
-        the result is returned as-is, otherwise returns a ResultMapping
-        object.  The *function* should take an iterable and return a single
-        summary value.
+    def reduce(self, function, column=None, group_by=None, initializer=None, **filter_by):
+        """Apply *function* of two arguments cumulatively to the items of
+        *column*, from left to right, so as to reduce the iterable to a single
+        value.  If *group_by* is omitted, the raw result is returned,
+        otherwise returns a ResultMapping object.
 
         """
-        normalize = self._normalize_column
+        _unpack = lambda cur: (x[0] for x in cur)  # 1st column in select stmnt.
+        _reduce = lambda cur: functools.reduce(function, _unpack(cur), initializer)
 
         if column:
             self._assert_columns_exist(column)
-            select_clause = normalize(column)
-            fn = lambda grp: function(row[0] for row in grp)
+            select = self._normalize_column(column)
         else:
-            select_clause = 'NULL'
-            fn = lambda grp: function(None for row in grp)
+            select = 'NULL'
 
-        if group_by == None:
-            cursor = self._execute_query(self._table, select_clause, **filter_by)
-            return fn(cursor)  # <- EXIT!
+        if not group_by:
+            cursor = self._execute_query(self._table, select, **filter_by)
+            return _reduce(cursor)  # <- EXIT!
 
         if not _is_nscontainer(group_by):
             group_by = (group_by,)
 
-        result = {}
-        groups = self.distinct(group_by, **filter_by)
-        for group in groups:
-            subfilter_by = dict(zip(group_by, group))
-            subfilter_by.update(filter_by)
-            cursor = self._execute_query(self._table, select_clause, **subfilter_by)
-            result[group] = fn(cursor)
+        group_clause = tuple(self._normalize_column(x) for x in group_by)
+        group_clause = ', '.join(group_clause)
+        select = '{0}, {1}'.format(select, group_clause)
+        order_by = 'ORDER BY {0}'.format(group_clause)
+        cursor = self._execute_query(self._table, select, order_by, **filter_by)
+
+        grouped = itertools.groupby(cursor, key=lambda row: row[1:])
+        result = ((key, _reduce(vals)) for key, vals in grouped)
+
+        # TODO: Check to see which is faster with lots of groups.
+        #result = {}
+        #groups = self.distinct(group_by, **filter_by)
+        #for group in groups:
+        #    subfilter_by = dict(zip(group_by, group))
+        #    subfilter_by.update(filter_by)
+        #    cursor = self._execute_query(self._table, select, **subfilter_by)
+        #    result[group] = _reduce(cursor)
+
         return ResultMapping(result, group_by)
 
     def _execute_query(self, table, select_clause, trailing_clause=None, **filter_by):
