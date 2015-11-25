@@ -140,22 +140,32 @@ class TestBaseSource(unittest.TestCase):
         reduce = self.datasource.reduce
 
         def maximum(x, y):
-            vals = tuple(float(a) for a in (x, y) if a)
-            if vals:
-                return max(vals)
-            return None
+            try:
+                y = float(y)
+            except TypeError:
+                return x
+
+            try:
+                return max(x, y)
+            except TypeError:
+                return y
 
         # No group_by.
         msg = 'when group_by is omitted, should return raw result not a ResultMapping'
         self.assertEqual(40.0, reduce(maximum, 'value'), msg=msg)
 
-        # No group_by, no column.
-        msg = 'when no row is provided, function receives None value for each row'
-        self.assertEqual(None, reduce(maximum), msg=msg)
+        # Callable.
+        column = lambda row: row['value']
+        self.assertEqual(40.0, reduce(maximum, column), msg=msg)
 
-        # No group_by, no column (using count).
-        count = lambda x, y: x + 1
-        self.assertEqual(7, reduce(count, initializer=0))
+        # No group_by, missing column.
+        with self.assertRaises(TypeError):
+            self.assertEqual(None, reduce(maximum))
+
+        # No group_by, callable-column (reimplements count).
+        function = lambda x, y: x + y
+        column = lambda row: 1
+        self.assertEqual(7, reduce(function, column, initializer=0))
 
         # Single group_by column.
         expected = {'a': 20.0, 'b': 40.0}
@@ -602,6 +612,23 @@ class TestMultiSource(TestBaseSource):
 
         expected = {'a': 1}
         self.assertEqual(expected, source.sum('value', 'label1', label2='x'))
+
+    def test_count_heterogeneous_columns(self):
+        testdata1 = [['a', 'x', '2'],
+                     ['a', 'y', '2']]
+        src1 = MinimalSource(testdata1, ['label1', 'label2', 'value'])
+
+        testdata2 = [['a', '5', '2'],
+                     ['b', '5', '2'],
+                     ['b', '5', '2']]
+        src2 = MinimalSource(testdata2, ['label1', 'altval', 'value'])
+        source = MultiSource(src1, src2)
+
+        expected = {'a': 3, 'b': 2}
+        self.assertEqual(expected, source.count('label1'))
+
+        expected = {'a': 1}
+        self.assertEqual(expected, source.count('label1', label2='x'))
 
 
 class TestMixedMultiSource(TestBaseSource):
