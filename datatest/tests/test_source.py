@@ -205,6 +205,30 @@ class TestBaseSource(unittest.TestCase):
         expected = {'x': 30, 'y': 20, 'z': 15}
         self.assertEqual(expected, sum('value', 'label2', label1='a'))
 
+    def test_count(self):
+        count = self.datasource.count
+
+        self.assertEqual(7, count())
+
+        expected = {'a': 4, 'b': 3}
+        self.assertEqual(expected, count('label1'))
+
+        expected = {('a',): 4, ('b',): 3}
+        self.assertEqual(expected, count(['label1']))
+
+        expected = {
+            ('a', 'x'): 2,
+            ('a', 'y'): 1,
+            ('a', 'z'): 1,
+            ('b', 'z'): 1,
+            ('b', 'y'): 1,
+            ('b', 'x'): 1,
+        }
+        self.assertEqual(expected, count(['label1', 'label2']))
+
+        expected = {'x': 2, 'y': 1, 'z': 1}
+        self.assertEqual(expected, count('label2', label1='a'))
+
     def test_distinct(self):
         distinct = self.datasource.distinct
 
