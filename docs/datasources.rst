@@ -95,11 +95,14 @@ also possible to call them directly:
     Returns count of rows grouped by *group_by* as ResultMapping.
 
 
-.. py:method:: aggregate(function, column, group_by=None, **filter_by)
+.. py:method:: reduce(function, column, group_by=None, initializer=None, **filter_by)
 
-    Aggregates values in the given *column*.  If *group_by* is omitted, the
-    result is returned as-is, otherwise returns a ResultMapping object.  The
-    *function* should take an iterable and return a single summary value.
+    Apply *function* of two arguments cumulatively to the values in *column*,
+    from left to right, so as to reduce the iterable to a single value.  If
+    *column* is a string, the values are passed to *function* unchanged.  But
+    if *column* is, itself, a function, it should accept a single dict-row and
+    return a single value.  If *group_by* is omitted, the raw result is
+    returned, otherwise returns a ResultMapping object.
 
 
 *******************
@@ -110,23 +113,11 @@ If you need to test data in a format that's not currently supported,
 you can make your own custom data source.  You do this by subclassing
 :class:`BaseSource` and implementing the basic, common methods.
 
-As a starting point, you can use one of the following templates:
-
-+-------------------------------+------------------------------------------+
-| Template File                 | Used for...                              |
-+===============================+==========================================+
-| :download:`native_template.py | Formats with fast, built-in access to    |
-| <_static/template.py>`        | stored data (e.g., SQL, pandas, etc.)    |
-+-------------------------------+------------------------------------------+
-| :download:`loader_template.py | Storage formats with no fast access to   |
-| <_static/template.py>`        | data (internally reuses SqliteSource     |
-|                               | for faster performance).                 |
-+-------------------------------+------------------------------------------+
-
-|
+As a starting point you can use this :download:`template.py
+<_static/template.py>` file to write and test your custom data source.
 
 .. autoclass:: datatest.BaseSource
-    :members: __init__, __repr__, __iter__, columns, distinct, sum, count, aggregate
+    :members: __init__, __repr__, __iter__, columns, distinct, sum, count, reduce
 
 
 *******************
