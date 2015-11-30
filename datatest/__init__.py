@@ -20,6 +20,7 @@ from .diff import NotProperSuperset
 from .sourceresult import ResultSet
 from .sourceresult import ResultMapping
 
+from .runner import required
 from .runner import DataTestRunner
 
 from .main import DataTestProgram
@@ -52,6 +53,7 @@ __all__ = [
     'InvalidNumber',
 
     # Test runner and command-line program.
+    'required',
     'DataTestRunner',
     'DataTestProgram',
     'main',

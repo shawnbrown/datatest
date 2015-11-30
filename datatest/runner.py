@@ -5,13 +5,27 @@ import re
 import sys
 import unittest
 import warnings
-from .case import DataAssertionError
 
+from ._functools import wraps
+from .case import DataAssertionError
 
 try:
     from unittest import TextTestResult
 except ImportError:
     from unittest import _TextTestResult as TextTestResult
+
+
+# @required: A decorator for test methods that must pass before subsequent
+# tests will run.  When a "required" test fails, DataTestRunner will
+# immediately stop (this behavior is similar to the "--failfast" command
+# line argument).
+def required(method):
+    """Mark the test as required.  If the test fails when ran, DataTestRunner
+    will stop.
+
+    """
+    method._required = True
+    return method
 
 
 class DataTestResult(TextTestResult):
@@ -21,13 +35,45 @@ class DataTestResult(TextTestResult):
     Used by DataTestRunner.
 
     """
+    def _stop_if_required(self, test):
+        """If an error or failure occurs on a "required" test, this method
+        stops the test runner and prevents subsequent tests from running.
+
+        Test methods are marked as "required" using the @required decorator.
+
+        """
+        test_method_name = getattr(test, '_testMethodName')
+        test_method = getattr(test, test_method_name)
+        is_required = getattr(test_method, '_required', False)  # <- Get _required property.
+        if is_required:
+            self.stop()  # <- sets "self.shouldStop = True"
+
+    def addError(self, test, err):
+        """Called when an error has occurred. 'err' is a tuple of values as
+        returned by sys.exc_info().
+        """
+        self._stop_if_required(test)
+        TextTestResult.addError(self, test, err)
+
     def addFailure(self, test, err):
+        """Called when an error has occurred. 'err' is a tuple of values as
+        returned by sys.exc_info().
+        """
+        self._stop_if_required(test)
+
         if err[0] == DataAssertionError:
             exctype, value, tb = err          # Unpack tuple.
             tb = HideInternalStackFrames(tb)  # Hide internal frames.
             value._verbose = self.showAll     # Set verbose flag (True/False).
             err = (exctype, value, tb)        # Repack tuple.
+
         TextTestResult.addFailure(self, test, err)
+
+    def addUnexpectedSuccess(self, test):
+        """Called when a test was expected to fail, but succeed."""
+        self._stop_if_required(test)
+        if hasattr(self, 'addUnexpectedSuccess'):
+            TextTestResult.addUnexpectedSuccess(self, test)
 
 
 class HideInternalStackFrames(object):
