@@ -15,17 +15,17 @@ except ImportError:
     from unittest import _TextTestResult as TextTestResult
 
 
-# @required: A decorator for test methods that must pass before subsequent
-# tests will run.  When a "required" test fails, DataTestRunner will
-# immediately stop (this behavior is similar to the "--failfast" command
+# @required: A decorator for test classes or methods that must pass before
+# subsequent tests will run.  When a "required" test fails, DataTestRunner
+# will immediately stop (this behavior is similar to the "--failfast" command
 # line argument).
-def required(method):
+def required(test_item):
     """Mark the test as required.  If the test fails when ran, DataTestRunner
     will stop.
 
     """
-    method._required = True
-    return method
+    test_item.__datatest_required__ = True
+    return test_item
 
 
 class DataTestResult(TextTestResult):
@@ -39,13 +39,19 @@ class DataTestResult(TextTestResult):
         """If an error or failure occurs on a "required" test, this method
         stops the test runner and prevents subsequent tests from running.
 
-        Test methods are marked as "required" using the @required decorator.
+        This method checks for a __datatest_required__ property in a test
+        class or test method--tests are marked as "required" using the
+        @required decorator.  If the property is found and is True, then
+        stop() is called to halt the test suite.
 
         """
-        test_method_name = getattr(test, '_testMethodName')
-        test_method = getattr(test, test_method_name)
-        is_required = getattr(test_method, '_required', False)  # <- Get _required property.
-        if is_required:
+        required_class = getattr(test, '__datatest_required__', False)
+        if not required_class:
+            test_method_name = getattr(test, '_testMethodName')
+            test_method = getattr(test, test_method_name)
+            required_method = getattr(test_method, '__datatest_required__', False)
+
+        if required_class or required_method:
             self.stop()  # <- sets "self.shouldStop = True"
 
     def addError(self, test, err):
