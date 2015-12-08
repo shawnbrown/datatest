@@ -109,7 +109,7 @@ class _AcceptableDifference(_AcceptableBaseContext):
             message = exc_value.msg
         else:
             diff = []
-            message = 'No error raised'
+            message = 'no error raised'
 
         diff = list(_walk_diff(diff))
         accepted = list(_walk_diff(self.accepted))
@@ -119,7 +119,7 @@ class _AcceptableDifference(_AcceptableBaseContext):
 
         accepted_not_found = [x for x in accepted if x not in diff]
         if accepted_not_found:
-            message = message + ', accepted difference not found'
+            message = 'Acceptable difference not found'
             return self._raiseFailure(message, accepted_not_found)  # <- EXIT!
 
         return True

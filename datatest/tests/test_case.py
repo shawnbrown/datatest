@@ -1072,7 +1072,7 @@ class TestAcceptableDifference(TestHelperCase):
                     _self.assertValueSum('value', ['label1'])  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = ("different 'value' sums, accepted difference not found:\n"
+        pattern = ("Acceptable difference not found:\n"
                    " InvalidNumber\(\+2, 65, label1=u?'a'\)")
         self.assertRegex(failure, pattern)
 
@@ -1089,7 +1089,7 @@ class TestAcceptableDifference(TestHelperCase):
                     _self.assertValueSum('value', ['label1'])  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = ("DataAssertionError: No error raised, accepted difference not found:\n"
+        pattern = ("DataAssertionError: Acceptable difference not found:\n"
                    " InvalidNumber\(\+2, 65, label1=u?'a'\)")
         self.assertRegex(failure, pattern)
 
@@ -1367,6 +1367,6 @@ class TestNestedAcceptBlocks(TestHelperCase):
                         _self.assertValueSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = ("DataAssertionError: No error raised, accepted difference not found:\n"
+        pattern = ("DataAssertionError: Acceptable difference not found:\n"
                    " InvalidNumber\(\+10, 999, label1=u?'a'\)")
         self.assertRegex(failure, pattern)
