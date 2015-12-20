@@ -138,6 +138,9 @@ class DataTestRunner(unittest.TextTestRunner):
     """
     resultclass = DataTestResult
 
+    def _makeResult(self):
+        return self.resultclass(self.stream, self.descriptions, self.verbosity)
+
     def run(self, test):
         """Run the given tests in order of line number from source file."""
         test = _sort_tests(test)  # Sort tests by line number.
