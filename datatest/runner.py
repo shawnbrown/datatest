@@ -170,6 +170,24 @@ class DataTestRunner(unittest.TextTestRunner):
         return unittest.TextTestRunner.run(self, test)
 
 
+# Fix stderr redirect behavior inherited from older versions of unittest (see
+# issue 10786 <http://bugs.python.org/issue10786>).
+if sys.version_info[:2] in [(3, 1), (2, 6)]:  # 3.1 and 2.6
+    def __init__(self, stream=None, descriptions=1, verbosity=1):
+        if stream is None:
+            stream = sys.stderr
+        unittest.TextTestRunner.__init__(self, stream, descriptions, verbosity)
+    DataTestRunner.__init__ = __init__
+elif sys.version_info[:2] == (2, 7):  # 2.7 only
+    def __init__(self, stream=None, descriptions=True, verbosity=1,
+                 failfast=False, buffer=False, resultclass=None):
+        if stream is None:
+            stream = sys.stderr
+        unittest.TextTestRunner.__init__(self, stream, descriptions, verbosity,
+                                failfast, buffer, resultclass)
+    DataTestRunner.__init__ = __init__
+
+
 def _sort_key(test):
     """Accepts test method, returns module name and line number."""
     method = getattr(test, test._testMethodName)
