@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import glob
 import os
+import shutil
 import sys
 import tempfile
 import textwrap
@@ -163,7 +164,7 @@ class TestDataTestProgram(unittest.TestCase):
         self.assertEqual(len(result.failures), 1)
 
 
-# Patch for setUpClass and tearDownClass on older versions of Python.
+# Patch for setUpClass and tearDownClass on older versions of unittest.
 try:
     unittest.TestCase.setUpClass  # New in 2.7, 3.1 and earlier.
 except AttributeError:
