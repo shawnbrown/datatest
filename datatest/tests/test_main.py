@@ -163,6 +163,85 @@ class TestDataTestProgram(unittest.TestCase):
         self.assertEqual(len(result.errors), 0)
         self.assertEqual(len(result.failures), 1)
 
+    def test_ignore_required_method(self):
+        source_code = """
+            import datatest
+
+            class TestA(datatest.DataTestCase):
+                def test_one(self):
+                    self.assertTrue(True)
+
+                @datatest.required  # <- "REQUIRED" DECORATOR
+                def test_two(self):
+                    self.assertTrue(False)  # <- TEST FAILURE!
+
+            class TestB(datatest.DataTestCase):
+                def test_three(self):
+                    self.assertTrue(True)
+
+        """
+        module = self.load_module(source_code)
+
+        # Test as __init__ argument.
+        with open(os.devnull, 'w') as devnul:
+            with redirect_stderr(devnul):
+                program = DataTestProgram(module=module, ignore=True, exit=False, argv=[''])
+
+        result = program.result
+        self.assertEqual(result.testsRun, 3)  # <- requirement of "test_two" is ignored
+        self.assertEqual(len(result.errors), 0)
+        self.assertEqual(len(result.failures), 1)
+
+        # Test as command line argument (argv).
+        #with open(os.devnull, 'w') as devnul:
+        #    with redirect_stderr(devnul):
+        #        program = DataTestProgram(module=module, exit=False, argv=['-i'])
+        #
+        #result = program.result
+        #self.assertEqual(result.testsRun, 3)  # <- requirement of "test_two" is ignored
+        #self.assertEqual(len(result.errors), 0)
+        #self.assertEqual(len(result.failures), 1)
+
+
+    def test_ignore_required_class(self):
+        source_code = """
+            import datatest
+
+            @datatest.required  # <- "REQUIRED" DECORATOR
+            class TestA(datatest.DataTestCase):
+                def test_one(self):
+                    self.assertTrue(True)
+
+                def test_two(self):
+                    self.assertTrue(False)  # <- TEST FAILURE!
+
+            class TestB(datatest.DataTestCase):
+                def test_three(self):
+                    self.assertTrue(True)
+
+        """
+        module = self.load_module(source_code)
+
+        # Test as __init__ argument.
+        with open(os.devnull, 'w') as devnul:
+            with redirect_stderr(devnul):
+                program = DataTestProgram(module=module, ignore=True, exit=False, argv=[''])
+
+        result = program.result
+        self.assertEqual(result.testsRun, 3)  # <- requirement of "test_two" is ignored
+        self.assertEqual(len(result.errors), 0)
+        self.assertEqual(len(result.failures), 1)
+
+        # Test as command line argument (argv).
+        #with open(os.devnull, 'w') as devnul:
+        #    with redirect_stderr(devnul):
+        #        program = DataTestProgram(module=module, exit=False, argv=['-i'])
+        #
+        #result = program.result
+        #self.assertEqual(result.testsRun, 3)  # <- requirement of "test_two" is ignored
+        #self.assertEqual(len(result.errors), 0)
+        #self.assertEqual(len(result.failures), 1)
+
 
 # Patch for setUpClass and tearDownClass on older versions of unittest.
 try:

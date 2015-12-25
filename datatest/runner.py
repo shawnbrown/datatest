@@ -35,6 +35,10 @@ class DataTestResult(TextTestResult):
     Used by DataTestRunner.
 
     """
+    def __init__(self, stream=None, descriptions=None, verbosity=None, ignore=False):
+        self.ignore = ignore
+        TextTestResult.__init__(self, stream, descriptions, verbosity)
+
     def _stop_if_required(self, test):
         """If an error or failure occurs on a "required" test, this method
         stops the test runner and prevents subsequent tests from running.
@@ -45,6 +49,9 @@ class DataTestResult(TextTestResult):
         stop() is called to halt the test suite.
 
         """
+        if self.ignore:
+            return  # <- If we're ignoring the 'required' flag, then EXIT!
+
         required_class = getattr(test, '__datatest_required__', False)
         if not required_class:
             test_method_name = getattr(test, '_testMethodName')
@@ -138,8 +145,22 @@ class DataTestRunner(unittest.TextTestRunner):
     """
     resultclass = DataTestResult
 
+    def __init__(self, stream=None, descriptions=True, verbosity=1,
+                 failfast=False, buffer=False, resultclass=None, ignore=False):
+        if stream is None:
+            stream = sys.stderr
+        self.ignore = ignore
+        unittest.TextTestRunner.__init__(self,
+                                         stream=stream,
+                                         descriptions=descriptions,
+                                         verbosity=verbosity,
+                                         failfast=failfast,
+                                         buffer=buffer,
+                                         resultclass=resultclass)
+
     def _makeResult(self):
-        return self.resultclass(self.stream, self.descriptions, self.verbosity)
+        return self.resultclass(self.stream, self.descriptions, self.verbosity, self.ignore)
+        #return self.resultclass(self.stream, self.descriptions, self.verbosity)
 
     def run(self, test):
         """Run the given tests in order of line number from source file."""
@@ -173,18 +194,14 @@ class DataTestRunner(unittest.TextTestRunner):
 # Fix stderr redirect behavior inherited from older versions of unittest (see
 # issue 10786 <http://bugs.python.org/issue10786>).
 if sys.version_info[:2] in [(3, 1), (2, 6)]:  # 3.1 and 2.6
-    def __init__(self, stream=None, descriptions=1, verbosity=1):
+    def __init__(self, stream=None, descriptions=1, verbosity=1, ignore=False):
         if stream is None:
             stream = sys.stderr
-        unittest.TextTestRunner.__init__(self, stream, descriptions, verbosity)
-    DataTestRunner.__init__ = __init__
-elif sys.version_info[:2] == (2, 7):  # 2.7 only
-    def __init__(self, stream=None, descriptions=True, verbosity=1,
-                 failfast=False, buffer=False, resultclass=None):
-        if stream is None:
-            stream = sys.stderr
-        unittest.TextTestRunner.__init__(self, stream, descriptions, verbosity,
-                                failfast, buffer, resultclass)
+        self.ignore = ignore
+        unittest.TextTestRunner.__init__(self,
+                                         stream=stream,
+                                         descriptions=descriptions,
+                                         verbosity=verbosity)
     DataTestRunner.__init__ = __init__
 
 
