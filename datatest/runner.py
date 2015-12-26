@@ -40,8 +40,8 @@ class DataTestResult(TextTestResult):
         TextTestResult.__init__(self, stream, descriptions, verbosity)
 
     def _stop_if_required(self, test):
-        """If an error or failure occurs on a "required" test, this method
-        stops the test runner and prevents subsequent tests from running.
+        """Stop test runner if the given *test* is required or is a member of
+        a class that is required.
 
         This method checks for a __datatest_required__ property in a test
         class or test method--tests are marked as "required" using the
