@@ -11,36 +11,6 @@ users should be familiar with Python's standard
 the data they want to audit.
 
 
-Command-Line Interface
-======================
-
-The datatest module can be used from the command line just like
-unittest. To run the program with :ref:`test discovery <test-discovery>`,
-use the following command::
-
-    python -m datatest
-
-Run tests from specific modules, classes, or individual methods with::
-
-    python -m datatest test_module1 test_module2
-    python -m datatest test_module.TestClass
-    python -m datatest test_module.TestClass.test_method
-
-The syntax and command-line options (``-f``, ``-v``, etc.) are the same
-as unittest---see the
-`unittest documentation <http://docs.python.org/library/unittest.html#command-line-interface>`_
-for full details.
-
-.. _test-discovery:
-.. note::
-
-    The **test discovery** process searches for tests in the current
-    directory (including package folders and sub-package folders) or in
-    a specified directory.  To learn more, see the unittest
-    documentation on `Test Discovery
-    <https://docs.python.org/3/library/unittest.html#test-discovery>`_.
-
-
 Basic Example
 =============
 
@@ -99,14 +69,23 @@ The following script implements these tests::
         datatest.main()
 
 
-The data we want to test---the subject of our tests---is stored in
-a property named ``subjectData``.  This property is referenced,
-internally, by the ``assertValue...()`` and ``assertColumn...()``
-methods.
+.. note::
 
-``subjectData`` is typically defined at the module-level inside a ``setUpModule()``
-function---as shown in the previous example.  However, if it is only
-referenced within a single class, then defining it inside a
+    This example uses a :class:`CsvSource <datatest.CsvSource>` to access data
+    from a CSV file.  Other data sources can access data in a variety of
+    formats (Excel, pandas, SQL, etc.).
+
+
+Subject Data
+============
+
+The data we want to test---the *subject* of our tests---is stored in a
+property named ``subjectData``.  This property is accessed, internally, by
+the ``assertValue...()`` and ``assertColumn...()`` methods.
+
+``subjectData`` is typically defined at the module-level inside a
+``setUpModule()`` function---as shown in the first example.  However, if
+it is only referenced within a single class, then defining it inside a
 ``setUpClass()`` method is also acceptable::
 
     import datatest
@@ -121,15 +100,8 @@ referenced within a single class, then defining it inside a
             ...
 
 
-.. note::
-
-    These examples use a :class:`CsvSource <datatest.CsvSource>`
-    to access data from a CSV file.  Other data sources can access data
-    in a variety of formats (Excel, pandas, SQL, etc.).
-
-
-Using Reference Data
-====================
+Reference Data
+==============
 
 Datatest also supports the use of reference data from external sources
 (files or databases).  While the tests in our first example include
@@ -260,3 +232,33 @@ or :meth:`acceptablePercentTolerance
     def test_households(self):
         with self.acceptableTolerance(25):
             self.assertValueCount('population', ['county'])
+
+
+Command-Line Interface
+======================
+
+The datatest module can be used from the command line just like
+unittest. To run the program with :ref:`test discovery <test-discovery>`,
+use the following command::
+
+    python -m datatest
+
+Run tests from specific modules, classes, or individual methods with::
+
+    python -m datatest test_module1 test_module2
+    python -m datatest test_module.TestClass
+    python -m datatest test_module.TestClass.test_method
+
+The syntax and command-line options (``-f``, ``-v``, etc.) are the same
+as unittest---see the
+`unittest documentation <http://docs.python.org/library/unittest.html#command-line-interface>`_
+for full details.
+
+.. _test-discovery:
+.. note::
+
+    The **test discovery** process searches for tests in the current
+    directory (including package folders and sub-package folders) or in
+    a specified directory.  To learn more, see the unittest
+    documentation on `Test Discovery
+    <https://docs.python.org/3/library/unittest.html#test-discovery>`_.
