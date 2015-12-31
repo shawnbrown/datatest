@@ -39,9 +39,9 @@ class DataTestResult(TextTestResult):
         self.ignore = ignore
         TextTestResult.__init__(self, stream, descriptions, verbosity)
 
-    def _stop_if_required(self, test):
-        """Stop test runner if the given *test* is required or is a member of
-        a class that is required.
+    def _is_required(self, test):
+        """Return True if a given *test* is required or is a member of a class
+        that is required.
 
         This method checks for a __datatest_required__ property in a test
         class or test method--tests are marked as "required" using the
@@ -50,7 +50,7 @@ class DataTestResult(TextTestResult):
 
         """
         if self.ignore:
-            return  # <- If we're ignoring the 'required' flag, then EXIT!
+            return False  # <- If we're ignoring the 'required' flag, then EXIT!
 
         required_class = getattr(test, '__datatest_required__', False)
         if not required_class:
@@ -58,35 +58,47 @@ class DataTestResult(TextTestResult):
             test_method = getattr(test, test_method_name)
             required_method = getattr(test_method, '__datatest_required__', False)
 
-        if required_class or required_method:
-            self.stop()  # <- sets "self.shouldStop = True"
+        return required_class or required_method
+
+    def _add_required_message(self, err):
+        """Add 'Stopping Early' message to error value.'"""
+        exctype, value, tb = err
+        value.args = ('Required Test Failed, Stopping Early',) + value.args
+        return (exctype, value, tb)
 
     def addError(self, test, err):
         """Called when an error has occurred. 'err' is a tuple of values as
         returned by sys.exc_info().
         """
-        self._stop_if_required(test)
+        if not self._is_required(test):
+            err = self._add_required_message(err)
+            self.stop()  # <- sets "self.shouldStop = True
+
         TextTestResult.addError(self, test, err)
 
     def addFailure(self, test, err):
         """Called when an error has occurred. 'err' is a tuple of values as
         returned by sys.exc_info().
         """
-        self._stop_if_required(test)
-
         if err[0] == DataAssertionError:
             exctype, value, tb = err          # Unpack tuple.
             tb = HideInternalStackFrames(tb)  # Hide internal frames.
             value._verbose = self.showAll     # Set verbose flag (True/False).
             err = (exctype, value, tb)        # Repack tuple.
 
+        if self._is_required(test):
+            err = self._add_required_message(err)
+            self.stop()  # <- sets "self.shouldStop = True
+
         TextTestResult.addFailure(self, test, err)
 
     def addUnexpectedSuccess(self, test):
         """Called when a test was expected to fail, but succeed."""
-        self._stop_if_required(test)
         if hasattr(self, 'addUnexpectedSuccess'):
             TextTestResult.addUnexpectedSuccess(self, test)
+
+            if self._is_required(test):
+                self.stop()  # <- sets "self.shouldStop = True
 
 
 class HideInternalStackFrames(object):

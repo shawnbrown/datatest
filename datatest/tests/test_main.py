@@ -134,6 +134,7 @@ class TestDataTestProgram(unittest.TestCase):
         self.assertEqual(result.testsRun, 2)  # <- Should stop early, "test_two" is required.
         self.assertEqual(len(result.errors), 0)
         self.assertEqual(len(result.failures), 1)
+        self.assertRegex(result.failures[0][1], 'Required Test Failed, Stopping Early')
 
     def test_required_class(self):
         source_code = """
@@ -162,6 +163,7 @@ class TestDataTestProgram(unittest.TestCase):
         self.assertEqual(result.testsRun, 2)  # <- Should stop early, "test_two" is required.
         self.assertEqual(len(result.errors), 0)
         self.assertEqual(len(result.failures), 1)
+        self.assertRegex(result.failures[0][1], 'Required Test Failed, Stopping Early')
 
     def test_ignore_required_method(self):
         source_code = """
