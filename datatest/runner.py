@@ -203,8 +203,9 @@ class DataTestRunner(unittest.TextTestRunner):
         return unittest.TextTestRunner.run(self, test)
 
 
-# Fix stderr redirect behavior inherited from older versions of unittest (see
-# issue 10786 <http://bugs.python.org/issue10786>).
+# Replace __init__ with version that uses arguments appropriate for older
+# versions of unittest.  Also, fixes redirect behavior inherited from these
+# older versions (see issue 10786 <http://bugs.python.org/issue10786>).
 if sys.version_info[:2] in [(3, 1), (2, 6)]:  # 3.1 and 2.6
     def __init__(self, stream=None, descriptions=1, verbosity=1, ignore=False):
         if stream is None:
