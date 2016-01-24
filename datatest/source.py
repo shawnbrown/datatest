@@ -149,6 +149,172 @@ class BaseSource(object):
             raise LookupError(msg)
 
 
+# Custom data source template example:
+#
+#    class MyCustomSource(SqliteSource)
+#        def __init__(self, customsource):
+#            ...prepare data and columns from customsource...
+#            temptable = _TemporarySqliteTable(data, columns)
+#            self._tempsqlite = temptable
+#            SqliteSource.__init__(self, temptable.connection, temptable.name)
+
+
+class _TemporarySqliteTable(object):
+    """Creates a temporary SQLite table and inserts given data."""
+    __shared_connection = sqlite3.connect('')  # Default connection shared by instances.
+
+    def __init__(self, data, columns=None, connection=None):
+        """Initialize self."""
+        if not columns:
+            data = iter(data)
+            first_row = next(data)
+            if hasattr(first_row, 'keys'):  # Dict-like rows.
+                columns = first_row.keys()
+                columns = tuple(sorted(columns))
+            elif hasattr(first_row, '_fields'):  # Namedtuple-like rows.
+                columns = first_row._fields
+            else:
+                msg = ('columns argument can only be omitted if data '
+                       'contains dict-rows or namedtuple-rows')
+                raise TypeError(msg)
+            data = itertools.chain([first_row], data)  # Rebuild original.
+
+        if not connection:
+            connection = self.__shared_connection
+
+        # Create table and load data.
+        _isolation_level = connection.isolation_level  # <- Isolation_level gets
+        connection.isolation_level = None              #    None for transactions.
+        cursor = connection.cursor()
+        cursor.execute('PRAGMA synchronous=OFF')  # For faster loading.
+        cursor.execute('BEGIN TRANSACTION')
+        try:
+            existing_tables = self._get_existing_tables(cursor)
+            table = self._make_new_table(existing_tables)
+            statement = self._create_table_statement(table, columns)
+            cursor.execute(statement)
+            self._insert_data(cursor, table, data, columns)
+            connection.commit()  # COMMIT TRANSACTION
+
+        except Exception as e:
+            connection.rollback()  # ROLLBACK TRANSACTION
+            if isinstance(e, UnicodeDecodeError):
+                e.reason += '\n{0}'.format(statement)
+                raise e
+            raise e.__class__('{0}\n{1}'.format(e, statement))
+
+        finally:
+            # Restore original connection attributes.
+            connection.isolation_level = _isolation_level
+            cursor.execute('PRAGMA synchronous=ON')
+
+            # Assign class properties.
+            self._connection = connection
+            self._name = table
+            self._columns = columns
+
+    @property
+    def connection(self):
+        """Database connection in which temporary table exists."""
+        return self._connection
+
+    @property
+    def name(self):
+        """Name of temporary table."""
+        return self._name
+
+    @property
+    def columns(self):
+        """Column names used in temporary table."""
+        return self._columns
+
+    def drop(self):
+        """Drops temporary table from database."""
+        cursor = self.connection.cursor()
+        cursor.execute('DROP TABLE IF EXISTS ' + self.name)
+
+    @staticmethod
+    def _get_existing_tables(cursor):
+        """Takes sqlite3 *cursor*, returns existing temporary table names."""
+        #cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        cursor.execute("SELECT name FROM sqlite_temp_master WHERE type='table'")
+        return [x[0] for x in cursor]
+
+    @staticmethod
+    def _make_new_table(existing):
+        """Takes a list of *existing* table names and returns a new, unique
+        table name (tbl0, tbl1, tbl2, etc.)."""
+        prefix = 'tbl'
+        numbers = [x[len(prefix):] for x in existing if x.startswith(prefix)]
+        numbers = [int(x) for x in numbers if x.isdigit()]
+        if numbers:
+            table_num = max(numbers) + 1
+        else:
+            table_num = 0
+        return prefix + str(table_num)
+
+    @classmethod
+    def _create_table_statement(cls, table, columns):
+        """Return 'CREATE TEMPORARY TABLE' statement."""
+        cls._assert_unique(columns)
+        columns = [cls._normalize_column(x) for x in columns]
+        #return 'CREATE TABLE %s (%s)' % (table, ', '.join(columns))
+        return 'CREATE TEMPORARY TABLE %s (%s)' % (table, ', '.join(columns))
+
+    @classmethod
+    def _insert_data(cls, cursor, table, data, columns):
+        for row in data:  # Insert all rows.
+            if isinstance(row, dict):
+                row = tuple(row[x] for x in columns)
+            statement, params = cls._insert_into_statement(table, row)
+            try:
+                cursor.execute(statement, params)
+                #TODO!!!: Look at using execute_many() for faster loading.
+            except Exception as e:
+                exc_cls = e.__class__
+                msg = ('\n'
+                       '    row -> %s\n'
+                       '    sql -> %s\n'
+                       ' params -> %s') % (row, statement, params)
+                msg = str(e).strip() + msg
+                raise exc_cls(msg)
+
+    @staticmethod
+    def _insert_into_statement(table, row):
+        """Return 'INSERT INTO' statement."""
+        assert not isinstance(row, str), "row must be non-string container"
+        statement = 'INSERT INTO ' + table + ' VALUES (' + ', '.join(['?'] * len(row)) + ')'
+        parameters = row
+        return statement, parameters
+
+    @staticmethod
+    def _normalize_column(name):
+        """Normalize value for use as SQLite column name."""
+        name = name.strip()
+        name = name.replace('"', '""')  # Escape quotes.
+        if name == '':
+            name = '_empty_'
+        return '"' + name + '"'
+
+    @staticmethod
+    def _assert_unique(lst):
+        """Asserts that list of items is unique, raises Exception if not."""
+        values = []
+        duplicates = []
+        for x in lst:
+            if x in values:
+                if x not in duplicates:
+                    duplicates.append(x)
+            else:
+                values.append(x)
+
+        if duplicates:
+            raise ValueError('Duplicate values: ' + ', '.join(duplicates))
+
+
+# TODO!!!: Explore the idea of formalizing __filter_by functionality.
+
+
 class _SqliteSource(BaseSource):
     """Base class four SqliteSource and CsvSource (not intended to be
     instantiated directly.)
@@ -324,26 +490,8 @@ class _SqliteSource(BaseSource):
         """Creating an index for certain columns can speed up data
         testing in some cases.
 
-        Indexes should be added one-by-one to tune a test suite's
-        over-all performance.  Creating several indexes before testing
-        even begins could lead to worse performance so use them with
-        discretion.
-
-        For example:  If you're using "town" to group aggregation
-        tests (like ``self.assertValueSum('population', ['town'])``),
-        then you might be able to improve performance by adding an index
-        for the "town" column::
-
-            subjectData.create_index('town')
-
-        Using two or more columns creates a multi-column index::
-
-            subjectData.create_index('town', 'zipcode')
-
-        Calling the function multiple times will create multiple indexes::
-
-            subjectData.create_index('town')
-            subjectData.create_index('zipcode')
+        See :meth:`SqliteSource.create_index
+        <datatest.SqliteSource.create_index>` for more details.
 
         """
         self._assert_columns_exist(columns)
@@ -366,60 +514,6 @@ class _SqliteSource(BaseSource):
         cursor.execute('PRAGMA synchronous=OFF')
         cursor.execute(statement)
 
-    @classmethod
-    def _load_table(cls, connection, table, columns, data):
-        # Set isolation_level to None for proper transaction handling.
-        _isolation_level = connection.isolation_level
-        connection.isolation_level = None
-
-        cursor = connection.cursor()
-        cursor.execute('PRAGMA synchronous=OFF')  # For faster loading.
-        cursor.execute('BEGIN TRANSACTION')
-        try:
-            statement = cls._create_table_statement(table, columns)
-            cursor.execute(statement)
-
-            for row in data:  # Insert all rows.
-                if isinstance(row, dict):
-                    row = tuple(row[x] for x in columns)
-                statement, params = cls._insert_into_statement(table, row)
-                try:
-                    cursor.execute(statement, params)
-                except Exception as e:
-                    exc_cls = e.__class__
-                    msg = ('\n'
-                           '    row -> %s\n'
-                           '    sql -> %s\n'
-                           ' params -> %s') % (row, statement, params)
-                    msg = str(e).strip() + msg
-                    raise exc_cls(msg)
-            connection.commit()  # COMMIT TRANSACTION
-
-        except Exception as e:
-            connection.rollback()  # ROLLBACK TRANSACTION
-            if isinstance(e, UnicodeDecodeError):
-                e.reason += '\n{0}'.format(statement)
-                raise e
-            raise e.__class__('{0}\n{1}'.format(e, statement))
-
-        finally:
-            connection.isolation_level = _isolation_level  # Restore original.
-
-    @classmethod
-    def _create_table_statement(cls, table, columns):
-        """Return 'CREATE TABLE' statement."""
-        cls._assert_unique(columns)
-        columns = [cls._normalize_column(x) for x in columns]
-        return 'CREATE TABLE %s (%s)' % (table, ', '.join(columns))
-
-    @staticmethod
-    def _insert_into_statement(table, row):
-        """Return 'INSERT INTO' statement."""
-        assert not isinstance(row, str), "row must be non-string container"
-        statement = 'INSERT INTO ' + table + ' VALUES (' + ', '.join(['?'] * len(row)) + ')'
-        parameters = row
-        return statement, parameters
-
     @staticmethod
     def _normalize_column(name):
         """Normalize value for use as SQLite column name."""
@@ -428,21 +522,6 @@ class _SqliteSource(BaseSource):
         if name == '':
             name = '_empty_'
         return '"' + name + '"'
-
-    @staticmethod
-    def _assert_unique(lst):
-        """Asserts that list of items is unique, raises Exception if not."""
-        values = []
-        duplicates = []
-        for x in lst:
-            if x in values:
-                if x not in duplicates:
-                    duplicates.append(x)
-            else:
-                values.append(x)
-
-        if duplicates:
-            raise ValueError('Duplicate values: ' + ', '.join(duplicates))
 
 
 class SqliteSource(_SqliteSource):
@@ -453,9 +532,37 @@ class SqliteSource(_SqliteSource):
         subjectData = datatest.SqliteSource(conn, 'mytable')
 
     """
+    def create_index(self, *columns):
+        """Creating an index for certain columns can speed up data
+        testing in some cases.
+
+        Indexes should be added one-by-one to tune a test suite's
+        over-all performance.  Creating several indexes before testing
+        even begins could lead to worse performance so use them with
+        discretion.
+
+        For example:  If you're using "town" to group aggregation
+        tests (like ``self.assertValueSum('population', ['town'])``),
+        then you might be able to improve performance by adding an index
+        for the "town" column::
+
+            subjectData.create_index('town')
+
+        Using two or more columns creates a multi-column index::
+
+            subjectData.create_index('town', 'zipcode')
+
+        Calling the function multiple times will create multiple indexes::
+
+            subjectData.create_index('town')
+            subjectData.create_index('zipcode')
+
+        """
+        # Calling super() with older convention to support Python 2.7 & 2.6.
+        super(self.__class__, self).create_index(*columns)
 
     @classmethod
-    def from_records(cls, data, columns=None, in_memory=False):
+    def from_records(cls, data, columns=None):
         """Alternate constructor to load an existing collection of
         records.  Loads *data* (an iterable of lists, tuples, or dicts)
         into a new SQLite database with the given *columns*::
@@ -463,27 +570,8 @@ class SqliteSource(_SqliteSource):
             subjectData = datatest.SqliteSource.from_records(records, columns)
 
         """
-        if not columns:
-            data = iter(data)
-            first_row = next(data)
-            if hasattr(first_row, 'keys'):  # Dict-like rows.
-                columns = tuple(first_row.keys())
-            elif hasattr(first_row, '_fields'):  # Namedtuple-like rows.
-                columns = first_row._fields
-            else:
-                msg = ('columns argument can only be omitted if data '
-                       'contains dict-rows or namedtuple-rows')
-                raise TypeError(msg)
-            data = itertools.chain([first_row], data)  # Rebuild original.
-
-        # Create database (an empty string denotes use of a temp file).
-        sqlite_path = ':memory:' if in_memory else ''
-        connection = sqlite3.connect(sqlite_path)
-
-        # Load data into table and return new instance.
-        table = 'main'
-        cls._load_table(connection, table, columns, data)
-        return cls(connection, table)
+        temptable = _TemporarySqliteTable(data, columns)
+        return cls(temptable.connection, temptable.name)
 
 
 class CsvSource(_SqliteSource):
@@ -505,28 +593,23 @@ class CsvSource(_SqliteSource):
             file = os.path.join(base_path, file)
             file = os.path.normpath(file)
 
-        # Create database (an empty string denotes use of a temp file).
-        sqlite_path = ':memory:' if in_memory else ''
-        connection = sqlite3.connect(sqlite_path)
-        table = 'main'
-
-        # Populate database.
+        # Create temporary SQLite table object.
         if encoding:
             with _UnicodeCsvReader(file, encoding=encoding) as reader:
                 columns = next(reader)  # Header row.
-                self._load_table(connection, table, columns, reader)
-
+                temptable = _TemporarySqliteTable(reader, columns)
         else:
             try:
                 with _UnicodeCsvReader(file, encoding='utf-8') as reader:
                     columns = next(reader)  # Header row.
-                    self._load_table(connection, table, columns, reader)
+                    temptable = _TemporarySqliteTable(reader, columns)
 
             except UnicodeDecodeError:
                 with _UnicodeCsvReader(file, encoding='iso8859-1') as reader:
                     columns = next(reader)  # Header row.
-                    self._load_table(connection, table, columns, reader)
+                    temptable = _TemporarySqliteTable(reader, columns)
 
+                # Prepare message and raise as warning.
                 try:
                     filename = os.path.basename(file)
                 except AttributeError:
@@ -536,25 +619,14 @@ class CsvSource(_SqliteSource):
                        'correct operation, please specify a text encoding.')
                 warnings.warn(msg.format(filename))
 
-        self._connection = connection
-        self._table = table
+        # Calling super() with older convention to support Python 2.7 & 2.6.
+        super(self.__class__, self).__init__(temptable.connection, temptable.name)
 
     def __repr__(self):
         """Return a string representation of the data source."""
         cls_name = self.__class__.__name__
         src_file = self._file_repr
         return '{0}({1})'.format(cls_name, src_file)
-
-    def create_index(self, *columns):
-        """Creating an index for certain columns can speed up data
-        testing in some cases.
-
-        See :meth:`SqliteSource.create_index
-        <datatest.SqliteSource.create_index>` for more details.
-
-        """
-        # Calling super() with older convention to support Python 2.7 & 2.6.
-        super(self.__class__, self).create_index(*columns)
 
 
 class MultiSource(BaseSource):

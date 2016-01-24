@@ -19,6 +19,7 @@ from datatest.sourceresult import ResultMapping
 
 # Import code to test.
 from datatest.source import BaseSource
+from datatest.source import _TemporarySqliteTable
 from datatest.source import SqliteSource
 from datatest.source import CsvSource
 from datatest.source import MultiSource
@@ -290,6 +291,180 @@ class TestBaseSource(unittest.TestCase):
             self.datasource._assert_columns_exist('label_x')
 
 
+class TestTemporarySqliteTable(unittest.TestCase):
+    def test_assert_unique(self):
+        # Pass without error.
+        _TemporarySqliteTable._assert_unique(['foo', 'bar'])
+
+        with self.assertRaises(ValueError):
+            _TemporarySqliteTable._assert_unique(['foo', 'foo'])
+
+    def test_normalize_column(self):
+        result = _TemporarySqliteTable._normalize_column('foo')
+        self.assertEqual('"foo"', result)
+
+        result = _TemporarySqliteTable._normalize_column('foo bar')
+        self.assertEqual('"foo bar"', result)
+
+        result = _TemporarySqliteTable._normalize_column('foo "bar" baz')
+        self.assertEqual('"foo ""bar"" baz"', result)
+
+    def test_create_table_statement(self):
+        stmnt = _TemporarySqliteTable._create_table_statement('mytable', ['col1', 'col2'])
+        self.assertEqual('CREATE TEMPORARY TABLE mytable ("col1", "col2")', stmnt)
+
+    def test_insert_into_statement(self):
+        stmnt, param = _TemporarySqliteTable._insert_into_statement('mytable', ['val1a', 'val2a'])
+        self.assertEqual('INSERT INTO mytable VALUES (?, ?)', stmnt)
+        self.assertEqual(['val1a', 'val2a'], param)
+
+        with self.assertRaisesRegex(AssertionError, 'must be non-string container'):
+            _TemporarySqliteTable._insert_into_statement('mytable', 'val1')
+
+    def test_make_new_table(self):
+        tablename = _TemporarySqliteTable._make_new_table(existing=[])
+        self.assertEqual(tablename, 'tbl0')
+
+        tablename = _TemporarySqliteTable._make_new_table(existing=['tbl0', 'foo'])
+        self.assertEqual(tablename, 'tbl1')
+
+        tablename = _TemporarySqliteTable._make_new_table(existing=['tbl0', 'foo', 'tbl1'])
+        self.assertEqual(tablename, 'tbl2')
+
+    def test_connection(self):
+        cols = ('COL_A', 'COL_B')
+        data = [
+            ('1A', '1B'),
+            ('2A', '2B')
+        ]
+
+        instance_x = _TemporarySqliteTable(data, cols)
+        instance_y = _TemporarySqliteTable(data, cols)
+        msg = 'Unless otherwise specified, instances should share the same connection.'
+        self.assertIs(instance_x.connection, instance_y.connection)
+
+        connection = sqlite3.connect(':memory:')
+        instance_z = _TemporarySqliteTable(data, cols, connection)
+        msg = 'When specified, an alternative connection should be used.'
+        self.assertIs(connection, instance_z.connection)
+        self.assertIsNot(instance_x.connection, instance_z.connection)
+
+    def test_init_with_tuple(self):
+        # Test list of tuples.
+        columns = ['foo', 'bar', 'baz']
+        data = [
+            ('a', 'x', '1'),
+            ('b', 'y', '2'),
+            ('c', 'z', '3'),
+        ]
+        temptable = _TemporarySqliteTable(data, columns)
+
+        self.assertEqual(temptable.columns, columns)
+
+        cursor = temptable.connection.cursor()
+        cursor.execute('SELECT * FROM ' + temptable.name)
+        result = list(cursor)
+        self.assertEqual(data, result)
+
+        # Test too few columns.
+        columns = ['foo', 'bar']
+        with self.assertRaises(sqlite3.OperationalError):
+            temptable = _TemporarySqliteTable(data, columns)
+
+        # Test too many columns.
+        columns = ['foo', 'bar', 'baz', 'qux']
+        with self.assertRaises(sqlite3.OperationalError):
+            temptable = _TemporarySqliteTable(data, columns)
+
+    def test_init_with_dict(self):
+        data = [
+            {'foo': 'a', 'bar': 'x', 'baz': '1'},
+            {'foo': 'b', 'bar': 'y', 'baz': '2'},
+            {'foo': 'c', 'bar': 'z', 'baz': '3'},
+        ]
+
+        # Test basics.
+        columns = ['foo', 'bar', 'baz']
+        temptable = _TemporarySqliteTable(data, columns)
+        cursor = temptable._connection.cursor()
+        cursor.execute('SELECT * FROM {0}'.format(temptable.name))
+        expected = [
+            ('a', 'x', '1'),
+            ('b', 'y', '2'),
+            ('c', 'z', '3'),
+        ]
+        self.assertEqual(expected, list(cursor))
+
+        # Test same data with different column order.
+        columns = ['baz', 'foo', 'bar']
+        temptable = _TemporarySqliteTable(data, columns)
+        cursor = temptable._connection.cursor()
+        cursor.execute('SELECT * FROM {0}'.format(temptable.name))
+        expected = [
+            ('1', 'a', 'x'),
+            ('2', 'b', 'y'),
+            ('3', 'c', 'z'),
+        ]
+        self.assertEqual(expected, list(cursor))
+
+        # Test too few columns (should this fail?)
+        #columns = ['foo', 'bar']
+        #with self.assertRaises(AssertionError):
+        #    temptable = _TemporarySqliteTable(data, columns)
+
+        # Test too many columns.
+        columns = ['foo', 'bar', 'baz', 'qux']
+        with self.assertRaises(KeyError):
+            temptable = _TemporarySqliteTable(data, columns)
+
+        # Wrong column names (but correct number of them).
+        columns = ['qux', 'quux', 'corge']
+        with self.assertRaises(KeyError):
+            temptable = _TemporarySqliteTable(data, columns)
+
+    def test_init_without_columns_arg(self):
+        data_dict = [
+            {'foo': 'a', 'bar': 'x', 'baz': '1'},
+            {'foo': 'b', 'bar': 'y', 'baz': '2'},
+            {'foo': 'c', 'bar': 'z', 'baz': '3'},
+        ]
+
+        # Iterable of dict-rows.
+        temptable = _TemporarySqliteTable(data_dict)
+        cursor = temptable._connection.cursor()
+        cursor.execute('SELECT * FROM {0}'.format(temptable.name))
+        expected = [
+            ('x', '1', 'a'),
+            ('y', '2', 'b'),
+            ('z', '3', 'c'),
+        ]
+        self.assertEqual(expected, list(cursor))
+
+        # Iterable of namedtuple-rows.
+        ntup = namedtuple('ntup', ['foo', 'bar', 'baz'])
+        data_namedtuple = [
+            ntup('a', 'x', '1'),
+            ntup('b', 'y', '2'),
+            ntup('c', 'z', '3'),
+        ]
+        temptable = _TemporarySqliteTable(data_namedtuple)
+        cursor = temptable._connection.cursor()
+        cursor.execute('SELECT * FROM {0}'.format(temptable.name))
+        expected = [
+            ('a', 'x', '1'),
+            ('b', 'y', '2'),
+            ('c', 'z', '3'),
+        ]
+        self.assertEqual(expected, list(cursor))
+
+        # Type that doesn't support omitted columns (should raise TypeError).
+        data_tuple = [('a', 'x', '1'), ('b', 'y', '2'), ('c', 'z', '3')]
+        regex = ('columns argument can only be omitted if data '
+                 'contains dict-rows or namedtuple-rows')
+        with self.assertRaisesRegex(TypeError, regex):
+            temptable = _TemporarySqliteTable(data_tuple)
+
+
 class TestSqliteSource(TestBaseSource):
     def setUp(self):
         tablename = 'testtable'
@@ -328,13 +503,6 @@ class TestSqliteSource(TestBaseSource):
         self.assertEqual(clause, 'label1 IN (?, ?) AND label2=?')
         self.assertEqual(params, ['a', 'b', 'x'])
 
-    def test_from_records_assert_unique(self):
-        # Pass without error.
-        SqliteSource._assert_unique(['foo', 'bar'])
-
-        with self.assertRaises(ValueError):
-            SqliteSource._assert_unique(['foo', 'foo'])
-
     def test_normalize_column(self):
         result = SqliteSource._normalize_column('foo')
         self.assertEqual('"foo"', result)
@@ -345,20 +513,9 @@ class TestSqliteSource(TestBaseSource):
         result = SqliteSource._normalize_column('foo "bar" baz')
         self.assertEqual('"foo ""bar"" baz"', result)
 
-    def test_insert_into_statement(self):
-        stmnt, param = SqliteSource._insert_into_statement('mytable', ['val1a', 'val2a'])
-        self.assertEqual('INSERT INTO mytable VALUES (?, ?)', stmnt)
-        self.assertEqual(['val1a', 'val2a'], param)
-
-        with self.assertRaisesRegex(AssertionError, 'must be non-string container'):
-            SqliteSource._insert_into_statement('mytable', 'val1')
-
-    def test_create_table_statement(self):
-        stmnt = SqliteSource._create_table_statement('mytable', ['col1', 'col2'])
-        self.assertEqual('CREATE TABLE mytable ("col1", "col2")', stmnt)
-
-    def test_from_records_tuple(self):
-        # Test list of tuples.
+    def test_from_records(self):
+        """Test from_records method (wrapper for _TemporarySqliteTable class)."""
+        # Test tuples.
         columns = ['foo', 'bar', 'baz']
         data = [
             ('a', 'x', '1'),
@@ -374,17 +531,7 @@ class TestSqliteSource(TestBaseSource):
         ]
         self.assertEqual(expected, list(source))
 
-        # Test too few columns.
-        columns = ['foo', 'bar']
-        with self.assertRaises(sqlite3.OperationalError):
-            source = SqliteSource.from_records(data, columns)
-
-        # Test too many columns.
-        columns = ['foo', 'bar', 'baz', 'qux']
-        with self.assertRaises(sqlite3.OperationalError):
-            source = SqliteSource.from_records(data, columns)
-
-    def test_from_records_dict(self):
+        # Test dict.
         columns = ['foo', 'bar', 'baz']
         data = [
             {'foo': 'a', 'bar': 'x', 'baz': '1'},
@@ -394,43 +541,14 @@ class TestSqliteSource(TestBaseSource):
         source = SqliteSource.from_records(data, columns)
         self.assertEqual(data, list(source))
 
-        # Test too few columns.
-        #columns = ['foo', 'bar']
-        #with self.assertRaises(AssertionError):
-        #    source = SqliteSource.from_records(data, columns)
-
-        # Test too many columns.
-        columns = ['foo', 'bar', 'baz', 'qux']
-        with self.assertRaises(KeyError):
-            source = SqliteSource.from_records(data, columns)
-
-    def test_from_records_no_columns_arg(self):
+        # Test omitted *columns* argument.
         data_dict = [
             {'foo': 'a', 'bar': 'x', 'baz': '1'},
             {'foo': 'b', 'bar': 'y', 'baz': '2'},
             {'foo': 'c', 'bar': 'z', 'baz': '3'},
         ]
-
-        # Iterable of dict-rows.
         source = SqliteSource.from_records(data_dict)
         self.assertEqual(data_dict, list(source))
-
-        # Iterable of namedtuple-rows.
-        row = namedtuple('row', ['foo', 'bar', 'baz'])
-        data_namedtuple = [
-            row('a', 'x', '1'),
-            row('b', 'y', '2'),
-            row('c', 'z', '3'),
-        ]
-        source = SqliteSource.from_records(data_namedtuple)
-        self.assertEqual(data_dict, list(source))
-
-        # Type that doesn't support omitted columns (should raise TypeError).
-        data_tuple = [('a', 'x', '1'), ('b', 'y', '2'), ('c', 'z', '3')]
-        regex = ('columns argument can only be omitted if data '
-                 'contains dict-rows or namedtuple-rows')
-        with self.assertRaisesRegex(TypeError, regex):
-            source = SqliteSource.from_records(data_tuple)
 
     def test_create_index(self):
         cursor = self.datasource._connection.cursor()
