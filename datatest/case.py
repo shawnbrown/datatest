@@ -74,10 +74,9 @@ def _walk_diff(diff):
             yield item
 
 
-class _AcceptableBaseContext(object):
-    """Base class for DataTestCase.acceptable...() context managers."""
-    def __init__(self, accepted, test_case, msg=None):
-        self.accepted = accepted
+class _BaseAllowance(object):
+    """Base class for DataTestCase.allow...() context managers."""
+    def __init__(self, test_case, msg=None):
         self.test_case = test_case
         self.obj_name = None
         self.msg = msg
@@ -101,50 +100,53 @@ class _AcceptableBaseContext(object):
             raise DataAssertionError(msg, difference, subj, trst)  # For Python 2.x
 
 
-class _AcceptableDifference(_AcceptableBaseContext):
-    """Context manager for DataTestCase.acceptableDifference() method."""
+class _AllowSpecified(_BaseAllowance):
+    """Context manager for DataTestCase.allowSpecified() method."""
+    def __init__(self, differences, test_case, msg=None):
+        self.differences = differences
+        super(self.__class__, self).__init__(test_case, msg=None)
+
     def __exit__(self, exc_type, exc_value, tb):
-        if exc_value:
+        try:
             diff = exc_value.diff
             message = exc_value.msg
-        else:
+        except AttributeError:
             diff = []
-            message = 'no error raised'
+            message = 'No error raised'
 
-        diff = list(_walk_diff(diff))
-        accepted = list(_walk_diff(self.accepted))
-        unaccepted = [x for x in diff if x not in accepted]
-        if unaccepted:
-            return self._raiseFailure(message, unaccepted)  # <- EXIT!
+        observed = list(_walk_diff(diff))
+        allowed = list(_walk_diff(self.differences))
+        not_allowed = [x for x in observed if x not in allowed]
+        if not_allowed:
+            return self._raiseFailure(message, not_allowed)  # <- EXIT!
 
-        accepted_not_found = [x for x in accepted if x not in diff]
-        if accepted_not_found:
-            message = 'Acceptable difference not found'
-            return self._raiseFailure(message, accepted_not_found)  # <- EXIT!
+        not_found = [x for x in allowed if x not in observed]
+        if not_found:
+            message = 'Allowed difference not found'
+            return self._raiseFailure(message, not_found)  # <- EXIT!
 
         return True
 
 
-class _AcceptableAbsoluteTolerance(_AcceptableBaseContext):
-    """Context manager for DataTestCase.acceptableTolerance() method."""
-    def __init__(self, accepted, test_case, msg, **filter_by):
-        assert accepted >= 0, 'Tolerance cannot be defined with a negative number.'
+class _AllowDeviation(_BaseAllowance):
+    """Context manager for DataTestCase.allowDeviation() method."""
+    def __init__(self, deviation, test_case, msg, **filter_by):
+        assert deviation >= 0, 'Tolerance cannot be defined with a negative number.'
         wrap = lambda v: [v] if isinstance(v, str) else v
         self._filter_by = dict((k, wrap(v)) for k, v in filter_by.items())
 
-        _AcceptableBaseContext.__init__(self, accepted, test_case, msg)
+        self.deviation = deviation
+        super(self.__class__, self).__init__(test_case, msg=None)
 
     def __exit__(self, exc_type, exc_value, tb):
-        if exc_value:
-            difference = exc_value.diff
+        try:
+            differences = list(exc_value.diff)
             message = exc_value.msg
-        else:
-            difference = []
+        except AttributeError:
+            differences = []
             message = 'No error raised'
 
-        diff_list = list(_walk_diff(difference))
-        failed = [obj for obj in diff_list if not self._acceptable(obj)]
-
+        failed = [obj for obj in differences if not self._acceptable(obj)]
         if failed:
             return self._raiseFailure(message, failed)  # <- EXIT!
 
@@ -154,30 +156,29 @@ class _AcceptableAbsoluteTolerance(_AcceptableBaseContext):
         for k, v in self._filter_by.items():
             if (k not in obj.kwds) or (obj.kwds[k] not in v):
                 return False
-        return abs(obj.diff) <= self.accepted
+        return abs(obj.diff) <= self.deviation
 
 
-class _AcceptablePercentTolerance(_AcceptableBaseContext):
-    """Context manager for DataTestCase.acceptablePercentTolerance() method."""
-    def __init__(self, accepted, test_case, msg, **filter_by):
-        assert 1 >= accepted >= 0, 'Percent tolerance must be between 0 and 1.'
+class _AllowDeviationPercent(_BaseAllowance):
+    """Context manager for DataTestCase.allowDeviationPercent() method."""
+    def __init__(self, deviation, test_case, msg, **filter_by):
+        assert 1 >= deviation >= 0, 'Percent tolerance must be between 0 and 1.'
         wrap = lambda v: [v] if isinstance(v, str) else v
         self._filter_by = dict((k, wrap(v)) for k, v in filter_by.items())
-        _AcceptableBaseContext.__init__(self, accepted, test_case, msg)
+        self.deviation = deviation
+        super(self.__class__, self).__init__(test_case, msg=None)
 
     def __exit__(self, exc_type, exc_value, tb):
-        if exc_value:
-            difference = exc_value.diff
+        try:
+            differences = list(exc_value.diff)
             message = exc_value.msg
-        else:
-            difference = []
+        except AttributeError:
+            differences = []
             message = 'No error raised'
 
-        diff_list = list(_walk_diff(difference))
-        failed = [obj for obj in diff_list if not self._acceptable(obj)]
-
+        failed = [obj for obj in differences if not self._acceptable(obj)]
         if failed:
-            return self._raiseFailure(exc_value.msg, failed)  # <- EXIT!
+            return self._raiseFailure(message, failed)  # <- EXIT!
 
         return True
 
@@ -188,7 +189,7 @@ class _AcceptablePercentTolerance(_AcceptableBaseContext):
             if (k not in obj.kwds) or (obj.kwds[k] not in v):
                 return False
         percent = obj.diff / obj.expected
-        return abs(percent) <= self.accepted
+        return abs(percent) <= self.deviation
 
 
 class DataTestCase(TestCase):
@@ -412,15 +413,15 @@ class DataTestCase(TestCase):
                 msg = 'matching {0!r} values'.format(column)
             self.fail(msg=msg, diff=invalid)
 
-    def acceptableDifference(self, diff, msg=None):
-        """Context manager to accept given differences *diff* without
+    def allowSpecified(self, diff, msg=None):
+        """Context manager to allow specific differences *diff* without
         triggering a test failure::
 
             diff = [
                 ExtraItem('foo'),
                 MissingItem('bar'),
             ]
-            with self.acceptableDifference(diff):
+            with self.allowSpecified(diff):
                 self.assertValueSet('column1')
 
         If the raised differences do not match *diff*, the test will
@@ -431,7 +432,7 @@ class DataTestCase(TestCase):
 
         Using a single difference::
 
-            with self.acceptableDifference(ExtraItem('foo')):
+            with self.allowSpecified(ExtraItem('foo')):
                 self.assertValueSet('column2')
 
         When using a dictionary of differences, the keys are strings that
@@ -448,37 +449,38 @@ class DataTestCase(TestCase):
                     InvalidNumber(-177, 177, town='Westfield')
                 ]
             }
-            with self.acceptableDifference(diff):
+            with self.allowSpecified(diff):
                 self.assertValueSum('population', ['town'])
 
         """
-        return _AcceptableDifference(diff, self, msg)
+        return _AllowSpecified(diff, self, msg)
 
-    def acceptableTolerance(self, tolerance, msg=None, **filter_by):
-        """Context manager to accept numeric differences less than or
-        equal to the given *tolerance*::
+    def allowDeviation(self, deviation, msg=None, **filter_by):
+        """Context manager to allow positive or negative numeric differences
+        of less than or equal to the given *deviation*::
 
-            with self.acceptableTolerance(5):  # Accepts +/- 5
+            with self.allowDeviation(5):  # Allows +/- 5
                 self.assertValueSum('column2', group_by=['column1'])
 
-        If differences exceed *tolerance*, the test case will fail with
+        If differences exceed *deviation*, the test case will fail with
         a DataAssertionError containing the excessive differences.
         """
-        tolerance = _make_decimal(tolerance)
-        return _AcceptableAbsoluteTolerance(tolerance, self, msg, **filter_by)
+        deviation = _make_decimal(deviation)
+        return _AllowDeviation(deviation, self, msg, **filter_by)
 
-    def acceptablePercentTolerance(self, tolerance, msg=None, **filter_by):
-        """Context manager to accept numeric difference percentages less
-        than or equal to the given *tolerance*::
+    def allowDeviationPercent(self, deviation, msg=None, **filter_by):
+        """Context manager to allow positive or negative numeric differences
+        of less than or equal to the given *deviation* as a percentage of the
+        matching reference value::
 
-            with self.acceptablePercentTolerance(0.02):  # Accepts +/- 2%
+            with self.allowDeviationPercent(0.02):  # Allows +/- 2%
                 self.assertValueSum('column2', group_by=['column1'])
 
-        If differences exceed *tolerance*, the test case will fail with
+        If differences exceed *deviation*, the test case will fail with
         a DataAssertionError containing the excessive differences.
         """
-        tolerance = _make_decimal(tolerance)
-        return _AcceptablePercentTolerance(tolerance, self, msg, **filter_by)
+        tolerance = _make_decimal(deviation)
+        return _AllowDeviationPercent(deviation, self, msg, **filter_by)
 
     def fail(self, msg, diff=None):
         """Signals a test failure unconditionally, with *msg* for the

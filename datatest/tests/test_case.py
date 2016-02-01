@@ -965,7 +965,7 @@ class TestValueRegexAndValueNotRegex(TestHelperCase):
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
 
-class TestAcceptableDifference(TestHelperCase):
+class TestAllowSpecified(TestHelperCase):
     def setUp(self):
         _fh = io.StringIO('label1,value\n'
                           'a,65\n'
@@ -994,7 +994,7 @@ class TestAcceptableDifference(TestHelperCase):
                     InvalidNumber(+1, 65, label1='a'),
                     InvalidNumber(-1, 70, label1='b'),
                 ]
-                with _self.acceptableDifference(diff):
+                with _self.allowSpecified(diff):
                     _self.assertValueSum('value', ['label1'])  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
@@ -1012,7 +1012,7 @@ class TestAcceptableDifference(TestHelperCase):
                     'One extra.': InvalidNumber(+1, 65, label1='a'),
                     'One missing.': InvalidNumber(-1, 70, label1='b'),
                 }
-                with _self.acceptableDifference(diff):
+                with _self.allowSpecified(diff):
                     _self.assertValueSum('value', ['label1'])  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
@@ -1030,7 +1030,7 @@ class TestAcceptableDifference(TestHelperCase):
                     'Omitted': [InvalidNumber(+1, 65, label1='a'),
                                 InvalidNumber(-1, 70, label1='b')]
                 }
-                with _self.acceptableDifference(diff):
+                with _self.allowSpecified(diff):
                     _self.assertValueSum('value', ['label1'])  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
@@ -1048,7 +1048,7 @@ class TestAcceptableDifference(TestHelperCase):
                     InvalidNumber(-1, 70, label1='b'),
                     InvalidNumber(+2, 65, label1='a'),
                 ]
-                with _self.acceptableDifference(diff):
+                with _self.allowSpecified(diff):
                     _self.assertValueSum('value', ['label1'])  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
@@ -1068,11 +1068,11 @@ class TestAcceptableDifference(TestHelperCase):
                     InvalidNumber(+1, 65, label1='a'),
                     InvalidNumber(+2, 65, label1='a')
                 ]
-                with _self.acceptableDifference(diff):
+                with _self.allowSpecified(diff):
                     _self.assertValueSum('value', ['label1'])  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = ("Acceptable difference not found:\n"
+        pattern = ("Allowed difference not found:\n"
                    " InvalidNumber\(\+2, 65, label1=u?'a'\)")
         self.assertRegex(failure, pattern)
 
@@ -1085,16 +1085,16 @@ class TestAcceptableDifference(TestHelperCase):
 
             def test_method(_self):
                 diff = InvalidNumber(+2, 65, label1='a')
-                with _self.acceptableDifference(diff):
+                with _self.allowSpecified(diff):
                     _self.assertValueSum('value', ['label1'])  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = ("DataAssertionError: Acceptable difference not found:\n"
+        pattern = ("DataAssertionError: Allowed difference not found:\n"
                    " InvalidNumber\(\+2, 65, label1=u?'a'\)")
         self.assertRegex(failure, pattern)
 
 
-class TestAcceptableTolerance(TestHelperCase):
+class TestAllowDeviation(TestHelperCase):
     def setUp(self):
         _fh = io.StringIO('label1,value\n'
                           'a,65\n'
@@ -1119,7 +1119,7 @@ class TestAcceptableTolerance(TestHelperCase):
                 _self.subjectData = self.bad_subject
 
             def test_method(_self):
-                with _self.acceptableTolerance(3):  # <- test tolerance
+                with _self.allowDeviation(3):  # <- test tolerance
                     _self.assertValueSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')
@@ -1133,7 +1133,7 @@ class TestAcceptableTolerance(TestHelperCase):
                 _self.subjectData = self.bad_subject
 
             def test_method(_self):
-                with _self.acceptableTolerance(3, label1='a'):  # <- Allow label1='a' only.
+                with _self.allowDeviation(3, label1='a'):  # <- Allow label1='a' only.
                     _self.assertValueSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')
@@ -1148,7 +1148,7 @@ class TestAcceptableTolerance(TestHelperCase):
                 _self.subjectData = self.bad_subject
 
             def test_method(_self):
-                with _self.acceptableTolerance(3, label1=['a', 'b']):  # <- Filter to 'a' or 'b' only.
+                with _self.allowDeviation(3, label1=['a', 'b']):  # <- Filter to 'a' or 'b' only.
                     _self.assertValueSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')
@@ -1162,7 +1162,7 @@ class TestAcceptableTolerance(TestHelperCase):
                 _self.subjectData = self.bad_subject
 
             def test_method(_self):
-                with _self.acceptableTolerance(2):  # <- test tolerance
+                with _self.allowDeviation(2):  # <- test tolerance
                     _self.assertValueSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')
@@ -1178,7 +1178,7 @@ class TestAcceptableTolerance(TestHelperCase):
                 _self.subjectData = self.bad_subject
 
             def test_method(_self):
-                with _self.acceptableTolerance(-5):  # <- invalid
+                with _self.allowDeviation(-5):  # <- invalid
                     _self.assertValueSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')
@@ -1197,7 +1197,7 @@ class TestAcceptableTolerance(TestHelperCase):
     #            _self.subjectData = self.reference
     #
     #        def test_method(_self):
-    #            with _self.acceptableTolerance(3):  # <- test tolerance
+    #            with _self.allowDeviation(3):  # <- test tolerance
     #                _self.assertValueSum('value', ['label1'])
     #
     #    failure = self._run_one_test(_TestClass, 'test_method')
@@ -1205,7 +1205,7 @@ class TestAcceptableTolerance(TestHelperCase):
     #    self.assertRegex(failure, pattern)
 
 
-class TestAcceptablePercentTolerance(TestHelperCase):
+class TestAllowDeviationPercent(TestHelperCase):
     def setUp(self):
         _fh = io.StringIO('label1,value\n'
                           'a,65\n'
@@ -1230,7 +1230,7 @@ class TestAcceptablePercentTolerance(TestHelperCase):
                 _self.subjectData = self.bad_subject
 
             def test_method(_self):
-                with _self.acceptablePercentTolerance(0.05):  # <- test tolerance
+                with _self.allowDeviationPercent(0.05):  # <- test tolerance
                     _self.assertValueSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')
@@ -1244,7 +1244,7 @@ class TestAcceptablePercentTolerance(TestHelperCase):
                 _self.subjectData = self.bad_subject
 
             def test_method(_self):
-                with _self.acceptablePercentTolerance(0.05, label1='a'):  # <- Allow label1='a' only.
+                with _self.allowDeviationPercent(0.05, label1='a'):  # <- Allow label1='a' only.
                     _self.assertValueSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')
@@ -1260,7 +1260,7 @@ class TestAcceptablePercentTolerance(TestHelperCase):
                 _self.subjectData = self.bad_subject
 
             def test_method(_self):
-                with _self.acceptablePercentTolerance(0.03):  # <- test tolerance
+                with _self.allowDeviationPercent(0.03):  # <- test tolerance
                     _self.assertValueSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')
@@ -1276,7 +1276,7 @@ class TestAcceptablePercentTolerance(TestHelperCase):
                 _self.subjectData = self.bad_subject
 
             def test_method(_self):
-                with _self.acceptablePercentTolerance(1.1):  # <- invalid
+                with _self.allowDeviationPercent(1.1):  # <- invalid
                     _self.assertValueSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')
@@ -1301,7 +1301,7 @@ class TestAcceptablePercentTolerance(TestHelperCase):
                 _self.subjectData = subject
 
             def test_method(_self):
-                with _self.acceptablePercentTolerance(0.03):  # <- test tolerance
+                with _self.allowDeviationPercent(0.03):  # <- test tolerance
                     _self.assertValueSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')
@@ -1310,7 +1310,7 @@ class TestAcceptablePercentTolerance(TestHelperCase):
         self.assertRegex(failure, pattern)
 
 
-class TestNestedAcceptBlocks(TestHelperCase):
+class TestNestedAllowances(TestHelperCase):
     def setUp(self):
         _fh = io.StringIO('label1,value\n'
                           'a,65\n'
@@ -1334,8 +1334,8 @@ class TestNestedAcceptBlocks(TestHelperCase):
                 _self.subjectData = self.bad_subject
 
             def test_method(_self):
-                with _self.acceptableDifference(InvalidNumber(+3, 65, label1='a')):
-                    with _self.acceptableTolerance(2):  # <- test tolerance
+                with _self.allowSpecified(InvalidNumber(+3, 65, label1='a')):
+                    with _self.allowDeviation(2):  # <- test tolerance
                         _self.assertValueSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')
@@ -1348,8 +1348,8 @@ class TestNestedAcceptBlocks(TestHelperCase):
                 _self.subjectData = self.bad_subject
 
             def test_method(_self):
-                with _self.acceptableTolerance(2):  # <- test tolerance
-                    with _self.acceptableDifference(InvalidNumber(+3, 65, label1='a')):
+                with _self.allowDeviation(2):  # <- test tolerance
+                    with _self.allowSpecified(InvalidNumber(+3, 65, label1='a')):
                         _self.assertValueSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')
@@ -1362,11 +1362,11 @@ class TestNestedAcceptBlocks(TestHelperCase):
                 _self.subjectData = self.bad_subject
 
             def test_method(_self):
-                with _self.acceptableDifference(InvalidNumber(+10, 999, label1='a')):
-                    with _self.acceptableTolerance(3):
+                with _self.allowSpecified(InvalidNumber(+10, 999, label1='a')):
+                    with _self.allowDeviation(3):
                         _self.assertValueSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = ("DataAssertionError: Acceptable difference not found:\n"
+        pattern = ("DataAssertionError: Allowed difference not found:\n"
                    " InvalidNumber\(\+10, 999, label1=u?'a'\)")
         self.assertRegex(failure, pattern)
