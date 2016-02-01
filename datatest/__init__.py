@@ -58,8 +58,3 @@ __all__ = [
     'DataTestProgram',
     'main',
 ]
-
-# Assignments for deprecated names.
-DataTestCase.acceptableDifference = DataTestCase.allowSpecified
-DataTestCase.acceptableTolerance = DataTestCase.allowDeviation
-DataTestCase.acceptablePercentTolerance = DataTestCase.allowDeviationPercent
