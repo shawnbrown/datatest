@@ -335,7 +335,6 @@ class _SqliteSource(BaseSource):
     def __iter__(self):
         """Return iterable of dictionary rows (like csv.DictReader)."""
         cursor = self._connection.cursor()
-        cursor.execute('PRAGMA synchronous=OFF')
         cursor.execute('SELECT * FROM ' + self._table)
         column_names = self.columns()
         mkdict = lambda x: dict(zip(column_names, x))
