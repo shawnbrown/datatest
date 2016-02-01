@@ -42,7 +42,32 @@ except AssertionError:
     import numbers as _numbers
     from decimal import _dec_from_triple
 
-    # Adapted from Python 3.2 standard library.
+
+    class FloatOperation(DecimalException, TypeError):
+        """Enable stricter semantics for mixing floats and Decimals."""
+        pass
+
+
+    # Adapted from Python 3.1 standard library.
+    _context_init_orig = Context.__init__
+    def _context_init_new(self, prec=None, rounding=None,
+                          traps=None, flags=None,
+                          Emin=None, Emax=None,
+                          capitals=None, _clamp=0,
+                          _ignored_flags=None):
+
+        # Call original __init__.
+        _context_init_orig(self, prec=prec, rounding=rounding, traps=traps,
+                           flags=flags, Emin=Emin, Emax=Emax, capitals=capitals,
+                           _clamp=_clamp, _ignored_flags=_ignored_flags)
+
+        # Add FloatOperation to `traps` dict.
+        self.traps[FloatOperation] = 0
+
+    Context.__init__ = _context_init_new
+
+
+    # Adapted from Python 3.4 standard library.
     def _convert_for_comparison(self, other, equality_op=False):
         if isinstance(other, Decimal):
             return self, other
@@ -63,10 +88,6 @@ except AssertionError:
                     "strict semantics for mixing floats and Decimals are enabled")
             return self, Decimal.from_float(other)
         return NotImplemented, NotImplemented
-
-    class FloatOperation(DecimalException, TypeError):
-        """Enable stricter semantics for mixing floats and Decimals."""
-        pass
 
     def _eq(self, other, context=None):
         self, other = _convert_for_comparison(self, other, equality_op=True)
