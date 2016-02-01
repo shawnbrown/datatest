@@ -107,24 +107,19 @@ class _AllowSpecified(_BaseAllowance):
         super(self.__class__, self).__init__(test_case, msg=None)
 
     def __exit__(self, exc_type, exc_value, tb):
-        try:
-            diff = exc_value.diff
-            message = exc_value.msg
-        except AttributeError:
-            diff = []
-            message = 'No error raised'
+        diff = getattr(exc_value, 'diff', [])
+        message = getattr(exc_value, 'msg', 'No error raised')
 
         observed = list(_walk_diff(diff))
         allowed = list(_walk_diff(self.differences))
         not_allowed = [x for x in observed if x not in allowed]
         if not_allowed:
-            return self._raiseFailure(message, not_allowed)  # <- EXIT!
+            self._raiseFailure(message, not_allowed)  # <- EXIT!
 
         not_found = [x for x in allowed if x not in observed]
         if not_found:
             message = 'Allowed difference not found'
-            return self._raiseFailure(message, not_found)  # <- EXIT!
-
+            self._raiseFailure(message, not_found)  # <- EXIT!
         return True
 
 
@@ -139,24 +134,19 @@ class _AllowDeviation(_BaseAllowance):
         super(self.__class__, self).__init__(test_case, msg=None)
 
     def __exit__(self, exc_type, exc_value, tb):
-        try:
-            differences = list(exc_value.diff)
-            message = exc_value.msg
-        except AttributeError:
-            differences = []
-            message = 'No error raised'
+        differences = getattr(exc_value, 'diff', [])
+        message = getattr(exc_value, 'msg', 'No error raised')
 
-        failed = [obj for obj in differences if not self._acceptable(obj)]
-        if failed:
-            return self._raiseFailure(message, failed)  # <- EXIT!
+        def _not_allowed(obj):
+            for k, v in self._filter_by.items():
+                if (k not in obj.kwds) or (obj.kwds[k] not in v):
+                    return True
+            return abs(obj.diff) > self.deviation
 
+        not_allowed = [x for x in differences if _not_allowed(x)]
+        if not_allowed:
+            self._raiseFailure(message, not_allowed)  # <- EXIT!
         return True
-
-    def _acceptable(self, obj):
-        for k, v in self._filter_by.items():
-            if (k not in obj.kwds) or (obj.kwds[k] not in v):
-                return False
-        return abs(obj.diff) <= self.deviation
 
 
 class _AllowDeviationPercent(_BaseAllowance):
@@ -169,27 +159,22 @@ class _AllowDeviationPercent(_BaseAllowance):
         super(self.__class__, self).__init__(test_case, msg=None)
 
     def __exit__(self, exc_type, exc_value, tb):
-        try:
-            differences = list(exc_value.diff)
-            message = exc_value.msg
-        except AttributeError:
-            differences = []
-            message = 'No error raised'
+        differences = getattr(exc_value, 'diff', [])
+        message = getattr(exc_value, 'msg', 'No error raised')
 
-        failed = [obj for obj in differences if not self._acceptable(obj)]
+        def _not_allowed(obj):
+            if not obj.expected:
+                return True  # <- EXIT!
+            for k, v in self._filter_by.items():
+                if (k not in obj.kwds) or (obj.kwds[k] not in v):
+                    return True
+            percent = obj.diff / obj.expected
+            return abs(percent) > self.deviation
+
+        failed = [x for x in differences if _not_allowed(x)]
         if failed:
-            return self._raiseFailure(message, failed)  # <- EXIT!
-
+            self._raiseFailure(message, failed)  # <- EXIT!
         return True
-
-    def _acceptable(self, obj):
-        if not obj.expected:
-            return False  # <- EXIT!
-        for k, v in self._filter_by.items():
-            if (k not in obj.kwds) or (obj.kwds[k] not in v):
-                return False
-        percent = obj.diff / obj.expected
-        return abs(percent) <= self.deviation
 
 
 class DataTestCase(TestCase):
