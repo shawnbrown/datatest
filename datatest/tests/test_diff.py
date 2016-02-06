@@ -5,57 +5,57 @@ import re
 from . import _io as io
 from . import _unittest as unittest
 
-from datatest.diff import ItemBase
+from datatest.diff import BaseDifference
 from datatest.diff import ExtraItem
 from datatest.diff import MissingItem
 from datatest.diff import InvalidItem
 from datatest.diff import InvalidNumber
 
 
-class TestItemBase(unittest.TestCase):
+class TestBaseDifference(unittest.TestCase):
     def test_repr(self):
-        item = ItemBase('foo')
-        self.assertEqual(repr(item), "ItemBase('foo')")
+        item = BaseDifference('foo')
+        self.assertEqual(repr(item), "BaseDifference('foo')")
 
-        item = ItemBase(item='foo')  # As kwds.
-        self.assertEqual(repr(item), "ItemBase('foo')")
+        item = BaseDifference(item='foo')  # As kwds.
+        self.assertEqual(repr(item), "BaseDifference('foo')")
 
-        item = ItemBase('foo', col4='bar')  # Using kwds for filtering.
-        self.assertRegex(repr(item), "ItemBase\(u?'foo', col4=u?'bar'\)")
+        item = BaseDifference('foo', col4='bar')  # Using kwds for filtering.
+        self.assertRegex(repr(item), "BaseDifference\(u?'foo', col4=u?'bar'\)")
 
     def test_str(self):
-        diff = ItemBase('foo', col4='bar')
+        diff = BaseDifference('foo', col4='bar')
         self.assertEqual(str(diff), repr(diff))
 
     def test_hash(self):
-        diff = ItemBase('foo')
+        diff = BaseDifference('foo')
         self.assertIsInstance(hash(diff), int)
 
     def test_eq(self):
-        diff1 = ItemBase('foo')
-        diff2 = ItemBase('foo')
+        diff1 = BaseDifference('foo')
+        diff2 = BaseDifference('foo')
         self.assertEqual(diff1, diff2)
 
-        diff1 = ItemBase('foo')
-        diff2 = ItemBase('bar')
+        diff1 = BaseDifference('foo')
+        diff2 = BaseDifference('bar')
         self.assertNotEqual(diff1, diff2)
 
-        diff1 = ItemBase('foo')
-        diff2 = "ItemBase('foo')"
+        diff1 = BaseDifference('foo')
+        diff2 = "BaseDifference('foo')"
         self.assertNotEqual(diff1, diff2)
 
     def test_repr_eval(self):
-        diff = ItemBase('someval')
+        diff = BaseDifference('someval')
         self.assertEqual(diff, eval(repr(diff)))  # Test __repr__ eval
 
-        diff = ItemBase('someval', col4='foo', col5='bar')
+        diff = BaseDifference('someval', col4='foo', col5='bar')
         self.assertEqual(diff, eval(repr(diff)))  # Test __repr__ eval
 
 
 class TestExtraAndMissing(unittest.TestCase):
     def test_subclass(self):
-        self.assertTrue(issubclass(ExtraItem, ItemBase))
-        self.assertTrue(issubclass(MissingItem, ItemBase))
+        self.assertTrue(issubclass(ExtraItem, BaseDifference))
+        self.assertTrue(issubclass(MissingItem, BaseDifference))
 
 
 class TestInvalidItem(unittest.TestCase):

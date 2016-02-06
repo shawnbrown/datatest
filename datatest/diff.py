@@ -12,7 +12,7 @@ def _make_decimal(d):
     return d.normalize()
 
 
-class ItemBase(object):
+class BaseDifference(object):
     def __init__(self, item, **kwds):
         self.item = item
         self.kwds = kwds
@@ -42,15 +42,15 @@ class ItemBase(object):
         return ', ' + kwds
 
 
-class ExtraItem(ItemBase):
+class ExtraItem(BaseDifference):
     pass
 
 
-class MissingItem(ItemBase):
+class MissingItem(BaseDifference):
     pass
 
 
-class InvalidItem(ItemBase):
+class InvalidItem(BaseDifference):
     def __init__(self, item, expected=None, **kwds):
         self.item = item
         self.expected = expected
@@ -66,7 +66,7 @@ class InvalidItem(ItemBase):
         return '{0}({1!r}{2}{3})'.format(clsname, self.item, expected, kwds)
 
 
-class InvalidNumber(ItemBase):
+class InvalidNumber(BaseDifference):
     def __init__(self, diff, expected, **kwds):
         if not diff:
             raise ValueError('diff must be positive or negative number')
@@ -83,7 +83,7 @@ class InvalidNumber(ItemBase):
         return '{0}({1}, {2}{3})'.format(clsname, diff, self.expected, kwds)
 
 
-class NonStrictRelation(ItemBase):
+class NonStrictRelation(BaseDifference):
     """Base class for to indicate non-strict subset or superset relationships."""
     def __init__(self, **kwds):
         self.kwds = kwds

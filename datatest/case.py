@@ -8,7 +8,7 @@ import re
 from unittest import TestCase
 
 from .diff import _make_decimal
-from .diff import ItemBase
+from .diff import BaseDifference
 from .diff import MissingItem
 from .diff import ExtraItem
 from .diff import InvalidItem
@@ -61,7 +61,7 @@ def _walk_diff(diff):
     """Iterate over difference or collection of differences."""
     if isinstance(diff, dict):
         diff = diff.values()
-    elif isinstance(diff, ItemBase):
+    elif isinstance(diff, BaseDifference):
         diff = (diff,)
 
     for item in diff:
@@ -69,8 +69,8 @@ def _walk_diff(diff):
             for elt2 in _walk_diff(item):
                 yield elt2
         else:
-            if not isinstance(item, ItemBase):
-                raise TypeError('Object {0!r} is not derived from ItemBase.'.format(item))
+            if not isinstance(item, BaseDifference):
+                raise TypeError('Object {0!r} is not derived from BaseDifference.'.format(item))
             yield item
 
 
