@@ -568,6 +568,7 @@ class SqliteSource(_SqliteSource):
 
             subjectData = datatest.SqliteSource.from_records(records, columns)
 
+        When *data* is a `dict` or `namedtuple`, *columns* can be omitted.
         """
         temptable = _TemporarySqliteTable(data, columns)
         return cls(temptable.connection, temptable.name)
