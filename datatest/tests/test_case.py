@@ -1205,7 +1205,7 @@ class TestAllowDeviation(TestHelperCase):
     #    self.assertRegex(failure, pattern)
 
 
-class TestAllowDeviationPercent(TestHelperCase):
+class TestAllowPercentDeviation(TestHelperCase):
     def setUp(self):
         _fh = io.StringIO('label1,value\n'
                           'a,65\n'
@@ -1230,7 +1230,7 @@ class TestAllowDeviationPercent(TestHelperCase):
                 _self.subjectData = self.bad_subject
 
             def test_method(_self):
-                with _self.allowDeviationPercent(0.05):  # <- test tolerance
+                with _self.allowPercentDeviation(0.05):  # <- test tolerance
                     _self.assertValueSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')
@@ -1244,7 +1244,7 @@ class TestAllowDeviationPercent(TestHelperCase):
                 _self.subjectData = self.bad_subject
 
             def test_method(_self):
-                with _self.allowDeviationPercent(0.05, label1='a'):  # <- Allow label1='a' only.
+                with _self.allowPercentDeviation(0.05, label1='a'):  # <- Allow label1='a' only.
                     _self.assertValueSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')
@@ -1260,7 +1260,7 @@ class TestAllowDeviationPercent(TestHelperCase):
                 _self.subjectData = self.bad_subject
 
             def test_method(_self):
-                with _self.allowDeviationPercent(0.03):  # <- test tolerance
+                with _self.allowPercentDeviation(0.03):  # <- test tolerance
                     _self.assertValueSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')
@@ -1276,7 +1276,7 @@ class TestAllowDeviationPercent(TestHelperCase):
                 _self.subjectData = self.bad_subject
 
             def test_method(_self):
-                with _self.allowDeviationPercent(1.1):  # <- invalid
+                with _self.allowPercentDeviation(1.1):  # <- invalid
                     _self.assertValueSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')
@@ -1301,7 +1301,7 @@ class TestAllowDeviationPercent(TestHelperCase):
                 _self.subjectData = subject
 
             def test_method(_self):
-                with _self.allowDeviationPercent(0.03):  # <- test tolerance
+                with _self.allowPercentDeviation(0.03):  # <- test tolerance
                     _self.assertValueSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')

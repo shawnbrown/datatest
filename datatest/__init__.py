@@ -58,3 +58,6 @@ __all__ = [
     'DataTestProgram',
     'main',
 ]
+
+# Temporary alias for deprecated name.
+DataTestCase.allowDeviationPercent = DataTestCase.allowPercentDeviation

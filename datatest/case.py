@@ -149,8 +149,8 @@ class _AllowDeviation(_BaseAllowance):
         return True
 
 
-class _AllowDeviationPercent(_BaseAllowance):
-    """Context manager for DataTestCase.allowDeviationPercent() method."""
+class _AllowPercentDeviation(_BaseAllowance):
+    """Context manager for DataTestCase.allowPercentDeviation() method."""
     def __init__(self, deviation, test_case, msg, **filter_by):
         assert 1 >= deviation >= 0, 'Percent tolerance must be between 0 and 1.'
         wrap = lambda v: [v] if isinstance(v, str) else v
@@ -453,19 +453,19 @@ class DataTestCase(TestCase):
         deviation = _make_decimal(deviation)
         return _AllowDeviation(deviation, self, msg, **filter_by)
 
-    def allowDeviationPercent(self, deviation, msg=None, **filter_by):
+    def allowPercentDeviation(self, deviation, msg=None, **filter_by):
         """Context manager to allow positive or negative numeric differences
         of less than or equal to the given *deviation* as a percentage of the
         matching reference value::
 
-            with self.allowDeviationPercent(0.02):  # Allows +/- 2%
+            with self.allowPercentDeviation(0.02):  # Allows +/- 2%
                 self.assertValueSum('column2', group_by=['column1'])
 
         If differences exceed *deviation*, the test case will fail with
         a DataAssertionError containing the excessive differences.
         """
         tolerance = _make_decimal(deviation)
-        return _AllowDeviationPercent(deviation, self, msg, **filter_by)
+        return _AllowPercentDeviation(deviation, self, msg, **filter_by)
 
     def fail(self, msg, diff=None):
         """Signals a test failure unconditionally, with *msg* for the
