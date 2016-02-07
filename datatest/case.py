@@ -123,6 +123,26 @@ class _AllowSpecified(_BaseAllowance):
         return True
 
 
+class _AllowUnspecified(_BaseAllowance):
+    """Context manager for DataTestCase.allowUnspecified() method."""
+    def __init__(self, number, test_case, msg=None):
+        assert number > 0, 'number must be positive'
+        self.number = number
+        super(self.__class__, self).__init__(test_case, msg=None)
+
+    def __exit__(self, exc_type, exc_value, tb):
+        differences = getattr(exc_value, 'diff', [])
+        observed = len(differences)
+        if observed > self.number:
+            if self.number == 1:
+                prefix = 'expected at most 1 difference, got {0}: '.format(observed)
+            else:
+                prefix = 'expected at most {0} differences, got {1}: '.format(self.number, observed)
+            message = prefix + exc_value.msg
+            self._raiseFailure(message, differences)  # <- EXIT!
+        return True
+
+
 class _AllowDeviation(_BaseAllowance):
     """Context manager for DataTestCase.allowDeviation() method."""
     def __init__(self, deviation, test_case, msg, **filter_by):
@@ -439,6 +459,19 @@ class DataTestCase(TestCase):
 
         """
         return _AllowSpecified(diff, self, msg)
+
+    def allowUnspecified(self, number, msg=None):
+        """Context manager to allow a given *number* of unspecified
+        differences without triggering a test failure::
+
+            with self.allowUnspecified(10):  # Allows up to ten differences.
+                self.assertValueSet('column1')
+
+        If the count of differences exceeds the given *number*, the test case
+        will fail with a DataAssertionError containing all observed
+        differences.
+        """
+        return _AllowUnspecified(number, self, msg)
 
     def allowDeviation(self, deviation, msg=None, **filter_by):
         """Context manager to allow positive or negative numeric differences

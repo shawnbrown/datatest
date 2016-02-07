@@ -965,6 +965,7 @@ class TestValueRegexAndValueNotRegex(TestHelperCase):
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
 
+
 class TestAllowSpecified(TestHelperCase):
     def setUp(self):
         _fh = io.StringIO('label1,value\n'
@@ -1091,6 +1092,58 @@ class TestAllowSpecified(TestHelperCase):
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ("DataAssertionError: Allowed difference not found:\n"
                    " InvalidNumber\(\+2, 65, label1=u?'a'\)")
+        self.assertRegex(failure, pattern)
+
+
+class TestAllowUnspecified(TestHelperCase):
+    def test_passing(self):
+        """Pass when observed number is less-than or equal-to allowed number."""
+        class _TestClass(DataTestCase):
+            def test_method1(_self):
+                with _self.allowUnspecified(3):  # <- allow three
+                    differences = [
+                        MissingItem('foo'),
+                        MissingItem('bar'),
+                        MissingItem('baz'),
+                    ]
+                    raise DataAssertionError('some differences', differences)
+
+            def test_method2(_self):
+                with _self.allowUnspecified(4):  # <- allow four
+                    differences = [
+                        MissingItem('foo'),
+                        MissingItem('bar'),
+                        MissingItem('baz'),
+                    ]
+                    raise DataAssertionError('some differences', differences)
+
+        failure = self._run_one_test(_TestClass, 'test_method1')
+        self.assertIsNone(failure)
+
+        failure = self._run_one_test(_TestClass, 'test_method2')
+        self.assertIsNone(failure)
+
+    def test_failing(self):
+        """Fail when observed number is greater-than allowed number."""
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                _self.referenceData = None
+                _self.subjectData = None
+
+            def test_method(_self):
+                with _self.allowUnspecified(2):  # <- allow two
+                    differences = [
+                        MissingItem('foo'),
+                        MissingItem('bar'),
+                        MissingItem('baz'),
+                    ]
+                    raise DataAssertionError('some differences', differences)
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        pattern = ("DataAssertionError: expected at most 2 differences, got 3: some differences:\n"
+                   " MissingItem[^\n]+\n"
+                   " MissingItem[^\n]+\n"
+                   " MissingItem[^\n]+\n$")
         self.assertRegex(failure, pattern)
 
 
