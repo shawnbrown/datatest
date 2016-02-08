@@ -1258,6 +1258,119 @@ class TestAllowDeviation(TestHelperCase):
     #    self.assertRegex(failure, pattern)
 
 
+class TestAllowDeviationUpper(TestHelperCase):
+    def test_passing(self):
+        """If accepted differences not found, raise exception."""
+        class _TestClass(DataTestCase):
+            def test_method(_self):
+                with _self.allowDeviationUpper(3):  # <- Allow deviation of 0 to +3
+                    differences = [
+                        InvalidNumber(+1, 10, column1='foo'),
+                        InvalidNumber(0, 10, column1='bar'),
+                        InvalidNumber(+3, 10, column1='baz'),
+                    ]
+                    raise DataAssertionError('some differences', differences)
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        self.assertIsNone(failure)
+
+    def test_over_deviation(self):
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                _self.referenceData = None
+                _self.subjectData = None
+
+            def test_method(_self):
+                with _self.allowDeviationUpper(3):  # <- Allow deviation of 0 to +3
+                    differences = [
+                        InvalidNumber(+2, 10, column1='foo'),
+                        InvalidNumber(+3, 10, column1='bar'),
+                        InvalidNumber(+4, 10, column1='baz'),
+                    ]
+                    raise DataAssertionError('some differences', differences)
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        pattern = ("DataAssertionError: some differences:\n"
+                   " InvalidNumber\(\+4, 10, column1=u?'baz'\)")
+        self.assertRegex(failure, pattern)
+
+    def test_under_zero(self):
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                _self.referenceData = None
+                _self.subjectData = None
+
+            def test_method(_self):
+                with _self.allowDeviationUpper(3):  # <- Allow deviation of 0 to +3
+                    differences = [
+                        InvalidNumber(+2, 10, column1='foo'),
+                        InvalidNumber(+3, 10, column1='bar'),
+                        InvalidNumber(-1, 10, column1='baz'),
+                    ]
+                    raise DataAssertionError('some differences', differences)
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        pattern = ("DataAssertionError: some differences:\n"
+                   " InvalidNumber\(-1, 10, column1=u?'baz'\)\n")
+        self.assertRegex(failure, pattern)
+
+class TestAllowDeviationLower(TestHelperCase):
+    def test_passing(self):
+        """If accepted differences not found, raise exception."""
+        class _TestClass(DataTestCase):
+            def test_method(_self):
+                with _self.allowDeviationLower(-3):  # <- Allow deviation of -3 to 0
+                    differences = [
+                        InvalidNumber(-1, 10, column1='foo'),
+                        InvalidNumber(0, 10, column1='bar'),
+                        InvalidNumber(-3, 10, column1='baz'),
+                    ]
+                    raise DataAssertionError('some differences', differences)
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        self.assertIsNone(failure)
+
+    def test_under_deviation(self):
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                _self.referenceData = None
+                _self.subjectData = None
+
+            def test_method(_self):
+                with _self.allowDeviationLower(-3):  # <- Allow deviation of 0 to +3
+                    differences = [
+                        InvalidNumber(-2, 10, column1='foo'),
+                        InvalidNumber(-3, 10, column1='bar'),
+                        InvalidNumber(-4, 10, column1='baz'),
+                    ]
+                    raise DataAssertionError('some differences', differences)
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        pattern = ("DataAssertionError: some differences:\n"
+                   " InvalidNumber\(-4, 10, column1=u?'baz'\)")
+        self.assertRegex(failure, pattern)
+
+    def test_over_zero(self):
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                _self.referenceData = None
+                _self.subjectData = None
+
+            def test_method(_self):
+                with _self.allowDeviationLower(-3):  # <- Allow deviation of 0 to +3
+                    differences = [
+                        InvalidNumber(-2, 10, column1='foo'),
+                        InvalidNumber(-3, 10, column1='bar'),
+                        InvalidNumber(+1, 10, column1='baz'),
+                    ]
+                    raise DataAssertionError('some differences', differences)
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        pattern = ("DataAssertionError: some differences:\n"
+                   " InvalidNumber\(\+1, 10, column1=u?'baz'\)\n")
+        self.assertRegex(failure, pattern)
+
+
 class TestAllowPercentDeviation(TestHelperCase):
     def setUp(self):
         _fh = io.StringIO('label1,value\n'

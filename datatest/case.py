@@ -161,7 +161,59 @@ class _AllowDeviation(_BaseAllowance):
             for k, v in self._filter_by.items():
                 if (k not in obj.kwds) or (obj.kwds[k] not in v):
                     return True
-            return abs(obj.diff) > self.deviation
+            return abs(obj.diff) > self.deviation  # <- Using abs(...)!
+
+        not_allowed = [x for x in differences if _not_allowed(x)]
+        if not_allowed:
+            self._raiseFailure(message, not_allowed)  # <- EXIT!
+        return True
+
+
+class _AllowDeviationUpper(_BaseAllowance):
+    """Context manager for DataTestCase.allowDeviation() method."""
+    def __init__(self, deviation, test_case, msg, **filter_by):
+        assert deviation >= 0, 'Tolerance cannot be defined with a negative number.'
+        wrap = lambda v: [v] if isinstance(v, str) else v
+        self._filter_by = dict((k, wrap(v)) for k, v in filter_by.items())
+
+        self.deviation = deviation
+        super(self.__class__, self).__init__(test_case, msg=None)
+
+    def __exit__(self, exc_type, exc_value, tb):
+        differences = getattr(exc_value, 'diff', [])
+        message = getattr(exc_value, 'msg', 'No error raised')
+
+        def _not_allowed(obj):
+            for k, v in self._filter_by.items():
+                if (k not in obj.kwds) or (obj.kwds[k] not in v):
+                    return True
+            return (obj.diff > self.deviation) or (obj.diff < 0)
+
+        not_allowed = [x for x in differences if _not_allowed(x)]
+        if not_allowed:
+            self._raiseFailure(message, not_allowed)  # <- EXIT!
+        return True
+
+
+class _AllowDeviationLower(_BaseAllowance):
+    """Context manager for DataTestCase.allowDeviation() method."""
+    def __init__(self, deviation, test_case, msg, **filter_by):
+        assert deviation < 0, 'Lower deviation should not be defined with a positive number.'
+        wrap = lambda v: [v] if isinstance(v, str) else v
+        self._filter_by = dict((k, wrap(v)) for k, v in filter_by.items())
+
+        self.deviation = deviation
+        super(self.__class__, self).__init__(test_case, msg=None)
+
+    def __exit__(self, exc_type, exc_value, tb):
+        differences = getattr(exc_value, 'diff', [])
+        message = getattr(exc_value, 'msg', 'No error raised')
+
+        def _not_allowed(obj):
+            for k, v in self._filter_by.items():
+                if (k not in obj.kwds) or (obj.kwds[k] not in v):
+                    return True
+            return (obj.diff < self.deviation) or (obj.diff > 0)
 
         not_allowed = [x for x in differences if _not_allowed(x)]
         if not_allowed:
@@ -485,6 +537,32 @@ class DataTestCase(TestCase):
         """
         deviation = _make_decimal(deviation)
         return _AllowDeviation(deviation, self, msg, **filter_by)
+
+    def allowDeviationUpper(self, deviation, msg=None, **filter_by):
+        """Context manager to allow positive numeric differences of less than
+        or equal to the given *deviation*::
+
+            with self.allowDeviation(5):  # Allows from 0 to +5
+                self.assertValueSum('column2', group_by=['column1'])
+
+        If differences exceed *deviation*, the test case will fail with
+        a DataAssertionError containing the excessive differences.
+        """
+        deviation = _make_decimal(deviation)
+        return _AllowDeviationUpper(deviation, self, msg, **filter_by)
+
+    def allowDeviationLower(self, deviation, msg=None, **filter_by):
+        """Context manager to allow negative numeric differences of greater than
+        or equal to the given *deviation*::
+
+            with self.allowDeviation(-5):  # Allows from -5 to 0
+                self.assertValueSum('column2', group_by=['column1'])
+
+        If differences exceed *deviation*, the test case will fail with
+        a DataAssertionError containing the excessive differences.
+        """
+        deviation = _make_decimal(deviation)
+        return _AllowDeviationLower(deviation, self, msg, **filter_by)
 
     def allowPercentDeviation(self, deviation, msg=None, **filter_by):
         """Context manager to allow positive or negative numeric differences
