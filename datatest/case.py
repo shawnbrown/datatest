@@ -542,7 +542,7 @@ class DataTestCase(TestCase):
         """Context manager to allow positive numeric differences of less than
         or equal to the given *deviation*::
 
-            with self.allowDeviation(5):  # Allows from 0 to +5
+            with self.allowDeviationUpper(5):  # Allows from 0 to +5
                 self.assertValueSum('column2', group_by=['column1'])
 
         If differences exceed *deviation*, the test case will fail with
@@ -555,7 +555,7 @@ class DataTestCase(TestCase):
         """Context manager to allow negative numeric differences of greater than
         or equal to the given *deviation*::
 
-            with self.allowDeviation(-5):  # Allows from -5 to 0
+            with self.allowDeviationLower(-5):  # Allows from -5 to 0
                 self.assertValueSum('column2', group_by=['column1'])
 
         If differences exceed *deviation*, the test case will fail with

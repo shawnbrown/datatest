@@ -76,12 +76,12 @@ The following script implements these tests::
     formats (Excel, pandas, SQL, etc.).
 
 
-Subject Data
-============
+Subject Data (Data Under Test)
+==============================
 
-The data we want to test---the *subject* of our tests---is stored in a
-property named ``subjectData``.  This property is accessed, internally, by
-the ``assertValue...()`` and ``assertColumn...()`` methods.
+The data under test---the *subject* of our tests---is stored in a property
+named ``subjectData``.  This property is accessed, internally, by the
+``assertValue...()`` and ``assertColumn...()`` methods.
 
 ``subjectData`` is typically defined at the module-level inside a
 ``setUpModule()`` function---as shown in the first example.  However, if
@@ -192,16 +192,15 @@ allow the test to pass.
     <datatest.DataAssertionError>`.
 
 
-Acceptable Errors
-=================
+Allowed Error
+=============
 
 Sometimes differences cannot be reconciled---they could represent a
-disagreement between two authoratative sources or lack of information
-could make correction impossible.  In any case, there are situations
-where it is legitimate to mark certain differences as "acceptable"
-for the purposes of data processing.
+disagreement between two authoritative sources or a lack of information could
+make correction impossible.  In any case, there are situations where it is
+legitimate to allow certain discrepancies for the purposes of data processing.
 
-In the following example, there are two differences (eight more in
+In the following example, there are two discrepancies (eight more in
 Warren County and 25 less in Lake County)::
 
     Traceback (most recent call last):
@@ -211,9 +210,9 @@ Warren County and 25 less in Lake County)::
      InvalidNumber(-25, 3184, county='Lake'),
      InvalidNumber(+8, 11771, county='Warren')
 
-If we've determined that these differences are acceptable, we can use
-the :meth:`acceptableDifference
-<datatest.DataTestCase.acceptableDifference>` context manager so the
+If we've determined that these differences are allowable, we can use
+the :meth:`allowSpecified
+<datatest.DataTestCase.allowSpecified>` context manager so the
 test runs without failing::
 
     def test_population(self):
@@ -221,16 +220,16 @@ test runs without failing::
             InvalidNumber(-25, 3184, county='Lake'),
             InvalidNumber(+8, 11771, county='Warren'),
         ]
-        with self.acceptableDifference(diff):
+        with self.allowSpecified(diff):
             self.assertValueSum('population', ['county'])
 
-To accept several numeric differences at once, you can use the
-:meth:`acceptableTolerance <datatest.DataTestCase.acceptableTolerance>`
-or :meth:`acceptablePercentTolerance
-<datatest.DataTestCase.acceptablePercentTolerance>` methods::
+To allow several numeric differences at once, you can use the
+:meth:`allowDeviation <datatest.DataTestCase.allowDeviation>`
+or :meth:`allowPercentDeviation
+<datatest.DataTestCase.allowPercentDeviation>` methods::
 
     def test_households(self):
-        with self.acceptableTolerance(25):
+        with self.allowDeviation(25):
             self.assertValueCount('population', ['county'])
 
 

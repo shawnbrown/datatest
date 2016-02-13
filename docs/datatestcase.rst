@@ -76,21 +76,34 @@ In addition to the new functionality, the familiar ``TestCase`` methods
     .. automethod:: assertValueNotRegex
 
     +-----------------------------------------------------+------------------------------------------+
-    | Accept method                                       | Accepts that                             |
+    | Context Manager                                     | Allows                                   |
     +=====================================================+==========================================+
-    | :meth:`acceptableDifference(diff)                   | differences match those in *diff*        |
-    | <datatest.DataTestCase.acceptableDifference>`       |                                          |
+    | :meth:`allowSpecified(diff)                         | specified collection of *differences*    |
+    | <datatest.DataTestCase.allowSpecified>`             |                                          |
     +-----------------------------------------------------+------------------------------------------+
-    | :meth:`acceptableTolerance(tolerance)               | absolute values of numeric differences   |
-    | <datatest.DataTestCase.acceptableTolerance>`        | are equal to or less than *tolerance*    |
+    | :meth:`allowUnspecified(number)                     | given *number* of unspecified            |
+    | <datatest.DataTestCase.allowUnspecified>`           | differences                              |
     +-----------------------------------------------------+------------------------------------------+
-    | :meth:`acceptablePercentTolerance(tolerance)        | percentage values of numeric differences |
-    | <datatest.DataTestCase.acceptablePercentTolerance>` | are equal to or less than *tolerance*    |
+    | :meth:`allowDeviation(deviation)                    | positive or negative numeric differences |
+    | <datatest.DataTestCase.allowDeviation>`             | equal to or less than *deviation*        |
+    +-----------------------------------------------------+------------------------------------------+
+    | :meth:`allowDeviationUpper(deviation)               | positive numeric differences             |
+    | <datatest.DataTestCase.allowDeviationUpper>`        | equal to or less than *deviation*        |
+    +-----------------------------------------------------+------------------------------------------+
+    | :meth:`allowDeviationLower(deviation)               | negative numeric differences             |
+    | <datatest.DataTestCase.allowDeviationLower>`        | equal to or less than *deviation*        |
+    +-----------------------------------------------------+------------------------------------------+
+    | :meth:`allowPercentDeviation(deviation)             | positive or negative numeric differences |
+    | <datatest.DataTestCase.allowPercentDeviation>`      | equal to or less than *deviation* as a   |
+    |                                                     | percentage of the matching reference     |
     +-----------------------------------------------------+------------------------------------------+
 
-    .. automethod:: acceptableDifference
-    .. automethod:: acceptableTolerance
-    .. automethod:: acceptablePercentTolerance
+    .. automethod:: allowSpecified
+    .. automethod:: allowUnspecified
+    .. automethod:: allowDeviation
+    .. automethod:: allowDeviationUpper
+    .. automethod:: allowDeviationLower
+    .. automethod:: allowPercentDeviation
 
 
 Optional Keyword Filters (using \*\*filter_by)
