@@ -1,20 +1,20 @@
 
 .. meta::
-    :description: Test-driven data processing can provide much-needed
-                  structure to guide the workflow of data processing,
+    :description: Test-driven data preparation can provide much-needed
+                  structure to guide the workflow of data preparation,
                   itself.
-    :keywords: test-driven data processing
+    :keywords: test-driven data preparation
 
 
-.. _test-driven-data-processing:
+.. _test-driven-data-preparation:
 
-***************************
-Test-Driven Data Processing
-***************************
+****************************
+Test-Driven Data Preparation
+****************************
 
-The strucure of a :mod:`datatest` suite helps to guide the data
-processing workflow.  It can also help supplement or replace check-lists
-and progress reports.
+The structure of a :mod:`datatest` suite helps to guide the data preparation
+workflow.  It can also help supplement or replace check-lists and progress
+reports.
 
 
 Workflow
@@ -36,7 +36,7 @@ sed, etc.).
 Structuring a Data Test Suite
 =============================
 
-The structure of a datatest suite defines a data processing workflow.
+The structure of a datatest suite defines a data preparation workflow.
 The first cases should address essential prerequisites and the following
 cases should focus on specific requirements.  Test cases and methods are
 run *in order* (by line number).
