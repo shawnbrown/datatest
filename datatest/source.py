@@ -531,6 +531,27 @@ class SqliteSource(_SqliteSource):
         subjectData = datatest.SqliteSource(conn, 'mytable')
 
     """
+    @classmethod
+    def from_records(cls, data, columns=None):
+        """Alternate constructor to load an existing collection of
+        records.  Loads *data* (an iterable of lists, tuples, or dicts)
+        into a new SQLite database with the given *columns*::
+
+            subjectData = datatest.SqliteSource.from_records(records, columns)
+
+        The *columns* argument can be omitted if *data* contains ``dict`` or
+        ``namedtuple`` records::
+
+            dict_rows = [
+                { ... },
+                { ... },
+            ]
+            subjectData = datatest.SqliteSource.from_records(dict_rows)
+
+        """
+        temptable = _TemporarySqliteTable(data, columns)
+        return cls(temptable.connection, temptable.name)
+
     def create_index(self, *columns):
         """Creating an index for certain columns can speed up data
         testing in some cases.
@@ -559,19 +580,6 @@ class SqliteSource(_SqliteSource):
         """
         # Calling super() with older convention to support Python 2.7 & 2.6.
         super(self.__class__, self).create_index(*columns)
-
-    @classmethod
-    def from_records(cls, data, columns=None):
-        """Alternate constructor to load an existing collection of
-        records.  Loads *data* (an iterable of lists, tuples, or dicts)
-        into a new SQLite database with the given *columns*::
-
-            subjectData = datatest.SqliteSource.from_records(records, columns)
-
-        When *data* is a `dict` or `namedtuple`, *columns* can be omitted.
-        """
-        temptable = _TemporarySqliteTable(data, columns)
-        return cls(temptable.connection, temptable.name)
 
 
 class CsvSource(_SqliteSource):
