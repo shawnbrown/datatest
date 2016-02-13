@@ -1,7 +1,7 @@
 
 .. meta::
     :description: datatest: Data testing tools for Python.
-    :keywords: datatest, unittest, testing, test-driven data processing
+    :keywords: datatest, unittest, testing, test-driven data preparation
 
 .. module:: datatest
     :synopsis: Data testing tools for Python.
@@ -19,11 +19,16 @@ allowing for discrepancies when appropriate.  Datatest is based on Python's
 `unittest <http://docs.python.org/3/library/unittest.html>`_ framework and is
 compatible with standard unittest practices.
 
-In addition to quality control, a datatest suite can provide much-needed
-structure to guide the work flow of data processing tasks.  :ref:`Test-driven
-data processing <test-driven-data-processing>` can automate existing
-check-lists, measure progress, promote best practices, and help acclimate new
-team members.
+In the practice of data science, data preparation is a huge part of the job.
+In recent studies, experts estimate that 50 to 80 percent of time is spent
+wrangling data.  This critically important phase is time-consuming,
+unglamorous, and often poorly structured.
+
+:ref:`Test-driven data preparation <test-driven-data-preparation>` can provide
+much-needed structure to the process.  Automated data testing allows for quick
+edit-test cycles which help guide the selection, cleaning, integration, and
+formatting of data.  Data tests can also help to automate check-lists, measure
+progress, and promote best practices.
 
 (If you're already familiar with the package, you might want to
 skip to the :ref:`list of assert methods <assert-methods>`.)
