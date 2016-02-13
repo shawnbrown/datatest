@@ -7,18 +7,26 @@ Data source objects are used to access data in various formats.  For
 additional sources, see :ref:`optional data sources <extra-sources>`
 (below).
 
-+------------------------------+---------------------------------------+
-| Class                        | Loads                                 |
-+==============================+=======================================+
-| :class:`CsvSource(f)         | CSV file *f* (path or file-like       |
-| <datatest.CsvSource>`        | object)                               |
-+------------------------------+---------------------------------------+
-| :class:`SqliteSource(c, t)   | table *t* from SQLite connection *c*  |
-| <datatest.SqliteSource>`     |                                       |
-+------------------------------+---------------------------------------+
-| :class:`MultiSource(*s)      | wrapper for multiple sources *s* that |
-| <datatest.MultiSource>`      | acts as a single data source          |
-+------------------------------+---------------------------------------+
++----------------------------------------+---------------------------------------------+
+| Class                                  | Loads                                       |
++========================================+=============================================+
+| :class:`CsvSource(f)                   | CSV file *f* (path or file-like object)     |
+| <datatest.CsvSource>`                  |                                             |
++----------------------------------------+---------------------------------------------+
+| :class:`SqliteSource(c, t)             | table *t* from SQLite connection *c*        |
+| <datatest.SqliteSource>`               |                                             |
++----------------------------------------+---------------------------------------------+
+| :class:`MultiSource(*s)                | wrapper for multiple sources *s* that       |
+| <datatest.MultiSource>`                | acts as a single data source                |
++----------------------------------------+---------------------------------------------+
+| :class:`ExcelSource(p, worksheet=None) | Excel *worksheet* from XLSX or XLS path *p* |
+| <datatest.ExcelSource>`                | (defaults to the first worksheet if None),  |
+|                                        | requires `xlrd                              |
+|                                        | <http://pypi.python.org/pypi/xlrd>`_        |
++----------------------------------------+---------------------------------------------+
+| :class:`PandasSource(df)               | DataFrame *df*, requires `pandas            |
+| <datatest.PandasSource>`               | <http://pypi.python.org/pypi/pandas>`_      |
++----------------------------------------+---------------------------------------------+
 
 |
 
@@ -41,20 +49,6 @@ additional sources, see :ref:`optional data sources <extra-sources>`
 
 If you have the appropriate, optional dependencies installed, datatest
 provides a variety of other data sources:
-
-+-------------------------------------------+---------------------------------------------+
-| Class                                     | Loads                                       |
-+===========================================+=============================================+
-| :class:`ExcelSource(p, worksheet=None)    | Excel *worksheet* from XLSX or XLS path *p* |
-| <datatest.ExcelSource>`                   | (defaults to the first worksheet if None),  |
-|                                           | requires `xlrd                              |
-|                                           | <http://pypi.python.org/pypi/xlrd>`_        |
-+-------------------------------------------+---------------------------------------------+
-| :class:`PandasSource(df)                  | DataFrame *df*, requires `pandas            |
-| <datatest.PandasSource>`                  | <http://pypi.python.org/pypi/pandas>`_      |
-+-------------------------------------------+---------------------------------------------+
-
-|
 
 .. autoclass:: datatest.ExcelSource
 
