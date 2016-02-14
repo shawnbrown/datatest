@@ -33,18 +33,17 @@ progress, and promote best practices.
 (If you're already familiar with the package, you might want to
 skip to the :ref:`list of assert methods <assert-methods>`.)
 
+
+********
+Contents
+********
+
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
-   getting_started
-   data_processing
-   datatestcase
-   datasources
-   reference_misc
-
-
-Index
-=====
+   overview
+   contents
+   custom
 
 * :ref:`genindex`
 * :ref:`search`
