@@ -1,7 +1,14 @@
 
-***************
-Getting Started
-***************
+.. meta::
+    :description: Test-driven data preparation can provide much-needed
+                  structure to guide the workflow of data preparation,
+                  itself.
+    :keywords: test-driven data preparation
+
+
+********
+Overview
+********
 
 :mod:`datatest` is designed to work with tabular data stored in
 spreadsheet files or database tables but it's also possible to create
@@ -261,3 +268,54 @@ for full details.
     a specified directory.  To learn more, see the unittest
     documentation on `Test Discovery
     <https://docs.python.org/3/library/unittest.html#test-discovery>`_.
+
+
+.. _test-driven-data-preparation:
+
+Test-Driven Data Preparation
+============================
+
+A :mod:`datatest` suite can help organize and guide the data preparation
+workflow.  It can also help supplement or replace check-lists and progress
+reports.
+
+
+Structuring a Test Suite
+------------------------
+
+The structure of a datatest suite defines a data preparation workflow.
+The first tests should address essential prerequisites and the following
+tests should focus on specific requirements.  Test cases and methods are
+run *in order* (by line number).
+
+Typically, data tests should be defined in the following order:
+
+ 1. load data sources (asserts that expected source data is present)
+ 2. check for expected column names
+ 3. validate format of values (data type or other regex)
+ 4. assert set-membership requirements
+ 5. assert sums, counts, or cross-column values
+
+.. note::
+
+    Datatest implements strictly ordered tests but don't expect other tools to
+    do the same.  Ordered tests are useful when testing data but not so useful
+    when testing software.  In fact, ordered testing of software can lead to
+    problems if side-effects from one test affect the outcome of following
+    tests.
+
+
+Data Preparation Workflow
+-------------------------
+
+Using a quick edit-test cycle, users can:
+
+ 1. focus on a failing test
+ 2. make small changes to the data
+ 3. re-run the suite to check that the test now passes
+ 4. then, move on to the next failing test
+
+The work of cleaning and formatting data takes place outside of the
+datatest package itself.  Users can work with with the tools they find
+the most productive (Excel, `pandas <http://pandas.pydata.org/>`_, R,
+sed, etc.).
