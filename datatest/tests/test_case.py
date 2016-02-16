@@ -1147,6 +1147,98 @@ class TestAllowUnspecified(TestHelperCase):
         self.assertRegex(failure, pattern)
 
 
+class TestAllowMissing(TestHelperCase):
+    def test_passing(self):
+        """Pass when the only differences found are MissingItem differences."""
+        class _TestClass(DataTestCase):
+            def test_method1(_self):
+                with _self.allowMissing():  # <- allow MissingItem differences
+                    differences = [
+                        MissingItem('foo'),
+                        MissingItem('bar'),
+                        MissingItem('baz'),
+                    ]
+                    raise DataAssertionError('some differences', differences)
+
+            def test_method2(_self):
+                with _self.allowMissing():  # <- also pass with zero difference
+                    pass
+
+        failure = self._run_one_test(_TestClass, 'test_method1')
+        self.assertIsNone(failure)
+
+        failure = self._run_one_test(_TestClass, 'test_method2')
+        self.assertIsNone(failure)
+
+    def test_failing(self):
+        """Fail with non-MissingItem differences."""
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                _self.referenceData = None
+                _self.subjectData = None
+
+            def test_method(_self):
+                with _self.allowMissing():
+                    differences = [
+                        MissingItem('foo'),
+                        ExtraItem('bar'),
+                        ExtraItem('baz'),
+                    ]
+                    raise DataAssertionError('some differences', differences)
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        pattern = ("DataAssertionError: some differences:\n"
+                   " ExtraItem[^\n]+\n"
+                   " ExtraItem[^\n]+\n$")
+        self.assertRegex(failure, pattern)
+
+
+class TestAllowExtra(TestHelperCase):
+    def test_passing(self):
+        """Pass when the only differences found are ExtraItem differences."""
+        class _TestClass(DataTestCase):
+            def test_method1(_self):
+                with _self.allowExtra():  # <- allow ExtraItem differences
+                    differences = [
+                        ExtraItem('foo'),
+                        ExtraItem('bar'),
+                        ExtraItem('baz'),
+                    ]
+                    raise DataAssertionError('some differences', differences)
+
+            def test_method2(_self):
+                with _self.allowExtra():  # <- also pass with zero difference
+                    pass
+
+        failure = self._run_one_test(_TestClass, 'test_method1')
+        self.assertIsNone(failure)
+
+        failure = self._run_one_test(_TestClass, 'test_method2')
+        self.assertIsNone(failure)
+
+    def test_failing(self):
+        """Fail with non-ExtraItem differences."""
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                _self.referenceData = None
+                _self.subjectData = None
+
+            def test_method(_self):
+                with _self.allowExtra():
+                    differences = [
+                        ExtraItem('foo'),
+                        MissingItem('bar'),
+                        MissingItem('baz'),
+                    ]
+                    raise DataAssertionError('some differences', differences)
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        pattern = ("DataAssertionError: some differences:\n"
+                   " MissingItem[^\n]+\n"
+                   " MissingItem[^\n]+\n$")
+        self.assertRegex(failure, pattern)
+
+
 class TestAllowDeviation(TestHelperCase):
     def setUp(self):
         _fh = io.StringIO('label1,value\n'

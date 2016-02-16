@@ -143,6 +143,30 @@ class _AllowUnspecified(_BaseAllowance):
         return True
 
 
+class _AllowMissing(_BaseAllowance):
+    """Context manager for DataTestCase.allowMissing() method."""
+    def __exit__(self, exc_type, exc_value, tb):
+        diff = getattr(exc_value, 'diff', [])
+        message = getattr(exc_value, 'msg', 'No error raised')
+        observed = list(diff)
+        not_allowed = [x for x in observed if not isinstance(x, MissingItem)]
+        if not_allowed:
+            self._raiseFailure(message, not_allowed)  # <- EXIT!
+        return True
+
+
+class _AllowExtra(_BaseAllowance):
+    """Context manager for DataTestCase.allowExtra() method."""
+    def __exit__(self, exc_type, exc_value, tb):
+        diff = getattr(exc_value, 'diff', [])
+        message = getattr(exc_value, 'msg', 'No error raised')
+        observed = list(diff)
+        not_allowed = [x for x in observed if not isinstance(x, ExtraItem)]
+        if not_allowed:
+            self._raiseFailure(message, not_allowed)  # <- EXIT!
+        return True
+
+
 class _AllowDeviation(_BaseAllowance):
     """Context manager for DataTestCase.allowDeviation() method."""
     def __init__(self, deviation, test_case, msg, **filter_by):
@@ -524,6 +548,26 @@ class DataTestCase(TestCase):
         differences.
         """
         return _AllowUnspecified(number, self, msg)
+
+    def allowMissing(self, msg=None):
+        """Context manager to allow for missing values without triggering a
+        test failure::
+
+            with self.allowMissing():  # Allows MissingItem differences.
+                self.assertValueSet('column1')
+
+        """
+        return _AllowMissing(self, msg)
+
+    def allowExtra(self, msg=None):
+        """Context manager to allow for extra values without triggering a
+        test failure.
+
+            with self.allowExtra():  # Allows ExtraItem differences.
+                self.assertValueSet('column1')
+
+        """
+        return _AllowExtra(self, msg)
 
     def allowDeviation(self, deviation, msg=None, **filter_by):
         """Context manager to allow positive or negative numeric differences
