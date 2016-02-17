@@ -10,8 +10,8 @@ import warnings
 from . import _io as io
 from . import _unittest as unittest
 from .common import MkdtempTestCase
-from .._collections import namedtuple
-from .._decimal import Decimal
+from datatest._collections import namedtuple
+from datatest._decimal import Decimal
 
 # Import related objects.
 from datatest.sourceresult import ResultSet
