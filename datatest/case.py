@@ -348,38 +348,6 @@ class DataTestCase(TestCase):
                 msg = 'different column names'
             self.fail(msg, subject_result.compare(reference_result))
 
-    def assertColumnSubset(self, ref=None, msg=None):
-        """Test that the set of subject columns is a subset of reference
-        columns.  If *ref* is provided, it is used in-place of the set
-        from ``referenceData``.
-        """
-        subject_columns = self.subjectData.columns()
-        subject_result = ResultSet(subject_columns)
-
-        reference_columns = self._normalize_reference(ref, 'columns')
-        reference_result = ResultSet(reference_columns)
-
-        if not subject_result <= reference_result:
-            if msg is None:
-                msg = 'different column names'  # found extra columns
-            self.fail(msg, subject_result.compare(reference_result, op='<='))
-
-    def assertColumnSuperset(self, ref=None, msg=None):
-        """Test that the set of subject columns is a superset of reference
-        columns.  If *ref* is provided, it is used in-place of the set
-        from ``referenceData``.
-        """
-        subject_columns = self.subjectData.columns()
-        subject_result = ResultSet(subject_columns)
-
-        reference_columns = self._normalize_reference(ref, 'columns')
-        reference_result = ResultSet(reference_columns)
-
-        if not subject_result >= reference_result:
-            if msg is None:
-                msg = 'different column names'  # missing expected columns
-            self.fail(msg, subject_result.compare(reference_result, op='>='))
-
     def assertValueSet(self, column, ref=None, msg=None, **filter_by):
         """Test that the set of subject values matches the set of
         reference values for the given *column*.  If *ref* is provided,
@@ -392,32 +360,6 @@ class DataTestCase(TestCase):
             if msg is None:
                 msg = 'different {0!r} values'.format(column)
             self.fail(msg, subject_result.compare(reference_result))
-
-    def assertValueSubset(self, column, ref=None, msg=None, **filter_by):
-        """Test that the set of subject values is a subset of reference
-        values for the given *column*.  If *ref* is provided, it is used
-        in-place of the set from ``referenceData``.
-        """
-        subject_result = self.subjectData.distinct(column, **filter_by)
-        reference_result = self._normalize_reference(ref, 'distinct', column, **filter_by)
-
-        if not subject_result <= reference_result:
-            if msg is None:
-                msg = 'different {0!r} values'.format(column)
-            self.fail(msg, subject_result.compare(reference_result, '<='))
-
-    def assertValueSuperset(self, column, ref=None, msg=None, **filter_by):
-        """Test that the set of subject values is a superset of reference
-        values for the given *column*.  If *ref* is provided, it is used
-        in-place of the set from ``referenceData``.
-        """
-        subject_result = self.subjectData.distinct(column, **filter_by)
-        reference_result = self._normalize_reference(ref, 'distinct', column, **filter_by)
-
-        if not subject_result >= reference_result:
-            if msg is None:
-                msg = 'different {0!r} values'.format(column)
-            self.fail(msg, subject_result.compare(reference_result, '>='))
 
     def assertValueSum(self, column, group_by, msg=None, **filter_by):
         """Test that the sum of subject values matches the sum of
