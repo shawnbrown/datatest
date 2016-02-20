@@ -61,6 +61,12 @@ __all__ = [
 
 # Temporary aliases for deprecated names.
 DataTestCase.allowDeviationPercent = DataTestCase.allowPercentDeviation
+DataTestCase.assertColumnSet = DataTestCase.assertDataColumns
+DataTestCase.assertValueSet = DataTestCase.assertDataSet
+DataTestCase.assertValueSum = DataTestCase.assertDataSum
+DataTestCase.assertValueCount = DataTestCase.assertDataCount
+DataTestCase.assertValueRegex = DataTestCase.assertDataRegex
+DataTestCase.assertValueNotRegex = DataTestCase.assertDataNotRegex
 
 def _assertColumnSubset(self, ref=None, msg=None):
     with self.allowMissing():

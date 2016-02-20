@@ -562,7 +562,7 @@ class SqliteSource(_SqliteSource):
         discretion.
 
         For example:  If you're using "town" to group aggregation
-        tests (like ``self.assertValueSum('population', ['town'])``),
+        tests (like ``self.assertDataSum('population', ['town'])``),
         then you might be able to improve performance by adding an index
         for the "town" column::
 

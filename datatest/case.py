@@ -332,7 +332,7 @@ class DataTestCase(TestCase):
 
         return ref
 
-    def assertColumnSet(self, ref=None, msg=None):
+    def assertDataColumns(self, ref=None, msg=None):
         """Test that the set of subject columns matches set of reference
         columns.  If *ref* is provided, it is used in-place of the set
         from ``referenceData``.
@@ -348,7 +348,7 @@ class DataTestCase(TestCase):
                 msg = 'different column names'
             self.fail(msg, subject_result.compare(reference_result))
 
-    def assertValueSet(self, column, ref=None, msg=None, **filter_by):
+    def assertDataSet(self, column, ref=None, msg=None, **filter_by):
         """Test that the set of subject values matches the set of
         reference values for the given *column*.  If *ref* is provided,
         it is used in place of the set from ``referenceData``.
@@ -361,7 +361,7 @@ class DataTestCase(TestCase):
                 msg = 'different {0!r} values'.format(column)
             self.fail(msg, subject_result.compare(reference_result))
 
-    def assertValueSum(self, column, group_by, msg=None, **filter_by):
+    def assertDataSum(self, column, group_by, msg=None, **filter_by):
         """Test that the sum of subject values matches the sum of
         reference values for the given *column* for each group in
         *group_by*.
@@ -370,7 +370,7 @@ class DataTestCase(TestCase):
         matches the sum of the reference's ``income`` for each group of
         ``department`` and ``year`` values::
 
-            self.assertValueSum('income', ['department', 'year'])
+            self.assertDataSum('income', ['department', 'year'])
 
         """
         subject_result = self.subjectData.sum(column, group_by, **filter_by)
@@ -382,7 +382,7 @@ class DataTestCase(TestCase):
                 msg = 'different {0!r} sums'.format(column)
             self.fail(msg=msg, diff=differences)
 
-    def assertValueCount(self, column, group_by, msg=None, **filter_by):
+    def assertDataCount(self, column, group_by, msg=None, **filter_by):
         """Test that the count of subject rows matches the sum of
         reference *column* for each group in *group_by*.
 
@@ -390,7 +390,7 @@ class DataTestCase(TestCase):
         matches the sum of the reference's ``employees`` column for
         each group of ``department`` and ``project`` values::
 
-            self.assertValueCount('employees', ['department', 'project'])
+            self.assertDataCount('employees', ['department', 'project'])
 
         """
         if column not in self.referenceData.columns():
@@ -406,7 +406,7 @@ class DataTestCase(TestCase):
                 msg = 'row counts different than {0!r} sums'.format(column)
             self.fail(msg=msg, diff=differences)
 
-    def assertValueRegex(self, column, regex, msg=None, **filter_by):
+    def assertDataRegex(self, column, regex, msg=None, **filter_by):
         """Test that all subject values in *column* match the *regex*
         pattern search.
         """
@@ -421,7 +421,7 @@ class DataTestCase(TestCase):
                 msg = 'non-matching {0!r} values'.format(column)
             self.fail(msg=msg, diff=invalid)
 
-    def assertValueNotRegex(self, column, regex, msg=None, **filter_by):
+    def assertDataNotRegex(self, column, regex, msg=None, **filter_by):
         """Test that all subject values in *column* do not match the
         *regex* pattern search.
         """
@@ -445,7 +445,7 @@ class DataTestCase(TestCase):
                 MissingItem('bar'),
             ]
             with self.allowSpecified(diff):
-                self.assertValueSet('column1')
+                self.assertDataSet('column1')
 
         If the raised differences do not match *diff*, the test will
         fail with a DataAssertionError of the remaining differences.
@@ -456,7 +456,7 @@ class DataTestCase(TestCase):
         Using a single difference::
 
             with self.allowSpecified(ExtraItem('foo')):
-                self.assertValueSet('column2')
+                self.assertDataSet('column2')
 
         When using a dictionary of differences, the keys are strings that
         provide context (for future reference and derived reports) and the
@@ -473,7 +473,7 @@ class DataTestCase(TestCase):
                 ]
             }
             with self.allowSpecified(diff):
-                self.assertValueSum('population', ['town'])
+                self.assertDataSum('population', ['town'])
 
         """
         return _AllowSpecified(diff, self, msg)
@@ -483,7 +483,7 @@ class DataTestCase(TestCase):
         differences without triggering a test failure::
 
             with self.allowUnspecified(10):  # Allows up to ten differences.
-                self.assertValueSet('column1')
+                self.assertDataSet('column1')
 
         If the count of differences exceeds the given *number*, the test case
         will fail with a DataAssertionError containing all observed
@@ -496,7 +496,7 @@ class DataTestCase(TestCase):
         test failure::
 
             with self.allowMissing():  # Allows MissingItem differences.
-                self.assertValueSet('column1')
+                self.assertDataSet('column1')
 
         """
         return _AllowMissing(self, msg)
@@ -506,7 +506,7 @@ class DataTestCase(TestCase):
         test failure.
 
             with self.allowExtra():  # Allows ExtraItem differences.
-                self.assertValueSet('column1')
+                self.assertDataSet('column1')
 
         """
         return _AllowExtra(self, msg)
@@ -516,7 +516,7 @@ class DataTestCase(TestCase):
         of less than or equal to the given *deviation*::
 
             with self.allowDeviation(5):  # Allows +/- 5
-                self.assertValueSum('column2', group_by=['column1'])
+                self.assertDataSum('column2', group_by=['column1'])
 
         If differences exceed *deviation*, the test case will fail with
         a DataAssertionError containing the excessive differences.
@@ -529,7 +529,7 @@ class DataTestCase(TestCase):
         or equal to the given *deviation*::
 
             with self.allowDeviationUpper(5):  # Allows from 0 to +5
-                self.assertValueSum('column2', group_by=['column1'])
+                self.assertDataSum('column2', group_by=['column1'])
 
         If differences exceed *deviation*, the test case will fail with
         a DataAssertionError containing the excessive differences.
@@ -542,7 +542,7 @@ class DataTestCase(TestCase):
         or equal to the given *deviation*::
 
             with self.allowDeviationLower(-5):  # Allows from -5 to 0
-                self.assertValueSum('column2', group_by=['column1'])
+                self.assertDataSum('column2', group_by=['column1'])
 
         If differences exceed *deviation*, the test case will fail with
         a DataAssertionError containing the excessive differences.
@@ -556,7 +556,7 @@ class DataTestCase(TestCase):
         matching reference value::
 
             with self.allowPercentDeviation(0.02):  # Allows +/- 2%
-                self.assertValueSum('column2', group_by=['column1'])
+                self.assertDataSum('column2', group_by=['column1'])
 
         If differences exceed *deviation*, the test case will fail with
         a DataAssertionError containing the excessive differences.

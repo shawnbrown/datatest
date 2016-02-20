@@ -21,62 +21,37 @@ In addition to the new functionality, the familiar ``TestCase`` methods
     .. autoattribute:: subjectData
     .. autoattribute:: referenceData
 
+
     .. _assert-methods:
-
-    Column assertions operate on the column names (or header row) of a
-    data source:
-
-    +---------------------------------------------------+----------------------------------------------+
-    | Method                                            | Checks that                                  |
-    +===================================================+==============================================+
-    | :meth:`assertColumnSet()                          | subject columns == reference columns         |
-    | <datatest.DataTestCase.assertColumnSet>`          |                                              |
-    +---------------------------------------------------+----------------------------------------------+
-    | :meth:`assertColumnSubset()                       | subject columns <= reference columns         |
-    | <datatest.DataTestCase.assertColumnSubset>`       |                                              |
-    +---------------------------------------------------+----------------------------------------------+
-    | :meth:`assertColumnSuperset()                     | subject columns >= reference columns         |
-    | <datatest.DataTestCase.assertColumnSuperset>`     |                                              |
-    +---------------------------------------------------+----------------------------------------------+
-
-    .. automethod:: assertColumnSet
-    .. automethod:: assertColumnSubset
-    .. automethod:: assertColumnSuperset
-
-    Value assertions operate on the values within a given column:
 
     +----------------------------------------------+----------------------------------------------------+
     | Method                                       | Checks that                                        |
     +==============================================+====================================================+
-    | :meth:`assertValueSet(c)                     | subject vals == reference vals in column *c*       |
-    | <datatest.DataTestCase.assertValueSet>`      |                                                    |
+    | :meth:`assertDataColumns()                   | subject columns == reference columns               |
+    | <datatest.DataTestCase.assertDataColumns>`   |                                                    |
     +----------------------------------------------+----------------------------------------------------+
-    | :meth:`assertValueSubset(c)                  | subject vals <= reference vals in column *c*       |
-    | <datatest.DataTestCase.assertValueSubset>`   |                                                    |
+    | :meth:`assertDataSet(c)                      | subject vals == reference vals in column *c*       |
+    | <datatest.DataTestCase.assertDataSet>`       |                                                    |
     +----------------------------------------------+----------------------------------------------------+
-    | :meth:`assertValueSuperset(c)                | subject vals >= reference vals in column *c*       |
-    | <datatest.DataTestCase.assertValueSuperset>` |                                                    |
+    | :meth:`assertDataSum(c, g)                   | sum of subject vals == sum of reference vals in    |
+    | <datatest.DataTestCase.assertDataSum>`       | column *c* for each group of *g*                   |
     +----------------------------------------------+----------------------------------------------------+
-    | :meth:`assertValueSum(c, g)                  | sum of subject vals == sum of reference vals in    |
-    | <datatest.DataTestCase.assertValueSum>`      | column *c* for each group of *g*                   |
+    | :meth:`assertDataCount(c, g)                 | count of subject rows == sum of reference vals in  |
+    | <datatest.DataTestCase.assertDataCount>`     | column *c* for each group of *g*                   |
     +----------------------------------------------+----------------------------------------------------+
-    | :meth:`assertValueCount(c, g)                | count of subject rows == sum of reference vals in  |
-    | <datatest.DataTestCase.assertValueCount>`    | column *c* for each group of *g*                   |
+    | :meth:`assertDataRegex(c, r)                 | *r*.search(val) for subject vals in column *c*     |
+    | <datatest.DataTestCase.assertDataRegex>`     |                                                    |
     +----------------------------------------------+----------------------------------------------------+
-    | :meth:`assertValueRegex(c, r)                | *r*.search(val) for subject vals in column *c*     |
-    | <datatest.DataTestCase.assertValueRegex>`    |                                                    |
-    +----------------------------------------------+----------------------------------------------------+
-    | :meth:`assertValueNotRegex(c, r)             | not *r*.search(val) for subject vals in column *c* |
-    | <datatest.DataTestCase.assertValueNotRegex>` |                                                    |
+    | :meth:`assertDataNotRegex(c, r)              | not *r*.search(val) for subject vals in column *c* |
+    | <datatest.DataTestCase.assertDataNotRegex>`  |                                                    |
     +----------------------------------------------+----------------------------------------------------+
 
-    .. automethod:: assertValueSet
-    .. automethod:: assertValueSubset
-    .. automethod:: assertValueSuperset
-    .. automethod:: assertValueSum
-    .. automethod:: assertValueCount
-    .. automethod:: assertValueRegex
-    .. automethod:: assertValueNotRegex
+    .. automethod:: assertDataColumns
+    .. automethod:: assertDataSet
+    .. automethod:: assertDataSum
+    .. automethod:: assertDataCount
+    .. automethod:: assertDataRegex
+    .. automethod:: assertDataNotRegex
 
     +-----------------------------------------------------+------------------------------------------+
     | Context Manager                                     | Allows                                   |
@@ -86,6 +61,12 @@ In addition to the new functionality, the familiar ``TestCase`` methods
     +-----------------------------------------------------+------------------------------------------+
     | :meth:`allowUnspecified(number)                     | given *number* of unspecified            |
     | <datatest.DataTestCase.allowUnspecified>`           | differences                              |
+    +-----------------------------------------------------+------------------------------------------+
+    | :meth:`allowExtra()                                 | any number of Extra differences          |
+    | <datatest.DataTestCase.allowExtra>`                 |                                          |
+    +-----------------------------------------------------+------------------------------------------+
+    | :meth:`allowMissing()                               | any number of Missing differences        |
+    | <datatest.DataTestCase.allowMissing>`               |                                          |
     +-----------------------------------------------------+------------------------------------------+
     | :meth:`allowDeviation(deviation)                    | positive or negative numeric differences |
     | <datatest.DataTestCase.allowDeviation>`             | equal to or less than *deviation*        |
@@ -103,6 +84,8 @@ In addition to the new functionality, the familiar ``TestCase`` methods
 
     .. automethod:: allowSpecified
     .. automethod:: allowUnspecified
+    .. automethod:: allowMissing
+    .. automethod:: allowExtra
     .. automethod:: allowDeviation
     .. automethod:: allowDeviationUpper
     .. automethod:: allowDeviationLower
@@ -119,12 +102,12 @@ The following example asserts that the subject's ``postal_code`` values
 match the reference's ``postal_code`` values but only for records where
 the ``state`` equals ``'Ohio'`` and the ``city`` equals ``'Columbus'``::
 
-    self.assertValueSet('postal_code', state='Ohio', city='Columbus')
+    self.assertDataSet('postal_code', state='Ohio', city='Columbus')
 
 The next example makes this same assertion but for records where the
 ``state`` equals ``'Indiana'`` *or* ``'Ohio'``::
 
-    self.assertValueSet('postal_code', state=['Indiana', 'Ohio'])
+    self.assertDataSet('postal_code', state=['Indiana', 'Ohio'])
 
 
 ************
