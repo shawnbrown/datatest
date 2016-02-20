@@ -5,10 +5,10 @@ from datatest.sourceresult import _coerce_other
 from datatest.sourceresult import ResultSet
 from datatest.sourceresult import ResultMapping
 
-from datatest import ExtraItem
-from datatest import MissingItem
-from datatest import InvalidItem
-from datatest import InvalidNumber
+from datatest import Extra
+from datatest import Missing
+from datatest import Invalid
+from datatest import Deviation
 from datatest import NotProperSubset
 from datatest import NotProperSuperset
 
@@ -126,7 +126,7 @@ class TestResultSet(unittest.TestCase):
     def test_compare(self):
         a = ResultSet(['aaa','bbb','ddd'])
         b = ResultSet(['aaa','bbb','ccc'])
-        expected = [ExtraItem('ddd'), MissingItem('ccc')]
+        expected = [Extra('ddd'), Missing('ccc')]
         self.assertEqual(expected, a.compare(b))
 
         a = ResultSet(['aaa','bbb','ccc'])
@@ -141,13 +141,13 @@ class TestResultSet(unittest.TestCase):
 
         # Test callable other (some False).
         result = a.compare(lambda x: x.startswith('b'))
-        expected = set([InvalidItem('aaa'), InvalidItem('ccc')])
+        expected = set([Invalid('aaa'), Invalid('ccc')])
         self.assertEqual(expected, set(result))
 
         # Test subset (less-than-or-equal).
         a = ResultSet(['aaa','bbb','ddd'])
         b = ResultSet(['aaa','bbb','ccc'])
-        expected = [ExtraItem('ddd')]
+        expected = [Extra('ddd')]
         self.assertEqual(expected, a.compare(b, op='<='))
 
         # Test strict subset (less-than).
@@ -163,7 +163,7 @@ class TestResultSet(unittest.TestCase):
         # Test superset (greater-than-or-equal).
         a = ResultSet(['aaa','bbb','ccc'])
         b = ResultSet(['aaa','bbb','ddd'])
-        expected = [MissingItem('ddd')]
+        expected = [Missing('ddd')]
         self.assertEqual(expected, a.compare(b, op='>='))
 
         # Test superset subset (greater-than).
@@ -313,43 +313,43 @@ class TestResultMapping(unittest.TestCase):
 
         a = ResultMapping({'aaa': 1, 'bbb': 2, 'ccc': 3, 'ddd': 4}, 'foo')
         b = ResultMapping({'aaa': 1, 'bbb': 2.5, 'ccc': 3, 'ddd': 4}, 'foo')
-        expected = [InvalidNumber(-0.5, 2.5, foo='bbb')]
+        expected = [Deviation(-0.5, 2.5, foo='bbb')]
         self.assertEqual(expected, a.compare(b))
 
         # 'b' is zero in self/subject.
         a = ResultMapping({'aaa': 1, 'bbb':   0, 'ccc': 3, 'ddd': 4}, 'foo')
         b = ResultMapping({'aaa': 1, 'bbb': 2.5, 'ccc': 3, 'ddd': 4}, 'foo')
-        expected = [InvalidNumber(-2.5, 2.5, foo='bbb')]
+        expected = [Deviation(-2.5, 2.5, foo='bbb')]
         self.assertEqual(expected, a.compare(b))
 
         # 'b' is missing from self/subject.
         a = ResultMapping({'aaa': 1,             'ccc': 3, 'ddd': 4}, 'foo')
         b = ResultMapping({'aaa': 1, 'bbb': 2.5, 'ccc': 3, 'ddd': 4}, 'foo')
-        expected = [InvalidNumber(-2.5, 2.5, foo='bbb')]
+        expected = [Deviation(-2.5, 2.5, foo='bbb')]
         self.assertEqual(expected, a.compare(b))
 
         # 'b' is zero in other/reference.
         a = ResultMapping({'aaa': 1, 'bbb': 2, 'ccc': 3, 'ddd': 4}, 'foo')
         b = ResultMapping({'aaa': 1, 'bbb': 0, 'ccc': 3, 'ddd': 4}, 'foo')
-        expected = [InvalidNumber(+2, 0, foo='bbb')]
+        expected = [Deviation(+2, 0, foo='bbb')]
         self.assertEqual(expected, a.compare(b))
 
         # 'b' is missing from other/reference.
         a = ResultMapping({'aaa': 1, 'bbb': 2, 'ccc': 3, 'ddd': 4}, 'foo')
         b = ResultMapping({'aaa': 1,           'ccc': 3, 'ddd': 4}, 'foo')
-        expected = [InvalidNumber(+2, None, foo='bbb')]
+        expected = [Deviation(+2, None, foo='bbb')]
         self.assertEqual(expected, a.compare(b))
 
         # Test coersion of *other*.
         a = ResultMapping({'aaa': 1, 'bbb': 2, 'ccc': 3, 'ddd': 4}, 'foo')
         b = {'aaa': 1, 'bbb': 2.5, 'ccc': 3, 'ddd': 4}
-        expected = [InvalidNumber(-0.5, 2.5, foo='bbb')]
+        expected = [Deviation(-0.5, 2.5, foo='bbb')]
         self.assertEqual(expected, a.compare(b))
 
     def test_compare_strings(self):
         a = ResultMapping({'aaa': 'x', 'bbb': 'y', 'ccc': 'z'}, 'foo')
         b = ResultMapping({'aaa': 'x', 'bbb': 'z', 'ccc': 'z'}, 'foo')
-        expected = [InvalidItem('y', 'z', foo='bbb')]
+        expected = [Invalid('y', 'z', foo='bbb')]
         self.assertEqual(expected, a.compare(b))
 
     def test_compare_function(self):
@@ -361,16 +361,16 @@ class TestResultMapping(unittest.TestCase):
 
         # Some False.
         result = a.compare(lambda a: a in ('x', 'y'))
-        expected = [InvalidItem('z', foo='ccc')]
+        expected = [Invalid('z', foo='ccc')]
         self.assertEqual(expected, result)
 
     def test_compare_mixed_types(self):
         a = ResultMapping({'aaa':  2,  'bbb': 3,   'ccc': 'z'}, 'foo')
         b = ResultMapping({'aaa': 'y', 'bbb': 4.0, 'ccc':  5 }, 'foo')
         expected = set([
-            InvalidItem(2, 'y', foo='aaa'),
-            InvalidNumber(-1, 4, foo='bbb'),
-            InvalidItem('z', 5, foo='ccc'),
+            Invalid(2, 'y', foo='aaa'),
+            Deviation(-1, 4, foo='bbb'),
+            Invalid('z', 5, foo='ccc'),
         ])
         self.assertEqual(expected, set(a.compare(b)))
 

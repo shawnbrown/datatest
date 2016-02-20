@@ -10,12 +10,12 @@ from .source import MultiSource
 from .extras import ExcelSource
 from .extras import PandasSource
 
-from .diff import ExtraItem
-from .diff import MissingItem
-from .diff import InvalidItem
-from .diff import InvalidNumber
-from .diff import NotProperSubset
-from .diff import NotProperSuperset
+from .differences import Extra
+from .differences import Missing
+from .differences import Invalid
+from .differences import Deviation
+from .differences import NotProperSubset
+from .differences import NotProperSuperset
 
 from .sourceresult import ResultSet
 from .sourceresult import ResultMapping
@@ -47,10 +47,10 @@ __all__ = [
     'ResultMapping',
 
     # Differences.
-    'ExtraItem',
-    'MissingItem',
-    'InvalidItem',
-    'InvalidNumber',
+    'Extra',
+    'Missing',
+    'Invalid',
+    'Deviation',
 
     # Test runner and command-line program.
     'required',
@@ -60,6 +60,11 @@ __all__ = [
 ]
 
 # Temporary aliases for deprecated names.
+ExtraItem = Extra
+MissingItem = Missing
+InvalidItem = Invalid
+InvalidNumber = Deviation
+
 DataTestCase.allowDeviationPercent = DataTestCase.allowPercentDeviation
 DataTestCase.assertColumnSet = DataTestCase.assertDataColumns
 DataTestCase.assertValueSet = DataTestCase.assertDataSet

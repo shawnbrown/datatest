@@ -7,12 +7,12 @@ import pprint
 import re
 from unittest import TestCase
 
-from .diff import _make_decimal
-from .diff import BaseDifference
-from .diff import MissingItem
-from .diff import ExtraItem
-from .diff import InvalidItem
-from .diff import InvalidNumber
+from .differences import _make_decimal
+from .differences import BaseDifference
+from .differences import Missing
+from .differences import Extra
+from .differences import Invalid
+from .differences import Deviation
 from .source import BaseSource
 from .sourceresult import ResultSet
 from .sourceresult import ResultMapping
@@ -149,7 +149,7 @@ class _AllowMissing(_BaseAllowance):
         diff = getattr(exc_value, 'diff', [])
         message = getattr(exc_value, 'msg', 'No error raised')
         observed = list(diff)
-        not_allowed = [x for x in observed if not isinstance(x, MissingItem)]
+        not_allowed = [x for x in observed if not isinstance(x, Missing)]
         if not_allowed:
             self._raiseFailure(message, not_allowed)  # <- EXIT!
         return True
@@ -161,7 +161,7 @@ class _AllowExtra(_BaseAllowance):
         diff = getattr(exc_value, 'diff', [])
         message = getattr(exc_value, 'msg', 'No error raised')
         observed = list(diff)
-        not_allowed = [x for x in observed if not isinstance(x, ExtraItem)]
+        not_allowed = [x for x in observed if not isinstance(x, Extra)]
         if not_allowed:
             self._raiseFailure(message, not_allowed)  # <- EXIT!
         return True
@@ -441,8 +441,8 @@ class DataTestCase(TestCase):
         triggering a test failure::
 
             diff = [
-                ExtraItem('foo'),
-                MissingItem('bar'),
+                Extra('foo'),
+                Missing('bar'),
             ]
             with self.allowSpecified(diff):
                 self.assertDataSet('column1')
@@ -455,7 +455,7 @@ class DataTestCase(TestCase):
 
         Using a single difference::
 
-            with self.allowSpecified(ExtraItem('foo')):
+            with self.allowSpecified(Extra('foo')):
                 self.assertDataSet('column2')
 
         When using a dictionary of differences, the keys are strings that
@@ -464,12 +464,12 @@ class DataTestCase(TestCase):
 
             diff = {
                 'Totals from state do not match totals from county.': [
-                    InvalidNumber(+436, 38032, town='Springfield'),
-                    InvalidNumber(-83, 8631, town='Union')
+                    Deviation(+436, 38032, town='Springfield'),
+                    Deviation(-83, 8631, town='Union')
                 ],
                 'Some small towns were omitted from county report.': [
-                    InvalidNumber(-102, 102, town='Anderson'),
-                    InvalidNumber(-177, 177, town='Westfield')
+                    Deviation(-102, 102, town='Anderson'),
+                    Deviation(-177, 177, town='Westfield')
                 ]
             }
             with self.allowSpecified(diff):
@@ -495,7 +495,7 @@ class DataTestCase(TestCase):
         """Context manager to allow for missing values without triggering a
         test failure::
 
-            with self.allowMissing():  # Allows MissingItem differences.
+            with self.allowMissing():  # Allows Missing differences.
                 self.assertDataSet('column1')
 
         """
@@ -505,7 +505,7 @@ class DataTestCase(TestCase):
         """Context manager to allow for extra values without triggering a
         test failure.
 
-            with self.allowExtra():  # Allows ExtraItem differences.
+            with self.allowExtra():  # Allows Extra differences.
                 self.assertDataSet('column1')
 
         """

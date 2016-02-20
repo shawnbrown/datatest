@@ -42,15 +42,15 @@ class BaseDifference(object):
         return ', ' + kwds
 
 
-class ExtraItem(BaseDifference):
+class Extra(BaseDifference):
     pass
 
 
-class MissingItem(BaseDifference):
+class Missing(BaseDifference):
     pass
 
 
-class InvalidItem(BaseDifference):
+class Invalid(BaseDifference):
     def __init__(self, item, expected=None, **kwds):
         self.item = item
         self.expected = expected
@@ -66,7 +66,7 @@ class InvalidItem(BaseDifference):
         return '{0}({1!r}{2}{3})'.format(clsname, self.item, expected, kwds)
 
 
-class InvalidNumber(BaseDifference):
+class Deviation(BaseDifference):
     def __init__(self, diff, expected, **kwds):
         if not diff:
             raise ValueError('diff must be positive or negative number')

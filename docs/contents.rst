@@ -250,16 +250,16 @@ Errors and Differences
 .. autoclass:: datatest.DataAssertionError
    :members:
 
-.. autoclass:: datatest.ExtraItem
+.. autoclass:: datatest.Extra
    :members:
 
-.. autoclass:: datatest.MissingItem
+.. autoclass:: datatest.Missing
    :members:
 
-.. autoclass:: datatest.InvalidItem
+.. autoclass:: datatest.Invalid
    :members:
 
-.. autoclass:: datatest.InvalidNumber
+.. autoclass:: datatest.Deviation
    :members:
 
 

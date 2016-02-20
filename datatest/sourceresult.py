@@ -8,12 +8,12 @@ from ._collections import Set
 from ._functools import wraps
 from . import _itertools as itertools
 
-from .diff import ExtraItem
-from .diff import MissingItem
-from .diff import InvalidItem
-from .diff import InvalidNumber
-from .diff import NotProperSubset
-from .diff import NotProperSuperset
+from .differences import Extra
+from .differences import Missing
+from .differences import Invalid
+from .differences import Deviation
+from .differences import NotProperSubset
+from .differences import NotProperSuperset
 
 
 def _is_nscontainer(x):
@@ -80,14 +80,14 @@ class ResultSet(set):
 
     def compare(self, other, op='=='):
         """Compare *self* to *other* and return a list of difference objects.
-        If *other* is callable, constructs a list of InvalidItem objects
+        If *other* is callable, constructs a list of Invalid objects
         for values where *other* returns False.  If *other* is a ResultSet or
-        other collection, differences are compiled as a list of ExtraItem and
-        MissingItem objects.
+        other collection, differences are compiled as a list of Extra and
+        Missing objects.
 
         """
         if callable(other):
-            differences = [InvalidItem(x) for x in self if not other(x)]
+            differences = [Invalid(x) for x in self if not other(x)]
         else:
             if not isinstance(other, ResultSet):
                 other = ResultSet(other)
@@ -97,7 +97,7 @@ class ResultSet(set):
                 if op == '<' and not (extra or other.difference(self)):
                     extra = [NotProperSubset()]
                 else:
-                    extra = (ExtraItem(x) for x in extra)
+                    extra = (Extra(x) for x in extra)
             else:
                 extra = []
 
@@ -106,7 +106,7 @@ class ResultSet(set):
                 if op == '>' and not (missing or self.difference(other)):
                     missing = [NotProperSuperset()]
                 else:
-                    missing = (MissingItem(x) for x in missing)
+                    missing = (Missing(x) for x in missing)
             else:
                 missing = []
 
@@ -191,10 +191,10 @@ class ResultMapping(dict):
 
     def compare(self, other):
         """Compare *self* to *other* and return a list of difference objects.
-        If *other* is callable, constructs a list of InvalidItem objects
+        If *other* is callable, constructs a list of Invalid objects
         for values where *other* returns False.  If *other* is a ResultMapping
         or other mapping object (like a dict), differences are compiled as a
-        list of InvalidNumber and InvalidItem objects.
+        list of Deviation and Invalid objects.
 
         """
         # Evaluate self._data with function.
@@ -207,7 +207,7 @@ class ResultMapping(dict):
                     if not _is_nscontainer(key):
                         key = (key,)
                     kwds = dict(zip(self.key_names, key))
-                    differences.append(InvalidItem(value, **kwds))
+                    differences.append(Invalid(value, **kwds))
         # Compare self to other.
         else:
             if not isinstance(other, ResultMapping):
@@ -235,13 +235,13 @@ class ResultMapping(dict):
                     if self_num != other_num:
                         diff = self_num - other_num
                         kwds = dict(zip(self.key_names, key))
-                        invalid = InvalidNumber(diff, other_val, **kwds)
-                        differences.append(InvalidNumber(diff, other_val, **kwds))
+                        invalid = Deviation(diff, other_val, **kwds)
+                        differences.append(Deviation(diff, other_val, **kwds))
                 # Object comparison.
                 else:
                     if self_val != other_val:
                         kwds = dict(zip(self.key_names, key))
-                        differences.append(InvalidItem(self_val, other_val, **kwds))
+                        differences.append(Invalid(self_val, other_val, **kwds))
 
         return differences
 

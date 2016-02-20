@@ -11,54 +11,54 @@ from . import _unittest as unittest
 from datatest.case import DataTestCase
 from datatest.case import DataAssertionError
 from datatest.case import _walk_diff
-from datatest import ExtraItem
-from datatest import MissingItem
-from datatest import InvalidItem
-from datatest import InvalidNumber
+from datatest import Extra
+from datatest import Missing
+from datatest import Invalid
+from datatest import Deviation
 from datatest import CsvSource
 
 
 class TestWalkValues(unittest.TestCase):
     def test_list_input(self):
         # Flat.
-        generator = _walk_diff([MissingItem('val1'),
-                                MissingItem('val2')])
-        self.assertEqual(list(generator), [MissingItem('val1'),
-                                           MissingItem('val2')])
+        generator = _walk_diff([Missing('val1'),
+                                Missing('val2')])
+        self.assertEqual(list(generator), [Missing('val1'),
+                                           Missing('val2')])
 
         # Nested.
-        generator = _walk_diff([MissingItem('val1'),
-                                [MissingItem('val2')]])
-        self.assertEqual(list(generator), [MissingItem('val1'),
-                                           MissingItem('val2')])
+        generator = _walk_diff([Missing('val1'),
+                                [Missing('val2')]])
+        self.assertEqual(list(generator), [Missing('val1'),
+                                           Missing('val2')])
 
     def test_dict_input(self):
         # Flat dictionary input.
-        generator = _walk_diff({'key1': MissingItem('val1'),
-                                'key2': MissingItem('val2')})
-        self.assertEqual(set(generator), set([MissingItem('val1'),
-                                              MissingItem('val2')]))
+        generator = _walk_diff({'key1': Missing('val1'),
+                                'key2': Missing('val2')})
+        self.assertEqual(set(generator), set([Missing('val1'),
+                                              Missing('val2')]))
 
         # Nested dictionary input.
-        generator = _walk_diff({'key1': MissingItem('val1'),
-                                'key2': {'key3': MissingItem('baz')}})
-        self.assertEqual(set(generator), set([MissingItem('val1'),
-                                              MissingItem('baz')]))
+        generator = _walk_diff({'key1': Missing('val1'),
+                                'key2': {'key3': Missing('baz')}})
+        self.assertEqual(set(generator), set([Missing('val1'),
+                                              Missing('baz')]))
 
     def test_unwrapped_input(self):
-        generator = _walk_diff(MissingItem('val1'))
-        self.assertEqual(list(generator), [MissingItem('val1')])
+        generator = _walk_diff(Missing('val1'))
+        self.assertEqual(list(generator), [Missing('val1')])
 
     def test_mixed_input(self):
         # Nested collection of dict, list, and unwrapped items.
-        generator = _walk_diff({'key1': MissingItem('val1'),
-                                'key2': [MissingItem('val2'),
-                                         [MissingItem('val3'),
-                                          MissingItem('val4')]]})
-        self.assertEqual(set(generator), set([MissingItem('val1'),
-                                              MissingItem('val2'),
-                                              MissingItem('val3'),
-                                              MissingItem('val4')]))
+        generator = _walk_diff({'key1': Missing('val1'),
+                                'key2': [Missing('val2'),
+                                         [Missing('val3'),
+                                          Missing('val4')]]})
+        self.assertEqual(set(generator), set([Missing('val1'),
+                                              Missing('val2'),
+                                              Missing('val3'),
+                                              Missing('val4')]))
 
     def test_nondiff_items(self):
         # Flat list.
@@ -73,14 +73,14 @@ class TestWalkValues(unittest.TestCase):
 
         # Nested list.
         with self.assertRaises(TypeError):
-            generator = _walk_diff([MissingItem('val1'), ['val2']])
+            generator = _walk_diff([Missing('val1'), ['val2']])
             list(generator)
 
         # Nested collection of dict, list, and unwrapped items.
         with self.assertRaises(TypeError):
-            generator = _walk_diff({'key1': MissingItem('val1'),
-                                    'key2': [MissingItem('val2'),
-                                             [MissingItem('val3'),
+            generator = _walk_diff({'key1': Missing('val1'),
+                                    'key2': [Missing('val2'),
+                                             [Missing('val3'),
                                               'val4']]})
             list(generator)
 
@@ -90,49 +90,49 @@ class TestDataAssertionError(unittest.TestCase):
         self.assertTrue(issubclass(DataAssertionError, AssertionError))
 
     def test_instantiation(self):
-        DataAssertionError('column names', MissingItem('foo'))
-        DataAssertionError('column names', [MissingItem('foo')])
-        DataAssertionError('column names', {'Explanation here.': MissingItem('foo')})
-        DataAssertionError('column names', {'Explanation here.': [MissingItem('foo')]})
+        DataAssertionError('column names', Missing('foo'))
+        DataAssertionError('column names', [Missing('foo')])
+        DataAssertionError('column names', {'Explanation here.': Missing('foo')})
+        DataAssertionError('column names', {'Explanation here.': [Missing('foo')]})
 
         with self.assertRaises(ValueError, msg='Empty error should raise exception.'):
             DataAssertionError(msg='', diff={})
 
     def test_repr(self):
-        error = DataAssertionError('different columns', [MissingItem('foo')])
-        pattern = "DataAssertionError: different columns:\n MissingItem('foo')"
+        error = DataAssertionError('different columns', [Missing('foo')])
+        pattern = "DataAssertionError: different columns:\n Missing('foo')"
         self.assertEqual(repr(error), pattern)
 
-        error = DataAssertionError('different columns', MissingItem('foo'))
-        pattern = "DataAssertionError: different columns:\n MissingItem('foo')"
+        error = DataAssertionError('different columns', Missing('foo'))
+        pattern = "DataAssertionError: different columns:\n Missing('foo')"
         self.assertEqual(repr(error), pattern)
 
         # Test pprint lists.
-        error = DataAssertionError('different columns', [MissingItem('foo'),
-                                                         MissingItem('bar')])
+        error = DataAssertionError('different columns', [Missing('foo'),
+                                                         Missing('bar')])
         pattern = ("DataAssertionError: different columns:\n"
-                   " MissingItem('foo'),\n"
-                   " MissingItem('bar')")
+                   " Missing('foo'),\n"
+                   " Missing('bar')")
         self.assertEqual(repr(error), pattern)
 
         # Test dictionary with nested list.
-        error = DataAssertionError('different columns', {'Omitted': [MissingItem('foo'),
-                                                                     MissingItem('bar'),
-                                                                     MissingItem('baz')]})
+        error = DataAssertionError('different columns', {'Omitted': [Missing('foo'),
+                                                                     Missing('bar'),
+                                                                     Missing('baz')]})
         pattern = ("DataAssertionError: different columns:\n"
-                   " 'Omitted': [MissingItem('foo'),\n"
-                   "             MissingItem('bar'),\n"
-                   "             MissingItem('baz')]")
+                   " 'Omitted': [Missing('foo'),\n"
+                   "             Missing('bar'),\n"
+                   "             Missing('baz')]")
         self.assertEqual(repr(error), pattern)
 
     def test_verbose_repr(self):
         reference = 'reference-data-source'
         subject = 'subject-data-source'
-        error = DataAssertionError('different columns', [MissingItem('foo')], reference, subject)
+        error = DataAssertionError('different columns', [Missing('foo')], reference, subject)
         error._verbose = True  # <- Set verbose flag, here!
 
         pattern = ("DataAssertionError: different columns:\n"
-                   " MissingItem('foo')\n"
+                   " Missing('foo')\n"
                    "\n"
                    "REFERENCE DATA:\n"
                    "reference-data-source\n"
@@ -262,8 +262,8 @@ class TestDataSum(TestHelperCase):
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ("DataAssertionError: different 'value' sums:\n"
-                   " InvalidNumber\(\+1, 65, label1=u?'a'\),\n"
-                   " InvalidNumber\(-1, 70, label1=u?'b'\)")
+                   " Deviation\(\+1, 65, label1=u?'a'\),\n"
+                   " Deviation\(-1, 70, label1=u?'b'\)")
         self.assertRegex(failure, pattern)
 
 
@@ -303,8 +303,8 @@ class TestAssertDataSumGroupsAndFilters(TestHelperCase):
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ("DataAssertionError: different 'value' sums:\n"
-                   " InvalidNumber\(\+1, 20, label1=u?'a'\),\n"
-                   " InvalidNumber\(-1, 40, label1=u?'b'\)")
+                   " Deviation\(\+1, 20, label1=u?'a'\),\n"
+                   " Deviation\(-1, 40, label1=u?'b'\)")
         self.assertRegex(failure, pattern)
 
 
@@ -379,8 +379,8 @@ class TestAssertDataCount(TestHelperCase):
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ("DataAssertionError: row counts different than 'total_rows' sums:\n"
-                   " InvalidNumber\(\+1, 4, label1=u?'a'\),\n"
-                   " InvalidNumber\(-1, 3, label1=u?'b'\)")
+                   " Deviation\(\+1, 4, label1=u?'a'\),\n"
+                   " Deviation\(-1, 3, label1=u?'b'\)")
         self.assertRegex(failure, pattern)
 
 
@@ -454,7 +454,7 @@ class TestAssertDataColumns(TestHelperCase):
                 _self.assertDataColumns()  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = "different column names:\n ExtraItem\(u?'label2'\)"
+        pattern = "different column names:\n Extra\(u?'label2'\)"
         self.assertRegex(failure, pattern)
 
     def test_missing(self):
@@ -470,7 +470,7 @@ class TestAssertDataColumns(TestHelperCase):
                 _self.assertDataColumns()  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = "different column names:\n MissingItem\(u?'value'\)"
+        pattern = "different column names:\n Missing\(u?'value'\)"
         self.assertRegex(failure, pattern)
 
 
@@ -545,7 +545,7 @@ class TestAssertDataSet(TestHelperCase):
                 _self.assertDataSet('label')  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = "different 'label' values:\n MissingItem\(u?'c'\)"
+        pattern = "different 'label' values:\n Missing\(u?'c'\)"
         self.assertRegex(failure, pattern)
 
     def test_extra(self):
@@ -563,7 +563,7 @@ class TestAssertDataSet(TestHelperCase):
                 _self.assertDataSet('label')  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = "different 'label' values:\n ExtraItem\(u?'d'\)"
+        pattern = "different 'label' values:\n Extra\(u?'d'\)"
         self.assertRegex(failure, pattern)
 
     def test_same_group(self):
@@ -595,7 +595,7 @@ class TestAssertDataSet(TestHelperCase):
                 _self.assertDataSet(['label', 'label2'])  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = "different \[u?'label', u?'label2'\] values:\n MissingItem\(\(u?'b', u?'y'\)\)"
+        pattern = "different \[u?'label', u?'label2'\] values:\n Missing\(\(u?'b', u?'y'\)\)"
         self.assertRegex(failure, pattern)
 
 
@@ -626,7 +626,7 @@ class TestAssertDataRegexAndNotDataRegex(TestHelperCase):
                 _self.assertDataRegex('label2', '\d\d\d')  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = "non-matching 'label2' values:\n InvalidItem\(u?'2'\)"
+        pattern = "non-matching 'label2' values:\n Invalid\(u?'2'\)"
         self.assertRegex(failure, pattern)
 
     def test_regex_precompiled(self):
@@ -661,7 +661,7 @@ class TestAssertDataRegexAndNotDataRegex(TestHelperCase):
                 _self.assertDataNotRegex('label2', '^\d{1,2}$')  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = "matching 'label2' values:\n InvalidItem\(u?'2'\)"
+        pattern = "matching 'label2' values:\n Invalid\(u?'2'\)"
         self.assertRegex(failure, pattern)
 
     def test_not_regex_precompiled(self):
@@ -703,8 +703,8 @@ class TestAllowSpecified(TestHelperCase):
 
             def test_method(_self):
                 diff = [
-                    InvalidNumber(+1, 65, label1='a'),
-                    InvalidNumber(-1, 70, label1='b'),
+                    Deviation(+1, 65, label1='a'),
+                    Deviation(-1, 70, label1='b'),
                 ]
                 with _self.allowSpecified(diff):
                     _self.assertDataSum('value', ['label1'])  # <- test assert
@@ -721,8 +721,8 @@ class TestAllowSpecified(TestHelperCase):
 
             def test_method(_self):
                 diff = {
-                    'One extra.': InvalidNumber(+1, 65, label1='a'),
-                    'One missing.': InvalidNumber(-1, 70, label1='b'),
+                    'One extra.': Deviation(+1, 65, label1='a'),
+                    'One missing.': Deviation(-1, 70, label1='b'),
                 }
                 with _self.allowSpecified(diff):
                     _self.assertDataSum('value', ['label1'])  # <- test assert
@@ -739,8 +739,8 @@ class TestAllowSpecified(TestHelperCase):
 
             def test_method(_self):
                 diff = {
-                    'Omitted': [InvalidNumber(+1, 65, label1='a'),
-                                InvalidNumber(-1, 70, label1='b')]
+                    'Omitted': [Deviation(+1, 65, label1='a'),
+                                Deviation(-1, 70, label1='b')]
                 }
                 with _self.allowSpecified(diff):
                     _self.assertDataSum('value', ['label1'])  # <- test assert
@@ -757,14 +757,14 @@ class TestAllowSpecified(TestHelperCase):
 
             def test_method(_self):
                 diff = [
-                    InvalidNumber(-1, 70, label1='b'),
-                    InvalidNumber(+2, 65, label1='a'),
+                    Deviation(-1, 70, label1='b'),
+                    Deviation(+2, 65, label1='a'),
                 ]
                 with _self.allowSpecified(diff):
                     _self.assertDataSum('value', ['label1'])  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = "different 'value' sums:\n InvalidNumber\(\+1, 65, label1=u?'a'\)"
+        pattern = "different 'value' sums:\n Deviation\(\+1, 65, label1=u?'a'\)"
         self.assertRegex(failure, pattern)
 
     def test_accepted_not_found_with_diff(self):
@@ -776,16 +776,16 @@ class TestAllowSpecified(TestHelperCase):
 
             def test_method(_self):
                 diff = [
-                    InvalidNumber(-1, 70, label1='b'),
-                    InvalidNumber(+1, 65, label1='a'),
-                    InvalidNumber(+2, 65, label1='a')
+                    Deviation(-1, 70, label1='b'),
+                    Deviation(+1, 65, label1='a'),
+                    Deviation(+2, 65, label1='a')
                 ]
                 with _self.allowSpecified(diff):
                     _self.assertDataSum('value', ['label1'])  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ("Allowed difference not found:\n"
-                   " InvalidNumber\(\+2, 65, label1=u?'a'\)")
+                   " Deviation\(\+2, 65, label1=u?'a'\)")
         self.assertRegex(failure, pattern)
 
     def test_accepted_not_found_without_diff(self):
@@ -796,13 +796,13 @@ class TestAllowSpecified(TestHelperCase):
                 _self.subjectData = self.reference
 
             def test_method(_self):
-                diff = InvalidNumber(+2, 65, label1='a')
+                diff = Deviation(+2, 65, label1='a')
                 with _self.allowSpecified(diff):
                     _self.assertDataSum('value', ['label1'])  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ("DataAssertionError: Allowed difference not found:\n"
-                   " InvalidNumber\(\+2, 65, label1=u?'a'\)")
+                   " Deviation\(\+2, 65, label1=u?'a'\)")
         self.assertRegex(failure, pattern)
 
 
@@ -813,18 +813,18 @@ class TestAllowUnspecified(TestHelperCase):
             def test_method1(_self):
                 with _self.allowUnspecified(3):  # <- allow three
                     differences = [
-                        MissingItem('foo'),
-                        MissingItem('bar'),
-                        MissingItem('baz'),
+                        Missing('foo'),
+                        Missing('bar'),
+                        Missing('baz'),
                     ]
                     raise DataAssertionError('some differences', differences)
 
             def test_method2(_self):
                 with _self.allowUnspecified(4):  # <- allow four
                     differences = [
-                        MissingItem('foo'),
-                        MissingItem('bar'),
-                        MissingItem('baz'),
+                        Missing('foo'),
+                        Missing('bar'),
+                        Missing('baz'),
                     ]
                     raise DataAssertionError('some differences', differences)
 
@@ -844,30 +844,30 @@ class TestAllowUnspecified(TestHelperCase):
             def test_method(_self):
                 with _self.allowUnspecified(2):  # <- allow two
                     differences = [
-                        MissingItem('foo'),
-                        MissingItem('bar'),
-                        MissingItem('baz'),
+                        Missing('foo'),
+                        Missing('bar'),
+                        Missing('baz'),
                     ]
                     raise DataAssertionError('some differences', differences)
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ("DataAssertionError: expected at most 2 differences, got 3: some differences:\n"
-                   " MissingItem[^\n]+\n"
-                   " MissingItem[^\n]+\n"
-                   " MissingItem[^\n]+\n$")
+                   " Missing[^\n]+\n"
+                   " Missing[^\n]+\n"
+                   " Missing[^\n]+\n$")
         self.assertRegex(failure, pattern)
 
 
 class TestAllowMissing(TestHelperCase):
     def test_passing(self):
-        """Pass when the only differences found are MissingItem differences."""
+        """Pass when the only differences found are Missing differences."""
         class _TestClass(DataTestCase):
             def test_method1(_self):
-                with _self.allowMissing():  # <- allow MissingItem differences
+                with _self.allowMissing():  # <- allow Missing differences
                     differences = [
-                        MissingItem('foo'),
-                        MissingItem('bar'),
-                        MissingItem('baz'),
+                        Missing('foo'),
+                        Missing('bar'),
+                        Missing('baz'),
                     ]
                     raise DataAssertionError('some differences', differences)
 
@@ -882,7 +882,7 @@ class TestAllowMissing(TestHelperCase):
         self.assertIsNone(failure)
 
     def test_failing(self):
-        """Fail with non-MissingItem differences."""
+        """Fail with non-Missing differences."""
         class _TestClass(DataTestCase):
             def setUp(_self):
                 _self.referenceData = None
@@ -891,29 +891,29 @@ class TestAllowMissing(TestHelperCase):
             def test_method(_self):
                 with _self.allowMissing():
                     differences = [
-                        MissingItem('foo'),
-                        ExtraItem('bar'),
-                        ExtraItem('baz'),
+                        Missing('foo'),
+                        Extra('bar'),
+                        Extra('baz'),
                     ]
                     raise DataAssertionError('some differences', differences)
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ("DataAssertionError: some differences:\n"
-                   " ExtraItem[^\n]+\n"
-                   " ExtraItem[^\n]+\n$")
+                   " Extra[^\n]+\n"
+                   " Extra[^\n]+\n$")
         self.assertRegex(failure, pattern)
 
 
 class TestAllowExtra(TestHelperCase):
     def test_passing(self):
-        """Pass when the only differences found are ExtraItem differences."""
+        """Pass when the only differences found are Extra differences."""
         class _TestClass(DataTestCase):
             def test_method1(_self):
-                with _self.allowExtra():  # <- allow ExtraItem differences
+                with _self.allowExtra():  # <- allow Extra differences
                     differences = [
-                        ExtraItem('foo'),
-                        ExtraItem('bar'),
-                        ExtraItem('baz'),
+                        Extra('foo'),
+                        Extra('bar'),
+                        Extra('baz'),
                     ]
                     raise DataAssertionError('some differences', differences)
 
@@ -928,7 +928,7 @@ class TestAllowExtra(TestHelperCase):
         self.assertIsNone(failure)
 
     def test_failing(self):
-        """Fail with non-ExtraItem differences."""
+        """Fail with non-Extra differences."""
         class _TestClass(DataTestCase):
             def setUp(_self):
                 _self.referenceData = None
@@ -937,16 +937,16 @@ class TestAllowExtra(TestHelperCase):
             def test_method(_self):
                 with _self.allowExtra():
                     differences = [
-                        ExtraItem('foo'),
-                        MissingItem('bar'),
-                        MissingItem('baz'),
+                        Extra('foo'),
+                        Missing('bar'),
+                        Missing('baz'),
                     ]
                     raise DataAssertionError('some differences', differences)
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ("DataAssertionError: some differences:\n"
-                   " MissingItem[^\n]+\n"
-                   " MissingItem[^\n]+\n$")
+                   " Missing[^\n]+\n"
+                   " Missing[^\n]+\n$")
         self.assertRegex(failure, pattern)
 
 
@@ -982,7 +982,7 @@ class TestAllowDeviation(TestHelperCase):
         self.assertIsNone(failure)
 
     def test_absolute_tolerance_with_filter(self):
-        """Using filter label1='a', InvalidNumber(...label1='b') should be raised."""
+        """Using filter label1='a', Deviation(...label1='b') should be raised."""
         class _TestClass(DataTestCase):
             def setUp(_self):
                 _self.referenceData = self.reference
@@ -994,7 +994,7 @@ class TestAllowDeviation(TestHelperCase):
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ("DataAssertionError: different u?'value' sums:\n"
-                   " InvalidNumber\(-1, 70, label1=u?'b'\)")
+                   " Deviation\(-1, 70, label1=u?'b'\)")
         self.assertRegex(failure, pattern)
 
 
@@ -1011,7 +1011,7 @@ class TestAllowDeviation(TestHelperCase):
         self.assertIsNone(failure)
 
     def test_inadequate_absolute_tolerance(self):
-        """Given tolerance of 2, InvalidNumber(+3) should still be raised."""
+        """Given tolerance of 2, Deviation(+3) should still be raised."""
         class _TestClass(DataTestCase):
             def setUp(_self):
                 _self.referenceData = self.reference
@@ -1023,7 +1023,7 @@ class TestAllowDeviation(TestHelperCase):
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ("DataAssertionError: different u?'value' sums:\n"
-                   " InvalidNumber\(\+3, 65, label1=u?'a'\)")
+                   " Deviation\(\+3, 65, label1=u?'a'\)")
         self.assertRegex(failure, pattern)
 
     def test_tolerance_error(self):
@@ -1068,9 +1068,9 @@ class TestAllowDeviationUpper(TestHelperCase):
             def test_method(_self):
                 with _self.allowDeviationUpper(3):  # <- Allow deviation of 0 to +3
                     differences = [
-                        InvalidNumber(+1, 10, column1='foo'),
-                        InvalidNumber(0, 10, column1='bar'),
-                        InvalidNumber(+3, 10, column1='baz'),
+                        Deviation(+1, 10, column1='foo'),
+                        Deviation(0, 10, column1='bar'),
+                        Deviation(+3, 10, column1='baz'),
                     ]
                     raise DataAssertionError('some differences', differences)
 
@@ -1086,15 +1086,15 @@ class TestAllowDeviationUpper(TestHelperCase):
             def test_method(_self):
                 with _self.allowDeviationUpper(3):  # <- Allow deviation of 0 to +3
                     differences = [
-                        InvalidNumber(+2, 10, column1='foo'),
-                        InvalidNumber(+3, 10, column1='bar'),
-                        InvalidNumber(+4, 10, column1='baz'),
+                        Deviation(+2, 10, column1='foo'),
+                        Deviation(+3, 10, column1='bar'),
+                        Deviation(+4, 10, column1='baz'),
                     ]
                     raise DataAssertionError('some differences', differences)
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ("DataAssertionError: some differences:\n"
-                   " InvalidNumber\(\+4, 10, column1=u?'baz'\)")
+                   " Deviation\(\+4, 10, column1=u?'baz'\)")
         self.assertRegex(failure, pattern)
 
     def test_under_zero(self):
@@ -1106,15 +1106,15 @@ class TestAllowDeviationUpper(TestHelperCase):
             def test_method(_self):
                 with _self.allowDeviationUpper(3):  # <- Allow deviation of 0 to +3
                     differences = [
-                        InvalidNumber(+2, 10, column1='foo'),
-                        InvalidNumber(+3, 10, column1='bar'),
-                        InvalidNumber(-1, 10, column1='baz'),
+                        Deviation(+2, 10, column1='foo'),
+                        Deviation(+3, 10, column1='bar'),
+                        Deviation(-1, 10, column1='baz'),
                     ]
                     raise DataAssertionError('some differences', differences)
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ("DataAssertionError: some differences:\n"
-                   " InvalidNumber\(-1, 10, column1=u?'baz'\)\n")
+                   " Deviation\(-1, 10, column1=u?'baz'\)\n")
         self.assertRegex(failure, pattern)
 
 class TestAllowDeviationLower(TestHelperCase):
@@ -1124,9 +1124,9 @@ class TestAllowDeviationLower(TestHelperCase):
             def test_method(_self):
                 with _self.allowDeviationLower(-3):  # <- Allow deviation of -3 to 0
                     differences = [
-                        InvalidNumber(-1, 10, column1='foo'),
-                        InvalidNumber(0, 10, column1='bar'),
-                        InvalidNumber(-3, 10, column1='baz'),
+                        Deviation(-1, 10, column1='foo'),
+                        Deviation(0, 10, column1='bar'),
+                        Deviation(-3, 10, column1='baz'),
                     ]
                     raise DataAssertionError('some differences', differences)
 
@@ -1142,15 +1142,15 @@ class TestAllowDeviationLower(TestHelperCase):
             def test_method(_self):
                 with _self.allowDeviationLower(-3):  # <- Allow deviation of 0 to +3
                     differences = [
-                        InvalidNumber(-2, 10, column1='foo'),
-                        InvalidNumber(-3, 10, column1='bar'),
-                        InvalidNumber(-4, 10, column1='baz'),
+                        Deviation(-2, 10, column1='foo'),
+                        Deviation(-3, 10, column1='bar'),
+                        Deviation(-4, 10, column1='baz'),
                     ]
                     raise DataAssertionError('some differences', differences)
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ("DataAssertionError: some differences:\n"
-                   " InvalidNumber\(-4, 10, column1=u?'baz'\)")
+                   " Deviation\(-4, 10, column1=u?'baz'\)")
         self.assertRegex(failure, pattern)
 
     def test_over_zero(self):
@@ -1162,15 +1162,15 @@ class TestAllowDeviationLower(TestHelperCase):
             def test_method(_self):
                 with _self.allowDeviationLower(-3):  # <- Allow deviation of 0 to +3
                     differences = [
-                        InvalidNumber(-2, 10, column1='foo'),
-                        InvalidNumber(-3, 10, column1='bar'),
-                        InvalidNumber(+1, 10, column1='baz'),
+                        Deviation(-2, 10, column1='foo'),
+                        Deviation(-3, 10, column1='bar'),
+                        Deviation(+1, 10, column1='baz'),
                     ]
                     raise DataAssertionError('some differences', differences)
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ("DataAssertionError: some differences:\n"
-                   " InvalidNumber\(\+1, 10, column1=u?'baz'\)\n")
+                   " Deviation\(\+1, 10, column1=u?'baz'\)\n")
         self.assertRegex(failure, pattern)
 
 
@@ -1218,7 +1218,7 @@ class TestAllowPercentDeviation(TestHelperCase):
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ("DataAssertionError: different u?'value' sums:\n"
-                   " InvalidNumber\(-1, 70, label1=u?'b'\)")
+                   " Deviation\(-1, 70, label1=u?'b'\)")
         self.assertRegex(failure, pattern)
 
     def test_inadequate_tolerance(self):
@@ -1234,7 +1234,7 @@ class TestAllowPercentDeviation(TestHelperCase):
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ("DataAssertionError: different u?'value' sums:\n"
-                   " InvalidNumber\(\+3, 65, label1=u?'a'\)")
+                   " Deviation\(\+3, 65, label1=u?'a'\)")
         self.assertRegex(failure, pattern)
 
     def test_error(self):
@@ -1275,7 +1275,7 @@ class TestAllowPercentDeviation(TestHelperCase):
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ("DataAssertionError: different u?'value' sums:\n"
-                   " InvalidNumber\(\+70, 0, label1=u?'b'\)")
+                   " Deviation\(\+70, 0, label1=u?'b'\)")
         self.assertRegex(failure, pattern)
 
 
@@ -1303,7 +1303,7 @@ class TestNestedAllowances(TestHelperCase):
                 _self.subjectData = self.bad_subject
 
             def test_method(_self):
-                with _self.allowSpecified(InvalidNumber(+3, 65, label1='a')):
+                with _self.allowSpecified(Deviation(+3, 65, label1='a')):
                     with _self.allowDeviation(2):  # <- test tolerance
                         _self.assertDataSum('value', ['label1'])
 
@@ -1318,7 +1318,7 @@ class TestNestedAllowances(TestHelperCase):
 
             def test_method(_self):
                 with _self.allowDeviation(2):  # <- test tolerance
-                    with _self.allowSpecified(InvalidNumber(+3, 65, label1='a')):
+                    with _self.allowSpecified(Deviation(+3, 65, label1='a')):
                         _self.assertDataSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')
@@ -1331,11 +1331,11 @@ class TestNestedAllowances(TestHelperCase):
                 _self.subjectData = self.bad_subject
 
             def test_method(_self):
-                with _self.allowSpecified(InvalidNumber(+10, 999, label1='a')):
+                with _self.allowSpecified(Deviation(+10, 999, label1='a')):
                     with _self.allowDeviation(3):
                         _self.assertDataSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ("DataAssertionError: Allowed difference not found:\n"
-                   " InvalidNumber\(\+10, 999, label1=u?'a'\)")
+                   " Deviation\(\+10, 999, label1=u?'a'\)")
         self.assertRegex(failure, pattern)
