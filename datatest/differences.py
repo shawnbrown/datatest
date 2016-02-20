@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import pprint
 from ._decimal import Decimal as _Decimal
 
 
@@ -10,6 +11,39 @@ def _make_decimal(d):
     if d == d.to_integral():             # Remove_exponent (from official
         return d.quantize(_Decimal(1))   # docs: 9.4.10. Decimal FAQ).
     return d.normalize()
+
+
+class DataAssertionError(AssertionError):
+    """Data assertion failed."""
+    def __init__(self, msg, diff, reference=None, subject=None):
+        """Initialize self, store difference for later reference."""
+        if not diff:
+            raise ValueError('Missing difference.')
+        self.diff = diff
+        self.msg = msg
+        self.reference = str(reference)  # Reference data source or object.
+        self.subject = str(subject)  # Subject data source.
+        self._verbose = False  # <- Set by DataTestResult if verbose.
+
+        return AssertionError.__init__(self, msg)
+
+    def __repr__(self):
+        return self.__class__.__name__ + ': ' + self.__str__()
+
+    def __str__(self):
+        diff = pprint.pformat(self.diff, width=1)
+        if any([diff.startswith('{') and diff.endswith('}'),
+                diff.startswith('[') and diff.endswith(']'),
+                diff.startswith('(') and diff.endswith(')')]):
+            diff = diff[1:-1]
+
+        if self._verbose:
+            msg_extras = '\n\nREFERENCE DATA:\n{0}\nSUBJECT DATA:\n{1}'
+            msg_extras = msg_extras.format(self.reference, self.subject)
+        else:
+            msg_extras = ''
+
+        return '{0}:\n {1}{2}'.format(self.msg, diff, msg_extras)
 
 
 class BaseDifference(object):

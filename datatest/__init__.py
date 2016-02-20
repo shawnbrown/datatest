@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from .case import DataTestCase
-from .case import DataAssertionError
 
 from .source import BaseSource
 from .source import SqliteSource
@@ -10,6 +9,7 @@ from .source import MultiSource
 from .extras import ExcelSource
 from .extras import PandasSource
 
+from .differences import DataAssertionError
 from .differences import Extra
 from .differences import Missing
 from .differences import Invalid
@@ -32,7 +32,6 @@ __version__ = '0.0.1a'
 __all__ = [
     # Test case.
     'DataTestCase',
-    'DataAssertionError',
 
     # Data sources.
     'BaseSource',
@@ -46,7 +45,8 @@ __all__ = [
     'ResultSet',
     'ResultMapping',
 
-    # Differences.
+    # Error and Differences.
+    'DataAssertionError',
     'Extra',
     'Missing',
     'Invalid',

@@ -9,8 +9,8 @@ from . import _unittest as unittest
 
 # Import code to test.
 from datatest.case import DataTestCase
-from datatest.case import DataAssertionError
 from datatest.case import _walk_diff
+from datatest import DataAssertionError
 from datatest import Extra
 from datatest import Missing
 from datatest import Invalid
@@ -83,62 +83,6 @@ class TestWalkValues(unittest.TestCase):
                                              [Missing('val3'),
                                               'val4']]})
             list(generator)
-
-
-class TestDataAssertionError(unittest.TestCase):
-    def test_subclass(self):
-        self.assertTrue(issubclass(DataAssertionError, AssertionError))
-
-    def test_instantiation(self):
-        DataAssertionError('column names', Missing('foo'))
-        DataAssertionError('column names', [Missing('foo')])
-        DataAssertionError('column names', {'Explanation here.': Missing('foo')})
-        DataAssertionError('column names', {'Explanation here.': [Missing('foo')]})
-
-        with self.assertRaises(ValueError, msg='Empty error should raise exception.'):
-            DataAssertionError(msg='', diff={})
-
-    def test_repr(self):
-        error = DataAssertionError('different columns', [Missing('foo')])
-        pattern = "DataAssertionError: different columns:\n Missing('foo')"
-        self.assertEqual(repr(error), pattern)
-
-        error = DataAssertionError('different columns', Missing('foo'))
-        pattern = "DataAssertionError: different columns:\n Missing('foo')"
-        self.assertEqual(repr(error), pattern)
-
-        # Test pprint lists.
-        error = DataAssertionError('different columns', [Missing('foo'),
-                                                         Missing('bar')])
-        pattern = ("DataAssertionError: different columns:\n"
-                   " Missing('foo'),\n"
-                   " Missing('bar')")
-        self.assertEqual(repr(error), pattern)
-
-        # Test dictionary with nested list.
-        error = DataAssertionError('different columns', {'Omitted': [Missing('foo'),
-                                                                     Missing('bar'),
-                                                                     Missing('baz')]})
-        pattern = ("DataAssertionError: different columns:\n"
-                   " 'Omitted': [Missing('foo'),\n"
-                   "             Missing('bar'),\n"
-                   "             Missing('baz')]")
-        self.assertEqual(repr(error), pattern)
-
-    def test_verbose_repr(self):
-        reference = 'reference-data-source'
-        subject = 'subject-data-source'
-        error = DataAssertionError('different columns', [Missing('foo')], reference, subject)
-        error._verbose = True  # <- Set verbose flag, here!
-
-        pattern = ("DataAssertionError: different columns:\n"
-                   " Missing('foo')\n"
-                   "\n"
-                   "REFERENCE DATA:\n"
-                   "reference-data-source\n"
-                   "SUBJECT DATA:\n"
-                   "subject-data-source")
-        self.assertEqual(repr(error), pattern)
 
 
 class TestHelperCase(unittest.TestCase):

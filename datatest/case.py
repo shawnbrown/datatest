@@ -3,11 +3,11 @@ from __future__ import division
 
 import collections
 import inspect
-import pprint
 import re
 from unittest import TestCase
 
 from .differences import _make_decimal
+from .differences import DataAssertionError
 from .differences import BaseDifference
 from .differences import Missing
 from .differences import Extra
@@ -22,39 +22,6 @@ __datatest = True  # Used to detect in-module stack frames (which are
                    # omitted from output).
 
 _re_type = type(re.compile(''))
-
-
-class DataAssertionError(AssertionError):
-    """Data assertion failed."""
-    def __init__(self, msg, diff, reference=None, subject=None):
-        """Initialize self, store difference for later reference."""
-        if not diff:
-            raise ValueError('Missing difference.')
-        self.diff = diff
-        self.msg = msg
-        self.reference = str(reference)  # Reference data source or object.
-        self.subject = str(subject)  # Subject data source.
-        self._verbose = False  # <- Set by DataTestResult if verbose.
-
-        return AssertionError.__init__(self, msg)
-
-    def __repr__(self):
-        return self.__class__.__name__ + ': ' + self.__str__()
-
-    def __str__(self):
-        diff = pprint.pformat(self.diff, width=1)
-        if any([diff.startswith('{') and diff.endswith('}'),
-                diff.startswith('[') and diff.endswith(']'),
-                diff.startswith('(') and diff.endswith(')')]):
-            diff = diff[1:-1]
-
-        if self._verbose:
-            msg_extras = '\n\nREFERENCE DATA:\n{0}\nSUBJECT DATA:\n{1}'
-            msg_extras = msg_extras.format(self.reference, self.subject)
-        else:
-            msg_extras = ''
-
-        return '{0}:\n {1}{2}'.format(self.msg, diff, msg_extras)
 
 
 def _walk_diff(diff):

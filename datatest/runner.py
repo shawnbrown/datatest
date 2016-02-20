@@ -7,7 +7,7 @@ import unittest
 import warnings
 
 from ._functools import wraps
-from .case import DataAssertionError
+from .differences import DataAssertionError
 
 try:
     from unittest import TextTestResult
