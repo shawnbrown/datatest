@@ -1,4 +1,5 @@
 """Result objects from data source queries."""
+import inspect
 from numbers import Number
 
 from ._builtins import *
@@ -38,6 +39,26 @@ def _coerce_other(target_type, *type_args, **type_kwds):
         return wrapped
 
     return callable
+
+
+def _expects_multiple_params(func):
+    """Returns True if callable obj expects multiple parameters."""
+    try:
+        funcsig = inspect.signature(func)
+        params_dict = funcsig.parameters
+        parameters = params_dict.values()
+        args_type = (inspect._POSITIONAL_OR_KEYWORD, inspect._POSITIONAL_ONLY)
+        args = [x for x in parameters if x.kind in args_type]
+        varargs = [x for x in parameters if x.kind == inspect._VAR_POSITIONAL]
+
+    except AttributeError:  # For Python 3.2 and earlier
+        try:
+            args, varargs = inspect.getfullargspec(func)[:2]
+
+        except AttributeError:  # For Python 2.7 and earlier
+            args, varargs = inspect.getargspec(func)[:2]
+
+    return len(args) > 1 or bool(varargs)  # <- EXIT!
 
 
 class ResultSet(set):
@@ -87,7 +108,12 @@ class ResultSet(set):
 
         """
         if callable(other):
+            if _expects_multiple_params(other):
+                wrapped = other
+                other = lambda x: wrapped(*x)
+
             differences = [Invalid(x) for x in self if not other(x)]
+
         else:
             if not isinstance(other, ResultSet):
                 other = ResultSet(other)
@@ -199,6 +225,10 @@ class ResultMapping(dict):
         """
         # Evaluate self._data with function.
         if callable(other):
+            if _expects_multiple_params(other):
+                wrapped = other
+                other = lambda x: wrapped(*x)
+
             keys = sorted(self.keys())
             differences = []
             for key in keys:

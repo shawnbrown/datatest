@@ -144,6 +144,22 @@ class TestResultSet(unittest.TestCase):
         expected = set([Invalid('aaa'), Invalid('ccc')])
         self.assertEqual(expected, set(result))
 
+        # Test callable other, multiple arguments (all True).
+        a = ResultSet([(1, 1), (1, 2), (2, 1), (2, 2)])
+        result = a.compare(lambda x, y: x + y > 0)
+        self.assertEqual([], result)
+
+        # Test callable other, using single vararg (all True).
+        a = ResultSet([(1, 1), (1, 2), (2, 1), (2, 2)])
+        result = a.compare(lambda *x: x[0] + x[1] > 0)
+        self.assertEqual([], result)
+
+        # Test callable other, multiple arguments (some False).
+        a = ResultSet([(1, 1), (1, 2), (2, 1), (2, 2)])
+        result = a.compare(lambda x, y: x != y)
+        expected = set([Invalid((1, 1)), Invalid((2, 2))])
+        self.assertEqual(expected, set(result))
+
         # Test subset (less-than-or-equal).
         a = ResultSet(['aaa','bbb','ddd'])
         b = ResultSet(['aaa','bbb','ccc'])
@@ -362,6 +378,17 @@ class TestResultMapping(unittest.TestCase):
         # Some False.
         result = a.compare(lambda a: a in ('x', 'y'))
         expected = [Invalid('z', foo='ccc')]
+        self.assertEqual(expected, result)
+
+        # All True, multiple args.
+        a = ResultMapping({'aaa': (1, 2), 'bbb': (1, 3), 'ccc': (4, 8)}, 'foo')
+        result = a.compare(lambda x, y: x < y)
+        self.assertEqual([], result)
+
+        # Some False, multiple args.
+        a = ResultMapping({'aaa': (1, 0), 'bbb': (1, 3), 'ccc': (3, 2)}, 'foo')
+        result = a.compare(lambda x, y: x < y)
+        expected = [Invalid((1, 0), foo='aaa'), Invalid((3, 2), foo='ccc')]
         self.assertEqual(expected, result)
 
     def test_compare_mixed_types(self):
