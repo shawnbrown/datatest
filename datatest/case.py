@@ -57,7 +57,12 @@ class _BaseAllowance(object):
     def _raiseFailure(self, standardMsg, difference):
         msg = self.test_case._formatMessage(self.msg, standardMsg)
         subj = self.test_case.subjectData
-        trst = self.test_case.referenceData
+        #trst = getattr(self.test_case, 'referenceData', None)
+        try:
+            trst = self.test_case.referenceData
+        except NameError:
+            trst = None
+
         try:
             # For Python 3.x (some 3.2 builds will raise a TypeError
             # while 2.x will raise SyntaxError).
@@ -277,6 +282,8 @@ class DataTestCase(TestCase):
 
     @staticmethod
     def _find_data_source(name):
+        # TODO: Make this method play nice with getattr() when
+        # attribute is missing.
         stack = inspect.stack()
         stack.pop()  # Skip record of current frame.
         for record in stack:   # Bubble-up stack looking for name.
