@@ -424,12 +424,69 @@ class TestAssertDataSet(TestHelperCase):
                           'a,x\n'
                           'b,y\n'
                           'c,z\n')
-        self.reference = CsvSource(_fh, in_memory=True)
+        self.data_source = CsvSource(_fh, in_memory=True)
+
+    def test_collection(self):
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                _self.subjectData = self.data_source
+
+            def test_set(_self):
+                required = set(['a', 'b', 'c'])
+                _self.assertDataSet('label', required)  # <- test assert
+
+            def test_list(_self):
+                required = ['a', 'b', 'c']
+                _self.assertDataSet('label', required)  # <- test assert
+
+            def test_iterator(_self):
+                required = iter(['a', 'b', 'c'])
+                _self.assertDataSet('label', required)  # <- test assert
+
+            def test_generator(_self):
+                required = (x for x in ['a', 'b', 'c'])
+                _self.assertDataSet('label', required)  # <- test assert
+
+        failure = self._run_one_test(_TestClass, 'test_set')
+        self.assertIsNone(failure)
+
+        failure = self._run_one_test(_TestClass, 'test_list')
+        self.assertIsNone(failure)
+
+        failure = self._run_one_test(_TestClass, 'test_iterator')
+        self.assertIsNone(failure)
+
+        failure = self._run_one_test(_TestClass, 'test_generator')
+        self.assertIsNone(failure)
+
+    def test_callable(self):
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                _self.subjectData = self.data_source
+
+            def test_method(_self):
+                required = lambda x: x in ['a', 'b', 'c']
+                _self.assertDataSet('label', required)  # <- test assert
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        self.assertIsNone(failure)
+
+        # Multiple args
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                _self.subjectData = self.data_source
+
+            def test_method(_self):
+                required = lambda x, y: x in ['a', 'b', 'c'] and y in ['x', 'y', 'z']
+                _self.assertDataSet(['label', 'label2'], required)  # <- test assert
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        self.assertIsNone(failure)
 
     def test_same(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.reference
+                _self.referenceData = self.data_source
                 same_as_reference = io.StringIO('label\n'
                                                 'a\n'
                                                 'b\n'
@@ -453,8 +510,8 @@ class TestAssertDataSet(TestHelperCase):
                 _self.subjectData = CsvSource(same_as_reference, in_memory=True)
 
             def test_method(_self):
-                reference_set = set(['a', 'b', 'c'])
-                _self.assertDataSet('label', ref=reference_set)  # <- test assert
+                required = set(['a', 'b', 'c'])
+                _self.assertDataSet('label', required)  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
@@ -470,8 +527,8 @@ class TestAssertDataSet(TestHelperCase):
                 _self.subjectData = CsvSource(same_as_reference, in_memory=True)
 
             def test_method(_self):
-                reference_set = set([('a', 'x'), ('b', 'y'), ('c', 'z')])
-                _self.assertDataSet(['label1', 'label2'], ref=reference_set)  # <- test assert
+                required = set([('a', 'x'), ('b', 'y'), ('c', 'z')])
+                _self.assertDataSet(['label1', 'label2'], required)  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
@@ -479,7 +536,7 @@ class TestAssertDataSet(TestHelperCase):
     def test_missing(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.reference
+                _self.referenceData = self.data_source
                 same_as_reference = io.StringIO('label\n'
                                                 'a\n'
                                                 'b\n')
@@ -495,7 +552,7 @@ class TestAssertDataSet(TestHelperCase):
     def test_extra(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.reference
+                _self.referenceData = self.data_source
                 same_as_reference = io.StringIO('label\n'
                                                 'a\n'
                                                 'b\n'
@@ -513,7 +570,7 @@ class TestAssertDataSet(TestHelperCase):
     def test_same_group(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.reference
+                _self.referenceData = self.data_source
                 same_as_reference = io.StringIO('label,label2\n'
                                                 'a,x\n'
                                                 'b,y\n'
@@ -529,7 +586,7 @@ class TestAssertDataSet(TestHelperCase):
     def test_missing_group(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.reference
+                _self.referenceData = self.data_source
                 same_as_reference = io.StringIO('label,label2\n'
                                                 'a,x\n'
                                                 'c,z\n')

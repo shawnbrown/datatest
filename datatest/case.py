@@ -6,6 +6,8 @@ import inspect
 import re
 from unittest import TestCase
 
+from ._builtins import *
+
 from .differences import _make_decimal
 from .differences import DataAssertionError
 from .differences import BaseDifference
@@ -322,18 +324,33 @@ class DataTestCase(TestCase):
                 msg = 'different column names'
             self.fail(msg, subject_result.compare(reference_result))
 
-    def assertDataSet(self, column, ref=None, msg=None, **filter_by):
-        """Test that the set of subject values matches the set of
-        reference values for the given *column*.  If *ref* is provided,
-        it is used in place of the set from ``referenceData``.
-        """
-        subject_result = self.subjectData.distinct(column, **filter_by)
-        reference_result = self._normalize_reference(ref, 'distinct', column, **filter_by)
+    def assertDataSet(self, column, required=None, msg=None, **filter_by):
+        """Test that *column* in ``subjectData`` contains *required* values.
+        If *required* is omitted, ``referenceData`` is used in its place.
 
-        if subject_result != reference_result:
-            if msg is None:
-                msg = 'different {0!r} values'.format(column)
-            self.fail(msg, subject_result.compare(reference_result))
+        *column* (string or sequence of strings):
+            Name of the ``subjectData`` column to check.  If *column* is a
+            sequence of names, the tests will check tuples of values.
+        *required* (collection, callable, data source, or None):
+            If *required* is a set (or other collection), the set of *column*
+            values must match the items in this collection.  If *required* is
+            a function (or other callable), it is used as a key which must
+            return True for acceptable values.  If *required* is a data source,
+            it is used as reference data.  If *required* is omitted, then
+            ``referenceData`` will be used in its place.
+        """
+        subject_set = self.subjectData.distinct(column, **filter_by)
+
+        if callable(required):
+            invalid = subject_set.compare(required)
+            if invalid:
+                self.fail(msg, invalid)
+        else:
+            required_set = self._normalize_reference(required, 'distinct', column, **filter_by)
+            if subject_set != required_set:
+                if msg is None:
+                    msg = 'different {0!r} values'.format(column)
+                self.fail(msg, subject_set.compare(required_set))
 
     def assertDataSum(self, column, group_by, msg=None, **filter_by):
         """Test that the sum of subject values matches the sum of
