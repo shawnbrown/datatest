@@ -249,16 +249,16 @@ class _AllowPercentDeviation(_BaseAllowance):
 
 class DataTestCase(TestCase):
     """This class wraps ``unittest.TestCase`` and implements additional
-    properties and methods for testing data quality.  When a data
-    assertion fails, this class raises a ``DataAssertionError``
-    containing the detected flaws.  When a non-data failure occurs, this
-    class raises a standard ``AssertionError``.
+    properties and methods for testing data quality.  When a data assertion
+    method fails, it raises a ``DataAssertionError`` containing the detected
+    flaws.  When a non-data failure occurs, these methods raise a standard
+    ``AssertionError``.
     """
     @property
     def subjectData(self):
-        """Property to access the data being tested---the subject of the
-        tests.  Typically, ``subjectData`` should be assigned in
-        ``setUpModule()`` or ``setUpClass()``.
+        """Property to access the data being tested---the subject of the tests.
+        Typically, ``subjectData`` should be assigned in ``setUpModule()`` or
+        ``setUpClass()``.
         """
         if hasattr(self, '_subjectData'):
             return self._subjectData
@@ -270,9 +270,9 @@ class DataTestCase(TestCase):
 
     @property
     def referenceData(self):
-        """Property to access reference data that is trusted to be
-        correct.  Typically, ``referenceData`` should be assigned in
-        ``setUpModule()`` or ``setUpClass()``.
+        """Property to access reference data that is trusted to be correct.
+        Typically, ``referenceData`` should be assigned in ``setUpModule()``
+        or ``setUpClass()``.
         """
         if hasattr(self, '_referenceData'):
             return self._referenceData
@@ -294,43 +294,46 @@ class DataTestCase(TestCase):
                 return frame.f_globals[name]  # <- EXIT!
         raise NameError('cannot find {0!r}'.format(name))
 
-    def _normalize_reference(self, ref, method, *args, **kwds):
-        """If *ref* is None, get query result from referenceData; if *ref*
-        is a data source, get query result from ref; else, return *ref*
-        without changes."""
-        if ref == None:
-            fn = getattr(self.referenceData, method)
-            return fn(*args, **kwds)
+    def _normalize_required(self, required, method, *args, **kwds):
+        """If *required* is None, query data from ``referenceData``; if it
+        is another data source, query from this other source; else, return
+        unchanged."""
+        if required == None:
+            required = self.referenceData
 
-        if isinstance(ref, BaseSource):
-            fn = getattr(ref, method)
-            return fn(*args, **kwds)
+        if isinstance(required, BaseSource):
+            fn = getattr(required, method)
+            required = fn(*args, **kwds)
 
-        return ref
+        return required
 
-    def assertDataColumns(self, ref=None, msg=None):
-        """Test that the set of subject columns matches set of reference
-        columns.  If *ref* is provided, it is used in-place of the set
-        from ``referenceData``.
+    def assertDataColumns(self, required=None, msg=None):
+        """Test that the column names in ``subjectData`` match the *required*
+        values.  If *required* is omitted, the column names from the
+        ``referenceData`` are used in its place.
+
+        The *required* argument can be a collection, callable, data source, or
+        None.  See :meth:`assertDataSet <datatest.DataTestCase.assertDataSet>`
+        for more details.
         """
-        subject_columns = self.subjectData.columns()
-        subject_result = ResultSet(subject_columns)
-
-        reference_columns = self._normalize_reference(ref, 'columns')
-        reference_result = ResultSet(reference_columns)
-
-        if subject_result != reference_result:
+        subject_set = ResultSet(self.subjectData.columns())
+        required_list = self._normalize_required(required, 'columns')
+        if subject_set != required_list:
             if msg is None:
                 msg = 'different column names'
-            self.fail(msg, subject_result.compare(reference_result))
+            self.fail(msg, subject_set.compare(required_list))
+        # TODO: Implement callable *required* argument.
+        # TODO: Explore the idea of implementing DataList to assert column order.
 
     def assertDataSet(self, column, required=None, msg=None, **filter_by):
-        """Test that *column* in ``subjectData`` contains *required* values.
-        If *required* is omitted, ``referenceData`` is used in its place.
+        """Test that the *column* or columns in ``subjectData`` contains the
+        *required* values. If *required* is omitted, values from
+        ``referenceData`` are used in its place.
 
         *column* (string or sequence of strings):
-            Name of the ``subjectData`` column to check.  If *column* is a
-            sequence of names, the tests will check tuples of values.
+            Name of the ``subjectData`` column or columns to check.  If
+            *column* contains multiple names, the tests will check tuples of
+            values.
         *required* (collection, callable, data source, or None):
             If *required* is a set (or other collection), the set of *column*
             values must match the items in this collection.  If *required* is
@@ -342,36 +345,51 @@ class DataTestCase(TestCase):
         subject_set = self.subjectData.distinct(column, **filter_by)
 
         if callable(required):
-            invalid = subject_set.compare(required)
-            if invalid:
-                self.fail(msg, invalid)
+            differences = subject_set.compare(required)
         else:
-            required_set = self._normalize_reference(required, 'distinct', column, **filter_by)
+            required_set = self._normalize_required(required, 'distinct', column, **filter_by)
             if subject_set != required_set:
-                if msg is None:
-                    msg = 'different {0!r} values'.format(column)
-                self.fail(msg, subject_set.compare(required_set))
+                differences = subject_set.compare(required_set)
+            else:
+                differences = None
 
-    def assertDataSum(self, column, group_by, msg=None, **filter_by):
-        """Test that the sum of subject values matches the sum of
-        reference values for the given *column* for each group in
-        *group_by*.
+        if differences:
+            if msg is None:
+                msg = 'different {0!r} values'.format(column)
+            self.fail(msg, differences)
 
-        The following asserts that the sum of the subject's ``income``
-        matches the sum of the reference's ``income`` for each group of
-        ``department`` and ``year`` values::
+    def assertDataSum(self, column, group_by, required=None, msg=None, **filter_by):
+        """Test that the sum of *column* in ``subjectData`` when grouped by
+        *group_by* matches *required* values dict.  If *required* is omitted,
+        ``referenceData`` is used in its place.
+
+        The *required* argument can be a dict, callable, data source, or None.
+        See :meth:`assertDataSet <datatest.DataTestCase.assertDataSet>` for
+        more details::
+
+            required = {2015: 146564,
+                        2016: 152530,
+                        2017: 158397}
+            self.assertDataSum('income', 'year', required)
+
+        By omitting the *required* argument, the following asserts that the
+        sum of "income" in ``subjectData`` matches the sum of "income" in
+        ``referenceData`` (for each group of "department" and "year" values)::
 
             self.assertDataSum('income', ['department', 'year'])
-
         """
-        subject_result = self.subjectData.sum(column, group_by, **filter_by)
-        reference_result = self.referenceData.sum(column, group_by, **filter_by)
+        subject_dict = self.subjectData.sum(column, group_by, **filter_by)
 
-        differences = subject_result.compare(reference_result)
+        if callable(required):
+            differences = subject_dict.compare(required)
+        else:
+            required_dict = self._normalize_required(required, 'sum', column, group_by, **filter_by)
+            differences = subject_dict.compare(required_dict)
+
         if differences:
             if not msg:
                 msg = 'different {0!r} sums'.format(column)
-            self.fail(msg=msg, diff=differences)
+            self.fail(msg, differences)
 
     def assertDataCount(self, column, group_by, msg=None, **filter_by):
         """Test that the count of subject rows matches the sum of
@@ -397,14 +415,17 @@ class DataTestCase(TestCase):
                 msg = 'row counts different than {0!r} sums'.format(column)
             self.fail(msg=msg, diff=differences)
 
-    def assertDataRegex(self, column, regex, msg=None, **filter_by):
-        """Test that all subject values in *column* match the *regex*
-        pattern search.
+    def assertDataRegex(self, column, required, msg=None, **filter_by):
+        """Test that *column* in ``subjectData`` contains values that match the
+        *required* regular expression.
+
+        The *required* argument must be a string or a compiled regular
+        expression object (it can not be omitted).
         """
         subject_result = self.subjectData.distinct(column, **filter_by)
-        if not isinstance(regex, _re_type):
-            regex = re.compile(regex)
-        func = lambda x: regex.search(x) is not None
+        if not isinstance(required, _re_type):
+            required = re.compile(required)
+        func = lambda x: required.search(x) is not None
 
         invalid = subject_result.compare(func)
         if invalid:
@@ -412,14 +433,17 @@ class DataTestCase(TestCase):
                 msg = 'non-matching {0!r} values'.format(column)
             self.fail(msg=msg, diff=invalid)
 
-    def assertDataNotRegex(self, column, regex, msg=None, **filter_by):
-        """Test that all subject values in *column* do not match the
-        *regex* pattern search.
+    def assertDataNotRegex(self, column, required, msg=None, **filter_by):
+        """Test that *column* in ``subjectData`` contains values that do not
+        match the *required* regular expression.
+
+        The *required* argument must be a string or a compiled regular
+        expression object (it can not be omitted).
         """
         subject_result = self.subjectData.distinct(column, **filter_by)
-        if not isinstance(regex, _re_type):
-            regex = re.compile(regex)
-        func = lambda x: regex.search(x) is None
+        if not isinstance(required, _re_type):
+            required = re.compile(required)
+        func = lambda x: required.search(x) is None
 
         invalid = subject_result.compare(func)
         if invalid:

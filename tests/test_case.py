@@ -124,7 +124,7 @@ class TestNormalizeReference(TestHelperCase):
                           'b,x,25\n')
         self.test_subject = CsvSource(_fh, in_memory=True)
 
-    def test_normalize_reference(self):
+    def test_normalize_required(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
                 _self.referenceData = self.test_reference
@@ -136,13 +136,13 @@ class TestNormalizeReference(TestHelperCase):
         instance = _TestClass('test_method')
 
         #original = set(['x', 'y', 'z'])
-        #normalized = instance._normalize_reference(None, 'distinct', 'label2')
+        #normalized = instance._normalize_required(None, 'distinct', 'label2')
         #self.assertIsNot(original, normalized)
         #self.assertEqual(original, normalized)
 
         # Set object should return unchanged.
         original = set(['x', 'y', 'z'])
-        normalized = instance._normalize_reference(original, 'distinct', 'label2')
+        normalized = instance._normalize_required(original, 'distinct', 'label2')
         self.assertIs(original, normalized)
 
         # Alternate reference source.
@@ -150,7 +150,7 @@ class TestNormalizeReference(TestHelperCase):
                           'c,75\n'
                           'd,80\n')
         altsrc = CsvSource(_fh, in_memory=True)
-        normalized = instance._normalize_reference(altsrc, 'distinct', 'label1')
+        normalized = instance._normalize_required(altsrc, 'distinct', 'label1')
         self.assertEqual(set(['c', 'd']), normalized)
 
 
@@ -183,6 +183,19 @@ class TestDataSum(TestHelperCase):
 
     def test_passing_case(self):
         """Sums are equal, test should pass."""
+        # Test using required dict.
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                _self.subjectData = self.src1_records
+
+            def test_method(_self):
+                required = {'a': 65, 'b': 70}
+                _self.assertDataSum('value', ['label1'], required)  # <- test assert
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        self.assertIsNone(failure)
+
+        # Test using referenceData.
         class _TestClass(DataTestCase):
             def setUp(_self):
                 _self.referenceData = self.src1_totals
@@ -194,8 +207,37 @@ class TestDataSum(TestHelperCase):
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
 
+        # Test using callable.
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                _self.referenceData = self.src1_totals
+                _self.subjectData = self.src1_records
+
+            def test_method(_self):
+                required = lambda x: x in (65, 70)
+                _self.assertDataSum('value', ['label1'], required)  # <- test assert
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        self.assertIsNone(failure)
+
     def test_failing_case(self):
         """Sums are unequal, test should fail."""
+        # Test using required dict.
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                _self.subjectData = self.src2_records  # <- src1 != src2
+
+            def test_method(_self):
+                required = {'a': 65, 'b': 70}
+                _self.assertDataSum('value', ['label1'], required)  # <- test assert
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        pattern = ("DataAssertionError: different 'value' sums:\n"
+                   " Deviation\(\+1, 65, label1=u?'a'\),\n"
+                   " Deviation\(-1, 70, label1=u?'b'\)")
+        self.assertRegex(failure, pattern)
+
+        # Test using referenceData.
         class _TestClass(DataTestCase):
             def setUp(_self):
                 _self.referenceData = self.src1_totals
@@ -208,6 +250,21 @@ class TestDataSum(TestHelperCase):
         pattern = ("DataAssertionError: different 'value' sums:\n"
                    " Deviation\(\+1, 65, label1=u?'a'\),\n"
                    " Deviation\(-1, 70, label1=u?'b'\)")
+        self.assertRegex(failure, pattern)
+
+        # Test using callable.
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                _self.subjectData = self.src2_records  # <- src1 != src2
+
+            def test_method(_self):
+                required = lambda x: x in (65, 70)
+                _self.assertDataSum('value', ['label1'], required)  # <- test assert
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        pattern = ("DataAssertionError: different 'value' sums:\n"
+                   " Invalid\(66, label1=u?'a'\),\n"
+                   " Invalid\(69, label1=u?'b'\)")
         self.assertRegex(failure, pattern)
 
 
@@ -250,7 +307,6 @@ class TestAssertDataSumGroupsAndFilters(TestHelperCase):
                    " Deviation\(\+1, 20, label1=u?'a'\),\n"
                    " Deviation\(-1, 40, label1=u?'b'\)")
         self.assertRegex(failure, pattern)
-
 
 
 class TestAssertDataCount(TestHelperCase):
@@ -353,7 +409,7 @@ class TestAssertDataColumns(TestHelperCase):
     def test_pass_using_set_arg_reference(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                #_self.referenceData =   <- Not defined!
+                #_self.referenceData =   <- intentionally omitted
                 subject = io.StringIO('label1,value\n'
                                       'a,6\n'
                                       'b,7\n')
@@ -361,7 +417,7 @@ class TestAssertDataColumns(TestHelperCase):
 
             def test_method(_self):
                 reference_set = set(['label1', 'value'])
-                _self.assertDataColumns(ref=reference_set)  # <- test assert
+                _self.assertDataColumns(required=reference_set)  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
@@ -369,7 +425,7 @@ class TestAssertDataColumns(TestHelperCase):
     def test_pass_using_source_arg_reference(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                #_self.referenceData =   <- Not defined!
+                #_self.referenceData =   <- intentionally omitted
                 subject = io.StringIO('label1,value\n'
                                       'a,6\n'
                                       'b,7\n')
@@ -380,7 +436,7 @@ class TestAssertDataColumns(TestHelperCase):
                                         'a,6\n'
                                         'b,7\n')
                 ref_source = CsvSource(reference, in_memory=True)
-                _self.assertDataColumns(ref=ref_source)  # <- test assert
+                _self.assertDataColumns(required=ref_source)  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
@@ -502,7 +558,7 @@ class TestAssertDataSet(TestHelperCase):
     def test_same_using_reference_from_argument(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                #_self.referenceData =   <- Not defined!
+                #_self.referenceData =   <- intentionally omitted
                 same_as_reference = io.StringIO('label\n'
                                                 'a\n'
                                                 'b\n'
@@ -519,7 +575,7 @@ class TestAssertDataSet(TestHelperCase):
     def test_same_group_using_reference_from_argument(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                #_self.referenceData =   <- Not defined!
+                #_self.referenceData =   <- intentionally omitted
                 same_as_reference = io.StringIO('label1,label2\n'
                                                 'a,x\n'
                                                 'b,y\n'
@@ -565,6 +621,19 @@ class TestAssertDataSet(TestHelperCase):
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = "different 'label' values:\n Extra\(u?'d'\)"
+        self.assertRegex(failure, pattern)
+
+    def test_invalid(self):
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                _self.subjectData = self.data_source
+
+            def test_method(_self):
+                required = lambda x: x in ('a', 'b')
+                _self.assertDataSet('label', required)  # <- test assert
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        pattern = "different 'label' values:\n Invalid\(u?'c'\)"
         self.assertRegex(failure, pattern)
 
     def test_same_group(self):
