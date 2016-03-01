@@ -747,7 +747,7 @@ class TestAssertDataRegexAndNotDataRegex(TestHelperCase):
         self.assertIsNone(failure)
 
 
-class TestAllowSpecified(TestHelperCase):
+class TestAllowOnly(TestHelperCase):
     def setUp(self):
         _fh = io.StringIO('label1,value\n'
                           'a,65\n'
@@ -776,7 +776,7 @@ class TestAllowSpecified(TestHelperCase):
                     Deviation(+1, 65, label1='a'),
                     Deviation(-1, 70, label1='b'),
                 ]
-                with _self.allowSpecified(diff):
+                with _self.allowOnly(diff):
                     _self.assertDataSum('value', ['label1'])  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
@@ -794,7 +794,7 @@ class TestAllowSpecified(TestHelperCase):
                     'One extra.': Deviation(+1, 65, label1='a'),
                     'One missing.': Deviation(-1, 70, label1='b'),
                 }
-                with _self.allowSpecified(diff):
+                with _self.allowOnly(diff):
                     _self.assertDataSum('value', ['label1'])  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
@@ -812,7 +812,7 @@ class TestAllowSpecified(TestHelperCase):
                     'Omitted': [Deviation(+1, 65, label1='a'),
                                 Deviation(-1, 70, label1='b')]
                 }
-                with _self.allowSpecified(diff):
+                with _self.allowOnly(diff):
                     _self.assertDataSum('value', ['label1'])  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
@@ -830,7 +830,7 @@ class TestAllowSpecified(TestHelperCase):
                     Deviation(-1, 70, label1='b'),
                     Deviation(+2, 65, label1='a'),
                 ]
-                with _self.allowSpecified(diff):
+                with _self.allowOnly(diff):
                     _self.assertDataSum('value', ['label1'])  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
@@ -850,7 +850,7 @@ class TestAllowSpecified(TestHelperCase):
                     Deviation(+1, 65, label1='a'),
                     Deviation(+2, 65, label1='a')
                 ]
-                with _self.allowSpecified(diff):
+                with _self.allowOnly(diff):
                     _self.assertDataSum('value', ['label1'])  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
@@ -867,7 +867,7 @@ class TestAllowSpecified(TestHelperCase):
 
             def test_method(_self):
                 diff = Deviation(+2, 65, label1='a')
-                with _self.allowSpecified(diff):
+                with _self.allowOnly(diff):
                     _self.assertDataSum('value', ['label1'])  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
@@ -876,12 +876,12 @@ class TestAllowSpecified(TestHelperCase):
         self.assertRegex(failure, pattern)
 
 
-class TestAllowUnspecified(TestHelperCase):
+class TestAllowAny(TestHelperCase):
     def test_passing(self):
         """Pass when observed number is less-than or equal-to allowed number."""
         class _TestClass(DataTestCase):
             def test_method1(_self):
-                with _self.allowUnspecified(3):  # <- allow three
+                with _self.allowAny(3):  # <- allow three
                     differences = [
                         Missing('foo'),
                         Missing('bar'),
@@ -890,7 +890,7 @@ class TestAllowUnspecified(TestHelperCase):
                     raise DataAssertionError('some differences', differences)
 
             def test_method2(_self):
-                with _self.allowUnspecified(4):  # <- allow four
+                with _self.allowAny(4):  # <- allow four
                     differences = [
                         Missing('foo'),
                         Missing('bar'),
@@ -912,7 +912,7 @@ class TestAllowUnspecified(TestHelperCase):
                 _self.subjectData = None
 
             def test_method(_self):
-                with _self.allowUnspecified(2):  # <- allow two
+                with _self.allowAny(2):  # <- allow two
                     differences = [
                         Missing('foo'),
                         Missing('bar'),
@@ -1373,7 +1373,7 @@ class TestNestedAllowances(TestHelperCase):
                 _self.subjectData = self.bad_subject
 
             def test_method(_self):
-                with _self.allowSpecified(Deviation(+3, 65, label1='a')):
+                with _self.allowOnly(Deviation(+3, 65, label1='a')):
                     with _self.allowDeviation(2):  # <- test tolerance
                         _self.assertDataSum('value', ['label1'])
 
@@ -1388,7 +1388,7 @@ class TestNestedAllowances(TestHelperCase):
 
             def test_method(_self):
                 with _self.allowDeviation(2):  # <- test tolerance
-                    with _self.allowSpecified(Deviation(+3, 65, label1='a')):
+                    with _self.allowOnly(Deviation(+3, 65, label1='a')):
                         _self.assertDataSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')
@@ -1401,7 +1401,7 @@ class TestNestedAllowances(TestHelperCase):
                 _self.subjectData = self.bad_subject
 
             def test_method(_self):
-                with _self.allowSpecified(Deviation(+10, 999, label1='a')):
+                with _self.allowOnly(Deviation(+10, 999, label1='a')):
                     with _self.allowDeviation(3):
                         _self.assertDataSum('value', ['label1'])
 

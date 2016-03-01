@@ -65,6 +65,8 @@ MissingItem = Missing
 InvalidItem = Invalid
 InvalidNumber = Deviation
 
+DataTestCase.allowSpecified = DataTestCase.allowOnly
+DataTestCase.allowUnspecified = DataTestCase.allowAny
 DataTestCase.allowDeviationPercent = DataTestCase.allowPercentDeviation
 DataTestCase.assertColumnSet = DataTestCase.assertDataColumns
 DataTestCase.assertValueSet = DataTestCase.assertDataSet

@@ -74,8 +74,8 @@ class _BaseAllowance(object):
             raise DataAssertionError(msg, difference, subj, trst)  # For Python 2.x
 
 
-class _AllowSpecified(_BaseAllowance):
-    """Context manager for DataTestCase.allowSpecified() method."""
+class _AllowOnly(_BaseAllowance):
+    """Context manager for DataTestCase.allowOnly() method."""
     def __init__(self, differences, test_case, msg=None):
         self.differences = differences
         super(self.__class__, self).__init__(test_case, msg=None)
@@ -97,8 +97,8 @@ class _AllowSpecified(_BaseAllowance):
         return True
 
 
-class _AllowUnspecified(_BaseAllowance):
-    """Context manager for DataTestCase.allowUnspecified() method."""
+class _AllowAny(_BaseAllowance):
+    """Context manager for DataTestCase.allowAny() method."""
     def __init__(self, number, test_case, msg=None):
         assert number > 0, 'number must be positive'
         self.number = number
@@ -451,33 +451,33 @@ class DataTestCase(TestCase):
                 msg = 'matching {0!r} values'.format(column)
             self.fail(msg=msg, diff=invalid)
 
-    def allowSpecified(self, diff, msg=None):
-        """Context manager to allow specific differences *diff* without
-        triggering a test failure::
+    def allowOnly(self, differences, msg=None):
+        """Context manager to allow specific *differences* without triggering
+        a test failure::
 
-            diff = [
+            differences = [
                 Extra('foo'),
                 Missing('bar'),
             ]
-            with self.allowSpecified(diff):
+            with self.allowOnly(differences):
                 self.assertDataSet('column1')
 
         If the raised differences do not match *diff*, the test will
         fail with a DataAssertionError of the remaining differences.
 
-        In the above example, *diff* is a list of differences but it is also
-        possible to pass a single difference or a dictionary of differences.
+        In the above example, *differences* is a list but it is also possible
+        to pass a single difference or a dictionary.
 
         Using a single difference::
 
-            with self.allowSpecified(Extra('foo')):
+            with self.allowOnly(Extra('foo')):
                 self.assertDataSet('column2')
 
-        When using a dictionary of differences, the keys are strings that
-        provide context (for future reference and derived reports) and the
-        values are the differences themselves::
+        When using a dictionary, the keys are strings that provide context
+        (for future reference and derived reports) and the values are the
+        individual difference objects themselves::
 
-            diff = {
+            differences = {
                 'Totals from state do not match totals from county.': [
                     Deviation(+436, 38032, town='Springfield'),
                     Deviation(-83, 8631, town='Union')
@@ -487,24 +487,24 @@ class DataTestCase(TestCase):
                     Deviation(-177, 177, town='Westfield')
                 ]
             }
-            with self.allowSpecified(diff):
+            with self.allowOnly(differences):
                 self.assertDataSum('population', ['town'])
 
         """
-        return _AllowSpecified(diff, self, msg)
+        return _AllowOnly(differences, self, msg)
 
-    def allowUnspecified(self, number, msg=None):
+    def allowAny(self, number, msg=None):
         """Context manager to allow a given *number* of unspecified
         differences without triggering a test failure::
 
-            with self.allowUnspecified(10):  # Allows up to ten differences.
+            with self.allowAny(10):  # Allows up to ten differences.
                 self.assertDataSet('column1')
 
         If the count of differences exceeds the given *number*, the test case
         will fail with a DataAssertionError containing all observed
         differences.
         """
-        return _AllowUnspecified(number, self, msg)
+        return _AllowAny(number, self, msg)
 
     def allowMissing(self, msg=None):
         """Context manager to allow for missing values without triggering a
