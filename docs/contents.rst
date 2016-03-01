@@ -24,27 +24,27 @@ In addition to the new functionality, the familiar ``TestCase`` methods
 
     .. _assert-methods:
 
-    +----------------------------------------------+----------------------------------------------------+
-    | Method                                       | Checks that                                        |
-    +==============================================+====================================================+
-    | :meth:`assertDataColumns()                   | subject columns == reference columns               |
-    | <datatest.DataTestCase.assertDataColumns>`   |                                                    |
-    +----------------------------------------------+----------------------------------------------------+
-    | :meth:`assertDataSet(c)                      | subject vals == reference vals in column *c*       |
-    | <datatest.DataTestCase.assertDataSet>`       |                                                    |
-    +----------------------------------------------+----------------------------------------------------+
-    | :meth:`assertDataSum(c, g)                   | sum of subject vals == sum of reference vals in    |
-    | <datatest.DataTestCase.assertDataSum>`       | column *c* for each group of *g*                   |
-    +----------------------------------------------+----------------------------------------------------+
-    | :meth:`assertDataCount(c, g)                 | count of subject rows == sum of reference vals in  |
-    | <datatest.DataTestCase.assertDataCount>`     | column *c* for each group of *g*                   |
-    +----------------------------------------------+----------------------------------------------------+
-    | :meth:`assertDataRegex(c, r)                 | *r*.search(val) for subject vals in column *c*     |
-    | <datatest.DataTestCase.assertDataRegex>`     |                                                    |
-    +----------------------------------------------+----------------------------------------------------+
-    | :meth:`assertDataNotRegex(c, r)              | not *r*.search(val) for subject vals in column *c* |
-    | <datatest.DataTestCase.assertDataNotRegex>`  |                                                    |
-    +----------------------------------------------+----------------------------------------------------+
+    +---------------------------------------------+---------------------------------------------+
+    | Method                                      | Checks that                                 |
+    +=============================================+=============================================+
+    | :meth:`assertDataColumns(r=None)            | column names match required values *r*      |
+    | <datatest.DataTestCase.assertDataColumns>`  |                                             |
+    +---------------------------------------------+---------------------------------------------+
+    | :meth:`assertDataSet(c, r=None)             | column *c* contains required values *r*     |
+    | <datatest.DataTestCase.assertDataSet>`      |                                             |
+    +---------------------------------------------+---------------------------------------------+
+    | :meth:`assertDataSum(c, g, r=None)          | sums of column *c*, grouped by *g*, match   |
+    | <datatest.DataTestCase.assertDataSum>`      | required values in dict *r*                 |
+    +---------------------------------------------+---------------------------------------------+
+    | :meth:`assertDataCount(c, g, r=None)        | row counts of column *c*, grouped by *g*,   |
+    | <datatest.DataTestCase.assertDataCount>`    | match required values in dict *r*           |
+    +---------------------------------------------+---------------------------------------------+
+    | :meth:`assertDataRegex(c, r)                | *r*.search(val) for each val in column *c*  |
+    | <datatest.DataTestCase.assertDataRegex>`    |                                             |
+    +---------------------------------------------+---------------------------------------------+
+    | :meth:`assertDataNotRegex(c, r)             | not *r*.search(val) for each val in         |
+    | <datatest.DataTestCase.assertDataNotRegex>` | column *c*                                  |
+    +---------------------------------------------+---------------------------------------------+
 
     .. automethod:: assertDataColumns
     .. automethod:: assertDataSet
@@ -114,9 +114,7 @@ The next example makes this same assertion but for records where the
 Data Sources
 ************
 
-Data source objects are used to access data in various formats.  For
-additional sources, see :ref:`optional data sources <extra-sources>`
-(below).
+Data source objects are used to access data in various formats.
 
 +----------------------------------------+---------------------------------------------+
 | Class                                  | Loads                                       |
