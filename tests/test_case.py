@@ -1022,11 +1022,6 @@ class TestAllowExtra(TestHelperCase):
 
 class TestAllowDeviation(TestHelperCase):
     def setUp(self):
-        _fh = io.StringIO('label1,value\n'
-                          'a,65\n'
-                          'b,70\n')
-        self.reference = CsvSource(_fh, in_memory=True)
-
         _fh = io.StringIO('label1,label2,value\n'
                           'a,x,20\n'  # <- off by +3
                           'a,x,13\n'
@@ -1037,78 +1032,117 @@ class TestAllowDeviation(TestHelperCase):
                           'b,x,25\n')
         self.bad_subject = CsvSource(_fh, in_memory=True)
 
-    def test_absolute_tolerance(self):
-        """If accepted differences not found, raise exception."""
+    def test_passing(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.reference
                 _self.subjectData = self.bad_subject
 
-            def test_method(_self):
-                with _self.allowDeviation(3):  # <- test tolerance
-                    _self.assertDataSum('value', ['label1'])
+            def test_method1(_self):
+                with _self.allowDeviation(3):  # <- "tolerance" signature
+                    required = {'a': 65, 'b': 70}
+                    _self.assertDataSum('value', ['label1'], required)
 
-        failure = self._run_one_test(_TestClass, 'test_method')
+            def test_method2(_self):
+                with _self.allowDeviation(-1, 3):  # <- "lower/upper" signature
+                    required = {'a': 65, 'b': 70}
+                    _self.assertDataSum('value', ['label1'], required)
+
+        failure = self._run_one_test(_TestClass, 'test_method1')
         self.assertIsNone(failure)
 
-    def test_absolute_tolerance_with_filter(self):
+        failure = self._run_one_test(_TestClass, 'test_method2')
+        self.assertIsNone(failure)
+
+    def test_passing_with_filter(self):
         """Using filter label1='a', Deviation(...label1='b') should be raised."""
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.reference
                 _self.subjectData = self.bad_subject
 
-            def test_method(_self):
-                with _self.allowDeviation(3, label1='a'):  # <- Allow label1='a' only.
-                    _self.assertDataSum('value', ['label1'])
+            def test_method1(_self):
+                with _self.allowDeviation(3, label1='a'):  # <- filter label1='a'
+                    required = {'a': 65, 'b': 70}
+                    _self.assertDataSum('value', ['label1'], required)
 
-        failure = self._run_one_test(_TestClass, 'test_method')
+            def test_method2(_self):
+                with _self.allowDeviation(-1, 3, label1='a'):  # <- filter label1='a
+                    required = {'a': 65, 'b': 70}
+                    _self.assertDataSum('value', ['label1'], required)
+
         pattern = ("DataAssertionError: different u?'value' sums:\n"
                    " Deviation\(-1, 70, label1=u?'b'\)")
+
+        failure = self._run_one_test(_TestClass, 'test_method1')
         self.assertRegex(failure, pattern)
 
+        failure = self._run_one_test(_TestClass, 'test_method2')
+        self.assertRegex(failure, pattern)
 
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.reference
                 _self.subjectData = self.bad_subject
 
             def test_method(_self):
                 with _self.allowDeviation(3, label1=['a', 'b']):  # <- Filter to 'a' or 'b' only.
-                    _self.assertDataSum('value', ['label1'])
+                    required = {'a': 65, 'b': 70}
+                    _self.assertDataSum('value', ['label1'], required)
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
 
-    def test_inadequate_absolute_tolerance(self):
+    def test_inadequate_tolerance(self):
         """Given tolerance of 2, Deviation(+3) should still be raised."""
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.reference
                 _self.subjectData = self.bad_subject
 
-            def test_method(_self):
-                with _self.allowDeviation(2):  # <- test tolerance
-                    _self.assertDataSum('value', ['label1'])
+            # Raises: Deviation(+3, 65, label1='a')
+            def test_method1(_self):
+                with _self.allowDeviation(2):  # <- "tolerance" syntax
+                    required = {'a': 65, 'b': 70}
+                    _self.assertDataSum('value', ['label1'], required)
 
-        failure = self._run_one_test(_TestClass, 'test_method')
+            # Raises: Deviation(+3, 65, label1='a')
+            def test_method2(_self):
+                with _self.allowDeviation(-1, 2):  # <- "low/high" syntax
+                    required = {'a': 65, 'b': 70}
+                    _self.assertDataSum('value', ['label1'], required)
+
+            # Raises: Deviation(-1, 70, label1='b')
+            def test_method3(_self):
+                with _self.allowDeviation(0, 3):  # <- "low/high" syntax
+                    required = {'a': 65, 'b': 70}
+                    _self.assertDataSum('value', ['label1'], required)
+
+        failure = self._run_one_test(_TestClass, 'test_method1')
         pattern = ("DataAssertionError: different u?'value' sums:\n"
                    " Deviation\(\+3, 65, label1=u?'a'\)")
+        self.assertRegex(failure, pattern)
+
+        failure = self._run_one_test(_TestClass, 'test_method2')
+        pattern = ("DataAssertionError: different u?'value' sums:\n"
+                   " Deviation\(\+3, 65, label1=u?'a'\)")
+        self.assertRegex(failure, pattern)
+
+        failure = self._run_one_test(_TestClass, 'test_method3')
+        pattern = ("DataAssertionError: different u?'value' sums:\n"
+                   " Deviation\(-1, 70, label1=u?'b'\)")
         self.assertRegex(failure, pattern)
 
     def test_tolerance_error(self):
         """Must throw error if tolerance is invalid."""
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.reference
                 _self.subjectData = self.bad_subject
 
             def test_method(_self):
                 with _self.allowDeviation(-5):  # <- invalid
-                    _self.assertDataSum('value', ['label1'])
+                    required = {'a': 65, 'b': 70}
+                    _self.assertDataSum('value', ['label1'], required)
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = 'Tolerance cannot be defined with a negative number.'
+        pattern = ('tolerance should not be negative, to set '
+                   'a lower bound use "lower, upper" syntax')
         self.assertRegex(failure, pattern)
 
     # QUESTION: Should tolerances raise an error if there are no
@@ -1129,119 +1163,6 @@ class TestAllowDeviation(TestHelperCase):
     #    failure = self._run_one_test(_TestClass, 'test_method')
     #    pattern = 'no errors...'
     #    self.assertRegex(failure, pattern)
-
-
-class TestAllowDeviationUpper(TestHelperCase):
-    def test_passing(self):
-        """If accepted differences not found, raise exception."""
-        class _TestClass(DataTestCase):
-            def test_method(_self):
-                with _self.allowDeviationUpper(3):  # <- Allow deviation of 0 to +3
-                    differences = [
-                        Deviation(+1, 10, column1='foo'),
-                        Deviation(0, 10, column1='bar'),
-                        Deviation(+3, 10, column1='baz'),
-                    ]
-                    raise DataAssertionError('some differences', differences)
-
-        failure = self._run_one_test(_TestClass, 'test_method')
-        self.assertIsNone(failure)
-
-    def test_over_deviation(self):
-        class _TestClass(DataTestCase):
-            def setUp(_self):
-                _self.referenceData = None
-                _self.subjectData = None
-
-            def test_method(_self):
-                with _self.allowDeviationUpper(3):  # <- Allow deviation of 0 to +3
-                    differences = [
-                        Deviation(+2, 10, column1='foo'),
-                        Deviation(+3, 10, column1='bar'),
-                        Deviation(+4, 10, column1='baz'),
-                    ]
-                    raise DataAssertionError('some differences', differences)
-
-        failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = ("DataAssertionError: some differences:\n"
-                   " Deviation\(\+4, 10, column1=u?'baz'\)")
-        self.assertRegex(failure, pattern)
-
-    def test_under_zero(self):
-        class _TestClass(DataTestCase):
-            def setUp(_self):
-                _self.referenceData = None
-                _self.subjectData = None
-
-            def test_method(_self):
-                with _self.allowDeviationUpper(3):  # <- Allow deviation of 0 to +3
-                    differences = [
-                        Deviation(+2, 10, column1='foo'),
-                        Deviation(+3, 10, column1='bar'),
-                        Deviation(-1, 10, column1='baz'),
-                    ]
-                    raise DataAssertionError('some differences', differences)
-
-        failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = ("DataAssertionError: some differences:\n"
-                   " Deviation\(-1, 10, column1=u?'baz'\)\n")
-        self.assertRegex(failure, pattern)
-
-class TestAllowDeviationLower(TestHelperCase):
-    def test_passing(self):
-        """If accepted differences not found, raise exception."""
-        class _TestClass(DataTestCase):
-            def test_method(_self):
-                with _self.allowDeviationLower(-3):  # <- Allow deviation of -3 to 0
-                    differences = [
-                        Deviation(-1, 10, column1='foo'),
-                        Deviation(0, 10, column1='bar'),
-                        Deviation(-3, 10, column1='baz'),
-                    ]
-                    raise DataAssertionError('some differences', differences)
-
-        failure = self._run_one_test(_TestClass, 'test_method')
-        self.assertIsNone(failure)
-
-    def test_under_deviation(self):
-        class _TestClass(DataTestCase):
-            def setUp(_self):
-                _self.referenceData = None
-                _self.subjectData = None
-
-            def test_method(_self):
-                with _self.allowDeviationLower(-3):  # <- Allow deviation of 0 to +3
-                    differences = [
-                        Deviation(-2, 10, column1='foo'),
-                        Deviation(-3, 10, column1='bar'),
-                        Deviation(-4, 10, column1='baz'),
-                    ]
-                    raise DataAssertionError('some differences', differences)
-
-        failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = ("DataAssertionError: some differences:\n"
-                   " Deviation\(-4, 10, column1=u?'baz'\)")
-        self.assertRegex(failure, pattern)
-
-    def test_over_zero(self):
-        class _TestClass(DataTestCase):
-            def setUp(_self):
-                _self.referenceData = None
-                _self.subjectData = None
-
-            def test_method(_self):
-                with _self.allowDeviationLower(-3):  # <- Allow deviation of 0 to +3
-                    differences = [
-                        Deviation(-2, 10, column1='foo'),
-                        Deviation(-3, 10, column1='bar'),
-                        Deviation(+1, 10, column1='baz'),
-                    ]
-                    raise DataAssertionError('some differences', differences)
-
-        failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = ("DataAssertionError: some differences:\n"
-                   " Deviation\(\+1, 10, column1=u?'baz'\)\n")
-        self.assertRegex(failure, pattern)
 
 
 class TestAllowPercentDeviation(TestHelperCase):

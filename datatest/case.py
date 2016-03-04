@@ -143,12 +143,19 @@ class _AllowExtra(_BaseAllowance):
 
 class _AllowDeviation(_BaseAllowance):
     """Context manager for DataTestCase.allowDeviation() method."""
-    def __init__(self, deviation, test_case, msg, **filter_by):
-        assert deviation >= 0, 'Tolerance cannot be defined with a negative number.'
+    #def __init__(self, deviation, test_case, msg, **filter_by):
+    def __init__(self, lower, upper, test_case, msg, **filter_by):
+        #assert deviation >= 0, 'Tolerance cannot be defined with a negative number.'
+
+        lower = _make_decimal(lower)
+        upper = _make_decimal(upper)
+
         wrap = lambda v: [v] if isinstance(v, str) else v
         self._filter_by = dict((k, wrap(v)) for k, v in filter_by.items())
 
-        self.deviation = deviation
+        #self.deviation = deviation
+        self.lower = lower
+        self.upper = upper
         super(self.__class__, self).__init__(test_case, msg=None)
 
     def __exit__(self, exc_type, exc_value, tb):
@@ -159,59 +166,8 @@ class _AllowDeviation(_BaseAllowance):
             for k, v in self._filter_by.items():
                 if (k not in obj.kwds) or (obj.kwds[k] not in v):
                     return True
-            return abs(obj.diff) > self.deviation  # <- Using abs(...)!
-
-        not_allowed = [x for x in differences if _not_allowed(x)]
-        if not_allowed:
-            self._raiseFailure(message, not_allowed)  # <- EXIT!
-        return True
-
-
-class _AllowDeviationUpper(_BaseAllowance):
-    """Context manager for DataTestCase.allowDeviation() method."""
-    def __init__(self, deviation, test_case, msg, **filter_by):
-        assert deviation >= 0, 'Tolerance cannot be defined with a negative number.'
-        wrap = lambda v: [v] if isinstance(v, str) else v
-        self._filter_by = dict((k, wrap(v)) for k, v in filter_by.items())
-
-        self.deviation = deviation
-        super(self.__class__, self).__init__(test_case, msg=None)
-
-    def __exit__(self, exc_type, exc_value, tb):
-        differences = getattr(exc_value, 'diff', [])
-        message = getattr(exc_value, 'msg', 'No error raised')
-
-        def _not_allowed(obj):
-            for k, v in self._filter_by.items():
-                if (k not in obj.kwds) or (obj.kwds[k] not in v):
-                    return True
-            return (obj.diff > self.deviation) or (obj.diff < 0)
-
-        not_allowed = [x for x in differences if _not_allowed(x)]
-        if not_allowed:
-            self._raiseFailure(message, not_allowed)  # <- EXIT!
-        return True
-
-
-class _AllowDeviationLower(_BaseAllowance):
-    """Context manager for DataTestCase.allowDeviation() method."""
-    def __init__(self, deviation, test_case, msg, **filter_by):
-        assert deviation < 0, 'Lower deviation should not be defined with a positive number.'
-        wrap = lambda v: [v] if isinstance(v, str) else v
-        self._filter_by = dict((k, wrap(v)) for k, v in filter_by.items())
-
-        self.deviation = deviation
-        super(self.__class__, self).__init__(test_case, msg=None)
-
-    def __exit__(self, exc_type, exc_value, tb):
-        differences = getattr(exc_value, 'diff', [])
-        message = getattr(exc_value, 'msg', 'No error raised')
-
-        def _not_allowed(obj):
-            for k, v in self._filter_by.items():
-                if (k not in obj.kwds) or (obj.kwds[k] not in v):
-                    return True
-            return (obj.diff < self.deviation) or (obj.diff > 0)
+            #return abs(obj.diff) > self.deviation  # <- Using abs(...)!
+            return (obj.diff > self.upper) or (obj.diff < self.lower)
 
         not_allowed = [x for x in differences if _not_allowed(x)]
         if not_allowed:
@@ -518,7 +474,7 @@ class DataTestCase(TestCase):
 
     def allowExtra(self, msg=None):
         """Context manager to allow for extra values without triggering a
-        test failure.
+        test failure::
 
             with self.allowExtra():  # Allows Extra differences.
                 self.assertDataSet('column1')
@@ -526,44 +482,36 @@ class DataTestCase(TestCase):
         """
         return _AllowExtra(self, msg)
 
-    def allowDeviation(self, deviation, msg=None, **filter_by):
-        """Context manager to allow positive or negative numeric differences
-        of less than or equal to the given *deviation*::
+    def allowDeviation(self, lower, upper=None, **filter_by):
+        """
+        allowDeviation(tolerance, /, **filter_by)
+        allowDeviation(lower, upper, **filter_by)
 
-            with self.allowDeviation(5):  # Allows +/- 5
+        Context manager to allow for deviations from required
+        numeric values without triggering a test failure.
+
+        Allowing deviations of plus-or-minus a given *tolerance*::
+
+            with self.allowDeviation(5):  # tolerance of +/- 5
                 self.assertDataSum('column2', group_by=['column1'])
 
-        If differences exceed *deviation*, the test case will fail with
-        a DataAssertionError containing the excessive differences.
-        """
-        deviation = _make_decimal(deviation)
-        return _AllowDeviation(deviation, self, msg, **filter_by)
+        Specifying different *lower* and *upper* bounds::
 
-    def allowDeviationUpper(self, deviation, msg=None, **filter_by):
-        """Context manager to allow positive numeric differences of less than
-        or equal to the given *deviation*::
-
-            with self.allowDeviationUpper(5):  # Allows from 0 to +5
+            with self.allowDeviation(-2, 3):  # tolerance from -2 to +3
                 self.assertDataSum('column2', group_by=['column1'])
 
-        If differences exceed *deviation*, the test case will fail with
-        a DataAssertionError containing the excessive differences.
+        All deviations within the accepted tolerance range are
+        suppressed but those that exceed the range will trigger
+        a test failure.
         """
-        deviation = _make_decimal(deviation)
-        return _AllowDeviationUpper(deviation, self, msg, **filter_by)
+        if upper == None:
+            tolerance = lower
+            assert tolerance >= 0, ('tolerance should not be negative, to set '
+                                    'a lower bound use "lower, upper" syntax')
+            lower, upper = -tolerance, tolerance
 
-    def allowDeviationLower(self, deviation, msg=None, **filter_by):
-        """Context manager to allow negative numeric differences of greater than
-        or equal to the given *deviation*::
-
-            with self.allowDeviationLower(-5):  # Allows from -5 to 0
-                self.assertDataSum('column2', group_by=['column1'])
-
-        If differences exceed *deviation*, the test case will fail with
-        a DataAssertionError containing the excessive differences.
-        """
-        deviation = _make_decimal(deviation)
-        return _AllowDeviationLower(deviation, self, msg, **filter_by)
+        assert lower <= 0 <= upper
+        return _AllowDeviation(lower, upper, self, msg=None, **filter_by)
 
     def allowPercentDeviation(self, deviation, msg=None, **filter_by):
         """Context manager to allow positive or negative numeric differences
@@ -592,3 +540,16 @@ class DataTestCase(TestCase):
             raise DataAssertionError(msg, diff, reference, self.subjectData)
         else:
             raise self.failureException(msg)
+
+
+# Prettify signature of DataTestCase.allowDeviation() by making "tolerance"
+# syntax the default option when introspected.
+try:
+    _sig = inspect.signature(DataTestCase.allowDeviation)
+    _self, _lower, _upper, _filter_by = _sig.parameters.values()
+    _self = _self.replace(kind=inspect.Parameter.POSITIONAL_ONLY)
+    _tolerance = inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY)
+    _sig = _sig.replace(parameters=[_self, _tolerance, _filter_by])
+    DataTestCase.allowDeviation.__signature__ = _sig
+except AttributeError:  # Fails for Python 3.2 and earlier.
+    pass
