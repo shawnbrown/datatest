@@ -15,14 +15,14 @@ def _make_decimal(d):
 
 class DataAssertionError(AssertionError):
     """Data assertion failed."""
-    def __init__(self, msg, diff, reference=None, subject=None):
-        """Initialize self, store difference for later reference."""
-        if not diff:
-            raise ValueError('Missing difference.')
-        self.diff = diff
+    def __init__(self, msg, differences, subject=None, required=None):
+        """Initialize self, store *differences* for later reference."""
+        if not differences:
+            raise ValueError('Missing differences.')
+        self.differences = differences
         self.msg = msg
-        self.reference = str(reference)  # Reference data source or object.
-        self.subject = str(subject)  # Subject data source.
+        self.subject = str(subject)    # Subject data source.
+        self.required = str(required)  # Required object or reference source.
         self._verbose = False  # <- Set by DataTestResult if verbose.
 
         return AssertionError.__init__(self, msg)
@@ -31,15 +31,15 @@ class DataAssertionError(AssertionError):
         return self.__class__.__name__ + ': ' + self.__str__()
 
     def __str__(self):
-        diff = pprint.pformat(self.diff, width=1)
+        diff = pprint.pformat(self.differences, width=1)
         if any([diff.startswith('{') and diff.endswith('}'),
                 diff.startswith('[') and diff.endswith(']'),
                 diff.startswith('(') and diff.endswith(')')]):
             diff = diff[1:-1]
 
         if self._verbose:
-            msg_extras = '\n\nREFERENCE DATA:\n{0}\nSUBJECT DATA:\n{1}'
-            msg_extras = msg_extras.format(self.reference, self.subject)
+            msg_extras = '\n\nSUBJECT:\n{0}\nREQUIRED:\n{1}'
+            msg_extras = msg_extras.format(self.subject, self.required)
         else:
             msg_extras = ''
 
@@ -47,14 +47,14 @@ class DataAssertionError(AssertionError):
 
 
 class BaseDifference(object):
-    def __init__(self, item, **kwds):
-        self.item = item
+    def __init__(self, value, **kwds):
+        self.value = value
         self.kwds = kwds
 
     def __repr__(self):
         clsname = self.__class__.__name__
         kwds = self._format_kwds(self.kwds)
-        return '{0}({1!r}{2})'.format(clsname, self.item, kwds)
+        return '{0}({1!r}{2})'.format(clsname, self.value, kwds)
 
     def __hash__(self):
         return hash((self.__class__, self.__repr__()))
@@ -85,36 +85,36 @@ class Missing(BaseDifference):
 
 
 class Invalid(BaseDifference):
-    def __init__(self, item, expected=None, **kwds):
-        self.item = item
-        self.expected = expected
+    def __init__(self, value, required=None, **kwds):
+        self.value = value
+        self.required = required
         self.kwds = kwds
 
     def __repr__(self):
         clsname = self.__class__.__name__
         kwds = self._format_kwds(self.kwds)
-        if self.expected == None:
-            expected = ''
+        if self.required == None:
+            required = ''
         else:
-            expected = ', ' + repr(self.expected)
-        return '{0}({1!r}{2}{3})'.format(clsname, self.item, expected, kwds)
+            required = ', ' + repr(self.required)
+        return '{0}({1!r}{2}{3})'.format(clsname, self.value, required, kwds)
 
 
 class Deviation(BaseDifference):
-    def __init__(self, diff, expected, **kwds):
-        if not diff:
-            raise ValueError('diff must be positive or negative number')
-        self.diff = _make_decimal(diff)
-        if expected != None:
-            expected = _make_decimal(expected)
-        self.expected = expected
+    def __init__(self, value, required, **kwds):
+        if not value:
+            raise ValueError('value must be positive or negative number')
+        self.value = _make_decimal(value)
+        if required != None:
+            required = _make_decimal(required)
+        self.required = required
         self.kwds = kwds
 
     def __repr__(self):
         clsname = self.__class__.__name__
         kwds = self._format_kwds(self.kwds)
-        diff = '{0:+}'.format(self.diff)  # Apply +/- sign.
-        return '{0}({1}, {2}{3})'.format(clsname, diff, self.expected, kwds)
+        value = '{0:+}'.format(self.value)  # Apply +/- sign.
+        return '{0}({1}, {2}{3})'.format(clsname, value, self.required, kwds)
 
 
 class NonStrictRelation(BaseDifference):

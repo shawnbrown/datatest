@@ -24,7 +24,7 @@ class TestDataAssertionError(unittest.TestCase):
         DataAssertionError('column names', {'Explanation here.': [Missing('foo')]})
 
         with self.assertRaises(ValueError, msg='Empty error should raise exception.'):
-            DataAssertionError(msg='', diff={})
+            DataAssertionError(msg='', differences={})
 
     def test_repr(self):
         error = DataAssertionError('different columns', [Missing('foo')])
@@ -56,16 +56,16 @@ class TestDataAssertionError(unittest.TestCase):
     def test_verbose_repr(self):
         reference = 'reference-data-source'
         subject = 'subject-data-source'
-        error = DataAssertionError('different columns', [Missing('foo')], reference, subject)
+        error = DataAssertionError('different columns', [Missing('foo')], subject, reference)
         error._verbose = True  # <- Set verbose flag, here!
 
         pattern = ("DataAssertionError: different columns:\n"
                    " Missing('foo')\n"
                    "\n"
-                   "REFERENCE DATA:\n"
-                   "reference-data-source\n"
-                   "SUBJECT DATA:\n"
-                   "subject-data-source")
+                   "SUBJECT:\n"
+                   "subject-data-source\n"
+                   "REQUIRED:\n"
+                   "reference-data-source")
         self.assertEqual(repr(error), pattern)
 
 
@@ -74,7 +74,7 @@ class TestBaseDifference(unittest.TestCase):
         item = BaseDifference('foo')
         self.assertEqual(repr(item), "BaseDifference('foo')")
 
-        item = BaseDifference(item='foo')  # As kwds.
+        item = BaseDifference(value='foo')  # As kwds.
         self.assertEqual(repr(item), "BaseDifference('foo')")
 
         item = BaseDifference('foo', col4='bar')  # Using kwds for filtering.
@@ -137,7 +137,7 @@ class TestInvalid(unittest.TestCase):
 
         # QUESTION: How should kwds be handled if keys match item or expected?
         with self.assertRaises(TypeError):
-            item = Invalid('foo', 'FOO', expected='bar')
+            item = Invalid('foo', 'FOO', required='bar')
 
 
 class TestDeviation(unittest.TestCase):

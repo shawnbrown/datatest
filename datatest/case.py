@@ -56,22 +56,22 @@ class _BaseAllowance(object):
     def __exit__(self, exc_type, exc_value, tb):
         raise NotImplementedError()
 
-    def _raiseFailure(self, standardMsg, difference):
+    def _raiseFailure(self, standardMsg, differences):
         msg = self.test_case._formatMessage(self.msg, standardMsg)
-        subj = self.test_case.subjectData
-        #trst = getattr(self.test_case, 'referenceData', None)
+        subject = self.test_case.subjectData
+        #required = getattr(self.test_case, 'referenceData', None)
         try:
-            trst = self.test_case.referenceData
+            required = self.test_case.referenceData
         except NameError:
-            trst = None
+            required = None
 
         try:
             # For Python 3.x (some 3.2 builds will raise a TypeError
             # while 2.x will raise SyntaxError).
-            expr = 'raise DataAssertionError(msg, {0}, subj, trst) from None'
-            exec(expr.format(repr(difference)))
+            expr = 'raise DataAssertionError(msg, {0}, subject, required) from None'
+            exec(expr.format(repr(differences)))
         except (SyntaxError, TypeError):
-            raise DataAssertionError(msg, difference, subj, trst)  # For Python 2.x
+            raise DataAssertionError(msg, differences, subject, required)  # For Python 2.x
 
 
 class _AllowOnly(_BaseAllowance):
@@ -81,7 +81,7 @@ class _AllowOnly(_BaseAllowance):
         super(self.__class__, self).__init__(test_case, msg=None)
 
     def __exit__(self, exc_type, exc_value, tb):
-        diff = getattr(exc_value, 'diff', [])
+        diff = getattr(exc_value, 'differences', [])
         message = getattr(exc_value, 'msg', 'No error raised')
 
         observed = list(_walk_diff(diff))
@@ -105,7 +105,7 @@ class _AllowAny(_BaseAllowance):
         super(self.__class__, self).__init__(test_case, msg=None)
 
     def __exit__(self, exc_type, exc_value, tb):
-        differences = getattr(exc_value, 'diff', [])
+        differences = getattr(exc_value, 'differences', [])
         observed = len(differences)
         if observed > self.number:
             if self.number == 1:
@@ -120,7 +120,7 @@ class _AllowAny(_BaseAllowance):
 class _AllowMissing(_BaseAllowance):
     """Context manager for DataTestCase.allowMissing() method."""
     def __exit__(self, exc_type, exc_value, tb):
-        diff = getattr(exc_value, 'diff', [])
+        diff = getattr(exc_value, 'differences', [])
         message = getattr(exc_value, 'msg', 'No error raised')
         observed = list(diff)
         not_allowed = [x for x in observed if not isinstance(x, Missing)]
@@ -132,7 +132,7 @@ class _AllowMissing(_BaseAllowance):
 class _AllowExtra(_BaseAllowance):
     """Context manager for DataTestCase.allowExtra() method."""
     def __exit__(self, exc_type, exc_value, tb):
-        diff = getattr(exc_value, 'diff', [])
+        diff = getattr(exc_value, 'differences', [])
         message = getattr(exc_value, 'msg', 'No error raised')
         observed = list(diff)
         not_allowed = [x for x in observed if not isinstance(x, Extra)]
@@ -143,7 +143,6 @@ class _AllowExtra(_BaseAllowance):
 
 class _AllowDeviation(_BaseAllowance):
     """Context manager for DataTestCase.allowDeviation() method."""
-    #def __init__(self, deviation, test_case, msg, **filter_by):
     def __init__(self, lower, upper, test_case, msg, **filter_by):
         #assert deviation >= 0, 'Tolerance cannot be defined with a negative number.'
 
@@ -153,21 +152,19 @@ class _AllowDeviation(_BaseAllowance):
         wrap = lambda v: [v] if isinstance(v, str) else v
         self._filter_by = dict((k, wrap(v)) for k, v in filter_by.items())
 
-        #self.deviation = deviation
         self.lower = lower
         self.upper = upper
         super(self.__class__, self).__init__(test_case, msg=None)
 
     def __exit__(self, exc_type, exc_value, tb):
-        differences = getattr(exc_value, 'diff', [])
+        differences = getattr(exc_value, 'differences', [])
         message = getattr(exc_value, 'msg', 'No error raised')
 
         def _not_allowed(obj):
             for k, v in self._filter_by.items():
                 if (k not in obj.kwds) or (obj.kwds[k] not in v):
                     return True
-            #return abs(obj.diff) > self.deviation  # <- Using abs(...)!
-            return (obj.diff > self.upper) or (obj.diff < self.lower)
+            return (obj.value > self.upper) or (obj.value < self.lower)
 
         not_allowed = [x for x in differences if _not_allowed(x)]
         if not_allowed:
@@ -185,16 +182,16 @@ class _AllowPercentDeviation(_BaseAllowance):
         super(self.__class__, self).__init__(test_case, msg=None)
 
     def __exit__(self, exc_type, exc_value, tb):
-        differences = getattr(exc_value, 'diff', [])
+        differences = getattr(exc_value, 'differences', [])
         message = getattr(exc_value, 'msg', 'No error raised')
 
         def _not_allowed(obj):
-            if not obj.expected:
+            if not obj.required:
                 return True  # <- EXIT!
             for k, v in self._filter_by.items():
                 if (k not in obj.kwds) or (obj.kwds[k] not in v):
                     return True
-            percent = obj.diff / obj.expected
+            percent = obj.value / obj.required
             return abs(percent) > self.deviation
 
         failed = [x for x in differences if _not_allowed(x)]
@@ -369,7 +366,7 @@ class DataTestCase(TestCase):
         if differences:
             if not msg:
                 msg = 'row counts different than {0!r} sums'.format(column)
-            self.fail(msg=msg, diff=differences)
+            self.fail(msg=msg, differences=differences)
 
     def assertDataRegex(self, column, required, msg=None, **filter_by):
         """Test that *column* in ``subjectData`` contains values that match the
@@ -387,7 +384,7 @@ class DataTestCase(TestCase):
         if invalid:
             if not msg:
                 msg = 'non-matching {0!r} values'.format(column)
-            self.fail(msg=msg, diff=invalid)
+            self.fail(msg=msg, differences=invalid)
 
     def assertDataNotRegex(self, column, required, msg=None, **filter_by):
         """Test that *column* in ``subjectData`` contains values that do not
@@ -405,7 +402,7 @@ class DataTestCase(TestCase):
         if invalid:
             if not msg:
                 msg = 'matching {0!r} values'.format(column)
-            self.fail(msg=msg, diff=invalid)
+            self.fail(msg=msg, differences=invalid)
 
     def allowOnly(self, differences, msg=None):
         """Context manager to allow specific *differences* without triggering
@@ -418,7 +415,7 @@ class DataTestCase(TestCase):
             with self.allowOnly(differences):
                 self.assertDataSet('column1')
 
-        If the raised differences do not match *diff*, the test will
+        If the raised differences do not match *differences*, the test will
         fail with a DataAssertionError of the remaining differences.
 
         In the above example, *differences* is a list but it is also possible
@@ -531,17 +528,17 @@ class DataTestCase(TestCase):
         tolerance = _make_decimal(deviation)
         return _AllowPercentDeviation(deviation, self, msg, **filter_by)
 
-    def fail(self, msg, diff=None):
+    def fail(self, msg, differences=None):
         """Signals a test failure unconditionally, with *msg* for the
-        error message.  If *diff* is provided, a DataAssertionError is
+        error message.  If *differences* is provided, a DataAssertionError is
         raised instead of an AssertionError.
         """
-        if diff:
+        if differences:
             try:
-                reference = self.referenceData
+                required = self.referenceData
             except NameError:
-                reference = None
-            raise DataAssertionError(msg, diff, reference, self.subjectData)
+                required = None
+            raise DataAssertionError(msg, differences, self.subjectData, required)
         else:
             raise self.failureException(msg)
 
