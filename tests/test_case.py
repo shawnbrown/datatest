@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import inspect
 import re
 from unittest import TestCase as _TestCase  # Originial TestCase, not
                                             # compatibility layer.
@@ -1032,25 +1033,44 @@ class TestAllowDeviation(TestHelperCase):
                           'b,x,25\n')
         self.bad_subject = CsvSource(_fh, in_memory=True)
 
+    def test_method_signature(self):
+        """Check for prettified default signature in Python 3.3 and later."""
+        try:
+            # Check that signature shows for "tolerance" syntax as default (Python 3.3 and later).
+            sig = inspect.signature(DataTestCase.allowDeviation)
+            parameters = list(sig.parameters)
+            self.assertEqual(parameters, ['self', 'tolerance', 'msg', 'filter_by'])
+        except AttributeError:
+            # Python 3.2 and earlier use the ugly signature as default.
+            pass
+
     def test_passing(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
                 _self.subjectData = self.bad_subject
 
-            def test_method1(_self):
+            def test_tolerance_syntax(_self):
                 with _self.allowDeviation(3):  # <- "tolerance" signature
                     required = {'a': 65, 'b': 70}
                     _self.assertDataSum('value', ['label1'], required)
 
-            def test_method2(_self):
+            def test_tolerance_syntax_with_positional_message(_self):
+                with _self.allowDeviation(3, 'some message'):  # <- positional "msg"
+                    required = {'a': 65, 'b': 70}
+                    _self.assertDataSum('value', ['label1'], required)
+
+            def test_lowerupper_syntax(_self):
                 with _self.allowDeviation(-1, 3):  # <- "lower/upper" signature
                     required = {'a': 65, 'b': 70}
                     _self.assertDataSum('value', ['label1'], required)
 
-        failure = self._run_one_test(_TestClass, 'test_method1')
+        failure = self._run_one_test(_TestClass, 'test_tolerance_syntax')
         self.assertIsNone(failure)
 
-        failure = self._run_one_test(_TestClass, 'test_method2')
+        failure = self._run_one_test(_TestClass, 'test_tolerance_syntax_with_positional_message')
+        self.assertIsNone(failure)
+
+        failure = self._run_one_test(_TestClass, 'test_lowerupper_syntax')
         self.assertIsNone(failure)
 
     def test_passing_with_filter(self):
@@ -1141,9 +1161,7 @@ class TestAllowDeviation(TestHelperCase):
                     _self.assertDataSum('value', ['label1'], required)
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = ('tolerance should not be negative, to set '
-                   'a lower bound use "lower, upper" syntax')
-        self.assertRegex(failure, pattern)
+        self.assertRegex(failure, 'tolerance should not be negative')
 
     # QUESTION: Should tolerances raise an error if there are no
     #           observed differences or if the maximum oberved

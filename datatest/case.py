@@ -482,10 +482,10 @@ class DataTestCase(TestCase):
         """
         return _AllowExtra(self, msg)
 
-    def allowDeviation(self, lower, upper=None, **filter_by):
+    def allowDeviation(self, lower, upper=None, msg=None, **filter_by):
         """
-        allowDeviation(tolerance, /, **filter_by)
-        allowDeviation(lower, upper, **filter_by)
+        allowDeviation(tolerance, /, msg=None, **filter_by)
+        allowDeviation(lower, upper, msg=None, **filter_by)
 
         Context manager to allow for deviations from required
         numeric values without triggering a test failure.
@@ -504,14 +504,18 @@ class DataTestCase(TestCase):
         suppressed but those that exceed the range will trigger
         a test failure.
         """
+        if msg == None and isinstance(upper, str):  # Adjust positional 'msg'
+            upper, msg = None, upper                # for "tolerance" syntax.
+
         if upper == None:
             tolerance = lower
-            assert tolerance >= 0, ('tolerance should not be negative, to set '
-                                    'a lower bound use "lower, upper" syntax')
+            assert tolerance >= 0, ('tolerance should not be negative, '
+                                    'for full control of lower and upper '
+                                    'bounds, use "lower, upper" syntax.')
             lower, upper = -tolerance, tolerance
 
         assert lower <= 0 <= upper
-        return _AllowDeviation(lower, upper, self, msg=None, **filter_by)
+        return _AllowDeviation(lower, upper, self, msg, **filter_by)
 
     def allowPercentDeviation(self, deviation, msg=None, **filter_by):
         """Context manager to allow positive or negative numeric differences
@@ -546,10 +550,10 @@ class DataTestCase(TestCase):
 # syntax the default option when introspected.
 try:
     _sig = inspect.signature(DataTestCase.allowDeviation)
-    _self, _lower, _upper, _filter_by = _sig.parameters.values()
+    _self, _lower, _upper, _msg, _filter_by = _sig.parameters.values()
     _self = _self.replace(kind=inspect.Parameter.POSITIONAL_ONLY)
     _tolerance = inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY)
-    _sig = _sig.replace(parameters=[_self, _tolerance, _filter_by])
+    _sig = _sig.replace(parameters=[_self, _tolerance, _msg, _filter_by])
     DataTestCase.allowDeviation.__signature__ = _sig
 except AttributeError:  # Fails for Python 3.2 and earlier.
     pass
