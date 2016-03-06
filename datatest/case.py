@@ -65,13 +65,10 @@ class _BaseAllowance(object):
         except NameError:
             required = None
 
-        try:
-            # For Python 3.x (some 3.2 builds will raise a TypeError
-            # while 2.x will raise SyntaxError).
-            expr = 'raise DataAssertionError(msg, {0}, subject, required) from None'
-            exec(expr.format(repr(differences)))
-        except (SyntaxError, TypeError):
-            raise DataAssertionError(msg, differences, subject, required)  # For Python 2.x
+        exc = DataAssertionError(msg, differences, subject, required)
+        exc.__cause__ = None  # Suppress context (usually "raise ... from
+        raise exc             # None") using verbose alternative to support
+                              # older Python versions--see PEP 415.
 
 
 class _AllowOnly(_BaseAllowance):
