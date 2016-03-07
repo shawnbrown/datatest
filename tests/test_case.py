@@ -899,17 +899,30 @@ class TestAllowAny(TestHelperCase):
                     ]
                     raise DataAssertionError('some differences', differences)
 
+            def test_method3(_self):
+                with _self.allowAny():  # <- allow unlimited
+                    differences = [
+                        Missing('foo'),
+                        Missing('bar'),
+                        Missing('baz'),
+                        Missing('qux'),
+                        Missing('quux'),
+                    ]
+                    raise DataAssertionError('some differences', differences)
+
         failure = self._run_one_test(_TestClass, 'test_method1')
         self.assertIsNone(failure)
 
         failure = self._run_one_test(_TestClass, 'test_method2')
         self.assertIsNone(failure)
 
+        failure = self._run_one_test(_TestClass, 'test_method3')
+        self.assertIsNone(failure)
+
     def test_failing(self):
         """Fail when observed number is greater-than allowed number."""
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = None
                 _self.subjectData = None
 
             def test_method(_self):
@@ -922,11 +935,47 @@ class TestAllowAny(TestHelperCase):
                     raise DataAssertionError('some differences', differences)
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = ("DataAssertionError: expected at most 2 differences, got 3: some differences:\n"
+
+        pattern = ("DataAssertionError: expected at most 2 matching differences, got 3: some differences:\n"
                    " Missing[^\n]+\n"
                    " Missing[^\n]+\n"
                    " Missing[^\n]+\n$")
         self.assertRegex(failure, pattern)
+
+    def test_filter(self):
+        """Fail when observed number is greater-than allowed number."""
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                _self.subjectData = None
+
+            def test_passing(_self):
+                with _self.allowAny(3, label1='a'):  # <- allow 3 where label1 equals 'a'
+                    differences = [
+                        Deviation(-1, 3, label1='a', label2='x'),
+                        Deviation(+1, 4, label1='a', label2='y'),
+                        Deviation(-2, 5, label1='a', label2='z'),
+                    ]
+                    raise DataAssertionError('some differences', differences)
+
+            def test_fail_with_nonmatched(_self):
+                with _self.allowAny(label1='a'):  # <- allow unlimited where label1 equals 'a'
+                    differences = [
+                        Deviation(-1, 3, label1='a', label2='x'),
+                        Deviation(+1, 4, label1='a', label2='y'),
+                        Deviation(-2, 5, label1='b', label2='z'),  # <- label='b'
+                    ]
+                    raise DataAssertionError('some differences', differences)
+
+        failure = self._run_one_test(_TestClass, 'test_passing')
+        self.assertIsNone(failure)
+
+        failure = self._run_one_test(_TestClass, 'test_fail_with_nonmatched')
+        pattern = ("DataAssertionError: some differences:\n"
+                   " Deviation\(-2, 5, label1=u?'b', label2=u?'z'\)$")
+        self.assertRegex(failure, pattern)
+
+        #Deviation\(-1, 70, label1=u?'b'\)")
+
 
 
 class TestAllowMissing(TestHelperCase):

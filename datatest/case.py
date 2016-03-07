@@ -66,9 +66,9 @@ class _BaseAllowance(object):
             required = None
 
         exc = DataAssertionError(msg, differences, subject, required)
-        exc.__cause__ = None  # Suppress context (usually "raise ... from
-        raise exc             # None") using verbose alternative to support
-                              # older Python versions--see PEP 415.
+        exc.__cause__ = None  # Suppress context (usu. "raise ... from None")
+        raise exc             # using verbose alternative to support older
+                              # Python versions--see PEP 415.
 
 
 class _AllowOnly(_BaseAllowance):
@@ -94,24 +94,66 @@ class _AllowOnly(_BaseAllowance):
         return True
 
 
+# TODO: Fix and normalize *msg* handling for all allowance managers.
 class _AllowAny(_BaseAllowance):
     """Context manager for DataTestCase.allowAny() method."""
-    def __init__(self, number, test_case, msg=None):
-        assert number > 0, 'number must be positive'
+    def __init__(self, test_case, number=None, msg=None, **filter_by):
+        if number != None:
+            assert number > 0, 'number must be positive'
         self.number = number
+        #self.msg = msg
+        self.filter_by = filter_by
         super(self.__class__, self).__init__(test_case, msg=None)
 
     def __exit__(self, exc_type, exc_value, tb):
         differences = getattr(exc_value, 'differences', [])
-        observed = len(differences)
-        if observed > self.number:
-            if self.number == 1:
-                prefix = 'expected at most 1 difference, got {0}: '.format(observed)
-            else:
-                prefix = 'expected at most {0} differences, got {1}: '.format(self.number, observed)
-            message = prefix + exc_value.msg
-            self._raiseFailure(message, differences)  # <- EXIT!
+        matches, nonmatches = self._filter_kwds(differences, **self.filter_by)
+        not_allowed = nonmatches  # No non-matching diffs are allowed.
+
+        message = exc_value.msg
+        observed = len(matches)
+        if self.number and observed > self.number:
+            not_allowed = matches + not_allowed  # Matching diffs go first.
+            prefix = 'expected at most {0} matching difference{1}, got {2}: '
+            plural = 's' if self.number != 1 else ''
+            prefix = prefix.format(self.number, plural, observed)
+            message = prefix + message
+
+        if not_allowed:
+            #if self.msg:
+            #    message = self.msg + ': ' + message
+            self._raiseFailure(message, not_allowed)  # <- EXIT!
+
         return True
+
+    @staticmethod
+    def _filter_kwds(differences, **filter_by):
+        """Takes an iterable of *differences* and keyword filters, returns a
+        2-tuple of lists containing *matches* and *nonmatches* differences.
+        """
+        if not filter_by:
+            return (differences, [])  # <- EXIT!
+
+        for k, v in filter_by.items():
+            if isinstance(v, str):
+                filter_by[k] = (v,)  # If string, wrap in 1-tuple.
+        filter_items = tuple(filter_by.items())
+
+        def matches_filter(obj):
+            for k, v in filter_items:
+                if (k not in obj.kwds) or (obj.kwds[k] not in v):
+                    return False
+            return True
+
+        matches = []
+        nonmatches = []
+        for diff in differences:
+            if matches_filter(diff):
+                matches.append(diff)
+            else:
+                nonmatches.append(diff)
+
+        return (matches, nonmatches)
 
 
 class _AllowMissing(_BaseAllowance):
@@ -443,7 +485,7 @@ class DataTestCase(TestCase):
         """
         return _AllowOnly(differences, self, msg)
 
-    def allowAny(self, number, msg=None):
+    def allowAny(self, number=None, msg=None, **filter_by):
         """Context manager to allow a given *number* of unspecified
         differences without triggering a test failure::
 
@@ -454,7 +496,7 @@ class DataTestCase(TestCase):
         will fail with a DataAssertionError containing all observed
         differences.
         """
-        return _AllowAny(number, self, msg)
+        return _AllowAny(self, number, msg, **filter_by)
 
     def allowMissing(self, msg=None):
         """Context manager to allow for missing values without triggering a
