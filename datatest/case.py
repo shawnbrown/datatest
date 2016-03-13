@@ -7,6 +7,7 @@ import re
 from unittest import TestCase
 
 from ._builtins import *
+from . import _itertools as itertools
 
 from .differences import _make_decimal
 from .differences import DataAssertionError
@@ -102,23 +103,31 @@ class _AllowAny(_BaseAllowance):
             assert number > 0, 'number must be positive'
         self.number = number
         #self.msg = msg
-        self.filter_by = filter_by
-        super(self.__class__, self).__init__(test_case, msg=None)
+        self.filter_kwds = filter_by
+        self.filter_class = BaseDifference
+        super(_AllowAny, self).__init__(test_case, msg=None)
 
     def __exit__(self, exc_type, exc_value, tb):
         differences = getattr(exc_value, 'differences', [])
-        matches, nonmatches = self._filter_kwds(differences, **self.filter_by)
-        not_allowed = nonmatches  # No non-matching diffs are allowed.
 
-        message = exc_value.msg
-        observed = len(matches)
+        filter_class = self.filter_class
+        is_class = lambda x: isinstance(x, filter_class)
+        rejected_class, matched_class = self._partition(is_class, differences)
+
+        rejected_kwds, matched_kwds = self._partition_kwds(matched_class, **self.filter_kwds)
+        not_allowed = itertools.chain(rejected_kwds, rejected_class)
+
+        message = getattr(exc_value, 'msg', '')
+        matched_kwds = list(matched_kwds)
+        observed = len(matched_kwds)
         if self.number and observed > self.number:
-            not_allowed = matches + not_allowed  # Matching diffs go first.
+            not_allowed = itertools.chain(matched_kwds, not_allowed)  # Matching diffs go first.
             prefix = 'expected at most {0} matching difference{1}, got {2}: '
             plural = 's' if self.number != 1 else ''
             prefix = prefix.format(self.number, plural, observed)
             message = prefix + message
 
+        not_allowed = list(not_allowed)
         if not_allowed:
             #if self.msg:
             #    message = self.msg + ': ' + message
@@ -126,13 +135,13 @@ class _AllowAny(_BaseAllowance):
 
         return True
 
-    @staticmethod
-    def _filter_kwds(differences, **filter_by):
+    @classmethod
+    def _partition_kwds(cls, differences, **filter_by):
         """Takes an iterable of *differences* and keyword filters, returns a
-        2-tuple of lists containing *matches* and *nonmatches* differences.
+        2-tuple of lists containing *nonmatches* and *matches* differences.
         """
         if not filter_by:
-            return (differences, [])  # <- EXIT!
+            return ([], differences)  # <- EXIT!
 
         for k, v in filter_by.items():
             if isinstance(v, str):
@@ -145,39 +154,27 @@ class _AllowAny(_BaseAllowance):
                     return False
             return True
 
-        matches = []
-        nonmatches = []
-        for diff in differences:
-            if matches_filter(diff):
-                matches.append(diff)
-            else:
-                nonmatches.append(diff)
+        return cls._partition(matches_filter, differences)
 
-        return (matches, nonmatches)
+    @staticmethod
+    def _partition(pred, iterable):
+        """Use a predicate to partition entries into false entries and true entries"""
+        t1, t2 = itertools.tee(iterable)
+        return itertools.filterfalse(pred, t1), filter(pred, t2)
 
 
-class _AllowMissing(_BaseAllowance):
+class _AllowMissing(_AllowAny):
     """Context manager for DataTestCase.allowMissing() method."""
-    def __exit__(self, exc_type, exc_value, tb):
-        diff = getattr(exc_value, 'differences', [])
-        message = getattr(exc_value, 'msg', 'No error raised')
-        observed = list(diff)
-        not_allowed = [x for x in observed if not isinstance(x, Missing)]
-        if not_allowed:
-            self._raiseFailure(message, not_allowed)  # <- EXIT!
-        return True
+    def __init__(self, test_case, number=None, msg=None, **filter_by):
+        super(_AllowMissing, self).__init__(test_case, number, msg, **filter_by)
+        self.filter_class = Missing  # <- Only Missing differences.
 
 
-class _AllowExtra(_BaseAllowance):
+class _AllowExtra(_AllowAny):
     """Context manager for DataTestCase.allowExtra() method."""
-    def __exit__(self, exc_type, exc_value, tb):
-        diff = getattr(exc_value, 'differences', [])
-        message = getattr(exc_value, 'msg', 'No error raised')
-        observed = list(diff)
-        not_allowed = [x for x in observed if not isinstance(x, Extra)]
-        if not_allowed:
-            self._raiseFailure(message, not_allowed)  # <- EXIT!
-        return True
+    def __init__(self, test_case, number=None, msg=None, **filter_by):
+        super(_AllowExtra, self).__init__(test_case, number, msg, **filter_by)
+        self.filter_class = Extra  # <- Only Extra differences.
 
 
 class _AllowDeviation(_BaseAllowance):
@@ -486,11 +483,17 @@ class DataTestCase(TestCase):
         return _AllowOnly(differences, self, msg)
 
     def allowAny(self, number=None, msg=None, **filter_by):
-        """Context manager to allow a given *number* of unspecified
-        differences without triggering a test failure::
+        """Allows a given *number* of differences (of any kind) without
+        triggering a test failure::
 
             with self.allowAny(10):  # Allows up to ten differences.
-                self.assertDataSet('column1')
+                self.assertDataSet('city_name')
+
+        If *number* is omitted, allows an unlimited number of differences
+        as long as they match a given keyword filter::
+
+            with self.allowAny(city_name='not a city'):
+                self.assertDataSum('population', ['city_name'])
 
         If the count of differences exceeds the given *number*, the test case
         will fail with a DataAssertionError containing all observed
@@ -498,7 +501,7 @@ class DataTestCase(TestCase):
         """
         return _AllowAny(self, number, msg, **filter_by)
 
-    def allowMissing(self, msg=None):
+    def allowMissing(self, number=None, msg=None):
         """Context manager to allow for missing values without triggering a
         test failure::
 
@@ -506,9 +509,9 @@ class DataTestCase(TestCase):
                 self.assertDataSet('column1')
 
         """
-        return _AllowMissing(self, msg)
+        return _AllowMissing(self, number, msg)
 
-    def allowExtra(self, msg=None):
+    def allowExtra(self, number=None, msg=None):
         """Context manager to allow for extra values without triggering a
         test failure::
 
@@ -516,7 +519,7 @@ class DataTestCase(TestCase):
                 self.assertDataSet('column1')
 
         """
-        return _AllowExtra(self, msg)
+        return _AllowExtra(self, number, msg)
 
     def allowDeviation(self, lower, upper=None, msg=None, **filter_by):
         """

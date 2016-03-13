@@ -17,6 +17,9 @@ from datatest import Missing
 from datatest import Invalid
 from datatest import Deviation
 from datatest import CsvSource
+from datatest.case import _AllowAny
+from datatest.case import _AllowMissing
+from datatest.case import _AllowExtra
 
 
 class TestWalkValues(unittest.TestCase):
@@ -877,36 +880,36 @@ class TestAllowOnly(TestHelperCase):
         self.assertRegex(failure, pattern)
 
 
-class TestAllowAny(TestHelperCase):
+class TestAllowAny_Missing_Extra(TestHelperCase):
     def test_passing(self):
         """Pass when observed number is less-than or equal-to allowed number."""
         class _TestClass(DataTestCase):
             def test_method1(_self):
                 with _self.allowAny(3):  # <- allow three
                     differences = [
-                        Missing('foo'),
+                        Extra('foo'),
                         Missing('bar'),
-                        Missing('baz'),
+                        Invalid('baz'),
                     ]
                     raise DataAssertionError('some differences', differences)
 
             def test_method2(_self):
                 with _self.allowAny(4):  # <- allow four
                     differences = [
-                        Missing('foo'),
+                        Extra('foo'),
                         Missing('bar'),
-                        Missing('baz'),
+                        Invalid('baz'),
                     ]
                     raise DataAssertionError('some differences', differences)
 
             def test_method3(_self):
                 with _self.allowAny():  # <- allow unlimited
                     differences = [
-                        Missing('foo'),
+                        Extra('foo'),
                         Missing('bar'),
-                        Missing('baz'),
-                        Missing('qux'),
-                        Missing('quux'),
+                        Invalid('baz'),
+                        Invalid('qux'),
+                        Invalid('quux'),
                     ]
                     raise DataAssertionError('some differences', differences)
 
@@ -974,42 +977,19 @@ class TestAllowAny(TestHelperCase):
                    " Deviation\(-2, 5, label1=u?'b', label2=u?'z'\)$")
         self.assertRegex(failure, pattern)
 
-        #Deviation\(-1, 70, label1=u?'b'\)")
-
-
 
 class TestAllowMissing(TestHelperCase):
-    def test_passing(self):
-        """Pass when the only differences found are Missing differences."""
-        class _TestClass(DataTestCase):
-            def test_method1(_self):
-                with _self.allowMissing():  # <- allow Missing differences
-                    differences = [
-                        Missing('foo'),
-                        Missing('bar'),
-                        Missing('baz'),
-                    ]
-                    raise DataAssertionError('some differences', differences)
+    def test_issubclass(self):
+        self.assertTrue(issubclass(_AllowMissing, _AllowAny))
 
-            def test_method2(_self):
-                with _self.allowMissing():  # <- also pass with zero difference
-                    pass
-
-        failure = self._run_one_test(_TestClass, 'test_method1')
-        self.assertIsNone(failure)
-
-        failure = self._run_one_test(_TestClass, 'test_method2')
-        self.assertIsNone(failure)
-
-    def test_failing(self):
-        """Fail with non-Missing differences."""
+    def test_class_restriction(self):
+        """Non-Missing differences should fail."""
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = None
                 _self.subjectData = None
 
             def test_method(_self):
-                with _self.allowMissing():
+                with _self.allowMissing(3):
                     differences = [
                         Missing('foo'),
                         Extra('bar'),
@@ -1025,37 +1005,17 @@ class TestAllowMissing(TestHelperCase):
 
 
 class TestAllowExtra(TestHelperCase):
-    def test_passing(self):
-        """Pass when the only differences found are Extra differences."""
-        class _TestClass(DataTestCase):
-            def test_method1(_self):
-                with _self.allowExtra():  # <- allow Extra differences
-                    differences = [
-                        Extra('foo'),
-                        Extra('bar'),
-                        Extra('baz'),
-                    ]
-                    raise DataAssertionError('some differences', differences)
+    def test_issubclass(self):
+        self.assertTrue(issubclass(_AllowExtra, _AllowAny))
 
-            def test_method2(_self):
-                with _self.allowExtra():  # <- also pass with zero difference
-                    pass
-
-        failure = self._run_one_test(_TestClass, 'test_method1')
-        self.assertIsNone(failure)
-
-        failure = self._run_one_test(_TestClass, 'test_method2')
-        self.assertIsNone(failure)
-
-    def test_failing(self):
-        """Fail with non-Extra differences."""
+    def test_class_restriction(self):
+        """Non-Extra differences should fail."""
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = None
                 _self.subjectData = None
 
             def test_method(_self):
-                with _self.allowExtra():
+                with _self.allowExtra(3):
                     differences = [
                         Extra('foo'),
                         Missing('bar'),
