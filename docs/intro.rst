@@ -6,70 +6,70 @@
     :keywords: test-driven data preparation
 
 
-********
-Overview
-********
+************
+Introduction
+************
 
 :mod:`datatest` is designed to work with tabular data stored in
 spreadsheet files or database tables but it's also possible to create
 custom data sources for other formats.  To use datatest effectively,
 users should be familiar with Python's standard
-`unittest <http://docs.python.org/library/unittest.html>`_ package and
-the data they want to audit.
+`unittest <http://docs.python.org/library/unittest.html>`_ library and
+with the data they want to test.
+
+In the practice of data science, data preparation is a huge part of the job.
+Practitioners often spend 50 to 80 percent of their time wrangling data [1]_
+[2]_ [3]_ [4]_.  This critically important phase is time-consuming,
+unglamorous, and often poorly structured.  Using datatest to implement
+:ref:`test-driven data preparation <test-driven-data-preparation>` can offer
+a disciplined approach to an otherwise messy process.
+
+A datatest suite can facilitate quick edit-test cycles which help guide the
+selection, cleaning, integration, and formatting of data.  Data tests can also
+help to automate check-lists, measure progress, and promote best practices.
 
 
 Basic Example
 =============
 
-As an example, assume we want to audit the data in the following CSV
-file (**members.csv**):
+As an example, consider a simple file with the following format
+(**users.csv**):
 
-    =========  ======  =========  =================
-    member_id  active  region     hours_volunteered
-    =========  ======  =========  =================
-    999        Y       Midwest    6
-    1000       Y       South      2
-    1001       N       Northeast  0
-    ...        ...     ...        ...
-    =========  ======  =========  =================
+    =======  ======
+    user_id  active
+    =======  ======
+    999      Y
+    1000     Y
+    1001     N
+    ...      ...
+    =======  ======
 
-We want to test that...
-
- * expected column names are present
- * **member_id** and **hours_volunteered** columns contain only numbers
- * **active** column contains only "Y" or "N" values
- * **region** column contains only valid region codes
-
-The following script implements these tests::
+Here is a short script to test the data from this file::
 
     import datatest
 
 
     def setUpModule():
         global subjectData
-        subjectData = datatest.CsvSource('members.csv')
+        subjectData = datatest.CsvSource('users.csv')
 
 
-    class TestFormatAndLabels(datatest.DataTestCase):
+    class TestUserData(datatest.DataTestCase):
         def test_columns(self):
-            """Test for required column names."""
-            columns = {'member_id', 'region', 'active', 'hours_volunteered'}
-            self.assertColumnSet(columns)
+            """Check that file uses required column names."""
+            required = {'user_id', 'active'}
+            self.assertDataColumns(required)
 
-        def test_numeric(self):
-            """Test that numeric columns contain only digits."""
-            only_digits = '^\d+$'  # Regex pattern.
-            self.assertValueRegex('member_id', only_digits)
-            self.assertValueRegex('hours_volunteered', only_digits)
+        def test_user_id(self):
+            """Check that 'user_id' column contains digits."""
+            def isdigit(x):  # <- Helper function.
+                return x.isdigit()
+            self.assertDataSet('user_id', isdigit)
 
-        def test_active_labels(self):
-            """Test that 'active' column contains valid codes."""
-            self.assertValueSubset('active', {'Y', 'N'})
-
-        def test_region_labels(self):
-            """Test that 'region' column contains valid codes."""
-            regions = {'Midwest', 'Northeast', 'South', 'West'}
-            self.assertValueSubset('region', regions)
+        def test_active(self):
+            """Check that 'active' column contains valid codes."""
+            required = {'Y', 'N'}
+            self.assertDataSet('active', required)
 
 
     if __name__ == '__main__':
@@ -88,20 +88,37 @@ Subject Data (Data Under Test)
 
 The data under test---the *subject* of our tests---is stored in a property
 named ``subjectData``.  This property is accessed, internally, by the
-``assertValue...()`` and ``assertColumn...()`` methods.
+``assertData...()`` methods.
 
-``subjectData`` is typically defined at the module-level inside a
-``setUpModule()`` function---as shown in the first example.  However, if
-it is only referenced within a single class, then defining it inside a
-``setUpClass()`` method is also acceptable::
+Loading files from disk and establishing database connections are relatively
+expensive operations.  It's best to minimize the number of times a data source
+object is created.  Typically, ``subjectData`` is defined at the module-level:
+
+.. code-block:: python
+    :emphasize-lines: 3-5
 
     import datatest
 
+    def setUpModule():
+        global subjectData
+        subjectData = datatest.CsvSource('users.csv')
 
-    class TestFormatAndLabels(datatest.DataTestCase):
+    class TestUserData(datatest.DataTestCase):
+        def test_columns(self):
+            ...
+
+However, if the data is only used within a single class, then defining it
+at the class-level is also acceptable:
+
+.. code-block:: python
+    :emphasize-lines: 4-6
+
+    import datatest
+
+    class TestUserData(datatest.DataTestCase):
         @classmethod
         def setUpClass(cls):
-            cls.subjectData = datatest.CsvSource('members.csv')
+            cls.subjectData = datatest.CsvSource('users.csv')
 
         def test_columns(self):
             ...
@@ -110,10 +127,10 @@ it is only referenced within a single class, then defining it inside a
 Reference Data
 ==============
 
-Datatest also supports the use of reference data from external sources
-(files or databases).  While the tests in our first example include
-their required values directly in the methods themselves, doing so
-becomes inconvenient when working with larger amounts of reference data.
+Datatest also supports the use of reference data from external sources (files
+or databases).  While our first example defined its requirements directly in
+the methods themselves, doing so becomes inconvenient when working with large
+amounts of required values.
 
 To continue testing the data from our first example, we can use the
 following table as reference data (**regional_report.csv**):
@@ -170,14 +187,16 @@ Understanding Errors
 
 When data errors are found, tests will fail with a
 :class:`DataAssertionError <datatest.DataAssertionError>` that contains
-a list of detected differences::
+a list of detected differences:
+
+.. code-block:: none
 
     Traceback (most recent call last):
       File "test_members.py", line 15, in test_region_labels
         self.assertValueSet('region')
     datatest.case.DataAssertionError: different 'region' values:
-     ExtraItem('North-east'),
-     MissingItem('Northeast')
+     Extra('North-east'),
+     Missing('Northeast')
 
 This error tells us that values in the "region" column of our
 ``subjectData`` do not match the values of our ``referenceData``.  The
@@ -212,10 +231,10 @@ Warren County and 25 less in Lake County)::
 
     Traceback (most recent call last):
       File "test_survey.py", line 35, in test_population
-        self.assertValueSum('population', ['county'])
+        self.assertDataSum('population', ['county'])
     datatest.case.DataAssertionError: different 'population' values:
-     InvalidNumber(-25, 3184, county='Lake'),
-     InvalidNumber(+8, 11771, county='Warren')
+     Deviation(-25, 3184, county='Lake'),
+     Deviation(+8, 11771, county='Warren')
 
 If we've determined that these differences are allowable, we can use
 the :meth:`allowSpecified
@@ -224,11 +243,11 @@ test runs without failing::
 
     def test_population(self):
         diff = [
-            InvalidNumber(-25, 3184, county='Lake'),
-            InvalidNumber(+8, 11771, county='Warren'),
+            Deviation(-25, 3184, county='Lake'),
+            Deviation(+8, 11771, county='Warren'),
         ]
         with self.allowSpecified(diff):
-            self.assertValueSum('population', ['county'])
+            self.assertDataSum('population', ['county'])
 
 To allow several numeric differences at once, you can use the
 :meth:`allowDeviation <datatest.DataTestCase.allowDeviation>`
@@ -237,7 +256,7 @@ or :meth:`allowPercentDeviation
 
     def test_households(self):
         with self.allowDeviation(25):
-            self.assertValueCount('population', ['county'])
+            self.assertDataSum('population', ['county'])
 
 
 Command-Line Interface
@@ -319,3 +338,22 @@ The work of cleaning and formatting data takes place outside of the
 datatest package itself.  Users can work with with the tools they find
 the most productive (Excel, `pandas <http://pandas.pydata.org/>`_, R,
 sed, etc.).
+
+
+.. rubric:: Footnotes
+
+.. [1] "This [data preparation step] has historically taken the largest part
+        of the overall time in the data mining solution process, which in some
+        cases can approach 80% of the time." *Dynamic Warehousing: Data Mining
+        Made Easy* (p. 19)
+
+.. [2] "As much as 80% of KDD is about preparing data, and the remaining 20%
+        is about mining." *Data Mining for Design and Manufacturing* (p. 44)
+
+.. [3] Online poll of data mining practitioners: http://www.kdnuggets.com/polls/2003/data_preparation.htm
+
+.. [4] "Data scientists, according to interviews and expert estimates, spend
+        from 50 percent to 80 percent of their time mired in this more mundane
+        labor of collecting and preparing unruly digital data..." Steve Lohraug
+        in *For Big-Data Scientists, 'Janitor Work' Is Key Hurdle to Insights*.
+        Retrieved from http://www.nytimes.com/2014/08/18/technology/for-big-data-scientists-hurdle-to-insights-is-janitor-work.html
