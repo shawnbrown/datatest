@@ -40,14 +40,13 @@ class DataTestResult(TextTestResult):
         TextTestResult.__init__(self, stream, descriptions, verbosity)
 
     def _is_required(self, test):
-        """Return True if a given *test* is required or is a member of a class
-        that is required.
+        """Return True if a given *test* is required or is a member of
+        a class that is required.
 
-        This method checks for a __datatest_required__ property in a test
-        class or test method--tests are marked as "required" using the
-        @required decorator.  If the property is found and is True, then
-        stop() is called to halt the test suite.
-
+        This method checks for a __datatest_required__ property in a
+        test class or test method--tests are marked as "required" using
+        the @required decorator.  If the property is found and is True,
+        then stop() is called to halt the test suite.
         """
         if self.ignore:
             return False  # <- If we're ignoring the 'required' flag, then EXIT!
@@ -77,8 +76,8 @@ class DataTestResult(TextTestResult):
         TextTestResult.addError(self, test, err)
 
     def addFailure(self, test, err):
-        """Called when an error has occurred. 'err' is a tuple of values as
-        returned by sys.exc_info().
+        """Called when an error has occurred. 'err' is a tuple of
+        values as returned by sys.exc_info().
         """
         if err[0] == DataAssertionError:
             exctype, value, tb = err          # Unpack tuple.
@@ -127,7 +126,6 @@ class HideInternalStackFrames(object):
         datatest.case.DataAssertionError: different 'column1' values:
          ExtraValue('foo'),
          ExtraValue('bar')
-
     """
     def __init__(self, tb):
         self._tb = tb
@@ -175,7 +173,9 @@ class DataTestRunner(unittest.TextTestRunner):
         #return self.resultclass(self.stream, self.descriptions, self.verbosity)
 
     def run(self, test):
-        """Run the given tests in order of line number from source file."""
+        """Run the given tests in order of line number from source
+        file.
+        """
         test = _sort_tests(test)  # Sort tests by line number.
 
         # Get test modules.

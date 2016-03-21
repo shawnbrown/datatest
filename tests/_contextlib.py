@@ -23,7 +23,9 @@ except NameError:
             setattr(_sys, self._stream, self._old_targets.pop())
 
     class redirect_stderr(_RedirectStream):
-        """Context manager for temporarily redirecting stderr to another file."""
+        """Context manager for temporarily redirecting stderr to
+        another file.
+        """
         _stream = 'stderr'
 
 
@@ -31,7 +33,8 @@ try:
     redirect_stdout
 except NameError:
     class redirect_stdout(_RedirectStream):
-        """Context manager for temporarily redirecting stdout to another file.
+        """Context manager for temporarily redirecting stdout to
+        another file.
 
             # How to send help() to stderr
             with redirect_stdout(sys.stderr):

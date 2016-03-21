@@ -61,8 +61,8 @@ class BaseSource(object):
         return NotImplemented
 
     def distinct(self, column, **filter_by):
-        """Return iterable of tuples containing distinct *column* values
-        (uses slow ``__iter__``).
+        """Return iterable of tuples containing distinct *column*
+        values (uses slow ``__iter__``).
         """
         if not _is_nscontainer(column):
             column = (column,)
@@ -71,32 +71,32 @@ class BaseSource(object):
         iterable = (tuple(row[c] for c in column) for row in iterable)
         return ResultSet(iterable)
 
-    def sum(self, column, group_by=None, **filter_by):
-        """Returns sum of *column* grouped by *group_by* as ResultMapping
+    def sum(self, column, keys=None, **filter_by):
+        """Returns sum of *column* grouped by *keys* as ResultMapping
         (uses ``reduce`` method).
         """
         func = lambda x, y: (x + Decimal(y)) if y else x
         init = Decimal(0)
-        return self.reduce(func, column, group_by, init, **filter_by)
+        return self.reduce(func, column, keys, init, **filter_by)
 
-    def count(self, group_by=None, **filter_by):
-        """Returns count of *column* grouped by *group_by* as ResultMapping
+    def count(self, keys=None, **filter_by):
+        """Returns count of *column* grouped by *keys* as ResultMapping
         (uses ``reduce`` method).
         """
         func = lambda x, y: x + y
         column = lambda row: 1  # Column mapped to int value 1.
         init = 0
-        return self.reduce(func, column, group_by, init, **filter_by)
+        return self.reduce(func, column, keys, init, **filter_by)
 
-    def reduce(self, function, column, group_by=None, initializer=None, **filter_by):
-        """Apply *function* of two arguments cumulatively to the values in
-        *column*, from left to right, so as to reduce the iterable to a single
-        value (uses slow ``__iter__``).  If *column* is a string, the values
-        are passed to *function* unchanged.  But if *column* is, itself, a
-        function, it should accept a single dict-row and return a single value.
-        If *group_by* is omitted, the raw result is returned, otherwise returns
-        a ResultMapping object.
-
+    def reduce(self, function, column, keys=None, initializer=None, **filter_by):
+        """Apply *function* of two arguments cumulatively to the values
+        in *column*, from left to right, so as to reduce the iterable
+        to a single value (uses slow ``__iter__``).  If *column* is a
+        string, the values are passed to *function* unchanged.  But if
+        *column* is, itself, a function, it should accept a single
+        dict-row and return a single value.  If *keys* is omitted, the
+        raw result is returned, otherwise returns a ResultMapping
+        object.
         """
         if not callable(column):
             self._assert_columns_exist(column)
@@ -106,22 +106,22 @@ class BaseSource(object):
 
         iterable = self.__filter_by(**filter_by)  # Uses slow __iter__().
 
-        if not group_by:
+        if not keys:
             vals = (get_value(row) for row in iterable)
             return functools.reduce(function, vals, initializer)  # <- EXIT!
 
-        if not _is_nscontainer(group_by):
-            group_by = (group_by,)
-        self._assert_columns_exist(group_by)
+        if not _is_nscontainer(keys):
+            keys = (keys,)
+        self._assert_columns_exist(keys)
 
         result = {}                                # Do not remove this loop
         for row in iterable:                       # without a good reason!
-            key = tuple(row[x] for x in group_by)  # Accumulating with a dict
+            key = tuple(row[x] for x in keys)      # Accumulating with a dict
             x = result.get(key, initializer)       # is more memory efficient
             y = get_value(row)                     # than using sorted() plus
             result[key] = function(x, y)           # itertools.groupby() plus
                                                    # functools.reduce().
-        return ResultMapping(result, group_by)
+        return ResultMapping(result, keys)
 
     def __filter_by(self, **filter_by):
         """Filter data by keywords, returns iterable.  E.g., where
@@ -134,9 +134,8 @@ class BaseSource(object):
                 yield row
 
     def _assert_columns_exist(self, columns):
-        """Asserts that given columns are present in data source, raises
-        LookupError if columns are missing.
-
+        """Asserts that given columns are present in data source,
+        raises LookupError if columns are missing.
         """
         if not _is_nscontainer(columns):
             columns = (columns,)
@@ -298,7 +297,9 @@ class _TemporarySqliteTable(object):
 
     @staticmethod
     def _assert_unique(lst):
-        """Asserts that list of items is unique, raises Exception if not."""
+        """Asserts that list of items is unique, raises Exception if
+        not.
+        """
         values = []
         duplicates = []
         for x in lst:
@@ -347,7 +348,9 @@ class _SqliteSource(BaseSource):
         return [x[1] for x in cursor.fetchall()]
 
     def distinct(self, column, **filter_by):
-        """Return iterable of tuples containing distinct *column* values."""
+        """Return iterable of tuples containing distinct *column*
+        values.
+        """
         if not _is_nscontainer(column):
             column = (column,)
         self._assert_columns_exist(column)
@@ -358,29 +361,32 @@ class _SqliteSource(BaseSource):
         cursor = self._execute_query(self._table, select_clause, **filter_by)
         return ResultSet(cursor)
 
-    def sum(self, column, group_by=None, **filter_by):
-        """Returns sum of *column* grouped by *group_by* as ResultMapping."""
+    def sum(self, column, keys=None, **filter_by):
+        """Returns sum of *column* grouped by *keys* as
+        ResultMapping.
+        """
         self._assert_columns_exist(column)
         column = self._normalize_column(column)
         sql_function = 'SUM({0})'.format(column)
-        return self._sql_aggregate(sql_function, group_by, **filter_by)
+        return self._sql_aggregate(sql_function, keys, **filter_by)
 
-    def count(self, group_by=None, **filter_by):
-        """Returns count of *column* grouped by *group_by* as ResultMapping."""
-        return self._sql_aggregate('COUNT(*)', group_by, **filter_by)
-
-    def _sql_aggregate(self, sql_function, group_by=None, **filter_by):
-        """Aggregates values using SQL function select--e.g., 'COUNT(*)',
-        'SUM(col1)', etc.
-
+    def count(self, keys=None, **filter_by):
+        """Returns count of *column* grouped by *keys* as
+        ResultMapping.
         """
-        if group_by == None:
+        return self._sql_aggregate('COUNT(*)', keys, **filter_by)
+
+    def _sql_aggregate(self, sql_function, keys=None, **filter_by):
+        """Aggregates values using SQL function select--e.g.,
+        'COUNT(*)', 'SUM(col1)', etc.
+        """
+        if keys == None:
             cursor = self._execute_query(self._table, sql_function, **filter_by)
             return cursor.fetchone()[0]  # <- EXIT!
 
-        if not _is_nscontainer(group_by):
-            group_by = (group_by,)
-        group_clause = [self._normalize_column(x) for x in group_by]
+        if not _is_nscontainer(keys):
+            keys = (keys,)
+        group_clause = [self._normalize_column(x) for x in keys]
         group_clause = ', '.join(group_clause)
 
         select_clause = '{0}, {1}'.format(group_clause, sql_function)
@@ -388,16 +394,16 @@ class _SqliteSource(BaseSource):
 
         cursor = self._execute_query(self._table, select_clause, trailing_clause, **filter_by)
         iterable = ((row[:-1], row[-1]) for row in cursor)
-        return ResultMapping(iterable, group_by)
+        return ResultMapping(iterable, keys)
 
-    def reduce(self, function, column, group_by=None, initializer=None, **filter_by):
-        """Apply *function* of two arguments cumulatively to the values in
-        *column*, from left to right, so as to reduce the iterable to a single
-        value.  If *column* is a string, the values are passed to *function*
-        unchanged.  But if *column* is, itself, a function, it should accept a
-        single dict-row and return a single value.  If *group_by* is omitted,
-        the raw result is returned, otherwise returns a ResultMapping object.
-
+    def reduce(self, function, column, keys=None, initializer=None, **filter_by):
+        """Apply *function* of two arguments cumulatively to the values
+        in *column*, from left to right, so as to reduce the iterable
+        to a single value.  If *column* is a string, the values are
+        passed to *function* unchanged.  But if *column* is, itself, a
+        function, it should accept a single dict-row and return a
+        single value.  If *keys* is omitted, the raw result is
+        returned, otherwise returns a ResultMapping object.
         """
         if not callable(column):
             self._assert_columns_exist(column)
@@ -406,35 +412,35 @@ class _SqliteSource(BaseSource):
             get_values = lambda itrbl: (column(row) for row in itrbl)
         apply = lambda cur: functools.reduce(function, get_values(cur), initializer)
 
-        keys = self.columns()
-        dict_rows = lambda itrbl: (dict(zip(keys, vals)) for vals in itrbl)
+        val_keys = self.columns()
+        dict_rows = lambda itrbl: (dict(zip(val_keys, vals)) for vals in itrbl)
 
-        if group_by:
-            if not _is_nscontainer(group_by):
-                group_by = (group_by,)
-            self._assert_columns_exist(group_by)
+        if keys:
+            if not _is_nscontainer(keys):
+                keys = (keys,)
+            self._assert_columns_exist(keys)
 
-            order_by = tuple(self._normalize_column(x) for x in group_by)
+            order_by = tuple(self._normalize_column(x) for x in keys)
             order_by = ', '.join(order_by)
             order_by = 'ORDER BY {0}'.format(order_by)
             cursor = self._execute_query(self._table, '*', order_by, **filter_by)
             cursor = dict_rows(cursor)
 
-            keyfn = lambda row: tuple(row[key] for key in group_by)
+            keyfn = lambda row: tuple(row[key] for key in keys)
             grouped = itertools.groupby(cursor, key=keyfn)
             result = ((key, apply(vals)) for key, vals in grouped)
-            result = ResultMapping(result, group_by)
+            result = ResultMapping(result, keys)
 
             # TODO: Check to see which is faster with lots of groups.
             #result = {}
-            #groups = self.distinct(group_by, **filter_by)
+            #groups = self.distinct(keys, **filter_by)
             #for group in groups:
-            #    subfilter_by = dict(zip(group_by, group))
+            #    subfilter_by = dict(zip(keys, group))
             #    subfilter_by.update(filter_by)
             #    cursor = self._execute_query(self._table, '*', **subfilter_by)
             #    cursor = dict_rows(cursor)
             #    result[group] = apply(cursor)
-            #    result = ResultMapping(result, group_by)
+            #    result = ResultMapping(result, keys)
         else:
             cursor = self._execute_query(self._table, '*', **filter_by)
             cursor = dict_rows(cursor)
@@ -468,7 +474,9 @@ class _SqliteSource(BaseSource):
 
     @staticmethod
     def _build_where_clause(**filter_by):
-        """Return 'WHERE' clause that implements *filter_by* constraints."""
+        """Return 'WHERE' clause that implements *filter_by*
+        constraints.
+        """
         clause = []
         params = []
         items = filter_by.items()
@@ -491,7 +499,6 @@ class _SqliteSource(BaseSource):
 
         See :meth:`SqliteSource.create_index
         <datatest.SqliteSource.create_index>` for more details.
-
         """
         self._assert_columns_exist(columns)
 
@@ -539,8 +546,8 @@ class SqliteSource(_SqliteSource):
 
             subjectData = datatest.SqliteSource.from_records(records, columns)
 
-        The *columns* argument can be omitted if *data* contains ``dict`` or
-        ``namedtuple`` records::
+        The *columns* argument can be omitted if *data* contains
+        ``dict`` or ``namedtuple`` records::
 
             dict_rows = [
                 { ... },
@@ -563,8 +570,8 @@ class SqliteSource(_SqliteSource):
 
         For example:  If you're using "town" to group aggregation
         tests (like ``self.assertDataSum('population', ['town'])``),
-        then you might be able to improve performance by adding an index
-        for the "town" column::
+        then you might be able to improve performance by adding an
+        index for the "town" column::
 
             subjectData.create_index('town')
 
@@ -572,7 +579,8 @@ class SqliteSource(_SqliteSource):
 
             subjectData.create_index('town', 'zipcode')
 
-        Calling the function multiple times will create multiple indexes::
+        Calling the function multiple times will create multiple
+        indexes::
 
             subjectData.create_index('town')
             subjectData.create_index('zipcode')
@@ -693,7 +701,9 @@ class MultiSource(BaseSource):
         return fn(*column, **sub_filter)
 
     def distinct(self, column, **filter_by):
-        """Return iterable of tuples containing distinct *column* values."""
+        """Return iterable of tuples containing distinct *column*
+        values.
+        """
         if not _is_nscontainer(column):
             column = (column,)
 
@@ -732,11 +742,11 @@ class MultiSource(BaseSource):
         results = itertools.chain(*results)
         return ResultSet(results)
 
-    def sum(self, column, group_by=None, **filter_by):
-        """Return sum of values in *column* grouped by *group_by*."""
+    def sum(self, column, keys=None, **filter_by):
+        """Return sum of values in *column* grouped by *keys*."""
         self._assert_columns_exist(column)
 
-        if group_by is None:
+        if keys is None:
             total = 0
             for subsrc in self.__wrapped__:
                 subsrc_columns = subsrc.columns()
@@ -746,8 +756,8 @@ class MultiSource(BaseSource):
                         total = total + subsrc.sum(column, **subfltr)
             return total
         else:
-            if not _is_nscontainer(group_by):
-                group_by = (group_by,)
+            if not _is_nscontainer(keys):
+                keys = (keys,)
 
             counter = Counter()
             for subsrc in self.__wrapped__:
@@ -755,56 +765,56 @@ class MultiSource(BaseSource):
                 if column in subsrc_columns:
                     subfltr = self._make_sub_filter(subsrc_columns, **filter_by)
                     if subfltr is not None:
-                        subgrp = [x for x in group_by if x in subsrc_columns]
+                        subgrp = [x for x in keys if x in subsrc_columns]
                         subres = subsrc.sum(column, subgrp, **subfltr)
-                        subres = self._normalize_result(subres, subgrp, group_by)
+                        subres = self._normalize_result(subres, subgrp, keys)
                         for k, v in subres.items():
                             counter[k] += v
-            return ResultMapping(counter, group_by)
+            return ResultMapping(counter, keys)
 
-    def reduce(self, function, column, group_by=None, initializer=None, **filter_by):
-        """Apply *function* of two arguments cumulatively to the values in
-        *column*, from left to right, so as to reduce the iterable to a single
-        value.  If *column* is a string, the values are passed to *function*
-        unchanged.  But if *column* is, itself, a function, it should accept a
-        single dict-row and return a single value.  If *group_by* is omitted,
-        the raw result is returned, otherwise returns a ResultMapping object.
-
+    def reduce(self, function, column, keys=None, initializer=None, **filter_by):
+        """Apply *function* of two arguments cumulatively to the values
+        in *column*, from left to right, so as to reduce the iterable
+        to a single value.  If *column* is a string, the values are
+        passed to *function* unchanged.  But if *column* is, itself, a
+        function, it should accept a single dict-row and return a
+        single value.  If *keys* is omitted, the raw result is
+        returned, otherwise returns a ResultMapping object.
         """
         if not callable(column):
             self._assert_columns_exist(column)
 
-        if group_by is None:
+        if keys is None:
             results = []
             for subsrc in self.__wrapped__:
                 subsrc_columns = subsrc.columns()
                 subfltr = self._make_sub_filter(subsrc_columns, **filter_by)
                 if subfltr is not None:
                     try:
-                        result = subsrc.reduce(function, column, group_by, initializer, **filter_by)
+                        result = subsrc.reduce(function, column, keys, initializer, **filter_by)
                         results.append(result)
                     except LookupError:
                         pass
             return functools.reduce(function, results, initializer)
         else:
-            if not _is_nscontainer(group_by):
-                group_by = (group_by,)
-            self._assert_columns_exist(group_by)
+            if not _is_nscontainer(keys):
+                keys = (keys,)
+            self._assert_columns_exist(keys)
             results = {}
             for subsrc in self.__wrapped__:
                 subsrc_columns = subsrc.columns()
                 subfltr = self._make_sub_filter(subsrc_columns, **filter_by)
                 if subfltr is not None:
                     try:
-                        subgrp = [x for x in group_by if x in subsrc_columns]
+                        subgrp = [x for x in keys if x in subsrc_columns]
                         subres = subsrc.reduce(function, column, subgrp, initializer, **subfltr)
-                        subres = self._normalize_result(subres, subgrp, group_by)
+                        subres = self._normalize_result(subres, subgrp, keys)
                         for key, y in subres.items():
                             x = results.get(key, initializer)
                             results[key] = function(x, y)
                     except LookupError:
                         pass
-            return ResultMapping(results, group_by)
+            return ResultMapping(results, keys)
 
     @staticmethod
     def _make_sub_filter(columns, **filter_by):

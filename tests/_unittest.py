@@ -7,7 +7,9 @@ try:
     #TestCase.assertNotIn
 except AttributeError:
     def _assertIn(self, member, container, msg=None):
-        """Just like self.assertTrue(a in b), but with a nicer default message."""
+        """Just like self.assertTrue(a in b), but with a nicer default
+        message.
+        """
         if member not in container:
             standardMsg = '%r not found in %r' % (member, container)
             self.fail(self._formatMessage(msg, standardMsg))
@@ -19,7 +21,9 @@ try:
     #TestCase.assertIsNotNone
 except AttributeError:
     def _assertIsNone(self, obj, msg=None):
-        """Same as self.assertTrue(obj is None), with a nicer default message."""
+        """Same as self.assertTrue(obj is None), with a nicer default
+        message.
+        """
         if obj is not None:
             standardMsg = '%s is not None' % (safe_repr(obj),)
             self.fail(self._formatMessage(msg, standardMsg))
@@ -90,15 +94,17 @@ try:
 except AttributeError:
     def _assertIs(self, expr1, expr2, msg=None):
         """Just like self.assertTrue(a is b), but with a nicer default
-        message."""
+        message.
+        """
         if not expr1 is expr2:
             standardMsg = '%s is not %s' % (safe_repr(expr1), safe_repr(expr2))
             self.fail(self._formatMessage(msg, standardMsg))
     TestCase.assertIs = _assertIs
 
     def _assertIsNot(self, expr1, expr2, msg=None):
-        """Just like self.assertTrue(a is not b), but with a nicer default
-        message."""
+        """Just like self.assertTrue(a is not b), but with a nicer
+        default message.
+        """
         if not expr1 is not expr2:
             standardMsg = '%s is not %s' % (safe_repr(expr1), safe_repr(expr2))
             self.fail(self._formatMessage(msg, standardMsg))
@@ -137,7 +143,9 @@ except AttributeError:
             _basestring = str
 
         def _assertRegex(self, text, expected_regexp, msg=None):
-            """Fail the test unless the text matches the regular expression."""
+            """Fail the test unless the text matches the regular
+            expression.
+            """
             if isinstance(expected_regexp, _basestring):
                 expected_regexp = _compile(expected_regexp)
             if not expected_regexp.search(text):
@@ -147,7 +155,9 @@ except AttributeError:
         TestCase.assertRegex = _assertRegex
 
         def _assertNotRegex(self, text, unexpected_regexp, msg=None):
-            """Fail the test if the text matches the regular expression."""
+            """Fail the test if the text matches the regular
+            expression.
+            """
             if isinstance(unexpected_regexp, _basestring):
                 unexpected_regexp = _compile(unexpected_regexp)
             match = unexpected_regexp.search(text)
@@ -170,7 +180,9 @@ except AttributeError:
         # The following code was adapted from the Python 2.7 Standard Library.
         import re as _re
         class _AssertRaisesContext(object):
-            """A context manager used to implement TestCase.assertRaises* methods."""
+            """A context manager used to implement
+            TestCase.assertRaises* methods.
+            """
             def __init__(self, expected, test_case, expected_regexp=None):
                 self.expected = expected
                 self.failureException = test_case.failureException
@@ -230,7 +242,9 @@ try:
 except AttributeError:
     import warnings as _warnings
     class _AssertWarnsContext(object):
-        """A context manager used to implement TestCase.assertWarns* methods."""
+        """A context manager used to implement TestCase.assertWarns*
+        methods.
+        """
         def __init__(self, expected, test_case, callable_obj=None,
                      expected_regex=None):
             self.expected = expected

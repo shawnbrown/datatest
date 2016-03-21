@@ -137,8 +137,9 @@ class _AllowAny(_BaseAllowance):
 
     @classmethod
     def _partition_kwds(cls, differences, **filter_by):
-        """Takes an iterable of *differences* and keyword filters, returns a
-        2-tuple of lists containing *nonmatches* and *matches* differences.
+        """Takes an iterable of *differences* and keyword filters,
+        returns a 2-tuple of lists containing *nonmatches* and
+        *matches* differences.
         """
         if not filter_by:
             return ([], differences)  # <- EXIT!
@@ -158,7 +159,9 @@ class _AllowAny(_BaseAllowance):
 
     @staticmethod
     def _partition(pred, iterable):
-        """Use a predicate to partition entries into false entries and true entries"""
+        """Use a predicate to partition entries into false entries and
+        true entries.
+        """
         t1, t2 = itertools.tee(iterable)
         return itertools.filterfalse(pred, t1), filter(pred, t2)
 
@@ -209,7 +212,9 @@ class _AllowDeviation(_BaseAllowance):
 
 
 class _AllowPercentDeviation(_BaseAllowance):
-    """Context manager for DataTestCase.allowPercentDeviation() method."""
+    """Context manager for DataTestCase.allowPercentDeviation()
+    method.
+    """
     def __init__(self, deviation, test_case, msg, **filter_by):
         assert 1 >= deviation >= 0, 'Percent tolerance must be between 0 and 1.'
         wrap = lambda v: [v] if isinstance(v, str) else v
@@ -238,16 +243,16 @@ class _AllowPercentDeviation(_BaseAllowance):
 
 class DataTestCase(TestCase):
     """This class wraps ``unittest.TestCase`` and implements additional
-    properties and methods for testing data quality.  When a data assertion
-    method fails, it raises a ``DataAssertionError`` containing the detected
-    flaws.  When a non-data failure occurs, these methods raise a standard
-    ``AssertionError``.
+    properties and methods for testing data quality.  When a data
+    assertion method fails, it raises a ``DataAssertionError``
+    containing the detected flaws.  When a non-data failure occurs,
+    these methods raise a standard ``AssertionError``.
     """
     @property
     def subjectData(self):
-        """Property to access the data being tested---the subject of the tests.
-        Typically, ``subjectData`` should be assigned in ``setUpModule()`` or
-        ``setUpClass()``.
+        """Property to access the data being tested---the subject of
+        the tests. Typically, ``subjectData`` should be assigned in
+        ``setUpModule()`` or ``setUpClass()``.
         """
         if hasattr(self, '_subjectData'):
             return self._subjectData
@@ -259,9 +264,9 @@ class DataTestCase(TestCase):
 
     @property
     def referenceData(self):
-        """Property to access reference data that is trusted to be correct.
-        Typically, ``referenceData`` should be assigned in ``setUpModule()``
-        or ``setUpClass()``.
+        """Property to access reference data that is trusted to be
+        correct. Typically, ``referenceData`` should be assigned in
+        ``setUpModule()`` or ``setUpClass()``.
         """
         if hasattr(self, '_referenceData'):
             return self._referenceData
@@ -284,9 +289,10 @@ class DataTestCase(TestCase):
         raise NameError('cannot find {0!r}'.format(name))
 
     def _normalize_required(self, required, method, *args, **kwds):
-        """If *required* is None, query data from ``referenceData``; if it
-        is another data source, query from this other source; else, return
-        unchanged."""
+        """If *required* is None, query data from ``referenceData``; if
+        it is another data source, query from this other source; else,
+        return unchanged.
+        """
         if required == None:
             required = self.referenceData
 
@@ -297,12 +303,13 @@ class DataTestCase(TestCase):
         return required
 
     def assertDataColumns(self, required=None, msg=None):
-        """Test that the column names in ``subjectData`` match the *required*
-        values.  If *required* is omitted, the column names from the
-        ``referenceData`` are used in its place.
+        """Test that the column names in ``subjectData`` match the
+        *required* values.  If *required* is omitted, the column names
+        from the ``referenceData`` are used in its place.
 
-        The *required* argument can be a collection, callable, data source, or
-        None.  See :meth:`assertDataSet <datatest.DataTestCase.assertDataSet>`
+        The *required* argument can be a collection, callable, data
+        source, or None.
+        See :meth:`assertDataSet <datatest.DataTestCase.assertDataSet>`
         for more details.
         """
         subject_set = ResultSet(self.subjectData.columns())
@@ -315,21 +322,22 @@ class DataTestCase(TestCase):
         # TODO: Explore the idea of implementing DataList to assert column order.
 
     def assertDataSet(self, column, required=None, msg=None, **filter_by):
-        """Test that the *column* or columns in ``subjectData`` contains the
-        *required* values. If *required* is omitted, values from
-        ``referenceData`` are used in its place.
+        """Test that the *column* or columns in ``subjectData``
+        contains the *required* values. If *required* is omitted,
+        values from ``referenceData`` are used in its place.
 
         *column* (string or sequence of strings):
             Name of the ``subjectData`` column or columns to check.  If
-            *column* contains multiple names, the tests will check tuples of
-            values.
+            *column* contains multiple names, the tests will check
+            tuples of values.
         *required* (collection, callable, data source, or None):
-            If *required* is a set (or other collection), the set of *column*
-            values must match the items in this collection.  If *required* is
-            a function (or other callable), it is used as a key which must
-            return True for acceptable values.  If *required* is a data source,
-            it is used as reference data.  If *required* is omitted, then
-            ``referenceData`` will be used in its place.
+            If *required* is a set (or other collection), the set of
+            *column* values must match the items in this collection.
+            If *required* is a function (or other callable), it is used
+            as a key which must return True for acceptable values. If
+            *required* is a data source, it is used as reference data.
+            If *required* is omitted, then ``referenceData`` will be
+            used in its place.
         """
         subject_set = self.subjectData.distinct(column, **filter_by)
 
@@ -347,32 +355,33 @@ class DataTestCase(TestCase):
                 msg = 'different {0!r} values'.format(column)
             self.fail(msg, differences)
 
-    def assertDataSum(self, column, group_by, required=None, msg=None, **filter_by):
-        """Test that the sum of *column* in ``subjectData`` when grouped by
-        *group_by* matches *required* values dict.  If *required* is omitted,
-        ``referenceData`` is used in its place.
+    def assertDataSum(self, column, keys, required=None, msg=None, **filter_by):
+        """Test that the sum of *column* in ``subjectData`` when
+        grouped by *keys* matches *required* values dict.  If
+        *required* is omitted, ``referenceData`` is used in its place.
 
-        The *required* argument can be a dict, callable, data source, or None.
-        See :meth:`assertDataSet <datatest.DataTestCase.assertDataSet>` for
-        more details::
+        The *required* argument can be a dict, callable, data source,
+        or None.  See :meth:`assertDataSet
+        <datatest.DataTestCase.assertDataSet>` for more details::
 
             required = {2015: 146564,
                         2016: 152530,
                         2017: 158397}
             self.assertDataSum('income', 'year', required)
 
-        By omitting the *required* argument, the following asserts that the
-        sum of "income" in ``subjectData`` matches the sum of "income" in
-        ``referenceData`` (for each group of "department" and "year" values)::
+        By omitting the *required* argument, the following asserts that
+        the sum of "income" in ``subjectData`` matches the sum of
+        "income" in ``referenceData`` (for each group of "department"
+        and "year" values)::
 
             self.assertDataSum('income', ['department', 'year'])
         """
-        subject_dict = self.subjectData.sum(column, group_by, **filter_by)
+        subject_dict = self.subjectData.sum(column, keys, **filter_by)
 
         if callable(required):
             differences = subject_dict.compare(required)
         else:
-            required_dict = self._normalize_required(required, 'sum', column, group_by, **filter_by)
+            required_dict = self._normalize_required(required, 'sum', column, keys, **filter_by)
             differences = subject_dict.compare(required_dict)
 
         if differences:
@@ -380,23 +389,22 @@ class DataTestCase(TestCase):
                 msg = 'different {0!r} sums'.format(column)
             self.fail(msg, differences)
 
-    def assertDataCount(self, column, group_by, msg=None, **filter_by):
+    def assertDataCount(self, column, keys, msg=None, **filter_by):
         """Test that the count of subject rows matches the sum of
-        reference *column* for each group in *group_by*.
+        reference *column* for each group in *keys*.
 
         The following asserts that the count of the subject's rows
         matches the sum of the reference's ``employees`` column for
         each group of ``department`` and ``project`` values::
 
             self.assertDataCount('employees', ['department', 'project'])
-
         """
         if column not in self.referenceData.columns():
             msg = 'no column named {0!r} in referenceData'.format(column)
             raise AssertionError(msg)
 
-        subject_result = self.subjectData.count(group_by, **filter_by)
-        reference_result = self.referenceData.sum(column, group_by, **filter_by)
+        subject_result = self.subjectData.count(keys, **filter_by)
+        reference_result = self.referenceData.sum(column, keys, **filter_by)
 
         differences = subject_result.compare(reference_result)
         if differences:
@@ -405,8 +413,8 @@ class DataTestCase(TestCase):
             self.fail(msg=msg, differences=differences)
 
     def assertDataRegex(self, column, required, msg=None, **filter_by):
-        """Test that *column* in ``subjectData`` contains values that match the
-        *required* regular expression.
+        """Test that *column* in ``subjectData`` contains values that
+        match the *required* regular expression.
 
         The *required* argument must be a string or a compiled regular
         expression object (it can not be omitted).
@@ -423,8 +431,8 @@ class DataTestCase(TestCase):
             self.fail(msg=msg, differences=invalid)
 
     def assertDataNotRegex(self, column, required, msg=None, **filter_by):
-        """Test that *column* in ``subjectData`` contains values that do not
-        match the *required* regular expression.
+        """Test that *column* in ``subjectData`` contains values that
+        do not match the *required* regular expression.
 
         The *required* argument must be a string or a compiled regular
         expression object (it can not be omitted).
@@ -441,8 +449,8 @@ class DataTestCase(TestCase):
             self.fail(msg=msg, differences=invalid)
 
     def allowOnly(self, differences, msg=None):
-        """Context manager to allow specific *differences* without triggering
-        a test failure::
+        """Context manager to allow specific *differences* without
+        triggering a test failure::
 
             differences = [
                 Extra('foo'),
@@ -451,20 +459,21 @@ class DataTestCase(TestCase):
             with self.allowOnly(differences):
                 self.assertDataSet('column1')
 
-        If the raised differences do not match *differences*, the test will
-        fail with a DataAssertionError of the remaining differences.
+        If the raised differences do not match *differences*, the test
+        will fail with a DataAssertionError of the remaining
+        differences.
 
-        In the above example, *differences* is a list but it is also possible
-        to pass a single difference or a dictionary.
+        In the above example, *differences* is a list but it is also
+        possible to pass a single difference or a dictionary.
 
         Using a single difference::
 
             with self.allowOnly(Extra('foo')):
                 self.assertDataSet('column2')
 
-        When using a dictionary, the keys are strings that provide context
-        (for future reference and derived reports) and the values are the
-        individual difference objects themselves::
+        When using a dictionary, the keys are strings that provide
+        context (for future reference and derived reports) and the
+        values are the individual difference objects themselves::
 
             differences = {
                 'Totals from state do not match totals from county.': [
@@ -478,7 +487,6 @@ class DataTestCase(TestCase):
             }
             with self.allowOnly(differences):
                 self.assertDataSum('population', ['town'])
-
         """
         return _AllowOnly(differences, self, msg)
 
@@ -489,35 +497,33 @@ class DataTestCase(TestCase):
             with self.allowAny(10):  # Allows up to ten differences.
                 self.assertDataSet('city_name')
 
-        If *number* is omitted, allows an unlimited number of differences
-        as long as they match a given keyword filter::
+        If *number* is omitted, allows an unlimited number of
+        differences as long as they match a given keyword filter::
 
             with self.allowAny(city_name='not a city'):
                 self.assertDataSum('population', ['city_name'])
 
-        If the count of differences exceeds the given *number*, the test case
-        will fail with a DataAssertionError containing all observed
-        differences.
+        If the count of differences exceeds the given *number*, the
+        test case will fail with a DataAssertionError containing all
+        observed differences.
         """
         return _AllowAny(self, number, msg, **filter_by)
 
     def allowMissing(self, number=None, msg=None):
-        """Context manager to allow for missing values without triggering a
-        test failure::
+        """Context manager to allow for missing values without
+        triggering a test failure::
 
             with self.allowMissing():  # Allows Missing differences.
                 self.assertDataSet('column1')
-
         """
         return _AllowMissing(self, number, msg)
 
     def allowExtra(self, number=None, msg=None):
-        """Context manager to allow for extra values without triggering a
-        test failure::
+        """Context manager to allow for extra values without triggering
+        a test failure::
 
             with self.allowExtra():  # Allows Extra differences.
                 self.assertDataSet('column1')
-
         """
         return _AllowExtra(self, number, msg)
 
@@ -532,12 +538,12 @@ class DataTestCase(TestCase):
         Allowing deviations of plus-or-minus a given *tolerance*::
 
             with self.allowDeviation(5):  # tolerance of +/- 5
-                self.assertDataSum('column2', group_by=['column1'])
+                self.assertDataSum('column2', keys=['column1'])
 
         Specifying different *lower* and *upper* bounds::
 
             with self.allowDeviation(-2, 3):  # tolerance from -2 to +3
-                self.assertDataSum('column2', group_by=['column1'])
+                self.assertDataSum('column2', keys=['column1'])
 
         All deviations within the accepted tolerance range are
         suppressed but those that exceed the range will trigger
@@ -557,12 +563,12 @@ class DataTestCase(TestCase):
         return _AllowDeviation(lower, upper, self, msg, **filter_by)
 
     def allowPercentDeviation(self, deviation, msg=None, **filter_by):
-        """Context manager to allow positive or negative numeric differences
-        of less than or equal to the given *deviation* as a percentage of the
-        matching reference value::
+        """Context manager to allow positive or negative numeric
+        differences of less than or equal to the given *deviation* as a
+        percentage of the matching reference value::
 
             with self.allowPercentDeviation(0.02):  # Allows +/- 2%
-                self.assertDataSum('column2', group_by=['column1'])
+                self.assertDataSum('column2', keys=['column1'])
 
         If differences exceed *deviation*, the test case will fail with
         a DataAssertionError containing the excessive differences.
@@ -572,8 +578,8 @@ class DataTestCase(TestCase):
 
     def fail(self, msg, differences=None):
         """Signals a test failure unconditionally, with *msg* for the
-        error message.  If *differences* is provided, a DataAssertionError is
-        raised instead of an AssertionError.
+        error message.  If *differences* is provided, a
+        DataAssertionError is raised instead of an AssertionError.
         """
         if differences:
             try:

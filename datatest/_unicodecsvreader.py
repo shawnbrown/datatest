@@ -17,13 +17,11 @@ class UnicodeCsvReader:
                 process(row)
 
     The *csvfile* argument can be a file path (as in the example above)
-    or a file-like object.  When passing file objects, Python 3 requires
-    them to be opened in text-mode ('r') while Python 2 requires them to
-    be opened in binary-mode ('rb').  UnicodeCsvReader manages these
-    differences automatically when given a file path.
-
+    or a file-like object.  When passing file objects, Python 3
+    requires them to be opened in text-mode ('r') while Python 2
+    requires them to be opened in binary-mode ('rb').  UnicodeCsvReader
+    manages these differences automatically when given a file path.
     """
-
     def __init__(self, csvfile, encoding='utf-8', dialect='excel', **fmtparams):
         self.encoding = encoding
         self.dialect = dialect

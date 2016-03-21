@@ -7,7 +7,6 @@ from .source import SqliteSource
 def _version_info(module):
     """Helper function returns a tuple containing the version number
     components for a given module.
-
     """
     version = module.__version__
     return tuple(int(i) for i in version.split('.'))
@@ -17,7 +16,6 @@ class PandasSource(BaseSource):
     """Loads pandas DataFrame as a data source:
     ::
         subjectData = datatest.PandasSource(df)
-
     """
     def __init__(self, df):
         """Initialize self."""
@@ -101,7 +99,6 @@ class PandasSource(BaseSource):
         as a DataFrame with the given *columns*::
 
             subjectData = datatest.PandasSource.from_records(records, columns)
-
         """
         try:
             import pandas
@@ -144,9 +141,7 @@ class ExcelSource(BaseSource):
     Specific worksheets can be accessed by name::
 
         subjectData = datatest.ExcelSource('mydata.xlsx', 'Sheet 2')
-
     """
-
     def __init__(self, path, worksheet=None, in_memory=False):
         """Initialize self."""
         try:

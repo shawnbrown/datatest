@@ -118,7 +118,9 @@ class Deviation(BaseDifference):
 
 
 class NonStrictRelation(BaseDifference):
-    """Base class for to indicate non-strict subset or superset relationships."""
+    """Base class for to indicate non-strict subset or superset
+    relationships.
+    """
     def __init__(self, **kwds):
         self.kwds = kwds
 

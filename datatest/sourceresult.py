@@ -23,9 +23,8 @@ def _is_nscontainer(x):
 
 
 def _coerce_other(target_type, *type_args, **type_kwds):
-    """Callable decorator for comparison methods to convert *other* argument
-    into given *target_type* instance.
-
+    """Callable decorator for comparison methods to convert *other*
+    argument into given *target_type* instance.
     """
     def callable(f):
         @wraps(f)
@@ -84,9 +83,8 @@ class ResultSet(set):
         set.__init__(self, data)
 
     def make_rows(self, names):
-        """Return an iterable of dictionary rows (like ``csv.DictReader``)
-        using *names* to construct dictionary keys.
-
+        """Return an iterable of dictionary rows (like
+        ``csv.DictReader``) using *names* to construct dictionary keys.
         """
         single_value = next(iter(self))
         if _is_nscontainer(single_value):
@@ -100,12 +98,11 @@ class ResultSet(set):
         return iterable
 
     def compare(self, other, op='=='):
-        """Compare *self* to *other* and return a list of difference objects.
-        If *other* is callable, constructs a list of Invalid objects
-        for values where *other* returns False.  If *other* is a ResultSet or
-        other collection, differences are compiled as a list of Extra and
-        Missing objects.
-
+        """Compare *self* to *other* and return a list of difference
+        objects.  If *other* is callable, constructs a list of Invalid
+        objects for values where *other* returns False.  If *other* is
+        a ResultSet or other collection, differences are compiled as a
+        list of Extra and Missing objects.
         """
         if callable(other):
             if _expects_multiple_params(other):
@@ -183,9 +180,8 @@ class ResultMapping(dict):
         return '{0}({1}, key_names={2!r})'.format(cls_name, dict_repr, key_names)
 
     def make_rows(self, names):
-        """Return an iterable of dictionary rows (like ``csv.DictReader``)
-        using *names* to construct dictionary keys.
-
+        """Return an iterable of dictionary rows (like
+        ``csv.DictReader``) using *names* to construct dictionary keys.
         """
         if not _is_nscontainer(names):
             names = (names,)
@@ -216,12 +212,12 @@ class ResultMapping(dict):
         return iter(make_dictrow(k, v) for k, v in iterable)
 
     def compare(self, other):
-        """Compare *self* to *other* and return a list of difference objects.
-        If *other* is callable, constructs a list of Invalid objects
-        for values where *other* returns False.  If *other* is a ResultMapping
-        or other mapping object (like a dict), differences are compiled as a
-        list of Deviation and Invalid objects.
-
+        """Compare *self* to *other* and return a list of difference
+        objects.  If *other* is callable, constructs a list of Invalid
+        objects for values where *other* returns False.  If *other* is
+        a ResultMapping or other mapping object (like a dict),
+        differences are compiled as a list of Deviation and Invalid
+        objects.
         """
         # Evaluate self._data with function.
         if callable(other):
