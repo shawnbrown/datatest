@@ -10,12 +10,11 @@
 Introduction
 ************
 
-:mod:`datatest` is designed to work with tabular data stored in
-spreadsheet files or database tables but it's also possible to create
-custom data sources for other formats.  To use datatest effectively,
-users should be familiar with Python's standard
-`unittest <http://docs.python.org/library/unittest.html>`_ library and
-with the data they want to test.
+:mod:`datatest` is designed to work with tabular data stored in spreadsheet
+files or database tables but it's also possible to create custom data sources
+for other formats.  To use datatest effectively, users should be familiar with
+Python's standard `unittest <http://docs.python.org/library/unittest.html>`_
+library and with the data they want to test.
 
 In the practice of data science, data preparation is a huge part of the job.
 Practitioners often spend 50 to 80 percent of their time wrangling data [1]_
@@ -236,9 +235,8 @@ Warren County and 25 less in Lake County)::
      Deviation(-25, 3184, county='Lake'),
      Deviation(+8, 11771, county='Warren')
 
-If we've determined that these differences are allowable, we can use
-the :meth:`allowSpecified
-<datatest.DataTestCase.allowSpecified>` context manager so the
+If we've determined that these differences are allowable, we can use the
+:meth:`allowOnly <datatest.DataTestCase.allowOnly>` context manager so the
 test runs without failing::
 
     def test_population(self):
@@ -246,7 +244,7 @@ test runs without failing::
             Deviation(-25, 3184, county='Lake'),
             Deviation(+8, 11771, county='Warren'),
         ]
-        with self.allowSpecified(diff):
+        with self.allowOnly(diff):
             self.assertDataSum('population', ['county'])
 
 To allow several numeric differences at once, you can use the
