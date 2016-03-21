@@ -236,9 +236,8 @@ Warren County and 25 less in Lake County)::
      Deviation(-25, 3184, county='Lake'),
      Deviation(+8, 11771, county='Warren')
 
-If we've determined that these differences are allowable, we can use
-the :meth:`allowSpecified
-<datatest.DataTestCase.allowSpecified>` context manager so the
+If we've determined that these differences are allowable, we can use the
+:meth:`allowOnly <datatest.DataTestCase.allowOnly>` context manager so the
 test runs without failing::
 
     def test_population(self):
@@ -246,7 +245,7 @@ test runs without failing::
             Deviation(-25, 3184, county='Lake'),
             Deviation(+8, 11771, county='Warren'),
         ]
-        with self.allowSpecified(diff):
+        with self.allowOnly(diff):
             self.assertDataSum('population', ['county'])
 
 To allow several numeric differences at once, you can use the

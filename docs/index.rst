@@ -1,7 +1,7 @@
 
 .. meta::
-    :description: datatest: Data testing tools for Python.
-    :keywords: datatest, unittest, testing, test-driven data preparation
+    :description: datatest: Testing tools for data preparation.
+    :keywords: datatest, unittest, testing, data preparation, test-driven data preparation
     :title: Index
 
 .. module:: datatest
@@ -10,12 +10,12 @@
 .. sectionauthor:: Shawn Brown <sbrown@ncecservices.com>
 
 
-#################################################
-:mod:`datatest` --- Data testing tools for Python
-#################################################
+######################################################
+:mod:`datatest` --- Testing tools for data preparation
+######################################################
 
-The :mod:`datatest` package provides data testing tools for Python.  It
-contains classes for conveniently loading data, asserting validity, and
+The :mod:`datatest` package provides data testing tools for data preparation.
+It contains classes for conveniently loading data, asserting validity, and
 allowing for discrepancies when appropriate.  Datatest is based on Python's
 `unittest <http://docs.python.org/3/library/unittest.html>`_ framework and is
 compatible with standard unittest practices.

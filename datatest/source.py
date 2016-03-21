@@ -29,35 +29,23 @@ class BaseSource(object):
     ``__repr__()``, ``__iter__()``, and ``columns()``.  Optionally,
     performance can be improved by implementing ``distinct()``,
     ``sum()``, ``count()``, and ``reduce()``.
-
     """
-
     def __init__(self):
-        """NotImplemented
-
-        Initialize self.
-        """
+        """Initialize self."""
         return NotImplemented
 
     def __repr__(self):
-        """NotImplemented
-
-        Return a string representation of the data source.
-        """
+        """Return a string representation of the data source."""
         return NotImplemented
 
     def __iter__(self):
-        """NotImplemented
-
-        Return an iterable of dictionary rows (like ``csv.DictReader``).
+        """Return an iterable of dictionary rows (like
+        ``csv.DictReader``).
         """
         return NotImplemented
 
     def columns(self):
-        """NotImplemented
-
-        Return list of column names.
-        """
+        """Return list of column names."""
         return NotImplemented
 
     def distinct(self, column, **filter_by):
@@ -234,15 +222,18 @@ class _TemporarySqliteTable(object):
 
     @staticmethod
     def _get_existing_tables(cursor):
-        """Takes sqlite3 *cursor*, returns existing temporary table names."""
+        """Takes sqlite3 *cursor*, returns existing temporary table
+        names.
+        """
         #cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
         cursor.execute("SELECT name FROM sqlite_temp_master WHERE type='table'")
         return [x[0] for x in cursor]
 
     @staticmethod
     def _make_new_table(existing):
-        """Takes a list of *existing* table names and returns a new, unique
-        table name (tbl0, tbl1, tbl2, etc.)."""
+        """Takes a list of *existing* table names and returns a new,
+        unique table name (tbl0, tbl1, tbl2, etc.).
+        """
         prefix = 'tbl'
         numbers = [x[len(prefix):] for x in existing if x.startswith(prefix)]
         numbers = [int(x) for x in numbers if x.isdigit()]
@@ -318,8 +309,7 @@ class _TemporarySqliteTable(object):
 
 class _SqliteSource(BaseSource):
     """Base class four SqliteSource and CsvSource (not intended to be
-    instantiated directly.)
-
+    instantiated directly).
     """
     def __init__(self, connection, table):
         """Initialize self."""
@@ -536,7 +526,6 @@ class SqliteSource(_SqliteSource):
 
         conn = sqlite3.connect('mydatabase.sqlite3')
         subjectData = datatest.SqliteSource(conn, 'mytable')
-
     """
     @classmethod
     def from_records(cls, data, columns=None):
@@ -554,7 +543,6 @@ class SqliteSource(_SqliteSource):
                 { ... },
             ]
             subjectData = datatest.SqliteSource.from_records(dict_rows)
-
         """
         temptable = _TemporarySqliteTable(data, columns)
         return cls(temptable.connection, temptable.name)
@@ -584,7 +572,6 @@ class SqliteSource(_SqliteSource):
 
             subjectData.create_index('town')
             subjectData.create_index('zipcode')
-
         """
         # Calling super() with older convention to support Python 2.7 & 2.6.
         super(SqliteSource, self).create_index(*columns)
