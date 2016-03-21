@@ -76,7 +76,7 @@ class _AllowOnly(_BaseAllowance):
     """Context manager for DataTestCase.allowOnly() method."""
     def __init__(self, differences, test_case, msg=None):
         self.differences = differences
-        super(self.__class__, self).__init__(test_case, msg=None)
+        super(_AllowOnly, self).__init__(test_case, msg=None)
 
     def __exit__(self, exc_type, exc_value, tb):
         diff = getattr(exc_value, 'differences', [])
@@ -193,7 +193,7 @@ class _AllowDeviation(_BaseAllowance):
 
         self.lower = lower
         self.upper = upper
-        super(self.__class__, self).__init__(test_case, msg=None)
+        super(_AllowDeviation, self).__init__(test_case, msg=None)
 
     def __exit__(self, exc_type, exc_value, tb):
         differences = getattr(exc_value, 'differences', [])
@@ -220,7 +220,7 @@ class _AllowPercentDeviation(_BaseAllowance):
         wrap = lambda v: [v] if isinstance(v, str) else v
         self._filter_by = dict((k, wrap(v)) for k, v in filter_by.items())
         self.deviation = deviation
-        super(self.__class__, self).__init__(test_case, msg=None)
+        super(_AllowPercentDeviation, self).__init__(test_case, msg=None)
 
     def __exit__(self, exc_type, exc_value, tb):
         differences = getattr(exc_value, 'differences', [])

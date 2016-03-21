@@ -587,7 +587,7 @@ class SqliteSource(_SqliteSource):
 
         """
         # Calling super() with older convention to support Python 2.7 & 2.6.
-        super(self.__class__, self).create_index(*columns)
+        super(SqliteSource, self).create_index(*columns)
 
 
 class CsvSource(_SqliteSource):
@@ -595,7 +595,6 @@ class CsvSource(_SqliteSource):
     ::
 
         subjectData = datatest.CsvSource('mydata.csv')
-
     """
     def __init__(self, file, encoding=None, in_memory=False):
         """Initialize self."""
@@ -636,7 +635,7 @@ class CsvSource(_SqliteSource):
                 warnings.warn(msg.format(filename))
 
         # Calling super() with older convention to support Python 2.7 & 2.6.
-        super(self.__class__, self).__init__(temptable.connection, temptable.name)
+        super(CsvSource, self).__init__(temptable.connection, temptable.name)
 
     def __repr__(self):
         """Return a string representation of the data source."""
@@ -656,9 +655,7 @@ class MultiSource(BaseSource):
         )
 
     The original sources are stored in the ``__wrapped__`` attribute.
-
     """
-
     def __init__(self, *sources):
         """Initialize self."""
         for source in sources:
