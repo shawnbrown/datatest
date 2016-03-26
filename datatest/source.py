@@ -8,7 +8,8 @@ import warnings
 
 from ._builtins import *
 from ._collections import Counter
-from ._collections import Iterable
+from ._collections import Sequence
+from ._collections import namedtuple
 from ._decimal import Decimal
 from ._unicodecsvreader import UnicodeCsvReader as _UnicodeCsvReader
 from . import _itertools as itertools
@@ -75,6 +76,62 @@ class BaseSource(object):
         column = lambda row: 1  # Column mapped to int value 1.
         init = 0
         return self.reduce(func, column, keys, init, **filter_by)
+
+    def mapreduce(self, mapper, reducer, columns, keys=None, **filter_by):
+        """Apply *mapper* to the values in *columns* (which are grouped
+        by *keys* and filtered by *filter*) then apply *reducer* of two
+        arguments cumulatively to the mapped values, from left to right,
+        so as to reduce the values to a single result per group of
+        *keys*.  If *keys* is omitted, a single result is returned,
+        otherwise returns a ResultMapping object.
+
+        *mapper* (function or other callable):
+            Should accept column values from a single row and return a
+            single computed result.  Mapper always receives a single
+            argument--if *columns* is a sequence, *mapper* will receive
+            a namedtuple of values containing in the specified columns.
+        *reducer* (function or other callable):
+            Should accept two arguments that are applied cumulatively to
+            the intermediate mapped results (produced by *mapper*), from
+            left to right, so as to reduce them to a single value for
+            each group of *keys*.
+        *columns* (string or sequence):
+            Name of column or columns that are passed into *mapper*.
+        *keys* (None, string, or sequence):
+            Name of key or keys used to group column values.
+        *filter* keywords:
+            Keywords used to filter rows.
+        """
+        if isinstance(columns, str):
+            getval = lambda row: row[columns]
+        elif isinstance(columns, Sequence):
+            coltup = namedtuple('column_names', columns, rename=True)
+            getval = lambda row: coltup(*(row[x] for x in columns))
+        else:
+            raise TypeError('colums must be str or sequence')
+
+        filtered_iter = self.__filter_by(**filter_by)
+
+        if not keys:
+            values_iter = (getval(row) for row in filtered_iter)
+            mapped_iter = (mapper(x) for x in values_iter)
+            return functools.reduce(reducer, mapped_iter)  # <- EXIT!
+
+        if not _is_nscontainer(keys):
+            keys = (keys,)
+        self._assert_columns_exist(keys)
+
+        result = {}
+        for row in filtered_iter:              # Do not remove this loop
+            y = getval(row)                    # without a good reason!
+            y = mapper(y)                      # While a more functional
+            key = tuple(row[k] for k in keys)  # style (using sorted,
+            if key in result:                  # groupby, and reduce) is
+                x = result[key]                # nicer to read, this base
+                result[key] = reducer(x, y)    # class should prioritize
+            else:                              # memory efficiency over
+                result[key] = y                # speed.
+        return ResultMapping(result, keys)
 
     def reduce(self, function, column, keys=None, initializer=None, **filter_by):
         """Apply *function* of two arguments cumulatively to the values

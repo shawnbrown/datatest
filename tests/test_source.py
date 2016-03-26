@@ -137,6 +137,58 @@ class TestBaseSource(unittest.TestCase):
         header = self.datasource.columns()
         self.assertEqual(header, ['label1', 'label2', 'value'])
 
+    def test_mapreduce(self):
+        mapreduce = self.datasource.mapreduce
+
+        # No keys.
+        self.assertEqual(40, mapreduce(int, max, 'value'))
+
+        # No keys, missing column.
+        with self.assertRaises(TypeError):
+            self.assertEqual(None, mapreduce(int, max))
+
+        # Single group_by column.
+        expected = {'a': 20, 'b': 40}
+        self.assertEqual(expected, mapreduce(int, max, 'value', 'label1'))
+        self.assertEqual(expected, mapreduce(int, max, 'value', ['label1']))  # 1-item container
+
+        # Two group_by columns.
+        expected = {
+            ('a', 'x'): 17,
+            ('a', 'y'): 20,
+            ('a', 'z'): 15,
+            ('b', 'z'):  5,
+            ('b', 'y'): 40,
+            ('b', 'x'): 25,
+        }
+        self.assertEqual(expected, mapreduce(int, max, 'value', ['label1', 'label2']))
+
+        # Group by with filter.
+        expected = {'x': 17, 'y': 20, 'z': 15}
+        self.assertEqual(expected, mapreduce(int, max, 'value', 'label2', label1='a'))
+
+        # Attempt to reduce column that does not exist.
+        with self.assertRaises(LookupError):
+            result = mapreduce(int, max, 'value_x')
+
+        # Tuple argument for mapper.
+        mapper = lambda a: (int(a[0]), a[1])
+        maxmin = lambda x, y: (max(x[0], y[0]), min(x[1], y[1]))
+        expected = {'a': (20, 'x'), 'b': (40, 'x')}
+        self.assertEqual(expected, mapreduce(mapper, maxmin, ['value', 'label2'], 'label1'))
+
+        # Namedtuple argument for mapper.
+        mapper = lambda a: (int(a.value), a.label2)  # <- Using namedtuples.
+        maxmin = lambda x, y: (max(x[0], y[0]), min(x[1], y[1]))
+        expected = {'a': (20, 'x'), 'b': (40, 'x')}
+        self.assertEqual(expected, mapreduce(mapper, maxmin, ['value', 'label2'], 'label1'))
+
+        # Tuple argument for reducer.
+        maketwo = lambda x: (int(x), int(x))
+        maxmin = lambda x, y: (max(x[0], y[0]), min(x[1], y[1]))
+        expected = {'a': (20, 13), 'b': (40, 5)}
+        self.assertEqual(expected, mapreduce(maketwo, maxmin, 'value', 'label1'))
+
     def test_reduce(self):
         reduce = self.datasource.reduce
 
