@@ -2,6 +2,33 @@
 
 from collections import *
 
+
+try:
+    namedtuple('x', ['x'], rename=True)  # Argument 'rename' new in 2.7
+except TypeError:
+    # Code adapted from the Python 2.7 standard library.
+    namedtuple_orig = namedtuple
+    from keyword import iskeyword as _iskeyword
+    def namedtuple(typename, field_names, verbose=False, rename=False):
+        if isinstance(field_names, basestring):
+            field_names = field_names.replace(',', ' ').split()
+        field_names = map(str, field_names)
+        typename = str(typename)
+        if rename:
+            seen = set()
+            for index, name in enumerate(field_names):
+                if (not all(c.isalnum() or c=='_' for c in name)
+                    or _iskeyword(name)
+                    or not name
+                    or name[0].isdigit()
+                    or name.startswith('_')
+                    or name in seen):
+                    field_names[index] = '_%d' % index
+                seen.add(name)
+        return namedtuple_orig(typename, field_names, verbose)
+    namedtuple.__doc__ == namedtuple_orig.__doc__
+
+
 try:
     Counter  # New in Python 2.7
 except NameError:
