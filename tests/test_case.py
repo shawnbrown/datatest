@@ -269,6 +269,9 @@ class TestDataSum(TestHelperCase):
         pattern = ("DataAssertionError: different 'value' sums:\n"
                    " Invalid\(66, label1=u?'a'\),\n"
                    " Invalid\(69, label1=u?'b'\)")
+        #pattern = ("DataAssertionError: different 'value' sums:\n"
+        #           " Invalid\(Decimal\('66'\), label1=u?'a'\),\n"
+        #           " Invalid\(Decimal\('69'\), label1=u?'b'\)")
         self.assertRegex(failure, pattern)
 
 

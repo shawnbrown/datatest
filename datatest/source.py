@@ -60,13 +60,18 @@ class BaseSource(object):
         iterable = (tuple(row[c] for c in column) for row in iterable)
         return ResultSet(iterable)
 
-    def sum(self, column, keys=None, **filter_by):
-        """Returns sum of *column* grouped by *keys* as ResultMapping
-        (uses ``reduce`` method).
+    def sum(self, columns, keys=None, **filter_by):
+        """Returns sum of one or more *columns* grouped by *keys* as a
+        ResultMapping.
         """
-        func = lambda x, y: (x + Decimal(y)) if y else x
-        init = Decimal(0)
-        return self.reduce(func, column, keys, init, **filter_by)
+        mapper = lambda x: Decimal(x) if x else Decimal(0)
+        if not _is_nscontainer(columns):
+            reducer = lambda x, y: x + y
+        else:
+            map_one = mapper
+            mapper = lambda x: tuple(map_one(n) for n in x)
+            reducer = lambda x, y: tuple(xi + yi for xi, yi in zip(x, y))
+        return self.mapreduce(mapper, reducer, columns, keys, **filter_by)
 
     def count(self, keys=None, **filter_by):
         """Returns count of *column* grouped by *keys* as ResultMapping
@@ -105,8 +110,9 @@ class BaseSource(object):
         if isinstance(columns, str):
             getval = lambda row: row[columns]
         elif isinstance(columns, Sequence):
-            coltup = namedtuple('column_names', columns, rename=True)
-            getval = lambda row: coltup(*(row[x] for x in columns))
+            #coltup = namedtuple('column_names', columns, rename=True)
+            #getval = lambda row: coltup(*(row[x] for x in columns))
+            getval = lambda row: tuple(row[x] for x in columns)
         else:
             raise TypeError('colums must be str or sequence')
 
@@ -408,14 +414,14 @@ class _SqliteSource(BaseSource):
         cursor = self._execute_query(self._table, select_clause, **filter_by)
         return ResultSet(cursor)
 
-    def sum(self, column, keys=None, **filter_by):
-        """Returns sum of *column* grouped by *keys* as
-        ResultMapping.
-        """
-        self._assert_columns_exist(column)
-        column = self._normalize_column(column)
-        sql_function = 'SUM({0})'.format(column)
-        return self._sql_aggregate(sql_function, keys, **filter_by)
+    def sum(self, columns, keys=None, **filter_by):
+        """Returns sum of *columns* grouped by *keys* as ResultMapping."""
+        if not _is_nscontainer(columns):
+            columns = (columns,)
+        self._assert_columns_exist(columns)
+        columns = (self._normalize_column(x) for x in columns)
+        sql_functions = tuple('SUM({0})'.format(x) for x in columns)
+        return self._sql_aggregate(sql_functions, keys, **filter_by)
 
     def count(self, keys=None, **filter_by):
         """Returns count of *column* grouped by *keys* as
@@ -427,21 +433,37 @@ class _SqliteSource(BaseSource):
         """Aggregates values using SQL function select--e.g.,
         'COUNT(*)', 'SUM(col1)', etc.
         """
+        if not _is_nscontainer(sql_function):
+            sql_function = (sql_function,)
+
         if keys == None:
+            sql_function = ', '.join(sql_function)
             cursor = self._execute_query(self._table, sql_function, **filter_by)
-            return cursor.fetchone()[0]  # <- EXIT!
+            result = cursor.fetchone()
+            if len(result) == 1:
+                return result[0]
+            return result  # <- EXIT!
 
         if not _is_nscontainer(keys):
             keys = (keys,)
         group_clause = [self._normalize_column(x) for x in keys]
         group_clause = ', '.join(group_clause)
 
-        select_clause = '{0}, {1}'.format(group_clause, sql_function)
+        select_clause = '{0}, {1}'.format(group_clause, ', '.join(sql_function))
         trailing_clause = 'GROUP BY ' + group_clause
 
         cursor = self._execute_query(self._table, select_clause, trailing_clause, **filter_by)
-        iterable = ((row[:-1], row[-1]) for row in cursor)
+        pos = len(sql_function)
+        iterable = ((row[:-pos], getvals(row)) for row in cursor)
+        if pos > 1:
+            # Gets values by slicing (i.e., row[-pos:]).
+            iterable = ((row[:-pos], row[-pos:]) for row in cursor)
+        else:
+            # Gets value by index (i.e., row[-pos]).
+            iterable = ((row[:-pos], row[-pos]) for row in cursor)
         return ResultMapping(iterable, keys)
+        # TODO: This method has grown messy after a handful of iterations
+        # look to refactor it in the future to improve maintainability.
 
     def reduce(self, function, column, keys=None, initializer=None, **filter_by):
         """Apply *function* of two arguments cumulatively to the values
@@ -783,35 +805,11 @@ class MultiSource(BaseSource):
         results = itertools.chain(*results)
         return ResultSet(results)
 
-    def sum(self, column, keys=None, **filter_by):
-        """Return sum of values in *column* grouped by *keys*."""
-        self._assert_columns_exist(column)
-
-        if keys is None:
-            total = 0
-            for subsrc in self.__wrapped__:
-                subsrc_columns = subsrc.columns()
-                if column in subsrc_columns:
-                    subfltr = self._make_sub_filter(subsrc_columns, **filter_by)
-                    if subfltr is not None:
-                        total = total + subsrc.sum(column, **subfltr)
-            return total
-        else:
-            if not _is_nscontainer(keys):
-                keys = (keys,)
-
-            counter = Counter()
-            for subsrc in self.__wrapped__:
-                subsrc_columns = subsrc.columns()
-                if column in subsrc_columns:
-                    subfltr = self._make_sub_filter(subsrc_columns, **filter_by)
-                    if subfltr is not None:
-                        subgrp = [x for x in keys if x in subsrc_columns]
-                        subres = subsrc.sum(column, subgrp, **subfltr)
-                        subres = self._normalize_result(subres, subgrp, keys)
-                        for k, v in subres.items():
-                            counter[k] += v
-            return ResultMapping(counter, keys)
+    def sum(self, columns, keys=None, **filter_by):
+        """Return sum of values in *columns* grouped by *keys*."""
+        # WARNING!!!: Removing optimized version until we
+        #             can implement AdapterSource class.
+        return super(MultiSource, self).sum(columns, keys, **filter_by)
 
     def reduce(self, function, column, keys=None, initializer=None, **filter_by):
         """Apply *function* of two arguments cumulatively to the values

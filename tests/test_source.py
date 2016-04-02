@@ -140,8 +140,17 @@ class TestBaseSource(unittest.TestCase):
     def test_mapreduce(self):
         mapreduce = self.datasource.mapreduce
 
-        # No keys.
+        # No keys, single *columns* value.
         self.assertEqual(40, mapreduce(int, max, 'value'))
+
+        # No keys, multiple *columns*.
+        mapper = lambda a: (a[0], int(a[1]))
+        reducer = lambda x, y: (min(x[0], y[0]), max(x[1], y[1]))
+        #tup = namedtuple('tup', ['label1', 'value'])
+        #mapper = lambda a: tup(a.label1, int(a.value))
+        #reducer = lambda x, y: tup(min(x.label1, y.label1), max(x.value, y.value))
+        expected = ('a', 40)
+        self.assertEqual(expected, mapreduce(mapper, reducer, ['label1', 'value']))
 
         # No keys, missing column.
         with self.assertRaises(TypeError):
@@ -178,10 +187,10 @@ class TestBaseSource(unittest.TestCase):
         self.assertEqual(expected, mapreduce(mapper, maxmin, ['value', 'label2'], 'label1'))
 
         # Namedtuple argument for mapper.
-        mapper = lambda a: (int(a.value), a.label2)  # <- Using namedtuples.
-        maxmin = lambda x, y: (max(x[0], y[0]), min(x[1], y[1]))
-        expected = {'a': (20, 'x'), 'b': (40, 'x')}
-        self.assertEqual(expected, mapreduce(mapper, maxmin, ['value', 'label2'], 'label1'))
+        #mapper = lambda a: (int(a.value), a.label2)  # <- Using namedtuples.
+        #maxmin = lambda x, y: (max(x[0], y[0]), min(x[1], y[1]))
+        #expected = {'a': (20, 'x'), 'b': (40, 'x')}
+        #self.assertEqual(expected, mapreduce(mapper, maxmin, ['value', 'label2'], 'label1'))
 
         # Tuple argument for reducer.
         maketwo = lambda x: (int(x), int(x))
@@ -267,6 +276,13 @@ class TestBaseSource(unittest.TestCase):
 
         expected = {'x': 30, 'y': 20, 'z': 15}
         self.assertEqual(expected, sum('value', 'label2', label1='a'))
+
+        # Test multiple *columns*:
+
+        self.assertEqual((135, 135), sum(['value', 'value']))
+
+        expected = {'x': (30, 30), 'y': (20, 20), 'z': (15, 15)}
+        self.assertEqual(expected, sum(['value', 'value'], 'label2', label1='a'))
 
     def test_count(self):
         count = self.datasource.count
