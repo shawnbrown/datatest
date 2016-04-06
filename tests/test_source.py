@@ -22,6 +22,7 @@ from datatest.source import BaseSource
 from datatest.source import _TemporarySqliteTable
 from datatest.source import SqliteSource
 from datatest.source import CsvSource
+from datatest.source import AdapterSource
 from datatest.source import MultiSource
 
 
@@ -45,7 +46,7 @@ class MinimalSource(BaseSource):
         self._fieldnames = fieldnames
 
     def __repr__(self):
-        return self.__class__.__name__
+        return self.__class__.__name__ + '(<data>, <fieldnames>)'
 
     def __iter__(self):
         for row in self._data:
@@ -758,6 +759,169 @@ class TestCsvSource_ActualFileHandling(MkdtempTestCase):
         with self.assertRaises(Exception):
             with open(filename, incorrect_mode) as fh:
                 CsvSource(fh, encoding='utf-8')  # Raise exception.
+
+
+class TestAdapterSource(unittest.TestCase):
+    def setUp(self):
+        self.fieldnames = ['col1', 'col2', 'col3']
+        self.data = [['a', 'x', '17'],
+                     ['a', 'x', '13'],
+                     ['a', 'y', '20'],
+                     ['a', 'z', '15']]
+        self.source = MinimalSource(self.data, self.fieldnames)
+
+    def test_repr(self):
+        interface = [('a', 'col1'), ('b', 'col2'), ('c', 'col3')]
+        adapted = AdapterSource(self.source, interface)
+        required = ("AdapterSource(MinimalSource(<data>, <fieldnames>), "
+                    "[('a', 'col1'), ('b', 'col2'), ('c', 'col3')])")
+        self.assertEqual(required, repr(adapted))
+
+    def test_columns(self):
+        # Test original.
+        self.assertEqual(['col1', 'col2', 'col3'], self.source.columns())
+
+        # Reorder columns.
+        interface = [
+            ('col3', 'col3'),
+            ('col2', 'col2'),
+            ('col1', 'col1'),
+        ]
+        adapted = AdapterSource(self.source, interface)
+        self.assertEqual(['col3', 'col2', 'col1'], adapted.columns())
+
+        # Rename columns.
+        interface = [
+            ('a', 'col1'),
+            ('b', 'col2'),
+            ('c', 'col3'),
+        ]
+        adapted = AdapterSource(self.source, interface)
+        self.assertEqual(['a', 'b', 'c'], adapted.columns())
+
+        # Remove column.
+        interface = [
+            ('col1', 'col1'),
+            ('col2', 'col2'),
+            # Column 'col3' not included!
+        ]
+        adapted = AdapterSource(self.source, interface)
+        self.assertEqual(['col1', 'col2'], adapted.columns())
+
+        # Add new column.
+        interface = [
+            ('a', 'col1'),
+            ('b', 'col2'),
+            ('c', 'col3'),
+            ('d', None),  # <- New column, no corresponding original!
+        ]
+        adapted = AdapterSource(self.source, interface)
+        self.assertEqual(['a', 'b', 'c', 'd'], adapted.columns())
+
+        # Raise error if old name is not in original source.
+        interface = [
+            ('a', 'bad_column'),  # <- 'bad_column' not in original!
+            ('b', 'col2'),
+            ('c', 'col3'),
+        ]
+        with self.assertRaises(KeyError):
+            adapted = AdapterSource(self.source, interface)
+
+    def test_iter(self):
+        interface = [('one', 'col1'), ('two', 'col2'), ('three', 'col3')]
+        adapted = AdapterSource(self.source, interface)
+        expected = [
+            {'one': 'a', 'two': 'x', 'three': '17'},
+            {'one': 'a', 'two': 'x', 'three': '13'},
+            {'one': 'a', 'two': 'y', 'three': '20'},
+            {'one': 'a', 'two': 'z', 'three': '15'},
+        ]
+        result = list(adapted.__iter__())
+        self.assertEqual(expected, result)
+
+    def test_distinct(self):
+        # Basic usage.
+        interface = [('one', 'col1'), ('two', 'col2'), ('three', 'col3')]
+        adapted = AdapterSource(self.source, interface)
+        required = set(['x', 'y', 'z'])
+        self.assertEqual(required, adapted.distinct('two'))
+
+        # Adapter column mapped to None.
+        interface = [('two', 'col2'), ('four', None)]
+        adapted = AdapterSource(self.source, interface)
+
+        required = set([('x', ''), ('y', ''), ('z', '')])
+        self.assertEqual(required, adapted.distinct(['two', 'four']))
+
+        required = set([('', 'x'), ('', 'y'), ('', 'z')])
+        self.assertEqual(required, adapted.distinct(['four', 'two']))
+
+        # Filter on renamed column.
+        interface = [('one', 'col1'), ('two', 'col2'), ('three', 'col3')]
+        adapted = AdapterSource(self.source, interface)
+        required = set(['17', '13'])
+        self.assertEqual(required, adapted.distinct('three', two='x'))
+
+        # Filter on column mapped to None.
+        interface = [('three', 'col3'), ('four', None)]
+        adapted = AdapterSource(self.source, interface)
+
+        required = set()
+        self.assertEqual(required, adapted.distinct('three', four='x'))
+
+        required = set(['17', '13', '20', '15'])
+        self.assertEqual(required, adapted.distinct('three', four=''))
+
+        # Unknown column.
+        interface = [('one', 'col1'), ('two', 'col2')]
+        adapted = AdapterSource(self.source, interface)
+        required = set(['x', 'y', 'z'])
+        with self.assertRaises(KeyError):
+            adapted.distinct('three')
+
+    def test_sum(self):
+        # Basic usage (no group-by keys).
+        interface = [('one', 'col1'), ('two', 'col2'), ('three', 'col3')]
+        adapted = AdapterSource(self.source, interface)
+        self.assertEqual(65, adapted.sum('three'))
+
+        # Grouped by column 'two'.
+        result = adapted.sum('three', 'two')
+        self.assertEqual({'x': 30, 'y': 20, 'z': 15}, result)
+        self.assertEqual(['two'], list(result.key_names))
+
+        # Grouped by column mapped to None.
+        interface = [('two', 'col2'), ('three', 'col3'), ('four', None)]
+        adapted = AdapterSource(self.source, interface)
+        result = adapted.sum('three', ['two', 'four'])
+        expected = {('x', ''): 30, ('y', ''): 20, ('z', ''): 15}
+        self.assertEqual(expected, result)
+
+        # Sum over column mapped to None.
+        interface = [('two', 'col2'), ('three', 'col3'), ('four', None)]
+        adapted = AdapterSource(self.source, interface, missing=0)
+        result = adapted.sum(['three', 'four'], 'two')
+        expected = {'x': (30, 0), 'y': (20, 0), 'z': (15, 0)}
+        self.assertEqual(expected, result)
+
+        # Grouped by and summed over column mapped to None.
+        interface = [('two', 'col2'), ('three', 'col3'), ('four', None)]
+        adapted = AdapterSource(self.source, interface, missing=0)
+        result = adapted.sum(['three', 'four'], ['two', 'four'])
+        expected = {('x', ''): (30, 0), ('y', ''): (20, 0), ('z', ''): (15, 0)}
+        self.assertEqual(expected, result)
+
+
+class TestAdapterSourceBasics(TestBaseSource):
+    def setUp(self):
+        fieldnames = ['col1', 'col2', 'col3']
+        source = MinimalSource(self.testdata, fieldnames)
+        interface = [
+            ('label1', 'col1'),
+            ('label2', 'col2'),
+            ('value', 'col3'),
+        ]
+        self.datasource = AdapterSource(source, interface)
 
 
 class TestMultiSource(TestBaseSource):

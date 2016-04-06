@@ -710,6 +710,208 @@ class CsvSource(_SqliteSource):
         return '{0}({1})'.format(cls_name, src_file)
 
 
+class AdapterSource(BaseSource):
+    """A wrapper class that adapts a data *source* to an *interface* of
+    column names. The *interface* should be a sequence of 2-tuples where
+    the first item is the desired column name and the second item is
+    the existing column name. If column order is not important, the
+    *interface* can, alternatively, be a dict.
+
+    For example, a CSV file that contains the columns 'old_1', 'old_2',
+    and 'old_4' can be adapted to behave as if it has the columns
+    'new_1', 'new_2', 'new_3' and 'new_4' with the following::
+
+        source = CsvSource('mydata.csv')
+        interface = [
+            ('new_1', 'old_1'),
+            ('new_2', 'old_2'),
+            ('new_3', None),
+            ('new_4', 'old_4'),
+        ]
+        subjectData = AdapterSource(source, interface)
+
+    An AdapterSource can be thought of as a virtual source that renames,
+    reorders, adds, or removes columns of the original *source*. To add
+    a column that does not exist in original, use None in place of a
+    column name (see 'new_3', above). Columns mapped to None will
+    contain *missing* values (defaults to empty string).
+
+    The original source can be accessed via the __wrapped__ property.
+    """
+    def __init__(self, source, interface, missing=''):
+        if not isinstance(interface, Sequence):
+            if isinstance(interface, dict):
+                interface = interface.items()
+            interface = sorted(interface)
+
+        source_columns = source.columns()
+        interface_cols = [x[1] for x in interface]
+        for c in interface_cols:
+            if c != None and c not in source_columns:
+                raise KeyError(c)
+
+        self._interface = list(interface)
+        self._missing = missing
+        self.__wrapped__ = source
+
+    def __repr__(self):
+        self_class = self.__class__.__name__
+        wrapped_repr = repr(self.__wrapped__)
+        interface = self._interface
+        missing = self._missing
+        if missing != '':
+            missing = ', missing=' + repr(missing)
+        return '{0}({1}, {2}{3})'.format(self_class, wrapped_repr, interface, missing)
+
+    def __iter__(self):
+        interface = self._interface
+        missing = self._missing
+        for row in self.__wrapped__:
+            yield dict((new, row.get(old, missing)) for new, old in interface)
+
+    def columns(self):
+        return [x[0] for x in self._interface]
+
+    def distinct(self, columns, **filter_by):
+        if isinstance(columns, str):
+            columns = (columns,)
+
+        source = self.__wrapped__  # Unwrap data source.
+        unwrapped_columns = self._unwrap_columns(columns)
+        try:
+            unwrapped_filter = self._unwrap_filter(filter_by)
+        except AssertionError:
+            return ResultSet([])  # <- EXIT!
+        results = source.distinct(unwrapped_columns, **unwrapped_filter)
+        return self._wrap_resultset(results, unwrapped_columns, columns)
+
+    def _unwrap_columns(self, columns, interface_dict=None):
+        if isinstance(columns, str):
+            columns = (columns,)
+
+        if not interface_dict:
+            interface_dict = dict(self._interface)
+
+        unwrapped = (interface_dict[k] for k in columns)
+        return tuple(x for x in unwrapped if x != None)
+
+    def _unwrap_filter(self, filter_dict, interface_dict=None):
+        if not interface_dict:
+            interface_dict = dict(self._interface)
+
+        translated = {}
+        for k, v in filter_dict.items():
+            tran_k = interface_dict[k]
+            if tran_k != None:
+                translated[tran_k] = v
+            else:
+                assert v == self._missing, ('Missing column can only be '
+                                            'filtered to missing value.')
+        return translated
+
+    def _wrap_resultset(self, result, unwrapped_columns, columns):
+        rev_interface = dict((v, k) for k, v in self._interface)
+        rewrapped_columns = [rev_interface[k] for k in unwrapped_columns]
+
+        if list(rewrapped_columns) == list(columns):
+            return result  # If columns are same, return unchanged.
+
+        missing = self._missing
+        def wrap(x):
+            lookup_dict = dict(zip(rewrapped_columns, x))
+            return tuple(lookup_dict.get(c, missing) for c in columns)
+        return ResultSet(wrap(x) for x in result)
+
+    def sum(self, columns, keys=None, **filter_by):
+        """Returns sum of *columns* grouped by *keys* as ResultMapping."""
+        # Check and prepare columns.
+        if isinstance(columns, str):
+            columns = (columns,)
+            unwrap_columns = True
+        else:
+            unwrap_columns = False
+        self._validate_columns(columns)
+
+        interface = dict(self._interface)
+        notnone_columns = [k for k in columns if interface[k] != None]
+        wrapped_columns = [interface[k] for k in notnone_columns]
+
+        # Check and prepare keys.
+        if keys:
+            if isinstance(keys, str):
+                keys = (keys,)
+            self._validate_columns(keys)
+            notnone_keys = [k for k in keys if interface[k] != None]
+            wrapped_keys = [interface[k] for k in notnone_keys]
+        else:
+            notnone_keys = None
+            wrapped_keys = None
+
+        # Check and prepare filter.
+        all_wrapped_columns = self.__wrapped__.columns()
+        for k, v in filter_by.items():
+            wrapped_k = interface[k]
+            if v != '' and wrapped_k not in all_wrapped_columns:
+                return ResultSet([])  # <- EXIT!
+
+        wrapped_filter = {}
+        for k, v in filter_by.items():
+            wrapped_k = interface.get(k)
+            if wrapped_k:
+                wrapped_filter[wrapped_k] = v
+
+        # Unwrap tuple
+        if unwrap_columns:
+            wrapped_columns = wrapped_columns[0]
+
+        result = self.__wrapped__.sum(wrapped_columns, wrapped_keys, **wrapped_filter)
+        return self._normalize_resultmapping(result, notnone_columns, columns, notnone_keys, keys)
+
+    def _validate_columns(self, columns, valid_columns=None):
+        """Assert that columns exist, raise KeyError if missing."""
+        if not valid_columns:
+            valid_columns = self.columns()
+
+        if isinstance(columns, str):
+            columns = (columns,)
+
+        for c in columns:
+            if c not in valid_columns:
+                raise KeyError(c)
+
+    @staticmethod
+    def _normalize_resultmapping(result, notnone_columns, columns, notnone_keys, keys):
+        """."""
+        if not isinstance(result, ResultMapping):
+            return result
+
+        result.key_names = keys
+
+        if list(notnone_columns) == list(columns) and list(notnone_keys) == list(keys):
+            return result  # If columns are same, return unchanged.
+
+        def normalize_keys(k):
+            key_dict = dict(zip(notnone_keys, k))
+            return tuple(key_dict.get(c, '') for c in keys)
+
+        def normalize_values(v, missing=''):
+            value_dict = dict(zip(notnone_columns, v))
+            return tuple(value_dict.get(v, missing) for v in columns)
+
+        if len(columns) > 1:
+            item_gen = ((normalize_keys(k), normalize_values(v, missing=0)) for k, v in result.items())
+        else:
+            item_gen = ((normalize_keys(k), v) for k, v in result.items())
+
+        return ResultMapping(item_gen, key_names=keys)
+
+    #def count():
+    #    pass
+
+    #def mapreduce():
+    #    pass
+
+
 class MultiSource(BaseSource):
     """A wrapper class that allows multiple data sources to be treated
     as a single, composite data source::
