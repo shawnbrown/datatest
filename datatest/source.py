@@ -773,29 +773,72 @@ class AdapterSource(BaseSource):
         return [x[0] for x in self._interface]
 
     def distinct(self, columns, **filter_by):
-        if isinstance(columns, str):
-            columns = (columns,)
-
-        source = self.__wrapped__  # Unwrap data source.
-        unwrapped_columns = self._unwrap_columns(columns)
+        unwrap_src = self.__wrapped__  # Unwrap data source.
+        unwrap_cols = self._unwrap_columns(columns)
         try:
-            unwrapped_filter = self._unwrap_filter(filter_by)
+            unwrap_flt = self._unwrap_filter(filter_by)
         except AssertionError:
             return ResultSet([])  # <- EXIT!
-        results = source.distinct(unwrapped_columns, **unwrapped_filter)
-        return self._wrap_resultset(results, unwrapped_columns, columns)
+
+        results = unwrap_src.distinct(unwrap_cols, **unwrap_flt)
+
+        rewrap_cols = self._rewrap_columns(unwrap_cols)
+        return self._rebuild_resultset(results, rewrap_cols, columns)
+
+    def sum(self, columns, keys=None, **filter_by):
+        """Returns sum of *columns* grouped by *keys* as ResultMapping."""
+        unwrap_src = self.__wrapped__
+        unwrap_cols = self._unwrap_columns(columns)
+        unwrap_key = self._unwrap_columns(keys)
+        try:
+            unwrap_flt = self._unwrap_filter(filter_by)
+        except AssertionError:
+            return ResultMapping({})  # <- EXIT!
+
+        result = unwrap_src.sum(unwrap_cols, unwrap_key, **unwrap_flt)
+
+        rewrap_cols = self._rewrap_columns(unwrap_cols)
+        rewrap_key = self._rewrap_columns(unwrap_key)
+        return self._rebuild_resultmapping(result, rewrap_cols, columns,
+                                           rewrap_key, keys, missing_col=0)
+
+    #def count(self, keys=None, **filter_by):
+    #    pass
+
+    def mapreduce(self, mapper, reducer, columns, keys=None, **filter_by):
+        unwrap_src = self.__wrapped__
+        unwrap_cols = self._unwrap_columns(columns)
+        unwrap_keys = self._unwrap_columns(keys)
+        try:
+            unwrap_flt = self._unwrap_filter(filter_by)
+        except AssertionError:
+            return ResultMapping({})  # <- EXIT!
+
+        result = unwrap_src.mapreduce(mapper, reducer,
+                                      unwrap_cols, unwrap_keys, **unwrap_flt)
+
+        rewrap_cols = self._rewrap_columns(unwrap_cols)
+        rewrap_key = self._rewrap_columns(unwrap_keys)
+        return self._rebuild_resultmapping(result, rewrap_cols, columns,
+                                           rewrap_key, keys,
+                                           missing_col=self._missing)
 
     def _unwrap_columns(self, columns, interface_dict=None):
-        if isinstance(columns, str):
-            columns = (columns,)
+        """."""
+        if not columns:
+            return None  # <- EXIT!
 
         if not interface_dict:
             interface_dict = dict(self._interface)
+
+        if isinstance(columns, str):
+            return interface_dict[columns]  # <- EXIT!
 
         unwrapped = (interface_dict[k] for k in columns)
         return tuple(x for x in unwrapped if x != None)
 
     def _unwrap_filter(self, filter_dict, interface_dict=None):
+        """."""
         if not interface_dict:
             interface_dict = dict(self._interface)
 
@@ -805,111 +848,83 @@ class AdapterSource(BaseSource):
             if tran_k != None:
                 translated[tran_k] = v
             else:
+                # TODO!!!: Make this message more informative.
                 assert v == self._missing, ('Missing column can only be '
                                             'filtered to missing value.')
         return translated
 
-    def _wrap_resultset(self, result, unwrapped_columns, columns):
-        rev_interface = dict((v, k) for k, v in self._interface)
-        rewrapped_columns = [rev_interface[k] for k in unwrapped_columns]
+    def _rewrap_columns(self, unwrapped_columns, interface_dict=None):
+        """."""
+        if not unwrapped_columns:
+            return None  # <- EXIT!
 
-        if list(rewrapped_columns) == list(columns):
-            return result  # If columns are same, return unchanged.
+        if interface_dict:
+            interface = interface_dict.items()
+        else:
+            interface = self._interface
+        rev_interface = dict((v, k) for k, v in interface)
+
+        if isinstance(unwrapped_columns, str):
+            return rev_interface[unwrapped_columns]
+        return tuple(rev_interface[k] for k in unwrapped_columns)
+
+    def _rebuild_resultset(self, result, rewrapped_columns, columns):
+        """."""
+        normalize = lambda x: x if isinstance(x, str) else tuple(x)
+        rewrapped_columns = normalize(rewrapped_columns)
+        columns = normalize(columns)
+
+        if rewrapped_columns == columns:
+            return result  # <- EXIT!
 
         missing = self._missing
-        def wrap(x):
+        def rebuild(x):
             lookup_dict = dict(zip(rewrapped_columns, x))
             return tuple(lookup_dict.get(c, missing) for c in columns)
-        return ResultSet(wrap(x) for x in result)
+        return ResultSet(rebuild(x) for x in result)
 
-    def sum(self, columns, keys=None, **filter_by):
-        """Returns sum of *columns* grouped by *keys* as ResultMapping."""
-        # Check and prepare columns.
-        if isinstance(columns, str):
-            columns = (columns,)
-            unwrap_columns = True
-        else:
-            unwrap_columns = False
-        self._validate_columns(columns)
-
-        interface = dict(self._interface)
-        notnone_columns = [k for k in columns if interface[k] != None]
-        wrapped_columns = [interface[k] for k in notnone_columns]
-
-        # Check and prepare keys.
-        if keys:
-            if isinstance(keys, str):
-                keys = (keys,)
-            self._validate_columns(keys)
-            notnone_keys = [k for k in keys if interface[k] != None]
-            wrapped_keys = [interface[k] for k in notnone_keys]
-        else:
-            notnone_keys = None
-            wrapped_keys = None
-
-        # Check and prepare filter.
-        all_wrapped_columns = self.__wrapped__.columns()
-        for k, v in filter_by.items():
-            wrapped_k = interface[k]
-            if v != '' and wrapped_k not in all_wrapped_columns:
-                return ResultSet([])  # <- EXIT!
-
-        wrapped_filter = {}
-        for k, v in filter_by.items():
-            wrapped_k = interface.get(k)
-            if wrapped_k:
-                wrapped_filter[wrapped_k] = v
-
-        # Unwrap tuple
-        if unwrap_columns:
-            wrapped_columns = wrapped_columns[0]
-
-        result = self.__wrapped__.sum(wrapped_columns, wrapped_keys, **wrapped_filter)
-        return self._normalize_resultmapping(result, notnone_columns, columns, notnone_keys, keys)
-
-    def _validate_columns(self, columns, valid_columns=None):
-        """Assert that columns exist, raise KeyError if missing."""
-        if not valid_columns:
-            valid_columns = self.columns()
-
-        if isinstance(columns, str):
-            columns = (columns,)
-
-        for c in columns:
-            if c not in valid_columns:
-                raise KeyError(c)
-
-    @staticmethod
-    def _normalize_resultmapping(result, notnone_columns, columns, notnone_keys, keys):
+    def _rebuild_resultmapping(self,
+                               result,
+                               rewrapped_columns,
+                               columns,
+                               rewrapped_keys,
+                               keys,
+                               missing_col):
         """."""
         if not isinstance(result, ResultMapping):
-            return result
+            return result  # <- EXIT!
 
-        result.key_names = keys
+        normalize = lambda x: x if isinstance(x, str) else tuple(x)
+        rewrapped_columns = normalize(rewrapped_columns)
+        rewrapped_keys = normalize(rewrapped_keys)
+        columns = normalize(columns)
+        keys = normalize(keys)
 
-        if list(notnone_columns) == list(columns) and list(notnone_keys) == list(keys):
-            return result  # If columns are same, return unchanged.
+        if rewrapped_keys == keys and rewrapped_columns == columns:
+            key_names = (keys,) if isinstance(keys, str) else keys
+            result.key_names = key_names
+            return result  # <- EXIT!
 
-        def normalize_keys(k):
-            key_dict = dict(zip(notnone_keys, k))
-            return tuple(key_dict.get(c, '') for c in keys)
+        item_gen = iter(result.items())
 
-        def normalize_values(v, missing=''):
-            value_dict = dict(zip(notnone_columns, v))
-            return tuple(value_dict.get(v, missing) for v in columns)
+        if rewrapped_keys != keys:
+            def rebuild_keys(k, missing):
+                if isinstance(keys, str):
+                    return k  # <- EXIT!
+                key_dict = dict(zip(rewrapped_keys, k))
+                return tuple(key_dict.get(c, missing) for c in keys)
+            missing_key = self._missing
+            item_gen = ((rebuild_keys(k, missing_key), v) for k, v in item_gen)
 
-        if len(columns) > 1:
-            item_gen = ((normalize_keys(k), normalize_values(v, missing=0)) for k, v in result.items())
-        else:
-            item_gen = ((normalize_keys(k), v) for k, v in result.items())
+        if rewrapped_columns != columns:
+            def rebuild_values(v, missing):
+                if isinstance(columns, str):
+                    return v
+                value_dict = dict(zip(rewrapped_columns, v))
+                return tuple(value_dict.get(v, missing) for v in columns)
+            item_gen = ((k, rebuild_values(v, missing_col)) for k, v in item_gen)
 
         return ResultMapping(item_gen, key_names=keys)
-
-    #def count():
-    #    pass
-
-    #def mapreduce():
-    #    pass
 
 
 class MultiSource(BaseSource):

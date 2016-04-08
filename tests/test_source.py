@@ -899,16 +899,23 @@ class TestAdapterSource(unittest.TestCase):
 
         # Sum over column mapped to None.
         interface = [('two', 'col2'), ('three', 'col3'), ('four', None)]
-        adapted = AdapterSource(self.source, interface, missing=0)
+        adapted = AdapterSource(self.source, interface)
         result = adapted.sum(['three', 'four'], 'two')
         expected = {'x': (30, 0), 'y': (20, 0), 'z': (15, 0)}
         self.assertEqual(expected, result)
 
         # Grouped by and summed over column mapped to None.
         interface = [('two', 'col2'), ('three', 'col3'), ('four', None)]
-        adapted = AdapterSource(self.source, interface, missing=0)
+        adapted = AdapterSource(self.source, interface)
         result = adapted.sum(['three', 'four'], ['two', 'four'])
         expected = {('x', ''): (30, 0), ('y', ''): (20, 0), ('z', ''): (15, 0)}
+        self.assertEqual(expected, result)
+
+        # Grouped by and summed over column mapped to None using alternate missing.
+        interface = [('two', 'col2'), ('three', 'col3'), ('four', None)]
+        adapted = AdapterSource(self.source, interface, missing='EMPTY')
+        result = adapted.sum(['three', 'four'], ['two', 'four'])
+        expected = {('x', 'EMPTY'): (30, 0), ('y', 'EMPTY'): (20, 0), ('z', 'EMPTY'): (15, 0)}
         self.assertEqual(expected, result)
 
 
