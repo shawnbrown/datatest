@@ -60,11 +60,6 @@ __all__ = [
 ]
 
 # Temporary aliases for deprecated names.
-ExtraItem = Extra
-MissingItem = Missing
-InvalidItem = Invalid
-InvalidNumber = Deviation
-
 DataTestCase.allowSpecified = DataTestCase.allowOnly
 DataTestCase.allowUnspecified = DataTestCase.allowAny
 DataTestCase.allowDeviationPercent = DataTestCase.allowPercentDeviation
