@@ -828,13 +828,13 @@ class TestAdapterSource(unittest.TestCase):
             adapted = AdapterSource(self.source, interface)
 
     def test_iter(self):
-        interface = [('one', 'col1'), ('two', 'col2'), ('three', 'col3')]
+        interface = [('two', 'col2'), ('three', 'col3'), ('four', None)]
         adapted = AdapterSource(self.source, interface)
         expected = [
-            {'one': 'a', 'two': 'x', 'three': '17'},
-            {'one': 'a', 'two': 'x', 'three': '13'},
-            {'one': 'a', 'two': 'y', 'three': '20'},
-            {'one': 'a', 'two': 'z', 'three': '15'},
+            {'two': 'x', 'three': '17', 'four': ''},
+            {'two': 'x', 'three': '13', 'four': ''},
+            {'two': 'y', 'three': '20', 'four': ''},
+            {'two': 'z', 'three': '15', 'four': ''},
         ]
         result = list(adapted.__iter__())
         self.assertEqual(expected, result)
@@ -855,6 +855,12 @@ class TestAdapterSource(unittest.TestCase):
 
         required = set([('', 'x'), ('', 'y'), ('', 'z')])
         self.assertEqual(required, adapted.distinct(['four', 'two']))
+
+        required = set([''])
+        self.assertEqual(required, adapted.distinct('four'))
+
+        required = set([('', '')])
+        self.assertEqual(required, adapted.distinct(['four', 'four']))
 
         # Filter on renamed column.
         interface = [('one', 'col1'), ('two', 'col2'), ('three', 'col3')]
@@ -884,6 +890,11 @@ class TestAdapterSource(unittest.TestCase):
         interface = [('one', 'col1'), ('two', 'col2'), ('three', 'col3')]
         adapted = AdapterSource(self.source, interface)
         self.assertEqual(65, adapted.sum('three'))
+
+        # No group-by keys, filter to missing column.
+        interface = [('one', 'col1'), ('two', 'col2'), ('three', 'col3'), ('four', None)]
+        adapted = AdapterSource(self.source, interface)
+        self.assertEqual(0, adapted.sum('three', four='xyz'))
 
         # Grouped by column 'two'.
         result = adapted.sum('three', 'two')
@@ -918,6 +929,22 @@ class TestAdapterSource(unittest.TestCase):
         expected = {('x', 'EMPTY'): (30, 0), ('y', 'EMPTY'): (20, 0), ('z', 'EMPTY'): (15, 0)}
         self.assertEqual(expected, result)
 
+        # Grouped by and summed over column mapped to None using alternate missing.
+        interface = [('one', 'col1'), ('two', 'col2'), ('three', 'col3'), ('four', None)]
+        adapted = AdapterSource(self.source, interface, missing='EMPTY')
+        result = adapted.sum(['three', 'four'], 'one')  # <- Key on existing column.
+        expected = {'a': (65, 0)}
+        self.assertEqual(expected, result)
+        result = adapted.sum(['three', 'four'], 'four')  # <- Key on missing column.
+        expected = {'EMPTY': (65, 0)}
+        self.assertEqual(expected, result)
+
+        # Summed over column mapped to None and nothing else.
+        interface = [('two', 'col2'), ('three', 'col3'), ('four', None)]
+        adapted = AdapterSource(self.source, interface)
+        result = adapted.sum('four', 'two')
+        expected = {'x': 0, 'y': 0, 'z': 0}
+        self.assertEqual(expected, result)
 
 class TestAdapterSourceBasics(TestBaseSource):
     def setUp(self):

@@ -7,7 +7,7 @@ import sys
 import warnings
 
 from ._builtins import *
-from ._collections import Counter
+from ._collections import defaultdict
 from ._collections import Sequence
 from ._collections import namedtuple
 from ._decimal import Decimal
@@ -780,8 +780,17 @@ class AdapterSource(BaseSource):
         except AssertionError:
             return ResultSet([])  # <- EXIT!
 
-        results = unwrap_src.distinct(unwrap_cols, **unwrap_flt)
+        if not unwrap_cols:
+            iterable = iter(unwrap_src)
+            try:
+                next(iterable)  # Check for any data at all.
+                length = 1 if isinstance(columns, str) else len(columns)
+                result = [tuple([self._missing]) * length]  # Make 1 row of *missing* vals.
+            except StopIteration:
+                result = []  # If no data, result is empty.
+            return ResultSet(result)  # <- EXIT!
 
+        results = unwrap_src.distinct(unwrap_cols, **unwrap_flt)
         rewrap_cols = self._rewrap_columns(unwrap_cols)
         return self._rebuild_resultset(results, rewrap_cols, columns)
 
@@ -789,18 +798,32 @@ class AdapterSource(BaseSource):
         """Returns sum of *columns* grouped by *keys* as ResultMapping."""
         unwrap_src = self.__wrapped__
         unwrap_cols = self._unwrap_columns(columns)
-        unwrap_key = self._unwrap_columns(keys)
+        unwrap_keys = self._unwrap_columns(keys)
         try:
             unwrap_flt = self._unwrap_filter(filter_by)
         except AssertionError:
-            return ResultMapping({})  # <- EXIT!
+            if keys:
+                result = ResultMapping({}, keys)
+            else:
+                result = 0
+            return result  # <- EXIT!
 
-        result = unwrap_src.sum(unwrap_cols, unwrap_key, **unwrap_flt)
+        # If all *columns* are missing, build result of missing values.
+        if not unwrap_cols:
+            distinct = self.distinct(keys, **filter_by)
+            if isinstance(columns, str):
+                val = 0
+            else:
+                val = (0,) * len(columns)
+            result = ((key, val) for key in distinct)
+            return ResultMapping(result, keys)  # <- EXIT!
+
+        result = unwrap_src.sum(unwrap_cols, unwrap_keys, **unwrap_flt)
 
         rewrap_cols = self._rewrap_columns(unwrap_cols)
-        rewrap_key = self._rewrap_columns(unwrap_key)
+        rewrap_keys = self._rewrap_columns(unwrap_keys)
         return self._rebuild_resultmapping(result, rewrap_cols, columns,
-                                           rewrap_key, keys, missing_col=0)
+                                           rewrap_keys, keys, missing_col=0)
 
     #def count(self, keys=None, **filter_by):
     #    pass
@@ -812,15 +835,29 @@ class AdapterSource(BaseSource):
         try:
             unwrap_flt = self._unwrap_filter(filter_by)
         except AssertionError:
-            return ResultMapping({})  # <- EXIT!
+            if keys:
+                result = ResultMapping({}, keys)
+            else:
+                result = self._missing
+            return result  # <- EXIT!
+
+        # If all *columns* are missing, build result of missing values.
+        if not unwrap_cols:
+            distinct = self.distinct(keys, **filter_by)
+            if isinstance(columns, str):
+                val = self._missing
+            else:
+                val = (self._missing,) * len(columns)
+            result = ((key, val) for key in distinct)
+            return ResultMapping(result, keys)  # <- EXIT!
 
         result = unwrap_src.mapreduce(mapper, reducer,
                                       unwrap_cols, unwrap_keys, **unwrap_flt)
 
         rewrap_cols = self._rewrap_columns(unwrap_cols)
-        rewrap_key = self._rewrap_columns(unwrap_keys)
+        rewrap_keys = self._rewrap_columns(unwrap_keys)
         return self._rebuild_resultmapping(result, rewrap_cols, columns,
-                                           rewrap_key, keys,
+                                           rewrap_keys, keys,
                                            missing_col=self._missing)
 
     def _unwrap_columns(self, columns, interface_dict=None):
@@ -870,7 +907,7 @@ class AdapterSource(BaseSource):
 
     def _rebuild_resultset(self, result, rewrapped_columns, columns):
         """."""
-        normalize = lambda x: x if isinstance(x, str) else tuple(x)
+        normalize = lambda x: x if (isinstance(x, str) or not x) else tuple(x)
         rewrapped_columns = normalize(rewrapped_columns)
         columns = normalize(columns)
 
@@ -891,26 +928,27 @@ class AdapterSource(BaseSource):
                                keys,
                                missing_col):
         """."""
-        if not isinstance(result, ResultMapping):
-            return result  # <- EXIT!
-
-        normalize = lambda x: x if isinstance(x, str) else tuple(x)
+        normalize = lambda x: x if (isinstance(x, str) or not x) else tuple(x)
         rewrapped_columns = normalize(rewrapped_columns)
         rewrapped_keys = normalize(rewrapped_keys)
         columns = normalize(columns)
         keys = normalize(keys)
 
         if rewrapped_keys == keys and rewrapped_columns == columns:
-            key_names = (keys,) if isinstance(keys, str) else keys
-            result.key_names = key_names
+            if isinstance(result, ResultMapping):
+                key_names = (keys,) if isinstance(keys, str) else keys
+                result.key_names = key_names
             return result  # <- EXIT!
 
-        item_gen = iter(result.items())
+        try:
+            item_gen = iter(result.items())
+        except AttributeError:
+            item_gen = [(self._missing, result)]
 
         if rewrapped_keys != keys:
             def rebuild_keys(k, missing):
                 if isinstance(keys, str):
-                    return k  # <- EXIT!
+                    return k
                 key_dict = dict(zip(rewrapped_keys, k))
                 return tuple(key_dict.get(c, missing) for c in keys)
             missing_key = self._missing
@@ -928,7 +966,10 @@ class AdapterSource(BaseSource):
 
 
 class MultiSource(BaseSource):
-    """A wrapper class that allows multiple data sources to be treated
+    """
+    MultiSource(*sources, missing='')
+
+    A wrapper class that allows multiple data sources to be treated
     as a single, composite data source::
 
         subjectData = datatest.MultiSource(
@@ -939,12 +980,45 @@ class MultiSource(BaseSource):
 
     The original sources are stored in the ``__wrapped__`` attribute.
     """
-    def __init__(self, *sources):
-        """Initialize self."""
-        for source in sources:
-            msg = 'Sources must be derived from BaseSource'
-            assert isinstance(source, BaseSource), msg
-        self.__wrapped__ = sources
+    def __init__(self, *sources, **kwd):
+        """
+        __init__(self, *sources, missing='')
+
+        Initialize self.
+        """
+        # Accept `missing` as a keyword-only argument.
+        try:
+            missing = kwd.pop('missing')
+        except KeyError:
+            missing = ''
+
+        if kwd:                     # Enforce keyword-only argument
+            key, _ = kwd.popitem()  # behavior that works in Python 2.x.
+            msg = "__init__() got an unexpected keyword argument " + repr(key)
+            raise TypeError(msg)
+
+        msg = 'Sources must be derived from BaseSource'
+        assert all(isinstance(s, BaseSource) for s in sources), msg
+
+        all_columns = []
+        for s in sources:
+            for c in s.columns():
+                if c not in all_columns:
+                    all_columns.append(c)
+
+        normalized_sources = []
+        for s in sources:
+            if set(s.columns()) < set(all_columns):
+                columns = s.columns()
+                fn = lambda x: x if x in columns else None
+                old = [fn(x) for x in all_columns]
+                interface = list(zip(all_columns, old))
+                s = AdapterSource(s, interface, missing)
+            normalized_sources.append(s)
+
+        self._columns = all_columns
+        self._sources = normalized_sources
+        self.__wrapped__ = sources  # <- Original sources.
 
     def __repr__(self):
         """Return a string representation of the data source."""
@@ -957,78 +1031,69 @@ class MultiSource(BaseSource):
     def __iter__(self):
         """Return iterable of dictionary rows (like csv.DictReader)."""
         columns = self.columns()
-        for source in self.__wrapped__:
+        for source in self._sources:
             for row in source.__iter__():
-                yield dict((col, row.get(col, '')) for col in columns)
+                yield row
 
     def columns(self):
         """Return list of column names."""
-        all_columns = []
-        for source in self.__wrapped__:
-            for c in source.columns():
-                if c not in all_columns:
-                    all_columns.append(c)
-        return all_columns
+        return self._columns
 
-    @staticmethod
-    def _filtered_call(source, method, *column, **filter_by):
-        subcols = source.columns()
-        column = [x for x in column if x in subcols]
-        if any(v != '' for k, v in filter_by.items() if k not in subcols):
-            return None  # <- EXIT!
-        sub_filter = dict((k, v) for k, v in filter_by.items() if k in subcols)
-        fn = getattr(source, method)
-        return fn(*column, **sub_filter)
-
-    def distinct(self, column, **filter_by):
+    def distinct(self, columns, **filter_by):
         """Return iterable of tuples containing distinct *column*
         values.
         """
-        if not _is_nscontainer(column):
-            column = (column,)
-
-        self._assert_columns_exist(column)  # Must be in at least one sub-source.
-
-        results = []
-        for subsrc in self.__wrapped__:
-            subsrc_columns = subsrc.columns()
-            subfltr = self._make_sub_filter(subsrc_columns, **filter_by)
-            if subfltr is not None:
-                subcol = [x for x in column if x in subsrc_columns]
-                if subcol:
-                    subres = subsrc.distinct(subcol, **subfltr)
-                    subres = self._normalize_result(subres, subcol, column)
-                    results.append(subres)
-                else:
-                    if subfltr != {}:
-                        tst = subsrc.distinct(subfltr.keys(), **subfltr)
-                        if tst:
-                            empty_row = ('',) * len(column)
-                            subres = ResultSet([empty_row])
-                            results.append(subres)
-                    else:
-                        # If subsrc contains at least 1 item, then
-                        # add an empty row to the result list.  If
-                        # subsrc is completely empty, then don't add
-                        # anything.
-                        iterable = iter(subsrc)
-                        try:
-                            next(iterable)
-                            subres = ResultSet([tuple(['']) * len(column)])
-                            results.append(subres)
-                        except StopIteration:
-                            pass
-
+        fn = lambda source: source.distinct(columns, **filter_by)
+        results = (fn(source) for source in self._sources)
         results = itertools.chain(*results)
         return ResultSet(results)
 
     def sum(self, columns, keys=None, **filter_by):
         """Return sum of values in *columns* grouped by *keys*."""
-        # WARNING!!!: Removing optimized version until we
-        #             can implement AdapterSource class.
-        return super(MultiSource, self).sum(columns, keys, **filter_by)
+        fn = lambda source: source.sum(columns, keys, **filter_by)
+        results = (fn(source) for source in self._sources)
 
-    def reduce(self, function, column, keys=None, initializer=None, **filter_by):
+        if not keys:
+            if isinstance(columns, str):
+                sum_total = sum(results)
+            else:
+                sum_total = (0,) * len(columns)
+                for val in results:
+                    sum_total = tuple(xi + yi for xi, yi in zip(sum_total, val))
+            return sum_total  # <- EXIT!
+
+        if isinstance(columns, str):
+            sum_total = defaultdict(lambda: 0)
+            for result in results:
+                for key, val in result.items():
+                    sum_total[key] += val
+        else:
+            all_zeros = (0,) * len(columns)
+            sum_total = defaultdict(lambda: all_zeros)
+            for result in results:
+                for key, val in result.items():
+                    existing = sum_total[key]
+                    sum_total[key] = tuple(xi + yi for xi, yi in zip(existing, val))
+        return ResultMapping(sum_total, keys)
+
+    def mapreduce(self, mapper, reducer, columns, keys=None, **filter_by):
+        fn = lambda source: source.mapreduce(mapper, reducer, columns, keys, **filter_by)
+        results = (fn(source) for source in self._sources)
+
+        if not keys:
+            return functools.reduce(reducer, results)  # <- EXIT!
+
+        final_result = {}
+        results = (result.items() for result in results)
+        for key, y in itertools.chain(*results):
+            if key in final_result:
+                x = final_result[key]
+                final_result[key] = reducer(x, y)
+            else:
+                final_result[key] = y
+        return ResultMapping(final_result, keys)
+
+    def _reduce(self, function, column, keys=None, initializer=None, **filter_by):
         """Apply *function* of two arguments cumulatively to the values
         in *column*, from left to right, so as to reduce the iterable
         to a single value.  If *column* is a string, the values are
