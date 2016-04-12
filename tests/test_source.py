@@ -22,6 +22,7 @@ from datatest.source import BaseSource
 from datatest.source import _TemporarySqliteTable
 from datatest.source import SqliteSource
 from datatest.source import CsvSource
+from datatest.source import _FilterValueError
 from datatest.source import AdapterSource
 from datatest.source import MultiSource
 
@@ -777,6 +778,131 @@ class TestAdapterSource(unittest.TestCase):
                     "[('a', 'col1'), ('b', 'col2'), ('c', 'col3')])")
         self.assertEqual(required, repr(adapted))
 
+    def test_unwrap_columns(self):
+        interface = [('a', 'col1'), ('b', 'col2'), ('c', 'col3'), ('d', None)]
+        adapted = AdapterSource(self.source, interface)
+        unwrap_columns = adapted._unwrap_columns
+
+        self.assertEqual('col1', unwrap_columns('a'))
+        self.assertEqual(('col1', 'col2'), unwrap_columns(['a', 'b']))
+        self.assertEqual(None, unwrap_columns('d'))
+        with self.assertRaises(KeyError):
+            unwrap_columns('col1')  # <- This is a hidden, adaptee column
+                                    #    not a visible adapter column.
+
+    def test_rewrap_columns(self):
+        interface = [('a', 'col1'), ('b', 'col2'), ('c', 'col3'), ('d', None)]
+        adapted = AdapterSource(self.source, interface)
+        rewrap_columns = adapted._rewrap_columns
+
+        self.assertEqual('a', rewrap_columns('col1'))
+        self.assertEqual(('a', 'b'), rewrap_columns(['col1', 'col2']))
+        self.assertEqual(None, rewrap_columns([]))
+        self.assertEqual(None, rewrap_columns(None))
+        with self.assertRaises(KeyError):
+            rewrap_columns('c')
+
+    def test_unwrap_filter(self):
+        interface = [('a', 'col1'), ('b', 'col2'), ('c', 'col3'), ('d', None)]
+        adapted = AdapterSource(self.source, interface)
+        unwrap_filter = adapted._unwrap_filter
+
+        self.assertEqual({'col1': 'foo'}, unwrap_filter({'a': 'foo'}))
+        self.assertEqual({'col1': 'foo', 'col2': 'bar'}, unwrap_filter({'a': 'foo', 'b': 'bar'}))
+        self.assertEqual({}, unwrap_filter({}))
+        with self.assertRaises(_FilterValueError):
+            unwrap_filter({'a': 'foo', 'd': 'baz'})  # <- d='baz' cannot be converted
+                                                     #    because there is no adaptee
+                                                     #    column mapped to 'd'.
+
+        # It is possible, however, to filter 'd' to an empty string (the
+        # default *missing* value.)
+        self.assertEqual({'col1': 'foo'}, unwrap_filter({'a': 'foo', 'd': ''}))
+
+    def test_rebuild_resultset(self):
+        interface = [('a', 'col1'), ('b', 'col2'), ('c', 'col3'), ('d', None)]
+        adapted = AdapterSource(self.source, interface)
+        rebuild_resultset = adapted._rebuild_resultset
+
+        # Rebuild one column result as two column result.
+        orig = ResultSet(['x', 'y', 'z'])
+        result = rebuild_resultset(orig, 'b', ['b', 'd'])
+        expected = ResultSet([('x', ''), ('y', ''), ('z', '')])
+        self.assertEqual(expected, result)
+
+        # Rebuild two column result to three column with missing column in the middle.
+        orig = ResultSet([('x1', 'x2'), ('y1', 'y2'), ('z1', 'z2')])
+        result = rebuild_resultset(orig, ['b', 'c'], ['b', 'd', 'c'])
+        expected = ResultSet([('x1', '', 'x2'), ('y1', '', 'y2'), ('z1', '', 'z2')])
+        self.assertEqual(expected, result)
+
+    def test_rebuild_resultmapping(self):
+        interface = [('a', 'col1'), ('b', 'col2'), ('c', 'col3'), ('d', None)]
+        adapted = AdapterSource(self.source, interface)
+        rebuild_resultmapping = adapted._rebuild_resultmapping
+
+        # Rebuild single key result as two key result.
+        orig = ResultMapping({'x': 1, 'y': 2, 'z': 3}, key_names='a')
+        result = rebuild_resultmapping(orig, 'c', 'c', 'a', ['a', 'b'], missing_col='')
+        expected = ResultMapping({('x', ''): 1,
+                                  ('y', ''): 2,
+                                  ('z', ''): 3},
+                                 key_names=['a', 'b'])
+        self.assertEqual(expected, result)
+
+        # Rebuild two key result as three key result.
+        orig = ResultMapping({('x', 'x'): 1, ('y', 'y'): 2, ('z', 'z'): 3}, key_names=['a', 'c'])
+        result = rebuild_resultmapping(orig, 'c', 'c', ['a', 'b'], ['a', 'd', 'b'], missing_col='')
+        expected = ResultMapping({('x', '', 'x'): 1,
+                                  ('y', '', 'y'): 2,
+                                  ('z', '', 'z'): 3},
+                                 key_names=['a', 'd', 'b'])
+        self.assertEqual(expected, result)
+
+        # Rebuild single value tuple result as two value result.
+        orig = ResultMapping({'x': (1,), 'y': (2,), 'z': (3,)}, key_names='a')
+        result = rebuild_resultmapping(orig, 'c', ['c', 'd'], 'a', 'a', missing_col='')
+        expected = ResultMapping({'x': (1, ''),
+                                  'y': (2, ''),
+                                  'z': (3, '')},
+                                 key_names='a')
+        self.assertEqual(expected, result)
+
+        # Rebuild single value result as two value result.
+        if True:
+            orig = ResultMapping({'x': 1, 'y': 2, 'z': 3}, key_names='a')
+            result = rebuild_resultmapping(orig, 'c', ['c', 'd'], 'a', 'a', missing_col='')
+            expected = ResultMapping({'x': (1, ''),
+                                      'y': (2, ''),
+                                      'z': (3, '')},
+                                     key_names=['c', 'd'])
+            self.assertEqual(expected, result)
+
+        # Rebuild two column result as three column result.
+        orig = ResultMapping({'x': (1, 2), 'y': (2, 4), 'z': (3, 6)}, key_names='a')
+        result = rebuild_resultmapping(orig, ['b', 'c'], ['b', 'd', 'c'],
+                                       'a', 'a', missing_col='empty')
+        expected = ResultMapping({'x': (1, 'empty', 2),
+                                  'y': (2, 'empty', 4),
+                                  'z': (3, 'empty', 6)},
+                                 key_names='a')
+        self.assertEqual(expected, result)
+
+        # Rebuild two key and two column result as three key and three column result.
+        orig = ResultMapping({('x', 'x'): (1, 2),
+                              ('y', 'y'): (2, 4),
+                              ('z', 'z'): (3, 6)},
+                              key_names=['a', 'c'])
+        result = rebuild_resultmapping(orig,
+                                       ['b', 'c'], ['b', 'd', 'c'],
+                                       ['a', 'b'], ['a', 'd', 'b'],
+                                       missing_col='empty')
+        expected = ResultMapping({('x', '', 'x'): (1, 'empty', 2),
+                                  ('y', '', 'y'): (2, 'empty', 4),
+                                  ('z', '', 'z'): (3, 'empty', 6)},
+                                 key_names=['a', 'd', 'b'])
+        self.assertEqual(expected, result)
+
     def test_columns(self):
         # Test original.
         self.assertEqual(['col1', 'col2', 'col3'], self.source.columns())
@@ -1110,85 +1236,3 @@ class TestMultiSourceDifferentColumns2(unittest.TestCase):
 
         expected = [('a', 'x'), ('a', 'y'), ('b', 'z'), ('a', ''), ('b', '')]
         self.assertEqual(expected, distinct(['label1', 'label2']))
-
-    def test_make_sub_filter(self):
-        make_sub_filter = self.datasource._make_sub_filter
-
-        filter_by = {'foo': 'a', 'bar': ''}
-        self.assertEqual({'foo': 'a'}, make_sub_filter(['foo'], **filter_by))
-
-        filter_by = {'foo': 'a', 'bar': ''}
-        self.assertEqual({'foo': 'a'}, make_sub_filter(['foo', 'baz'], **filter_by))
-
-        filter_by = {'qux': '', 'quux': ''}
-        self.assertEqual({}, make_sub_filter(['foo', 'bar'], **filter_by))
-
-        filter_by = {'foo': 'a', 'bar': 'b'}
-        self.assertIsNone(make_sub_filter(['foo', 'baz'], **filter_by))
-
-    def test_normalize_resultset(self):
-        normalize_result = self.datasource._normalize_result
-
-        result = ResultSet([('a', 'x'), ('b', 'y'), ('c', 'z')])
-
-        # Append empty column.
-        expected = ResultSet([('a', 'x', ''), ('b', 'y', ''), ('c', 'z', '')])
-        self.assertEqual(expected, normalize_result(result, ['foo', 'bar'], ['foo', 'bar', 'baz']))
-
-        # Insert empty column into middle.
-        expected = ResultSet([('a', '', 'x'), ('b', '', 'y'), ('c', '', 'z')])
-        self.assertEqual(expected, normalize_result(result, ['foo', 'bar'], ['foo', 'baz', 'bar']))
-
-        # Insert empty column, reorder existing columns.
-        expected = ResultSet([('x', '', 'a'), ('y', '', 'b'), ('z', '', 'c')])
-        self.assertEqual(expected, normalize_result(result, ['foo', 'bar'], ['bar', 'baz', 'foo']))
-
-        # Test error condition.
-        with self.assertRaises(Exception):
-            normalized = normalize_result(result, ['foo', 'bar'], ['bar'])
-
-        # Single-item set, insert empty columns.
-        result = ResultSet(['a', 'b', 'c'])
-        expected = ResultSet([('', 'a', ''), ('', 'b', ''), ('', 'c', '')])
-        self.assertEqual(expected, normalize_result(result, 'foo', ['qux', 'foo', 'corge']))
-
-    def test_normalize_resultmapping(self):
-        """."""
-        normalize_result = self.datasource._normalize_result
-
-        result = ResultMapping({('a', 'x'): 1, ('b', 'y'): 2, ('c', 'z'): 3}, key_names=['foo', 'bar'])
-
-        # Append empty column.
-        expected = ResultMapping({('a', 'x', ''): 1,
-                                  ('b', 'y', ''): 2,
-                                  ('c', 'z', ''): 3},
-                                 key_names=['foo', 'bar', 'baz'])
-        self.assertEqual(expected, normalize_result(result, ['foo', 'bar'], ['foo', 'bar', 'baz']))
-
-        # Insert empty column into middle.
-        expected = ResultMapping({('a', '', 'x'): 1,
-                                  ('b', '', 'y'): 2,
-                                  ('c', '', 'z'): 3},
-                                 key_names=['foo', 'bar', 'baz'])
-        self.assertEqual(expected, normalize_result(result, ['foo', 'bar'], ['foo', 'baz', 'bar']))
-
-        # Insert empty column, reorder existing columns.
-        expected = ResultMapping({('x', '', 'a'): 1,
-                                  ('y', '', 'b'): 2,
-                                  ('z', '', 'c'): 3},
-                                 key_names=['foo', 'bar', 'baz'])
-        self.assertEqual(expected, normalize_result(result, ['foo', 'bar'], ['bar', 'baz', 'foo']))
-
-        # Test error condition.
-        with self.assertRaises(Exception):
-            normalized = normalize_result(result, ['foo', 'bar'], ['bar'])
-
-        # Single-item key, insert empty columns.
-        result = ResultMapping({('a',): 1, ('b',): 2, ('c',): 3}, key_names='foo')
-        expected = ResultMapping({('', 'a', ''): 1, ('', 'b', ''): 2, ('', 'c', ''): 3}, key_names=['qux', 'foo', 'corge'])
-        self.assertEqual(expected, normalize_result(result, ['foo'], ['qux', 'foo', 'corge']))
-
-        # String key, insert empty columns.
-        result = ResultMapping({'a': 1, 'b': 2, 'c': 3}, key_names='foo')
-        expected = ResultMapping({('', 'a', ''): 1, ('', 'b', ''): 2, ('', 'c', ''): 3}, key_names=['qux', 'foo', 'corge'])
-        self.assertEqual(expected, normalize_result(result, ['foo'], ['qux', 'foo', 'corge']))

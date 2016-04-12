@@ -710,6 +710,13 @@ class CsvSource(_SqliteSource):
         return '{0}({1})'.format(cls_name, src_file)
 
 
+class _FilterValueError(ValueError):
+    """Used by AdapterSource.  This error is raised when attempting to
+    unwrap a filter that specifies an inappropriate (non-missing) value
+    for a missing column."""
+    pass
+
+
 class AdapterSource(BaseSource):
     """A wrapper class that adapts a data *source* to an *interface* of
     column names. The *interface* should be a sequence of 2-tuples where
@@ -777,7 +784,7 @@ class AdapterSource(BaseSource):
         unwrap_cols = self._unwrap_columns(columns)
         try:
             unwrap_flt = self._unwrap_filter(filter_by)
-        except AssertionError:
+        except _FilterValueError:
             return ResultSet([])  # <- EXIT!
 
         if not unwrap_cols:
@@ -801,7 +808,7 @@ class AdapterSource(BaseSource):
         unwrap_keys = self._unwrap_columns(keys)
         try:
             unwrap_flt = self._unwrap_filter(filter_by)
-        except AssertionError:
+        except _FilterValueError:
             if keys:
                 result = ResultMapping({}, keys)
             else:
@@ -834,7 +841,7 @@ class AdapterSource(BaseSource):
         unwrap_keys = self._unwrap_columns(keys)
         try:
             unwrap_flt = self._unwrap_filter(filter_by)
-        except AssertionError:
+        except _FilterValueError:
             if keys:
                 result = ResultMapping({}, keys)
             else:
@@ -861,7 +868,7 @@ class AdapterSource(BaseSource):
                                            missing_col=self._missing)
 
     def _unwrap_columns(self, columns, interface_dict=None):
-        """."""
+        """Unwrap adapter *columns* to reveal hidden adaptee columns."""
         if not columns:
             return None  # <- EXIT!
 
@@ -875,7 +882,11 @@ class AdapterSource(BaseSource):
         return tuple(x for x in unwrapped if x != None)
 
     def _unwrap_filter(self, filter_dict, interface_dict=None):
-        """."""
+        """Unwrap adapter *filter_dict* to reveal hidden adaptee column
+        names.  An unwrapped filter cannot be created if the filter
+        specifies that a missing column equals a non-missing value--if
+        this condition occurs, a _FilterValueError is raised.
+        """
         if not interface_dict:
             interface_dict = dict(self._interface)
 
@@ -885,13 +896,15 @@ class AdapterSource(BaseSource):
             if tran_k != None:
                 translated[tran_k] = v
             else:
-                # TODO!!!: Make this message more informative.
-                assert v == self._missing, ('Missing column can only be '
+                if v != self._missing:
+                    raise _FilterValueError('Missing column can only be '
                                             'filtered to missing value.')
         return translated
 
     def _rewrap_columns(self, unwrapped_columns, interface_dict=None):
-        """."""
+        """Take unwrapped adaptee column names and wrap them in adapter
+        column names (specified by _interface).
+        """
         if not unwrapped_columns:
             return None  # <- EXIT!
 
@@ -906,7 +919,9 @@ class AdapterSource(BaseSource):
         return tuple(rev_interface[k] for k in unwrapped_columns)
 
     def _rebuild_resultset(self, result, rewrapped_columns, columns):
-        """."""
+        """Take ResultSet from unwrapped source and rebuild it to match
+        the ResultSet that would be expected from the wrapped source.
+        """
         normalize = lambda x: x if (isinstance(x, str) or not x) else tuple(x)
         rewrapped_columns = normalize(rewrapped_columns)
         columns = normalize(columns)
@@ -927,7 +942,10 @@ class AdapterSource(BaseSource):
                                rewrapped_keys,
                                keys,
                                missing_col):
-        """."""
+        """Take ResultMapping from unwrapped source and rebuild it to
+        match the ResultMapping that would be expected from the wrapped
+        source.
+        """
         normalize = lambda x: x if (isinstance(x, str) or not x) else tuple(x)
         rewrapped_columns = normalize(rewrapped_columns)
         rewrapped_keys = normalize(rewrapped_keys)
@@ -958,6 +976,8 @@ class AdapterSource(BaseSource):
             def rebuild_values(v, missing):
                 if isinstance(columns, str):
                     return v
+                if not _is_nscontainer(v):
+                    v = (v,)
                 value_dict = dict(zip(rewrapped_columns, v))
                 return tuple(value_dict.get(v, missing) for v in columns)
             item_gen = ((k, rebuild_values(v, missing_col)) for k, v in item_gen)
@@ -1092,86 +1112,6 @@ class MultiSource(BaseSource):
             else:
                 final_result[key] = y
         return ResultMapping(final_result, keys)
-
-    def _reduce(self, function, column, keys=None, initializer=None, **filter_by):
-        """Apply *function* of two arguments cumulatively to the values
-        in *column*, from left to right, so as to reduce the iterable
-        to a single value.  If *column* is a string, the values are
-        passed to *function* unchanged.  But if *column* is, itself, a
-        function, it should accept a single dict-row and return a
-        single value.  If *keys* is omitted, the raw result is
-        returned, otherwise returns a ResultMapping object.
-        """
-        if not callable(column):
-            self._assert_columns_exist(column)
-
-        if keys is None:
-            results = []
-            for subsrc in self.__wrapped__:
-                subsrc_columns = subsrc.columns()
-                subfltr = self._make_sub_filter(subsrc_columns, **filter_by)
-                if subfltr is not None:
-                    try:
-                        result = subsrc.reduce(function, column, keys, initializer, **filter_by)
-                        results.append(result)
-                    except LookupError:
-                        pass
-            return functools.reduce(function, results, initializer)
-        else:
-            if not _is_nscontainer(keys):
-                keys = (keys,)
-            self._assert_columns_exist(keys)
-            results = {}
-            for subsrc in self.__wrapped__:
-                subsrc_columns = subsrc.columns()
-                subfltr = self._make_sub_filter(subsrc_columns, **filter_by)
-                if subfltr is not None:
-                    try:
-                        subgrp = [x for x in keys if x in subsrc_columns]
-                        subres = subsrc.reduce(function, column, subgrp, initializer, **subfltr)
-                        subres = self._normalize_result(subres, subgrp, keys)
-                        for key, y in subres.items():
-                            x = results.get(key, initializer)
-                            results[key] = function(x, y)
-                    except LookupError:
-                        pass
-            return ResultMapping(results, keys)
-
-    @staticmethod
-    def _make_sub_filter(columns, **filter_by):
-        """."""
-        subcols = columns
-        missing = [k for k in filter_by if k not in subcols]
-        if any(filter_by[k] != '' for k in missing):
-            return None  # <- EXIT!
-        subfltr = dict((k, v) for k, v in filter_by.items() if k in subcols)
-        return subfltr
-
-    @staticmethod
-    def _normalize_result(result_obj, orig_cols, targ_cols):
-        """."""
-        if list(orig_cols) == list(targ_cols):
-            return result_obj  # If columns are same, return result unchanged.
-
-        if not _is_nscontainer(orig_cols):
-            orig_cols = (orig_cols,)
-
-        if not all(x in targ_cols for x in orig_cols):
-            raise ValueError('Target columns must include all original columns.')
-
-        def normalize(orig):
-            orig_dict = dict(zip(orig_cols, orig))
-            return tuple(orig_dict.get(col, '') for col in targ_cols)
-
-        if isinstance(result_obj, ResultSet):
-            normalized = ResultSet(normalize(v) for v in result_obj)
-        elif isinstance(result_obj, ResultMapping):
-            item_gen = ((normalize(k), v) for k, v in result_obj.items())
-            normalized = ResultMapping(item_gen, key_names=targ_cols)
-        else:
-            raise ValueError('Result object must be ResultSet or ResultMapping.')
-
-        return normalized
 
 
 #DefaultDataSource = CsvSource
