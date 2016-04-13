@@ -127,26 +127,26 @@ class BaseSource(object):
             Keywords used to filter rows.
         """
         if isinstance(columns, str):
-            getval = lambda row: row[columns]
+            get_value = lambda row: row[columns]
         elif isinstance(columns, Sequence):
-            getval = lambda row: tuple(row[x] for x in columns)
+            get_value = lambda row: tuple(row[column] for column in columns)
         else:
             raise TypeError('colums must be str or sequence')
 
-        filtered_iter = self.filter_rows(**kwds_filter)
+        filtered_rows = self.filter_rows(**kwds_filter)
 
         if not keys:
-            values_iter = (getval(row) for row in filtered_iter)
-            mapped_iter = (mapper(x) for x in values_iter)
-            return functools.reduce(reducer, mapped_iter)  # <- EXIT!
+            filtered_values = (get_value(row) for row in filtered_rows)
+            mapped_values = (mapper(value) for value in filtered_values)
+            return functools.reduce(reducer, mapped_values)  # <- EXIT!
 
         if not _is_nscontainer(keys):
             keys = (keys,)
         self._assert_columns_exist(keys)
 
         result = {}
-        for row in filtered_iter:              # Do not remove this loop
-            y = getval(row)                    # without a good reason!
+        for row in filtered_rows:              # Do not remove this loop
+            y = get_value(row)                 # without a good reason!
             y = mapper(y)                      # While a more functional
             key = tuple(row[k] for k in keys)  # style (using sorted,
             if key in result:                  # groupby, and reduce) is
@@ -204,16 +204,6 @@ class BaseSource(object):
             missing = ', '.join(repr(x) for x in missing)
             msg = '{0} not in {1}'.format(missing, self.__repr__())
             raise LookupError(msg)
-
-
-# Custom data source template example:
-#
-#    class MyCustomSource(SqliteSource)
-#        def __init__(self, customsource):
-#            ...prepare data and columns from customsource...
-#            temptable = _TemporarySqliteTable(data, columns)
-#            self._tempsqlite = temptable
-#            SqliteSource.__init__(self, temptable.connection, temptable.name)
 
 
 class SqliteBase(BaseSource):
@@ -295,6 +285,9 @@ class SqliteBase(BaseSource):
         """Aggregates values using SQL function select--e.g.,
         'COUNT(*)', 'SUM(col1)', etc.
         """
+        # TODO: _sql_aggregate has grown messy after a handful of
+        # iterations look to refactor it in the future to improve
+        # maintainability.
         if not _is_nscontainer(sql_function):
             sql_function = (sql_function,)
 
@@ -324,8 +317,23 @@ class SqliteBase(BaseSource):
             # Gets value by index (i.e., row[-pos]).
             iterable = ((row[:-pos], row[-pos]) for row in cursor)
         return CompareDict(iterable, keys)
-        # TODO: This method has grown messy after a handful of iterations
-        # look to refactor it in the future to improve maintainability.
+
+    # Regarding SqliteBase.mapreduce():
+    #
+    # This subclass does not implement its own mapreduce() optimization
+    # and it probably should not in the future.  However, this class
+    # *does* implement a SQL-optimized filter_rows() method--which
+    # mapreduce() uses internally.
+    #
+    # A generalized optimization of mapreduce() cannot be implemented
+    # in basic SQL.  Although, it is technically possible to implement
+    # several special cases and then fallback to the parent
+    # implementation when a novel case is encountered.  The sum() and
+    # count() methods are, themselves, special cases of mapreduce() and
+    # this class does provide optimized versions of them.  But
+    # attempting to optimize an open-ended number of special cases
+    # would require a lot of speculation and hardly seems advisable at
+    # this time.
 
     def reduce(self, function, column, keys=None, initializer=None, **kwds_filter):
         """Apply *function* of two arguments cumulatively to the values
