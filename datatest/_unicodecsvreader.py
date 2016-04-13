@@ -64,28 +64,29 @@ class UnicodeCsvReader:
 
 
 ########################################################################
-# Patch `UnicodeCsvReader` if using Python 2.
+# Patch `UnicodeCsvReader` methods if using Python 2.
 ########################################################################
 if sys.version < '3':
-    _py3_UnicodeCsvReader = UnicodeCsvReader
-    class UnicodeCsvReader(_py3_UnicodeCsvReader):
-        @staticmethod
-        def _get_file_object(csvfile, encoding):
-            if isinstance(csvfile, str):
-                return open(csvfile, 'rb')  # <- EXIT!
+    @staticmethod
+    def _py2_get_file_object(csvfile, encoding):
+        if isinstance(csvfile, str):
+            return open(csvfile, 'rb')  # <- EXIT!
 
-            if hasattr(csvfile, 'mode'):
-                assert 'b' in csvfile.mode, ("When using Python 2, file must "
-                                             "be open in binary mode ('rb').")
-            elif issubclass(csvfile.__class__, io.IOBase):
-                assert not issubclass(csvfile.__class__, io.TextIOBase), ("When using Python 2, "
-                                                                          "must use byte stream "
-                                                                          "(not text stream).")
-            return csvfile
+        if hasattr(csvfile, 'mode'):
+            assert 'b' in csvfile.mode, ("When using Python 2, file must "
+                                         "be open in binary mode ('rb').")
+        elif issubclass(csvfile.__class__, io.IOBase):
+            assert not issubclass(csvfile.__class__, io.TextIOBase), ("When using Python 2, "
+                                                                      "must use byte stream "
+                                                                      "(not text stream).")
+        return csvfile
+    UnicodeCsvReader._get_file_object = _py2_get_file_object
 
-        def __next__(self):
-            row = next(self._reader)
-            return [s.decode(self.encoding) for s in row]
+    def _py2__next__(self):
+        row = next(self._reader)
+        return [s.decode(self.encoding) for s in row]
+    UnicodeCsvReader.__next__ = _py2__next__
 
-        def next(self):
-            return self.__next__()
+    def _py2_next(self):
+        return self.__next__()
+    UnicodeCsvReader.next = _py2_next
