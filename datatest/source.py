@@ -28,10 +28,16 @@ sqlite3.register_adapter(Decimal, str)
 class BaseSource(object):
     """Common base class for all data sources.  Custom sources can be
     created by subclassing BaseSource and implementing ``__init__()``,
-    ``__repr__()``, ``__iter__()``, and ``columns()``.  Optionally,
-    performance can be improved by implementing ``distinct()``,
-    ``sum()``, ``count()``, and ``reduce()``.
+    ``__repr__()``, ``columns()`` and ``__iter__()``.  Optionally,
+    performance can be improved by implementing ``filter_rows()``,
+    ``distinct()``, ``sum()``, ``count()``, and ``mapreduce()``.
     """
+    def __new__(cls, *args, **kwds):
+        if cls is BaseSource:
+            msg = 'cannot instantiate BaseSource directly - make a subclass'
+            raise NotImplementedError(msg)
+        return super(BaseSource, cls).__new__(cls)
+
     def __init__(self):
         """Initialize self."""
         return NotImplemented
@@ -40,15 +46,27 @@ class BaseSource(object):
         """Return a string representation of the data source."""
         return NotImplemented
 
+    def columns(self):
+        """Return list of column names."""
+        return NotImplemented
+
     def __iter__(self):
         """Return an iterable of dictionary rows (like
         ``csv.DictReader``).
         """
         return NotImplemented
 
-    def columns(self):
-        """Return list of column names."""
-        return NotImplemented
+    def filter_rows(self, **kwds):
+        """Filter data by keywords, returns iterable of dict-rows (much
+        like csv.DictReader() object).  E.g., where column1=value1,
+        column2=value2, etc. (uses slow ``__iter__``).
+        """
+        if kwds:
+            normalize = lambda v: (v,) if isinstance(v, str) else v
+            kwds = dict((k, normalize(v)) for k, v in kwds.items())
+            matches_kwds = lambda row: all(row[k] in v for k, v in kwds.items())
+            return filter(matches_kwds, self.__iter__())
+        return self.__iter__()
 
     def distinct(self, column, **kwds_filter):
         """Return iterable of tuples containing distinct *column*
@@ -111,8 +129,6 @@ class BaseSource(object):
         if isinstance(columns, str):
             getval = lambda row: row[columns]
         elif isinstance(columns, Sequence):
-            #coltup = namedtuple('column_names', columns, rename=True)
-            #getval = lambda row: coltup(*(row[x] for x in columns))
             getval = lambda row: tuple(row[x] for x in columns)
         else:
             raise TypeError('colums must be str or sequence')
@@ -174,19 +190,6 @@ class BaseSource(object):
             result[key] = function(x, y)           # itertools.groupby() plus
                                                    # functools.reduce().
         return CompareDict(result, keys)
-
-    def filter_rows(self, **kwds):
-        """Filter data by keywords, returns iterable of dict-rows (much
-        like csv.DictReader() object).  E.g., where column1=value1,
-        column2=value2, etc. (uses slow ``__iter__``).
-        """
-        if not kwds:
-            return self.__iter__()  # <- EXIT!
-        normalize = lambda v: (v,) if not _is_nscontainer(v) else v
-        kwds = dict((k, normalize(v)) for k, v in kwds.items())
-
-        matches_kwds = lambda row: all(row[k] in v for k, v in kwds.items())
-        return (x for x in self.__iter__() if matches_kwds(x))
 
     def _assert_columns_exist(self, columns):
         """Asserts that given columns are present in data source,
@@ -251,12 +254,13 @@ class SqliteBase(BaseSource):
         return (dict_row(row) for row in cursor.fetchall())
 
     def filter_rows(self, **kwds):
-        cursor = self._connection.cursor()
-        cursor = self._execute_query(self._table, '*', **kwds)
-
-        column_names = self.columns()
-        dict_row = lambda row: dict(zip(column_names, row))
-        return (dict_row(row) for row in cursor)
+        if kwds:
+            cursor = self._connection.cursor()
+            cursor = self._execute_query(self._table, '*', **kwds)  # <- applies filter
+            column_names = self.columns()
+            dict_row = lambda row: dict(zip(column_names, row))
+            return (dict_row(row) for row in cursor)
+        return self.__iter__()
 
     def distinct(self, column, **kwds_filter):
         """Return iterable of tuples containing distinct *column*
@@ -628,14 +632,25 @@ class AdapterSource(BaseSource):
             missing = ', missing=' + repr(missing)
         return '{0}({1}, {2}{3})'.format(self_class, wrapped_repr, interface, missing)
 
+    def columns(self):
+        return [x[0] for x in self._interface]
+
     def __iter__(self):
         interface = self._interface
         missing = self._missing
-        for row in self.__wrapped__:
+        for row in self.__wrapped__.__iter__():
             yield dict((new, row.get(old, missing)) for new, old in interface)
 
-    def columns(self):
-        return [x[0] for x in self._interface]
+    def filter_rows(self, **kwds):
+        try:
+            unwrap_kwds = self._unwrap_filter(kwds)
+        except _FilterValueError:
+            return  # <- EXIT! Raises StopIteration to signify empty generator.
+
+        interface = self._interface
+        missing = self._missing
+        for row in self.__wrapped__.filter_rows(**unwrap_kwds):
+            yield dict((new, row.get(old, missing)) for new, old in interface)
 
     def distinct(self, columns, **kwds_filter):
         unwrap_src = self.__wrapped__  # Unwrap data source.
@@ -906,16 +921,21 @@ class MultiSource(BaseSource):
         src_names = ',\n'.join(src_names)                    # Join w/ comma & new-line.
         return '{0}(\n{1}\n)'.format(cls_name, src_names)
 
+    def columns(self):
+        """Return list of column names."""
+        return self._columns
+
     def __iter__(self):
         """Return iterable of dictionary rows (like csv.DictReader)."""
-        columns = self.columns()
+        #columns = self.columns()
         for source in self._sources:
             for row in source.__iter__():
                 yield row
 
-    def columns(self):
-        """Return list of column names."""
-        return self._columns
+    def filter_rows(self, **kwds):
+        for source in self._sources:
+            for row in source.filter_rows(**kwds):
+                yield row
 
     def distinct(self, columns, **kwds_filter):
         """Return iterable of tuples containing distinct *column*
