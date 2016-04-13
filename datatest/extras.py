@@ -92,46 +92,6 @@ class PandasSource(BaseSource):
                 df = df[df[col] == val]
         return df
 
-    @classmethod
-    def from_records(cls, data, columns=None):
-        """Alternate constructor to load an existing collection of
-        records.  Loads *data* (an iterable of lists, tuples, or dicts)
-        as a DataFrame with the given *columns*::
-
-            subjectData = datatest.PandasSource.from_records(records, columns)
-        """
-        try:
-            import pandas
-            try:
-                assert _version_info(pandas) >= (0, 13, 0)
-            except AssertionError:
-                raise AssertionError("Requires 'pandas' version 0.13.0 "
-                                     "or greater.")
-        except ImportError:
-            raise ImportError(
-                "No module named 'pandas'\n"
-                "\n"
-                "This is an optional data source that requires the "
-                "third-party libraries 'pandas' (0.13.0 or greater) "
-                "and 'numpy' (1.7.1 or greater)."
-            )
-
-        data = iter(data)
-        if not columns:
-            first_row = next(data)
-            if hasattr(first_row, 'keys'):  # Dict-like rows.
-                columns = tuple(first_row.keys())
-            elif hasattr(first_row, '_fields'):  # Namedtuple-like rows.
-                columns = first_row._fields
-            else:
-                msg = ('columns argument can only be omitted if data '
-                       'contains dict-rows or namedtuple-rows')
-                raise TypeError(msg)
-            data = itertools.chain([first_row], data)  # Rebuild original.
-
-        df = pandas.DataFrame.from_records(data, columns=columns)
-        return cls(df)
-
 
 class ExcelSource(BaseSource):
     """Loads first worksheet from XLSX or XLS file *path*::
