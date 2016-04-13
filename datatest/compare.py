@@ -1,4 +1,4 @@
-"""Result objects from data source queries."""
+"""Comparison objects returned by data source queries."""
 import inspect
 from numbers import Number
 

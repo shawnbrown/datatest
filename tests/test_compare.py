@@ -1,9 +1,9 @@
 """Result objects for DataSource queries."""
 from . import _unittest as unittest
 
-from datatest.sourceresult import _coerce_other
-from datatest.sourceresult import CompareSet
-from datatest.sourceresult import CompareDict
+from datatest.compare import _coerce_other
+from datatest.compare import CompareSet
+from datatest.compare import CompareDict
 
 from datatest import Extra
 from datatest import Missing

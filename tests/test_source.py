@@ -14,8 +14,8 @@ from datatest._collections import namedtuple
 from datatest._decimal import Decimal
 
 # Import related objects.
-from datatest.sourceresult import CompareSet
-from datatest.sourceresult import CompareDict
+from datatest.compare import CompareSet
+from datatest.compare import CompareDict
 
 # Import code to test.
 from datatest.source import BaseSource

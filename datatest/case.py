@@ -17,7 +17,7 @@ from .differences import Extra
 from .differences import Invalid
 from .differences import Deviation
 from .source import BaseSource
-from .sourceresult import CompareSet
+from .compare import CompareSet
 
 
 __datatest = True  # Used to detect in-module stack frames (which are

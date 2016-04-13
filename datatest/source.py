@@ -14,9 +14,9 @@ from ._decimal import Decimal
 from ._unicodecsvreader import UnicodeCsvReader as _UnicodeCsvReader
 from . import _itertools as itertools
 
-from .sourceresult import CompareDict
-from .sourceresult import CompareSet
-from .sourceresult import _is_nscontainer
+from .compare import CompareDict
+from .compare import CompareSet
+from .compare import _is_nscontainer
 
 #pattern = 'test*.py'
 prefix = 'test_'

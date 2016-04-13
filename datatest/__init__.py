@@ -17,8 +17,8 @@ from .differences import Deviation
 from .differences import NotProperSubset
 from .differences import NotProperSuperset
 
-from .sourceresult import CompareSet
-from .sourceresult import CompareDict
+from .compare import CompareSet
+from .compare import CompareDict
 
 from .runner import required
 from .runner import DataTestRunner
