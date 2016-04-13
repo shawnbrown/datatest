@@ -213,10 +213,16 @@ class BaseSource(object):
 #            SqliteSource.__init__(self, temptable.connection, temptable.name)
 
 
-class _SqliteSource(BaseSource):
+class SqliteBase(BaseSource):
     """Base class four SqliteSource and CsvSource (not intended to be
     instantiated directly).
     """
+    def __new__(cls, *args, **kwds):
+        if cls is SqliteBase:
+            msg = 'cannot instantiate SqliteBase directly - make a subclass'
+            raise NotImplementedError(msg)
+        return super(SqliteBase, cls).__new__(cls)
+
     def __init__(self, connection, table):
         """Initialize self."""
         self._connection = connection
@@ -451,7 +457,7 @@ class _SqliteSource(BaseSource):
         return '"' + name + '"'
 
 
-class SqliteSource(_SqliteSource):
+class SqliteSource(SqliteBase):
     """Loads *table* data from given SQLite *connection*:
     ::
 
@@ -508,7 +514,7 @@ class SqliteSource(_SqliteSource):
         super(SqliteSource, self).create_index(*columns)
 
 
-class CsvSource(_SqliteSource):
+class CsvSource(SqliteBase):
     """Loads CSV data from *file* (path or file-like object):
     ::
 

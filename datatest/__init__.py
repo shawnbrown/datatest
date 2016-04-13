@@ -5,6 +5,7 @@ from .source import BaseSource
 from .source import SqliteSource
 from .source import CsvSource
 from .source import MultiSource
+from .source import SqliteBase
 
 from .extras import ExcelSource
 from .extras import PandasSource
@@ -40,6 +41,7 @@ __all__ = [
     'MultiSource',
     'ExcelSource',
     'PandasSource',
+    'SqliteBase',
 
     # Query results.
     'CompareSet',
