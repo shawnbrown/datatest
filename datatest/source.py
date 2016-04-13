@@ -14,8 +14,8 @@ from ._decimal import Decimal
 from ._unicodecsvreader import UnicodeCsvReader as _UnicodeCsvReader
 from . import _itertools as itertools
 
-from .sourceresult import ResultMapping
-from .sourceresult import ResultSet
+from .sourceresult import CompareDict
+from .sourceresult import CompareSet
 from .sourceresult import _is_nscontainer
 
 #pattern = 'test*.py'
@@ -58,11 +58,11 @@ class BaseSource(object):
         self._assert_columns_exist(column)
         iterable = self.__filter_by(**filter_by)  # Filtered rows only.
         iterable = (tuple(row[c] for c in column) for row in iterable)
-        return ResultSet(iterable)
+        return CompareSet(iterable)
 
     def sum(self, columns, keys=None, **filter_by):
         """Returns sum of one or more *columns* grouped by *keys* as a
-        ResultMapping.
+        CompareDict.
         """
         mapper = lambda x: Decimal(x) if x else Decimal(0)
         if not _is_nscontainer(columns):
@@ -74,7 +74,7 @@ class BaseSource(object):
         return self.mapreduce(mapper, reducer, columns, keys, **filter_by)
 
     def count(self, keys=None, **filter_by):
-        """Returns count of *column* grouped by *keys* as ResultMapping
+        """Returns count of *column* grouped by *keys* as CompareDict
         (uses ``reduce`` method).
         """
         func = lambda x, y: x + y
@@ -88,7 +88,7 @@ class BaseSource(object):
         arguments cumulatively to the mapped values, from left to right,
         so as to reduce the values to a single result per group of
         *keys*.  If *keys* is omitted, a single result is returned,
-        otherwise returns a ResultMapping object.
+        otherwise returns a CompareDict object.
 
         *mapper* (function or other callable):
             Should accept column values from a single row and return a
@@ -137,7 +137,7 @@ class BaseSource(object):
                 result[key] = reducer(x, y)    # class should prioritize
             else:                              # memory efficiency over
                 result[key] = y                # speed.
-        return ResultMapping(result, keys)
+        return CompareDict(result, keys)
 
     def reduce(self, function, column, keys=None, initializer=None, **filter_by):
         """Apply *function* of two arguments cumulatively to the values
@@ -146,7 +146,7 @@ class BaseSource(object):
         string, the values are passed to *function* unchanged.  But if
         *column* is, itself, a function, it should accept a single
         dict-row and return a single value.  If *keys* is omitted, the
-        raw result is returned, otherwise returns a ResultMapping
+        raw result is returned, otherwise returns a CompareDict
         object.
         """
         if not callable(column):
@@ -172,7 +172,7 @@ class BaseSource(object):
             y = get_value(row)                     # than using sorted() plus
             result[key] = function(x, y)           # itertools.groupby() plus
                                                    # functools.reduce().
-        return ResultMapping(result, keys)
+        return CompareDict(result, keys)
 
     def __filter_by(self, **filter_by):
         """Filter data by keywords, returns iterable.  E.g., where
@@ -412,10 +412,10 @@ class _SqliteSource(BaseSource):
         select_clause = 'DISTINCT ' + select_clause
 
         cursor = self._execute_query(self._table, select_clause, **filter_by)
-        return ResultSet(cursor)
+        return CompareSet(cursor)
 
     def sum(self, columns, keys=None, **filter_by):
-        """Returns sum of *columns* grouped by *keys* as ResultMapping."""
+        """Returns sum of *columns* grouped by *keys* as CompareDict."""
         if not _is_nscontainer(columns):
             columns = (columns,)
         self._assert_columns_exist(columns)
@@ -425,7 +425,7 @@ class _SqliteSource(BaseSource):
 
     def count(self, keys=None, **filter_by):
         """Returns count of *column* grouped by *keys* as
-        ResultMapping.
+        CompareDict.
         """
         return self._sql_aggregate('COUNT(*)', keys, **filter_by)
 
@@ -461,7 +461,7 @@ class _SqliteSource(BaseSource):
         else:
             # Gets value by index (i.e., row[-pos]).
             iterable = ((row[:-pos], row[-pos]) for row in cursor)
-        return ResultMapping(iterable, keys)
+        return CompareDict(iterable, keys)
         # TODO: This method has grown messy after a handful of iterations
         # look to refactor it in the future to improve maintainability.
 
@@ -472,7 +472,7 @@ class _SqliteSource(BaseSource):
         passed to *function* unchanged.  But if *column* is, itself, a
         function, it should accept a single dict-row and return a
         single value.  If *keys* is omitted, the raw result is
-        returned, otherwise returns a ResultMapping object.
+        returned, otherwise returns a CompareDict object.
         """
         if not callable(column):
             self._assert_columns_exist(column)
@@ -498,7 +498,7 @@ class _SqliteSource(BaseSource):
             keyfn = lambda row: tuple(row[key] for key in keys)
             grouped = itertools.groupby(cursor, key=keyfn)
             result = ((key, apply(vals)) for key, vals in grouped)
-            result = ResultMapping(result, keys)
+            result = CompareDict(result, keys)
 
             # TODO: Check to see which is faster with lots of groups.
             #result = {}
@@ -509,7 +509,7 @@ class _SqliteSource(BaseSource):
             #    cursor = self._execute_query(self._table, '*', **subfilter_by)
             #    cursor = dict_rows(cursor)
             #    result[group] = apply(cursor)
-            #    result = ResultMapping(result, keys)
+            #    result = CompareDict(result, keys)
         else:
             cursor = self._execute_query(self._table, '*', **filter_by)
             cursor = dict_rows(cursor)
@@ -785,7 +785,7 @@ class AdapterSource(BaseSource):
         try:
             unwrap_flt = self._unwrap_filter(filter_by)
         except _FilterValueError:
-            return ResultSet([])  # <- EXIT!
+            return CompareSet([])  # <- EXIT!
 
         if not unwrap_cols:
             iterable = iter(unwrap_src)
@@ -795,14 +795,14 @@ class AdapterSource(BaseSource):
                 result = [tuple([self._missing]) * length]  # Make 1 row of *missing* vals.
             except StopIteration:
                 result = []  # If no data, result is empty.
-            return ResultSet(result)  # <- EXIT!
+            return CompareSet(result)  # <- EXIT!
 
         results = unwrap_src.distinct(unwrap_cols, **unwrap_flt)
         rewrap_cols = self._rewrap_columns(unwrap_cols)
-        return self._rebuild_resultset(results, rewrap_cols, columns)
+        return self._rebuild_compareset(results, rewrap_cols, columns)
 
     def sum(self, columns, keys=None, **filter_by):
-        """Returns sum of *columns* grouped by *keys* as ResultMapping."""
+        """Returns sum of *columns* grouped by *keys* as CompareDict."""
         unwrap_src = self.__wrapped__
         unwrap_cols = self._unwrap_columns(columns)
         unwrap_keys = self._unwrap_columns(keys)
@@ -810,7 +810,7 @@ class AdapterSource(BaseSource):
             unwrap_flt = self._unwrap_filter(filter_by)
         except _FilterValueError:
             if keys:
-                result = ResultMapping({}, keys)
+                result = CompareDict({}, keys)
             else:
                 result = 0
             return result  # <- EXIT!
@@ -823,14 +823,14 @@ class AdapterSource(BaseSource):
             else:
                 val = (0,) * len(columns)
             result = ((key, val) for key in distinct)
-            return ResultMapping(result, keys)  # <- EXIT!
+            return CompareDict(result, keys)  # <- EXIT!
 
         result = unwrap_src.sum(unwrap_cols, unwrap_keys, **unwrap_flt)
 
         rewrap_cols = self._rewrap_columns(unwrap_cols)
         rewrap_keys = self._rewrap_columns(unwrap_keys)
-        return self._rebuild_resultmapping(result, rewrap_cols, columns,
-                                           rewrap_keys, keys, missing_col=0)
+        return self._rebuild_comparedict(result, rewrap_cols, columns,
+                                         rewrap_keys, keys, missing_col=0)
 
     #def count(self, keys=None, **filter_by):
     #    pass
@@ -843,7 +843,7 @@ class AdapterSource(BaseSource):
             unwrap_flt = self._unwrap_filter(filter_by)
         except _FilterValueError:
             if keys:
-                result = ResultMapping({}, keys)
+                result = CompareDict({}, keys)
             else:
                 result = self._missing
             return result  # <- EXIT!
@@ -856,14 +856,14 @@ class AdapterSource(BaseSource):
             else:
                 val = (self._missing,) * len(columns)
             result = ((key, val) for key in distinct)
-            return ResultMapping(result, keys)  # <- EXIT!
+            return CompareDict(result, keys)  # <- EXIT!
 
         result = unwrap_src.mapreduce(mapper, reducer,
                                       unwrap_cols, unwrap_keys, **unwrap_flt)
 
         rewrap_cols = self._rewrap_columns(unwrap_cols)
         rewrap_keys = self._rewrap_columns(unwrap_keys)
-        return self._rebuild_resultmapping(result, rewrap_cols, columns,
+        return self._rebuild_comparedict(result, rewrap_cols, columns,
                                            rewrap_keys, keys,
                                            missing_col=self._missing)
 
@@ -918,9 +918,9 @@ class AdapterSource(BaseSource):
             return rev_interface[unwrapped_columns]
         return tuple(rev_interface[k] for k in unwrapped_columns)
 
-    def _rebuild_resultset(self, result, rewrapped_columns, columns):
-        """Take ResultSet from unwrapped source and rebuild it to match
-        the ResultSet that would be expected from the wrapped source.
+    def _rebuild_compareset(self, result, rewrapped_columns, columns):
+        """Take CompareSet from unwrapped source and rebuild it to match
+        the CompareSet that would be expected from the wrapped source.
         """
         normalize = lambda x: x if (isinstance(x, str) or not x) else tuple(x)
         rewrapped_columns = normalize(rewrapped_columns)
@@ -933,17 +933,17 @@ class AdapterSource(BaseSource):
         def rebuild(x):
             lookup_dict = dict(zip(rewrapped_columns, x))
             return tuple(lookup_dict.get(c, missing) for c in columns)
-        return ResultSet(rebuild(x) for x in result)
+        return CompareSet(rebuild(x) for x in result)
 
-    def _rebuild_resultmapping(self,
-                               result,
-                               rewrapped_columns,
-                               columns,
-                               rewrapped_keys,
-                               keys,
-                               missing_col):
-        """Take ResultMapping from unwrapped source and rebuild it to
-        match the ResultMapping that would be expected from the wrapped
+    def _rebuild_comparedict(self,
+                             result,
+                             rewrapped_columns,
+                             columns,
+                             rewrapped_keys,
+                             keys,
+                             missing_col):
+        """Take CompareDict from unwrapped source and rebuild it to
+        match the CompareDict that would be expected from the wrapped
         source.
         """
         normalize = lambda x: x if (isinstance(x, str) or not x) else tuple(x)
@@ -953,7 +953,7 @@ class AdapterSource(BaseSource):
         keys = normalize(keys)
 
         if rewrapped_keys == keys and rewrapped_columns == columns:
-            if isinstance(result, ResultMapping):
+            if isinstance(result, CompareDict):
                 key_names = (keys,) if isinstance(keys, str) else keys
                 result.key_names = key_names
             return result  # <- EXIT!
@@ -982,7 +982,7 @@ class AdapterSource(BaseSource):
                 return tuple(value_dict.get(v, missing) for v in columns)
             item_gen = ((k, rebuild_values(v, missing_col)) for k, v in item_gen)
 
-        return ResultMapping(item_gen, key_names=keys)
+        return CompareDict(item_gen, key_names=keys)
 
 
 class MultiSource(BaseSource):
@@ -1066,7 +1066,7 @@ class MultiSource(BaseSource):
         fn = lambda source: source.distinct(columns, **filter_by)
         results = (fn(source) for source in self._sources)
         results = itertools.chain(*results)
-        return ResultSet(results)
+        return CompareSet(results)
 
     def sum(self, columns, keys=None, **filter_by):
         """Return sum of values in *columns* grouped by *keys*."""
@@ -1094,7 +1094,7 @@ class MultiSource(BaseSource):
                 for key, val in result.items():
                     existing = sum_total[key]
                     sum_total[key] = tuple(xi + yi for xi, yi in zip(existing, val))
-        return ResultMapping(sum_total, keys)
+        return CompareDict(sum_total, keys)
 
     def mapreduce(self, mapper, reducer, columns, keys=None, **filter_by):
         fn = lambda source: source.mapreduce(mapper, reducer, columns, keys, **filter_by)
@@ -1111,7 +1111,7 @@ class MultiSource(BaseSource):
                 final_result[key] = reducer(x, y)
             else:
                 final_result[key] = y
-        return ResultMapping(final_result, keys)
+        return CompareDict(final_result, keys)
 
 
 #DefaultDataSource = CsvSource

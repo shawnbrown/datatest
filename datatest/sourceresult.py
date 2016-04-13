@@ -60,7 +60,7 @@ def _expects_multiple_params(func):
     return len(args) > 1 or bool(varargs)  # <- EXIT!
 
 
-class ResultSet(set):
+class CompareSet(set):
     """DataSource query result set."""
     def __init__(self, data):
         """Initialize object."""
@@ -101,7 +101,7 @@ class ResultSet(set):
         """Compare *self* to *other* and return a list of difference
         objects.  If *other* is callable, constructs a list of Invalid
         objects for values where *other* returns False.  If *other* is
-        a ResultSet or other collection, differences are compiled as a
+        a CompareSet or other collection, differences are compiled as a
         list of Extra and Missing objects.
         """
         if callable(other):
@@ -112,8 +112,8 @@ class ResultSet(set):
             differences = [Invalid(x) for x in self if not other(x)]
 
         else:
-            if not isinstance(other, ResultSet):
-                other = ResultSet(other)
+            if not isinstance(other, CompareSet):
+                other = CompareSet(other)
 
             if op in ('==', '<=', '<'):
                 extra = self.difference(other)
@@ -138,18 +138,18 @@ class ResultSet(set):
         return differences
 
 
-# Decorate ResultSet comparison magic methods (cannot be decorated in-line as
+# Decorate CompareSet comparison magic methods (cannot be decorated in-line as
 # class must first be defined).
-_other_to_resultset = _coerce_other(ResultSet)
-ResultSet.__eq__ = _other_to_resultset(ResultSet.__eq__)
-ResultSet.__ne__ = _other_to_resultset(ResultSet.__ne__)
-ResultSet.__lt__ = _other_to_resultset(ResultSet.__lt__)
-ResultSet.__gt__ = _other_to_resultset(ResultSet.__gt__)
-ResultSet.__le__ = _other_to_resultset(ResultSet.__le__)
-ResultSet.__ge__ = _other_to_resultset(ResultSet.__ge__)
+_other_to_compareset = _coerce_other(CompareSet)
+CompareSet.__eq__ = _other_to_compareset(CompareSet.__eq__)
+CompareSet.__ne__ = _other_to_compareset(CompareSet.__ne__)
+CompareSet.__lt__ = _other_to_compareset(CompareSet.__lt__)
+CompareSet.__gt__ = _other_to_compareset(CompareSet.__gt__)
+CompareSet.__le__ = _other_to_compareset(CompareSet.__le__)
+CompareSet.__ge__ = _other_to_compareset(CompareSet.__ge__)
 
 
-class ResultMapping(dict):
+class CompareDict(dict):
     """DataSource query result mapping."""
     def __init__(self, data, key_names):
         """Initialize object."""
@@ -215,7 +215,7 @@ class ResultMapping(dict):
         """Compare *self* to *other* and return a list of difference
         objects.  If *other* is callable, constructs a list of Invalid
         objects for values where *other* returns False.  If *other* is
-        a ResultMapping or other mapping object (like a dict),
+        a CompareDict or other mapping object (like a dict),
         differences are compiled as a list of Deviation and Invalid
         objects.
         """
@@ -236,8 +236,8 @@ class ResultMapping(dict):
                     differences.append(Invalid(value, **kwds))
         # Compare self to other.
         else:
-            if not isinstance(other, ResultMapping):
-                other = ResultMapping(other, key_names=None)
+            if not isinstance(other, CompareDict):
+                other = CompareDict(other, key_names=None)
             keys = itertools.chain(self.keys(), other.keys())
             keys = sorted(set(keys))
             differences = []
@@ -272,8 +272,8 @@ class ResultMapping(dict):
         return differences
 
 
-# Decorate ResultMapping comparison magic methods (cannot be decorated in-line
+# Decorate CompareDict comparison magic methods (cannot be decorated in-line
 # as class must first be defined).
-_other_to_resultmapping = _coerce_other(ResultMapping, key_names=None)
-ResultMapping.__eq__ = _other_to_resultmapping(ResultMapping.__eq__)
-ResultMapping.__ne__ = _other_to_resultmapping(ResultMapping.__ne__)
+_other_to_comparedict = _coerce_other(CompareDict, key_names=None)
+CompareDict.__eq__ = _other_to_comparedict(CompareDict.__eq__)
+CompareDict.__ne__ = _other_to_comparedict(CompareDict.__ne__)

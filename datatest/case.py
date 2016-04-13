@@ -17,8 +17,7 @@ from .differences import Extra
 from .differences import Invalid
 from .differences import Deviation
 from .source import BaseSource
-from .sourceresult import ResultSet
-from .sourceresult import ResultMapping
+from .sourceresult import CompareSet
 
 
 __datatest = True  # Used to detect in-module stack frames (which are
@@ -312,7 +311,7 @@ class DataTestCase(TestCase):
         See :meth:`assertDataSet <datatest.DataTestCase.assertDataSet>`
         for more details.
         """
-        subject_set = ResultSet(self.subjectData.columns())
+        subject_set = CompareSet(self.subjectData.columns())
         required_list = self._normalize_required(required, 'columns')
         if subject_set != required_list:
             if msg is None:

@@ -14,8 +14,8 @@ from datatest._collections import namedtuple
 from datatest._decimal import Decimal
 
 # Import related objects.
-from datatest.sourceresult import ResultSet
-from datatest.sourceresult import ResultMapping
+from datatest.sourceresult import CompareSet
+from datatest.sourceresult import CompareDict
 
 # Import code to test.
 from datatest.source import BaseSource
@@ -215,7 +215,7 @@ class TestBaseSource(unittest.TestCase):
                 return y
 
         # No group_by.
-        msg = 'when group_by is omitted, should return raw result not a ResultMapping'
+        msg = 'when group_by is omitted, should return raw result not a CompareDict'
         self.assertEqual(40.0, reduce(maximum, 'value'), msg=msg)
 
         # Callable.
@@ -819,85 +819,85 @@ class TestAdapterSource(unittest.TestCase):
         # default *missing* value.)
         self.assertEqual({'col1': 'foo'}, unwrap_filter({'a': 'foo', 'd': ''}))
 
-    def test_rebuild_resultset(self):
+    def test_rebuild_compareset(self):
         interface = [('a', 'col1'), ('b', 'col2'), ('c', 'col3'), ('d', None)]
         adapted = AdapterSource(self.source, interface)
-        rebuild_resultset = adapted._rebuild_resultset
+        rebuild_compareset = adapted._rebuild_compareset
 
         # Rebuild one column result as two column result.
-        orig = ResultSet(['x', 'y', 'z'])
-        result = rebuild_resultset(orig, 'b', ['b', 'd'])
-        expected = ResultSet([('x', ''), ('y', ''), ('z', '')])
+        orig = CompareSet(['x', 'y', 'z'])
+        result = rebuild_compareset(orig, 'b', ['b', 'd'])
+        expected = CompareSet([('x', ''), ('y', ''), ('z', '')])
         self.assertEqual(expected, result)
 
         # Rebuild two column result to three column with missing column in the middle.
-        orig = ResultSet([('x1', 'x2'), ('y1', 'y2'), ('z1', 'z2')])
-        result = rebuild_resultset(orig, ['b', 'c'], ['b', 'd', 'c'])
-        expected = ResultSet([('x1', '', 'x2'), ('y1', '', 'y2'), ('z1', '', 'z2')])
+        orig = CompareSet([('x1', 'x2'), ('y1', 'y2'), ('z1', 'z2')])
+        result = rebuild_compareset(orig, ['b', 'c'], ['b', 'd', 'c'])
+        expected = CompareSet([('x1', '', 'x2'), ('y1', '', 'y2'), ('z1', '', 'z2')])
         self.assertEqual(expected, result)
 
-    def test_rebuild_resultmapping(self):
+    def test_rebuild_comparedict(self):
         interface = [('a', 'col1'), ('b', 'col2'), ('c', 'col3'), ('d', None)]
         adapted = AdapterSource(self.source, interface)
-        rebuild_resultmapping = adapted._rebuild_resultmapping
+        rebuild_comparedict = adapted._rebuild_comparedict
 
         # Rebuild single key result as two key result.
-        orig = ResultMapping({'x': 1, 'y': 2, 'z': 3}, key_names='a')
-        result = rebuild_resultmapping(orig, 'c', 'c', 'a', ['a', 'b'], missing_col='')
-        expected = ResultMapping({('x', ''): 1,
-                                  ('y', ''): 2,
-                                  ('z', ''): 3},
-                                 key_names=['a', 'b'])
+        orig = CompareDict({'x': 1, 'y': 2, 'z': 3}, key_names='a')
+        result = rebuild_comparedict(orig, 'c', 'c', 'a', ['a', 'b'], missing_col='')
+        expected = CompareDict({('x', ''): 1,
+                                ('y', ''): 2,
+                                ('z', ''): 3},
+                               key_names=['a', 'b'])
         self.assertEqual(expected, result)
 
         # Rebuild two key result as three key result.
-        orig = ResultMapping({('x', 'x'): 1, ('y', 'y'): 2, ('z', 'z'): 3}, key_names=['a', 'c'])
-        result = rebuild_resultmapping(orig, 'c', 'c', ['a', 'b'], ['a', 'd', 'b'], missing_col='')
-        expected = ResultMapping({('x', '', 'x'): 1,
-                                  ('y', '', 'y'): 2,
-                                  ('z', '', 'z'): 3},
-                                 key_names=['a', 'd', 'b'])
+        orig = CompareDict({('x', 'x'): 1, ('y', 'y'): 2, ('z', 'z'): 3}, key_names=['a', 'c'])
+        result = rebuild_comparedict(orig, 'c', 'c', ['a', 'b'], ['a', 'd', 'b'], missing_col='')
+        expected = CompareDict({('x', '', 'x'): 1,
+                                ('y', '', 'y'): 2,
+                                ('z', '', 'z'): 3},
+                               key_names=['a', 'd', 'b'])
         self.assertEqual(expected, result)
 
         # Rebuild single value tuple result as two value result.
-        orig = ResultMapping({'x': (1,), 'y': (2,), 'z': (3,)}, key_names='a')
-        result = rebuild_resultmapping(orig, 'c', ['c', 'd'], 'a', 'a', missing_col='')
-        expected = ResultMapping({'x': (1, ''),
-                                  'y': (2, ''),
-                                  'z': (3, '')},
-                                 key_names='a')
+        orig = CompareDict({'x': (1,), 'y': (2,), 'z': (3,)}, key_names='a')
+        result = rebuild_comparedict(orig, 'c', ['c', 'd'], 'a', 'a', missing_col='')
+        expected = CompareDict({'x': (1, ''),
+                                'y': (2, ''),
+                                'z': (3, '')},
+                               key_names='a')
         self.assertEqual(expected, result)
 
         # Rebuild single value result as two value result.
         if True:
-            orig = ResultMapping({'x': 1, 'y': 2, 'z': 3}, key_names='a')
-            result = rebuild_resultmapping(orig, 'c', ['c', 'd'], 'a', 'a', missing_col='')
-            expected = ResultMapping({'x': (1, ''),
-                                      'y': (2, ''),
-                                      'z': (3, '')},
-                                     key_names=['c', 'd'])
+            orig = CompareDict({'x': 1, 'y': 2, 'z': 3}, key_names='a')
+            result = rebuild_comparedict(orig, 'c', ['c', 'd'], 'a', 'a', missing_col='')
+            expected = CompareDict({'x': (1, ''),
+                                    'y': (2, ''),
+                                    'z': (3, '')},
+                                   key_names=['c', 'd'])
             self.assertEqual(expected, result)
 
         # Rebuild two column result as three column result.
-        orig = ResultMapping({'x': (1, 2), 'y': (2, 4), 'z': (3, 6)}, key_names='a')
-        result = rebuild_resultmapping(orig, ['b', 'c'], ['b', 'd', 'c'],
+        orig = CompareDict({'x': (1, 2), 'y': (2, 4), 'z': (3, 6)}, key_names='a')
+        result = rebuild_comparedict(orig, ['b', 'c'], ['b', 'd', 'c'],
                                        'a', 'a', missing_col='empty')
-        expected = ResultMapping({'x': (1, 'empty', 2),
-                                  'y': (2, 'empty', 4),
-                                  'z': (3, 'empty', 6)},
-                                 key_names='a')
+        expected = CompareDict({'x': (1, 'empty', 2),
+                                'y': (2, 'empty', 4),
+                                'z': (3, 'empty', 6)},
+                               key_names='a')
         self.assertEqual(expected, result)
 
         # Rebuild two key and two column result as three key and three column result.
-        orig = ResultMapping({('x', 'x'): (1, 2),
-                              ('y', 'y'): (2, 4),
-                              ('z', 'z'): (3, 6)},
-                              key_names=['a', 'c'])
-        result = rebuild_resultmapping(orig,
+        orig = CompareDict({('x', 'x'): (1, 2),
+                            ('y', 'y'): (2, 4),
+                            ('z', 'z'): (3, 6)},
+                            key_names=['a', 'c'])
+        result = rebuild_comparedict(orig,
                                        ['b', 'c'], ['b', 'd', 'c'],
                                        ['a', 'b'], ['a', 'd', 'b'],
                                        missing_col='empty')
-        expected = ResultMapping({('x', '', 'x'): (1, 'empty', 2),
+        expected = CompareDict({('x', '', 'x'): (1, 'empty', 2),
                                   ('y', '', 'y'): (2, 'empty', 4),
                                   ('z', '', 'z'): (3, 'empty', 6)},
                                  key_names=['a', 'd', 'b'])

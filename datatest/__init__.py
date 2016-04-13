@@ -17,8 +17,8 @@ from .differences import Deviation
 from .differences import NotProperSubset
 from .differences import NotProperSuperset
 
-from .sourceresult import ResultSet
-from .sourceresult import ResultMapping
+from .sourceresult import CompareSet
+from .sourceresult import CompareDict
 
 from .runner import required
 from .runner import DataTestRunner
@@ -42,8 +42,8 @@ __all__ = [
     'PandasSource',
 
     # Query results.
-    'ResultSet',
-    'ResultMapping',
+    'CompareSet',
+    'CompareDict',
 
     # Error and Differences.
     'DataAssertionError',
