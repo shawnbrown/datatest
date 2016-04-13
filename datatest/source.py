@@ -49,18 +49,18 @@ class BaseSource(object):
         """Return list of column names."""
         return NotImplemented
 
-    def distinct(self, column, **filter_by):
+    def distinct(self, column, **kwds_filter):
         """Return iterable of tuples containing distinct *column*
         values (uses slow ``__iter__``).
         """
         if not _is_nscontainer(column):
             column = (column,)
         self._assert_columns_exist(column)
-        iterable = self.__filter_by(**filter_by)  # Filtered rows only.
+        iterable = self.filter_rows(**kwds_filter)  # Filtered rows only.
         iterable = (tuple(row[c] for c in column) for row in iterable)
         return CompareSet(iterable)
 
-    def sum(self, columns, keys=None, **filter_by):
+    def sum(self, columns, keys=None, **kwds_filter):
         """Returns sum of one or more *columns* grouped by *keys* as a
         CompareDict.
         """
@@ -71,18 +71,18 @@ class BaseSource(object):
             map_one = mapper
             mapper = lambda x: tuple(map_one(n) for n in x)
             reducer = lambda x, y: tuple(xi + yi for xi, yi in zip(x, y))
-        return self.mapreduce(mapper, reducer, columns, keys, **filter_by)
+        return self.mapreduce(mapper, reducer, columns, keys, **kwds_filter)
 
-    def count(self, keys=None, **filter_by):
+    def count(self, keys=None, **kwds_filter):
         """Returns count of *column* grouped by *keys* as CompareDict
         (uses ``reduce`` method).
         """
         func = lambda x, y: x + y
         column = lambda row: 1  # Column mapped to int value 1.
         init = 0
-        return self.reduce(func, column, keys, init, **filter_by)
+        return self.reduce(func, column, keys, init, **kwds_filter)
 
-    def mapreduce(self, mapper, reducer, columns, keys=None, **filter_by):
+    def mapreduce(self, mapper, reducer, columns, keys=None, **kwds_filter):
         """Apply *mapper* to the values in *columns* (which are grouped
         by *keys* and filtered by *filter*) then apply *reducer* of two
         arguments cumulatively to the mapped values, from left to right,
@@ -104,7 +104,7 @@ class BaseSource(object):
             Name of column or columns that are passed into *mapper*.
         *keys* (None, string, or sequence):
             Name of key or keys used to group column values.
-        *filter* keywords:
+        *kwds_filter*:
             Keywords used to filter rows.
         """
         if isinstance(columns, str):
@@ -116,7 +116,7 @@ class BaseSource(object):
         else:
             raise TypeError('colums must be str or sequence')
 
-        filtered_iter = self.__filter_by(**filter_by)
+        filtered_iter = self.filter_rows(**kwds_filter)
 
         if not keys:
             values_iter = (getval(row) for row in filtered_iter)
@@ -139,7 +139,7 @@ class BaseSource(object):
                 result[key] = y                # speed.
         return CompareDict(result, keys)
 
-    def reduce(self, function, column, keys=None, initializer=None, **filter_by):
+    def reduce(self, function, column, keys=None, initializer=None, **kwds_filter):
         """Apply *function* of two arguments cumulatively to the values
         in *column*, from left to right, so as to reduce the iterable
         to a single value (uses slow ``__iter__``).  If *column* is a
@@ -155,7 +155,7 @@ class BaseSource(object):
         else:
             get_value = column
 
-        iterable = self.__filter_by(**filter_by)  # Uses slow __iter__().
+        iterable = self.filter_rows(**kwds_filter)  # Uses slow __iter__().
 
         if not keys:
             vals = (get_value(row) for row in iterable)
@@ -174,15 +174,18 @@ class BaseSource(object):
                                                    # functools.reduce().
         return CompareDict(result, keys)
 
-    def __filter_by(self, **filter_by):
-        """Filter data by keywords, returns iterable.  E.g., where
-        column1=value1, column2=value2, etc. (uses slow ``__iter__``).
+    def filter_rows(self, **kwds):
+        """Filter data by keywords, returns iterable of dict-rows (much
+        like csv.DictReader() object).  E.g., where column1=value1,
+        column2=value2, etc. (uses slow ``__iter__``).
         """
-        mktup = lambda v: (v,) if not _is_nscontainer(v) else v
-        filter_by = dict((k, mktup(v)) for k, v in filter_by.items())
-        for row in self.__iter__():
-            if all(row[k] in v for k, v in filter_by.items()):
-                yield row
+        if not kwds:
+            return self.__iter__()  # <- EXIT!
+        normalize = lambda v: (v,) if not _is_nscontainer(v) else v
+        kwds = dict((k, normalize(v)) for k, v in kwds.items())
+
+        matches_kwds = lambda row: all(row[k] in v for k, v in kwds.items())
+        return (x for x in self.__iter__() if matches_kwds(x))
 
     def _assert_columns_exist(self, columns):
         """Asserts that given columns are present in data source,
@@ -367,9 +370,6 @@ class _TemporarySqliteTable(object):
             raise ValueError('Duplicate values: ' + ', '.join(duplicates))
 
 
-# TODO!!!: Explore the idea of formalizing __filter_by functionality.
-
-
 class _SqliteSource(BaseSource):
     """Base class four SqliteSource and CsvSource (not intended to be
     instantiated directly).
@@ -386,21 +386,30 @@ class _SqliteSource(BaseSource):
         tbl_name = self._table
         return '{0}({1}, table={2!r})'.format(cls_name, conn_name, tbl_name)
 
-    def __iter__(self):
-        """Return iterable of dictionary rows (like csv.DictReader)."""
-        cursor = self._connection.cursor()
-        cursor.execute('SELECT * FROM ' + self._table)
-        column_names = self.columns()
-        mkdict = lambda x: dict(zip(column_names, x))
-        return (mkdict(row) for row in cursor.fetchall())
-
     def columns(self):
         """Return list of column names."""
         cursor = self._connection.cursor()
         cursor.execute('PRAGMA table_info(' + self._table + ')')
         return [x[1] for x in cursor.fetchall()]
 
-    def distinct(self, column, **filter_by):
+    def __iter__(self):
+        """Return iterable of dictionary rows (like csv.DictReader)."""
+        cursor = self._connection.cursor()
+        cursor.execute('SELECT * FROM ' + self._table)
+
+        column_names = self.columns()
+        dict_row = lambda x: dict(zip(column_names, x))
+        return (dict_row(row) for row in cursor.fetchall())
+
+    def filter_rows(self, **kwds):
+        cursor = self._connection.cursor()
+        cursor = self._execute_query(self._table, '*', **kwds)
+
+        column_names = self.columns()
+        dict_row = lambda row: dict(zip(column_names, row))
+        return (dict_row(row) for row in cursor)
+
+    def distinct(self, column, **kwds_filter):
         """Return iterable of tuples containing distinct *column*
         values.
         """
@@ -411,25 +420,25 @@ class _SqliteSource(BaseSource):
         select_clause = ', '.join(select_clause)
         select_clause = 'DISTINCT ' + select_clause
 
-        cursor = self._execute_query(self._table, select_clause, **filter_by)
+        cursor = self._execute_query(self._table, select_clause, **kwds_filter)
         return CompareSet(cursor)
 
-    def sum(self, columns, keys=None, **filter_by):
+    def sum(self, columns, keys=None, **kwds_filter):
         """Returns sum of *columns* grouped by *keys* as CompareDict."""
         if not _is_nscontainer(columns):
             columns = (columns,)
         self._assert_columns_exist(columns)
         columns = (self._normalize_column(x) for x in columns)
         sql_functions = tuple('SUM({0})'.format(x) for x in columns)
-        return self._sql_aggregate(sql_functions, keys, **filter_by)
+        return self._sql_aggregate(sql_functions, keys, **kwds_filter)
 
-    def count(self, keys=None, **filter_by):
+    def count(self, keys=None, **kwds_filter):
         """Returns count of *column* grouped by *keys* as
         CompareDict.
         """
-        return self._sql_aggregate('COUNT(*)', keys, **filter_by)
+        return self._sql_aggregate('COUNT(*)', keys, **kwds_filter)
 
-    def _sql_aggregate(self, sql_function, keys=None, **filter_by):
+    def _sql_aggregate(self, sql_function, keys=None, **kwds_filter):
         """Aggregates values using SQL function select--e.g.,
         'COUNT(*)', 'SUM(col1)', etc.
         """
@@ -438,7 +447,7 @@ class _SqliteSource(BaseSource):
 
         if keys == None:
             sql_function = ', '.join(sql_function)
-            cursor = self._execute_query(self._table, sql_function, **filter_by)
+            cursor = self._execute_query(self._table, sql_function, **kwds_filter)
             result = cursor.fetchone()
             if len(result) == 1:
                 return result[0]
@@ -452,7 +461,7 @@ class _SqliteSource(BaseSource):
         select_clause = '{0}, {1}'.format(group_clause, ', '.join(sql_function))
         trailing_clause = 'GROUP BY ' + group_clause
 
-        cursor = self._execute_query(self._table, select_clause, trailing_clause, **filter_by)
+        cursor = self._execute_query(self._table, select_clause, trailing_clause, **kwds_filter)
         pos = len(sql_function)
         iterable = ((row[:-pos], getvals(row)) for row in cursor)
         if pos > 1:
@@ -465,7 +474,7 @@ class _SqliteSource(BaseSource):
         # TODO: This method has grown messy after a handful of iterations
         # look to refactor it in the future to improve maintainability.
 
-    def reduce(self, function, column, keys=None, initializer=None, **filter_by):
+    def reduce(self, function, column, keys=None, initializer=None, **kwds_filter):
         """Apply *function* of two arguments cumulatively to the values
         in *column*, from left to right, so as to reduce the iterable
         to a single value.  If *column* is a string, the values are
@@ -492,7 +501,7 @@ class _SqliteSource(BaseSource):
             order_by = tuple(self._normalize_column(x) for x in keys)
             order_by = ', '.join(order_by)
             order_by = 'ORDER BY {0}'.format(order_by)
-            cursor = self._execute_query(self._table, '*', order_by, **filter_by)
+            cursor = self._execute_query(self._table, '*', order_by, **kwds_filter)
             cursor = dict_rows(cursor)
 
             keyfn = lambda row: tuple(row[key] for key in keys)
@@ -502,24 +511,24 @@ class _SqliteSource(BaseSource):
 
             # TODO: Check to see which is faster with lots of groups.
             #result = {}
-            #groups = self.distinct(keys, **filter_by)
+            #groups = self.distinct(keys, **kwds_filter)
             #for group in groups:
             #    subfilter_by = dict(zip(keys, group))
-            #    subfilter_by.update(filter_by)
+            #    subfilter_by.update(kwds_filter)
             #    cursor = self._execute_query(self._table, '*', **subfilter_by)
             #    cursor = dict_rows(cursor)
             #    result[group] = apply(cursor)
             #    result = CompareDict(result, keys)
         else:
-            cursor = self._execute_query(self._table, '*', **filter_by)
+            cursor = self._execute_query(self._table, '*', **kwds_filter)
             cursor = dict_rows(cursor)
             result = apply(cursor)
         return result
 
-    def _execute_query(self, table, select_clause, trailing_clause=None, **filter_by):
+    def _execute_query(self, table, select_clause, trailing_clause=None, **kwds_filter):
         """Execute query and return cursor object."""
         try:
-            stmnt, params = self._build_query(self._table, select_clause, **filter_by)
+            stmnt, params = self._build_query(self._table, select_clause, **kwds_filter)
             if trailing_clause:
                 stmnt += '\n' + trailing_clause
             cursor = self._connection.cursor()
@@ -533,22 +542,22 @@ class _SqliteSource(BaseSource):
         return cursor
 
     @classmethod
-    def _build_query(cls, table, select_clause, **filter_by):
+    def _build_query(cls, table, select_clause, **kwds_filter):
         """Return 'SELECT' query."""
         query = 'SELECT ' + select_clause + ' FROM ' + table
-        where_clause, params = cls._build_where_clause(**filter_by)
+        where_clause, params = cls._build_where_clause(**kwds_filter)
         if where_clause:
             query = query + ' WHERE ' + where_clause
         return query, params
 
     @staticmethod
-    def _build_where_clause(**filter_by):
-        """Return 'WHERE' clause that implements *filter_by*
+    def _build_where_clause(**kwds_filter):
+        """Return 'WHERE' clause that implements *kwds_filter*
         constraints.
         """
         clause = []
         params = []
-        items = filter_by.items()
+        items = kwds_filter.items()
         items = sorted(items, key=lambda x: x[0])  # Ordered by key.
         for key, val in items:
             if _is_nscontainer(val):
@@ -779,11 +788,11 @@ class AdapterSource(BaseSource):
     def columns(self):
         return [x[0] for x in self._interface]
 
-    def distinct(self, columns, **filter_by):
+    def distinct(self, columns, **kwds_filter):
         unwrap_src = self.__wrapped__  # Unwrap data source.
         unwrap_cols = self._unwrap_columns(columns)
         try:
-            unwrap_flt = self._unwrap_filter(filter_by)
+            unwrap_flt = self._unwrap_filter(kwds_filter)
         except _FilterValueError:
             return CompareSet([])  # <- EXIT!
 
@@ -801,13 +810,13 @@ class AdapterSource(BaseSource):
         rewrap_cols = self._rewrap_columns(unwrap_cols)
         return self._rebuild_compareset(results, rewrap_cols, columns)
 
-    def sum(self, columns, keys=None, **filter_by):
+    def sum(self, columns, keys=None, **kwds_filter):
         """Returns sum of *columns* grouped by *keys* as CompareDict."""
         unwrap_src = self.__wrapped__
         unwrap_cols = self._unwrap_columns(columns)
         unwrap_keys = self._unwrap_columns(keys)
         try:
-            unwrap_flt = self._unwrap_filter(filter_by)
+            unwrap_flt = self._unwrap_filter(kwds_filter)
         except _FilterValueError:
             if keys:
                 result = CompareDict({}, keys)
@@ -817,7 +826,7 @@ class AdapterSource(BaseSource):
 
         # If all *columns* are missing, build result of missing values.
         if not unwrap_cols:
-            distinct = self.distinct(keys, **filter_by)
+            distinct = self.distinct(keys, **kwds_filter)
             if isinstance(columns, str):
                 val = 0
             else:
@@ -832,15 +841,15 @@ class AdapterSource(BaseSource):
         return self._rebuild_comparedict(result, rewrap_cols, columns,
                                          rewrap_keys, keys, missing_col=0)
 
-    #def count(self, keys=None, **filter_by):
+    #def count(self, keys=None, **kwds_filter):
     #    pass
 
-    def mapreduce(self, mapper, reducer, columns, keys=None, **filter_by):
+    def mapreduce(self, mapper, reducer, columns, keys=None, **kwds_filter):
         unwrap_src = self.__wrapped__
         unwrap_cols = self._unwrap_columns(columns)
         unwrap_keys = self._unwrap_columns(keys)
         try:
-            unwrap_flt = self._unwrap_filter(filter_by)
+            unwrap_flt = self._unwrap_filter(kwds_filter)
         except _FilterValueError:
             if keys:
                 result = CompareDict({}, keys)
@@ -850,7 +859,7 @@ class AdapterSource(BaseSource):
 
         # If all *columns* are missing, build result of missing values.
         if not unwrap_cols:
-            distinct = self.distinct(keys, **filter_by)
+            distinct = self.distinct(keys, **kwds_filter)
             if isinstance(columns, str):
                 val = self._missing
             else:
@@ -1059,18 +1068,18 @@ class MultiSource(BaseSource):
         """Return list of column names."""
         return self._columns
 
-    def distinct(self, columns, **filter_by):
+    def distinct(self, columns, **kwds_filter):
         """Return iterable of tuples containing distinct *column*
         values.
         """
-        fn = lambda source: source.distinct(columns, **filter_by)
+        fn = lambda source: source.distinct(columns, **kwds_filter)
         results = (fn(source) for source in self._sources)
         results = itertools.chain(*results)
         return CompareSet(results)
 
-    def sum(self, columns, keys=None, **filter_by):
+    def sum(self, columns, keys=None, **kwds_filter):
         """Return sum of values in *columns* grouped by *keys*."""
-        fn = lambda source: source.sum(columns, keys, **filter_by)
+        fn = lambda source: source.sum(columns, keys, **kwds_filter)
         results = (fn(source) for source in self._sources)
 
         if not keys:
@@ -1096,8 +1105,8 @@ class MultiSource(BaseSource):
                     sum_total[key] = tuple(xi + yi for xi, yi in zip(existing, val))
         return CompareDict(sum_total, keys)
 
-    def mapreduce(self, mapper, reducer, columns, keys=None, **filter_by):
-        fn = lambda source: source.mapreduce(mapper, reducer, columns, keys, **filter_by)
+    def mapreduce(self, mapper, reducer, columns, keys=None, **kwds_filter):
+        fn = lambda source: source.mapreduce(mapper, reducer, columns, keys, **kwds_filter)
         results = (fn(source) for source in self._sources)
 
         if not keys:

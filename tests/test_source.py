@@ -89,20 +89,10 @@ class TestBaseSource(unittest.TestCase):
         ]
         self.assertEqual(expected, results)
 
-    def test_filter_iter(self):
+    def test_filter_rows(self):
         """Test filter iterator."""
-        testdata = [
-            {'label1': 'a', 'label2': 'x', 'value': '17'},
-            {'label1': 'a', 'label2': 'x', 'value': '13'},
-            {'label1': 'a', 'label2': 'y', 'value': '20'},
-            {'label1': 'a', 'label2': 'z', 'value': '15'},
-            {'label1': 'b', 'label2': 'z', 'value': '5' },
-            {'label1': 'b', 'label2': 'y', 'value': '40'},
-            {'label1': 'b', 'label2': 'x', 'value': '25'},
-        ]
-
         # Filter by single value (where label1 is 'a').
-        results = self.datasource._BaseSource__filter_by(label1='a')
+        results = self.datasource.filter_rows(label1='a')
         results = list(results)
         expected = [
             {'label1': 'a', 'label2': 'x', 'value': '17'},
@@ -113,7 +103,7 @@ class TestBaseSource(unittest.TestCase):
         self.assertEqual(expected, results)
 
         # Filter by multiple values (where label2 is 'x' OR 'y').
-        results = self.datasource._BaseSource__filter_by(label2=['x', 'y'])
+        results = self.datasource.filter_rows(label2=['x', 'y'])
         results = list(results)
         expected = [
             {'label1': 'a', 'label2': 'x', 'value': '17'},
@@ -125,15 +115,28 @@ class TestBaseSource(unittest.TestCase):
         self.assertEqual(expected, results)
 
         # Filter by multiple columns (where label1 is 'a', label2 is 'x' OR 'y').
-        results = self.datasource._BaseSource__filter_by(label1='a',
-                                                         label2=['x', 'y'])
+        results = self.datasource.filter_rows(label1='a', label2=['x', 'y'])
         results = list(results)
         expected = [
             {'label1': 'a', 'label2': 'x', 'value': '17'},
             {'label1': 'a', 'label2': 'x', 'value': '13'},
             {'label1': 'a', 'label2': 'y', 'value': '20'},
         ]
-        self.assertEqual(results, expected)
+        self.assertEqual(expected, results)
+
+        # Call with no filter kewords at all.
+        results = self.datasource.filter_rows()  # <- Should return all rows.
+        results = list(results)
+        expected = [
+            {'label1': 'a', 'label2': 'x', 'value': '17'},
+            {'label1': 'a', 'label2': 'x', 'value': '13'},
+            {'label1': 'a', 'label2': 'y', 'value': '20'},
+            {'label1': 'a', 'label2': 'z', 'value': '15'},
+            {'label1': 'b', 'label2': 'z', 'value': '5' },
+            {'label1': 'b', 'label2': 'y', 'value': '40'},
+            {'label1': 'b', 'label2': 'x', 'value': '25'},
+        ]
+        self.assertEqual(expected, results)
 
     def test_columns(self):
         header = self.datasource.columns()
