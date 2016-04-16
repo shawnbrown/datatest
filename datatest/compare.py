@@ -2,12 +2,10 @@
 import inspect
 from numbers import Number
 
-from ._builtins import *
-from ._collections import Container
-from ._collections import Mapping
-from ._collections import Set
-from ._functools import wraps
-from . import _itertools as itertools
+from .utils.builtins import *
+from .utils import collections
+from .utils import functools
+from .utils import itertools
 
 from .differences import Extra
 from .differences import Missing
@@ -19,7 +17,7 @@ from .differences import NotProperSuperset
 
 def _is_nscontainer(x):
     """Returns True if *x* is a non-string container object."""
-    return not isinstance(x, str) and isinstance(x, Container)
+    return not isinstance(x, str) and isinstance(x, collections.Container)
 
 
 def _coerce_other(target_type, *type_args, **type_kwds):
@@ -27,7 +25,7 @@ def _coerce_other(target_type, *type_args, **type_kwds):
     argument into given *target_type* instance.
     """
     def callable(f):
-        @wraps(f)
+        @functools.wraps(f)
         def wrapped(self, other):
             if not isinstance(other, target_type):
                 try:
@@ -64,11 +62,11 @@ class CompareSet(set):
     """DataSource query result set."""
     def __init__(self, data):
         """Initialize object."""
-        if isinstance(data, Mapping):
+        if isinstance(data, collections.Mapping):
             raise TypeError('cannot be mapping')
 
         try:
-            if isinstance(data, Set):
+            if isinstance(data, collections.Set):
                 first_value = next(iter(data))
             else:
                 data = iter(data)
@@ -153,7 +151,7 @@ class CompareDict(dict):
     """DataSource query result mapping."""
     def __init__(self, data, key_names):
         """Initialize object."""
-        if not isinstance(data, Mapping):
+        if not isinstance(data, collections.Mapping):
             data = dict(data)
         if not _is_nscontainer(key_names):
             key_names = (key_names,)

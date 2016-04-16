@@ -1,4 +1,5 @@
-"""decimal compatibility layer"""
+"""compatibility layer for decimal (Python standard library)"""
+from __future__ import absolute_import
 from decimal import *
 
 

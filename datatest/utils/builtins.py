@@ -1,4 +1,5 @@
-"""builtins compatibility layer"""
+"""compatibility layer for built-in functions"""
+from __future__ import absolute_import
 
 try:
     from io import open as _open

@@ -1,5 +1,5 @@
+from __future__ import absolute_import
 
-from . import _itertools as itertools
 from .source import BaseSource
 from .source import SqliteSource
 

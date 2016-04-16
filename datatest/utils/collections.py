@@ -1,5 +1,5 @@
-"""collections compatibility layer"""
-
+"""compatibility layer for collections (Python standard library)"""
+from __future__ import absolute_import
 from collections import *
 
 

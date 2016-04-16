@@ -1,4 +1,5 @@
-"""itertools compatibility layer"""
+"""compatibility layer for itertools (Python standard library)"""
+from __future__ import absolute_import
 from itertools import *
 
 try:

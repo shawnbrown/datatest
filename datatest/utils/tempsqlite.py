@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 """Temporary SQLite table loader and manager."""
-
+from __future__ import absolute_import
 import sqlite3
-from ._decimal import Decimal
-from . import _itertools as itertools
 
-sqlite3.register_adapter(Decimal, str)
+from . import decimal
+from . import itertools
+
+sqlite3.register_adapter(decimal.Decimal, str)
 
 
 class TemporarySqliteTable(object):

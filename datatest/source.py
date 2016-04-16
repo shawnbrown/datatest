@@ -1,19 +1,17 @@
 # -*- coding: utf-8 -*-
-import functools
 import inspect
 import os
 import sqlite3
 import sys
 import warnings
 
-from ._builtins import *
-from ._collections import defaultdict
-from ._collections import Sequence
-from ._collections import namedtuple
-from ._decimal import Decimal
-from ._tempsqlite import TemporarySqliteTable as _TemporarySqliteTable
-from ._unicodecsvreader import UnicodeCsvReader as _UnicodeCsvReader
-from . import _itertools as itertools
+from .utils.builtins import *
+from .utils import collections
+from .utils import decimal
+from .utils import functools
+from .utils import itertools
+from .utils import TemporarySqliteTable
+from .utils import UnicodeCsvReader
 
 from .compare import CompareDict
 from .compare import CompareSet
@@ -22,7 +20,7 @@ from .compare import _is_nscontainer
 #pattern = 'test*.py'
 prefix = 'test_'
 
-sqlite3.register_adapter(Decimal, str)
+sqlite3.register_adapter(decimal.Decimal, str)
 
 
 class BaseSource(object):
@@ -83,7 +81,7 @@ class BaseSource(object):
         """Returns sum of one or more *columns* grouped by *keys* as a
         CompareDict.
         """
-        mapper = lambda x: Decimal(x) if x else Decimal(0)
+        mapper = lambda x: decimal.Decimal(x) if x else decimal.Decimal(0)
         if not _is_nscontainer(columns):
             reducer = lambda x, y: x + y
         else:
@@ -118,7 +116,7 @@ class BaseSource(object):
             Should accept column values from a single row and return a
             single computed result.  Mapper always receives a single
             argument--if *columns* is a sequence, *mapper* will receive
-            a namedtuple of values containing in the specified columns.
+            a tuple of values containing in the specified columns.
         *reducer* (function or other callable):
             Should accept two arguments that are applied cumulatively to
             the intermediate mapped results (produced by *mapper*), from
@@ -133,7 +131,7 @@ class BaseSource(object):
         """
         if isinstance(columns, str):
             get_value = lambda row: row[columns]
-        elif isinstance(columns, Sequence):
+        elif isinstance(columns, collections.Sequence):
             get_value = lambda row: tuple(row[column] for column in columns)
         else:
             raise TypeError('colums must be str or sequence')
@@ -504,7 +502,7 @@ class SqliteSource(SqliteBase):
             ]
             subjectData = datatest.SqliteSource.from_records(dict_rows)
         """
-        temptable = _TemporarySqliteTable(data, columns)
+        temptable = TemporarySqliteTable(data, columns)
         return cls(temptable.connection, temptable.name)
 
     def create_index(self, *columns):
@@ -557,19 +555,19 @@ class CsvSource(SqliteBase):
 
         # Create temporary SQLite table object.
         if encoding:
-            with _UnicodeCsvReader(file, encoding=encoding) as reader:
+            with UnicodeCsvReader(file, encoding=encoding) as reader:
                 columns = next(reader)  # Header row.
-                temptable = _TemporarySqliteTable(reader, columns)
+                temptable = TemporarySqliteTable(reader, columns)
         else:
             try:
-                with _UnicodeCsvReader(file, encoding='utf-8') as reader:
+                with UnicodeCsvReader(file, encoding='utf-8') as reader:
                     columns = next(reader)  # Header row.
-                    temptable = _TemporarySqliteTable(reader, columns)
+                    temptable = TemporarySqliteTable(reader, columns)
 
             except UnicodeDecodeError:
-                with _UnicodeCsvReader(file, encoding='iso8859-1') as reader:
+                with UnicodeCsvReader(file, encoding='iso8859-1') as reader:
                     columns = next(reader)  # Header row.
-                    temptable = _TemporarySqliteTable(reader, columns)
+                    temptable = TemporarySqliteTable(reader, columns)
 
                 # Prepare message and raise as warning.
                 try:
@@ -627,7 +625,7 @@ class AdapterSource(BaseSource):
     The original source can be accessed via the __wrapped__ property.
     """
     def __init__(self, source, interface, missing=''):
-        if not isinstance(interface, Sequence):
+        if not isinstance(interface, collections.Sequence):
             if isinstance(interface, dict):
                 interface = interface.items()
             interface = sorted(interface)
@@ -980,13 +978,13 @@ class MultiSource(BaseSource):
             return sum_total  # <- EXIT!
 
         if isinstance(columns, str):
-            sum_total = defaultdict(lambda: 0)
+            sum_total = collections.defaultdict(lambda: 0)
             for result in results:
                 for key, val in result.items():
                     sum_total[key] += val
         else:
             all_zeros = (0,) * len(columns)
-            sum_total = defaultdict(lambda: all_zeros)
+            sum_total = collections.defaultdict(lambda: all_zeros)
             for result in results:
                 for key, val in result.items():
                     existing = sum_total[key]

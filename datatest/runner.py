@@ -6,7 +6,6 @@ import sys
 import unittest
 import warnings
 
-from ._functools import wraps
 from .differences import DataAssertionError
 
 try:

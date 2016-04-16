@@ -1,4 +1,5 @@
-"""functools compatibility layer"""
+"""compatibility layer for functools (Python standard library)"""
+from __future__ import absolute_import
 from functools import *
 from sys import version_info as _version_info
 

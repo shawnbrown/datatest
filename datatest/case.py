@@ -6,8 +6,8 @@ import inspect
 import re
 from unittest import TestCase
 
-from ._builtins import *
-from . import _itertools as itertools
+from .utils.builtins import *
+from .utils import itertools
 
 from .differences import _make_decimal
 from .differences import DataAssertionError
