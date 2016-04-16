@@ -92,6 +92,11 @@ class BaseSource(object):
             reducer = lambda x, y: tuple(xi + yi for xi, yi in zip(x, y))
         return self.mapreduce(mapper, reducer, columns, keys, **kwds_filter)
 
+    def count2(self, column, keys=None, **kwds_filter):
+        mapper = lambda value: 1 if value else 0  # 1 for truthy, 0 for falsy
+        reducer = lambda x, y: x + y
+        return self.mapreduce(mapper, reducer, column, keys, **kwds_filter)
+
     def count(self, keys=None, **kwds_filter):
         """Returns count of *column* grouped by *keys* as CompareDict
         (uses ``reduce`` method).
@@ -274,6 +279,12 @@ class SqliteBase(BaseSource):
         columns = (self._normalize_column(x) for x in columns)
         sql_functions = tuple('SUM({0})'.format(x) for x in columns)
         return self._sql_aggregate(sql_functions, keys, **kwds_filter)
+
+    def count2(self, column, keys=None, **kwds_filter):
+        """."""
+        sql_function = "SUM(CASE COALESCE({0}, '') WHEN '' THEN 0 ELSE 1 END)"
+        sql_function = sql_function.format(self._normalize_column(column))
+        return self._sql_aggregate(sql_function, keys, **kwds_filter)
 
     def count(self, keys=None, **kwds_filter):
         """Returns count of *column* grouped by *keys* as

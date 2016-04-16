@@ -35,6 +35,7 @@ def _make_csv_file(fieldnames, datarows):
     init_string = []
     init_string.append(','.join(fieldnames)) # Concat cells into row.
     for row in datarows:
+        row = [str(cell) for cell in row]
         init_string.append(','.join(row))    # Concat cells into row.
     init_string = '\n'.join(init_string)     # Concat rows into final string.
     return io.StringIO(init_string)
@@ -66,6 +67,7 @@ class TestBaseSource(unittest.TestCase):
                 ['b', 'z', '5' ],
                 ['b', 'y', '40'],
                 ['b', 'x', '25']]
+
     def setUp(self):
         self.datasource = MinimalSource(self.testdata, self.fieldnames)
 
@@ -186,9 +188,9 @@ class TestBaseSource(unittest.TestCase):
             result = mapreduce(int, max, 'value_x')
 
         # Tuple argument for mapper.
-        mapper = lambda a: (int(a[0]), a[1])
-        maxmin = lambda x, y: (max(x[0], y[0]), min(x[1], y[1]))
-        expected = {'a': (20, 'x'), 'b': (40, 'x')}
+        mapper = lambda a: (int(a[0]), str(a[1]))
+        maxmin = lambda x, y: (min(x[0], y[0]), max(x[1], y[1]))
+        expected = {'a': (13, 'z'), 'b': (5, 'z')}
         self.assertEqual(expected, mapreduce(mapper, maxmin, ['value', 'label2'], 'label1'))
 
         # Namedtuple argument for mapper.
@@ -309,7 +311,6 @@ class TestBaseSource(unittest.TestCase):
             ('b', 'x'): 1,
         }
         self.assertEqual(expected, count(['label1', 'label2']))
-
         expected = {'x': 2, 'y': 1, 'z': 1}
         self.assertEqual(expected, count('label2', label1='a'))
 
@@ -362,6 +363,81 @@ class TestBaseSource(unittest.TestCase):
 
         with self.assertRaisesRegex(LookupError, "'label_x' not in \w+Source"):
             self.datasource._assert_columns_exist('label_x')
+
+
+class TestDataSourceCount(unittest.TestCase):
+    """Test count2() method with the following data set:
+
+        label1  label2  value
+        ------  ------  -----
+        'a'     'x'     '17'
+        'a'     'x'     '13'
+        'a'     'y'     '20'
+        'a'     ''      '15'
+        'b'     'z'     '5'
+        'b'     'y'     '40'
+        'b'     'x'     '25'
+        'b'     None    '0'
+        'b'     ''      '1'
+    """
+    fieldnames = ['label1', 'label2', 'value']
+    testdata = [
+        ['a', 'x', '17'],
+        ['a', 'x', '13'],
+        ['a', 'y', '20'],
+        ['a', '',  '15'],
+        ['b', 'z', '5' ],
+        ['b', 'y', '40'],
+        ['b', 'x', '25'],
+        ['b', None, '0'],
+        ['b', '', '1'],
+    ]
+    def setUp(self):
+        """Define self.datasource (base version uses MinimalSource)."""
+        self.datasource = MinimalSource(self.testdata, self.fieldnames)
+
+    def test_count2(self):
+        count = self.datasource.count2
+
+        self.assertEqual(9, count('label1'))
+
+        expected = {'a': 4, 'b': 5}
+        result = count('label1', ['label1'])
+        self.assertEqual(expected, result)
+
+        expected = {'a': 3, 'b': 3}  # Counts only truthy values (not '' or None).
+        result = count('label2', ['label1'])
+        self.assertEqual(expected, result)
+
+        expected = {
+            ('a', 'x'): 2,
+            ('a', 'y'): 1,
+            ('a', ''): 1,
+            ('b', 'z'): 1,
+            ('b', 'y'): 1,
+            ('b', 'x'): 1,
+            ('b', None): 1,
+            ('b', ''): 1,
+        }
+        result = count('label1', ['label1', 'label2'])
+        self.assertEqual(expected, result)
+
+        expected = {'x': 2, 'y': 1, '': 1}
+        result = count('label1', 'label2', label1='a')
+        self.assertEqual(expected, result)
+
+
+class TestSqliteSourceCount(TestDataSourceCount):
+    def setUp(self):
+        tablename = 'testtable'
+        connection = sqlite3.connect(':memory:')
+        cursor = connection.cursor()
+        cursor.execute("CREATE TABLE testtable (label1, label2, value)")
+        for values in self.testdata:
+            cursor.execute("INSERT INTO testtable VALUES (?, ?, ?)", values)
+        connection.commit()
+
+        self.datasource = SqliteSource(connection, tablename)
 
 
 class TestTemporarySqliteTable(unittest.TestCase):
