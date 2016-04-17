@@ -30,8 +30,7 @@ class TestHelperCase(unittest.TestCase):
         test_result = runner.run(audit_case)
         self.assertEqual(test_result.testsRun, 1, 'Should one run test.')
         if test_result.errors:
-            msg = 'Test contains error.\n'
-            raise AssertionError(msg + test_result.errors[0][1])
+            return test_result.errors[0][1]
         if test_result.failures:
             return test_result.failures[0][1]
         return None
@@ -303,7 +302,7 @@ class TestAssertDataCount(TestHelperCase):
                 _self.assertDataCount('bad_col_name', ['label1'])  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = "no column named u?'bad_col_name'"
+        pattern = "LookupError: u?'bad_col_name' not in"
         self.assertRegex(failure, pattern)
 
     def test_failing_case(self):
@@ -314,7 +313,8 @@ class TestAssertDataCount(TestHelperCase):
                 _self.subjectData = self.src2_records  # <- src1 != src2
 
             def test_method(_self):
-                _self.assertDataCount('total_rows', ['label1'])  # <- test assert
+                required = {'a': 4, 'b': 3}
+                _self.assertDataCount('total_rows', ['label1'], required)  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ("DataAssertionError: row counts different than 'total_rows' sums:\n"

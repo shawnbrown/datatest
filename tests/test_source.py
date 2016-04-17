@@ -292,13 +292,13 @@ class TestBaseSource(unittest.TestCase):
     def test_count(self):
         count = self.datasource.count
 
-        self.assertEqual(7, count())
+        self.assertEqual(7, count('label1'))
 
         expected = {'a': 4, 'b': 3}
-        self.assertEqual(expected, count('label1'))
+        self.assertEqual(expected, count('label1', 'label1'))
 
         expected = {('a',): 4, ('b',): 3}
-        self.assertEqual(expected, count(['label1']))
+        self.assertEqual(expected, count('label1', ['label1']))
 
         expected = {
             ('a', 'x'): 2,
@@ -308,9 +308,9 @@ class TestBaseSource(unittest.TestCase):
             ('b', 'y'): 1,
             ('b', 'x'): 1,
         }
-        self.assertEqual(expected, count(['label1', 'label2']))
+        self.assertEqual(expected, count('label1', ['label1', 'label2']))
         expected = {'x': 2, 'y': 1, 'z': 1}
-        self.assertEqual(expected, count('label2', label1='a'))
+        self.assertEqual(expected, count('label2', 'label2', label1='a'))
 
     def test_distinct(self):
         distinct = self.datasource.distinct
@@ -364,7 +364,7 @@ class TestBaseSource(unittest.TestCase):
 
 
 class TestDataSourceCount(unittest.TestCase):
-    """Test count2() method with the following data set:
+    """Test count() method with the following data set:
 
         label1  label2  value
         ------  ------  -----
@@ -394,8 +394,8 @@ class TestDataSourceCount(unittest.TestCase):
         """Define self.datasource (base version uses MinimalSource)."""
         self.datasource = MinimalSource(self.testdata, self.fieldnames)
 
-    def test_count2(self):
-        count = self.datasource.count2
+    def test_count(self):
+        count = self.datasource.count
 
         self.assertEqual(9, count('label1'))
 
@@ -1038,10 +1038,10 @@ class TestMultiSource(TestBaseSource):
         source = MultiSource(src1, src2)
 
         expected = {'a': 3, 'b': 2}
-        self.assertEqual(expected, source.count('label1'))
+        self.assertEqual(expected, source.count('label1', 'label1'))
 
         expected = {'a': 1}
-        self.assertEqual(expected, source.count('label1', label2='x'))
+        self.assertEqual(expected, source.count('label1', 'label1', label2='x'))
 
 
 class TestMixedMultiSource(TestBaseSource):

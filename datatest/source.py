@@ -90,19 +90,10 @@ class BaseSource(object):
             reducer = lambda x, y: tuple(xi + yi for xi, yi in zip(x, y))
         return self.mapreduce(mapper, reducer, columns, keys, **kwds_filter)
 
-    def count2(self, column, keys=None, **kwds_filter):
+    def count(self, column, keys=None, **kwds_filter):
         mapper = lambda value: 1 if value else 0  # 1 for truthy, 0 for falsy
         reducer = lambda x, y: x + y
         return self.mapreduce(mapper, reducer, column, keys, **kwds_filter)
-
-    def count(self, keys=None, **kwds_filter):
-        """Returns count of *column* grouped by *keys* as CompareDict
-        (uses ``reduce`` method).
-        """
-        func = lambda x, y: x + y
-        column = lambda row: 1  # Column mapped to int value 1.
-        init = 0
-        return self.reduce(func, column, keys, init, **kwds_filter)
 
     def mapreduce(self, mapper, reducer, columns, keys=None, **kwds_filter):
         """Apply *mapper* to the values in *columns* (which are grouped
@@ -278,17 +269,11 @@ class SqliteBase(BaseSource):
         sql_functions = tuple('SUM({0})'.format(x) for x in columns)
         return self._sql_aggregate(sql_functions, keys, **kwds_filter)
 
-    def count2(self, column, keys=None, **kwds_filter):
+    def count(self, column, keys=None, **kwds_filter):
         """."""
         sql_function = "SUM(CASE COALESCE({0}, '') WHEN '' THEN 0 ELSE 1 END)"
         sql_function = sql_function.format(self._normalize_column(column))
         return self._sql_aggregate(sql_function, keys, **kwds_filter)
-
-    def count(self, keys=None, **kwds_filter):
-        """Returns count of *column* grouped by *keys* as
-        CompareDict.
-        """
-        return self._sql_aggregate('COUNT(*)', keys, **kwds_filter)
 
     def _sql_aggregate(self, sql_function, keys=None, **kwds_filter):
         """Aggregates values using SQL function select--e.g.,
@@ -722,7 +707,7 @@ class AdapterSource(BaseSource):
         return self._rebuild_comparedict(result, rewrap_cols, columns,
                                          rewrap_keys, keys, missing_col=0)
 
-    #def count(self, keys=None, **kwds_filter):
+    #def count(self, column, keys=None, **kwds_filter):
     #    pass
 
     def mapreduce(self, mapper, reducer, columns, keys=None, **kwds_filter):
@@ -990,6 +975,9 @@ class MultiSource(BaseSource):
                     existing = sum_total[key]
                     sum_total[key] = tuple(xi + yi for xi, yi in zip(existing, val))
         return CompareDict(sum_total, keys)
+
+    #def count(self, column, keys=None, **kwds_filter):
+    #    pass
 
     def mapreduce(self, mapper, reducer, columns, keys=None, **kwds_filter):
         fn = lambda source: source.mapreduce(mapper, reducer, columns, keys, **kwds_filter)

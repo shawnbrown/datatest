@@ -178,28 +178,29 @@ class DataTestCase(TestCase):
                 msg = 'different {0!r} sums'.format(column)
             self.fail(msg, differences)
 
-    def assertDataCount(self, column, keys, msg=None, **filter_by):
-        """Test that the count of subject rows matches the sum of
-        reference *column* for each group in *keys*.
+    def assertDataCount(self, column, keys, required=None, msg=None, **filter_by):
+        """Test that the count of non-empty values in ``subjectData``
+        column matches the the *required* values dict.  If *required* is
+        omitted, the sum of values in ``referenceData`` column (not the
+        count) is used in its place.
 
-        The following asserts that the count of the subject's rows
-        matches the sum of the reference's ``employees`` column for
-        each group of ``department`` and ``project`` values::
-
-            self.assertDataCount('employees', ['department', 'project'])
+        The *required* argument can be a dict, callable, data source,
+        or None.  See :meth:`assertDataSet
+        <datatest.DataTestCase.assertDataSet>` for more details.
         """
-        if column not in self.referenceData.columns():
-            msg = 'no column named {0!r} in referenceData'.format(column)
-            raise AssertionError(msg)
+        subject_result = self.subjectData.count(column, keys, **filter_by)
 
-        subject_result = self.subjectData.count(keys, **filter_by)
-        reference_result = self.referenceData.sum(column, keys, **filter_by)
+        if callable(required):
+            differences = subject_result.compare(required)
+        else:
+            # Gets 'sum' of reference column (not 'count').
+            required_dict = self._normalize_required(required, 'sum', column, keys, **filter_by)
+            differences = subject_result.compare(required_dict)
 
-        differences = subject_result.compare(reference_result)
         if differences:
             if not msg:
                 msg = 'row counts different than {0!r} sums'.format(column)
-            self.fail(msg=msg, differences=differences)
+            self.fail(msg, differences)
 
     def assertDataRegex(self, column, required, msg=None, **filter_by):
         """Test that *column* in ``subjectData`` contains values that
