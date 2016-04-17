@@ -203,61 +203,6 @@ class TestBaseSource(unittest.TestCase):
         expected = {'a': (20, 13), 'b': (40, 5)}
         self.assertEqual(expected, mapreduce(maketwo, maxmin, 'value', 'label1'))
 
-    def test_reduce(self):
-        reduce = self.datasource.reduce
-
-        def maximum(x, y):
-            try:
-                y = float(y)
-            except TypeError:
-                return x
-
-            try:
-                return max(x, y)
-            except TypeError:
-                return y
-
-        # No group_by.
-        msg = 'when group_by is omitted, should return raw result not a CompareDict'
-        self.assertEqual(40.0, reduce(maximum, 'value'), msg=msg)
-
-        # Callable.
-        column = lambda row: row['value']
-        self.assertEqual(40.0, reduce(maximum, column), msg=msg)
-
-        # No group_by, missing column.
-        with self.assertRaises(TypeError):
-            self.assertEqual(None, reduce(maximum))
-
-        # No group_by, callable-column (reimplements count).
-        function = lambda x, y: x + y
-        column = lambda row: 1
-        self.assertEqual(7, reduce(function, column, initializer=0))
-
-        # Single group_by column.
-        expected = {'a': 20.0, 'b': 40.0}
-        self.assertEqual(expected, reduce(maximum, 'value', 'label1'))
-        self.assertEqual(expected, reduce(maximum, 'value', ['label1']))  # 1-item container
-
-        # Two group_by columns.
-        expected = {
-            ('a', 'x'): 17.0,
-            ('a', 'y'): 20.0,
-            ('a', 'z'): 15.0,
-            ('b', 'z'):  5.0,
-            ('b', 'y'): 40.0,
-            ('b', 'x'): 25.0,
-        }
-        self.assertEqual(expected, reduce(maximum, 'value', ['label1', 'label2']))
-
-        # Group by with filter.
-        expected = {'x': 17.0, 'y': 20.0, 'z': 15.0}
-        self.assertEqual(expected, reduce(maximum, 'value', 'label2', label1='a'))
-
-        # Attempt to reduce column that does not exist.
-        with self.assertRaises(LookupError):
-            result = reduce(maximum, 'value_x')
-
     def test_sum(self):
         sum = self.datasource.sum
 

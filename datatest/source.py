@@ -150,41 +150,6 @@ class BaseSource(object):
                 result[key] = y                # speed.
         return CompareDict(result, keys)
 
-    def reduce(self, function, column, keys=None, initializer=None, **kwds_filter):
-        """Apply *function* of two arguments cumulatively to the values
-        in *column*, from left to right, so as to reduce the iterable
-        to a single value (uses slow ``__iter__``).  If *column* is a
-        string, the values are passed to *function* unchanged.  But if
-        *column* is, itself, a function, it should accept a single
-        dict-row and return a single value.  If *keys* is omitted, the
-        raw result is returned, otherwise returns a CompareDict
-        object.
-        """
-        if not callable(column):
-            self._assert_columns_exist(column)
-            get_value = lambda row: row[column]
-        else:
-            get_value = column
-
-        iterable = self.filter_rows(**kwds_filter)  # Uses slow __iter__().
-
-        if not keys:
-            vals = (get_value(row) for row in iterable)
-            return functools.reduce(function, vals, initializer)  # <- EXIT!
-
-        if not _is_nscontainer(keys):
-            keys = (keys,)
-        self._assert_columns_exist(keys)
-
-        result = {}                                # Do not remove this loop
-        for row in iterable:                       # without a good reason!
-            key = tuple(row[x] for x in keys)      # Accumulating with a dict
-            x = result.get(key, initializer)       # is more memory efficient
-            y = get_value(row)                     # than using sorted() plus
-            result[key] = function(x, y)           # itertools.groupby() plus
-                                                   # functools.reduce().
-        return CompareDict(result, keys)
-
     def _assert_columns_exist(self, columns):
         """Asserts that given columns are present in data source,
         raises LookupError if columns are missing.
@@ -328,57 +293,6 @@ class SqliteBase(BaseSource):
     # attempting to optimize an open-ended number of special cases
     # would require a lot of speculation and hardly seems advisable at
     # this time.
-
-    def reduce(self, function, column, keys=None, initializer=None, **kwds_filter):
-        """Apply *function* of two arguments cumulatively to the values
-        in *column*, from left to right, so as to reduce the iterable
-        to a single value.  If *column* is a string, the values are
-        passed to *function* unchanged.  But if *column* is, itself, a
-        function, it should accept a single dict-row and return a
-        single value.  If *keys* is omitted, the raw result is
-        returned, otherwise returns a CompareDict object.
-        """
-        if not callable(column):
-            self._assert_columns_exist(column)
-            get_values = lambda itrbl: (row[column] for row in itrbl)
-        else:
-            get_values = lambda itrbl: (column(row) for row in itrbl)
-        apply = lambda cur: functools.reduce(function, get_values(cur), initializer)
-
-        val_keys = self.columns()
-        dict_rows = lambda itrbl: (dict(zip(val_keys, vals)) for vals in itrbl)
-
-        if keys:
-            if not _is_nscontainer(keys):
-                keys = (keys,)
-            self._assert_columns_exist(keys)
-
-            order_by = tuple(self._normalize_column(x) for x in keys)
-            order_by = ', '.join(order_by)
-            order_by = 'ORDER BY {0}'.format(order_by)
-            cursor = self._execute_query(self._table, '*', order_by, **kwds_filter)
-            cursor = dict_rows(cursor)
-
-            keyfn = lambda row: tuple(row[key] for key in keys)
-            grouped = itertools.groupby(cursor, key=keyfn)
-            result = ((key, apply(vals)) for key, vals in grouped)
-            result = CompareDict(result, keys)
-
-            # TODO: Check to see which is faster with lots of groups.
-            #result = {}
-            #groups = self.distinct(keys, **kwds_filter)
-            #for group in groups:
-            #    subfilter_by = dict(zip(keys, group))
-            #    subfilter_by.update(kwds_filter)
-            #    cursor = self._execute_query(self._table, '*', **subfilter_by)
-            #    cursor = dict_rows(cursor)
-            #    result[group] = apply(cursor)
-            #    result = CompareDict(result, keys)
-        else:
-            cursor = self._execute_query(self._table, '*', **kwds_filter)
-            cursor = dict_rows(cursor)
-            result = apply(cursor)
-        return result
 
     def _execute_query(self, table, select_clause, trailing_clause=None, **kwds_filter):
         """Execute query and return cursor object."""
