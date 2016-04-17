@@ -1,4 +1,5 @@
-"""contextlib compatibility layer."""
+"""compatibility layer for contextlib (Python standard library)"""
+from __future__ import absolute_import
 from contextlib import *
 
 
@@ -30,7 +31,7 @@ except NameError:
 
 
 try:
-    redirect_stdout
+    redirect_stdout  # New in 3.4
 except NameError:
     class redirect_stdout(_RedirectStream):
         """Context manager for temporarily redirecting stdout to

@@ -1,3 +1,5 @@
+"""compatibility layer for io (Python standard library)"""
+from __future__ import absolute_import
 from io import *
 from sys import version_info as _version_info
 

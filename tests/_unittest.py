@@ -1,6 +1,8 @@
-"""unittest compatibility layer."""
-import sys as _sys
+"""compatibility layer for unittest (Python standard library)"""
+from __future__ import absolute_import
 from unittest import *
+import sys as _sys
+
 
 try:
     TestCase.assertIn  # New in 2.7/3.1
