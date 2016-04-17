@@ -10,83 +10,15 @@ from . import _unittest as unittest
 
 # Import code to test.
 from datatest.case import DataTestCase
-from datatest.case import _walk_diff
 from datatest import DataAssertionError
 from datatest import Extra
 from datatest import Missing
 from datatest import Invalid
 from datatest import Deviation
 from datatest import CsvSource
-from datatest.case import _AllowAny
-from datatest.case import _AllowMissing
-from datatest.case import _AllowExtra
-
-
-class TestWalkValues(unittest.TestCase):
-    def test_list_input(self):
-        # Flat.
-        generator = _walk_diff([Missing('val1'),
-                                Missing('val2')])
-        self.assertEqual(list(generator), [Missing('val1'),
-                                           Missing('val2')])
-
-        # Nested.
-        generator = _walk_diff([Missing('val1'),
-                                [Missing('val2')]])
-        self.assertEqual(list(generator), [Missing('val1'),
-                                           Missing('val2')])
-
-    def test_dict_input(self):
-        # Flat dictionary input.
-        generator = _walk_diff({'key1': Missing('val1'),
-                                'key2': Missing('val2')})
-        self.assertEqual(set(generator), set([Missing('val1'),
-                                              Missing('val2')]))
-
-        # Nested dictionary input.
-        generator = _walk_diff({'key1': Missing('val1'),
-                                'key2': {'key3': Missing('baz')}})
-        self.assertEqual(set(generator), set([Missing('val1'),
-                                              Missing('baz')]))
-
-    def test_unwrapped_input(self):
-        generator = _walk_diff(Missing('val1'))
-        self.assertEqual(list(generator), [Missing('val1')])
-
-    def test_mixed_input(self):
-        # Nested collection of dict, list, and unwrapped items.
-        generator = _walk_diff({'key1': Missing('val1'),
-                                'key2': [Missing('val2'),
-                                         [Missing('val3'),
-                                          Missing('val4')]]})
-        self.assertEqual(set(generator), set([Missing('val1'),
-                                              Missing('val2'),
-                                              Missing('val3'),
-                                              Missing('val4')]))
-
-    def test_nondiff_items(self):
-        # Flat list.
-        with self.assertRaises(TypeError):
-            generator = _walk_diff(['val1', 'val2'])
-            list(generator)
-
-        # Flat dict.
-        with self.assertRaises(TypeError):
-            generator = _walk_diff({'key1': 'val1', 'key2': 'val2'})
-            list(generator)
-
-        # Nested list.
-        with self.assertRaises(TypeError):
-            generator = _walk_diff([Missing('val1'), ['val2']])
-            list(generator)
-
-        # Nested collection of dict, list, and unwrapped items.
-        with self.assertRaises(TypeError):
-            generator = _walk_diff({'key1': Missing('val1'),
-                                    'key2': [Missing('val2'),
-                                             [Missing('val3'),
-                                              'val4']]})
-            list(generator)
+from datatest.allow import _AllowAny
+from datatest.allow import _AllowMissing
+from datatest.allow import _AllowExtra
 
 
 class TestHelperCase(unittest.TestCase):
