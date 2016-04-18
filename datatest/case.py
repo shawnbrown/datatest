@@ -110,30 +110,30 @@ class DataTestCase(TestCase):
         # TODO: Implement callable *required* argument.
         # TODO: Explore the idea of implementing DataList to assert column order.
 
-    def assertDataSet(self, column, required=None, msg=None, **filter_by):
-        """Test that the *column* or columns in ``subjectData``
+    def assertDataSet(self, columns, required=None, msg=None, **filter_by):
+        """Test that the *columns* or column in ``subjectData``
         contains the *required* values. If *required* is omitted,
         values from ``referenceData`` are used in its place.
 
-        *column* (string or sequence of strings):
+        *columns* (string or sequence of strings):
             Name of the ``subjectData`` column or columns to check.  If
-            *column* contains multiple names, the tests will check
+            *columns* contains multiple names, the tests will check
             tuples of values.
         *required* (collection, callable, data source, or None):
             If *required* is a set (or other collection), the set of
-            *column* values must match the items in this collection.
+            *columns* values must match the items in this collection.
             If *required* is a function (or other callable), it is used
             as a key which must return True for acceptable values. If
             *required* is a data source, it is used as reference data.
             If *required* is omitted, then ``referenceData`` will be
             used in its place.
         """
-        subject_set = self.subjectData.distinct(column, **filter_by)
+        subject_set = self.subjectData.distinct(columns, **filter_by)
 
         if callable(required):
             differences = subject_set.compare(required)
         else:
-            required_set = self._normalize_required(required, 'distinct', column, **filter_by)
+            required_set = self._normalize_required(required, 'distinct', columns, **filter_by)
             if subject_set != required_set:
                 differences = subject_set.compare(required_set)
             else:
@@ -141,7 +141,7 @@ class DataTestCase(TestCase):
 
         if differences:
             if msg is None:
-                msg = 'different {0!r} values'.format(column)
+                msg = 'different {0!r} values'.format(columns)
             self.fail(msg, differences)
 
     def assertDataSum(self, column, keys, required=None, msg=None, **filter_by):

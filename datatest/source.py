@@ -66,15 +66,15 @@ class BaseSource(object):
             return filter(matches_kwds, self.__iter__())
         return self.__iter__()
 
-    def distinct(self, column, **kwds_filter):
-        """Return iterable of tuples containing distinct *column*
+    def distinct(self, columns, **kwds_filter):
+        """Return iterable of tuples containing distinct *columns*
         values (uses slow ``__iter__``).
         """
-        if not _is_nscontainer(column):
-            column = (column,)
-        self._assert_columns_exist(column)
+        if not _is_nscontainer(columns):
+            columns = (columns,)
+        self._assert_columns_exist(columns)
         iterable = self.filter_rows(**kwds_filter)  # Filtered rows only.
-        iterable = (tuple(row[c] for c in column) for row in iterable)
+        iterable = (tuple(row[c] for c in columns) for row in iterable)
         return CompareSet(iterable)
 
     def sum(self, column, keys=None, **kwds_filter):
@@ -203,14 +203,14 @@ class SqliteBase(BaseSource):
             return (dict_row(row) for row in cursor)
         return self.__iter__()
 
-    def distinct(self, column, **kwds_filter):
-        """Return iterable of tuples containing distinct *column*
+    def distinct(self, columns, **kwds_filter):
+        """Return iterable of tuples containing distinct *columns*
         values.
         """
-        if not _is_nscontainer(column):
-            column = (column,)
-        self._assert_columns_exist(column)
-        select_clause = [self._normalize_column(x) for x in column]
+        if not _is_nscontainer(columns):
+            columns = (columns,)
+        self._assert_columns_exist(columns)
+        select_clause = [self._normalize_column(x) for x in columns]
         select_clause = ', '.join(select_clause)
         select_clause = 'DISTINCT ' + select_clause
 
@@ -583,10 +583,10 @@ class AdapterSource(BaseSource):
         rewrap_cols = self._rewrap_columns(unwrap_cols)
         return self._rebuild_compareset(results, rewrap_cols, columns)
 
-    def sum(self, columns, keys=None, **kwds_filter):
-        """Returns sum of *columns* grouped by *keys* as CompareDict."""
+    def sum(self, column, keys=None, **kwds_filter):
+        """Returns sum of *column* grouped by *keys* as CompareDict."""
         unwrap_src = self.__wrapped__
-        unwrap_cols = self._unwrap_columns(columns)
+        unwrap_col = self._unwrap_columns(column)
         unwrap_keys = self._unwrap_columns(keys)
         try:
             unwrap_flt = self._unwrap_filter(kwds_filter)
@@ -598,20 +598,16 @@ class AdapterSource(BaseSource):
             return result  # <- EXIT!
 
         # If all *columns* are missing, build result of missing values.
-        if not unwrap_cols:
+        if not unwrap_col:
             distinct = self.distinct(keys, **kwds_filter)
-            if isinstance(columns, str):
-                val = 0
-            else:
-                val = (0,) * len(columns)
-            result = ((key, val) for key in distinct)
+            result = ((key, 0) for key in distinct)
             return CompareDict(result, keys)  # <- EXIT!
 
-        result = unwrap_src.sum(unwrap_cols, unwrap_keys, **unwrap_flt)
+        result = unwrap_src.sum(unwrap_col, unwrap_keys, **unwrap_flt)
 
-        rewrap_cols = self._rewrap_columns(unwrap_cols)
+        rewrap_col = self._rewrap_columns(unwrap_col)
         rewrap_keys = self._rewrap_columns(unwrap_keys)
-        return self._rebuild_comparedict(result, rewrap_cols, columns,
+        return self._rebuild_comparedict(result, rewrap_col, column,
                                          rewrap_keys, keys, missing_col=0)
 
     #def count(self, column, keys=None, **kwds_filter):
@@ -855,32 +851,18 @@ class MultiSource(BaseSource):
         results = itertools.chain(*results)
         return CompareSet(results)
 
-    def sum(self, columns, keys=None, **kwds_filter):
-        """Return sum of values in *columns* grouped by *keys*."""
-        fn = lambda source: source.sum(columns, keys, **kwds_filter)
+    def sum(self, column, keys=None, **kwds_filter):
+        """Return sum of values in *column* grouped by *keys*."""
+        fn = lambda source: source.sum(column, keys, **kwds_filter)
         results = (fn(source) for source in self._sources)
 
         if not keys:
-            if isinstance(columns, str):
-                sum_total = sum(results)
-            else:
-                sum_total = (0,) * len(columns)
-                for val in results:
-                    sum_total = tuple(xi + yi for xi, yi in zip(sum_total, val))
-            return sum_total  # <- EXIT!
+            return sum(results)  # <- EXIT!
 
-        if isinstance(columns, str):
-            sum_total = collections.defaultdict(lambda: 0)
-            for result in results:
-                for key, val in result.items():
-                    sum_total[key] += val
-        else:
-            all_zeros = (0,) * len(columns)
-            sum_total = collections.defaultdict(lambda: all_zeros)
-            for result in results:
-                for key, val in result.items():
-                    existing = sum_total[key]
-                    sum_total[key] = tuple(xi + yi for xi, yi in zip(existing, val))
+        sum_total = collections.defaultdict(lambda: 0)
+        for result in results:
+            for key, val in result.items():
+                sum_total[key] += val
         return CompareDict(sum_total, keys)
 
     #def count(self, column, keys=None, **kwds_filter):
