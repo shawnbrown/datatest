@@ -14,9 +14,9 @@ CALL :runCommand "C:\Program Files\Python 3.5\python.exe -B -m unittest %*"
 CALL :runCommand "C:\Python34\python.exe -B -m unittest %*"
 CALL :runCommand "C:\Python33\python.exe -B -m unittest %*"
 CALL :runCommand "C:\Python32\python.exe -B -m unittest %*"
-CALL :runCommand "C:\Python31\python.exe -B discover.py %*"
+CALL :runCommand "C:\Python31\python.exe -B tests/discover.py %*"
 CALL :runCommand "C:\Python27\python.exe -B -m unittest discover %*"
-CALL :runCommand "C:\Python26\python.exe -B discover.py %*"
+CALL :runCommand "C:\Python26\python.exe -B tests/discover.py %*"
 
 IF %GLOBAL_ERRORLEVEL% EQU 0 (
     ECHO.

@@ -31,9 +31,9 @@ run_command "python3.5 -B -m unittest $*"
 run_command "python3.4 -B -m unittest $*"
 run_command "python3.3 -B -m unittest $*"
 run_command "python3.2 -B -m unittest $*"
-run_command "python3.1 -B discover.py $*"
+run_command "python3.1 -B tests/discover.py $*"
 run_command "python2.7 -B -m unittest discover $*"
-run_command "python2.6 -B discover.py $*"
+run_command "python2.6 -B tests/discover.py $*"
 
 echo "" >&2
 echo "All commands successful." >&2
