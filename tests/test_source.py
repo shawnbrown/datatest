@@ -227,12 +227,12 @@ class TestBaseSource(unittest.TestCase):
         expected = {'x': 30, 'y': 20, 'z': 15}
         self.assertEqual(expected, sum('value', 'label2', label1='a'))
 
-        # Test multiple *columns*:
+        # Test multiple/non-string column (not valid).
+        with self.assertRaises((TypeError, ValueError)):
+            sum(['value', 'value'])
 
-        self.assertEqual((135, 135), sum(['value', 'value']))
-
-        expected = {'x': (30, 30), 'y': (20, 20), 'z': (15, 15)}
-        self.assertEqual(expected, sum(['value', 'value'], 'label2', label1='a'))
+        with self.assertRaises((TypeError, ValueError)):
+            sum(['value', 'value'], 'label2', label1='a')
 
     def test_count(self):
         count = self.datasource.count
@@ -885,32 +885,24 @@ class TestAdapterSource(unittest.TestCase):
         # Sum over column mapped to None.
         interface = [('two', 'col2'), ('three', 'col3'), ('four', None)]
         adapted = AdapterSource(self.source, interface)
-        result = adapted.sum(['three', 'four'], 'two')
-        expected = {'x': (30, 0), 'y': (20, 0), 'z': (15, 0)}
+        result = adapted.sum('four', 'two')
+        expected = {'x': 0, 'y': 0, 'z': 0}
         self.assertEqual(expected, result)
 
         # Grouped by and summed over column mapped to None.
         interface = [('two', 'col2'), ('three', 'col3'), ('four', None)]
         adapted = AdapterSource(self.source, interface)
-        result = adapted.sum(['three', 'four'], ['two', 'four'])
-        expected = {('x', ''): (30, 0), ('y', ''): (20, 0), ('z', ''): (15, 0)}
-        self.assertEqual(expected, result)
+        with self.assertRaises(ValueError):
+            adapted.sum(['three', 'four'], 'two')
 
         # Grouped by and summed over column mapped to None using alternate missing.
-        interface = [('two', 'col2'), ('three', 'col3'), ('four', None)]
+        interface = [('one', 'col1'), ('two', 'col2'), ('three', 'col3'), ('four', None), ('five', None)]
         adapted = AdapterSource(self.source, interface, missing='EMPTY')
-        result = adapted.sum(['three', 'four'], ['two', 'four'])
-        expected = {('x', 'EMPTY'): (30, 0), ('y', 'EMPTY'): (20, 0), ('z', 'EMPTY'): (15, 0)}
+        result = adapted.sum('four', 'one')  # <- Key on existing column.
+        expected = {'a': 0}
         self.assertEqual(expected, result)
-
-        # Grouped by and summed over column mapped to None using alternate missing.
-        interface = [('one', 'col1'), ('two', 'col2'), ('three', 'col3'), ('four', None)]
-        adapted = AdapterSource(self.source, interface, missing='EMPTY')
-        result = adapted.sum(['three', 'four'], 'one')  # <- Key on existing column.
-        expected = {'a': (65, 0)}
-        self.assertEqual(expected, result)
-        result = adapted.sum(['three', 'four'], 'four')  # <- Key on missing column.
-        expected = {'EMPTY': (65, 0)}
+        result = adapted.sum('four', 'five')  # <- Key on missing column.
+        expected = {'EMPTY': 0}
         self.assertEqual(expected, result)
 
         # Summed over column mapped to None and nothing else.

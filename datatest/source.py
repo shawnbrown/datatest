@@ -77,18 +77,10 @@ class BaseSource(object):
         iterable = (tuple(row[c] for c in column) for row in iterable)
         return CompareSet(iterable)
 
-    def sum(self, columns, keys=None, **kwds_filter):
-        """Returns sum of one or more *columns* grouped by *keys* as a
-        CompareDict.
-        """
+    def sum(self, column, keys=None, **kwds_filter):
         mapper = lambda x: decimal.Decimal(x) if x else decimal.Decimal(0)
-        if not _is_nscontainer(columns):
-            reducer = lambda x, y: x + y
-        else:
-            map_one = mapper
-            mapper = lambda x: tuple(map_one(n) for n in x)
-            reducer = lambda x, y: tuple(xi + yi for xi, yi in zip(x, y))
-        return self.mapreduce(mapper, reducer, columns, keys, **kwds_filter)
+        reducer = lambda x, y: x + y
+        return self.mapreduce(mapper, reducer, column, keys, **kwds_filter)
 
     def count(self, column, keys=None, **kwds_filter):
         mapper = lambda value: 1 if value else 0  # 1 for truthy, 0 for falsy
@@ -225,13 +217,11 @@ class SqliteBase(BaseSource):
         cursor = self._execute_query(self._table, select_clause, **kwds_filter)
         return CompareSet(cursor)
 
-    def sum(self, columns, keys=None, **kwds_filter):
-        """Returns sum of *columns* grouped by *keys* as CompareDict."""
-        if not _is_nscontainer(columns):
-            columns = (columns,)
-        self._assert_columns_exist(columns)
-        columns = (self._normalize_column(x) for x in columns)
-        sql_functions = tuple('SUM({0})'.format(x) for x in columns)
+    def sum(self, column, keys=None, **kwds_filter):
+        """Returns sum of *column* grouped by *keys* as CompareDict."""
+        self._assert_columns_exist(column)
+        column = self._normalize_column(column)
+        sql_functions = 'SUM({0})'.format(column)
         return self._sql_aggregate(sql_functions, keys, **kwds_filter)
 
     def count(self, column, keys=None, **kwds_filter):
@@ -368,13 +358,16 @@ class SqliteBase(BaseSource):
         cursor.execute(statement)
 
     @staticmethod
-    def _normalize_column(name):
+    def _normalize_column(column):
         """Normalize value for use as SQLite column name."""
-        name = name.strip()
-        name = name.replace('"', '""')  # Escape quotes.
-        if name == '':
-            name = '_empty_'
-        return '"' + name + '"'
+        if not isinstance(column, str):
+            msg = "expected column of type 'str', got {0!r} instead"
+            raise TypeError(msg.format(column.__class__.__name__))
+        column = column.strip()
+        column = column.replace('"', '""')  # Escape quotes.
+        if column == '':
+            column = '_empty_'
+        return '"' + column + '"'
 
 
 class SqliteSource(SqliteBase):
