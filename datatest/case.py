@@ -9,7 +9,7 @@ from .utils import collections
 
 from .differences import _make_decimal
 from .differences import DataAssertionError
-from .source import BaseSource
+from .sources.base import BaseSource
 from .compare import CompareSet
 
 

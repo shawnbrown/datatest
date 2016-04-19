@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 from .case import DataTestCase
 
-from .source import BaseSource
-from .source import SqliteSource
-from .source import CsvSource
-from .source import MultiSource
-from .source import SqliteBase
-
-from .extras import ExcelSource
-from .extras import PandasSource
+from .sources.base import BaseSource
+from .sources.adapter import AdapterSource
+from .sources.csv import CsvSource
+from .sources.multi import MultiSource
+from .sources.sqlite import SqliteBase
+from .sources.sqlite import SqliteSource
+from .sources.excel import ExcelSource
+from .sources.pandas import PandasSource
 
 from .differences import DataAssertionError
 from .differences import Extra
