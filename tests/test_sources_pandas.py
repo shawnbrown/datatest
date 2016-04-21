@@ -1,7 +1,9 @@
 
 from . import _unittest as unittest
-from .test_sources_base import TestBaseSource
 from .test_sources_base import MinimalSource
+
+from .mixins import CountTests
+from .mixins import OtherTests
 
 from datatest import ExcelSource
 from datatest import PandasSource
@@ -21,21 +23,21 @@ except (ImportError, AssertionError):
 
 
 #@unittest.skipIf(xlrd is None, 'xlrd not installed')
-#class TestExcelSource(TestBaseSource):
+#class TestExcelSource(unittest.TestCase, TestAll):
 #    def setUp(self):
 #        path =
 #        self.datasource = ExcelSource(path)
 
 
 @unittest.skipIf(pandas is None, 'pandas not found')
-class TestPandasSource(TestBaseSource):
+class TestPandasSource(OtherTests, unittest.TestCase):
     def setUp(self):
         df = pandas.DataFrame(self.testdata, columns=self.fieldnames)
         self.datasource = PandasSource(df)
 
 
 @unittest.skipIf(pandas is None, 'pandas not found')
-class TestPandasSourceWithIndex(TestBaseSource):
+class TestPandasSourceWithIndex(OtherTests, unittest.TestCase):
     def setUp(self):
         df = pandas.DataFrame(self.testdata, columns=self.fieldnames)
         df = df.set_index(['label1', 'label2'])

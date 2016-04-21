@@ -3,16 +3,18 @@ from . import _io as io
 from . import _unittest as unittest
 
 # Import related objects.
-from .test_sources_base import TestBaseSource
 from .test_sources_base import MinimalSource
 from datatest import CompareSet
 from datatest import CompareDict
+
+from .mixins import CountTests
+from .mixins import OtherTests
 
 from datatest.sources.adapter import _FilterValueError
 from datatest import AdapterSource
 
 
-class TestAdapterSourceBasics(TestBaseSource):
+class TestAdapterSourceBasics(OtherTests, unittest.TestCase):
     def setUp(self):
         fieldnames = ['col1', 'col2', 'col3']
         source = MinimalSource(self.testdata, fieldnames)

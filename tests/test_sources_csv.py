@@ -7,7 +7,9 @@ from . import _io as io
 from . import _unittest as unittest
 from .common import MkdtempTestCase
 
-from .test_sources_base import TestBaseSource
+from .mixins import CountTests
+from .mixins import OtherTests
+
 from datatest import CsvSource
 
 
@@ -25,7 +27,7 @@ def _make_csv_file(fieldnames, datarows):
     return io.StringIO(init_string)
 
 
-class TestCsvSource(TestBaseSource):
+class TestCsvSource(OtherTests, unittest.TestCase):
     def setUp(self):
         fh = _make_csv_file(self.fieldnames, self.testdata)
         self.datasource = CsvSource(fh)

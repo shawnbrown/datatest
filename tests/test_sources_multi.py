@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 from . import _io as io
 from . import _unittest as unittest
-from .test_sources_base import TestBaseSource
+
+from .mixins import CountTests
+from .mixins import OtherTests
+
 from .test_sources_base import MinimalSource
 from .test_sources_csv import _make_csv_file
 
@@ -9,7 +12,7 @@ from datatest import CsvSource
 from datatest import MultiSource
 
 
-class TestMultiSource(TestBaseSource):
+class TestMultiSource(OtherTests, unittest.TestCase):
     def setUp(self):
         fieldnames1 = ['label1', 'label2', 'value']
         testdata1 = [['a', 'x', '17'],
@@ -66,7 +69,7 @@ class TestMultiSource(TestBaseSource):
         self.assertEqual(expected, source.count('label1', 'label1', label2='x'))
 
 
-class TestMixedMultiSource(TestBaseSource):
+class TestMixedMultiSource(OtherTests, unittest.TestCase):
     """Test MultiSource with sub-sources of different types."""
     def setUp(self):
         fieldnames1 = ['label1', 'label2', 'value']

@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 import sqlite3
+from . import _unittest as unittest
 
-from .test_sources_base import TestBaseSource
-from .test_sources_base import TestDataSourceCount
+from .mixins import CountTests
+from .mixins import OtherTests
 
 from datatest import SqliteSource
 
 
-class TestSqliteSourceCount(TestDataSourceCount):
+class TestSqliteSourceCount(CountTests, unittest.TestCase):
     def setUp(self):
         tablename = 'testtable'
         connection = sqlite3.connect(':memory:')
@@ -20,7 +21,7 @@ class TestSqliteSourceCount(TestDataSourceCount):
         self.datasource = SqliteSource(connection, tablename)
 
 
-class TestSqliteSource(TestBaseSource):
+class TestSqliteSource(OtherTests, unittest.TestCase):
     def setUp(self):
         tablename = 'testtable'
         connection = sqlite3.connect(':memory:')
