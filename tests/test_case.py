@@ -983,7 +983,7 @@ class TestAllowDeviation(TestHelperCase):
             # Check that signature shows for "tolerance" syntax as default (Python 3.3 and later).
             sig = inspect.signature(DataTestCase.allowDeviation)
             parameters = list(sig.parameters)
-            self.assertEqual(parameters, ['self', 'tolerance', 'msg', 'filter_by'])
+            self.assertEqual(parameters, ['self', 'tolerance', 'msg', 'kwds_filter'])
         except AttributeError:
             # Python 3.2 and earlier use the ugly signature as default.
             pass

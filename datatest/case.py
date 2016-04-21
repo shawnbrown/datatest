@@ -110,7 +110,7 @@ class DataTestCase(TestCase):
         # TODO: Implement callable *required* argument.
         # TODO: Explore the idea of implementing DataList to assert column order.
 
-    def assertDataSet(self, columns, required=None, msg=None, **filter_by):
+    def assertDataSet(self, columns, required=None, msg=None, **kwds_filter):
         """Test that the *columns* or column in ``subjectData``
         contains the *required* values. If *required* is omitted,
         values from ``referenceData`` are used in its place.
@@ -128,12 +128,12 @@ class DataTestCase(TestCase):
             If *required* is omitted, then ``referenceData`` will be
             used in its place.
         """
-        subject_set = self.subjectData.distinct(columns, **filter_by)
+        subject_set = self.subjectData.distinct(columns, **kwds_filter)
 
         if callable(required):
             differences = subject_set.compare(required)
         else:
-            required_set = self._normalize_required(required, 'distinct', columns, **filter_by)
+            required_set = self._normalize_required(required, 'distinct', columns, **kwds_filter)
             if subject_set != required_set:
                 differences = subject_set.compare(required_set)
             else:
@@ -144,7 +144,7 @@ class DataTestCase(TestCase):
                 msg = 'different {0!r} values'.format(columns)
             self.fail(msg, differences)
 
-    def assertDataSum(self, column, keys, required=None, msg=None, **filter_by):
+    def assertDataSum(self, column, keys, required=None, msg=None, **kwds_filter):
         """Test that the sum of *column* in ``subjectData`` when
         grouped by *keys* matches *required* values dict.  If
         *required* is omitted, ``referenceData`` is used in its place.
@@ -165,12 +165,12 @@ class DataTestCase(TestCase):
 
             self.assertDataSum('income', ['department', 'year'])
         """
-        subject_dict = self.subjectData.sum(column, keys, **filter_by)
+        subject_dict = self.subjectData.sum(column, keys, **kwds_filter)
 
         if callable(required):
             differences = subject_dict.compare(required)
         else:
-            required_dict = self._normalize_required(required, 'sum', column, keys, **filter_by)
+            required_dict = self._normalize_required(required, 'sum', column, keys, **kwds_filter)
             differences = subject_dict.compare(required_dict)
 
         if differences:
@@ -178,7 +178,7 @@ class DataTestCase(TestCase):
                 msg = 'different {0!r} sums'.format(column)
             self.fail(msg, differences)
 
-    def assertDataCount(self, column, keys, required=None, msg=None, **filter_by):
+    def assertDataCount(self, column, keys, required=None, msg=None, **kwds_filter):
         """Test that the count of non-empty values in ``subjectData``
         column matches the the *required* values dict.  If *required* is
         omitted, the sum of values in ``referenceData`` column (not the
@@ -188,13 +188,13 @@ class DataTestCase(TestCase):
         or None.  See :meth:`assertDataSet
         <datatest.DataTestCase.assertDataSet>` for more details.
         """
-        subject_result = self.subjectData.count(column, keys, **filter_by)
+        subject_result = self.subjectData.count(column, keys, **kwds_filter)
 
         if callable(required):
             differences = subject_result.compare(required)
         else:
             # Gets 'sum' of reference column (not 'count').
-            required_dict = self._normalize_required(required, 'sum', column, keys, **filter_by)
+            required_dict = self._normalize_required(required, 'sum', column, keys, **kwds_filter)
             differences = subject_result.compare(required_dict)
 
         if differences:
@@ -202,14 +202,14 @@ class DataTestCase(TestCase):
                 msg = 'row counts different than {0!r} sums'.format(column)
             self.fail(msg, differences)
 
-    def assertDataRegex(self, column, required, msg=None, **filter_by):
+    def assertDataRegex(self, column, required, msg=None, **kwds_filter):
         """Test that *column* in ``subjectData`` contains values that
         match the *required* regular expression.
 
         The *required* argument must be a string or a compiled regular
         expression object (it can not be omitted).
         """
-        subject_result = self.subjectData.distinct(column, **filter_by)
+        subject_result = self.subjectData.distinct(column, **kwds_filter)
         if not isinstance(required, _re_type):
             required = re.compile(required)
         func = lambda x: required.search(x) is not None
@@ -220,14 +220,14 @@ class DataTestCase(TestCase):
                 msg = 'non-matching {0!r} values'.format(column)
             self.fail(msg=msg, differences=invalid)
 
-    def assertDataNotRegex(self, column, required, msg=None, **filter_by):
+    def assertDataNotRegex(self, column, required, msg=None, **kwds_filter):
         """Test that *column* in ``subjectData`` contains values that
         do not match the *required* regular expression.
 
         The *required* argument must be a string or a compiled regular
         expression object (it can not be omitted).
         """
-        subject_result = self.subjectData.distinct(column, **filter_by)
+        subject_result = self.subjectData.distinct(column, **kwds_filter)
         if not isinstance(required, _re_type):
             required = re.compile(required)
         func = lambda x: required.search(x) is None
@@ -280,7 +280,7 @@ class DataTestCase(TestCase):
         """
         return _AllowOnly(differences, self, msg)
 
-    def allowAny(self, number=None, msg=None, **filter_by):
+    def allowAny(self, number=None, msg=None, **kwds_filter):
         """Allows a given *number* of differences (of any kind) without
         triggering a test failure::
 
@@ -297,7 +297,7 @@ class DataTestCase(TestCase):
         test case will fail with a DataAssertionError containing all
         observed differences.
         """
-        return _AllowAny(self, number, msg, **filter_by)
+        return _AllowAny(self, number, msg, **kwds_filter)
 
     def allowMissing(self, number=None, msg=None):
         """Context manager to allow for missing values without
@@ -317,10 +317,10 @@ class DataTestCase(TestCase):
         """
         return _AllowExtra(self, number, msg)
 
-    def allowDeviation(self, lower, upper=None, msg=None, **filter_by):
+    def allowDeviation(self, lower, upper=None, msg=None, **kwds_filter):
         """
-        allowDeviation(tolerance, /, msg=None, **filter_by)
-        allowDeviation(lower, upper, msg=None, **filter_by)
+        allowDeviation(tolerance, /, msg=None, **kwds_filter)
+        allowDeviation(lower, upper, msg=None, **kwds_filter)
 
         Context manager to allow for deviations from required
         numeric values without triggering a test failure.
@@ -350,9 +350,9 @@ class DataTestCase(TestCase):
             lower, upper = -tolerance, tolerance
 
         assert lower <= 0 <= upper
-        return _AllowDeviation(lower, upper, self, msg, **filter_by)
+        return _AllowDeviation(lower, upper, self, msg, **kwds_filter)
 
-    def allowPercentDeviation(self, deviation, msg=None, **filter_by):
+    def allowPercentDeviation(self, deviation, msg=None, **kwds_filter):
         """Context manager to allow positive or negative numeric
         differences of less than or equal to the given *deviation* as a
         percentage of the matching reference value::
@@ -364,7 +364,7 @@ class DataTestCase(TestCase):
         a DataAssertionError containing the excessive differences.
         """
         tolerance = _make_decimal(deviation)
-        return _AllowPercentDeviation(deviation, self, msg, **filter_by)
+        return _AllowPercentDeviation(deviation, self, msg, **kwds_filter)
 
     def fail(self, msg, differences=None):
         """Signals a test failure unconditionally, with *msg* for the
@@ -385,10 +385,10 @@ class DataTestCase(TestCase):
 # syntax the default option when introspected.
 try:
     _sig = inspect.signature(DataTestCase.allowDeviation)
-    _self, _lower, _upper, _msg, _filter_by = _sig.parameters.values()
+    _self, _lower, _upper, _msg, _kwds_filter = _sig.parameters.values()
     _self = _self.replace(kind=inspect.Parameter.POSITIONAL_ONLY)
     _tolerance = inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY)
-    _sig = _sig.replace(parameters=[_self, _tolerance, _msg, _filter_by])
+    _sig = _sig.replace(parameters=[_self, _tolerance, _msg, _kwds_filter])
     DataTestCase.allowDeviation.__signature__ = _sig
 except AttributeError:  # Fails for Python 3.2 and earlier.
     pass
