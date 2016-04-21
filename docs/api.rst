@@ -33,11 +33,11 @@ In addition to the new functionality, the familiar ``TestCase`` methods
     | :meth:`assertDataSet(column, required=None)                     | *column* contains *required* values      |
     | <datatest.DataTestCase.assertDataSet>`                          |                                          |
     +-----------------------------------------------------------------+------------------------------------------+
-    | :meth:`assertDataSum(column, group_by, required=None)           | sums of *column*, grouped by *group_by*, |
-    | <datatest.DataTestCase.assertDataSum>`                          | match *required* values dict             |
+    | :meth:`assertDataSum(column, keys, required=None)               | sums of *column* values, grouped by      |
+    | <datatest.DataTestCase.assertDataSum>`                          | *keys*, match *required* dict            |
     +-----------------------------------------------------------------+------------------------------------------+
-    | :meth:`assertDataCount(column, group_by, required=None)         | row counts of *column*, grouped by       |
-    | <datatest.DataTestCase.assertDataCount>`                        | *group_by*, match *required* values dict |
+    | :meth:`assertDataCount(column, keys, required=None)             | counts of *column* values, grouped by    |
+    | <datatest.DataTestCase.assertDataCount>`                        | *keys*, match *required* dict            |
     +-----------------------------------------------------------------+------------------------------------------+
     | :meth:`assertDataRegex(column, required)                        | *required*.search(val) for each val in   |
     | <datatest.DataTestCase.assertDataRegex>`                        | *column*                                 |
@@ -63,9 +63,9 @@ In addition to the new functionality, the familiar ``TestCase`` methods
     | :meth:`allowAny(number)                                         | given *number* of differences of any     |
     | <datatest.DataTestCase.allowAny>`                               | class                                    |
     +-----------------------------------------------------------------+------------------------------------------+
-    | :meth:`allowAny(**filter_by)                                    | unlimited number of differences of any   |
+    | :meth:`allowAny(**kwds_filter)                                  | unlimited number of differences of any   |
     | <datatest.DataTestCase.allowAny>`                               | class that match given                   |
-    |                                                                 | :ref:`keyword filters <filter-by>`       |
+    |                                                                 | :ref:`keyword filters <kwds-filter>`     |
     +-----------------------------------------------------------------+------------------------------------------+
     | :meth:`allowExtra(number=None)                                  | given *number* of :class:`Extra          |
     | <datatest.DataTestCase.allowExtra>`                             | <datatest.Extra>` differences or         |
@@ -91,8 +91,8 @@ In addition to the new functionality, the familiar ``TestCase`` methods
 
     .. automethod:: allowExtra
 
-    .. method:: allowDeviation(tolerance, /, msg=None, **filter_by)
-                allowDeviation(lower, upper, msg=None, **filter_by)
+    .. method:: allowDeviation(tolerance, /, msg=None, **kwds_filter)
+                allowDeviation(lower, upper, msg=None, **kwds_filter)
 
         Context manager to allow for deviations from required
         numeric values without triggering a test failure.
@@ -118,10 +118,10 @@ In addition to the new functionality, the familiar ``TestCase`` methods
     .. automethod:: allowPercentDeviation
 
 
-.. _filter-by:
+.. _kwds-filter:
 
-Filter by Keywords (using \*\*filter_by)
-========================================
+Filter by Keywords (using \*\*kwds_filter)
+==========================================
 
 Many datatest methods support optional keyword arguments to quickly filter the
 data being tested.  For example, adding ``state='Ohio'`` to a data assertion
@@ -193,6 +193,11 @@ MultiSource
 
         .. image:: _static/multisource.*
 
+
+AdapterSource
+=============
+.. autoclass:: datatest.AdapterSource
+
 --------
 
 .. _extra-sources:
@@ -221,51 +226,34 @@ DataTestCase to access data and report meaningful failure messages.
 Typically, these methods are used indirectly via DataTestCase but it is
 also possible to call them directly:
 
+
 .. autoclass:: datatest.BaseSource
 
-    .. method:: columns()
-
-        Return a list or tuple of column names.
-
-    .. method:: distinct(column, **filter_by)
-
-        Return ResultSet containing distinct *column* values.
-
-    .. method:: sum(column, group_by=None, **filter_by)
-
-        Returns sum of *column* grouped by *group_by* as ResultMapping.
-
-    .. method:: count(group_by=None, **filter_by)
-
-        Returns count of rows grouped by *group_by* as ResultMapping.
-
-    .. method:: reduce(function, column, group_by=None, initializer=None, **filter_by)
-
-        Apply *function* of two arguments cumulatively to the values in *column*,
-        from left to right, so as to reduce the iterable to a single value.  If
-        *column* is a string, the values are passed to *function* unchanged.  But
-        if *column* is, itself, a function, it should accept a single dict-row and
-        return a single value.  If *group_by* is omitted, the raw result is
-        returned, otherwise returns a ResultMapping object.
+    .. automethod:: columns
+    .. automethod:: filter_rows
+    .. automethod:: distinct
+    .. automethod:: sum
+    .. automethod:: count
+    .. automethod:: mapreduce
 
 
-***************
-Results Objects
-***************
+******************
+Comparison Objects
+******************
 
-Querying a data source with various methods will return a ResultSet or a
-ResultMapping.
+Querying a data source with various methods will return a CompareSet or a
+CompareDict.
 
 
-ResultSet
-=========
-.. autoclass:: datatest.ResultSet
+CompareSet
+==========
+.. autoclass:: datatest.CompareSet
     :members: make_rows, compare
 
 
-ResultMapping
-=============
-.. autoclass:: datatest.ResultMapping
+CompareDict
+===========
+.. autoclass:: datatest.CompareDict
     :members: make_rows, compare
 
     .. py:attribute:: key_names
