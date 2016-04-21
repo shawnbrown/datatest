@@ -6,6 +6,7 @@ import sys
 from . import _io as io
 from . import _unittest as unittest
 from .common import MkdtempTestCase
+from .common import make_csv_file
 
 from .mixins import CountTests
 from .mixins import OtherTests
@@ -13,23 +14,9 @@ from .mixins import OtherTests
 from datatest import CsvSource
 
 
-def _make_csv_file(fieldnames, datarows):
-    """Helper function to make CSV file-like object using *fieldnames*
-    (a list of field names) and *datarows* (a list of lists containing
-    the row values).
-    """
-    init_string = []
-    init_string.append(','.join(fieldnames)) # Concat cells into row.
-    for row in datarows:
-        row = [str(cell) for cell in row]
-        init_string.append(','.join(row))    # Concat cells into row.
-    init_string = '\n'.join(init_string)     # Concat rows into final string.
-    return io.StringIO(init_string)
-
-
 class TestCsvSource(OtherTests, unittest.TestCase):
     def setUp(self):
-        fh = _make_csv_file(self.fieldnames, self.testdata)
+        fh = make_csv_file(self.fieldnames, self.testdata)
         self.datasource = CsvSource(fh)
 
     def test_empty_file(self):

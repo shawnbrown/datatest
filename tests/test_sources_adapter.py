@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
-from . import _io as io
 from . import _unittest as unittest
 
 # Import related objects.
-from .test_sources_base import MinimalSource
 from datatest import CompareSet
 from datatest import CompareDict
 
 from .mixins import CountTests
 from .mixins import OtherTests
 
+from .common import MinimalSource
 from datatest.sources.adapter import _FilterValueError
 from datatest import AdapterSource
 

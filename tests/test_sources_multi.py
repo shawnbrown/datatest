@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
-from . import _io as io
 from . import _unittest as unittest
 
 from .mixins import CountTests
 from .mixins import OtherTests
 
-from .test_sources_base import MinimalSource
-from .test_sources_csv import _make_csv_file
+from .common import MinimalSource
+from .common import make_csv_file
 
 from datatest import CsvSource
 from datatest import MultiSource
@@ -83,7 +82,7 @@ class TestMixedMultiSource(OtherTests, unittest.TestCase):
         testdata2 = [['b', 'z', '5' ],
                      ['b', 'y', '40'],
                      ['b', 'x', '25']]
-        fh = _make_csv_file(fieldnames2, testdata2)
+        fh = make_csv_file(fieldnames2, testdata2)
         csv_source = CsvSource(fh)
 
         self.datasource = MultiSource(minimal_source, csv_source)
