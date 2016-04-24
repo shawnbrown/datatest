@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 """Mixin test cases common to all data source classes."""
 
+from datatest import CompareSet
+from datatest import ExcelSource
+
+
 class CountTests(object):
     """Test count() method with the following data set:
 
@@ -70,6 +74,20 @@ class OtherTests(object):
                 ['b', 'y', '40'],
                 ['b', 'x', '25']]
 
+    @staticmethod
+    def _value_to_str(result):
+        # TODO: REMOVE IN THE FUTURE AND CLEAN UP THESE TESTS!
+        new_result = []
+        for dic in result:
+            value = dic['value']
+            if isinstance(value, (int, float)):
+                value = str(value)
+                if value.endswith('.0'):
+                    value = value[:-2]
+                dic['value'] = value
+            new_result.append(dic)
+        return new_result
+
     def test_for_datasource(self):
         msg = '{0} missing `datasource` attribute.'
         msg = msg.format(self.__class__.__name__)
@@ -77,7 +95,9 @@ class OtherTests(object):
 
     def test_iter(self):
         """Test __iter__."""
-        results = [row for row in self.datasource]
+        result = [row for row in self.datasource]
+        if isinstance(self.datasource, ExcelSource):
+            result = self._value_to_str(result)
 
         expected = [
             {'label1': 'a', 'label2': 'x', 'value': '17'},
@@ -88,13 +108,16 @@ class OtherTests(object):
             {'label1': 'b', 'label2': 'y', 'value': '40'},
             {'label1': 'b', 'label2': 'x', 'value': '25'},
         ]
-        self.assertEqual(expected, results)
+        self.assertEqual(expected, result)
 
     def test_filter_rows(self):
         """Test filter iterator."""
         # Filter by single value (where label1 is 'a').
         results = self.datasource.filter_rows(label1='a')
         results = list(results)
+        if isinstance(self.datasource, ExcelSource):
+            results = self._value_to_str(results)
+
         expected = [
             {'label1': 'a', 'label2': 'x', 'value': '17'},
             {'label1': 'a', 'label2': 'x', 'value': '13'},
@@ -106,6 +129,9 @@ class OtherTests(object):
         # Filter by multiple values (where label2 is 'x' OR 'y').
         results = self.datasource.filter_rows(label2=['x', 'y'])
         results = list(results)
+        if isinstance(self.datasource, ExcelSource):
+            results = self._value_to_str(results)
+
         expected = [
             {'label1': 'a', 'label2': 'x', 'value': '17'},
             {'label1': 'a', 'label2': 'x', 'value': '13'},
@@ -118,6 +144,9 @@ class OtherTests(object):
         # Filter by multiple columns (where label1 is 'a', label2 is 'x' OR 'y').
         results = self.datasource.filter_rows(label1='a', label2=['x', 'y'])
         results = list(results)
+        if isinstance(self.datasource, ExcelSource):
+            results = self._value_to_str(results)
+
         expected = [
             {'label1': 'a', 'label2': 'x', 'value': '17'},
             {'label1': 'a', 'label2': 'x', 'value': '13'},
@@ -128,6 +157,9 @@ class OtherTests(object):
         # Call with no filter kewords at all.
         results = self.datasource.filter_rows()  # <- Should return all rows.
         results = list(results)
+        if isinstance(self.datasource, ExcelSource):
+            results = self._value_to_str(results)
+
         expected = [
             {'label1': 'a', 'label2': 'x', 'value': '17'},
             {'label1': 'a', 'label2': 'x', 'value': '13'},
@@ -293,7 +325,10 @@ class OtherTests(object):
         expected = [('a', '17'),
                     ('a', '13'),
                     ('b', '25')]
-        self.assertEqual(expected, distinct(['label1', 'value'], label2='x'))
+        result = distinct(['label1', 'value'], label2='x')
+        if isinstance(self.datasource, ExcelSource):
+            result = CompareSet((x, str(int(y))) for x, y in result)
+        self.assertEqual(expected, result)
 
         # Test when specified column is missing.
         msg = 'Error should reference missing column.'
