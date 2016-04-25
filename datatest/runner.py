@@ -9,9 +9,9 @@ import warnings
 from .differences import DataAssertionError
 
 try:
-    from unittest import TextTestResult
-except ImportError:
-    from unittest import _TextTestResult as TextTestResult
+    TextTestResult = unittest.TextTestResult
+except AttributeError:
+    TextTestResult = unittest._TextTestResult
 
 
 # @required: A decorator for test classes or methods that must pass before
