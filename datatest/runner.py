@@ -34,7 +34,7 @@ class DataTestResult(TextTestResult):
     Used by DataTestRunner.
 
     """
-    def __init__(self, stream=None, descriptions=None, verbosity=None, ignore=False):
+    def __init__(self, stream=None, descriptions=None, verbosity=0, ignore=False):
         self.ignore = ignore
         TextTestResult.__init__(self, stream, descriptions, verbosity)
 
@@ -47,15 +47,17 @@ class DataTestResult(TextTestResult):
         the @required decorator.  If the property is found and is True,
         then stop() is called to halt the test suite.
         """
+        if not isinstance(test, unittest.TestCase):
+            return False  # <- EXIT! Only for TestCase and subclasses.
+
         if self.ignore:
-            return False  # <- If we're ignoring the 'required' flag, then EXIT!
+            return False  # <- EXIT if we're ignoring the 'required' flag!
 
         required_class = getattr(test, '__datatest_required__', False)
         if not required_class:
             test_method_name = getattr(test, '_testMethodName')
             test_method = getattr(test, test_method_name)
             required_method = getattr(test_method, '__datatest_required__', False)
-
         return required_class or required_method
 
     def _add_required_message(self, err):
