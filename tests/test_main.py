@@ -107,7 +107,7 @@ class TestDataTestProgram(unittest.TestCase):
         self.assertEqual(len(result.errors), 0)
         self.assertEqual(len(result.failures), 1)
 
-    def test_required_method(self):
+    def test_mandatory_method(self):
         source_code = """
             import datatest
 
@@ -115,7 +115,7 @@ class TestDataTestProgram(unittest.TestCase):
                 def test_one(self):
                     self.assertTrue(True)
 
-                @datatest.required  # <- "REQUIRED" DECORATOR
+                @datatest.mandatory  # <- "MANDATORY" DECORATOR
                 def test_two(self):
                     self.assertTrue(False)  # <- TEST FAILURE!
 
@@ -131,16 +131,16 @@ class TestDataTestProgram(unittest.TestCase):
                 program = DataTestProgram(module=module, exit=False, argv=[''])
 
         result = program.result
-        self.assertEqual(result.testsRun, 2)  # <- Should stop early, "test_two" is required.
+        self.assertEqual(result.testsRun, 2)  # <- Should stop early, "test_two" is mandatory.
         self.assertEqual(len(result.errors), 0)
         self.assertEqual(len(result.failures), 1)
-        self.assertRegex(result.failures[0][1], 'Required Test Failed, Stopping Early')
+        self.assertRegex(result.failures[0][1], 'Mandatory Test Failed, Stopping Early')
 
-    def test_required_class(self):
+    def test_mandatory_class(self):
         source_code = """
             import datatest
 
-            @datatest.required  # <- "REQUIRED" DECORATOR
+            @datatest.mandatory  # <- "MANDATORY" DECORATOR
             class TestA(datatest.DataTestCase):
                 def test_one(self):
                     self.assertTrue(True)
@@ -160,12 +160,12 @@ class TestDataTestProgram(unittest.TestCase):
                 program = DataTestProgram(module=module, exit=False, argv=[''])
 
         result = program.result
-        self.assertEqual(result.testsRun, 2)  # <- Should stop early, "test_two" is required.
+        self.assertEqual(result.testsRun, 2)  # <- Should stop early, "test_two" is mandatory.
         self.assertEqual(len(result.errors), 0)
         self.assertEqual(len(result.failures), 1)
-        self.assertRegex(result.failures[0][1], 'Required Test Failed, Stopping Early')
+        self.assertRegex(result.failures[0][1], 'Mandatory Test Failed, Stopping Early')
 
-    def test_ignore_required_method(self):
+    def test_ignore_mandatory_method(self):
         source_code = """
             import datatest
 
@@ -173,7 +173,7 @@ class TestDataTestProgram(unittest.TestCase):
                 def test_one(self):
                     self.assertTrue(True)
 
-                @datatest.required  # <- "REQUIRED" DECORATOR
+                @datatest.mandatory  # <- "MANDATORY" DECORATOR
                 def test_two(self):
                     self.assertTrue(False)  # <- TEST FAILURE!
 
@@ -205,11 +205,11 @@ class TestDataTestProgram(unittest.TestCase):
         #self.assertEqual(len(result.failures), 1)
 
 
-    def test_ignore_required_class(self):
+    def test_ignore_mandatory_class(self):
         source_code = """
             import datatest
 
-            @datatest.required  # <- "REQUIRED" DECORATOR
+            @datatest.mandatory  # <- "MANDATORY" DECORATOR
             class TestA(datatest.DataTestCase):
                 def test_one(self):
                     self.assertTrue(True)

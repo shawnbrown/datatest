@@ -6,7 +6,7 @@ from datatest.runner import DataTestResult
 
 
 class TestDataTestResult(unittest.TestCase):
-    def test_is_required(self):
+    def test_is_mandatory(self):
         testresult = DataTestResult()
 
         class _TestClass(DataTestCase):  # Dummy class.
@@ -16,18 +16,18 @@ class TestDataTestResult(unittest.TestCase):
             def runTest(_self):
                 pass
 
-        # Not required.
+        # Not mandatory.
         testcase = _TestClass()
-        self.assertFalse(testresult._is_required(testcase))
+        self.assertFalse(testresult._is_mandatory(testcase))
 
-        # Required class.
+        # Mandatory class.
         testcase = _TestClass()
-        testcase.__datatest_required__ = True
-        self.assertTrue(testresult._is_required(testcase))
+        testcase.__datatest_mandatory__ = True
+        self.assertTrue(testresult._is_mandatory(testcase))
 
-        # Required method.
+        # Mandatory method.
         #TODO!!!: Need to make this test.
 
         # Check non-test-case behavior.
         not_a_testcase = object()
-        self.assertFalse(testresult._is_required(not_a_testcase))
+        self.assertFalse(testresult._is_mandatory(not_a_testcase))

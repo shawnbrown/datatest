@@ -14,16 +14,16 @@ except AttributeError:
     TextTestResult = unittest._TextTestResult
 
 
-# @required: A decorator for test classes or methods that must pass before
-# subsequent tests will run.  When a "required" test fails, DataTestRunner
+# @mandatory: A decorator for test classes or methods that must pass before
+# subsequent tests will run.  When a "mandatory" test fails, DataTestRunner
 # will immediately stop (this behavior is similar to the "--failfast" command
 # line argument).
-def required(test_item):
-    """Mark the test as required.  If the test fails when ran, DataTestRunner
+def mandatory(test_item):
+    """Mark the test as mandatory.  If the test fails when ran, DataTestRunner
     will stop.
 
     """
-    test_item.__datatest_required__ = True
+    test_item.__datatest_mandatory__ = True
     return test_item
 
 
@@ -38,40 +38,40 @@ class DataTestResult(TextTestResult):
         self.ignore = ignore
         TextTestResult.__init__(self, stream, descriptions, verbosity)
 
-    def _is_required(self, test):
-        """Return True if a given *test* is required or is a member of
-        a class that is required.
+    def _is_mandatory(self, test):
+        """Return True if a given *test* is mandatory or is a member of
+        a class that is mandatory.
 
-        This method checks for a __datatest_required__ property in a
-        test class or test method--tests are marked as "required" using
-        the @required decorator.  If the property is found and is True,
+        This method checks for a __datatest_mandatory__ property in a
+        test class or test method--tests are marked as "mandatory" using
+        the @mandatory decorator.  If the property is found and is True,
         then stop() is called to halt the test suite.
         """
         if not isinstance(test, unittest.TestCase):
             return False  # <- EXIT! Only for TestCase and subclasses.
 
         if self.ignore:
-            return False  # <- EXIT if we're ignoring the 'required' flag!
+            return False  # <- EXIT if we're ignoring the 'mandatory' flag!
 
-        required_class = getattr(test, '__datatest_required__', False)
-        if not required_class:
+        mandatory_class = getattr(test, '__datatest_mandatory__', False)
+        if not mandatory_class:
             test_method_name = getattr(test, '_testMethodName')
             test_method = getattr(test, test_method_name)
-            required_method = getattr(test_method, '__datatest_required__', False)
-        return required_class or required_method
+            mandatory_method = getattr(test_method, '__datatest_mandatory__', False)
+        return mandatory_class or mandatory_method
 
-    def _add_required_message(self, err):
+    def _add_mandatory_message(self, err):
         """Add 'Stopping Early' message to error value.'"""
         exctype, value, tb = err
-        value.args = ('Required Test Failed, Stopping Early',) + value.args
+        value.args = ('Mandatory Test Failed, Stopping Early',) + value.args
         return (exctype, value, tb)
 
     def addError(self, test, err):
         """Called when an error has occurred. 'err' is a tuple of values as
         returned by sys.exc_info().
         """
-        if not self._is_required(test):
-            err = self._add_required_message(err)
+        if not self._is_mandatory(test):
+            err = self._add_mandatory_message(err)
             self.stop()  # <- sets "self.shouldStop = True
 
         TextTestResult.addError(self, test, err)
@@ -86,8 +86,8 @@ class DataTestResult(TextTestResult):
             value._verbose = self.showAll     # Set verbose flag (True/False).
             err = (exctype, value, tb)        # Repack tuple.
 
-        if self._is_required(test):
-            err = self._add_required_message(err)
+        if self._is_mandatory(test):
+            err = self._add_mandatory_message(err)
             self.stop()  # <- sets "self.shouldStop = True
 
         TextTestResult.addFailure(self, test, err)
@@ -97,7 +97,7 @@ class DataTestResult(TextTestResult):
         if hasattr(self, 'addUnexpectedSuccess'):
             TextTestResult.addUnexpectedSuccess(self, test)
 
-            if self._is_required(test):
+            if self._is_mandatory(test):
                 self.stop()  # <- sets "self.shouldStop = True
 
 

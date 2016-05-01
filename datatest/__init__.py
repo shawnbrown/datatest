@@ -22,7 +22,7 @@ from .differences import NotProperSuperset
 from .compare import CompareSet
 from .compare import CompareDict
 
-from .runner import required
+from .runner import mandatory
 from .runner import DataTestRunner
 
 from .main import DataTestProgram
@@ -58,8 +58,11 @@ __all__ = [
     'Deviation',
 
     # Test runner and command-line program.
-    'required',
+    'mandatory',
     'DataTestRunner',
     'DataTestProgram',
     'main',
 ]
+
+# Temporary alias for old "required" decorator.
+required = mandatory
