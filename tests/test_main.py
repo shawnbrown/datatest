@@ -134,7 +134,7 @@ class TestDataTestProgram(unittest.TestCase):
         self.assertEqual(result.testsRun, 2)  # <- Should stop early, "test_two" is mandatory.
         self.assertEqual(len(result.errors), 0)
         self.assertEqual(len(result.failures), 1)
-        self.assertRegex(result.failures[0][1], 'Mandatory Test Failed, Stopping Early')
+        self.assertRegex(result.failures[0][1], 'mandatory test failed, stopping early')
 
     def test_mandatory_class(self):
         source_code = """
@@ -163,7 +163,7 @@ class TestDataTestProgram(unittest.TestCase):
         self.assertEqual(result.testsRun, 2)  # <- Should stop early, "test_two" is mandatory.
         self.assertEqual(len(result.errors), 0)
         self.assertEqual(len(result.failures), 1)
-        self.assertRegex(result.failures[0][1], 'Mandatory Test Failed, Stopping Early')
+        self.assertRegex(result.failures[0][1], 'mandatory test failed, stopping early')
 
     def test_ignore_mandatory_method(self):
         source_code = """

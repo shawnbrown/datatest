@@ -19,9 +19,8 @@ except AttributeError:
 # will immediately stop (this behavior is similar to the "--failfast" command
 # line argument).
 def mandatory(test_item):
-    """Mark the test as mandatory.  If the test fails when ran, DataTestRunner
+    """Mark the test as mandatory.  If the test fails, DataTestRunner
     will stop.
-
     """
     test_item.__datatest_mandatory__ = True
     return test_item
@@ -32,7 +31,6 @@ class DataTestResult(TextTestResult):
     a stream.
 
     Used by DataTestRunner.
-
     """
     def __init__(self, stream=None, descriptions=None, verbosity=0, ignore=False):
         self.ignore = ignore
@@ -61,9 +59,25 @@ class DataTestResult(TextTestResult):
         return mandatory_class or mandatory_method
 
     def _add_mandatory_message(self, err):
-        """Add 'Stopping Early' message to error value.'"""
+        """Add 'stopping early' message to error value.'"""
         exctype, value, tb = err
-        value.args = ('Mandatory Test Failed, Stopping Early',) + value.args
+        stop_early_msg = 'mandatory test failed, stopping early'
+
+        try:
+            if value.msg:
+                value.msg = '{0}: {1}'.format(stop_early_msg, value.msg)
+            else:
+                value.msg = stop_early_msg
+        except AttributeError:
+            pass
+
+        try:
+            first_arg = value.args[0]
+            new_first_arg = '{0}: {1}'.format(stop_early_msg, first_arg)
+            value.args = (new_first_arg,) + value.args[1:]
+        except IndexError:
+            value.args = (stop_early_msg,)
+
         return (exctype, value, tb)
 
     def addError(self, test, err):
