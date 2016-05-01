@@ -84,7 +84,7 @@ class DataTestResult(TextTestResult):
         """Called when an error has occurred. 'err' is a tuple of values as
         returned by sys.exc_info().
         """
-        if not self._is_mandatory(test):
+        if self._is_mandatory(test):
             err = self._add_mandatory_message(err)
             self.stop()  # <- sets "self.shouldStop = True
 
