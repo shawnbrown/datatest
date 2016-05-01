@@ -6,7 +6,7 @@ import sys
 import unittest
 import warnings
 
-from .differences import DataAssertionError
+from .error import DataAssertionError
 
 try:
     TextTestResult = unittest.TextTestResult

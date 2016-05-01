@@ -7,10 +7,10 @@ from unittest import TestCase
 from .utils.builtins import *
 from .utils import collections
 
-from .differences import _make_decimal
-from .differences import DataAssertionError
-from .sources.base import BaseSource
 from .compare import CompareSet
+from .differences import _make_decimal
+from .error import DataAssertionError
+from .sources.base import BaseSource
 
 
 __datatest = True  # Used to detect in-module stack frames (which are

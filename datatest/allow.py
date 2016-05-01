@@ -3,9 +3,9 @@ from .utils import itertools
 
 from .differences import _make_decimal
 from .differences import BaseDifference
-from .differences import DataAssertionError
 from .differences import Missing
 from .differences import Extra
+from .error import DataAssertionError
 #from .differences import Invalid
 #from .differences import Deviation
 

@@ -3,14 +3,15 @@ from .case import DataTestCase
 
 from .sources.base import BaseSource
 from .sources.adapter import AdapterSource
-from .sources.csv import CsvSource
 from .sources.multi import MultiSource
 from .sources.sqlite import SqliteBase
 from .sources.sqlite import SqliteSource
+from .sources.csv import CsvSource
 from .sources.excel import ExcelSource
 from .sources.pandas import PandasSource
 
-from .differences import DataAssertionError
+from .error import DataAssertionError
+
 from .differences import Extra
 from .differences import Missing
 from .differences import Invalid
@@ -47,8 +48,10 @@ __all__ = [
     'CompareSet',
     'CompareDict',
 
-    # Error and Differences.
+    # Error.
     'DataAssertionError',
+
+    # Differences.
     'Extra',
     'Missing',
     'Invalid',
