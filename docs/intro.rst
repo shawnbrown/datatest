@@ -31,8 +31,7 @@ help to automate check-lists, measure progress, and promote best practices.
 Basic Example
 =============
 
-As an example, consider a simple file with the following format
-(**users.csv**):
+As an example, consider a simple file (users.csv) with the following format:
 
     =======  ======
     user_id  active
@@ -43,7 +42,10 @@ As an example, consider a simple file with the following format
     ...      ...
     =======  ======
 
-Here is a short script to test the data from this file::
+
+Here is a short script (test_users.py) to test the data in this file:
+
+.. code-block:: python
 
     import datatest
 
@@ -55,15 +57,15 @@ Here is a short script to test the data from this file::
 
     class TestUserData(datatest.DataTestCase):
         def test_columns(self):
-            """Check that file uses required column names."""
+            """Check that column names match required set."""
             required = {'user_id', 'active'}
             self.assertDataColumns(required)
 
         def test_user_id(self):
             """Check that 'user_id' column contains digits."""
-            def isdigit(x):  # <- Helper function.
+            def required(x):  # <- Helper function.
                 return x.isdigit()
-            self.assertDataSet('user_id', isdigit)
+            self.assertDataSet('user_id', required)
 
         def test_active(self):
             """Check that 'active' column contains valid codes."""
@@ -75,76 +77,131 @@ Here is a short script to test the data from this file::
         datatest.main()
 
 
+Download :download:`basic_example.zip <_static/basic_example.zip>` to try it
+for yourself.
+
+
+Step-by-step Breakdown
+----------------------
+
+1. Define subjectData (the data under test):
+    To interface with our data, we create a data source and assign it to the
+    variable ``subjectData``:
+
+    .. code-block:: python
+        :emphasize-lines: 3
+
+        def setUpModule():
+            global subjectData
+            subjectData = datatest.CsvSource('users.csv')
+
+2. Check column names (against a set of values):
+    To check the columns, we define a *required* set of names and pass it to
+    :meth:`assertDataColumns() <datatest.DataTestCase.assertDataColumns>`:
+
+    .. code-block:: python
+        :emphasize-lines: 4
+
+        class TestUserData(datatest.DataTestCase):
+            def test_columns(self):
+                required = {'user_id', 'active'}
+                self.assertDataColumns(required)
+
+    This assertion automatically checks the *required* set against the data in
+    the ``subjectData`` defined earlier.
+
+3. Check "user_id" values (with a helper-function):
+    To assert that the "user_id" column contains only digits, we define a
+    *reqired* helper-function and pass it to :meth:`assertDataSet()
+    <datatest.DataTestCase.assertDataSet>`.  The helper-function in this
+    example takes a single value and returns ``True`` if the value is a digit
+    or ``False`` if not:
+
+    .. code-block:: python
+        :emphasize-lines: 4
+
+            def test_user_id(self):
+                def required(x):  # <- Helper function.
+                    return x.isdigit()
+                self.assertDataSet('user_id', required)
+
+4. Check "active" values (against a set of values):
+    To check that the "active" column contains only "Y" or "N" values, we
+    define a *required* set of values and pass it to :meth:`assertDataSet()
+    <datatest.DataTestCase.assertDataSet>`:
+
+    .. code-block:: python
+        :emphasize-lines: 3
+
+            def test_active(self):
+                required = {'Y', 'N'}
+                self.assertDataSet('active', required)
+
 .. note::
 
     This example uses a :class:`CsvSource <datatest.CsvSource>` to access data
     from a CSV file.  Other data sources can access data in a variety of
     formats (Excel, pandas, SQL, etc.).
 
+.. note::
+    Loading files from disk and establishing database connections are
+    relatively slow operations.  So it's best to minimize the number of times
+    a data source object is created.  Typically, ``subjectData`` is defined at
+    the module-level, however, if the data is only used within a single class,
+    then defining it at the class-level is also acceptable:
 
-Subject Data (Data Under Test)
-==============================
+    .. code-block:: python
+        :emphasize-lines: 4
 
-The data under test---the *subject* of our tests---is stored in a property
-named ``subjectData``.  This property is accessed, internally, by the
-``assertData...()`` methods.
-
-Loading files from disk and establishing database connections are relatively
-expensive operations.  It's best to minimize the number of times a data source
-object is created.  Typically, ``subjectData`` is defined at the module-level:
-
-.. code-block:: python
-    :emphasize-lines: 3-5
-
-    import datatest
-
-    def setUpModule():
-        global subjectData
-        subjectData = datatest.CsvSource('users.csv')
-
-    class TestUserData(datatest.DataTestCase):
-        def test_columns(self):
-            ...
-
-However, if the data is only used within a single class, then defining it
-at the class-level is also acceptable:
-
-.. code-block:: python
-    :emphasize-lines: 4-6
-
-    import datatest
-
-    class TestUserData(datatest.DataTestCase):
-        @classmethod
-        def setUpClass(cls):
-            cls.subjectData = datatest.CsvSource('users.csv')
-
-        def test_columns(self):
-            ...
+        class TestUsers(datatest.DataTestCase):
+            @classmethod
+            def setUpClass(cls):
+                cls.subjectData = datatest.CsvSource('users.csv')
 
 
 Reference Data
 ==============
 
-Datatest also supports the use of reference data from external sources (files
-or databases).  While our first example defined its requirements directly in
-the methods themselves, doing so becomes inconvenient when working with large
-amounts of required values.
+In the previous example, we checked our data against sets and functions but
+it's also possible to check our data against other data sources.
 
-To continue testing the data from our first example, we can use the
-following table as reference data (**regional_report.csv**):
+For this next example, we will test the 2014 Utah Crime Statistics Report
+(utah_2014_crime_details.csv).  This file contains 1,048 records and **if a
+county was missing from the file or if a number miscopied, the errors would
+not be immediately obvious**:
 
-    =========  ==============  ==================
-    region     active_members   hours_volunteered
-    =========  ==============  ==================
-    Midwest    39              97
-    Northeast  23              59
-    South      14              32
-    West       33              76
-    =========  ==============  ==================
+    ======  =====================  ========  =========
+    county  agency                 crime     incidents
+    ======  =====================  ========  =========
+    BEAVER  BEAVER COUNTY SHERIFF  arson     0
+    BEAVER  BEAVER COUNTY SHERIFF  assault   1
+    BEAVER  BEAVER COUNTY SHERIFF  burglary  18
+    BEAVER  BEAVER COUNTY SHERIFF  homicide  1
+    BEAVER  BEAVER COUNTY SHERIFF  larceny   78
+    ...     ...                    ...       ...
+    ======  =====================  ========  =========
 
-By loading this data into a variable named ``referenceData``, we can
-easily integrate it into a test script::
+To verify our subject data, we will use a county-level summary file
+(utah_2014_crime_summary.csv) as reference data.  This summary file contains the
+county names and total incidents reported:
+
+    =========  =========
+    county     incidents
+    =========  =========
+    BEAVER     105
+    BOX ELDER  1153
+    CACHE      1482
+    CARBON     646
+    DAGGETT    9
+    ...        ...
+    =========  =========
+
+The following script (test_utah_2014_crime_details.py) demonstrates the use
+of reference data.  Unlike the previous example, the assertion calls in this
+script don't pass a *required* argument---when *required* is omitted, values
+from ``referenceData`` are used in its place:
+
+.. code-block:: python
 
     import datatest
 
@@ -152,48 +209,115 @@ easily integrate it into a test script::
     def setUpModule():
         global subjectData
         global referenceData
-        subjectData = datatest.CsvSource('members.csv')
-        referenceData = datatest.CsvSource('regional_report.csv')
+        subjectData = datatest.CsvSource('utah_2014_crime_details.csv')
+        referenceData = datatest.CsvSource('utah_2014_crime_summary.csv')
 
 
-    class TestLabels(datatest.DataTestCase):
-        def test_region_labels(self):
-            """Check that subject values equal reference values in
-               the 'region' column."""
-            self.assertValueSet('region')
+    class TestDetails(datatest.DataTestCase):
+        def test_columns(self):
+            """Check that column names match those in reference data."""
+            with self.allowExtra():
+                self.assertDataColumns()
+
+        def test_county(self):
+            """Check that 'county' column matches reference data."""
+            self.assertDataSet('county')
+
+        def test_incidents(self):
+            """Check that sum of 'incidents' (grouped by 'county') matches
+            reference data."""
+            self.assertDataSum('incidents', keys=['county'])
 
 
-    class TestTotals(datatest.DataTestCase):
-        def test_hours(self):
-            """Check that the sum of subject values equals the sum of
-               reference values in the 'hours_volunteered' column for
-               each 'region' group."""
-            self.assertValueSum('hours_volunteered', ['region'])
+    if __name__ == '__main__':
+        datatest.main()
 
-        def test_active(self):
-            """Check that the count of subject rows equals the total
-               reference value in the 'active_members' column for rows
-               where 'active' equals 'Y' for each 'region' group."""
-            self.assertValueCount('active_members', ['region'], active='Y')
+Download :download:`reference_data_example.zip <_static/reference_data_example.zip>`
+to try it for yourself.
 
 
-The tests in the above example automatically use the ``subjectData``
-and ``referenceData`` sources defined in the ``setUpModule()`` function.
+Step-by-step Breakdown
+----------------------
+
+1. Define subjectData (data under test) and referenceData (data trusted to be correct):
+    In addition to ``subjectData``, we load our reference data and assign it
+    to the variable ``referenceData``:
+
+    .. code-block:: python
+        :emphasize-lines: 5
+
+        def setUpModule():
+            global subjectData
+            global referenceData
+            subjectData = datatest.CsvSource('utah_2014_crime_details.csv')
+            referenceData = datatest.CsvSource('utah_2014_crime_summary.csv')
+
+2. Check column names (against referenceData):
+    To check the columns against our reference file, we call
+    :meth:`assertDataColumns() <datatest.DataTestCase.assertDataColumns>`
+    with no arguments.  Since we've omitted the *required* argument, the
+    method compares the ``subjectData`` columns against the ``referenceData``
+    columns:
+
+    .. code-block:: python
+        :emphasize-lines: 4
+
+        class TestDetails(datatest.DataTestCase):
+            def test_columns(self):
+                with self.allowExtra():
+                    self.assertDataColumns()
+
+    Comparing the data sources reveals two differences---the columns "agency"
+    and "crime".  These columns are not part of the reference data so they're
+    seen as extra.  But because our subject data contains more detail, we
+    understand that these extra columns are acceptable so we allow them by
+    putting our assertion inside the :meth:`allowExtra()
+    <datatest.DataTestCase.allowExtra>` context manager.
+
+3. Check "county" values (against referenceData):
+    To check the "county" values against our reference data, we call
+    :meth:`assertDataSet() <datatest.DataTestCase.assertDataSet>` and pass
+    in the column name (omitting *required* argument):
+
+    .. code-block:: python
+        :emphasize-lines: 2
+
+            def test_county(self):
+                self.assertDataSet('county')
+
+4. Check sum of "incidents" grouped by "county" (against referenceData).
+    To check that the sum of incidents by county matches the number
+    listed in the ``referenceData``, we call :meth:`assertDataSum()
+    <datatest.DataTestCase.assertDataSum>` and pass in the column we want
+    to sum as well as the columns we want to group by:
+
+    .. code-block:: python
+        :emphasize-lines: 2
+
+            def test_incidents(self):
+                self.assertDataSum('incidents', keys=['county'])
 
 
 Understanding Errors
 ====================
 
-When data errors are found, tests will fail with a
-:class:`DataAssertionError <datatest.DataAssertionError>` that contains
-a list of detected differences:
+When the data in the ``subjectData`` differs from the *required* data
+(or ``referenceData`` if *required* is omitted), a test will fail with a
+:class:`DataAssertionError <datatest.DataAssertionError>` containing
+a list of detected differences.
+
+A good way to understand how errors work is to download the previous examples
+(:download:`basic_example.zip <_static/basic_example.zip>`
+and :download:`reference_data_example.zip <_static/reference_data_example.zip>`)
+and change the values in the subject data file.
 
 .. code-block:: none
+    :emphasize-lines: 5-6
 
     Traceback (most recent call last):
       File "test_members.py", line 15, in test_region_labels
         self.assertValueSet('region')
-    datatest.case.DataAssertionError: different 'region' values:
+    datatest.DataAssertionError: different 'region' values:
      Extra('North-east'),
      Missing('Northeast')
 
@@ -237,7 +361,10 @@ Warren County and 25 less in Lake County)::
 
 If we've determined that these differences are allowable, we can use the
 :meth:`allowOnly <datatest.DataTestCase.allowOnly>` context manager so the
-test runs without failing::
+test runs without failing:
+
+.. code-block:: python
+    :emphasize-lines: 6
 
     def test_population(self):
         diff = [
@@ -250,7 +377,10 @@ test runs without failing::
 To allow several numeric differences at once, you can use the
 :meth:`allowDeviation <datatest.DataTestCase.allowDeviation>`
 or :meth:`allowPercentDeviation
-<datatest.DataTestCase.allowPercentDeviation>` methods::
+<datatest.DataTestCase.allowPercentDeviation>` methods:
+
+.. code-block:: python
+    :emphasize-lines: 2
 
     def test_households(self):
         with self.allowDeviation(25):
@@ -296,6 +426,9 @@ A :mod:`datatest` suite can help organize and guide the data preparation
 workflow.  It can also help supplement or replace check-lists and progress
 reports.
 
+.. epigraph::
+    Unix was not designed to stop you from doing stupid things, because that
+    would also stop you from doing clever things. --Doug Gwyn
 
 Structuring a Test Suite
 ------------------------
