@@ -18,9 +18,9 @@ class TestAdapterSourceBasics(OtherTests, unittest.TestCase):
         fieldnames = ['col1', 'col2', 'col3']
         source = MinimalSource(self.testdata, fieldnames)
         interface = [
-            ('label1', 'col1'),
-            ('label2', 'col2'),
-            ('value', 'col3'),
+            ('col1', 'label1'),
+            ('col2', 'label2'),
+            ('col3', 'value'),
         ]
         self.datasource = AdapterSource(source, interface)
 
@@ -35,14 +35,14 @@ class TestAdapterSource(unittest.TestCase):
         self.source = MinimalSource(self.data, self.fieldnames)
 
     def test_repr(self):
-        interface = [('a', 'col1'), ('b', 'col2'), ('c', 'col3')]
+        interface = [('col1', 'a'), ('col2', 'b'), ('col3', 'c')]
         adapted = AdapterSource(self.source, interface)
         required = ("AdapterSource(MinimalSource(<data>, <fieldnames>), "
-                    "[('a', 'col1'), ('b', 'col2'), ('c', 'col3')])")
+                    "[('col1', 'a'), ('col2', 'b'), ('col3', 'c')])")
         self.assertEqual(required, repr(adapted))
 
     def test_unwrap_columns(self):
-        interface = [('a', 'col1'), ('b', 'col2'), ('c', 'col3'), ('d', None)]
+        interface = [('col1', 'a'), ('col2', 'b'), ('col3', 'c'), (None, 'd')]
         adapted = AdapterSource(self.source, interface)
         unwrap_columns = adapted._unwrap_columns
 
@@ -54,7 +54,7 @@ class TestAdapterSource(unittest.TestCase):
                                     #    not a visible adapter column.
 
     def test_rewrap_columns(self):
-        interface = [('a', 'col1'), ('b', 'col2'), ('c', 'col3'), ('d', None)]
+        interface = [('col1', 'a'), ('col2', 'b'), ('col3', 'c'), (None, 'd')]
         adapted = AdapterSource(self.source, interface)
         rewrap_columns = adapted._rewrap_columns
 
@@ -66,7 +66,7 @@ class TestAdapterSource(unittest.TestCase):
             rewrap_columns('c')
 
     def test_unwrap_filter(self):
-        interface = [('a', 'col1'), ('b', 'col2'), ('c', 'col3'), ('d', None)]
+        interface = [('col1', 'a'), ('col2', 'b'), ('col3', 'c'), (None, 'd')]
         adapted = AdapterSource(self.source, interface)
         unwrap_filter = adapted._unwrap_filter
 
@@ -83,7 +83,7 @@ class TestAdapterSource(unittest.TestCase):
         self.assertEqual({'col1': 'foo'}, unwrap_filter({'a': 'foo', 'd': ''}))
 
     def test_rebuild_compareset(self):
-        interface = [('a', 'col1'), ('b', 'col2'), ('c', 'col3'), ('d', None)]
+        interface = [('col1', 'a'), ('col2', 'b'), ('col3', 'c'), (None, 'd')]
         adapted = AdapterSource(self.source, interface)
         rebuild_compareset = adapted._rebuild_compareset
 
@@ -100,7 +100,7 @@ class TestAdapterSource(unittest.TestCase):
         self.assertEqual(expected, result)
 
     def test_rebuild_comparedict(self):
-        interface = [('a', 'col1'), ('b', 'col2'), ('c', 'col3'), ('d', None)]
+        interface = [('col1', 'a'), ('col2', 'b'), ('col3', 'c'), (None, 'd')]
         adapted = AdapterSource(self.source, interface)
         rebuild_comparedict = adapted._rebuild_comparedict
 
@@ -181,9 +181,9 @@ class TestAdapterSource(unittest.TestCase):
 
         # Rename columns.
         interface = [
-            ('a', 'col1'),
-            ('b', 'col2'),
-            ('c', 'col3'),
+            ('col1', 'a'),
+            ('col2', 'b'),
+            ('col3', 'c'),
         ]
         adapted = AdapterSource(self.source, interface)
         self.assertEqual(['a', 'b', 'c'], adapted.columns())
@@ -192,32 +192,41 @@ class TestAdapterSource(unittest.TestCase):
         interface = [
             ('col1', 'col1'),
             ('col2', 'col2'),
-            # Column 'col3' not included!
+            # Column 'col3' omitted!
+        ]
+        adapted = AdapterSource(self.source, interface)
+        self.assertEqual(['col1', 'col2'], adapted.columns())
+
+        # Remove column 2.
+        interface = [
+            ('col1', 'col1'),
+            ('col2', 'col2'),
+            ('col3', None),  # Column 'col3' mapped to None!
         ]
         adapted = AdapterSource(self.source, interface)
         self.assertEqual(['col1', 'col2'], adapted.columns())
 
         # Add new column.
         interface = [
-            ('a', 'col1'),
-            ('b', 'col2'),
-            ('c', 'col3'),
-            ('d', None),  # <- New column, no corresponding original!
+            ('col1', 'a'),
+            ('col2', 'b'),
+            ('col3', 'c'),
+            (None, 'd'),  # <- New column, no corresponding original!
         ]
         adapted = AdapterSource(self.source, interface)
         self.assertEqual(['a', 'b', 'c', 'd'], adapted.columns())
 
         # Raise error if old name is not in original source.
         interface = [
-            ('a', 'bad_column'),  # <- 'bad_column' not in original!
-            ('b', 'col2'),
-            ('c', 'col3'),
+            ('bad_column', 'a'),  # <- 'bad_column' not in original!
+            ('col2', 'b'),
+            ('col3', 'c'),
         ]
         with self.assertRaises(KeyError):
             adapted = AdapterSource(self.source, interface)
 
     def test_iter(self):
-        interface = [('two', 'col2'), ('three', 'col3'), ('four', None)]
+        interface = [('col2', 'two'), ('col3', 'three'), (None, 'four')]
         adapted = AdapterSource(self.source, interface)
         expected = [
             {'two': 'x', 'three': '17', 'four': ''},
@@ -230,13 +239,13 @@ class TestAdapterSource(unittest.TestCase):
 
     def test_distinct(self):
         # Basic usage.
-        interface = [('one', 'col1'), ('two', 'col2'), ('three', 'col3')]
+        interface = [('col1', 'one'), ('col2', 'two'), ('col3', 'three')]
         adapted = AdapterSource(self.source, interface)
         required = set(['x', 'y', 'z'])
         self.assertEqual(required, adapted.distinct('two'))
 
         # Adapter column mapped to None.
-        interface = [('two', 'col2'), ('four', None)]
+        interface = [('col2', 'two'), (None, 'four')]
         adapted = AdapterSource(self.source, interface)
 
         required = set([('x', ''), ('y', ''), ('z', '')])
@@ -252,13 +261,13 @@ class TestAdapterSource(unittest.TestCase):
         self.assertEqual(required, adapted.distinct(['four', 'four']))
 
         # Filter on renamed column.
-        interface = [('one', 'col1'), ('two', 'col2'), ('three', 'col3')]
+        interface = [('col1', 'one'), ('col2', 'two'), ('col3', 'three')]
         adapted = AdapterSource(self.source, interface)
         required = set(['17', '13'])
         self.assertEqual(required, adapted.distinct('three', two='x'))
 
         # Filter on column mapped to None.
-        interface = [('three', 'col3'), ('four', None)]
+        interface = [('col3', 'three'), (None, 'four')]
         adapted = AdapterSource(self.source, interface)
 
         required = set()
@@ -268,7 +277,7 @@ class TestAdapterSource(unittest.TestCase):
         self.assertEqual(required, adapted.distinct('three', four=''))
 
         # Unknown column.
-        interface = [('one', 'col1'), ('two', 'col2')]
+        interface = [('col1', 'one'), ('col2', 'two')]
         adapted = AdapterSource(self.source, interface)
         required = set(['x', 'y', 'z'])
         with self.assertRaises(KeyError):
@@ -276,12 +285,12 @@ class TestAdapterSource(unittest.TestCase):
 
     def test_sum(self):
         # Basic usage (no group-by keys).
-        interface = [('one', 'col1'), ('two', 'col2'), ('three', 'col3')]
+        interface = [('col1', 'one'), ('col2', 'two'), ('col3', 'three')]
         adapted = AdapterSource(self.source, interface)
         self.assertEqual(65, adapted.sum('three'))
 
         # No group-by keys, filter to missing column.
-        interface = [('one', 'col1'), ('two', 'col2'), ('three', 'col3'), ('four', None)]
+        interface = [('col1', 'one'), ('col2', 'two'), ('col3', 'three'), (None, 'four')]
         adapted = AdapterSource(self.source, interface)
         self.assertEqual(0, adapted.sum('three', four='xyz'))
 
@@ -291,27 +300,27 @@ class TestAdapterSource(unittest.TestCase):
         self.assertEqual(['two'], list(result.key_names))
 
         # Grouped by column mapped to None.
-        interface = [('two', 'col2'), ('three', 'col3'), ('four', None)]
+        interface = [('col2', 'two'), ('col3', 'three'), (None, 'four')]
         adapted = AdapterSource(self.source, interface)
         result = adapted.sum('three', ['two', 'four'])
         expected = {('x', ''): 30, ('y', ''): 20, ('z', ''): 15}
         self.assertEqual(expected, result)
 
         # Sum over column mapped to None.
-        interface = [('two', 'col2'), ('three', 'col3'), ('four', None)]
+        interface = [('col2', 'two'), ('col3', 'three'), (None, 'four')]
         adapted = AdapterSource(self.source, interface)
         result = adapted.sum('four', 'two')
         expected = {'x': 0, 'y': 0, 'z': 0}
         self.assertEqual(expected, result)
 
         # Grouped by and summed over column mapped to None.
-        interface = [('two', 'col2'), ('three', 'col3'), ('four', None)]
+        interface = [('col2', 'two'), ('col3', 'three'), (None, 'four')]
         adapted = AdapterSource(self.source, interface)
         with self.assertRaises(ValueError):
             adapted.sum(['three', 'four'], 'two')
 
         # Grouped by and summed over column mapped to None using alternate missing.
-        interface = [('one', 'col1'), ('two', 'col2'), ('three', 'col3'), ('four', None), ('five', None)]
+        interface = [('col1', 'one'), ('col2', 'two'), ('col3', 'three'), (None, 'four'), (None, 'five')]
         adapted = AdapterSource(self.source, interface, missing='EMPTY')
         result = adapted.sum('four', 'one')  # <- Key on existing column.
         expected = {'a': 0}
@@ -321,7 +330,7 @@ class TestAdapterSource(unittest.TestCase):
         self.assertEqual(expected, result)
 
         # Summed over column mapped to None and nothing else.
-        interface = [('two', 'col2'), ('three', 'col3'), ('four', None)]
+        interface = [('col2', 'two'), ('col3', 'three'), (None, 'four')]
         adapted = AdapterSource(self.source, interface)
         result = adapted.sum('four', 'two')
         expected = {'x': 0, 'y': 0, 'z': 0}

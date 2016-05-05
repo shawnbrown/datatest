@@ -56,9 +56,8 @@ class MultiSource(BaseSource):
         for s in sources:
             if set(s.columns()) < set(all_columns):
                 columns = s.columns()
-                fn = lambda x: x if x in columns else None
-                old = [fn(x) for x in all_columns]
-                interface = list(zip(all_columns, old))
+                make_old = lambda x: x if x in columns else None
+                interface = [(make_old(x), x) for x in all_columns]
                 s = AdapterSource(s, interface, missing)
             normalized_sources.append(s)
 

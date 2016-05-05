@@ -29,10 +29,10 @@ class AdapterSource(BaseSource):
 
         source = CsvSource('mydata.csv')
         interface = [
-            ('new_1', 'old_1'),
-            ('new_2', 'old_2'),
-            ('new_3', None),
-            ('new_4', 'old_4'),
+            ('old_1', 'new_1'),
+            ('old_2', 'new_2'),
+            (None, 'new_3'),
+            ('old_4', 'new_4'),
         ]
         subjectData = AdapterSource(source, interface)
 
@@ -51,7 +51,7 @@ class AdapterSource(BaseSource):
             interface = sorted(interface)
 
         source_columns = source.columns()
-        interface_cols = [x[1] for x in interface]
+        interface_cols = [x[0] for x in interface]
         for c in interface_cols:
             if c != None and c not in source_columns:
                 raise KeyError(c)
@@ -70,13 +70,13 @@ class AdapterSource(BaseSource):
         return '{0}({1}, {2}{3})'.format(self_class, wrapped_repr, interface, missing)
 
     def columns(self):
-        return [x[0] for x in self._interface]
+        return [new for (old, new) in self._interface if new != None]
 
     def __iter__(self):
         interface = self._interface
         missing = self._missing
         for row in self.__wrapped__.__iter__():
-            yield dict((new, row.get(old, missing)) for new, old in interface)
+            yield dict((new, row.get(old, missing)) for old, new in interface)
 
     def filter_rows(self, **kwds):
         try:
@@ -87,7 +87,7 @@ class AdapterSource(BaseSource):
         interface = self._interface
         missing = self._missing
         for row in self.__wrapped__.filter_rows(**unwrap_kwds):
-            yield dict((new, row.get(old, missing)) for new, old in interface)
+            yield dict((new, row.get(old, missing)) for old, new in interface)
 
     def distinct(self, columns, **kwds_filter):
         unwrap_src = self.__wrapped__  # Unwrap data source.
@@ -179,7 +179,7 @@ class AdapterSource(BaseSource):
             return None  # <- EXIT!
 
         if not interface_dict:
-            interface_dict = dict(self._interface)
+            interface_dict = dict((new, old) for old, new in self._interface)
 
         if isinstance(columns, str):
             return interface_dict[columns]  # <- EXIT!
@@ -194,7 +194,7 @@ class AdapterSource(BaseSource):
         this condition occurs, a _FilterValueError is raised.
         """
         if not interface_dict:
-            interface_dict = dict(self._interface)
+            interface_dict = dict((new, old) for old, new in self._interface)
 
         translated = {}
         for k, v in filter_dict.items():
@@ -207,22 +207,21 @@ class AdapterSource(BaseSource):
                                             'filtered to missing value.')
         return translated
 
-    def _rewrap_columns(self, unwrapped_columns, interface_dict=None):
+    def _rewrap_columns(self, unwrapped_columns, rev_dict=None):
         """Take unwrapped adaptee column names and wrap them in adapter
         column names (specified by _interface).
         """
         if not unwrapped_columns:
             return None  # <- EXIT!
 
-        if interface_dict:
-            interface = interface_dict.items()
+        if rev_dict:
+            interface_dict = dict((old, new) for new, old in rev_dict.items())
         else:
-            interface = self._interface
-        rev_interface = dict((v, k) for k, v in interface)
+            interface_dict = dict(self._interface)
 
         if isinstance(unwrapped_columns, str):
-            return rev_interface[unwrapped_columns]
-        return tuple(rev_interface[k] for k in unwrapped_columns)
+            return interface_dict[unwrapped_columns]
+        return tuple(interface_dict[k] for k in unwrapped_columns)
 
     def _rebuild_compareset(self, result, rewrapped_columns, columns):
         """Take CompareSet from unwrapped source and rebuild it to match
