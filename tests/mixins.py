@@ -36,16 +36,20 @@ class CountTests(object):
     def test_count(self):
         count = self.datasource.count
 
+        # No keys.
         self.assertEqual(9, count('label1'))
 
+        # Basic count.
         expected = {'a': 4, 'b': 5}
         result = count('label1', ['label1'])
         self.assertEqual(expected, result)
 
-        expected = {'a': 3, 'b': 3}  # Counts only truthy values (not '' or None).
+        # Count only truthy values (not '' or None).
+        expected = {'a': 3, 'b': 3}
         result = count('label2', ['label1'])
         self.assertEqual(expected, result)
 
+        # Compound group-by keys.
         expected = {
             ('a', 'x'): 2,
             ('a', 'y'): 1,
@@ -59,6 +63,7 @@ class CountTests(object):
         result = count('label1', ['label1', 'label2'])
         self.assertEqual(expected, result)
 
+        # Count with filter (label1='a').
         expected = {'x': 2, 'y': 1, '': 1}
         result = count('label1', 'label2', label1='a')
         self.assertEqual(expected, result)
