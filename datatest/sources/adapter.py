@@ -112,7 +112,13 @@ class AdapterSource(BaseSource):
         return self._rebuild_compareset(results, rewrap_cols, columns)
 
     def sum(self, column, keys=None, **kwds_filter):
-        """Returns sum of *column* grouped by *keys* as CompareDict."""
+        return self._aggregate('sum', column, keys, **kwds_filter)
+
+    def count(self, column, keys=None, **kwds_filter):
+        return self._aggregate('count', column, keys, **kwds_filter)
+
+    def _aggregate(self, method, column, keys=None, **kwds_filter):
+        """Call aggregation method ('sum' or 'count'), return result."""
         unwrap_src = self.__wrapped__
         unwrap_col = self._unwrap_columns(column)
         unwrap_keys = self._unwrap_columns(keys)
@@ -131,15 +137,14 @@ class AdapterSource(BaseSource):
             result = ((key, 0) for key in distinct)
             return CompareDict(result, keys)  # <- EXIT!
 
-        result = unwrap_src.sum(unwrap_col, unwrap_keys, **unwrap_flt)
+        # Get method ('sum' or 'count') and perform aggregation.
+        aggregate = getattr(unwrap_src, method)
+        result = aggregate(unwrap_col, unwrap_keys, **unwrap_flt)
 
         rewrap_col = self._rewrap_columns(unwrap_col)
         rewrap_keys = self._rewrap_columns(unwrap_keys)
         return self._rebuild_comparedict(result, rewrap_col, column,
                                          rewrap_keys, keys, missing_col=0)
-
-    #def count(self, column, keys=None, **kwds_filter):
-    #    pass
 
     def mapreduce(self, mapper, reducer, columns, keys=None, **kwds_filter):
         unwrap_src = self.__wrapped__

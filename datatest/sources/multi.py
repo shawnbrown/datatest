@@ -79,7 +79,6 @@ class MultiSource(BaseSource):
 
     def __iter__(self):
         """Return iterable of dictionary rows (like csv.DictReader)."""
-        #columns = self.columns()
         for source in self._sources:
             for row in source.__iter__():
                 yield row
@@ -100,20 +99,24 @@ class MultiSource(BaseSource):
 
     def sum(self, column, keys=None, **kwds_filter):
         """Return sum of values in *column* grouped by *keys*."""
-        fn = lambda source: source.sum(column, keys, **kwds_filter)
-        results = (fn(source) for source in self._sources)
+        return self._aggregate('sum', column, keys, **kwds_filter)
+
+    def count(self, column, keys=None, **kwds_filter):
+        return self._aggregate('count', column, keys, **kwds_filter)
+
+    def _aggregate(self, method, column, keys=None, **kwds_filter):
+        """Call aggregation method ('sum' or 'count'), return result."""
+        fn = lambda src: getattr(src, method)(column, keys, **kwds_filter)
+        results = (fn(source) for source in self._sources)  # Perform aggregation.
 
         if not keys:
             return sum(results)  # <- EXIT!
 
-        sum_total = collections.defaultdict(lambda: 0)
+        total = collections.defaultdict(lambda: 0)
         for result in results:
             for key, val in result.items():
-                sum_total[key] += val
-        return CompareDict(sum_total, keys)
-
-    #def count(self, column, keys=None, **kwds_filter):
-    #    pass
+                total[key] += val
+        return CompareDict(total, keys)
 
     def mapreduce(self, mapper, reducer, columns, keys=None, **kwds_filter):
         fn = lambda source: source.mapreduce(mapper, reducer, columns, keys, **kwds_filter)
