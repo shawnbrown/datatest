@@ -126,22 +126,14 @@ class SqliteBase(BaseSource):
             iterable = ((row[:-pos], row[-pos]) for row in cursor)
         return CompareDict(iterable, keys)
 
-    # Regarding SqliteBase.mapreduce():
-    #
-    # This subclass does not implement its own mapreduce() optimization
-    # and it probably should not in the future.  However, this class
-    # *does* implement a SQL-optimized filter_rows() method--which
-    # mapreduce() uses internally.
-    #
-    # A generalized optimization of mapreduce() cannot be implemented
-    # in basic SQL.  Although, it is technically possible to implement
-    # several special cases and then fallback to the parent
-    # implementation when a novel case is encountered.  The sum() and
-    # count() methods are, themselves, special cases of mapreduce() and
-    # this class does provide optimized versions of them.  But
-    # attempting to optimize an open-ended number of special cases
-    # would require a lot of speculation and hardly seems advisable at
-    # this time.
+    def mapreduce(self, mapper, reducer, columns, keys=None, **kwds_filter):
+        obj = super(SqliteBase, self)  # 2.x compatible calling convention.
+        return obj.mapreduce(mapper, reducer, columns, keys, **kwds_filter)
+        # SqliteBase doesn't implement its own mapreduce() optimization.
+        # A generalized, SQL optimization could do little more than the
+        # already-optmized filter_rows() method.  Since the super-class'
+        # mapreduce() already uses filter_rows() internally, a separate
+        # optimization is unnecessary.
 
     def _execute_query(self, table, select_clause, trailing_clause=None, **kwds_filter):
         """Execute query and return cursor object."""
