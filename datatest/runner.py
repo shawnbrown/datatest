@@ -6,6 +6,7 @@ import sys
 import unittest
 import warnings
 
+from .utils import functools
 from .error import DataAssertionError
 
 try:
@@ -24,6 +25,45 @@ def mandatory(test_item):
     """
     test_item.__datatest_mandatory__ = True
     return test_item
+
+
+# The standard unittest.skip decorators are reimplemented to add a
+# _wrapped attribute that points to the orignal object so that the
+# _sort_key() function can find the proper line number when test_item
+# gets wrapped by functools.wraps().
+def skip(reason):
+    """Unconditionally skip a test."""
+    def decorator(test_item):
+        if not isinstance(test_item, type):
+            orig_item = test_item           # <- Not in unittest.skip()
+            @functools.wraps(test_item)
+            def skip_wrapper(*args, **kwargs):
+                raise unittest.SkipTest(reason)
+            test_item = skip_wrapper
+            test_item._wrapped = orig_item  # <- Not in unittest.skip()
+
+        test_item.__unittest_skip__ = True
+        test_item.__unittest_skip_why__ = reason
+        return test_item
+    return decorator
+
+
+def _id(obj):
+    return obj
+
+
+def skipIf(condition, reason):
+    """Skip a test if the condition is true."""
+    if condition:
+        return skip(reason)
+    return _id
+
+
+def skipUnless(condition, reason):
+    """Skip a test unless the condition is true."""
+    if not condition:
+        return skip(reason)
+    return _id
 
 
 class DataTestResult(TextTestResult):

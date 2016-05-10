@@ -23,6 +23,9 @@ from .compare import CompareSet
 from .compare import CompareDict
 
 from .runner import mandatory
+from .runner import skip
+from .runner import skipIf
+from .runner import skipUnless
 from .runner import DataTestRunner
 
 from .main import DataTestProgram
@@ -59,6 +62,9 @@ __all__ = [
 
     # Test runner and command-line program.
     'mandatory',
+    'skip',
+    'skipIf',
+    'skipUnless',
     'DataTestRunner',
     'DataTestProgram',
     'main',
