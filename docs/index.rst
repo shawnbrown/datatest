@@ -23,8 +23,12 @@ integrated, formatted, and verified.  It can provide structure
 for the tidying process, automate checklists, log discrepancies,
 and measure progress.
 
-(If you're already familiar with the package, you might want to skip to the
-:ref:`list of assert methods <assert-methods>`.)
+To use datatest effectively, users should be familiar with Python's standard
+`unittest <http://docs.python.org/library/unittest.html>`_ library and with
+the data they want to test.  This said, testing data isn't the same as testing
+software---please see :doc:`intro` for examples.  (If you're already familiar
+with datatest, you might want to skip to the :ref:`list of assert methods
+<assert-methods>`.)
 
 
 ********

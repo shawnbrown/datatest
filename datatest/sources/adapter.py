@@ -19,8 +19,8 @@ class _FilterValueError(ValueError):
 class AdapterSource(BaseSource):
     """A wrapper class that adapts a data *source* to an *interface* of
     column names. The *interface* should be a sequence of 2-tuples where
-    the first item is the desired column name and the second item is
-    the existing column name. If column order is not important, the
+    the first item is the existing column name and the second item is
+    the desired column name. If column order is not important, the
     *interface* can, alternatively, be a dict.
 
     For example, a CSV file that contains the columns 'old_1', 'old_2',

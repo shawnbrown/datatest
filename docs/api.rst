@@ -144,6 +144,8 @@ value "Indiana" *or* the value "Ohio"::
     self.assertDataSet('postal_code', state=['Indiana', 'Ohio'])
 
 
+.. _data-sources:
+
 ************
 Data Sources
 ************
@@ -159,9 +161,6 @@ Data source objects are used to access data in various formats.
 | :class:`SqliteSource(connection, table)     | *table* from SQLite *connection*        |
 | <datatest.SqliteSource>`                    |                                         |
 +---------------------------------------------+-----------------------------------------+
-| :class:`MultiSource(*sources)               | multiple data *sources* which can be    |
-| <datatest.MultiSource>`                     | treated as single data source           |
-+---------------------------------------------+-----------------------------------------+
 | :class:`ExcelSource(path, worksheet=None)   | Excel *worksheet* from XLSX or XLS      |
 | <datatest.ExcelSource>`                     | *path*, defaults to the first worksheet |
 |                                             | if ``None`` (requires `xlrd             |
@@ -169,6 +168,9 @@ Data source objects are used to access data in various formats.
 +---------------------------------------------+-----------------------------------------+
 | :class:`PandasSource(df)                    | pandas DataFrame *df* (requires `pandas |
 | <datatest.PandasSource>`                    | <http://pypi.python.org/pypi/pandas>`_) |
++---------------------------------------------+-----------------------------------------+
+| :class:`MultiSource(*sources)               | multiple data *sources* which can be    |
+| <datatest.MultiSource>`                     | treated as single data source           |
 +---------------------------------------------+-----------------------------------------+
 
 
@@ -182,6 +184,25 @@ SqliteSource
 ============
 .. autoclass:: datatest.SqliteSource
    :members: create_index, from_records
+
+
+.. _extra-sources:
+
+If you have the appropriate, optional dependencies installed, datatest
+provides a variety of other data sources:
+
+ExcelSource
+===========
+.. autoclass:: datatest.ExcelSource
+
+
+PandasSource
+============
+.. autoclass:: datatest.PandasSource
+  :members: from_records
+
+
+-----------
 
 
 MultiSource
@@ -198,23 +219,6 @@ AdapterSource
 =============
 .. autoclass:: datatest.AdapterSource
 
---------
-
-.. _extra-sources:
-
-If you have the appropriate, optional dependencies installed, datatest
-provides a variety of other data sources:
-
-
-ExcelSource
-===========
-.. autoclass:: datatest.ExcelSource
-
-
-PandasSource
-============
-.. autoclass:: datatest.PandasSource
-   :members: from_records
 
 
 *******************

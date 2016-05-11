@@ -6,22 +6,18 @@
     :keywords: test-driven data preparation
 
 
-************
-Introduction
-************
-
-:mod:`datatest` is designed to work with tabular data stored in spreadsheet
-files or database tables but it's also possible to create custom data sources
-for other formats.  To use datatest effectively, users should be familiar with
-Python's standard `unittest <http://docs.python.org/library/unittest.html>`_
-library and with the data they want to test.
+************************
+Introduction to Datatest
+************************
 
 In the practice of data science, data preparation is a huge part of the job.
 Practitioners often spend 50 to 80 percent of their time wrangling data [1]_
 [2]_ [3]_ [4]_.  This critically important phase is time-consuming,
-unglamorous, and often poorly structured.  Using datatest to implement
-:ref:`test-driven data preparation <test-driven-data-preparation>` can offer
-a disciplined approach to an otherwise messy process.
+unglamorous, and often poorly structured.
+
+Using :mod:`datatest` to implement :ref:`test-driven data preparation
+<test-driven-data-preparation>` can offer a disciplined approach to an
+otherwise messy process.
 
 A datatest suite can facilitate quick edit-test cycles which help guide the
 selection, cleaning, integration, and formatting of data.  Data tests can also
@@ -95,6 +91,10 @@ Step-by-step Breakdown
             global subjectData
             subjectData = datatest.CsvSource('users.csv')
 
+    Here, we use a :class:`CsvSource <datatest.CsvSource>` to access data
+    from a CSV file.  Data in other formats can be accessed with
+    :ref:`other data sources <data-sources>`.
+
 2. Check column names (against a set of values):
     To check the columns, we define a *required* set of names and pass it to
     :meth:`assertDataColumns() <datatest.DataTestCase.assertDataColumns>`:
@@ -107,8 +107,8 @@ Step-by-step Breakdown
                 required = {'user_id', 'active'}
                 self.assertDataColumns(required)
 
-    This assertion automatically checks the *required* set against the data in
-    the ``subjectData`` defined earlier.
+    This assertion automatically checks the *required* set against the column
+    names in the ``subjectData`` defined earlier.
 
 3. Check "user_id" values (with a helper-function):
     To assert that the "user_id" column contains only digits, we define a
@@ -125,6 +125,10 @@ Step-by-step Breakdown
                     return x.isdigit()
                 self.assertDataSet('user_id', required)
 
+    This assertion applies the *required* function to all of the data in the
+    "user_id" column.  The test passes if the helper function returns True
+    for all values.
+
 4. Check "active" values (against a set of values):
     To check that the "active" column contains only "Y" or "N" values, we
     define a *required* set of values and pass it to :meth:`assertDataSet()
@@ -136,12 +140,6 @@ Step-by-step Breakdown
             def test_active(self):
                 required = {'Y', 'N'}
                 self.assertDataSet('active', required)
-
-.. note::
-
-    This example uses a :class:`CsvSource <datatest.CsvSource>` to access data
-    from a CSV file.  Other data sources can access data in a variety of
-    formats (Excel, pandas, SQL, etc.).
 
 .. note::
     Loading files from disk and establishing database connections are
@@ -167,8 +165,8 @@ it's also possible to check our data against other data sources.
 
 For this next example, we will test the 2014 Utah Crime Statistics Report
 (utah_2014_crime_details.csv).  This file contains 1,048 records and **if a
-county was missing from the file or if a number miscopied, the errors would
-not be immediately obvious**:
+single county was missing or if a few numbers were mis-copied, the errors
+would not be immediately obvious**:
 
     ======  =====================  ========  =========
     county  agency                 crime     incidents
@@ -182,8 +180,8 @@ not be immediately obvious**:
     ======  =====================  ========  =========
 
 To verify our subject data, we will use a county-level summary file
-(utah_2014_crime_summary.csv) as reference data.  This summary file contains the
-county names and total incidents reported:
+(utah_2014_crime_summary.csv) as reference data.  This summary file
+contains the county names and total incidents reported:
 
     =========  =========
     county     incidents
@@ -267,12 +265,14 @@ Step-by-step Breakdown
                 with self.allowExtra():
                     self.assertDataColumns()
 
-    Comparing the data sources reveals two differences---the columns "agency"
-    and "crime".  These columns are not part of the reference data so they're
-    seen as extra.  But because our subject data contains more detail, we
-    understand that these extra columns are acceptable so we allow them by
-    putting our assertion inside the :meth:`allowExtra()
-    <datatest.DataTestCase.allowExtra>` context manager.
+    Our ``referenceData`` only contains the columns "county" and "incidents".
+    Since reference data is trusted to be correct, the two additional columns
+    in the ``subjectData`` (the columns "agency" and "crime") are seen as extra.
+    But as writers of this test, we understand that our subject data is supposed
+    to contain more detail and these extra columns are perfectly acceptable.  To
+    account for this, we **allow** these differences by putting our assertion
+    inside an :meth:`allowExtra() <datatest.DataTestCase.allowExtra>` context
+    manager.
 
 3. Check "county" values (against referenceData):
     To check the "county" values against our reference data, we call
@@ -285,7 +285,7 @@ Step-by-step Breakdown
             def test_county(self):
                 self.assertDataSet('county')
 
-4. Check sum of "incidents" grouped by "county" (against referenceData).
+4. Check the sum of "incidents" grouped by "county" (against referenceData).
     To check that the sum of incidents by county matches the number
     listed in the ``referenceData``, we call :meth:`assertDataSum()
     <datatest.DataTestCase.assertDataSum>` and pass in the column we want
@@ -298,8 +298,8 @@ Step-by-step Breakdown
                 self.assertDataSum('incidents', keys=['county'])
 
 
-Understanding Errors
-====================
+Understanding Failure Messages
+==============================
 
 When the data in the ``subjectData`` differs from the *required* data
 (or ``referenceData`` if *required* is omitted), a test will fail with a
@@ -333,16 +333,8 @@ with "Northeast" in the ``subjectData`` will correct this error and
 allow the test to pass.
 
 
-.. note::
-
-    If a non-data failure occurs (like a syntax error or a standard
-    unittest failure), then a standard :class:`AssertionError` is raised
-    rather than a :class:`DataAssertionError
-    <datatest.DataAssertionError>`.
-
-
-Allowed Error
-=============
+Allowed Differences
+===================
 
 Sometimes differences cannot be reconciled---they could represent a
 disagreement between two authoritative sources or a lack of information could

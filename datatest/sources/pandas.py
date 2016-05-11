@@ -16,6 +16,13 @@ class PandasSource(BaseSource):
     """Loads pandas DataFrame as a data source:
     ::
         subjectData = datatest.PandasSource(df)
+
+    This is an optional data source that requires the third-party
+    library `pandas <https://pypi.python.org/pypi/pandas>`_.
+
+    IMPORTANT: This data source is not yet optimized for speed
+    (although it will be in the future).  Testing large DataFrames
+    could be slow and it is faster to use CsvSource or SqliteSource.
     """
     def __init__(self, df):
         """Initialize self."""
