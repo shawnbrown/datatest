@@ -13,42 +13,51 @@ from datatest.differences import Deviation
 
 
 class TestBaseDifference(unittest.TestCase):
+    def setUp(self):
+        class MinimalDifference(BaseDifference):    # Create subclass because
+            pass                                    # BaseDifference cannot be
+        self.MinimalDifference = MinimalDifference  # instantiated directly.
+
     def test_repr(self):
-        item = BaseDifference('foo')
-        self.assertEqual(repr(item), "BaseDifference('foo')")
+        item = self.MinimalDifference('foo')
+        self.assertEqual(repr(item), "MinimalDifference('foo')")
 
-        item = BaseDifference(value='foo')  # As kwds.
-        self.assertEqual(repr(item), "BaseDifference('foo')")
+        item = self.MinimalDifference(value='foo')  # As kwds.
+        self.assertEqual(repr(item), "MinimalDifference('foo')")
 
-        item = BaseDifference('foo', col4='bar')  # Using kwds for filtering.
-        self.assertRegex(repr(item), "BaseDifference\(u?'foo', col4=u?'bar'\)")
+        item = self.MinimalDifference('foo', col4='bar')  # Using kwds for filtering.
+        self.assertRegex(repr(item), "MinimalDifference\(u?'foo', col4=u?'bar'\)")
 
     def test_str(self):
-        diff = BaseDifference('foo', col4='bar')
+        diff = self.MinimalDifference('foo', col4='bar')
         self.assertEqual(str(diff), repr(diff))
 
     def test_hash(self):
-        diff = BaseDifference('foo')
+        diff = self.MinimalDifference('foo')
         self.assertIsInstance(hash(diff), int)
 
     def test_eq(self):
-        diff1 = BaseDifference('foo')
-        diff2 = BaseDifference('foo')
+        diff1 = self.MinimalDifference('foo')
+        diff2 = self.MinimalDifference('foo')
         self.assertEqual(diff1, diff2)
 
-        diff1 = BaseDifference('foo')
-        diff2 = BaseDifference('bar')
+        diff1 = self.MinimalDifference('foo')
+        diff2 = self.MinimalDifference('bar')
         self.assertNotEqual(diff1, diff2)
 
-        diff1 = BaseDifference('foo')
-        diff2 = "BaseDifference('foo')"
+        class OtherDifference(BaseDifference):
+            pass
+        diff1 = OtherDifference('foo')
+        diff2 = self.MinimalDifference('foo')
         self.assertNotEqual(diff1, diff2)
 
     def test_repr_eval(self):
-        diff = BaseDifference('someval')
+        MinimalDifference = self.MinimalDifference
+
+        diff = MinimalDifference('someval')
         self.assertEqual(diff, eval(repr(diff)))  # Test __repr__ eval
 
-        diff = BaseDifference('someval', col4='foo', col5='bar')
+        diff = MinimalDifference('someval', col4='foo', col5='bar')
         self.assertEqual(diff, eval(repr(diff)))  # Test __repr__ eval
 
 

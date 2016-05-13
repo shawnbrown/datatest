@@ -14,6 +14,12 @@ def _make_decimal(d):
 
 
 class BaseDifference(object):
+    def __new__(cls, *args, **kwds):
+        if cls is BaseDifference:
+            msg = 'cannot instantiate BaseDifference directly - make a subclass'
+            raise NotImplementedError(msg)
+        return super(BaseDifference, cls).__new__(cls)
+
     def __init__(self, value, **kwds):
         self.value = value
         self.kwds = kwds
@@ -88,6 +94,12 @@ class NonStrictRelation(BaseDifference):
     """Base class for to indicate non-strict subset or superset
     relationships.
     """
+    def __new__(cls, *args, **kwds):
+        if cls is NonStrictRelation:
+            msg = 'cannot instantiate NonStrictRelation directly - make a subclass'
+            raise NotImplementedError(msg)
+        return super(NonStrictRelation, cls).__new__(cls)
+
     def __init__(self, **kwds):
         self.kwds = kwds
 
