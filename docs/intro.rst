@@ -73,12 +73,12 @@ Here is a short script (test_users.py) to test the data in this file:
         datatest.main()
 
 
-Download :download:`basic_example.zip <_static/basic_example.zip>` to try it
-for yourself.
+Step-by-step Explanation
+------------------------
 
-
-Step-by-step Breakdown
-----------------------
+To try it for yourself, download and run
+:download:`basic_example.zip <_static/basic_example.zip>` after reviewing the
+following steps.
 
 1. Define subjectData (the data under test):
     To interface with our data, we create a data source and assign it to the
@@ -230,12 +230,13 @@ from ``referenceData`` are used in its place:
     if __name__ == '__main__':
         datatest.main()
 
-Download :download:`reference_data_example.zip <_static/reference_data_example.zip>`
-to try it for yourself.
 
+Step-by-step Explanation
+------------------------
 
-Step-by-step Breakdown
-----------------------
+To try it for yourself, download and run
+:download:`reference_data_example.zip <_static/reference_data_example.zip>`
+after reviewing the following steps.
 
 1. Define subjectData (data under test) and referenceData (data trusted to be correct):
     In addition to ``subjectData``, we load our reference data and assign it
