@@ -21,7 +21,7 @@ class RestrictedCommand(Command):
 
 def get_version(filepath):
     """Return value of file's __version__ attribute."""
-    with open(filepath, newline='') as fh:
+    with open(filepath) as fh:
         for line in fh:
             line = line.strip()
             if line.startswith('__version__'):
