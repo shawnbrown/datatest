@@ -30,19 +30,23 @@ def get_version(filepath):
 
 
 if __name__ == '__main__':
+    with open('README.rst') as file:
+        long_description = file.read()
+
     setup(
+        # Required meta-data:
         name='datatest',
         version=get_version('datatest/__init__.py'),
+        url='https://pypi.python.org/pypi/datatest',
+        # Additional fields:
         description='Testing tools for data preparation.',
+        long_description=long_description,
         author='Shawn Brown',
-        #author_email='',
-        #url='',
-        #packages=['distutils', 'distutils.command'],
         classifiers  = [
-            'Development Status :: 3 - Alpha',
-            #'License :: OSI Approved :: Apache Software License',
             'Topic :: Software Development :: Quality Assurance',
             'Topic :: Software Development :: Testing',
+            'License :: OSI Approved :: Apache Software License',
+            'Development Status :: 3 - Alpha',
             'Programming Language :: Python :: 2',
             'Programming Language :: Python :: 2.6',
             'Programming Language :: Python :: 2.7',
@@ -53,8 +57,8 @@ if __name__ == '__main__':
             'Programming Language :: Python :: 3.4',
             'Programming Language :: Python :: 3.5',
         ],
-        # Restrict unintended upload of private code to public PyPI:
         cmdclass={
+            # Restrict unintended PyPI interactions:
             'register':    RestrictedCommand,
             'upload':      RestrictedCommand,
             'upload_docs': RestrictedCommand,
