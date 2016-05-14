@@ -50,7 +50,7 @@ appropriate version number)::
 Change to the unpacked directory and run the tests::
 
   cd datatest-X.Y.Z
-  python -m unittest discover
+  python setup.py test
 
 Please Note: Tests for optional data sources (like pandas DataFrames or
 MS Excel files) are skipped if the related third-party packages are not
@@ -66,7 +66,7 @@ Supported Versions
 
 Tested on Python versions 3.5, 3.4, 3.3, 3.2, 3.1, 2.7 and 2.6.
 Datatest is pure Python and is likely to run on PyPy, Jython, and other
-implementations without issues (check with "python -m unittest" before
+implementations without issues (check with "setup.py test" before
 installing).
 
 
