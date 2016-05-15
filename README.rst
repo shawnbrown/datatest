@@ -10,6 +10,11 @@ provide testing tools for asserting data correctness.
 * Official Releases: https://pypi.python.org/pypi/datatest
 * Development: https://github.com/shawnbrown/datatest
 
+Datatest can help prepare messy data that needs to be cleaned,
+integrated, formatted, and verified. It can provide structure for the
+tidying process, automate checklists, log discrepancies, and measure
+progress.
+
 
 Installation
 ============
@@ -78,8 +83,8 @@ before this happens, we want to get community feedback, add support for
 more data sources, and improve py.test integration (including a py.test
 plugin).
 
-This said, all of the data used at the National Committee for an
-Effective Congress <http://ncec.org/about> has been checked with test
+This said, all of the data used at the `National Committee for an
+Effective Congress <http://ncec.org/about>`_ has been checked with test
 suites built on datatest for more than a year. The API may adjust in
 small ways but drastic changes are not anticipated.
 

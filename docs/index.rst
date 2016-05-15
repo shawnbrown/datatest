@@ -15,20 +15,26 @@
 ######################################################
 
 Datatest extends the standard library's `unittest
-<http://docs.python.org/3/library/unittest.html>`_ package to provide testing
-tools for asserting data correctness.
+<http://docs.python.org/3/library/unittest.html>`_ package to provide
+testing tools for asserting data correctness.
 
-Datatest can help prepare messy data that needs to be cleaned,
-integrated, formatted, and verified.  It can provide structure
-for the tidying process, automate checklists, log discrepancies,
-and measure progress.
+To understand the basics of datatest, please see :doc:`intro`.  To use
+datatest effectively, users should be familiar with Python's standard
+unittest library and with the data they want to test.  (If you're
+already familiar with datatest, you might want to skip to the
+:ref:`list of assert methods <assert-methods>`.)
 
-To use datatest effectively, users should be familiar with Python's standard
-`unittest <http://docs.python.org/library/unittest.html>`_ library and with
-the data they want to test.  This said, testing data isn't the same as testing
-software---please see :doc:`intro` for examples.  (If you're already familiar
-with datatest, you might want to skip to the :ref:`list of assert methods
-<assert-methods>`.)
+
+*************
+Quick Install
+*************
+
+.. code-block:: none
+
+    pip install datatest
+
+For installation details, see https://pypi.python.org/pypi/datatest or
+the README.rst file included with the source distribution.
 
 
 ********

@@ -26,9 +26,9 @@ class TestCommand(Command):
         # Run tests.
         import subprocess, sys
         if sys.version_info[:2] in [(2, 6), (3, 1)]:
-            args = [sys.executable, 'tests/discover.py']
+            args = [sys.executable, '-B', 'tests/discover.py']
         else:
-            args = [sys.executable, '-m', 'unittest', 'discover']
+            args = [sys.executable, '-B', '-m', 'unittest', 'discover']
         exit(subprocess.call(args))
 
     def _get_missing_optionals(self):
@@ -87,8 +87,7 @@ if __name__ == '__main__':
             'Topic :: Software Development :: Quality Assurance',
             'Topic :: Software Development :: Testing',
             'License :: OSI Approved :: Apache Software License',
-            'Development Status :: 3 - Alpha',
-            #'Development Status :: 4 - Beta',
+            'Development Status :: 4 - Beta',
             'Programming Language :: Python :: 2',
             'Programming Language :: Python :: 2.6',
             'Programming Language :: Python :: 2.7',
