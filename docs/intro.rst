@@ -286,7 +286,7 @@ after reviewing the following steps.
             def test_county(self):
                 self.assertDataSet('county')
 
-4. Check the sum of "incidents" grouped by "county" (against referenceData).
+4. Check the sum of "incidents" grouped by "county" (against referenceData):
     To check that the sum of incidents by county matches the number
     listed in the ``referenceData``, we call :meth:`assertDataSum()
     <datatest.DataTestCase.assertDataSum>` and pass in the column we want
@@ -302,45 +302,99 @@ after reviewing the following steps.
 Understanding Failure Messages
 ==============================
 
-When the data in the ``subjectData`` differs from the *required* data
-(or ``referenceData`` if *required* is omitted), a test will fail with a
-:class:`DataAssertionError <datatest.DataAssertionError>` containing
-a list of detected differences.
+When a data assertion fails, a
+:class:`DataAssertionError <datatest.DataAssertionError>` is raised that
+contains a list of differences detected in the data under test (the
+``subjectData``).
 
-A good way to understand how errors work is to download the previous examples
-(:download:`basic_example.zip <_static/basic_example.zip>`
-and :download:`reference_data_example.zip <_static/reference_data_example.zip>`)
-and change the values in the subject data file.
+To demonstrate this, we will reuse the tests from the basic example.
+The difference, this time, is that the CSV file contains a number of
+data errors---these errors will trigger test failures.  Download and run
+:download:`failure_message_example.zip
+<_static/failure_message_example.zip>` to see for yourself.
 
-.. code-block:: none
-    :emphasize-lines: 5-6
+1. Check column names (against a set of values):
+    To check the columns, we call
+    :meth:`self.assertDataColumns({'user_id', 'active'})
+    <datatest.DataTestCase.assertDataColumns>`.  But unlike the basic
+    example, we detect a number of differences:
 
-    Traceback (most recent call last):
-      File "test_members.py", line 15, in test_region_labels
-        self.assertValueSet('region')
-    datatest.DataAssertionError: different 'region' values:
-     Extra('North-east'),
-     Missing('Northeast')
+    .. code-block:: none
+        :emphasize-lines: 3,6-9
 
-This error tells us that values in the "region" column of our
-``subjectData`` do not match the values of our ``referenceData``.  The
-``subjectData`` contains the extra value "North-east" (which is not
-included in the ``referenceData``) and it's missing the value
-"Northeast" (which *is* included in the ``referenceData``).
+        Traceback (most recent call last):
+          File "test_users_fail.py", line 13, in test_columns
+            self.assertDataColumns({'user_id', 'active'})
+        datatest.error.DataAssertionError: mandatory test failed, stopping
+        early: different column names:
+         Extra('USER_ID'),
+         Extra('ACTIVE'),
+         Missing('user_id'),
+         Missing('active')
 
-Pairs of conspicuous differences, as shown above, are common when the
-subject and reference files use differing codes.  Replacing "North-east"
-with "Northeast" in the ``subjectData`` will correct this error and
-allow the test to pass.
+    The ``subjectData`` columns are written in uppercase but our test
+    checks for "user_id" and "active" (lowercase letters).  So the
+    uppercase values are seen as :class:`Extra <datatest.Extra>`, while
+    the lowercase ones are considered :class:`Missing <datatest.Missing>`.
+    To correct for this, we convert the CSV column names to lowercase
+    and the failure goes away.
+
+2. Check "user_id" values (with a helper-function):
+    To check the "user_id" column, we call
+    :meth:`self.assertDataSet('user_id', must_be_digit)
+    <datatest.DataTestCase.assertDataSet>` and use a helper function
+    named ``must_be_digit``:
+
+    .. code-block:: none
+        :emphasize-lines: 3,5-6
+
+        Traceback (most recent call last):
+          File "test_users_fail.py", line 19, in test_user_id
+            self.assertDataSet('user_id', must_be_digit)
+        datatest.error.DataAssertionError: different 'user_id' values:
+         Invalid('1056A'),
+         Invalid('1099B')
+
+    The helper function asserts that the "user_id" values contain only
+    digits.  Any ID values that contain non-digit characters are seen
+    as :class:`Invalid <datatest.Invalid>` (in this case, "1056A" and
+    "1099B").  To correct for this, we remove the letters and the test
+    will pass.
+
+3. Check "active" values (against a set of values):
+    To check the "active" column, we call
+    :meth:`self.assertDataSet('active', {'Y', 'N'})
+    <datatest.DataTestCase.assertDataSet>` to make sure it contains
+    the required values ("Y" and "N"):
+
+    .. code-block:: none
+        :emphasize-lines: 3,5-9
+
+        Traceback (most recent call last):
+          File "test_users_fail.py", line 23, in test_active
+            self.assertDataSet('active', {'Y', 'N'})
+        datatest.error.DataAssertionError: different 'active' values:
+         Extra('YES'),
+         Extra('NO'),
+         Extra('y'),
+         Extra('n'),
+         Missing('N')
+
+    Above, we see several data errors which are common when integrating
+    data from multiple sources.  To correct for these errors, we convert
+    "YES" to Y", "NO" to "N", and change the remaining lowercase values
+    to uppercase.  With these changes made, the test will pass and we
+    can trust that our data is valid.
 
 
 Allowed Differences
 ===================
 
 Sometimes differences cannot be reconciled---they could represent a
-disagreement between two authoritative sources or a lack of information could
-make correction impossible.  In any case, there are situations where it is
-legitimate to allow certain discrepancies for the purposes of data processing.
+disagreement between two authoritative sources or a lack of information
+could make correction impossible.  In any case, there are situations
+where it is legitimate to allow certain discrepancies for the purposes
+of data processing.
 
 In the following example, there are two discrepancies (eight more in
 Warren County and 25 less in Lake County)::
@@ -353,8 +407,8 @@ Warren County and 25 less in Lake County)::
      Deviation(+8, 11771, county='Warren')
 
 If we've determined that these differences are allowable, we can use the
-:meth:`allowOnly <datatest.DataTestCase.allowOnly>` context manager so the
-test runs without failing:
+:meth:`allowOnly <datatest.DataTestCase.allowOnly>` context manager so
+the test runs without failing:
 
 .. code-block:: python
     :emphasize-lines: 6
