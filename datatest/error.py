@@ -3,7 +3,7 @@ import pprint
 
 
 class DataAssertionError(AssertionError):
-    """Data assertion failed."""
+    """Data assertion failure---includes a list of differences."""
     def __init__(self, msg, differences, subject=None, required=None):
         """Initialize self, store *differences* for later reference."""
         if not differences:

@@ -265,9 +265,9 @@ CompareDict
         Column names for result keys.
 
 
-**********************
-Errors and Differences
-**********************
+*********************
+Error and Differences
+*********************
 
 .. autoclass:: datatest.DataAssertionError
    :members:
@@ -289,13 +289,22 @@ Errors and Differences
 Test Runner Program
 *******************
 
+.. autodata:: datatest.mandatory
+   :annotation:
+
+.. autofunction:: datatest.skip
+
+.. autofunction:: datatest.skipIf
+
+.. autofunction:: datatest.skipUnless
+
 .. autoclass:: datatest.DataTestRunner
-           :members:
-           :inherited-members:
+    :members:
+    :inherited-members:
 
 .. autoclass:: datatest.DataTestProgram(module='__main__', defaultTest=None, argv=None, testRunner=datatest.DataTestRunner, testLoader=unittest.TestLoader, exit=True, verbosity=1, failfast=None, catchbreak=None, buffer=None, warnings=None)
-   :members:
-   :inherited-members:
+    :members:
+    :inherited-members:
 
 |
 

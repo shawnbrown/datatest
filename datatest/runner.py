@@ -15,13 +15,18 @@ except AttributeError:
     TextTestResult = unittest._TextTestResult
 
 
-# @mandatory: A decorator for test classes or methods that must pass before
-# subsequent tests will run.  When a "mandatory" test fails, DataTestRunner
-# will immediately stop (this behavior is similar to the "--failfast" command
-# line argument).
+# @mandatory: A decorator for test classes or methods that must pass
+# before subsequent tests will run.
 def mandatory(test_item):
-    """Mark the test as mandatory.  If the test fails, DataTestRunner
-    will stop.
+    """A decorator to mark whole test cases or individual methods as
+    mandatory.  If a mandatory test fails, DataTestRunner will stop
+    immediately (this is similar to the ``--failfast`` command line
+    argument behavior)::
+
+        @datatest.mandatory
+        class TestFileFormat(datatest.DataTestCase):
+            def test_columns(self):
+                ...
     """
     test_item.__datatest_mandatory__ = True
     return test_item
@@ -32,7 +37,15 @@ def mandatory(test_item):
 # _sort_key() function can find the proper line number when test_item
 # gets wrapped by functools.wraps().
 def skip(reason):
-    """Unconditionally skip a test."""
+    """A decorator to unconditionally skip a test:
+
+    .. code-block:: python
+
+        @datatest.skip('Not finished collecting raw data.')
+        class TestSumTotals(datatest.DataTestCase):
+            def test_totals(self):
+                ...
+    """
     def decorator(test_item):
         if not isinstance(test_item, type):
             orig_item = test_item           # <- Not in unittest.skip()
@@ -53,14 +66,14 @@ def _id(obj):
 
 
 def skipIf(condition, reason):
-    """Skip a test if the condition is true."""
+    """A decorator to skip a test if the condition is true."""
     if condition:
         return skip(reason)
     return _id
 
 
 def skipUnless(condition, reason):
-    """Skip a test unless the condition is true."""
+    """A decorator to skip a test unless the condition is true."""
     if not condition:
         return skip(reason)
     return _id

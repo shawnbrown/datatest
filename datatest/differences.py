@@ -50,14 +50,17 @@ class BaseDifference(object):
 
 
 class Extra(BaseDifference):
+    """Additional value that is not part of a required set."""
     pass
 
 
 class Missing(BaseDifference):
+    """Missing value that is part of a required set."""
     pass
 
 
 class Invalid(BaseDifference):
+    """Invalid item that does not match a required check."""
     def __init__(self, value, required=None, **kwds):
         self.value = value
         self.required = required
@@ -74,6 +77,7 @@ class Invalid(BaseDifference):
 
 
 class Deviation(BaseDifference):
+    """Deviation from a required numeric value."""
     def __init__(self, value, required, **kwds):
         if not value:
             raise ValueError('value must be positive or negative number')
@@ -110,8 +114,10 @@ class NonStrictRelation(BaseDifference):
 
 
 class NotProperSubset(NonStrictRelation):
+    """Not a proper subset of a required set."""
     pass
 
 
 class NotProperSuperset(NonStrictRelation):
+    """Not a proper superset of a required set."""
     pass
