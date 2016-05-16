@@ -390,6 +390,9 @@ data errors---these errors will trigger test failures.  Download and run
 Allowed Differences
 ===================
 
+.. todo::
+    Rewrite this section and include a downloadable, working example.
+
 Sometimes differences cannot be reconciled---they could represent a
 disagreement between two authoritative sources or a lack of information
 could make correction impossible.  In any case, there are situations
@@ -469,13 +472,15 @@ for full details.
 Test-Driven Data Preparation
 ============================
 
+.. epigraph::
+
+    Unix was not designed to stop you from doing stupid things, because that
+    would also stop you from doing clever things. ---Doug Gwyn
+
 A :mod:`datatest` suite can help organize and guide the data preparation
 workflow.  It can also help supplement or replace check-lists and progress
 reports.
 
-.. epigraph::
-    Unix was not designed to stop you from doing stupid things, because that
-    would also stop you from doing clever things. --Doug Gwyn
 
 Structuring a Test Suite
 ------------------------
@@ -495,11 +500,8 @@ Typically, data tests should be defined in the following order:
 
 .. note::
 
-    Datatest implements strictly ordered tests but don't expect other tools to
-    do the same.  Ordered tests are useful when testing data but not so useful
-    when testing software.  In fact, ordered testing of software can lead to
-    problems if side-effects from one test affect the outcome of following
-    tests.
+    Datatest executes strictly ordered tests (ordered by package name
+    then line number).
 
 
 Data Preparation Workflow
@@ -531,7 +533,7 @@ sed, etc.).
         cases can approach 80% of the time." *Dynamic Warehousing: Data Mining
         Made Easy* (p. 19)
 
-.. [3] Online poll of data mining practitioners: `[see image] <_static/data_prep_poll.png>`_,
+.. [3] Online poll of data mining practitioners: `See image <_static/data_prep_poll.png>`_,
        *Data preparation (Oct 2003)*.
        Retrieved from http://www.kdnuggets.com/polls/2003/data_preparation.htm
        [While this poll is quite old, the situation has not changed

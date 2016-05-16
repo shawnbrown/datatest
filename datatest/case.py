@@ -31,17 +31,23 @@ from .allow import _AllowPercentDeviation
 
 
 class DataTestCase(TestCase):
-    """This class wraps ``unittest.TestCase`` and implements additional
-    properties and methods for testing data quality.  When a data
-    assertion method fails, it raises a ``DataAssertionError``
-    containing the detected flaws.  When a non-data failure occurs,
-    these methods raise a standard ``AssertionError``.
+    """This class wraps and extends ``unittest.TestCase`` and implements
+    additional properties and methods for testing data quality.  When a
+    data assertion fails, it raises a ``DataAssertionError`` which
+    contains a list of detected errors.
+
+    In addition to the new functionality, the familiar ``TestCase``
+    methods (like ``setUp``, ``assertEqual``, etc.) are still available.
     """
     @property
     def subjectData(self):
-        """Property to access the data being tested---the subject of
-        the tests. Typically, ``subjectData`` should be assigned in
-        ``setUpModule()`` or ``setUpClass()``.
+        """A data source containing the data under test---the subject of
+        the tests.
+
+        Typically, ``subjectData`` should be defined in
+        ``setUpModule()`` or ``setUpClass()``.  When not defined at the
+        class level, this property will reach into its parent scopes
+        and return the ``subjectData`` from the nearest enclosed scope.
         """
         if hasattr(self, '_subjectData'):
             return self._subjectData
@@ -53,9 +59,12 @@ class DataTestCase(TestCase):
 
     @property
     def referenceData(self):
-        """Property to access reference data that is trusted to be
-        correct. Typically, ``referenceData`` should be assigned in
-        ``setUpModule()`` or ``setUpClass()``.
+        """A data source containing data that is trusted to be correct.
+
+        Typically, ``referenceData`` should be defined in
+        ``setUpModule()`` or ``setUpClass()``.  When not defined at the
+        class level, this property will reach into its parent scopes
+        and return the ``referenceData`` from the nearest enclosed scope.
         """
         if hasattr(self, '_referenceData'):
             return self._referenceData

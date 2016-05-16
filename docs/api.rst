@@ -10,12 +10,6 @@ Developer Interface
 DataTestCase
 ************
 
-This class inherits from
-`unittest.TestCase <http://docs.python.org/library/unittest.html#unittest.TestCase>`_
-and adds additional properties and methods to help with testing data.
-In addition to the new functionality, the familiar ``TestCase`` methods
-(like ``setUp``, ``assertEqual``, etc.) are still available.
-
 .. autoclass:: datatest.DataTestCase
 
     .. autoattribute:: subjectData
@@ -30,8 +24,8 @@ In addition to the new functionality, the familiar ``TestCase`` methods
     | :meth:`assertDataColumns(required=None)                         | column names match *required*            |
     | <datatest.DataTestCase.assertDataColumns>`                      |                                          |
     +-----------------------------------------------------------------+------------------------------------------+
-    | :meth:`assertDataSet(column, required=None)                     | *column* contains *required* values      |
-    | <datatest.DataTestCase.assertDataSet>`                          |                                          |
+    | :meth:`assertDataSet(columns, required=None)                    | one or more *columns* contains           |
+    | <datatest.DataTestCase.assertDataSet>`                          | *required*                               |
     +-----------------------------------------------------------------+------------------------------------------+
     | :meth:`assertDataSum(column, keys, required=None)               | sums of *column* values, grouped by      |
     | <datatest.DataTestCase.assertDataSum>`                          | *keys*, match *required* dict            |
@@ -111,9 +105,10 @@ In addition to the new functionality, the familiar ``TestCase`` methods
         suppressed but those that exceed the range will trigger
         a test failure.
 
-        .. note:: The "``/``" in this method's signature means that the
-                  preceding argument (*tolerance*) is a positional-only
-                  parameter---it cannot be specified using keyword syntax.
+        .. note:: The "``tolerance, /,``" part of this method's
+                  signature means that *tolerance* is a positional-only
+                  parameter---it cannot be specified using keyword
+                  syntax.
 
     .. automethod:: allowPercentDeviation
 
@@ -163,11 +158,10 @@ Data source objects are used to access data in various formats.
 +---------------------------------------------+-----------------------------------------+
 | :class:`ExcelSource(path, worksheet=None)   | Excel *worksheet* from XLSX or XLS      |
 | <datatest.ExcelSource>`                     | *path*, defaults to the first worksheet |
-|                                             | if ``None`` (requires `xlrd             |
-|                                             | <http://pypi.python.org/pypi/xlrd>`_)   |
+|                                             | if ``None`` (requires ``xlrd`` package) |
 +---------------------------------------------+-----------------------------------------+
-| :class:`PandasSource(df)                    | pandas DataFrame *df* (requires `pandas |
-| <datatest.PandasSource>`                    | <http://pypi.python.org/pypi/pandas>`_) |
+| :class:`PandasSource(df)                    | pandas DataFrame *df* (requires         |
+| <datatest.PandasSource>`                    | ``pandas``)                             |
 +---------------------------------------------+-----------------------------------------+
 | :class:`MultiSource(*sources)               | multiple data *sources* which can be    |
 | <datatest.MultiSource>`                     | treated as single data source           |
@@ -189,17 +183,17 @@ SqliteSource
 .. _extra-sources:
 
 If you have the appropriate, optional dependencies installed, datatest
-provides a variety of other data sources:
+provides additional data source options:
 
 ExcelSource
 ===========
 .. autoclass:: datatest.ExcelSource
+   :members: create_index
 
 
 PandasSource
 ============
 .. autoclass:: datatest.PandasSource
-  :members: from_records
 
 
 -----------
@@ -221,32 +215,23 @@ AdapterSource
 
 
 
-*******************
-Data Source Methods
-*******************
+Common Methods
+==========================
 
-Data sources implement a common set of methods which are used by
-DataTestCase to access data and report meaningful failure messages.
-Typically, these methods are used indirectly via DataTestCase but it is
-also possible to call them directly:
-
+All data sources implement a set of common methods which are inhereted
+from a common BaseSource.  Typically, these methods are used indirectly
+via DataTestCase but it is also possible to call them directly:
 
 .. autoclass:: datatest.BaseSource
-
-    .. automethod:: columns
-    .. automethod:: filter_rows
-    .. automethod:: distinct
-    .. automethod:: sum
-    .. automethod:: count
-    .. automethod:: mapreduce
+    :members: columns, __iter__, filter_rows, distinct, sum, count, mapreduce
 
 
 ******************
 Comparison Objects
 ******************
 
-Querying a data source with various methods will return a CompareSet or a
-CompareDict.
+Querying a data source with various methods will return a CompareSet or
+a CompareDict.
 
 
 CompareSet
@@ -289,14 +274,34 @@ Error and Differences
 Test Runner Program
 *******************
 
-.. autodata:: datatest.mandatory
-   :annotation:
+.. py:decorator:: datatest.mandatory
 
-.. autofunction:: datatest.skip
+    A decorator to mark whole test cases or individual methods as
+    mandatory.  If a mandatory test fails, DataTestRunner will stop
+    immediately (this is similar to the ``--failfast`` command line
+    argument behavior)::
 
-.. autofunction:: datatest.skipIf
+        @datatest.mandatory
+        class TestFileFormat(datatest.DataTestCase):
+            def test_columns(self):
+                ...
 
-.. autofunction:: datatest.skipUnless
+.. py:decorator:: datatest.skip(reason)
+
+    A decorator to unconditionally skip a test::
+
+        @datatest.skip('Not finished collecting raw data.')
+        class TestSumTotals(datatest.DataTestCase):
+            def test_totals(self):
+                ...
+
+.. py:decorator:: datatest.skipIf(condition, reason)
+
+    A decorator to skip a test if the condition is true.
+
+.. py:decorator:: datatest.skipUnless(condition, reason)
+
+    A decorator to skip a test unless the condition is true.
 
 .. autoclass:: datatest.DataTestRunner
     :members:

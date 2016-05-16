@@ -46,7 +46,5 @@ Contents
 
     intro
     api
-    custom
 
 * :ref:`genindex`
-* :ref:`search`

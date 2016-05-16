@@ -10,8 +10,9 @@ If you need to test data in a format that's not currently supported,
 you can make your own custom data source.  You do this by subclassing
 :class:`BaseSource` and implementing the basic, common methods.
 
-As a starting point you can use this :download:`template.py
-<_static/template.py>` file to write and test your custom data source.
+.. todo::
+    Make an updated template file.  The original :download:`template.py
+    <_static/template.py>` is extremely out of date and doesn't match
+    the current data source API.
 
-.. autoclass:: datatest.BaseSource
-    :members: __init__, __repr__, __iter__, columns, distinct, sum, count, reduce
+.. todo:: Give examples of BaseSource and SqliteBase subclasses.
