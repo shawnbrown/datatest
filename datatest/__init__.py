@@ -32,7 +32,7 @@ from .main import DataTestProgram
 from .main import main
 
 
-__version__ = '0.6.0'
+__version__ = '0.6.0.dev1'
 
 __all__ = [
     # Test case.

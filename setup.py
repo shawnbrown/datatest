@@ -2,8 +2,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 import ast
-from distutils.core import setup
-from distutils.core import Command
+import os.path
+
+from setuptools import setup
+from setuptools import find_packages
+from setuptools import Command
 
 
 class TestCommand(Command):
@@ -62,7 +65,8 @@ class RestrictedCommand(Command):
 
 def get_version(filepath):
     """Return value of file's __version__ attribute."""
-    with open(filepath) as fh:
+    fullpath = os.path.join(os.path.dirname(__file__), filepath)
+    with open(fullpath) as fh:
         for line in fh:
             line = line.strip()
             if line.startswith('__version__'):
@@ -79,6 +83,7 @@ if __name__ == '__main__':
         name='datatest',
         version=get_version('datatest/__init__.py'),
         url='https://pypi.python.org/pypi/datatest',
+        packages=find_packages(exclude=['tests']),
         # Additional fields:
         description='Testing tools for data preparation.',
         long_description=long_description,
@@ -100,9 +105,17 @@ if __name__ == '__main__':
         ],
         cmdclass={
             'test': TestCommand,
-            # Restrict PyPI interactions:
-            'register': RestrictedCommand,
-            'upload': RestrictedCommand,
+            # Restrict setup commands (use twine instead):
+            'register': RestrictedCommand,  # Use: twine register dist/*
+            'upload': RestrictedCommand,    # Use: twine upload dist/*
             'upload_docs': RestrictedCommand,
         },
     )
+
+# Release Checklist
+# -----------------
+# Set version number in datatest.__init__
+# python setup.py sdist bdist_wheel
+# twine register dist/datatest.X.Y.Z.tar.gz
+# twine upload dist/*
+#

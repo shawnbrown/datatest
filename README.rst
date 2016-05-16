@@ -45,7 +45,7 @@ Safety-first Clyde
 If you need to review and test packages before installing, you can
 install datatest manually:
 
-Download the latest version from https://pypi.python.org/pypi/datatest
+Download the latest source distribution from https://pypi.python.org/pypi/datatest
 
 Unpack the file and review the source code (replacing X.Y.Z with the
 appropriate version number)::

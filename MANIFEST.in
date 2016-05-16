@@ -1,0 +1,5 @@
+include README.rst
+include AUTHORS
+include LICENSE
+recursive-include datatest *.py
+recursive-include tests *.py *.xlsx
