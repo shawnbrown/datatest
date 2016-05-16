@@ -6,7 +6,7 @@ datatest: Testing tools for data preparation
 Datatest extends the Python standard library's unittest package to
 provide testing tools for asserting data correctness.
 
-* Documentation: <readthedocs-link-here>
+* Documentation: http://datatest.readthedocs.io/en/latest/
 * Official Releases: https://pypi.python.org/pypi/datatest
 * Development: https://github.com/shawnbrown/datatest
 
