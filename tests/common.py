@@ -63,7 +63,11 @@ def make_csv_file(fieldnames, datarows):
 
 class MinimalSource(BaseSource):
     """Minimal data source implementation for testing."""
-    def __init__(self, data, fieldnames):
+    def __init__(self, data, fieldnames=None):
+        if not fieldnames:
+            data_iter = iter(data)
+            fieldnames = next(data_iter)  # <- First row.
+            data = list(data_iter)        # <- Remaining rows.
         self._data = data
         self._fieldnames = fieldnames
 
