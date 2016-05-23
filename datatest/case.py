@@ -142,14 +142,23 @@ class DataTestCase(TestCase):
             def test_columns(self):
                 self.assertDataColumns()
         """
+        # TODO: Explore the idea of implementing CompareList to assert
+        # column order.
         subject_set = CompareSet(self.subjectData.columns())
-        required_list = self._normalize_required(required, 'columns')
-        if subject_set != required_list:
+
+        if callable(required):
+            differences = subject_set.compare(required)
+        else:
+            required_list = self._normalize_required(required, 'columns')
+            if subject_set != required_list:
+                differences = subject_set.compare(required_list)
+            else:
+                differences = None
+
+        if differences:
             if msg is None:
                 msg = 'different column names'
-            self.fail(msg, subject_set.compare(required_list))
-        # TODO: Implement callable *required* argument.
-        # TODO: Explore the idea of implementing DataList to assert column order.
+            self.fail(msg, differences)
 
     def assertDataSet(self, columns, required=None, msg=None, **kwds_filter):
         """Test that the column or *columns* in subjectData contain the

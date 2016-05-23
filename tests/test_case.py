@@ -7,6 +7,7 @@ from unittest import TestCase as _TestCase  # Originial TestCase, not
 # Import compatiblity layers.
 from . import _io as io
 from . import _unittest as unittest
+from .common import MinimalSource
 
 # Import code to test.
 from datatest.case import DataTestCase
@@ -324,58 +325,66 @@ class TestAssertDataCount(TestHelperCase):
 
 
 class TestAssertDataColumns(TestHelperCase):
-    def setUp(self):
-        _fh = io.StringIO('label1,value\n'
-                          'a,65\n'
-                          'b,70\n')
-        self.reference = CsvSource(_fh, in_memory=True)
-
-    def test_pass(self):
+    def test_required_set(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.reference  # <- referenceData!
-                same_as_reference = io.StringIO('label1,value\n'
-                                                'a,6\n'
-                                                'b,7\n')
-                _self.subjectData = CsvSource(same_as_reference, in_memory=True)
+                data = [('label1', 'value'),
+                        ('a', '6'),
+                        ('b', '7')]
+                _self.subjectData = MinimalSource(data)
+
+            def test_method(_self):
+                required_set = set(['label1', 'value'])
+                _self.assertDataColumns(required=required_set)  # <- test assert
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        self.assertIsNone(failure)
+
+    def test_required_source(self):
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                data = [('label1', 'value'),
+                        ('a', '6'),
+                        ('b', '7')]
+                _self.subjectData = MinimalSource(data)
+
+            def test_method(_self):
+                data = [('label1', 'value'),
+                        ('a', '6'),
+                        ('b', '7')]
+                required_source = MinimalSource(data)
+                _self.assertDataColumns(required=required_source)  # <- test assert
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        self.assertIsNone(failure)
+
+    def test_required_function(self):
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                data = [('label1', 'value'),
+                        ('a', '6'),
+                        ('b', '7')]
+                _self.subjectData = MinimalSource(data)
+
+            def test_method(_self):
+                def lowercase(x):  # <- Helper function!!!
+                    return x == x.lower()
+                _self.assertDataColumns(required=lowercase)  # <- test assert
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        self.assertIsNone(failure)
+
+    def test_using_reference(self):
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                data = [('label1', 'value'),
+                        ('a', '6'),
+                        ('b', '7')]
+                _self.subjectData = MinimalSource(data)
+                _self.referenceData = MinimalSource(data)  # <- Same as subject!
 
             def test_method(_self):
                 _self.assertDataColumns()  # <- test assert
-
-        failure = self._run_one_test(_TestClass, 'test_method')
-        self.assertIsNone(failure)
-
-    def test_pass_using_set_arg_reference(self):
-        class _TestClass(DataTestCase):
-            def setUp(_self):
-                #_self.referenceData =   <- intentionally omitted
-                subject = io.StringIO('label1,value\n'
-                                      'a,6\n'
-                                      'b,7\n')
-                _self.subjectData = CsvSource(subject, in_memory=True)
-
-            def test_method(_self):
-                reference_set = set(['label1', 'value'])
-                _self.assertDataColumns(required=reference_set)  # <- test assert
-
-        failure = self._run_one_test(_TestClass, 'test_method')
-        self.assertIsNone(failure)
-
-    def test_pass_using_source_arg_reference(self):
-        class _TestClass(DataTestCase):
-            def setUp(_self):
-                #_self.referenceData =   <- intentionally omitted
-                subject = io.StringIO('label1,value\n'
-                                      'a,6\n'
-                                      'b,7\n')
-                _self.subjectData = CsvSource(subject, in_memory=True)
-
-            def test_method(_self):
-                reference = io.StringIO('label1,value\n'
-                                        'a,6\n'
-                                        'b,7\n')
-                ref_source = CsvSource(reference, in_memory=True)
-                _self.assertDataColumns(required=ref_source)  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
@@ -383,14 +392,14 @@ class TestAssertDataColumns(TestHelperCase):
     def test_extra(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.reference
-                too_many = io.StringIO('label1,label2,value\n'
-                                       'a,x,6\n'
-                                       'b,y,7\n')
-                _self.subjectData = CsvSource(too_many, in_memory=True)
+                data = [('label1', 'label2', 'value'),
+                        ('a', 'x', '6'),
+                        ('b', 'y', '7')]
+                _self.subjectData = MinimalSource(data)
 
             def test_method(_self):
-                _self.assertDataColumns()  # <- test assert
+                required_set = set(['label1', 'value'])
+                _self.assertDataColumns(required=required_set)  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = "different column names:\n Extra\(u?'label2'\)"
@@ -399,17 +408,34 @@ class TestAssertDataColumns(TestHelperCase):
     def test_missing(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.reference
-                too_few = io.StringIO('label1\n'
-                                      'a\n'
-                                      'b\n')
-                _self.subjectData = CsvSource(too_few, in_memory=True)
+                data = [('label1',),
+                        ('a',),
+                        ('b',)]
+                _self.subjectData = MinimalSource(data)
 
             def test_method(_self):
-                _self.assertDataColumns()  # <- test assert
+                required_set = set(['label1', 'value'])
+                _self.assertDataColumns(required=required_set)  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = "different column names:\n Missing\(u?'value'\)"
+        self.assertRegex(failure, pattern)
+
+    def test_invalid(self):
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                data = [('LABEL1', 'value'),
+                        ('a', '6'),
+                        ('b', '7')]
+                _self.subjectData = MinimalSource(data)
+
+            def test_method(_self):
+                def lowercase(x):  # <- Helper function!!!
+                    return x == x.lower()
+                _self.assertDataColumns(required=lowercase)  # <- test assert
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        pattern = "different column names:\n Invalid\(u?'LABEL1'\)"
         self.assertRegex(failure, pattern)
 
 
