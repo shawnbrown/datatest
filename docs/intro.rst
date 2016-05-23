@@ -45,29 +45,21 @@ Here is a short script (test_users.py) to test the data in this file:
 
     import datatest
 
-
     def setUpModule():
         global subjectData
         subjectData = datatest.CsvSource('users.csv')
 
-
     class TestUserData(datatest.DataTestCase):
         def test_columns(self):
-            """Check that column names match required set."""
-            required = {'user_id', 'active'}
-            self.assertDataColumns(required)
+            self.assertDataColumns(required={'user_id', 'active'})
 
         def test_user_id(self):
-            """Check that 'user_id' column contains digits."""
-            def required(x):  # <- Helper function.
-                return x.isdigit()
-            self.assertDataSet('user_id', required)
+            def must_be_digit(x):  # <- Helper function.
+                return str(x).isdigit()
+            self.assertDataSet('user_id', required=must_be_digit)
 
         def test_active(self):
-            """Check that 'active' column contains valid codes."""
-            required = {'Y', 'N'}
-            self.assertDataSet('active', required)
-
+            self.assertDataSet('active', required={'Y', 'N'})
 
     if __name__ == '__main__':
         datatest.main()
@@ -82,7 +74,7 @@ following steps.
 
 1. Define subjectData (the data under test):
     To interface with our data, we create a data source and assign it to the
-    variable ``subjectData``:
+    variable :meth:`subjectData <datatest.DataTestCase.subjectData>`:
 
     .. code-block:: python
         :emphasize-lines: 3
@@ -96,19 +88,19 @@ following steps.
     :ref:`other data sources <data-sources>`.
 
 2. Check column names (against a set of values):
-    To check the columns, we define a *required* set of names and pass it to
+    To check the columns, we pass a *required* set of names to
     :meth:`assertDataColumns() <datatest.DataTestCase.assertDataColumns>`:
 
     .. code-block:: python
-        :emphasize-lines: 4
+        :emphasize-lines: 3
 
         class TestUserData(datatest.DataTestCase):
             def test_columns(self):
-                required = {'user_id', 'active'}
-                self.assertDataColumns(required)
+                self.assertDataColumns(required={'user_id', 'active'})
 
     This assertion automatically checks the *required* set against the column
-    names in the ``subjectData`` defined earlier.
+    names in the :meth:`subjectData <datatest.DataTestCase.subjectData>`
+    defined earlier.
 
 3. Check "user_id" values (with a helper-function):
     To assert that the "user_id" column contains only digits, we define a
@@ -121,9 +113,9 @@ following steps.
         :emphasize-lines: 4
 
             def test_user_id(self):
-                def required(x):  # <- Helper function.
+                def must_be_digit(x):  # <- Helper function.
                     return x.isdigit()
-                self.assertDataSet('user_id', required)
+                self.assertDataSet('user_id', required=must_be_digit)
 
     This assertion applies the *required* function to all of the data in the
     "user_id" column.  The test passes if the helper function returns True
@@ -131,15 +123,14 @@ following steps.
 
 4. Check "active" values (against a set of values):
     To check that the "active" column contains only "Y" or "N" values, we
-    define a *required* set of values and pass it to :meth:`assertDataSet()
+    pass a *required* set of values to :meth:`assertDataSet()
     <datatest.DataTestCase.assertDataSet>`:
 
     .. code-block:: python
-        :emphasize-lines: 3
+        :emphasize-lines: 2
 
             def test_active(self):
-                required = {'Y', 'N'}
-                self.assertDataSet('active', required)
+                self.assertDataSet('active', required={'Y', 'N'})
 
 .. note::
     Loading files from disk and establishing database connections are
@@ -160,7 +151,7 @@ following steps.
 Reference Data
 ==============
 
-In the previous example, we checked our data against sets and functions but
+In the previous examples, we checked our data against sets and functions but
 it's also possible to check our data against other data sources.
 
 For this next example, we will test the 2014 Utah Crime Statistics Report
@@ -234,9 +225,8 @@ from ``referenceData`` are used in its place:
 Step-by-step Explanation
 ------------------------
 
-To try it for yourself, download and run
-:download:`reference_data_example.zip <_static/reference_data_example.zip>`
-after reviewing the following steps.
+To try it for yourself, download and run :download:`reference_data_example.zip
+<_static/reference_data_example.zip>` after reviewing the following steps.
 
 1. Define subjectData (data under test) and referenceData (data trusted to be correct):
     In addition to ``subjectData``, we load our reference data and assign it
@@ -304,13 +294,12 @@ Understanding Failure Messages
 
 When a data assertion fails, a
 :class:`DataAssertionError <datatest.DataAssertionError>` is raised that
-contains a list of differences detected in the data under test (the
-``subjectData``).
+contains a list of differences detected in the :meth:`subjectData
+<datatest.DataTestCase.subjectData>` (the data under test).
 
-To demonstrate this, we will reuse the tests from the basic example.
-The difference, this time, is that the CSV file contains a number of
-data errors---these errors will trigger test failures.  Download and run
-:download:`failure_message_example.zip
+To demonstrate this, we will use the same tests from basic example but
+use a CSV file that contains a number of data errors---these errors will
+trigger test failures.  Download and run :download:`failure_message_example.zip
 <_static/failure_message_example.zip>` to see for yourself.
 
 1. Check column names (against a set of values):
@@ -332,12 +321,12 @@ data errors---these errors will trigger test failures.  Download and run
          Missing('user_id'),
          Missing('active')
 
-    The ``subjectData`` columns are written in uppercase but our test
-    checks for "user_id" and "active" (lowercase letters).  So the
-    uppercase values are seen as :class:`Extra <datatest.Extra>`, while
-    the lowercase ones are considered :class:`Missing <datatest.Missing>`.
-    To correct for this, we convert the CSV column names to lowercase
-    and the failure goes away.
+    The column names are written in uppercase but our test checks for
+    "user_id" and "active" (lowercase letters).  So the uppercase values
+    are seen as :class:`Extra <datatest.Extra>`, while the lowercase
+    ones are considered :class:`Missing <datatest.Missing>`.  To correct
+    for this, we convert the CSV column names to lowercase and the
+    failure goes away.
 
 2. Check "user_id" values (with a helper-function):
     To check the "user_id" column, we call
