@@ -31,23 +31,35 @@ from .allow import _AllowPercentDeviation
 
 
 class DataTestCase(TestCase):
-    """This class wraps and extends ``unittest.TestCase`` and implements
+    """This class wraps and extends unittest.TestCase and implements
     additional properties and methods for testing data quality.  When a
-    data assertion fails, it raises a ``DataAssertionError`` which
+    data assertion fails, it raises a DataAssertionError which
     contains a list of detected errors.
 
-    In addition to the new functionality, the familiar ``TestCase``
-    methods (like ``setUp``, ``assertEqual``, etc.) are still available.
+    In addition to the new functionality, the familiar TestCase methods
+    (like setUp, assertEqual, etc.) are still available.
     """
     @property
     def subjectData(self):
         """A data source containing the data under test---the subject of
-        the tests.
+        the tests.  The subjectData can be defined at the class-level or
+        at the module-level.  To use DataTestCase, you **must** define
+        subjectData.
 
-        Typically, ``subjectData`` should be defined in
-        ``setUpModule()`` or ``setUpClass()``.  When not defined at the
-        class level, this property will reach into its parent scopes
-        and return the ``subjectData`` from the nearest enclosed scope.
+        When defining subjectData at the module-level, this property
+        will reach into its parent scopes and return the subjectData
+        from the nearest enclosed scope::
+
+            def setUpModule():
+                global subjectData
+                subjectData = datatest.CsvSource('myfile.csv')
+
+        Class-level declaration::
+
+            class TestMyFile(datatest.DataTestCase):
+                @classmethod
+                def setUpClass(cls):
+                    cls.subjectData = datatest.CsvSource('myfile.csv')
         """
         if hasattr(self, '_subjectData'):
             return self._subjectData
@@ -59,12 +71,27 @@ class DataTestCase(TestCase):
 
     @property
     def referenceData(self):
-        """A data source containing data that is trusted to be correct.
+        """An optional data source containing data that is trusted to
+        be correct.  Like the subjectData, referenceData can be defined
+        at the class-level or at the module-level and this property
+        will return the referenceData from the nearest enclosed scope.
+        Unlike subjectData, defining referenceData is completely
+        optional.
 
-        Typically, ``referenceData`` should be defined in
-        ``setUpModule()`` or ``setUpClass()``.  When not defined at the
-        class level, this property will reach into its parent scopes
-        and return the ``referenceData`` from the nearest enclosed scope.
+        Module-level declaration::
+
+            def setUpModule():
+                global subjectData, referenceData
+                subjectData = datatest.CsvSource('myfile.csv')
+                referenceData = datatest.CsvSource('myreference.csv')
+
+        Class-level declaration::
+
+            class TestMyFile(datatest.DataTestCase):
+                @classmethod
+                def setUpClass(cls):
+                    cls.subjectData = datatest.CsvSource('myfile.csv')
+                    cls.referenceData = datatest.CsvSource('myreference.csv')
         """
         if hasattr(self, '_referenceData'):
             return self._referenceData
@@ -101,14 +128,19 @@ class DataTestCase(TestCase):
         return required
 
     def assertDataColumns(self, required=None, msg=None):
-        """Test that the column names in ``subjectData`` match the
-        *required* values.  If *required* is omitted, the column names
-        from the ``referenceData`` are used in its place.
+        """Test that the column names in subjectData match the
+        *required* values.  The *required* argument can be a collection,
+        callable, data source, or None::
 
-        The *required* argument can be a collection, callable, data
-        source, or None.
-        See :meth:`assertDataSet <datatest.DataTestCase.assertDataSet>`
-        for more details.
+            def test_columns(self):
+                required_names = {'col1', 'col2'}
+                self.assertDataColumns(required_names)
+
+        If *required* is omitted, the column names from referenceData
+        are used in its place::
+
+            def test_columns(self):
+                self.assertDataColumns()
         """
         subject_set = CompareSet(self.subjectData.columns())
         required_list = self._normalize_required(required, 'columns')
@@ -120,22 +152,37 @@ class DataTestCase(TestCase):
         # TODO: Explore the idea of implementing DataList to assert column order.
 
     def assertDataSet(self, columns, required=None, msg=None, **kwds_filter):
-        """Test that the *columns* or column in ``subjectData``
-        contains the *required* values. If *required* is omitted,
-        values from ``referenceData`` are used in its place.
+        """Test that the column or *columns* in subjectData contain the
+        *required* values::
 
-        *columns* (string or sequence of strings):
-            Name of the ``subjectData`` column or columns to check.  If
-            *columns* contains multiple names, the tests will check
-            tuples of values.
-        *required* (collection, callable, data source, or None):
-            If *required* is a set (or other collection), the set of
-            *columns* values must match the items in this collection.
-            If *required* is a function (or other callable), it is used
-            as a key which must return True for acceptable values. If
-            *required* is a data source, it is used as reference data.
-            If *required* is omitted, then ``referenceData`` will be
-            used in its place.
+            def test_column1(self):
+                required_values = {'a', 'b'}
+                self.assertDataSet('col1', required_values)
+
+        If *columns* is a sequence of strings, we can check for distinct
+        groups of values::
+
+            def test_column1and2(self):
+                required_groups = {('a', 'x'), ('a', 'y'), ('b', 'x'), ('b', 'y')}
+                self.assertDataSet(['col1', 'col2'], required_groups)
+
+        If the *required* argument is a helper-function (or other
+        callable), it is used as a key which must return True for
+        acceptable values::
+
+            def test_column1(self):
+                def length_of_one(x):  # <- Helper function.
+                    return len(str(x)) == 1
+                self.assertDataSet('col1', length_of_one)
+
+        If the *required* argument is omitted, then values from
+        referenceData will be used in its place::
+
+            def test_column1(self):
+                self.assertDataSet('col1')
+
+            def test_column1and2(self):
+                self.assertDataSet(['col1', 'col2'])
         """
         subject_set = self.subjectData.distinct(columns, **kwds_filter)
 
@@ -154,25 +201,28 @@ class DataTestCase(TestCase):
             self.fail(msg, differences)
 
     def assertDataSum(self, column, keys, required=None, msg=None, **kwds_filter):
-        """Test that the sum of *column* in ``subjectData`` when
-        grouped by *keys* matches *required* values dict.  If
-        *required* is omitted, ``referenceData`` is used in its place.
+        """Test that the sum of *column* in subjectData, when grouped by
+        *keys*, matches a dict of *required* values::
 
-        The *required* argument can be a dict, callable, data source,
-        or None.  See :meth:`assertDataSet
-        <datatest.DataTestCase.assertDataSet>` for more details::
+            per_dept = {'finance': 146564,
+                        'marketing': 152530,
+                        'research': 158397}
+            self.assertDataSum('budget', 'department', per_dept)
 
-            required = {2015: 146564,
-                        2016: 152530,
-                        2017: 158397}
-            self.assertDataSum('income', 'year', required)
+        Grouping by multiple *keys*::
 
-        By omitting the *required* argument, the following asserts that
-        the sum of "income" in ``subjectData`` matches the sum of
-        "income" in ``referenceData`` (for each group of "department"
-        and "year" values)::
+            dept_quarter = {('finance', 'q1'): 85008,
+                            ('finance', 'q2'): 61556,
+                            ('marketing', 'q1'): 86941,
+                            ('marketing', 'q2'): 65589,
+                            ('research', 'q1'): 93454,
+                            ('research', 'q2'): 64943}
+            self.assertDataSum('budget', ['department', 'quarter'], dept_quarter)
 
-            self.assertDataSum('income', ['department', 'year'])
+        If *required* argument is omitted, then values from
+        referenceData are used in its place::
+
+            self.assertDataSum('budget', ['department', 'quarter'])
         """
         subject_dict = self.subjectData.sum(column, keys, **kwds_filter)
 
@@ -188,9 +238,9 @@ class DataTestCase(TestCase):
             self.fail(msg, differences)
 
     def assertDataCount(self, column, keys, required=None, msg=None, **kwds_filter):
-        """Test that the count of non-empty values in ``subjectData``
-        column matches the the *required* values dict.  If *required* is
-        omitted, the sum of values in ``referenceData`` column (not the
+        """Test that the count of non-empty values in subjectData column
+        matches the the *required* values dict.  If *required* is
+        omitted, the **sum** of values in referenceData column (not the
         count) is used in its place.
 
         The *required* argument can be a dict, callable, data source,
@@ -213,7 +263,11 @@ class DataTestCase(TestCase):
 
     def assertDataRegex(self, column, required, msg=None, **kwds_filter):
         """Test that *column* in ``subjectData`` contains values that
-        match the *required* regular expression.
+        match a *required* regular expression::
+
+            def test_date(self):
+                wellformed = r'\d\d\d\d-\d\d-\d\d'  # Matches YYYY-MM-DD.
+                self.assertDataRegex('date', wellformed)
 
         The *required* argument must be a string or a compiled regular
         expression object (it can not be omitted).
@@ -230,8 +284,12 @@ class DataTestCase(TestCase):
             self.fail(msg=msg, differences=invalid)
 
     def assertDataNotRegex(self, column, required, msg=None, **kwds_filter):
-        """Test that *column* in ``subjectData`` contains values that
-        do not match the *required* regular expression.
+        """Test that *column* in subjectData contains values that do
+        **not** match a *required* regular expression::
+
+            def test_name(self):
+                bad_whitespace = r'^\s|\s$'  # Leading or trailing whitespace.
+                self.assertDataNotRegex('name', bad_whitespace)
 
         The *required* argument must be a string or a compiled regular
         expression object (it can not be omitted).
