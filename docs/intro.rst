@@ -64,6 +64,11 @@ Here is a short script (test_users.py) to test the data in this file:
     if __name__ == '__main__':
         datatest.main()
 
+..
+    NOTE: The "Basic Example" code uses the *required* argument as
+    a keyword to be more explicit for developers new to reading
+    code written using datatest.
+
 
 Step-by-step Explanation
 ------------------------
@@ -292,21 +297,27 @@ To try it for yourself, download and run :download:`reference_data_example.zip
 Understanding Failure Messages
 ==============================
 
-When a data assertion fails, a
-:class:`DataAssertionError <datatest.DataAssertionError>` is raised that
-contains a list of differences detected in the :meth:`subjectData
-<datatest.DataTestCase.subjectData>` (the data under test).
+When a data assertion fails, a :class:`DataAssertionError
+<datatest.DataAssertionError>` is raised that contains a list of differences
+detected in the subjectData (the data under test).  To demonstrate this, we
+will use the same tests shown in the previous example but we'll check a CSV file
+that contains a number of data errors---these errors will trigger test failures.
 
-To demonstrate this, we will use the same tests from basic example but
-use a CSV file that contains a number of data errors---these errors will
-trigger test failures.  Download and run :download:`failure_message_example.zip
+Download and run :download:`failure_message_example.zip
 <_static/failure_message_example.zip>` to see for yourself.
 
+..
+    NOTE: The "Understanding Failure Messages" code is the same as the
+    "Basic Example" code except that the *required* argument is passed
+    positionally---not as a keyword argument.  Passing arguments by
+    keyword can create verbose code and since it's optional, we want to
+    acclimate readers of datatest code with how tests are commonly
+    written.
+
 1. Check column names (against a set of values):
-    To check the columns, we call
-    :meth:`self.assertDataColumns({'user_id', 'active'})
-    <datatest.DataTestCase.assertDataColumns>`.  But unlike the basic
-    example, we detect a number of differences:
+    To check the columns, we call :meth:`assertDataColumns(...)
+    <datatest.DataTestCase.assertDataColumns>`.  But we detect a number of
+    differences in this new file:
 
     .. code-block:: none
         :emphasize-lines: 3,6-9
@@ -321,18 +332,15 @@ trigger test failures.  Download and run :download:`failure_message_example.zip
          Missing('user_id'),
          Missing('active')
 
-    The column names are written in uppercase but our test checks for
-    "user_id" and "active" (lowercase letters).  So the uppercase values
-    are seen as :class:`Extra <datatest.Extra>`, while the lowercase
-    ones are considered :class:`Missing <datatest.Missing>`.  To correct
-    for this, we convert the CSV column names to lowercase and the
-    failure goes away.
+    The column names are written in uppercase but our test checks for "user_id"
+    and "active" (written with lowercase letters).  So the uppercase values are
+    seen as :class:`Extra <datatest.Extra>`, while the lowercase ones are
+    considered :class:`Missing <datatest.Missing>`.  To correct for this, we
+    convert the CSV column names to lowercase and the failure goes away.
 
 2. Check "user_id" values (with a helper-function):
-    To check the "user_id" column, we call
-    :meth:`self.assertDataSet('user_id', must_be_digit)
-    <datatest.DataTestCase.assertDataSet>` and use a helper function
-    named ``must_be_digit``:
+    To check the "user_id" column, we call :meth:`assertDataSet(...)
+    <datatest.DataTestCase.assertDataSet>` with a helper function:
 
     .. code-block:: none
         :emphasize-lines: 3,5-6
@@ -344,15 +352,14 @@ trigger test failures.  Download and run :download:`failure_message_example.zip
          Invalid('1056A'),
          Invalid('1099B')
 
-    The helper function asserts that the "user_id" values contain only
-    digits.  Any ID values that contain non-digit characters are seen
-    as :class:`Invalid <datatest.Invalid>` (in this case, "1056A" and
-    "1099B").  To correct for this, we remove the letters and the test
-    will pass.
+    The helper function, ``must_be_digit()``, asserts that the "user_id" values
+    contain only digits.  Any ID values that contain non-digit characters are
+    seen as :class:`Invalid <datatest.Invalid>` (in this case, "1056A" and
+    "1099B").  To correct for this, we remove the letters "A" and "B" which
+    allows the test to pass.
 
 3. Check "active" values (against a set of values):
-    To check the "active" column, we call
-    :meth:`self.assertDataSet('active', {'Y', 'N'})
+    To check the "active" column, we call :meth:`assertDataSet(...)
     <datatest.DataTestCase.assertDataSet>` to make sure it contains
     the required values ("Y" and "N"):
 
@@ -371,9 +378,9 @@ trigger test failures.  Download and run :download:`failure_message_example.zip
 
     Above, we see several data errors which are common when integrating
     data from multiple sources.  To correct for these errors, we convert
-    "YES" to Y", "NO" to "N", and change the remaining lowercase values
-    to uppercase.  With these changes made, the test will pass and we
-    can trust that our data is valid.
+    "YES" to "Y", "NO" to "N", and change the remaining lowercase values
+    to uppercase ("y" to "Y" and "n" to "N").  With these changes made,
+    the test will pass and we can trust that our data is valid.
 
 
 Allowed Differences
