@@ -53,10 +53,10 @@ class PandasSource(BaseSource):
             for row in self._df.itertuples(index=False):
                 yield dict(zip(columns, row))
         else:
-            gettup = lambda x: x if isinstance(x, tuple) else tuple([x])
-            addtup = lambda x: gettup(x[0]) + gettup(x[1:])
+            mktup = lambda x: x if isinstance(x, tuple) else tuple([x])
+            flatten = lambda x: mktup(x[0]) + mktup(x[1:])
             for row in self._df.itertuples(index=True):
-                yield dict(zip(columns, addtup(row)))
+                yield dict(zip(columns, flatten(row)))
 
     def columns(self):
         """Return list of column names."""
