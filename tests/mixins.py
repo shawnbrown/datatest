@@ -33,23 +33,21 @@ class CountTests(object):
         ['b', '', '1'],
     ]
 
-    def test_count(self):
-        count = self.datasource.count
+    def test_nokeys(self):
+        result = self.datasource.count('label1')  # <- No keys arg!
+        self.assertEqual(9, result)
 
-        # No keys.
-        self.assertEqual(9, count('label1'))
-
-        # Basic count.
+    def test_simple_count(self):
         expected = {'a': 4, 'b': 5}
-        result = count('label1', ['label1'])
+        result = self.datasource.count('label1', ['label1'])
         self.assertEqual(expected, result)
 
-        # Count only truthy values (not '' or None).
-        expected = {'a': 3, 'b': 3}
-        result = count('label2', ['label1'])
+    def test_only_truthy(self):
+        expected = {'a': 3, 'b': 3}  # <- Only truthy, not '' or None!
+        result = self.datasource.count('label2', ['label1'])
         self.assertEqual(expected, result)
 
-        # Compound group-by keys.
+    def test_compound_keys(self):
         expected = {
             ('a', 'x'): 2,
             ('a', 'y'): 1,
@@ -60,12 +58,12 @@ class CountTests(object):
             ('b', None): 1,
             ('b', ''): 1,
         }
-        result = count('label1', ['label1', 'label2'])
+        result = self.datasource.count('label1', ['label1', 'label2'])
         self.assertEqual(expected, result)
 
-        # Count with filter (label1='a').
+    def test_with_filter(self):
         expected = {'x': 2, 'y': 1, '': 1}
-        result = count('label1', 'label2', label1='a')
+        result = self.datasource.count('label1', 'label2', label1='a')
         self.assertEqual(expected, result)
 
 
