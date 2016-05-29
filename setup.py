@@ -114,8 +114,14 @@ if __name__ == '__main__':
 
 # Release Checklist
 # -----------------
-# Set version number in datatest.__init__
-# python setup.py sdist bdist_wheel
-# twine register dist/datatest.X.Y.Z.tar.gz
-# twine upload dist/*
-#
+# Set version number in:
+#   datatest/__init__.py
+#   docs/config.py
+# Add version tag to git repository:
+#   git tag -a X.Y.Z -m "my version 1.4"
+# Erase all existing files in the dist/ folder.
+# Build new distributions:
+#   python setup.py sdist bdist_wheel
+# Register and upload to PyPI:
+#   twine register dist/datatest.X.Y.Z.tar.gz
+#   twine upload dist/*

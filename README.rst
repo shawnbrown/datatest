@@ -15,6 +15,10 @@ integrated, formatted, and verified. It can provide structure for the
 tidying process, automate checklists, log discrepancies, and measure
 progress.
 
+.. note::
+    This is a pre-1.0.0 release that is under active development (see
+    `Future Plans`_ for more information).
+
 
 Installation
 ============
@@ -43,12 +47,15 @@ Safety-first Clyde
 ------------------
 
 If you need to review and test packages before installing, you can
-install datatest manually:
+install datatest manually.
 
-Download the latest source distribution from https://pypi.python.org/pypi/datatest
+Download the latest **source** distribution from the Python Package
+Index (PyPI):
 
-Unpack the file and review the source code (replacing X.Y.Z with the
-appropriate version number)::
+  https://pypi.python.org/pypi/datatest
+
+Unpack the file (replacing X.Y.Z with the appropriate version number)
+and review the source code::
 
   tar xvfz datatest-X.Y.Z.tar.gz
 
@@ -57,11 +64,12 @@ Change to the unpacked directory and run the tests::
   cd datatest-X.Y.Z
   python setup.py test
 
-Please Note: Tests for optional data sources (like pandas DataFrames or
-MS Excel files) are skipped if the related third-party packages are not
-installed.
+Don't worry if some of the tests are skipped.  Tests for optional data
+sources (like pandas DataFrames or MS Excel files) are skipped when the
+related third-party packages are not installed.
 
-If everything looks good, install the package::
+If the source code and test results are satisfactory, install the
+package::
 
   python setup.py install
 
@@ -78,15 +86,25 @@ installing).
 Future Plans
 ============
 
-We're aiming to release a 1.0.0, stable API by the end of the year. But
-before this happens, we want to get community feedback, add support for
-more data sources, and improve py.test integration (including a py.test
+I'm aiming to release a 1.0.0, stable API by the end of the year. But
+before this happens, I want to get some feedback, add support for more
+data sources, and improve py.test integration (including a py.test
 plugin).
 
+As I tighten the integration with unittest and py.test, expect some
+assertions and properties to be renamed.  But don't panic---test suites
+that rely on the current version's assertion names (version 0.6.0.dev1)
+will still run by adding the following import to the beginning of each
+file::
+
+    from datatest.__past__ import api_dev1
+
 This said, all of the data used at the `National Committee for an
-Effective Congress <http://ncec.org/about>`_ has been checked with test
-suites built on datatest for more than a year. The API may adjust in
-small ways but drastic changes are not anticipated.
+Effective Congress <http://ncec.org/about>`_ has been checked with
+datatest for more than a year so there is, already, an existing codebase
+that relies on current features and must be maintained into the future.
+It is my intention that the API only change in measured and sustainable
+ways.
 
 
 Dependencies
