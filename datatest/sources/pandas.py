@@ -32,21 +32,13 @@ class PandasSource(BaseSource):
         """Initialize self."""
         self._df = df
         self._default_index = (df.index.names == [None])
-        try:
-            import numpy
-            try:
-                assert _version_info(numpy) >= (1, 7, 1)
-            except AssertionError:
-                raise AssertionError("Requires 'numpy' version 1.7.1 "
-                                     "or greater.")
-        except ImportError:
-            raise ImportError(
-                "No module named 'numpy'\n"
-                "\n"
-                "This is an optional data source that requires the "
-                "third-party library 'numpy' (1.7.1 or greater)."
-            )
-        self._np = numpy
+        self._pandas = __import__('pandas')
+        #self._np = __import__('numpy')
+        #try:
+        #    assert _version_info(self._np) >= (1, 7, 1)
+        #except AssertionError:
+        #    raise AssertionError("Requires 'numpy' version 1.7.1 "
+        #                         "or greater.")
 
     def __repr__(self):
         """Return a string representation of the data source."""
@@ -58,13 +50,13 @@ class PandasSource(BaseSource):
         """Return iterable of dictionary rows (like csv.DictReader)."""
         columns = self.columns()
         if self._default_index:
-            for row in self._df.itertuples(index=not self._default_index):
+            for row in self._df.itertuples(index=False):
                 yield dict(zip(columns, row))
         else:
-            gettup = lambda x: x if isinstance(x, tuple) else tuple([x])
-            addtup = lambda x: gettup(x[0]) + gettup(x[1:])
-            for row in self._df.itertuples(index=not self._default_index):
-                yield dict(zip(columns, addtup(row)))
+            mktup = lambda x: x if isinstance(x, tuple) else tuple([x])
+            flatten = lambda x: mktup(x[0]) + mktup(x[1:])
+            for row in self._df.itertuples(index=True):
+                yield dict(zip(columns, flatten(row)))
 
     def columns(self):
         """Return list of column names."""
@@ -89,6 +81,15 @@ class PandasSource(BaseSource):
     #    """Return count of rows."""
     #    df = self.__filter_by(self._df, self._default_index, **filter_by)
     #    return len(df)
+
+    def count(self, column, keys=None, **kwds_filter):
+        """Returns CompareDict containing count of non-empty *column*
+        values grouped by *keys*.
+        """
+        isnull = self._pandas.isnull
+        mapper = lambda value: 1 if (value and not isnull(value)) else 0
+        reducer = lambda x, y: x + y
+        return self.mapreduce(mapper, reducer, column, keys, **kwds_filter)
 
     @staticmethod
     def __filter_by(df, default_index, **filter_by):
