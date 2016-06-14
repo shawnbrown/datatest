@@ -117,11 +117,12 @@ if __name__ == '__main__':
 # Set version number in:
 #   datatest/__init__.py
 #   docs/config.py
-# Add version tag to git repository:
-#   git tag -a X.Y.Z -m "my version 1.4"
-# Erase all existing files in the dist/ folder.
+# Commit and push version change to upstream repository.
+# Add version tag to upstream repository.
+# Remove all existing files in the dist/ folder.
 # Build new distributions:
 #   python setup.py sdist bdist_wheel
-# Register and upload to PyPI:
+# Register source distribution with PyPI:
 #   twine register dist/datatest.X.Y.Z.tar.gz
+# Upload source and wheel distributions to PyPI:
 #   twine upload dist/*
