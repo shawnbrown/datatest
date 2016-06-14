@@ -192,6 +192,15 @@ class TestCompareSet(unittest.TestCase):
         b = CompareSet(['aaa','bbb','ccc'])
         self.assertEqual([NotProperSuperset()], a.compare(b, op='>'))
 
+    def test_all_fn(self):
+        obj = CompareSet(['aaa','bbb','ddd'])
+        key = lambda x: len(x) == 3
+        self.assertTrue(obj.all(key))
+
+        obj = CompareSet(['aaa1','aaa2','bbb1'])
+        key = lambda x: str(x).startswith('aaa')
+        self.assertFalse(obj.all(key))
+
 
 class TestCompareDict(unittest.TestCase):
     def test_init(self):
@@ -400,6 +409,27 @@ class TestCompareDict(unittest.TestCase):
             Invalid('z', 5, foo='ccc'),
         ])
         self.assertEqual(expected, set(a.compare(b)))
+
+    def test_all_fn(self):
+        # All True, single arg key function..
+        compare_obj = CompareDict({'aaa': (1, 2), 'bbb': (1, 3), 'ccc': (4, 8)}, 'foo')
+        result = compare_obj.all(lambda x: x[0] < x[1])
+        self.assertTrue(result)
+
+        # Some False, single arg key function..
+        compare_obj = CompareDict({'aaa': (1, 2), 'bbb': (5, 3), 'ccc': (4, 8)}, 'foo')
+        result = compare_obj.all(lambda x: x[0] < x[1])
+        self.assertFalse(result)
+
+        # All True, multi-arg key function.
+        compare_obj = CompareDict({'aaa': (1, 2), 'bbb': (1, 3), 'ccc': (4, 8)}, 'foo')
+        result = compare_obj.all(lambda x, y: x < y)
+        self.assertTrue(result)
+
+        # Some False,multi-arg key function.
+        compare_obj = CompareDict({'aaa': (1, 2), 'bbb': (5, 3), 'ccc': (4, 8)}, 'foo')
+        result = compare_obj.all(lambda x, y: x < y)
+        self.assertFalse(result)
 
 
 if __name__ == '__main__':

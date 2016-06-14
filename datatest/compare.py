@@ -58,7 +58,16 @@ def _expects_multiple_params(func):
     return len(args) > 1 or bool(varargs)  # <- EXIT!
 
 
-class CompareSet(set):
+class BaseCompare(object):
+    """Common base class for all comparison objects."""
+    def __new__(cls, *args, **kwds):
+        if cls is BaseCompare:
+            msg = 'cannot instantiate BaseCompare directly - make a subclass'
+            raise NotImplementedError(msg)
+        return super(BaseCompare, cls).__new__(cls)
+
+
+class CompareSet(BaseCompare, set):
     """DataSource query result set."""
     def __init__(self, data):
         """Initialize object."""
@@ -94,6 +103,24 @@ class CompareSet(set):
                 names = names[0]  # Unwrap names value.
             iterable = iter({names: value} for value in self)
         return iterable
+
+    def __eq__(self, other):
+        if not isinstance(other, CompareSet):
+            other = CompareSet(other)
+        return super(CompareSet, self).__eq__(other)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def all(self, key=None):
+        assert callable(key) or key == None, 'key must be callable or None'
+        if key == None:
+            key = lambda x: x  # Default to identity function.
+        elif _expects_multiple_params(key):
+            wrapped = key
+            key = lambda x: wrapped(*x)
+
+        return all(key(x) for x in self.__iter__())  # Note: all() fn is lazy.
 
     def compare(self, other, op='=='):
         """Compare *self* to *other* and return a list of difference
@@ -139,15 +166,13 @@ class CompareSet(set):
 # Decorate CompareSet comparison magic methods (cannot be decorated in-line as
 # class must first be defined).
 _other_to_compareset = _coerce_other(CompareSet)
-CompareSet.__eq__ = _other_to_compareset(CompareSet.__eq__)
-CompareSet.__ne__ = _other_to_compareset(CompareSet.__ne__)
 CompareSet.__lt__ = _other_to_compareset(CompareSet.__lt__)
 CompareSet.__gt__ = _other_to_compareset(CompareSet.__gt__)
 CompareSet.__le__ = _other_to_compareset(CompareSet.__le__)
 CompareSet.__ge__ = _other_to_compareset(CompareSet.__ge__)
 
 
-class CompareDict(dict):
+class CompareDict(BaseCompare, dict):
     """DataSource query result mapping."""
     def __init__(self, data, key_names):
         """Initialize object."""
@@ -268,6 +293,16 @@ class CompareDict(dict):
                         differences.append(Invalid(self_val, other_val, **kwds))
 
         return differences
+
+    def all(self, key=None):
+        assert callable(key) or key == None, 'key must be callable or None'
+        if key == None:
+            key = lambda x: x  # Default to identity function.
+        elif _expects_multiple_params(key):
+            wrapped = key
+            key = lambda x: wrapped(*x)
+
+        return all(key(x) for x in self.values())  # Note: all() fn is lazy.
 
 
 # Decorate CompareDict comparison magic methods (cannot be decorated in-line
