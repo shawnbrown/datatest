@@ -12,6 +12,8 @@ from .common import MinimalSource
 # Import code to test.
 from datatest.case import DataTestCase
 from datatest import DataAssertionError
+from datatest import CompareSet
+#from datatest import CompareDict
 from datatest import Extra
 from datatest import Missing
 from datatest import Invalid
@@ -41,6 +43,48 @@ class TestSubclass(TestHelperCase):
     def test_subclass(self):
         """DataTestCase should be a subclass of unittest.TestCase."""
         self.assertTrue(issubclass(DataTestCase, _TestCase))
+
+
+class TestAssertEqual(TestHelperCase):
+    def test_assertEqual(self):
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                _self.subjectData = None
+
+            def test_method1(_self):
+                first  = CompareSet([1,2,3,4,5,6,7])
+                second = CompareSet([1,2,3,4,5,6])
+                _self.assertEqual(first, second)
+
+            def test_method2(_self):
+                first  = CompareSet([1,2,3,4,5,6,7])
+                second = set([1,2,3,4,5,6])  # <- Built-in set type!!!
+                _self.assertEqual(first, second)
+
+            def test_method3(_self):
+                first  = CompareSet([1,2,3,4,5,6,7])
+                second = lambda x: x <= 6  # <- callable
+                _self.assertEqual(first, second)
+
+            def test_method4(_self):
+                first  = CompareSet([1,2,3,4,5,6,7])
+                second = lambda x: x < 10  # <- callable
+                _self.assertEqual(first, second)
+
+        pattern = r"first object does not match second object:\n Extra\(7\)"
+
+        failure = self._run_one_test(_TestClass, 'test_method1')
+        self.assertRegex(failure, pattern)
+
+        failure = self._run_one_test(_TestClass, 'test_method2')
+        self.assertRegex(failure, pattern)
+
+        pattern = r"first object contains invalid items:\n Invalid\(7\)"
+        failure = self._run_one_test(_TestClass, 'test_method3')
+        self.assertRegex(failure, pattern)
+
+        failure = self._run_one_test(_TestClass, 'test_method4')
+        self.assertIsNone(failure)
 
 
 class TestNormalizeReference(TestHelperCase):

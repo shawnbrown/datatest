@@ -7,7 +7,8 @@ from unittest import TestCase
 from .utils.builtins import *
 from .utils import collections
 
-from .compare import CompareSet
+from .compare import CompareSet  # TODO!!!: Remove after assertDataColumns fixed!
+from .compare import BaseCompare
 from .differences import _make_decimal
 from .error import DataAssertionError
 from .sources.base import BaseSource
@@ -127,6 +128,40 @@ class DataTestCase(TestCase):
 
         return required
 
+    def assertEqual(self, first, second, msg=None):
+        """Fail if the two objects are unequal as determined by the '=='
+        operator.
+
+        If the *first* argument is a datatest comparison object
+        (CompareSet, CompareDict, etc.), a failure will raise the
+        differences between *first* and *second*.
+
+        If the *second* argument is a helper-function (or other
+        callable), it is used as a key which must return True for
+        acceptable values::
+
+            def test_column1(self):
+                compare_obj = self.subject.set('col1')
+                def length_of_one(x):  # <- Helper function.
+                    return len(str(x)) == 1
+                self.assertEqual(compare_obj, length_of_one)
+        """
+        if isinstance(first, BaseCompare):
+            if callable(second):
+                equal = first.all(second)
+                default_msg = 'first object contains invalid items'
+            else:
+                equal = first == second
+                default_msg = 'first object does not match second object'
+
+            if not equal:
+                differences = first.compare(second)
+                self.fail(msg or default_msg, differences)
+
+        else:
+            super(DataTestCase, self).assertEqual(first, second, msg)
+            # Called super() using older convention for 2.x support.
+
     def assertDataColumns(self, required=None, msg=None):
         """Test that the column names in subjectData match the
         *required* values.  The *required* argument can be a collection,
@@ -145,20 +180,9 @@ class DataTestCase(TestCase):
         # TODO: Explore the idea of implementing CompareList to assert
         # column order.
         subject_set = CompareSet(self.subjectData.columns())
-
-        if callable(required):
-            differences = subject_set.compare(required)
-        else:
-            required_list = self._normalize_required(required, 'columns')
-            if subject_set != required_list:
-                differences = subject_set.compare(required_list)
-            else:
-                differences = None
-
-        if differences:
-            if msg is None:
-                msg = 'different column names'
-            self.fail(msg, differences)
+        required = self._normalize_required(required, 'columns')
+        msg = msg or 'different column names'
+        self.assertEqual(subject_set, required, msg)
 
     def assertDataSet(self, columns, required=None, msg=None, **kwds_filter):
         """Test that the column or *columns* in subjectData contain the
@@ -194,20 +218,9 @@ class DataTestCase(TestCase):
                 self.assertDataSet(['col1', 'col2'])
         """
         subject_set = self.subjectData.distinct(columns, **kwds_filter)
-
-        if callable(required):
-            differences = subject_set.compare(required)
-        else:
-            required_set = self._normalize_required(required, 'distinct', columns, **kwds_filter)
-            if subject_set != required_set:
-                differences = subject_set.compare(required_set)
-            else:
-                differences = None
-
-        if differences:
-            if msg is None:
-                msg = 'different {0!r} values'.format(columns)
-            self.fail(msg, differences)
+        required = self._normalize_required(required, 'distinct', columns, **kwds_filter)
+        msg = msg or 'different {0!r} values'.format(columns)
+        self.assertEqual(subject_set, required, msg)
 
     def assertDataSum(self, column, keys, required=None, msg=None, **kwds_filter):
         """Test that the sum of *column* in subjectData, when grouped by
@@ -234,17 +247,9 @@ class DataTestCase(TestCase):
             self.assertDataSum('budget', ['department', 'quarter'])
         """
         subject_dict = self.subjectData.sum(column, keys, **kwds_filter)
-
-        if callable(required):
-            differences = subject_dict.compare(required)
-        else:
-            required_dict = self._normalize_required(required, 'sum', column, keys, **kwds_filter)
-            differences = subject_dict.compare(required_dict)
-
-        if differences:
-            if not msg:
-                msg = 'different {0!r} sums'.format(column)
-            self.fail(msg, differences)
+        required = self._normalize_required(required, 'sum', column, keys, **kwds_filter)
+        msg = msg or 'different {0!r} sums'.format(column)
+        self.assertEqual(subject_dict, required, msg)
 
     def assertDataCount(self, column, keys, required=None, msg=None, **kwds_filter):
         """Test that the count of non-empty values in subjectData column
@@ -256,19 +261,10 @@ class DataTestCase(TestCase):
         or None.  See :meth:`assertDataSet
         <datatest.DataTestCase.assertDataSet>` for more details.
         """
-        subject_result = self.subjectData.count(column, keys, **kwds_filter)
-
-        if callable(required):
-            differences = subject_result.compare(required)
-        else:
-            # Gets 'sum' of reference column (not 'count').
-            required_dict = self._normalize_required(required, 'sum', column, keys, **kwds_filter)
-            differences = subject_result.compare(required_dict)
-
-        if differences:
-            if not msg:
-                msg = 'row counts different than {0!r} sums'.format(column)
-            self.fail(msg, differences)
+        subject_dict = self.subjectData.count(column, keys, **kwds_filter)
+        required = self._normalize_required(required, 'sum', column, keys, **kwds_filter)
+        msg = msg or 'row counts different than {0!r} sums'.format(column)
+        self.assertEqual(subject_dict, required, msg)
 
     def assertDataRegex(self, column, required, msg=None, **kwds_filter):
         """Test that *column* in ``subjectData`` contains values that
@@ -285,12 +281,8 @@ class DataTestCase(TestCase):
         if not isinstance(required, _re_type):
             required = re.compile(required)
         func = lambda x: required.search(x) is not None
-
-        invalid = subject_result.compare(func)
-        if invalid:
-            if not msg:
-                msg = 'non-matching {0!r} values'.format(column)
-            self.fail(msg=msg, differences=invalid)
+        msg = msg or 'non-matching {0!r} values'.format(column)
+        self.assertEqual(subject_result, func, msg)
 
     def assertDataNotRegex(self, column, required, msg=None, **kwds_filter):
         """Test that *column* in subjectData contains values that do
@@ -307,12 +299,8 @@ class DataTestCase(TestCase):
         if not isinstance(required, _re_type):
             required = re.compile(required)
         func = lambda x: required.search(x) is None
-
-        invalid = subject_result.compare(func)
-        if invalid:
-            if not msg:
-                msg = 'matching {0!r} values'.format(column)
-            self.fail(msg=msg, differences=invalid)
+        msg = msg or 'matching {0!r} values'.format(column)
+        self.assertEqual(subject_result, func, msg)
 
     def allowOnly(self, differences, msg=None):
         """Context manager to allow specific *differences* without
