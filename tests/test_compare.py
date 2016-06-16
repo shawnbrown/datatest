@@ -118,6 +118,12 @@ class TestCompareSet(unittest.TestCase):
         b = [1, 2, 3, 4]  # <- Should be coerced into CompareSet internally.
         self.assertEqual(a, b)
 
+        # Test non-comparable types.
+        a = CompareSet(data)
+        self.assertNotEqual(a, None)
+        self.assertNotEqual(a, False)
+        self.assertNotEqual(a, 0)
+
     def test_ne(self):
         a = CompareSet(set([1, 2, 3]))
         b = CompareSet(set([1, 2, 3, 4]))

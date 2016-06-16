@@ -106,7 +106,10 @@ class CompareSet(BaseCompare, set):
 
     def __eq__(self, other):
         if not isinstance(other, CompareSet):
-            other = CompareSet(other)
+            try:
+                other = CompareSet(other)
+            except TypeError:
+                return False
         return super(CompareSet, self).__eq__(other)
 
     def __ne__(self, other):
