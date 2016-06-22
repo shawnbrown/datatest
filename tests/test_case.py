@@ -678,6 +678,41 @@ class TestAssertDataSet(TestHelperCase):
         self.assertRegex(failure, pattern)
 
 
+class TestAssertDataUnique(TestHelperCase):
+    def test_required_set(self):
+        class _TestClass(DataTestCase):
+            def setUp(_self):
+                data = [
+                    ('label1', 'label2'),
+                    ('a', 'x'),
+                    ('b', 'y'),
+                    ('c', 'z'),
+                    ('d', 'z'),
+                    ('e', 'z'),
+                    ('f', 'z'),
+                ]
+                _self.subjectData = MinimalSource(data)
+
+            def test_method1(_self):
+                _self.assertDataUnique('label1')  # <- test assert
+
+            def test_method2(_self):
+                _self.assertDataUnique(['label1', 'label2'])  # <- test assert
+
+            def test_method3(_self):
+                _self.assertDataUnique('label2')  # <- test assert
+
+        failure = self._run_one_test(_TestClass, 'test_method1')
+        self.assertIsNone(failure)
+
+        failure = self._run_one_test(_TestClass, 'test_method2')
+        self.assertIsNone(failure)
+
+        failure = self._run_one_test(_TestClass, 'test_method3')
+        pattern = "values in 'label2' are not unique:\n Extra\('z'\)"
+        self.assertRegex(failure, pattern)
+
+
 class TestAssertDataRegexAndNotDataRegex(TestHelperCase):
     def setUp(self):
         self.source = io.StringIO('label1,label2\n'

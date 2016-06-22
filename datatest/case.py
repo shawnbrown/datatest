@@ -10,6 +10,7 @@ from .utils import collections
 from .compare import CompareSet  # TODO!!!: Remove after assertDataColumns fixed!
 from .compare import BaseCompare
 from .differences import _make_decimal
+from .differences import Extra  # TODO: Move when assertDataUnique us moved.
 from .error import DataAssertionError
 from .sources.base import BaseSource
 
@@ -265,6 +266,44 @@ class DataTestCase(TestCase):
         required = self._normalize_required(required, 'sum', column, keys, **kwds_filter)
         msg = msg or 'row counts different than {0!r} sums'.format(column)
         self.assertEqual(subject_dict, required, msg)
+
+    def assertDataUnique(self, columns, msg=None, **kwds_filter):
+        """Test that values in column or *columns* of ``subjectData``
+        are unique.  Any duplicate values are raised as Extra
+        differences.
+
+        .. warning::
+
+            This method is unoptimized---it performs all operations
+            in-memory. Avoid using this method on data sets that exceed
+            available memory.
+
+        .. todo::
+
+            Optimize for memory usage (see issue #9 in development
+            repository). Move functionality into compare.py when
+            preparing for better py.test integration.
+        """
+        if isinstance(columns, str):
+            get_value = lambda row: row[columns]
+        elif isinstance(columns, collections.Sequence):
+            get_value = lambda row: tuple(row[column] for column in columns)
+        else:
+            raise TypeError('colums must be str or sequence')
+
+        seen_before = set()
+        extras = set()
+        for row in self.subjectData.filter_rows(**kwds_filter):
+            values =get_value(row)
+            if values in seen_before:
+                extras.add(values)
+            else:
+                seen_before.add(values)
+
+        if extras:
+            differences = sorted([Extra(x) for x in extras])
+            default_msg = 'values in {0!r} are not unique'.format(columns)
+            self.fail(msg or default_msg, differences)
 
     def assertDataRegex(self, column, required, msg=None, **kwds_filter):
         """Test that *column* in ``subjectData`` contains values that

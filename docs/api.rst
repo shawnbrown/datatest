@@ -39,6 +39,9 @@ DataTestCase
     | :meth:`assertDataNotRegex(column, required)                     | not *required*.search(val) for each val  |
     | <datatest.DataTestCase.assertDataNotRegex>`                     | in *column*                              |
     +-----------------------------------------------------------------+------------------------------------------+
+    | :meth:`assertDataUnique(columns)                                | values in *columns* are unique and       |
+    | <datatest.DataTestCase.assertDataUnique>`                       | contain no duplicates                    |
+    +-----------------------------------------------------------------+------------------------------------------+
 
     .. automethod:: assertDataColumns
     .. automethod:: assertDataSet
@@ -46,6 +49,7 @@ DataTestCase
     .. automethod:: assertDataCount
     .. automethod:: assertDataRegex
     .. automethod:: assertDataNotRegex
+    .. automethod:: assertDataUnique
 
 
     +-----------------------------------------------------------------+------------------------------------------+
