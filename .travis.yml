@@ -6,7 +6,6 @@ python:
   - "3.2"
   - "2.7"
   - "2.6"
-  - "nightly"  # current CPython development build
   - "pypy3"
   - "pypy"
 #  - "3.1"  # not currently supported by Travis CI
