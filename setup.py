@@ -4,9 +4,12 @@ from __future__ import print_function
 import ast
 import os.path
 
-from setuptools import setup
-from setuptools import find_packages
-from setuptools import Command
+try:
+    from setuptools import setup
+    from setuptools import Command
+except ImportError:
+    from distutils.core import setup
+    from distutils.core import Command
 
 
 class TestCommand(Command):
@@ -83,7 +86,12 @@ if __name__ == '__main__':
         name='datatest',
         version=get_version('datatest/__init__.py'),
         url='https://pypi.python.org/pypi/datatest',
-        packages=find_packages(exclude=['tests']),
+        packages=[
+            'datatest',
+            'datatest.sources',
+            'datatest.utils',
+            'datatest.__past__',
+        ],
         # Additional fields:
         description='Testing tools for data preparation.',
         long_description=long_description,
