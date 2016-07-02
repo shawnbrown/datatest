@@ -42,66 +42,66 @@ class DataTestCase(TestCase):
     (like setUp, assertEqual, etc.) are still available.
     """
     @property
-    def subjectData(self):
-        """A data source containing the data under test---the subject of
-        the tests.  The subjectData can be defined at the class-level or
-        at the module-level.  To use DataTestCase, you **must** define
-        subjectData.
+    def subject(self):
+        """A data source containing the data under test---the *subject*
+        of the tests.  :attr:`subject` can be defined at the class-level
+        or at the module-level.  To use DataTestCase, you **must**
+        define :attr:`subject`.
 
-        When defining subjectData at the module-level, this property
-        will reach into its parent scopes and return the subjectData
-        from the nearest enclosed scope::
+        When defining :attr:`subject` at the module-level, this property
+        will reach into its parent scopes and return the subject from
+        the nearest enclosed scope::
 
             def setUpModule():
-                global subjectData
-                subjectData = datatest.CsvSource('myfile.csv')
+                global subject
+                subject = datatest.CsvSource('myfile.csv')
 
         Class-level declaration::
 
             class TestMyFile(datatest.DataTestCase):
                 @classmethod
                 def setUpClass(cls):
-                    cls.subjectData = datatest.CsvSource('myfile.csv')
+                    cls.subject = datatest.CsvSource('myfile.csv')
         """
-        if hasattr(self, '_subjectData'):
-            return self._subjectData
-        return self._find_data_source('subjectData')
+        if hasattr(self, '_subject_data'):
+            return self._subject_data
+        return self._find_data_source('subject')
 
-    @subjectData.setter
-    def subjectData(self, value):
-        self._subjectData = value
+    @subject.setter
+    def subject(self, value):
+        self._subject_data = value
 
     @property
-    def referenceData(self):
+    def reference(self):
         """An optional data source containing data that is trusted to
-        be correct.  Like the subjectData, referenceData can be defined
-        at the class-level or at the module-level and this property
-        will return the referenceData from the nearest enclosed scope.
-        Unlike subjectData, defining referenceData is completely
-        optional.
+        be correct.  Like :attr:`subject`, :attr:`reference` can be
+        defined at the class-level or at the module-level and this
+        property will return the :attr:`reference` from the nearest
+        enclosed scope.  Unlike :attr:`subject`, defining
+        :attr:`reference` is completely optional.
 
         Module-level declaration::
 
             def setUpModule():
-                global subjectData, referenceData
-                subjectData = datatest.CsvSource('myfile.csv')
-                referenceData = datatest.CsvSource('myreference.csv')
+                global subject, reference
+                subject = datatest.CsvSource('myfile.csv')
+                reference = datatest.CsvSource('myreference.csv')
 
         Class-level declaration::
 
             class TestMyFile(datatest.DataTestCase):
                 @classmethod
                 def setUpClass(cls):
-                    cls.subjectData = datatest.CsvSource('myfile.csv')
-                    cls.referenceData = datatest.CsvSource('myreference.csv')
+                    cls.subject = datatest.CsvSource('myfile.csv')
+                    cls.reference = datatest.CsvSource('myreference.csv')
         """
-        if hasattr(self, '_referenceData'):
-            return self._referenceData
-        return self._find_data_source('referenceData')
+        if hasattr(self, '_reference_data'):
+            return self._reference_data
+        return self._find_data_source('reference')
 
-    @referenceData.setter
-    def referenceData(self, value):
-        self._referenceData = value
+    @reference.setter
+    def reference(self, value):
+        self._reference_data = value
 
     @staticmethod
     def _find_data_source(name):
@@ -116,12 +116,12 @@ class DataTestCase(TestCase):
         raise NameError('cannot find {0!r}'.format(name))
 
     def _normalize_required(self, required, method, *args, **kwds):
-        """If *required* is None, query data from ``referenceData``; if
+        """If *required* is None, query data from :attr:`reference`; if
         it is another data source, query from this other source; else,
         return unchanged.
         """
         if required == None:
-            required = self.referenceData
+            required = self.reference
 
         if isinstance(required, BaseSource):
             fn = getattr(required, method)
@@ -164,7 +164,7 @@ class DataTestCase(TestCase):
             # Called super() using older convention for 2.x support.
 
     def assertDataColumns(self, required=None, msg=None):
-        """Test that the column names in subjectData match the
+        """Test that the column names of :attr:`subject` match the
         *required* values.  The *required* argument can be a collection,
         callable, data source, or None::
 
@@ -172,22 +172,22 @@ class DataTestCase(TestCase):
                 required_names = {'col1', 'col2'}
                 self.assertDataColumns(required_names)
 
-        If *required* is omitted, the column names from referenceData
-        are used in its place::
+        If *required* is omitted, the column names from
+        :attr:`reference` are used in its place::
 
             def test_columns(self):
                 self.assertDataColumns()
         """
         # TODO: Explore the idea of implementing CompareList to assert
         # column order.
-        subject_set = CompareSet(self.subjectData.columns())
+        subject_set = CompareSet(self.subject.columns())
         required = self._normalize_required(required, 'columns')
         msg = msg or 'different column names'
         self.assertEqual(subject_set, required, msg)
 
     def assertDataSet(self, columns, required=None, msg=None, **kwds_filter):
-        """Test that the column or *columns* in subjectData contain the
-        *required* values::
+        """Test that the column or *columns* in :attr:`subject` contain
+        the *required* values::
 
             def test_column1(self):
                 required_values = {'a', 'b'}
@@ -210,7 +210,7 @@ class DataTestCase(TestCase):
                 self.assertDataSet('col1', length_of_one)
 
         If the *required* argument is omitted, then values from
-        referenceData will be used in its place::
+        :attr:`reference` will be used in its place::
 
             def test_column1(self):
                 self.assertDataSet('col1')
@@ -218,14 +218,14 @@ class DataTestCase(TestCase):
             def test_column1and2(self):
                 self.assertDataSet(['col1', 'col2'])
         """
-        subject_set = self.subjectData.distinct(columns, **kwds_filter)
+        subject_set = self.subject.distinct(columns, **kwds_filter)
         required = self._normalize_required(required, 'distinct', columns, **kwds_filter)
         msg = msg or 'different {0!r} values'.format(columns)
         self.assertEqual(subject_set, required, msg)
 
     def assertDataSum(self, column, keys, required=None, msg=None, **kwds_filter):
-        """Test that the sum of *column* in subjectData, when grouped by
-        *keys*, matches a dict of *required* values::
+        """Test that the sum of *column* in :attr:`subject`, when
+        grouped by *keys*, matches a dict of *required* values::
 
             per_dept = {'finance': 146564,
                         'marketing': 152530,
@@ -243,32 +243,32 @@ class DataTestCase(TestCase):
             self.assertDataSum('budget', ['department', 'quarter'], dept_quarter)
 
         If *required* argument is omitted, then values from
-        referenceData are used in its place::
+        :attr:`reference` are used in its place::
 
             self.assertDataSum('budget', ['department', 'quarter'])
         """
-        subject_dict = self.subjectData.sum(column, keys, **kwds_filter)
+        subject_dict = self.subject.sum(column, keys, **kwds_filter)
         required = self._normalize_required(required, 'sum', column, keys, **kwds_filter)
         msg = msg or 'different {0!r} sums'.format(column)
         self.assertEqual(subject_dict, required, msg)
 
     def assertDataCount(self, column, keys, required=None, msg=None, **kwds_filter):
-        """Test that the count of non-empty values in subjectData column
-        matches the the *required* values dict.  If *required* is
-        omitted, the **sum** of values in referenceData column (not the
-        count) is used in its place.
+        """Test that the count of non-empty values in the
+        :attr:`subject` column matches the the *required* values dict.
+        If *required* is omitted, the **sum** of values in
+        :attr:`reference` column (not the count) is used in its place.
 
         The *required* argument can be a dict, callable, data source,
         or None.  See :meth:`assertDataSet
         <datatest.DataTestCase.assertDataSet>` for more details.
         """
-        subject_dict = self.subjectData.count(column, keys, **kwds_filter)
+        subject_dict = self.subject.count(column, keys, **kwds_filter)
         required = self._normalize_required(required, 'sum', column, keys, **kwds_filter)
         msg = msg or 'row counts different than {0!r} sums'.format(column)
         self.assertEqual(subject_dict, required, msg)
 
     def assertDataUnique(self, columns, msg=None, **kwds_filter):
-        """Test that values in column or *columns* of ``subjectData``
+        """Test that values in column or *columns* of :attr:`subject`
         are unique.  Any duplicate values are raised as Extra
         differences.
 
@@ -293,7 +293,7 @@ class DataTestCase(TestCase):
 
         seen_before = set()
         extras = set()
-        for row in self.subjectData.filter_rows(**kwds_filter):
+        for row in self.subject.filter_rows(**kwds_filter):
             values =get_value(row)
             if values in seen_before:
                 extras.add(values)
@@ -306,7 +306,7 @@ class DataTestCase(TestCase):
             self.fail(msg or default_msg, differences)
 
     def assertDataRegex(self, column, required, msg=None, **kwds_filter):
-        """Test that *column* in ``subjectData`` contains values that
+        """Test that *column* in :attr:`subject` contains values that
         match a *required* regular expression::
 
             def test_date(self):
@@ -316,7 +316,7 @@ class DataTestCase(TestCase):
         The *required* argument must be a string or a compiled regular
         expression object (it can not be omitted).
         """
-        subject_result = self.subjectData.distinct(column, **kwds_filter)
+        subject_result = self.subject.distinct(column, **kwds_filter)
         if not isinstance(required, _re_type):
             required = re.compile(required)
         func = lambda x: required.search(x) is not None
@@ -324,8 +324,8 @@ class DataTestCase(TestCase):
         self.assertEqual(subject_result, func, msg)
 
     def assertDataNotRegex(self, column, required, msg=None, **kwds_filter):
-        """Test that *column* in subjectData contains values that do
-        **not** match a *required* regular expression::
+        """Test that *column* in :attr:`subject` contains values that
+        do **not** match a *required* regular expression::
 
             def test_name(self):
                 bad_whitespace = r'^\s|\s$'  # Leading or trailing whitespace.
@@ -334,7 +334,7 @@ class DataTestCase(TestCase):
         The *required* argument must be a string or a compiled regular
         expression object (it can not be omitted).
         """
-        subject_result = self.subjectData.distinct(column, **kwds_filter)
+        subject_result = self.subject.distinct(column, **kwds_filter)
         if not isinstance(required, _re_type):
             required = re.compile(required)
         func = lambda x: required.search(x) is None
@@ -476,10 +476,10 @@ class DataTestCase(TestCase):
         """
         if differences:
             try:
-                required = self.referenceData
+                required = self.reference
             except NameError:
                 required = None
-            raise DataAssertionError(msg, differences, self.subjectData, required)
+            raise DataAssertionError(msg, differences, self.subject, required)
         else:
             raise self.failureException(msg)
 

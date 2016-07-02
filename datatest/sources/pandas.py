@@ -17,7 +17,7 @@ class PandasSource(BaseSource):
 
     .. code-block:: python
 
-        subjectData = datatest.PandasSource(df)
+        subject = datatest.PandasSource(df)
 
     This is an optional data source that requires the third-party
     library `pandas <https://pypi.python.org/pypi/pandas>`_.

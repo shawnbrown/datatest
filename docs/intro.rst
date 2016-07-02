@@ -46,8 +46,8 @@ Here is a short script (test_users.py) to test the data in this file:
     import datatest
 
     def setUpModule():
-        global subjectData
-        subjectData = datatest.CsvSource('users.csv')
+        global subject
+        subject = datatest.CsvSource('users.csv')
 
     class TestUserData(datatest.DataTestCase):
         def test_columns(self):
@@ -77,16 +77,16 @@ To try it for yourself, download and run
 :download:`basic_example.zip <_static/basic_example.zip>` after reviewing the
 following steps.
 
-1. Define subjectData (the data under test):
+1. Define subject (the data under test):
     To interface with our data, we create a data source and assign it to the
-    variable :meth:`subjectData <datatest.DataTestCase.subjectData>`:
+    property :attr:`subject <datatest.DataTestCase.subject>`:
 
     .. code-block:: python
         :emphasize-lines: 3
 
         def setUpModule():
-            global subjectData
-            subjectData = datatest.CsvSource('users.csv')
+            global subject
+            subject = datatest.CsvSource('users.csv')
 
     Here, we use a :class:`CsvSource <datatest.CsvSource>` to access data
     from a CSV file.  Data in other formats can be accessed with
@@ -104,7 +104,7 @@ following steps.
                 self.assertDataColumns(required={'user_id', 'active'})
 
     This assertion automatically checks the *required* set against the column
-    names in the :meth:`subjectData <datatest.DataTestCase.subjectData>`
+    names in the :meth:`subject <datatest.DataTestCase.subject>`
     defined earlier.
 
 3. Check "user_id" values (with a helper-function):
@@ -140,9 +140,10 @@ following steps.
 .. note::
     Loading files from disk and establishing database connections are
     relatively slow operations.  So it's best to minimize the number of times
-    a data source object is created.  Typically, ``subjectData`` is defined at
-    the module-level, however, if the data is only used within a single class,
-    then defining it at the class-level is also acceptable:
+    a data source object is created.  Typically,
+    :attr:`subject <datatest.DataTestCase.subject>` is defined at the
+    module-level, however, if the data is only used within a single class, then
+    defining it at the class-level is also acceptable:
 
     .. code-block:: python
         :emphasize-lines: 4
@@ -150,7 +151,7 @@ following steps.
         class TestUsers(datatest.DataTestCase):
             @classmethod
             def setUpClass(cls):
-                cls.subjectData = datatest.CsvSource('users.csv')
+                cls.subject = datatest.CsvSource('users.csv')
 
 
 Understanding Failure Messages
@@ -158,8 +159,8 @@ Understanding Failure Messages
 
 When a data assertion fails, a :class:`DataAssertionError
 <datatest.DataAssertionError>` is raised that contains a list of differences
-detected in the subjectData (the data under test).  To demonstrate this, we
-will use the same tests shown in the previous example but we'll check a CSV file
+detected in the subject (the data under test).  To demonstrate this, we will
+use the same tests shown in the previous example but we'll check a CSV file
 that contains a number of data errors---these errors will trigger test failures.
 
 Download and run :download:`failure_message_example.zip
@@ -282,7 +283,7 @@ contains the county names and total incidents reported:
 The following script (test_utah_2014_crime_details.py) demonstrates the use
 of reference data.  Unlike the previous example, the assertion calls in this
 script don't pass a *required* argument---when *required* is omitted, values
-from ``referenceData`` are used in its place:
+from :attr:`reference <datatest.DataTestCase.reference>` are used in its place:
 
 .. code-block:: python
 
@@ -290,10 +291,10 @@ from ``referenceData`` are used in its place:
 
 
     def setUpModule():
-        global subjectData
-        global referenceData
-        subjectData = datatest.CsvSource('utah_2014_crime_details.csv')
-        referenceData = datatest.CsvSource('utah_2014_crime_summary.csv')
+        global subject
+        global reference
+        subject = datatest.CsvSource('utah_2014_crime_details.csv')
+        reference = datatest.CsvSource('utah_2014_crime_summary.csv')
 
 
     class TestDetails(datatest.DataTestCase):
@@ -322,25 +323,26 @@ Step-by-step Explanation
 To try it for yourself, download and run :download:`reference_data_example.zip
 <_static/reference_data_example.zip>` after reviewing the following steps.
 
-1. Define subjectData (data under test) and referenceData (data trusted to be correct):
-    In addition to ``subjectData``, we load our reference data and assign it
-    to the variable ``referenceData``:
+1. Define subject (data under test) and reference (data trusted to be correct):
+    In addition to :attr:`subject <datatest.DataTestCase.subject>`, we load
+    our reference data and assign it to the variable
+    :attr:`reference <datatest.DataTestCase.reference>`:
 
     .. code-block:: python
         :emphasize-lines: 5
 
         def setUpModule():
-            global subjectData
-            global referenceData
-            subjectData = datatest.CsvSource('utah_2014_crime_details.csv')
-            referenceData = datatest.CsvSource('utah_2014_crime_summary.csv')
+            global subject
+            global reference
+            subject = datatest.CsvSource('utah_2014_crime_details.csv')
+            reference = datatest.CsvSource('utah_2014_crime_summary.csv')
 
-2. Check column names (against referenceData):
+2. Check column names (against reference):
     To check the columns against our reference file, we call
     :meth:`assertDataColumns() <datatest.DataTestCase.assertDataColumns>`
     with no arguments.  Since we've omitted the *required* argument, the
-    method compares the ``subjectData`` columns against the ``referenceData``
-    columns:
+    method compares the :attr:`subject <datatest.DataTestCase.subject>` columns
+    against the :attr:`reference <datatest.DataTestCase.reference>` columns:
 
     .. code-block:: python
         :emphasize-lines: 4
@@ -350,16 +352,17 @@ To try it for yourself, download and run :download:`reference_data_example.zip
                 with self.allowExtra():
                     self.assertDataColumns()
 
-    Our ``referenceData`` only contains the columns "county" and "incidents".
-    Since reference data is trusted to be correct, the two additional columns
-    in the ``subjectData`` (the columns "agency" and "crime") are seen as extra.
-    But as writers of this test, we understand that our subject data is supposed
-    to contain more detail and these extra columns are perfectly acceptable.  To
-    account for this, we **allow** these differences by putting our assertion
-    inside an :meth:`allowExtra() <datatest.DataTestCase.allowExtra>` context
-    manager.
+    Our :attr:`reference <datatest.DataTestCase.reference>` only contains the
+    columns "county" and "incidents".  Since reference data is trusted to be
+    correct, the two additional columns in the
+    :attr:`subject <datatest.DataTestCase.subject>` (the columns "agency" and
+    "crime") are seen as extra.  But as writers of this test, we understand
+    that our subject data is supposed to contain more detail and these extra
+    columns are perfectly acceptable.  To account for this, we **allow** these
+    differences by putting our assertion inside an
+    :meth:`allowExtra() <datatest.DataTestCase.allowExtra>` context manager.
 
-3. Check "county" values (against referenceData):
+3. Check "county" values (against reference):
     To check the "county" values against our reference data, we call
     :meth:`assertDataSet() <datatest.DataTestCase.assertDataSet>` and pass
     in the column name (omitting *required* argument):
@@ -370,11 +373,12 @@ To try it for yourself, download and run :download:`reference_data_example.zip
             def test_county(self):
                 self.assertDataSet('county')
 
-4. Check the sum of "incidents" grouped by "county" (against referenceData):
+4. Check the sum of "incidents" grouped by "county" (against reference):
     To check that the sum of incidents by county matches the number
-    listed in the ``referenceData``, we call :meth:`assertDataSum()
-    <datatest.DataTestCase.assertDataSum>` and pass in the column we want
-    to sum as well as the columns we want to group by:
+    listed in the :attr:`reference <datatest.DataTestCase.reference>`,
+    we call :meth:`assertDataSum() <datatest.DataTestCase.assertDataSum>`
+    and pass in the column we want to sum as well as the columns we want
+    to group by:
 
     .. code-block:: python
         :emphasize-lines: 2

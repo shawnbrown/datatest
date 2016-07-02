@@ -11,6 +11,11 @@ import unittest
 class TestApiDev0(unittest.TestCase):
     def test_api_dev0(self):
         import datatest
+
+        from datatest.__past__ import api_dev0  # <- MONKEY PATCH!!!
+        self.assertTrue(hasattr(datatest.DataTestCase, 'subjectData'))
+        self.assertTrue(hasattr(datatest.DataTestCase, 'referenceData'))
+
         from datatest.__past__ import assertions_alpha  # <- MONKEY PATCH!!!
         self.assertTrue(hasattr(datatest.DataTestCase, 'assertColumnSet'))
         self.assertTrue(hasattr(datatest.DataTestCase, 'assertColumnSubset'))
@@ -27,6 +32,10 @@ class TestApiDev0(unittest.TestCase):
         self.assertTrue(hasattr(datatest.DataTestCase, 'allowSpecified'))
         self.assertTrue(hasattr(datatest.DataTestCase, 'allowUnspecified'))
         self.assertTrue(hasattr(datatest.DataTestCase, 'allowDeviationPercent'))
+
+        # Test old compatibility imports.
+        #from datatest.__past__ import assertions_alpha  # <- MONKEY PATCH!!!
+        #from datatest.__past__ import allowances_alpha  # <- MONKEY PATCH!!!
 
 
 if __name__ == '__main__':

@@ -34,7 +34,7 @@ class AdapterSource(BaseSource):
             (None, 'new_3'),
             ('old_4', 'new_4'),
         ]
-        subjectData = AdapterSource(source, interface)
+        subject = AdapterSource(source, interface)
 
     An AdapterSource can be thought of as a virtual source that renames,
     reorders, adds, or removes columns of the original *source*. To add

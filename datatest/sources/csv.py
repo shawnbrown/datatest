@@ -15,7 +15,7 @@ class CsvSource(SqliteBase):
     """Loads CSV data from *file* (path or file-like object):
     ::
 
-        subjectData = datatest.CsvSource('mydata.csv')
+        subject = datatest.CsvSource('mydata.csv')
     """
     def __init__(self, file, encoding=None, in_memory=False):
         """Initialize self."""

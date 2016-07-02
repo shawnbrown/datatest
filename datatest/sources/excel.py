@@ -7,11 +7,11 @@ from datatest import SqliteBase
 class ExcelSource(SqliteBase):
     """Loads first worksheet from XLSX or XLS file *path*::
 
-        subjectData = datatest.ExcelSource('mydata.xlsx')
+        subject = datatest.ExcelSource('mydata.xlsx')
 
     Specific worksheets can be accessed by name::
 
-        subjectData = datatest.ExcelSource('mydata.xlsx', 'Sheet 2')
+        subject = datatest.ExcelSource('mydata.xlsx', 'Sheet 2')
 
     This is an optional data source that requires the third-party
     library `xlrd <https://pypi.python.org/pypi/xlrd>`_.

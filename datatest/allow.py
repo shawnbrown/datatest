@@ -45,10 +45,10 @@ class _BaseAllowance(object):
 
     def _raiseFailure(self, standardMsg, differences):
         msg = self.test_case._formatMessage(self.msg, standardMsg)
-        subject = self.test_case.subjectData
-        #required = getattr(self.test_case, 'referenceData', None)
+        subject = self.test_case.subject
+        #required = getattr(self.test_case, 'reference', None)
         try:
-            required = self.test_case.referenceData
+            required = self.test_case.reference
         except NameError:
             required = None
 

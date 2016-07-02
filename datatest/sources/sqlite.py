@@ -226,7 +226,7 @@ class SqliteSource(SqliteBase):
     ::
 
         conn = sqlite3.connect('mydatabase.sqlite3')
-        subjectData = datatest.SqliteSource(conn, 'mytable')
+        subject = datatest.SqliteSource(conn, 'mytable')
     """
     @classmethod
     def from_records(cls, data, columns=None):
@@ -234,7 +234,7 @@ class SqliteSource(SqliteBase):
         records.  Loads *data* (an iterable of lists, tuples, or dicts)
         into a new SQLite database with the given *columns*::
 
-            subjectData = datatest.SqliteSource.from_records(records, columns)
+            subject = datatest.SqliteSource.from_records(records, columns)
 
         The *columns* argument can be omitted if *data* contains
         ``dict`` or ``namedtuple`` records::
@@ -243,7 +243,7 @@ class SqliteSource(SqliteBase):
                 { ... },
                 { ... },
             ]
-            subjectData = datatest.SqliteSource.from_records(dict_rows)
+            subject = datatest.SqliteSource.from_records(dict_rows)
         """
         temptable = TemporarySqliteTable(data, columns)
         return cls(temptable.connection, temptable.name)
@@ -262,17 +262,17 @@ class SqliteSource(SqliteBase):
         then you might be able to improve performance by adding an
         index for the "town" column::
 
-            subjectData.create_index('town')
+            subject.create_index('town')
 
         Using two or more columns creates a multi-column index::
 
-            subjectData.create_index('town', 'zipcode')
+            subject.create_index('town', 'zipcode')
 
         Calling the function multiple times will create multiple
         indexes::
 
-            subjectData.create_index('town')
-            subjectData.create_index('zipcode')
+            subject.create_index('town')
+            subject.create_index('zipcode')
         """
         # Calling super() with older convention to support Python 2.7 & 2.6.
         super(SqliteSource, self).create_index(*columns)

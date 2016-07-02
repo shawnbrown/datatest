@@ -12,8 +12,8 @@ DataTestCase
 
 .. autoclass:: datatest.DataTestCase
 
-    .. autoattribute:: subjectData
-    .. autoattribute:: referenceData
+    .. autoattribute:: subject
+    .. autoattribute:: reference
 
 
     .. _assert-methods:

@@ -49,7 +49,7 @@ class TestAssertEqual(TestHelperCase):
     def test_assertEqual(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.subjectData = None
+                _self.subject = None
 
             def test_method1(_self):
                 first  = CompareSet([1,2,3,4,5,6,7])
@@ -107,8 +107,8 @@ class TestNormalizeReference(TestHelperCase):
     def test_normalize_required(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.test_reference
-                _self.subjectData = self.test_subject
+                _self.reference = self.test_reference
+                _self.subject = self.test_subject
 
             def test_method(_self):  # Dummy method for instantiation.
                 pass
@@ -166,7 +166,7 @@ class TestDataSum(TestHelperCase):
         # Test using required dict.
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.subjectData = self.src1_records
+                _self.subject = self.src1_records
 
             def test_method(_self):
                 required = {'a': 65, 'b': 70}
@@ -175,11 +175,11 @@ class TestDataSum(TestHelperCase):
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
 
-        # Test using referenceData.
+        # Test using reference.
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.src1_totals
-                _self.subjectData = self.src1_records
+                _self.reference = self.src1_totals
+                _self.subject = self.src1_records
 
             def test_method(_self):
                 _self.assertDataSum('value', ['label1'])  # <- test assert
@@ -190,8 +190,8 @@ class TestDataSum(TestHelperCase):
         # Test using callable.
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.src1_totals
-                _self.subjectData = self.src1_records
+                _self.reference = self.src1_totals
+                _self.subject = self.src1_records
 
             def test_method(_self):
                 required = lambda x: x in (65, 70)
@@ -205,7 +205,7 @@ class TestDataSum(TestHelperCase):
         # Test using required dict.
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.subjectData = self.src2_records  # <- src1 != src2
+                _self.subject = self.src2_records  # <- src1 != src2
 
             def test_method(_self):
                 required = {'a': 65, 'b': 70}
@@ -217,11 +217,11 @@ class TestDataSum(TestHelperCase):
                    " Deviation\(-1, 70, label1=u?'b'\)")
         self.assertRegex(failure, pattern)
 
-        # Test using referenceData.
+        # Test using reference.
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.src1_totals
-                _self.subjectData = self.src2_records  # <- src1 != src2
+                _self.reference = self.src1_totals
+                _self.subject = self.src2_records  # <- src1 != src2
 
             def test_method(_self):
                 _self.assertDataSum('value', ['label1'])  # <- test assert
@@ -235,7 +235,7 @@ class TestDataSum(TestHelperCase):
         # Test using callable.
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.subjectData = self.src2_records  # <- src1 != src2
+                _self.subject = self.src2_records  # <- src1 != src2
 
             def test_method(_self):
                 required = lambda x: x in (65, 70)
@@ -279,8 +279,8 @@ class TestAssertDataSumGroupsAndFilters(TestHelperCase):
         """Only groupby fields should appear in diff errors (kwds-filters should be omitted)."""
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.src3_totals
-                _self.subjectData = self.src3_records  # <- src1 != src2
+                _self.reference = self.src3_totals
+                _self.subject = self.src3_records  # <- src1 != src2
 
             def test_method(_self):
                 _self.assertDataSum('value', ['label1'], label2='y')  # <- test assert
@@ -328,8 +328,8 @@ class TestAssertDataCount(TestHelperCase):
         """Subject counts match reference sums, test should pass."""
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.src1_totals
-                _self.subjectData = self.src1_records
+                _self.reference = self.src1_totals
+                _self.subject = self.src1_records
 
             def test_method(_self):
                 _self.assertDataCount('total_rows', ['label1'])  # <- test assert
@@ -340,8 +340,8 @@ class TestAssertDataCount(TestHelperCase):
     def test_missing_column(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.src1_totals
-                _self.subjectData = self.src1_records
+                _self.reference = self.src1_totals
+                _self.subject = self.src1_records
 
             def test_method(_self):
                 _self.assertDataCount('bad_col_name', ['label1'])  # <- test assert
@@ -354,8 +354,8 @@ class TestAssertDataCount(TestHelperCase):
         """Counts do not match, test should fail."""
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.src1_totals
-                _self.subjectData = self.src2_records  # <- src1 != src2
+                _self.reference = self.src1_totals
+                _self.subject = self.src2_records  # <- src1 != src2
 
             def test_method(_self):
                 required = {'a': 4, 'b': 3}
@@ -375,7 +375,7 @@ class TestAssertDataColumns(TestHelperCase):
                 data = [('label1', 'value'),
                         ('a', '6'),
                         ('b', '7')]
-                _self.subjectData = MinimalSource(data)
+                _self.subject = MinimalSource(data)
 
             def test_method(_self):
                 required_set = set(['label1', 'value'])
@@ -390,7 +390,7 @@ class TestAssertDataColumns(TestHelperCase):
                 data = [('label1', 'value'),
                         ('a', '6'),
                         ('b', '7')]
-                _self.subjectData = MinimalSource(data)
+                _self.subject = MinimalSource(data)
 
             def test_method(_self):
                 data = [('label1', 'value'),
@@ -408,7 +408,7 @@ class TestAssertDataColumns(TestHelperCase):
                 data = [('label1', 'value'),
                         ('a', '6'),
                         ('b', '7')]
-                _self.subjectData = MinimalSource(data)
+                _self.subject = MinimalSource(data)
 
             def test_method(_self):
                 def lowercase(x):  # <- Helper function!!!
@@ -424,8 +424,8 @@ class TestAssertDataColumns(TestHelperCase):
                 data = [('label1', 'value'),
                         ('a', '6'),
                         ('b', '7')]
-                _self.subjectData = MinimalSource(data)
-                _self.referenceData = MinimalSource(data)  # <- Same as subject!
+                _self.subject = MinimalSource(data)
+                _self.reference = MinimalSource(data)  # <- Same as subject!
 
             def test_method(_self):
                 _self.assertDataColumns()  # <- test assert
@@ -439,7 +439,7 @@ class TestAssertDataColumns(TestHelperCase):
                 data = [('label1', 'label2', 'value'),
                         ('a', 'x', '6'),
                         ('b', 'y', '7')]
-                _self.subjectData = MinimalSource(data)
+                _self.subject = MinimalSource(data)
 
             def test_method(_self):
                 required_set = set(['label1', 'value'])
@@ -455,7 +455,7 @@ class TestAssertDataColumns(TestHelperCase):
                 data = [('label1',),
                         ('a',),
                         ('b',)]
-                _self.subjectData = MinimalSource(data)
+                _self.subject = MinimalSource(data)
 
             def test_method(_self):
                 required_set = set(['label1', 'value'])
@@ -471,7 +471,7 @@ class TestAssertDataColumns(TestHelperCase):
                 data = [('LABEL1', 'value'),
                         ('a', '6'),
                         ('b', '7')]
-                _self.subjectData = MinimalSource(data)
+                _self.subject = MinimalSource(data)
 
             def test_method(_self):
                 def lowercase(x):  # <- Helper function!!!
@@ -494,7 +494,7 @@ class TestAssertDataSet(TestHelperCase):
     def test_collection(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.subjectData = self.data_source
+                _self.subject = self.data_source
 
             def test_set(_self):
                 required = set(['a', 'b', 'c'])
@@ -527,7 +527,7 @@ class TestAssertDataSet(TestHelperCase):
     def test_callable(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.subjectData = self.data_source
+                _self.subject = self.data_source
 
             def test_method(_self):
                 required = lambda x: x in ['a', 'b', 'c']
@@ -539,7 +539,7 @@ class TestAssertDataSet(TestHelperCase):
         # Multiple args
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.subjectData = self.data_source
+                _self.subject = self.data_source
 
             def test_method(_self):
                 required = lambda x, y: x in ['a', 'b', 'c'] and y in ['x', 'y', 'z']
@@ -551,12 +551,12 @@ class TestAssertDataSet(TestHelperCase):
     def test_same(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.data_source
+                _self.reference = self.data_source
                 same_as_reference = io.StringIO('label\n'
                                                 'a\n'
                                                 'b\n'
                                                 'c\n')
-                _self.subjectData = CsvSource(same_as_reference, in_memory=True)
+                _self.subject = CsvSource(same_as_reference, in_memory=True)
 
             def test_method(_self):
                 _self.assertDataSet('label')  # <- test assert
@@ -567,12 +567,12 @@ class TestAssertDataSet(TestHelperCase):
     def test_same_using_reference_from_argument(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                #_self.referenceData =   <- intentionally omitted
+                #_self.reference =   <- intentionally omitted
                 same_as_reference = io.StringIO('label\n'
                                                 'a\n'
                                                 'b\n'
                                                 'c\n')
-                _self.subjectData = CsvSource(same_as_reference, in_memory=True)
+                _self.subject = CsvSource(same_as_reference, in_memory=True)
 
             def test_method(_self):
                 required = set(['a', 'b', 'c'])
@@ -584,12 +584,12 @@ class TestAssertDataSet(TestHelperCase):
     def test_same_group_using_reference_from_argument(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                #_self.referenceData =   <- intentionally omitted
+                #_self.reference =   <- intentionally omitted
                 same_as_reference = io.StringIO('label1,label2\n'
                                                 'a,x\n'
                                                 'b,y\n'
                                                 'c,z\n')
-                _self.subjectData = CsvSource(same_as_reference, in_memory=True)
+                _self.subject = CsvSource(same_as_reference, in_memory=True)
 
             def test_method(_self):
                 required = set([('a', 'x'), ('b', 'y'), ('c', 'z')])
@@ -601,11 +601,11 @@ class TestAssertDataSet(TestHelperCase):
     def test_missing(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.data_source
+                _self.reference = self.data_source
                 same_as_reference = io.StringIO('label\n'
                                                 'a\n'
                                                 'b\n')
-                _self.subjectData = CsvSource(same_as_reference, in_memory=True)
+                _self.subject = CsvSource(same_as_reference, in_memory=True)
 
             def test_method(_self):
                 _self.assertDataSet('label')  # <- test assert
@@ -617,13 +617,13 @@ class TestAssertDataSet(TestHelperCase):
     def test_extra(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.data_source
+                _self.reference = self.data_source
                 same_as_reference = io.StringIO('label\n'
                                                 'a\n'
                                                 'b\n'
                                                 'c\n'
                                                 'd\n')
-                _self.subjectData = CsvSource(same_as_reference, in_memory=True)
+                _self.subject = CsvSource(same_as_reference, in_memory=True)
 
             def test_method(_self):
                 _self.assertDataSet('label')  # <- test assert
@@ -635,7 +635,7 @@ class TestAssertDataSet(TestHelperCase):
     def test_invalid(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.subjectData = self.data_source
+                _self.subject = self.data_source
 
             def test_method(_self):
                 required = lambda x: x in ('a', 'b')
@@ -648,12 +648,12 @@ class TestAssertDataSet(TestHelperCase):
     def test_same_group(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.data_source
+                _self.reference = self.data_source
                 same_as_reference = io.StringIO('label,label2\n'
                                                 'a,x\n'
                                                 'b,y\n'
                                                 'c,z\n')
-                _self.subjectData = CsvSource(same_as_reference, in_memory=True)
+                _self.subject = CsvSource(same_as_reference, in_memory=True)
 
             def test_method(_self):
                 _self.assertDataSet(['label', 'label2'])  # <- test assert
@@ -664,11 +664,11 @@ class TestAssertDataSet(TestHelperCase):
     def test_missing_group(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.data_source
+                _self.reference = self.data_source
                 same_as_reference = io.StringIO('label,label2\n'
                                                 'a,x\n'
                                                 'c,z\n')
-                _self.subjectData = CsvSource(same_as_reference, in_memory=True)
+                _self.subject = CsvSource(same_as_reference, in_memory=True)
 
             def test_method(_self):
                 _self.assertDataSet(['label', 'label2'])  # <- test assert
@@ -691,7 +691,7 @@ class TestAssertDataUnique(TestHelperCase):
                     ('e', 'z'),
                     ('f', 'z'),
                 ]
-                _self.subjectData = MinimalSource(data)
+                _self.subject = MinimalSource(data)
 
             def test_method1(_self):
                 _self.assertDataUnique('label1')  # <- test assert
@@ -723,7 +723,7 @@ class TestAssertDataRegexAndNotDataRegex(TestHelperCase):
     def test_regex_passing(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.subjectData = CsvSource(self.source, in_memory=True)
+                _self.subject = CsvSource(self.source, in_memory=True)
 
             def test_method(_self):
                 _self.assertDataRegex('label1', '\w\w')  # <- test assert
@@ -734,7 +734,7 @@ class TestAssertDataRegexAndNotDataRegex(TestHelperCase):
     def test_regex_failing(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.subjectData = CsvSource(self.source, in_memory=True)
+                _self.subject = CsvSource(self.source, in_memory=True)
 
             def test_method(_self):
                 _self.assertDataRegex('label2', '\d\d\d')  # <- test assert
@@ -746,7 +746,7 @@ class TestAssertDataRegexAndNotDataRegex(TestHelperCase):
     def test_regex_precompiled(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.subjectData = CsvSource(self.source, in_memory=True)
+                _self.subject = CsvSource(self.source, in_memory=True)
 
             def test_method(_self):
                 regex = re.compile('[ABC]$', re.IGNORECASE)  # <- pre-compiled
@@ -758,7 +758,7 @@ class TestAssertDataRegexAndNotDataRegex(TestHelperCase):
     def test_not_regex_passing(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.subjectData = CsvSource(self.source, in_memory=True)
+                _self.subject = CsvSource(self.source, in_memory=True)
 
             def test_method(_self):
                 _self.assertDataNotRegex('label1', '\d\d\d')  # <- test assert
@@ -769,7 +769,7 @@ class TestAssertDataRegexAndNotDataRegex(TestHelperCase):
     def test_not_regex_failing(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.subjectData = CsvSource(self.source, in_memory=True)
+                _self.subject = CsvSource(self.source, in_memory=True)
 
             def test_method(_self):
                 _self.assertDataNotRegex('label2', '^\d{1,2}$')  # <- test assert
@@ -781,7 +781,7 @@ class TestAssertDataRegexAndNotDataRegex(TestHelperCase):
     def test_not_regex_precompiled(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.subjectData = CsvSource(self.source, in_memory=True)
+                _self.subject = CsvSource(self.source, in_memory=True)
 
             def test_method(_self):
                 regex = re.compile('^[ABC]')  # <- pre-compiled
@@ -812,8 +812,8 @@ class TestAllowOnly(TestHelperCase):
         """Test should pass with expected difference."""
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.reference
-                _self.subjectData = self.bad_subject
+                _self.reference = self.reference
+                _self.subject = self.bad_subject
 
             def test_method(_self):
                 diff = [
@@ -830,8 +830,8 @@ class TestAllowOnly(TestHelperCase):
         """Test should pass with expected difference."""
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.reference
-                _self.subjectData = self.bad_subject
+                _self.reference = self.reference
+                _self.subject = self.bad_subject
 
             def test_method(_self):
                 diff = {
@@ -848,8 +848,8 @@ class TestAllowOnly(TestHelperCase):
         """Test should pass with expected difference."""
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.reference
-                _self.subjectData = self.bad_subject
+                _self.reference = self.reference
+                _self.subject = self.bad_subject
 
             def test_method(_self):
                 diff = {
@@ -866,8 +866,8 @@ class TestAllowOnly(TestHelperCase):
         """Unaccepted differences should fail first."""
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.reference
-                _self.subjectData = self.bad_subject
+                _self.reference = self.reference
+                _self.subject = self.bad_subject
 
             def test_method(_self):
                 diff = [
@@ -885,8 +885,8 @@ class TestAllowOnly(TestHelperCase):
         """If accepted differences not found, raise exception."""
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.reference
-                _self.subjectData = self.bad_subject
+                _self.reference = self.reference
+                _self.subject = self.bad_subject
 
             def test_method(_self):
                 diff = [
@@ -906,8 +906,8 @@ class TestAllowOnly(TestHelperCase):
         """If accepted differences not found and no diff at all, raise exception."""
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.reference
-                _self.subjectData = self.reference
+                _self.reference = self.reference
+                _self.subject = self.reference
 
             def test_method(_self):
                 diff = Deviation(+2, 65, label1='a')
@@ -966,7 +966,7 @@ class TestAllowAny_Missing_Extra(TestHelperCase):
         """Fail when observed number is greater-than allowed number."""
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.subjectData = None
+                _self.subject = None
 
             def test_method(_self):
                 with _self.allowAny(2):  # <- allow two
@@ -989,7 +989,7 @@ class TestAllowAny_Missing_Extra(TestHelperCase):
         """Fail when observed number is greater-than allowed number."""
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.subjectData = None
+                _self.subject = None
 
             def test_passing(_self):
                 with _self.allowAny(3, label1='a'):  # <- allow 3 where label1 equals 'a'
@@ -1026,7 +1026,7 @@ class TestAllowMissing(TestHelperCase):
         """Non-Missing differences should fail."""
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.subjectData = None
+                _self.subject = None
 
             def test_method(_self):
                 with _self.allowMissing(3):
@@ -1052,7 +1052,7 @@ class TestAllowExtra(TestHelperCase):
         """Non-Extra differences should fail."""
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.subjectData = None
+                _self.subject = None
 
             def test_method(_self):
                 with _self.allowExtra(3):
@@ -1096,7 +1096,7 @@ class TestAllowDeviation(TestHelperCase):
     def test_passing(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.subjectData = self.bad_subject
+                _self.subject = self.bad_subject
 
             def test_tolerance_syntax(_self):
                 with _self.allowDeviation(3):  # <- "tolerance" signature
@@ -1126,7 +1126,7 @@ class TestAllowDeviation(TestHelperCase):
         """Using filter label1='a', Deviation(...label1='b') should be raised."""
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.subjectData = self.bad_subject
+                _self.subject = self.bad_subject
 
             def test_method1(_self):
                 with _self.allowDeviation(3, label1='a'):  # <- filter label1='a'
@@ -1149,7 +1149,7 @@ class TestAllowDeviation(TestHelperCase):
 
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.subjectData = self.bad_subject
+                _self.subject = self.bad_subject
 
             def test_method(_self):
                 with _self.allowDeviation(3, label1=['a', 'b']):  # <- Filter to 'a' or 'b' only.
@@ -1163,7 +1163,7 @@ class TestAllowDeviation(TestHelperCase):
         """Given tolerance of 2, Deviation(+3) should still be raised."""
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.subjectData = self.bad_subject
+                _self.subject = self.bad_subject
 
             # Raises: Deviation(+3, 65, label1='a')
             def test_method1(_self):
@@ -1202,7 +1202,7 @@ class TestAllowDeviation(TestHelperCase):
         """Must throw error if tolerance is invalid."""
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.subjectData = self.bad_subject
+                _self.subject = self.bad_subject
 
             def test_method(_self):
                 with _self.allowDeviation(-5):  # <- invalid
@@ -1220,8 +1220,8 @@ class TestAllowDeviation(TestHelperCase):
     #    """If accepted differences not found, raise exception."""
     #    class _TestClass(DataTestCase):
     #        def setUp(_self):
-    #            _self.referenceData = self.reference
-    #            _self.subjectData = self.reference
+    #            _self.reference = self.reference
+    #            _self.subject = self.reference
     #
     #        def test_method(_self):
     #            with _self.allowDeviation(3):  # <- test tolerance
@@ -1253,8 +1253,8 @@ class TestAllowPercentDeviation(TestHelperCase):
         """If accepted differences not found, raise exception."""
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.reference
-                _self.subjectData = self.bad_subject
+                _self.reference = self.reference
+                _self.subject = self.bad_subject
 
             def test_method(_self):
                 with _self.allowPercentDeviation(0.05):  # <- test tolerance
@@ -1267,8 +1267,8 @@ class TestAllowPercentDeviation(TestHelperCase):
         """If accepted differences not found, raise exception."""
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.reference
-                _self.subjectData = self.bad_subject
+                _self.reference = self.reference
+                _self.subject = self.bad_subject
 
             def test_method(_self):
                 with _self.allowPercentDeviation(0.05, label1='a'):  # <- Allow label1='a' only.
@@ -1283,8 +1283,8 @@ class TestAllowPercentDeviation(TestHelperCase):
         """If accepted differences not found, raise exception."""
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.reference
-                _self.subjectData = self.bad_subject
+                _self.reference = self.reference
+                _self.subject = self.bad_subject
 
             def test_method(_self):
                 with _self.allowPercentDeviation(0.03):  # <- test tolerance
@@ -1299,8 +1299,8 @@ class TestAllowPercentDeviation(TestHelperCase):
         """Tolerance must throw error if invalid parameter."""
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.reference
-                _self.subjectData = self.bad_subject
+                _self.reference = self.reference
+                _self.subject = self.bad_subject
 
             def test_method(_self):
                 with _self.allowPercentDeviation(1.1):  # <- invalid
@@ -1324,8 +1324,8 @@ class TestAllowPercentDeviation(TestHelperCase):
 
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = reference
-                _self.subjectData = subject
+                _self.reference = reference
+                _self.subject = subject
 
             def test_method(_self):
                 with _self.allowPercentDeviation(0.03):  # <- test tolerance
@@ -1357,8 +1357,8 @@ class TestNestedAllowances(TestHelperCase):
     def test_tolerance_in_difference(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.reference
-                _self.subjectData = self.bad_subject
+                _self.reference = self.reference
+                _self.subject = self.bad_subject
 
             def test_method(_self):
                 with _self.allowOnly(Deviation(+3, 65, label1='a')):
@@ -1371,8 +1371,8 @@ class TestNestedAllowances(TestHelperCase):
     def test_difference_in_tolerance(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.reference
-                _self.subjectData = self.bad_subject
+                _self.reference = self.reference
+                _self.subject = self.bad_subject
 
             def test_method(_self):
                 with _self.allowDeviation(2):  # <- test tolerance
@@ -1385,8 +1385,8 @@ class TestNestedAllowances(TestHelperCase):
     def test_difference_not_found_in_tolerance(self):
         class _TestClass(DataTestCase):
             def setUp(_self):
-                _self.referenceData = self.reference
-                _self.subjectData = self.bad_subject
+                _self.reference = self.reference
+                _self.subject = self.bad_subject
 
             def test_method(_self):
                 with _self.allowOnly(Deviation(+10, 999, label1='a')):

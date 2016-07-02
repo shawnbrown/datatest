@@ -13,8 +13,8 @@ class TestApiDev1(unittest.TestCase):
     def test_api_dev1(self):
         import datatest
         from datatest.__past__ import api_dev1  # <- MONKEY PATCH!!!
-        #self.assertTrue(hasattr(datatest.DataTestCase, 'subjectData'))
-        #self.assertTrue(hasattr(datatest.DataTestCase, 'referenceData'))
+        self.assertTrue(hasattr(datatest.DataTestCase, 'subjectData'))
+        self.assertTrue(hasattr(datatest.DataTestCase, 'referenceData'))
 
 
 if __name__ == '__main__':

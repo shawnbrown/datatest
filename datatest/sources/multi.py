@@ -18,7 +18,7 @@ class MultiSource(BaseSource):
     A wrapper class that allows multiple data sources to be treated
     as a single, composite data source::
 
-        subjectData = datatest.MultiSource(
+        subject = datatest.MultiSource(
             datatest.CsvSource('file1.csv'),
             datatest.CsvSource('file2.csv'),
             datatest.CsvSource('file3.csv')
