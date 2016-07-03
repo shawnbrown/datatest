@@ -1,18 +1,18 @@
 
 .. meta::
-    :description: datatest: Testing tools for data preparation.
-    :keywords: datatest, unittest, testing, data preparation, test-driven data preparation
+    :description: datatest: Testing driven data wrangling.
+    :keywords: datatest, data wrangling, unittest, data preparation
     :title: Index
 
 .. module:: datatest
-    :synopsis: Testing tools for data preparation.
+    :synopsis: Testing driven data wrangling.
 .. moduleauthor:: Shawn Brown <sbrown@ncecservices.com>
 .. sectionauthor:: Shawn Brown <sbrown@ncecservices.com>
 
 
-######################################################
-:mod:`datatest` --- Testing tools for data preparation
-######################################################
+#################################################
+:mod:`datatest` --- Testing driven data wrangling
+#################################################
 
 Datatest extends the standard library's `unittest
 <http://docs.python.org/3/library/unittest.html>`_ package to provide

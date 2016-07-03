@@ -11,14 +11,17 @@ from ..compare import _is_nscontainer
 
 class BaseSource(object):
     """Common base class for all data sources.  Custom sources can be
-    created by subclassing BaseSource and implementing ``__init__()``,
-    ``__repr__()``, ``columns()`` and ``__iter__()``.  Optionally,
-    performance can be improved by implementing ``filter_rows()``,
-    ``distinct()``, ``sum()``, ``count()``, and ``mapreduce()``.
+    created by subclassing BaseSource and implementing
+    :meth:`__init__()`, :meth:`__repr__()`, :meth:`columns()` and
+    :meth:`__iter__()`.
+
+    All data sources implement a common set of methods.
     """
     def __new__(cls, *args, **kwds):
         if cls is BaseSource:
-            msg = 'cannot instantiate BaseSource directly - make a subclass'
+            msg = ('Cannot instantiate BaseSource directly.  Use a '
+                   'data source of the appropriate type or make a '
+                   'subclass.')
             raise NotImplementedError(msg)
         return super(BaseSource, cls).__new__(cls)
 
@@ -27,7 +30,7 @@ class BaseSource(object):
         return NotImplemented
 
     def __repr__(self):
-        """Returns string representation of the data source."""
+        """Returns string representation describing the data source."""
         return NotImplemented
 
     def columns(self):
@@ -35,13 +38,15 @@ class BaseSource(object):
         return NotImplemented
 
     def __iter__(self):
-        """Returns iterable of dictionary rows (like ``csv.DictReader``)."""
+        """Returns iterable of dictionary rows (like
+        :class:`csv.DictReader`)."""
         return NotImplemented
 
     def filter_rows(self, **kwds):
-        """Returns iterable of dictionary rows (like ``csv.DictReader``)
-        filtered by keywords.  E.g., where column1=value1,
-        column2=value2, etc. (uses slow ``__iter__``).
+        """Returns iterable of dictionary rows (like
+        :class:`csv.DictReader`) filtered by keywords.  E.g., where
+        column1=value1, column2=value2, etc. (unoptimized, uses
+        :meth:`__iter__`).
         """
         if kwds:
             normalize = lambda v: (v,) if isinstance(v, str) else v
@@ -51,8 +56,9 @@ class BaseSource(object):
         return self.__iter__()
 
     def distinct(self, columns, **kwds_filter):
-        """Returns CompareSet of distinct values or distinct tuples of
-        values if given multiple *columns* (uses slow ``__iter__``).
+        """Returns :class:`CompareSet` of distinct values or distinct
+        tuples of values if given multiple *columns* (unoptimized, uses
+        :meth:`__iter__`).
         """
         if not _is_nscontainer(columns):
             columns = (columns,)
@@ -62,16 +68,16 @@ class BaseSource(object):
         return CompareSet(iterable)
 
     def sum(self, column, keys=None, **kwds_filter):
-        """Returns CompareDict containing sums of *column* values
-        grouped by *keys*.
+        """Returns :class:`CompareDict` containing sums of *column*
+        values grouped by *keys*.
         """
         mapper = lambda x: decimal.Decimal(x) if x else decimal.Decimal(0)
         reducer = lambda x, y: x + y
         return self.mapreduce(mapper, reducer, column, keys, **kwds_filter)
 
     def count(self, column, keys=None, **kwds_filter):
-        """Returns CompareDict containing count of non-empty *column*
-        values grouped by *keys*.
+        """Returns :class:`CompareDict` containing count of non-empty
+        *column* values grouped by *keys*.
         """
         mapper = lambda value: 1 if value else 0  # 1 for truthy, 0 for falsy
         reducer = lambda x, y: x + y
@@ -79,22 +85,22 @@ class BaseSource(object):
 
     def mapreduce(self, mapper, reducer, columns, keys=None, **kwds_filter):
         """Apply *mapper* to the values in *columns* (which are grouped
-        by *keys* and filtered by *filter*) then apply *reducer* of two
-        arguments cumulatively to the mapped values, from left to right,
-        so as to reduce the values to a single result per group of
-        *keys*.  If *keys* is omitted, a single result is returned,
-        otherwise returns a CompareDict object.
+        by *keys* and filtered by keywords) then apply a *reducer* of
+        two arguments cumulatively to the mapped values, from left to
+        right, so as to reduce the values to a single result (per group
+        of *keys*).  If *keys* is omitted, a single result is returned,
+        otherwise returns a :class:`CompareDict` object.
 
         *mapper* (function or other callable):
             Should accept column values from a single row and return a
             single computed result.  Mapper always receives a single
-            argument--if *columns* is a sequence, *mapper* will receive
+            argument---if *columns* is a sequence, *mapper* will receive
             a tuple of values containing in the specified columns.
         *reducer* (function or other callable):
-            Should accept two arguments that are applied cumulatively to
-            the intermediate mapped results (produced by *mapper*), from
-            left to right, so as to reduce them to a single value for
-            each group of *keys*.
+            Should accept two arguments which are applied cumulatively
+            to the values produced by *mapper*, from left to right, so
+            as to reduce them to a single value (for each group of
+            *keys*).
         *columns* (string or sequence):
             Name of column or columns that are passed into *mapper*.
         *keys* (None, string, or sequence):

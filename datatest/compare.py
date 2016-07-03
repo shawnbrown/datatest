@@ -91,7 +91,8 @@ class CompareSet(BaseCompare, set):
 
     def make_rows(self, names):
         """Return an iterable of dictionary rows (like
-        ``csv.DictReader``) using *names* to construct dictionary keys.
+        :mod:`csv.DictReader`) using *names* to construct dictionary
+        keys.
         """
         single_value = next(iter(self))
         if _is_nscontainer(single_value):
@@ -207,7 +208,8 @@ class CompareDict(BaseCompare, dict):
 
     def make_rows(self, names):
         """Return an iterable of dictionary rows (like
-        ``csv.DictReader``) using *names* to construct dictionary keys.
+        :mod:`csv.DictReader`) using *names* to construct dictionary
+        keys.
         """
         if not _is_nscontainer(names):
             names = (names,)

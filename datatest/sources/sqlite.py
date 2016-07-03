@@ -231,17 +231,26 @@ class SqliteSource(SqliteBase):
     @classmethod
     def from_records(cls, data, columns=None):
         """Alternate constructor to load an existing collection of
-        records.  Loads *data* (an iterable of lists, tuples, or dicts)
-        into a new SQLite database with the given *columns*::
+        records into a tempoarary SQLite database.  Loads *data* (an
+        iterable of lists, tuples, or dicts) into a temporary table
+        using the named *columns*::
 
-            subject = datatest.SqliteSource.from_records(records, columns)
+            records = [
+                ('a', 'x'),
+                ('b', 'y'),
+                ('c', 'z'),
+                ...
+            ]
+            subject = datatest.SqliteSource.from_records(records, ['col1', 'col2'])
 
-        The *columns* argument can be omitted if *data* contains
-        ``dict`` or ``namedtuple`` records::
+        The *columns* argument can be omitted if *data* is a collection
+        of dictionary or namedtuple records::
 
             dict_rows = [
-                { ... },
-                { ... },
+                {'col1': 'a', 'col2': 'x'},
+                {'col1': 'b', 'col2': 'y'},
+                {'col1': 'c', 'col2': 'z'},
+                ...
             ]
             subject = datatest.SqliteSource.from_records(dict_rows)
         """

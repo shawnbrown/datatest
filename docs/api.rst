@@ -21,6 +21,9 @@ DataTestCase
     +-----------------------------------------------------------------+------------------------------------------+
     | Method                                                          | Checks that                              |
     +=================================================================+==========================================+
+    | :meth:`assertEqual(first, second)                               | *first* matches *second*                 |
+    | <datatest.DataTestCase.assertEqual>`                            |                                          |
+    +-----------------------------------------------------------------+------------------------------------------+
     | :meth:`assertDataColumns(required=None)                         | column names match *required*            |
     | <datatest.DataTestCase.assertDataColumns>`                      |                                          |
     +-----------------------------------------------------------------+------------------------------------------+
@@ -43,6 +46,7 @@ DataTestCase
     | <datatest.DataTestCase.assertDataUnique>`                       | contain no duplicates                    |
     +-----------------------------------------------------------------+------------------------------------------+
 
+    .. automethod:: assertEqual
     .. automethod:: assertDataColumns
     .. automethod:: assertDataSet
     .. automethod:: assertDataSum
@@ -61,8 +65,8 @@ DataTestCase
     | :meth:`allowAny(number)                                         | given *number* of differences of any     |
     | <datatest.DataTestCase.allowAny>`                               | class                                    |
     +-----------------------------------------------------------------+------------------------------------------+
-    | :meth:`allowAny(**kwds_filter)                                  | unlimited number of differences of any   |
-    | <datatest.DataTestCase.allowAny>`                               | class that match given                   |
+    | :meth:`allowAny(**kwds_filter)                                  | differences of any class that match      |
+    | <datatest.DataTestCase.allowAny>`                               | given                                    |
     |                                                                 | :ref:`keyword filters <kwds-filter>`     |
     +-----------------------------------------------------------------+------------------------------------------+
     | :meth:`allowExtra(number=None)                                  | given *number* of :class:`Extra          |
@@ -98,12 +102,12 @@ DataTestCase
         Allowing deviations of plus-or-minus a given *tolerance*::
 
             with self.allowDeviation(5):  # tolerance of +/- 5
-                self.assertDataSum('column2', group_by=['column1'])
+                self.assertDataSum('column2', keys=['column1'])
 
         Specifying different *lower* and *upper* bounds::
 
             with self.allowDeviation(-2, 3):  # tolerance from -2 to +3
-                self.assertDataSum('column2', group_by=['column1'])
+                self.assertDataSum('column2', keys=['column1'])
 
         All deviations within the accepted tolerance range are
         suppressed but those that exceed the range will trigger
@@ -162,14 +166,42 @@ Data source objects are used to access data in various formats.
 +---------------------------------------------+-----------------------------------------+
 | :class:`ExcelSource(path, worksheet=None)   | Excel *worksheet* from XLSX or XLS      |
 | <datatest.ExcelSource>`                     | *path*, defaults to the first worksheet |
-|                                             | if ``None`` (requires ``xlrd`` package) |
+|                                             | if None (requires :mod:`xlrd` package)  |
 +---------------------------------------------+-----------------------------------------+
 | :class:`PandasSource(df)                    | pandas DataFrame *df* (requires         |
-| <datatest.PandasSource>`                    | ``pandas``)                             |
+| <datatest.PandasSource>`                    | :mod:`pandas`)                          |
 +---------------------------------------------+-----------------------------------------+
 | :class:`MultiSource(*sources)               | multiple data *sources* which can be    |
 | <datatest.MultiSource>`                     | treated as single data source           |
 +---------------------------------------------+-----------------------------------------+
+| :class:`AdapterSource(source, interface)    | existing *source* with column names     |
+| <datatest.AdapterSource>`                   | adapted to the given *interface*        |
++---------------------------------------------+-----------------------------------------+
+
+.. autoclass:: datatest.BaseSource(...)
+
+    .. automethod:: __repr__
+
+    .. automethod:: columns
+
+    .. automethod:: __iter__
+
+    .. method:: filter_rows(**kwds)
+
+        Returns iterable of dictionary rows (like
+        :class:`csv.DictReader`) filtered by keywords.  E.g., where
+        column1=value1, column2=value2, etc.
+
+    .. method:: distinct(columns, **kwds_filter)
+
+        Returns :class:`CompareSet` of distinct values or distinct tuples of
+        values if given multiple *columns*.
+
+    .. automethod:: sum
+
+    .. automethod:: count
+
+    .. automethod:: mapreduce
 
 
 CsvSource
@@ -182,6 +214,9 @@ SqliteSource
 ============
 .. autoclass:: datatest.SqliteSource
    :members: create_index, from_records
+
+
+-----------
 
 
 .. _extra-sources:
@@ -207,8 +242,8 @@ MultiSource
 ===========
 .. autoclass:: datatest.MultiSource
 
-    Data is aligned by column name and missing values are filled with empty
-    strings:
+    Data is aligned by column name and empty cells are filled with the
+    given *missing* value (defaults to empty string):
 
         .. image:: _static/multisource.*
 
@@ -216,18 +251,6 @@ MultiSource
 AdapterSource
 =============
 .. autoclass:: datatest.AdapterSource
-
-
-
-Common Methods
-==========================
-
-All data sources implement a set of common methods which are inhereted
-from a common BaseSource.  Typically, these methods are used indirectly
-via DataTestCase but it is also possible to call them directly:
-
-.. autoclass:: datatest.BaseSource
-    :members: columns, __iter__, filter_rows, distinct, sum, count, mapreduce
 
 
 ******************

@@ -24,7 +24,8 @@ class MultiSource(BaseSource):
             datatest.CsvSource('file3.csv')
         )
 
-    The original sources are stored in the ``__wrapped__`` attribute.
+    The original sources are stored in the :attr:`__wrapped__`
+    attribute.
     """
     def __init__(self, *sources, **kwd):
         """

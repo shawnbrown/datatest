@@ -31,18 +31,21 @@ class AdapterSource(BaseSource):
         interface = [
             ('old_1', 'new_1'),
             ('old_2', 'new_2'),
-            (None, 'new_3'),
+            (None,    'new_3'),
             ('old_4', 'new_4'),
         ]
         subject = AdapterSource(source, interface)
 
     An AdapterSource can be thought of as a virtual source that renames,
-    reorders, adds, or removes columns of the original *source*. To add
-    a column that does not exist in original, use None in place of a
-    column name (see 'new_3', above). Columns mapped to None will
-    contain *missing* values (defaults to empty string).
+    reorders, adds, or removes columns of the original *source*.
 
-    The original source can be accessed via the __wrapped__ property.
+    To add a column that does not exist in original, use None in place
+    of a column name (see 'new_3', above). Columns mapped to None will
+    contain *missing* values (defaults to empty string).  To remove a
+    column, simply omit it from the interface.
+
+    The original source can be accessed via the :attr:`__wrapped__`
+    property.
     """
     def __init__(self, source, interface, missing=''):
         if not isinstance(interface, collections.Sequence):

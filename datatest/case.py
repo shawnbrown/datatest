@@ -134,8 +134,13 @@ class DataTestCase(TestCase):
         operator.
 
         If the *first* argument is a datatest comparison object
-        (CompareSet, CompareDict, etc.), a failure will raise the
-        differences between *first* and *second*.
+        (:class:`CompareSet`, :class:`CompareDict`, etc.), a failure
+        will raise the differences between *first* and *second*::
+
+            def test_column1(self):
+                first = self.subject.set('col1')     # The set() method
+                second = self.reference.set('col1')  # returns a CompareSet.
+                self.assertEqual(first, second)
 
         If the *second* argument is a helper-function (or other
         callable), it is used as a key which must return True for
