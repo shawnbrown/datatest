@@ -44,13 +44,12 @@ class DataTestCase(TestCase):
     @property
     def subject(self):
         """A data source containing the data under test---the *subject*
-        of the tests.  :attr:`subject` can be defined at the class-level
-        or at the module-level.  To use DataTestCase, you **must**
-        define :attr:`subject`.
+        of the tests.  A :attr:`subject` can be defined at the
+        class-level or at the module-level.
 
         When defining :attr:`subject` at the module-level, this property
-        will reach into its parent scopes and return the subject from
-        the nearest enclosed scope::
+        will reach into its parent scopes and return the :attr:`subject`
+        from the nearest enclosed scope::
 
             def setUpModule():
                 global subject
@@ -74,11 +73,9 @@ class DataTestCase(TestCase):
     @property
     def reference(self):
         """An optional data source containing data that is trusted to
-        be correct.  Like :attr:`subject`, :attr:`reference` can be
-        defined at the class-level or at the module-level and this
-        property will return the :attr:`reference` from the nearest
-        enclosed scope.  Unlike :attr:`subject`, defining
-        :attr:`reference` is completely optional.
+        be correct.  A :attr:`reference` can be defined at the
+        class-level or at the module-level.  This property will return
+        the :attr:`reference` from the nearest enclosed scope.
 
         Module-level declaration::
 
@@ -481,10 +478,14 @@ class DataTestCase(TestCase):
         """
         if differences:
             try:
+                subject = self.subject
+            except NameError:
+                subject = None
+            try:
                 required = self.reference
             except NameError:
                 required = None
-            raise DataAssertionError(msg, differences, self.subject, required)
+            raise DataAssertionError(msg, differences, subject, required)
         else:
             raise self.failureException(msg)
 

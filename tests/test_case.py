@@ -45,12 +45,28 @@ class TestSubclass(TestHelperCase):
         self.assertTrue(issubclass(DataTestCase, _TestCase))
 
 
+class TestNoDefaultSubject(TestHelperCase):
+    def test_no_subject(self):
+        class _TestClass(DataTestCase):
+            def test_method1(_self):
+                first  = CompareSet([1,2,3])
+                second = CompareSet([1,2,3])
+                _self.assertEqual(first, second)
+
+            def test_method2(_self):
+                required = CompareSet([1,2,3])
+                _self.assertDataSet(required)
+
+        failure = self._run_one_test(_TestClass, 'test_method1')
+        self.assertIsNone(failure)
+
+        failure = self._run_one_test(_TestClass, 'test_method2')
+        self.assertRegex(failure, "cannot find 'subject'")
+
+
 class TestAssertEqual(TestHelperCase):
     def test_assertEqual(self):
         class _TestClass(DataTestCase):
-            def setUp(_self):
-                _self.subject = None
-
             def test_method1(_self):
                 first  = CompareSet([1,2,3,4,5,6,7])
                 second = CompareSet([1,2,3,4,5,6])
@@ -965,9 +981,6 @@ class TestAllowAny_Missing_Extra(TestHelperCase):
     def test_failing(self):
         """Fail when observed number is greater-than allowed number."""
         class _TestClass(DataTestCase):
-            def setUp(_self):
-                _self.subject = None
-
             def test_method(_self):
                 with _self.allowAny(2):  # <- allow two
                     differences = [
@@ -988,9 +1001,6 @@ class TestAllowAny_Missing_Extra(TestHelperCase):
     def test_filter(self):
         """Fail when observed number is greater-than allowed number."""
         class _TestClass(DataTestCase):
-            def setUp(_self):
-                _self.subject = None
-
             def test_passing(_self):
                 with _self.allowAny(3, label1='a'):  # <- allow 3 where label1 equals 'a'
                     differences = [
@@ -1025,9 +1035,6 @@ class TestAllowMissing(TestHelperCase):
     def test_class_restriction(self):
         """Non-Missing differences should fail."""
         class _TestClass(DataTestCase):
-            def setUp(_self):
-                _self.subject = None
-
             def test_method(_self):
                 with _self.allowMissing(3):
                     differences = [
@@ -1051,9 +1058,6 @@ class TestAllowExtra(TestHelperCase):
     def test_class_restriction(self):
         """Non-Extra differences should fail."""
         class _TestClass(DataTestCase):
-            def setUp(_self):
-                _self.subject = None
-
             def test_method(_self):
                 with _self.allowExtra(3):
                     differences = [
