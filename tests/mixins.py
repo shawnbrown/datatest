@@ -66,6 +66,10 @@ class CountTests(object):
         result = self.datasource.count('label1', 'label2', label1='a')
         self.assertEqual(expected, result)
 
+    def test_missing_column(self):
+        with self.assertRaises((KeyError, LookupError)):
+            self.datasource.count('label1XX', ['label2'], label1='a')
+
 
 class OtherTests(object):
     fieldnames = ['label1', 'label2', 'value']

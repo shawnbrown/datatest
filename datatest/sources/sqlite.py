@@ -77,14 +77,19 @@ class SqliteBase(BaseSource):
         return CompareSet(cursor)
 
     def sum(self, column, keys=None, **kwds_filter):
-        """Returns sum of *column* grouped by *keys* as CompareDict."""
+        """Returns :class:`CompareDict` containing sums of *column*
+        values grouped by *keys*.
+        """
         self._assert_columns_exist(column)
         column = self._normalize_column(column)
         sql_functions = 'SUM({0})'.format(column)
         return self._sql_aggregate(sql_functions, keys, **kwds_filter)
 
     def count(self, column, keys=None, **kwds_filter):
-        """."""
+        """Returns :class:`CompareDict` containing count of non-empty
+        *column* values grouped by *keys*.
+        """
+        self._assert_columns_exist(column)
         sql_function = "SUM(CASE COALESCE({0}, '') WHEN '' THEN 0 ELSE 1 END)"
         sql_function = sql_function.format(self._normalize_column(column))
         return self._sql_aggregate(sql_function, keys, **kwds_filter)
