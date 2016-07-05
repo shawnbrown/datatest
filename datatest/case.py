@@ -254,21 +254,6 @@ class DataTestCase(TestCase):
         msg = msg or 'different {0!r} sums'.format(column)
         self.assertEqual(subject_dict, required, msg)
 
-    def assertDataCount(self, column, keys, required=None, msg=None, **kwds_filter):
-        """Test that the count of non-empty values in the
-        :attr:`subject` column matches the the *required* values dict.
-        If *required* is omitted, the **sum** of values in
-        :attr:`reference` column (not the count) is used in its place.
-
-        The *required* argument can be a dict, callable, data source,
-        or None.  See :meth:`assertDataSet
-        <datatest.DataTestCase.assertDataSet>` for more details.
-        """
-        subject_dict = self.subject.count(column, keys, **kwds_filter)
-        required = self._normalize_required(required, 'sum', column, keys, **kwds_filter)
-        msg = msg or 'row counts different than {0!r} sums'.format(column)
-        self.assertEqual(subject_dict, required, msg)
-
     def assertDataUnique(self, columns, msg=None, **kwds_filter):
         """Test that values in column or *columns* of :attr:`subject`
         are unique.  Any duplicate values are raised as Extra
