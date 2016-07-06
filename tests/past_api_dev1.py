@@ -19,7 +19,11 @@ class TestApiDev1(unittest.TestCase):
         self.assertTrue(hasattr(datatest.DataTestCase, 'subjectData'))
         self.assertTrue(hasattr(datatest.DataTestCase, 'referenceData'))
 
+        self.assertTrue(hasattr(datatest.DataTestCase, 'assertDataColumns'))
         self.assertTrue(hasattr(datatest.DataTestCase, 'assertDataCount'))
+        self.assertTrue(hasattr(datatest.DataTestCase, 'assertDataSum'))
+        self.assertTrue(hasattr(datatest.DataTestCase, 'assertDataRegex'))
+        self.assertTrue(hasattr(datatest.DataTestCase, 'assertDataNotRegex'))
 
 
 class TestAssertDataCount(unittest.TestCase):

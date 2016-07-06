@@ -272,7 +272,7 @@ class SqliteSource(SqliteBase):
         discretion.
 
         For example:  If you're using "town" to group aggregation
-        tests (like ``self.assertDataSum('population', ['town'])``),
+        tests (like ``self.assertSubjectSum('population', ['town'])``),
         then you might be able to improve performance by adding an
         index for the "town" column::
 

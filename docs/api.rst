@@ -15,45 +15,38 @@ DataTestCase
     .. autoattribute:: subject
     .. autoattribute:: reference
 
+    .. automethod:: assertEqual
 
     .. _assert-methods:
 
     +-----------------------------------------------------------------+------------------------------------------+
-    | Method                                                          | Checks that                              |
+    | Subject method                                                  | Checks :attr:`subject` to assure that    |
     +=================================================================+==========================================+
-    | :meth:`assertEqual(first, second)                               | *first* matches *second*                 |
-    | <datatest.DataTestCase.assertEqual>`                            |                                          |
+    | :meth:`assertSubjectColumns(required=None)                      | column names match *required*            |
+    | <datatest.DataTestCase.assertSubjectColumns>`                   |                                          |
     +-----------------------------------------------------------------+------------------------------------------+
-    | :meth:`assertDataColumns(required=None)                         | column names match *required*            |
-    | <datatest.DataTestCase.assertDataColumns>`                      |                                          |
+    | :meth:`assertSubjectSet(columns, required=None)                 | one or more *columns* contains           |
+    | <datatest.DataTestCase.assertSubjectSet>`                       | *required*                               |
     +-----------------------------------------------------------------+------------------------------------------+
-    | :meth:`assertDataSet(columns, required=None)                    | one or more *columns* contains           |
-    | <datatest.DataTestCase.assertDataSet>`                          | *required*                               |
+    | :meth:`assertSubjectSum(column, keys, required=None)            | sums of *column* values, grouped by      |
+    | <datatest.DataTestCase.assertSubjectSum>`                       | *keys*, match *required* dict            |
     +-----------------------------------------------------------------+------------------------------------------+
-    | :meth:`assertDataSum(column, keys, required=None)               | sums of *column* values, grouped by      |
-    | <datatest.DataTestCase.assertDataSum>`                          | *keys*, match *required* dict            |
+    | :meth:`assertSubjectRegex(column, required)                     | *required*.search(val) for each val in   |
+    | <datatest.DataTestCase.assertSubjectRegex>`                     | *column*                                 |
     +-----------------------------------------------------------------+------------------------------------------+
-    | :meth:`assertDataCount(column, keys, required=None)             | counts of *column* values, grouped by    |
-    | <datatest.DataTestCase.assertDataCount>`                        | *keys*, match *required* dict            |
+    | :meth:`assertSubjectNotRegex(column, required)                  | not *required*.search(val) for each val  |
+    | <datatest.DataTestCase.assertSubjectNotRegex>`                  | in *column*                              |
     +-----------------------------------------------------------------+------------------------------------------+
-    | :meth:`assertDataRegex(column, required)                        | *required*.search(val) for each val in   |
-    | <datatest.DataTestCase.assertDataRegex>`                        | *column*                                 |
-    +-----------------------------------------------------------------+------------------------------------------+
-    | :meth:`assertDataNotRegex(column, required)                     | not *required*.search(val) for each val  |
-    | <datatest.DataTestCase.assertDataNotRegex>`                     | in *column*                              |
-    +-----------------------------------------------------------------+------------------------------------------+
-    | :meth:`assertDataUnique(columns)                                | values in *columns* are unique and       |
-    | <datatest.DataTestCase.assertDataUnique>`                       | contain no duplicates                    |
+    | :meth:`assertSubjectUnique(columns)                             | values in *columns* are unique and       |
+    | <datatest.DataTestCase.assertSubjectUnique>`                    | contain no duplicates                    |
     +-----------------------------------------------------------------+------------------------------------------+
 
-    .. automethod:: assertEqual
-    .. automethod:: assertDataColumns
-    .. automethod:: assertDataSet
-    .. automethod:: assertDataSum
-    .. automethod:: assertDataCount
-    .. automethod:: assertDataRegex
-    .. automethod:: assertDataNotRegex
-    .. automethod:: assertDataUnique
+    .. automethod:: assertSubjectColumns
+    .. automethod:: assertSubjectSet
+    .. automethod:: assertSubjectSum
+    .. automethod:: assertSubjectRegex
+    .. automethod:: assertSubjectNotRegex
+    .. automethod:: assertSubjectUnique
 
 
     +-----------------------------------------------------------------+------------------------------------------+
@@ -102,12 +95,12 @@ DataTestCase
         Allowing deviations of plus-or-minus a given *tolerance*::
 
             with self.allowDeviation(5):  # tolerance of +/- 5
-                self.assertDataSum('column2', keys=['column1'])
+                self.assertSubjectSum('column2', keys=['column1'])
 
         Specifying different *lower* and *upper* bounds::
 
             with self.allowDeviation(-2, 3):  # tolerance from -2 to +3
-                self.assertDataSum('column2', keys=['column1'])
+                self.assertSubjectSum('column2', keys=['column1'])
 
         All deviations within the accepted tolerance range are
         suppressed but those that exceed the range will trigger
@@ -131,20 +124,20 @@ data being tested.  For example, adding ``state='Ohio'`` to a data assertion
 would limit the test to those records where the "state" column contains the
 value "Ohio"::
 
-    self.assertDataSet('postal_code', state='Ohio')
+    self.assertSubjectSet('postal_code', state='Ohio')
 
 Multiple keywords can be used to further specify the data being tested.  The
 keyword filter ``state='Ohio', city='Columbus'`` limits the test to records
 where the "state" column contains the value "Ohio" *and* the "city" column
 contains the value "Columbus"::
 
-    self.assertDataSet('postal_code', state='Ohio', city='Columbus')
+    self.assertSubjectSet('postal_code', state='Ohio', city='Columbus')
 
 Keyword arguments can also contain multiple values.  Using ``state=['Indiana',
 'Ohio']`` limits the test to records where the "state" column contains the
 value "Indiana" *or* the value "Ohio"::
 
-    self.assertDataSet('postal_code', state=['Indiana', 'Ohio'])
+    self.assertSubjectSet('postal_code', state=['Indiana', 'Ohio'])
 
 
 .. _data-sources:

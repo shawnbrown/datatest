@@ -47,19 +47,19 @@ Here is a short script (test_users.py) to test the data in this file:
 
     def setUpModule():
         global subject
-        subject = datatest.CsvSource('users.csv')
+        subject = datatest.CsvSource('users.csv')  # <- Data under test.
 
     class TestUserData(datatest.DataTestCase):
         def test_columns(self):
-            self.assertDataColumns(required={'user_id', 'active'})
+            self.assertSubjectColumns(required={'user_id', 'active'})
 
         def test_user_id(self):
             def must_be_digit(x):  # <- Helper function.
                 return str(x).isdigit()
-            self.assertDataSet('user_id', required=must_be_digit)
+            self.assertSubjectSet('user_id', required=must_be_digit)
 
         def test_active(self):
-            self.assertDataSet('active', required={'Y', 'N'})
+            self.assertSubjectSet('active', required={'Y', 'N'})
 
     if __name__ == '__main__':
         datatest.main()
@@ -86,7 +86,7 @@ following steps.
 
         def setUpModule():
             global subject
-            subject = datatest.CsvSource('users.csv')
+            subject = datatest.CsvSource('users.csv')  # <- Data under test.
 
     Here, we use a :class:`CsvSource <datatest.CsvSource>` to access data
     from a CSV file.  Data in other formats can be accessed with
@@ -94,14 +94,14 @@ following steps.
 
 2. Check column names (against a set of values):
     To check the columns, we pass a *required* set of names to
-    :meth:`assertDataColumns() <datatest.DataTestCase.assertDataColumns>`:
+    :meth:`assertSubjectColumns() <datatest.DataTestCase.assertSubjectColumns>`:
 
     .. code-block:: python
         :emphasize-lines: 3
 
         class TestUserData(datatest.DataTestCase):
             def test_columns(self):
-                self.assertDataColumns(required={'user_id', 'active'})
+                self.assertSubjectColumns(required={'user_id', 'active'})
 
     This assertion automatically checks the *required* set against the column
     names in the :meth:`subject <datatest.DataTestCase.subject>`
@@ -109,8 +109,8 @@ following steps.
 
 3. Check "user_id" values (with a helper-function):
     To assert that the "user_id" column contains only digits, we define a
-    *reqired* helper-function and pass it to :meth:`assertDataSet()
-    <datatest.DataTestCase.assertDataSet>`.  The helper-function in this
+    *required* helper-function and pass it to :meth:`assertSubjectSet()
+    <datatest.DataTestCase.assertSubjectSet>`.  The helper-function in this
     example takes a single value and returns ``True`` if the value is a digit
     or ``False`` if not:
 
@@ -119,8 +119,8 @@ following steps.
 
             def test_user_id(self):
                 def must_be_digit(x):  # <- Helper function.
-                    return x.isdigit()
-                self.assertDataSet('user_id', required=must_be_digit)
+                    return str(x).isdigit()
+                self.assertSubjectSet('user_id', required=must_be_digit)
 
     This assertion applies the *required* function to all of the data in the
     "user_id" column.  The test passes if the helper function returns True
@@ -128,14 +128,14 @@ following steps.
 
 4. Check "active" values (against a set of values):
     To check that the "active" column contains only "Y" or "N" values, we
-    pass a *required* set of values to :meth:`assertDataSet()
-    <datatest.DataTestCase.assertDataSet>`:
+    pass a *required* set of values to :meth:`assertSubjectSet()
+    <datatest.DataTestCase.assertSubjectSet>`:
 
     .. code-block:: python
         :emphasize-lines: 2
 
             def test_active(self):
-                self.assertDataSet('active', required={'Y', 'N'})
+                self.assertSubjectSet('active', required={'Y', 'N'})
 
 .. note::
     Loading files from disk and establishing database connections are
@@ -175,8 +175,8 @@ Download and run :download:`failure_message_example.zip
     written.
 
 1. Check column names (against a set of values):
-    To check the columns, we call :meth:`assertDataColumns(...)
-    <datatest.DataTestCase.assertDataColumns>`.  But we detect a number of
+    To check the columns, we call :meth:`assertSubjectColumns(...)
+    <datatest.DataTestCase.assertSubjectColumns>`.  But we detect a number of
     differences in this new file:
 
     .. code-block:: none
@@ -184,7 +184,7 @@ Download and run :download:`failure_message_example.zip
 
         Traceback (most recent call last):
           File "test_users_fail.py", line 13, in test_columns
-            self.assertDataColumns({'user_id', 'active'})
+            self.assertSubjectColumns({'user_id', 'active'})
         datatest.error.DataAssertionError: mandatory test failed, stopping
         early: different column names:
          Extra('USER_ID'),
@@ -199,15 +199,15 @@ Download and run :download:`failure_message_example.zip
     convert the CSV column names to lowercase and the failure goes away.
 
 2. Check "user_id" values (with a helper-function):
-    To check the "user_id" column, we call :meth:`assertDataSet(...)
-    <datatest.DataTestCase.assertDataSet>` with a helper function:
+    To check the "user_id" column, we call :meth:`assertSubjectSet(...)
+    <datatest.DataTestCase.assertSubjectSet>` with a helper function:
 
     .. code-block:: none
         :emphasize-lines: 3,5-6
 
         Traceback (most recent call last):
           File "test_users_fail.py", line 19, in test_user_id
-            self.assertDataSet('user_id', must_be_digit)
+            self.assertSubjectSet('user_id', must_be_digit)
         datatest.error.DataAssertionError: different 'user_id' values:
          Invalid('1056A'),
          Invalid('1099B')
@@ -219,8 +219,8 @@ Download and run :download:`failure_message_example.zip
     allows the test to pass.
 
 3. Check "active" values (against a set of values):
-    To check the "active" column, we call :meth:`assertDataSet(...)
-    <datatest.DataTestCase.assertDataSet>` to make sure it contains
+    To check the "active" column, we call :meth:`assertSubjectSet(...)
+    <datatest.DataTestCase.assertSubjectSet>` to make sure it contains
     the required values ("Y" and "N"):
 
     .. code-block:: none
@@ -228,7 +228,7 @@ Download and run :download:`failure_message_example.zip
 
         Traceback (most recent call last):
           File "test_users_fail.py", line 23, in test_active
-            self.assertDataSet('active', {'Y', 'N'})
+            self.assertSubjectSet('active', {'Y', 'N'})
         datatest.error.DataAssertionError: different 'active' values:
          Extra('YES'),
          Extra('NO'),
@@ -301,16 +301,16 @@ from :attr:`reference <datatest.DataTestCase.reference>` are used in its place:
         def test_columns(self):
             """Check that column names match those in reference data."""
             with self.allowExtra():
-                self.assertDataColumns()
+                self.assertSubjectColumns()
 
         def test_county(self):
             """Check that 'county' column matches reference data."""
-            self.assertDataSet('county')
+            self.assertSubjectSet('county')
 
         def test_incidents(self):
             """Check that sum of 'incidents' (grouped by 'county') matches
             reference data."""
-            self.assertDataSum('incidents', keys=['county'])
+            self.assertSubjectSum('incidents', keys=['county'])
 
 
     if __name__ == '__main__':
@@ -339,7 +339,7 @@ To try it for yourself, download and run :download:`reference_data_example.zip
 
 2. Check column names (against reference):
     To check the columns against our reference file, we call
-    :meth:`assertDataColumns() <datatest.DataTestCase.assertDataColumns>`
+    :meth:`assertSubjectColumns() <datatest.DataTestCase.assertSubjectColumns>`
     with no arguments.  Since we've omitted the *required* argument, the
     method compares the :attr:`subject <datatest.DataTestCase.subject>` columns
     against the :attr:`reference <datatest.DataTestCase.reference>` columns:
@@ -350,7 +350,7 @@ To try it for yourself, download and run :download:`reference_data_example.zip
         class TestDetails(datatest.DataTestCase):
             def test_columns(self):
                 with self.allowExtra():
-                    self.assertDataColumns()
+                    self.assertSubjectColumns()
 
     Our :attr:`reference <datatest.DataTestCase.reference>` only contains the
     columns "county" and "incidents".  Since reference data is trusted to be
@@ -364,19 +364,19 @@ To try it for yourself, download and run :download:`reference_data_example.zip
 
 3. Check "county" values (against reference):
     To check the "county" values against our reference data, we call
-    :meth:`assertDataSet() <datatest.DataTestCase.assertDataSet>` and pass
-    in the column name (omitting *required* argument):
+    :meth:`assertSubjectSet() <datatest.DataTestCase.assertSubjectSet>` and
+    pass in the column name (omitting *required* argument):
 
     .. code-block:: python
         :emphasize-lines: 2
 
             def test_county(self):
-                self.assertDataSet('county')
+                self.assertSubjectSet('county')
 
 4. Check the sum of "incidents" grouped by "county" (against reference):
     To check that the sum of incidents by county matches the number
     listed in the :attr:`reference <datatest.DataTestCase.reference>`,
-    we call :meth:`assertDataSum() <datatest.DataTestCase.assertDataSum>`
+    we call :meth:`assertSubjectSum() <datatest.DataTestCase.assertSubjectSum>`
     and pass in the column we want to sum as well as the columns we want
     to group by:
 
@@ -384,7 +384,7 @@ To try it for yourself, download and run :download:`reference_data_example.zip
         :emphasize-lines: 2
 
             def test_incidents(self):
-                self.assertDataSum('incidents', keys=['county'])
+                self.assertSubjectSum('incidents', keys=['county'])
 
 
 Allowed Differences
@@ -404,7 +404,7 @@ Warren County and 25 less in Lake County)::
 
     Traceback (most recent call last):
       File "test_survey.py", line 35, in test_population
-        self.assertDataSum('population', ['county'])
+        self.assertSubjectSum('population', ['county'])
     datatest.case.DataAssertionError: different 'population' values:
      Deviation(-25, 3184, county='Lake'),
      Deviation(+8, 11771, county='Warren')
@@ -422,7 +422,7 @@ the test runs without failing:
             Deviation(+8, 11771, county='Warren'),
         ]
         with self.allowOnly(diff):
-            self.assertDataSum('population', ['county'])
+            self.assertSubjectSum('population', ['county'])
 
 To allow several numeric differences at once, you can use the
 :meth:`allowDeviation <datatest.DataTestCase.allowDeviation>`
@@ -434,7 +434,7 @@ or :meth:`allowPercentDeviation
 
     def test_households(self):
         with self.allowDeviation(25):
-            self.assertDataSum('population', ['county'])
+            self.assertSubjectSum('population', ['county'])
 
 
 Command-Line Interface

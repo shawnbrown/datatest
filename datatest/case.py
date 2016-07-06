@@ -7,10 +7,10 @@ from unittest import TestCase
 from .utils.builtins import *
 from .utils import collections
 
-from .compare import CompareSet  # TODO!!!: Remove after assertDataColumns fixed!
+from .compare import CompareSet  # TODO!!!: Remove after assertSubjectColumns fixed!
 from .compare import BaseCompare
 from .differences import _make_decimal
-from .differences import Extra  # TODO: Move when assertDataUnique us moved.
+from .differences import Extra  # TODO: Move when assertSubjectUnique us moved.
 from .error import DataAssertionError
 from .sources.base import BaseSource
 
@@ -165,20 +165,20 @@ class DataTestCase(TestCase):
             super(DataTestCase, self).assertEqual(first, second, msg)
             # Called super() using older convention for 2.x support.
 
-    def assertDataColumns(self, required=None, msg=None):
+    def assertSubjectColumns(self, required=None, msg=None):
         """Test that the column names of :attr:`subject` match the
         *required* values.  The *required* argument can be a collection,
         callable, data source, or None::
 
             def test_columns(self):
                 required_names = {'col1', 'col2'}
-                self.assertDataColumns(required_names)
+                self.assertSubjectColumns(required_names)
 
         If *required* is omitted, the column names from
         :attr:`reference` are used in its place::
 
             def test_columns(self):
-                self.assertDataColumns()
+                self.assertSubjectColumns()
         """
         # TODO: Explore the idea of implementing CompareList to assert
         # column order.
@@ -187,20 +187,20 @@ class DataTestCase(TestCase):
         msg = msg or 'different column names'
         self.assertEqual(subject_set, required, msg)
 
-    def assertDataSet(self, columns, required=None, msg=None, **kwds_filter):
+    def assertSubjectSet(self, columns, required=None, msg=None, **kwds_filter):
         """Test that the column or *columns* in :attr:`subject` contain
         the *required* values::
 
             def test_column1(self):
                 required_values = {'a', 'b'}
-                self.assertDataSet('col1', required_values)
+                self.assertSubjectSet('col1', required_values)
 
         If *columns* is a sequence of strings, we can check for distinct
         groups of values::
 
             def test_column1and2(self):
                 required_groups = {('a', 'x'), ('a', 'y'), ('b', 'x'), ('b', 'y')}
-                self.assertDataSet(['col1', 'col2'], required_groups)
+                self.assertSubjectSet(['col1', 'col2'], required_groups)
 
         If the *required* argument is a helper-function (or other
         callable), it is used as a key which must return True for
@@ -209,30 +209,30 @@ class DataTestCase(TestCase):
             def test_column1(self):
                 def length_of_one(x):  # <- Helper function.
                     return len(str(x)) == 1
-                self.assertDataSet('col1', length_of_one)
+                self.assertSubjectSet('col1', length_of_one)
 
         If the *required* argument is omitted, then values from
         :attr:`reference` will be used in its place::
 
             def test_column1(self):
-                self.assertDataSet('col1')
+                self.assertSubjectSet('col1')
 
             def test_column1and2(self):
-                self.assertDataSet(['col1', 'col2'])
+                self.assertSubjectSet(['col1', 'col2'])
         """
         subject_set = self.subject.distinct(columns, **kwds_filter)
         required = self._normalize_required(required, 'distinct', columns, **kwds_filter)
         msg = msg or 'different {0!r} values'.format(columns)
         self.assertEqual(subject_set, required, msg)
 
-    def assertDataSum(self, column, keys, required=None, msg=None, **kwds_filter):
+    def assertSubjectSum(self, column, keys, required=None, msg=None, **kwds_filter):
         """Test that the sum of *column* in :attr:`subject`, when
         grouped by *keys*, matches a dict of *required* values::
 
             per_dept = {'finance': 146564,
                         'marketing': 152530,
                         'research': 158397}
-            self.assertDataSum('budget', 'department', per_dept)
+            self.assertSubjectSum('budget', 'department', per_dept)
 
         Grouping by multiple *keys*::
 
@@ -242,19 +242,19 @@ class DataTestCase(TestCase):
                             ('marketing', 'q2'): 65589,
                             ('research', 'q1'): 93454,
                             ('research', 'q2'): 64943}
-            self.assertDataSum('budget', ['department', 'quarter'], dept_quarter)
+            self.assertSubjectSum('budget', ['department', 'quarter'], dept_quarter)
 
         If *required* argument is omitted, then values from
         :attr:`reference` are used in its place::
 
-            self.assertDataSum('budget', ['department', 'quarter'])
+            self.assertSubjectSum('budget', ['department', 'quarter'])
         """
         subject_dict = self.subject.sum(column, keys, **kwds_filter)
         required = self._normalize_required(required, 'sum', column, keys, **kwds_filter)
         msg = msg or 'different {0!r} sums'.format(column)
         self.assertEqual(subject_dict, required, msg)
 
-    def assertDataUnique(self, columns, msg=None, **kwds_filter):
+    def assertSubjectUnique(self, columns, msg=None, **kwds_filter):
         """Test that values in column or *columns* of :attr:`subject`
         are unique.  Any duplicate values are raised as Extra
         differences.
@@ -292,13 +292,13 @@ class DataTestCase(TestCase):
             default_msg = 'values in {0!r} are not unique'.format(columns)
             self.fail(msg or default_msg, differences)
 
-    def assertDataRegex(self, column, required, msg=None, **kwds_filter):
+    def assertSubjectRegex(self, column, required, msg=None, **kwds_filter):
         """Test that *column* in :attr:`subject` contains values that
         match a *required* regular expression::
 
             def test_date(self):
                 wellformed = r'\d\d\d\d-\d\d-\d\d'  # Matches YYYY-MM-DD.
-                self.assertDataRegex('date', wellformed)
+                self.assertSubjectRegex('date', wellformed)
 
         The *required* argument must be a string or a compiled regular
         expression object (it can not be omitted).
@@ -310,13 +310,13 @@ class DataTestCase(TestCase):
         msg = msg or 'non-matching {0!r} values'.format(column)
         self.assertEqual(subject_result, func, msg)
 
-    def assertDataNotRegex(self, column, required, msg=None, **kwds_filter):
+    def assertSubjectNotRegex(self, column, required, msg=None, **kwds_filter):
         """Test that *column* in :attr:`subject` contains values that
         do **not** match a *required* regular expression::
 
             def test_name(self):
                 bad_whitespace = r'^\s|\s$'  # Leading or trailing whitespace.
-                self.assertDataNotRegex('name', bad_whitespace)
+                self.assertSubjectNotRegex('name', bad_whitespace)
 
         The *required* argument must be a string or a compiled regular
         expression object (it can not be omitted).
@@ -337,7 +337,7 @@ class DataTestCase(TestCase):
                 Missing('bar'),
             ]
             with self.allowOnly(differences):
-                self.assertDataSet('column1')
+                self.assertSubjectSet('column1')
 
         If the raised differences do not match *differences*, the test
         will fail with a DataAssertionError of the remaining
@@ -349,7 +349,7 @@ class DataTestCase(TestCase):
         Using a single difference::
 
             with self.allowOnly(Extra('foo')):
-                self.assertDataSet('column2')
+                self.assertSubjectSet('column2')
 
         When using a dictionary, the keys are strings that provide
         context (for future reference and derived reports) and the
@@ -366,7 +366,7 @@ class DataTestCase(TestCase):
                 ]
             }
             with self.allowOnly(differences):
-                self.assertDataSum('population', ['town'])
+                self.assertSubjectSum('population', ['town'])
         """
         return _AllowOnly(differences, self, msg)
 
@@ -375,13 +375,13 @@ class DataTestCase(TestCase):
         triggering a test failure::
 
             with self.allowAny(10):  # Allows up to ten differences.
-                self.assertDataSet('city_name')
+                self.assertSubjectSet('city_name')
 
         If *number* is omitted, allows an unlimited number of
         differences as long as they match a given keyword filter::
 
             with self.allowAny(city_name='not a city'):
-                self.assertDataSum('population', ['city_name'])
+                self.assertSubjectSum('population', ['city_name'])
 
         If the count of differences exceeds the given *number*, the
         test case will fail with a DataAssertionError containing all
@@ -394,7 +394,7 @@ class DataTestCase(TestCase):
         triggering a test failure::
 
             with self.allowMissing():  # Allows Missing differences.
-                self.assertDataSet('column1')
+                self.assertSubjectSet('column1')
         """
         return _AllowMissing(self, number, msg)
 
@@ -403,7 +403,7 @@ class DataTestCase(TestCase):
         a test failure::
 
             with self.allowExtra():  # Allows Extra differences.
-                self.assertDataSet('column1')
+                self.assertSubjectSet('column1')
         """
         return _AllowExtra(self, number, msg)
 
@@ -418,12 +418,12 @@ class DataTestCase(TestCase):
         Allowing deviations of plus-or-minus a given *tolerance*::
 
             with self.allowDeviation(5):  # tolerance of +/- 5
-                self.assertDataSum('column2', keys=['column1'])
+                self.assertSubjectSum('column2', keys=['column1'])
 
         Specifying different *lower* and *upper* bounds::
 
             with self.allowDeviation(-2, 3):  # tolerance from -2 to +3
-                self.assertDataSum('column2', keys=['column1'])
+                self.assertSubjectSum('column2', keys=['column1'])
 
         All deviations within the accepted tolerance range are
         suppressed but those that exceed the range will trigger
@@ -448,7 +448,7 @@ class DataTestCase(TestCase):
         percentage of the matching reference value::
 
             with self.allowPercentDeviation(0.02):  # Allows +/- 2%
-                self.assertDataSum('column2', keys=['column1'])
+                self.assertSubjectSum('column2', keys=['column1'])
 
         If differences exceed *deviation*, the test case will fail with
         a DataAssertionError containing the excessive differences.

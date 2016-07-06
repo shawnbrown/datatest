@@ -6,6 +6,13 @@ from datatest import DataTestCase
 
 DataTestCase.subjectData = DataTestCase.subject
 DataTestCase.referenceData = DataTestCase.reference
+DataTestCase.assertDataColumns = DataTestCase.assertSubjectColumns
+DataTestCase.assertDataSet = DataTestCase.assertSubjectSet
+DataTestCase.assertDataSum = DataTestCase.assertSubjectSum
+DataTestCase.assertDataRegex = DataTestCase.assertSubjectRegex
+DataTestCase.assertDataNotRegex = DataTestCase.assertSubjectNotRegex
+#datatest.DataAssertionError = datatest.DataError
+
 
 _wrapped_find_data_source = DataTestCase._find_data_source
 @staticmethod

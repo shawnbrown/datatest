@@ -3,13 +3,14 @@
 from __future__ import absolute_import
 from datatest import DataTestCase
 
+from .api_dev1 import _assertDataCount
 
-DataTestCase.assertColumnSet = DataTestCase.assertDataColumns
-DataTestCase.assertValueSet = DataTestCase.assertDataSet
-DataTestCase.assertValueSum = DataTestCase.assertDataSum
-DataTestCase.assertValueCount = DataTestCase.assertDataCount
-DataTestCase.assertValueRegex = DataTestCase.assertDataRegex
-DataTestCase.assertValueNotRegex = DataTestCase.assertDataNotRegex
+DataTestCase.assertColumnSet = DataTestCase.assertSubjectColumns
+DataTestCase.assertValueSet = DataTestCase.assertSubjectSet
+DataTestCase.assertValueSum = DataTestCase.assertSubjectSum
+DataTestCase.assertValueRegex = DataTestCase.assertSubjectRegex
+DataTestCase.assertValueNotRegex = DataTestCase.assertSubjectNotRegex
+DataTestCase.assertValueCount = _assertDataCount
 
 
 def _assertColumnSubset(self, ref=None, msg=None):
