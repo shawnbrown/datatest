@@ -13,12 +13,19 @@ class TestApiDev0(unittest.TestCase):
         import datatest
 
         from datatest.__past__ import api_dev0  # <- MONKEY PATCH!!!
-        self.assertTrue(hasattr(datatest.DataTestCase, 'subjectData'))
-        self.assertTrue(hasattr(datatest.DataTestCase, 'referenceData'))
 
         self.assertTrue(hasattr(datatest, 'DataAssertionError'))
 
-        from datatest.__past__ import assertions_alpha  # <- MONKEY PATCH!!!
+        # DataTest properties.
+        self.assertTrue(hasattr(datatest.DataTestCase, 'subjectData'))
+        self.assertTrue(hasattr(datatest.DataTestCase, 'referenceData'))
+
+        # DataTest allowances.
+        self.assertTrue(hasattr(datatest.DataTestCase, 'allowSpecified'))
+        self.assertTrue(hasattr(datatest.DataTestCase, 'allowUnspecified'))
+        self.assertTrue(hasattr(datatest.DataTestCase, 'allowDeviationPercent'))
+
+        # DataTest assertions.
         self.assertTrue(hasattr(datatest.DataTestCase, 'assertColumnSet'))
         self.assertTrue(hasattr(datatest.DataTestCase, 'assertColumnSubset'))
         self.assertTrue(hasattr(datatest.DataTestCase, 'assertColumnSuperset'))
@@ -29,15 +36,6 @@ class TestApiDev0(unittest.TestCase):
         self.assertTrue(hasattr(datatest.DataTestCase, 'assertValueCount'))
         self.assertTrue(hasattr(datatest.DataTestCase, 'assertValueRegex'))
         self.assertTrue(hasattr(datatest.DataTestCase, 'assertValueNotRegex'))
-
-        from datatest.__past__ import allowances_alpha  # <- MONKEY PATCH!!!
-        self.assertTrue(hasattr(datatest.DataTestCase, 'allowSpecified'))
-        self.assertTrue(hasattr(datatest.DataTestCase, 'allowUnspecified'))
-        self.assertTrue(hasattr(datatest.DataTestCase, 'allowDeviationPercent'))
-
-        # Test old compatibility imports.
-        #from datatest.__past__ import assertions_alpha  # <- MONKEY PATCH!!!
-        #from datatest.__past__ import allowances_alpha  # <- MONKEY PATCH!!!
 
 
 if __name__ == '__main__':
