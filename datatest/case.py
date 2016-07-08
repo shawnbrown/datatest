@@ -35,7 +35,7 @@ from .allow import _AllowPercentDeviation
 class DataTestCase(TestCase):
     """This class wraps and extends unittest.TestCase and implements
     additional properties and methods for testing data quality.  When a
-    data assertion fails, it raises a DataAssertionError which
+    data assertion fails, it raises a :class:`DataAssertionError` which
     contains a list of detected errors.
 
     In addition to the new functionality, the familiar TestCase methods
@@ -340,7 +340,7 @@ class DataTestCase(TestCase):
                 self.assertSubjectSet('column1')
 
         If the raised differences do not match *differences*, the test
-        will fail with a DataAssertionError of the remaining
+        will fail with a :class:`DataAssertionError` of the remaining
         differences.
 
         In the above example, *differences* is a list but it is also
@@ -384,8 +384,8 @@ class DataTestCase(TestCase):
                 self.assertSubjectSum('population', ['city_name'])
 
         If the count of differences exceeds the given *number*, the
-        test case will fail with a DataAssertionError containing all
-        observed differences.
+        test case will fail with a :class:`DataAssertionError`
+        containing all observed differences.
         """
         return _AllowAny(self, number, msg, **kwds_filter)
 
@@ -451,7 +451,8 @@ class DataTestCase(TestCase):
                 self.assertSubjectSum('column2', keys=['column1'])
 
         If differences exceed *deviation*, the test case will fail with
-        a DataAssertionError containing the excessive differences.
+        a :class:`DataAssertionError` containing the excessive
+        differences.
         """
         tolerance = _make_decimal(deviation)
         return _AllowPercentDeviation(deviation, self, msg, **kwds_filter)
@@ -459,7 +460,8 @@ class DataTestCase(TestCase):
     def fail(self, msg, differences=None):
         """Signals a test failure unconditionally, with *msg* for the
         error message.  If *differences* is provided, a
-        DataAssertionError is raised instead of an AssertionError.
+        :class:`DataAssertionError` is raised instead of an
+        AssertionError.
         """
         if differences:
             try:

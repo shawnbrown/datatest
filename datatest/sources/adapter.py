@@ -21,28 +21,29 @@ class AdapterSource(BaseSource):
     column names. The *interface* should be a sequence of 2-tuples where
     the first item is the existing column name and the second item is
     the desired column name. If column order is not important, the
-    *interface* can, alternatively, be a dict.
+    *interface* can, alternatively, be a dictionary.
 
-    For example, a CSV file that contains the columns 'old_1', 'old_2',
-    and 'old_4' can be adapted to behave as if it has the columns
-    'new_1', 'new_2', 'new_3' and 'new_4' with the following::
+    For example, a CSV file that contains the columns 'AAA', 'BBB',
+    and 'DDD' can be adapted to behave as if it has the columns
+    'AAA', 'BBB', 'CCC' and 'DDD' with the following::
 
         source = CsvSource('mydata.csv')
         interface = [
-            ('old_1', 'new_1'),
-            ('old_2', 'new_2'),
-            (None,    'new_3'),
-            ('old_4', 'new_4'),
+            ('AAA', 'AAA'),
+            ('BBB', 'BBB'),
+            (None,  'CCC'),
+            ('DDD', 'DDD'),
         ]
         subject = AdapterSource(source, interface)
 
-    An AdapterSource can be thought of as a virtual source that renames,
-    reorders, adds, or removes columns of the original *source*.
+    An :class:`AdapterSource` can be thought of as a virtual source that
+    renames, reorders, adds, or removes columns of the original
+    *source*.
 
     To add a column that does not exist in original, use None in place
-    of a column name (see 'new_3', above). Columns mapped to None will
-    contain *missing* values (defaults to empty string).  To remove a
-    column, simply omit it from the interface.
+    of a column name (see column 'CCC', above). Columns mapped to None
+    will contain *missing* values (defaults to empty string).  To remove
+    a column, simply omit it from the interface.
 
     The original source can be accessed via the :attr:`__wrapped__`
     property.

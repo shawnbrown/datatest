@@ -17,24 +17,6 @@ provide testing tools for asserting data correctness.
 * Development:
    - https://github.com/shawnbrown/datatest
 
-Data errors can be identified quickly with a list of differences
-showing where data fails to satisfy a given requirement::
-
-    Traceback (most recent call last):
-      File "test_census_update.py", line 13, in test_columns
-        self.assertSubjectSum('population', ['county'])
-    datatest.error.DataError: different column sums:
-     Deviation(-1, 71372, county='Franklin'),
-     Deviation(+8, 160248, county='Jackson'),
-     Deviation(+1, 116229, county='Jefferson'),
-     Deviation(-3, 17581, county='Washington')
-
-When some differences are acceptable, they can be allowed using a
-context manager::
-
-    with self.allowDeviation(8):  # Allows +/- 8.
-        self.assertSubjectSum('population', ['county'])
-
 Datatest can help prepare messy data that needs to be cleaned,
 integrated, formatted, and verified. It can provide structure for the
 tidying process, automate checklists, log discrepancies, and measure

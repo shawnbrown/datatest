@@ -214,8 +214,6 @@ SqliteSource
 
 .. _extra-sources:
 
-If you have the appropriate, optional dependencies installed, datatest
-provides additional data source options:
 
 ExcelSource
 ===========
@@ -249,9 +247,6 @@ AdapterSource
 ******************
 Comparison Objects
 ******************
-
-Querying a data source with various methods will return a CompareSet or
-a CompareDict.
 
 
 CompareSet

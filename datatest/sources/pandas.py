@@ -19,11 +19,11 @@ class PandasSource(BaseSource):
 
         subject = datatest.PandasSource(df)
 
-    This is an optional data source that requires the third-party
-    library `pandas <https://pypi.python.org/pypi/pandas>`_.
+    .. note::
+        This data source is optional---it requires the third-party
+        library `pandas <https://pypi.python.org/pypi/pandas>`_.
 
     .. todo::
-
         Optimize.  PandasSource is not yet optimized for speed (although
         it will be in the future).  Testing large DataFrames will be
         slow---it is faster to use CsvSource or SqliteSource.

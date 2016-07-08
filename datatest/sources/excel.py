@@ -13,8 +13,9 @@ class ExcelSource(SqliteBase):
 
         subject = datatest.ExcelSource('mydata.xlsx', 'Sheet 2')
 
-    This is an optional data source that requires the third-party
-    library `xlrd <https://pypi.python.org/pypi/xlrd>`_.
+    .. note::
+        This data source is optional---it requires the third-party
+        library `xlrd <https://pypi.python.org/pypi/xlrd>`_.
     """
     def __init__(self, path, worksheet=None, in_memory=False):
         """Initialize self."""
