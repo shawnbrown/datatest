@@ -16,6 +16,8 @@ class TestApiDev0(unittest.TestCase):
         self.assertTrue(hasattr(datatest.DataTestCase, 'subjectData'))
         self.assertTrue(hasattr(datatest.DataTestCase, 'referenceData'))
 
+        self.assertTrue(hasattr(datatest, 'DataAssertionError'))
+
         from datatest.__past__ import assertions_alpha  # <- MONKEY PATCH!!!
         self.assertTrue(hasattr(datatest.DataTestCase, 'assertColumnSet'))
         self.assertTrue(hasattr(datatest.DataTestCase, 'assertColumnSubset'))

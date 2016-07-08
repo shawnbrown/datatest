@@ -25,6 +25,8 @@ class TestApiDev1(unittest.TestCase):
         self.assertTrue(hasattr(datatest.DataTestCase, 'assertDataRegex'))
         self.assertTrue(hasattr(datatest.DataTestCase, 'assertDataNotRegex'))
 
+        self.assertTrue(hasattr(datatest, 'DataAssertionError'))
+
 
 class TestAssertDataCount(unittest.TestCase):
     """The assertDataCount() method was removed from DataTestCase."""
@@ -110,7 +112,7 @@ class TestAssertDataCount(unittest.TestCase):
                 _self.assertDataCount('total_rows', ['label1'], required)  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = ("DataAssertionError: row counts different than 'total_rows' sums:\n"
+        pattern = ("DataError: row counts different than 'total_rows' sums:\n"
                    " Deviation\(\+1, 4, label1=u?'a'\),\n"
                    " Deviation\(-1, 3, label1=u?'b'\)")
         self.assertRegex(failure, pattern)

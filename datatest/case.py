@@ -11,7 +11,7 @@ from .compare import CompareSet  # TODO!!!: Remove after assertSubjectColumns fi
 from .compare import BaseCompare
 from .differences import _make_decimal
 from .differences import Extra  # TODO: Move when assertSubjectUnique us moved.
-from .error import DataAssertionError
+from .error import DataError
 from .sources.base import BaseSource
 
 
@@ -35,8 +35,8 @@ from .allow import _AllowPercentDeviation
 class DataTestCase(TestCase):
     """This class wraps and extends unittest.TestCase and implements
     additional properties and methods for testing data quality.  When a
-    data assertion fails, it raises a :class:`DataAssertionError` which
-    contains a list of detected errors.
+    data assertion fails, it raises a :class:`DataError` which contains
+    a list of detected errors.
 
     In addition to the new functionality, the familiar TestCase methods
     (like setUp, assertEqual, etc.) are still available.
@@ -340,7 +340,7 @@ class DataTestCase(TestCase):
                 self.assertSubjectSet('column1')
 
         If the raised differences do not match *differences*, the test
-        will fail with a :class:`DataAssertionError` of the remaining
+        will fail with a :class:`DataError` of the remaining
         differences.
 
         In the above example, *differences* is a list but it is also
@@ -384,8 +384,8 @@ class DataTestCase(TestCase):
                 self.assertSubjectSum('population', ['city_name'])
 
         If the count of differences exceeds the given *number*, the
-        test case will fail with a :class:`DataAssertionError`
-        containing all observed differences.
+        test case will fail with a :class:`DataError` containing all
+        observed differences.
         """
         return _AllowAny(self, number, msg, **kwds_filter)
 
@@ -451,8 +451,7 @@ class DataTestCase(TestCase):
                 self.assertSubjectSum('column2', keys=['column1'])
 
         If differences exceed *deviation*, the test case will fail with
-        a :class:`DataAssertionError` containing the excessive
-        differences.
+        a :class:`DataError` containing the excessive differences.
         """
         tolerance = _make_decimal(deviation)
         return _AllowPercentDeviation(deviation, self, msg, **kwds_filter)
@@ -460,8 +459,7 @@ class DataTestCase(TestCase):
     def fail(self, msg, differences=None):
         """Signals a test failure unconditionally, with *msg* for the
         error message.  If *differences* is provided, a
-        :class:`DataAssertionError` is raised instead of an
-        AssertionError.
+        :class:`DataError` is raised instead of an AssertionError.
         """
         if differences:
             try:
@@ -472,7 +470,7 @@ class DataTestCase(TestCase):
                 required = self.reference
             except NameError:
                 required = None
-            raise DataAssertionError(msg, differences, subject, required)
+            raise DataError(msg, differences, subject, required)
         else:
             raise self.failureException(msg)
 

@@ -157,11 +157,11 @@ following steps.
 Understanding Failure Messages
 ==============================
 
-When a data assertion fails, a :class:`DataAssertionError
-<datatest.DataAssertionError>` is raised that contains a list of differences
-detected in the subject (the data under test).  To demonstrate this, we will
-use the same tests shown in the previous example but we'll check a CSV file
-that contains a number of data errors---these errors will trigger test failures.
+When a data assertion fails, a :class:`DataError <datatest.DataError>` is
+raised that contains a list of differences detected in the subject (the data
+under test).  To demonstrate this, we will use the same tests shown in the
+previous example but we'll check a CSV file that contains a number of data
+errors---these errors will trigger test failures.
 
 Download and run :download:`failure_message_example.zip
 <_static/failure_message_example.zip>` to see for yourself.
@@ -185,7 +185,7 @@ Download and run :download:`failure_message_example.zip
         Traceback (most recent call last):
           File "test_users_fail.py", line 13, in test_columns
             self.assertSubjectColumns({'user_id', 'active'})
-        datatest.error.DataAssertionError: mandatory test failed, stopping
+        datatest.error.DataError: mandatory test failed, stopping
         early: different column names:
          Extra('USER_ID'),
          Extra('ACTIVE'),
@@ -208,7 +208,7 @@ Download and run :download:`failure_message_example.zip
         Traceback (most recent call last):
           File "test_users_fail.py", line 19, in test_user_id
             self.assertSubjectSet('user_id', must_be_digit)
-        datatest.error.DataAssertionError: different 'user_id' values:
+        datatest.error.DataError: different 'user_id' values:
          Invalid('1056A'),
          Invalid('1099B')
 
@@ -229,7 +229,7 @@ Download and run :download:`failure_message_example.zip
         Traceback (most recent call last):
           File "test_users_fail.py", line 23, in test_active
             self.assertSubjectSet('active', {'Y', 'N'})
-        datatest.error.DataAssertionError: different 'active' values:
+        datatest.error.DataError: different 'active' values:
          Extra('YES'),
          Extra('NO'),
          Extra('y'),
@@ -405,7 +405,7 @@ Warren County and 25 less in Lake County)::
     Traceback (most recent call last):
       File "test_survey.py", line 35, in test_population
         self.assertSubjectSum('population', ['county'])
-    datatest.case.DataAssertionError: different 'population' values:
+    datatest.case.DataError: different 'population' values:
      Deviation(-25, 3184, county='Lake'),
      Deviation(+8, 11771, county='Warren')
 

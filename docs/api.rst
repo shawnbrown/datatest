@@ -269,7 +269,7 @@ CompareDict
 Error and Differences
 *********************
 
-.. autoclass:: datatest.DataAssertionError
+.. autoclass:: datatest.DataError
    :members:
 
 .. autoclass:: datatest.Extra

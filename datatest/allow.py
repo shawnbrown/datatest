@@ -5,7 +5,7 @@ from .differences import _make_decimal
 from .differences import BaseDifference
 from .differences import Missing
 from .differences import Extra
-from .error import DataAssertionError
+from .error import DataError
 #from .differences import Invalid
 #from .differences import Deviation
 
@@ -56,7 +56,7 @@ class _BaseAllowance(object):
         except NameError:
             required = None
 
-        exc = DataAssertionError(msg, differences, subject, required)
+        exc = DataError(msg, differences, subject, required)
         exc.__cause__ = None  # Suppress context (usu. "raise ... from None")
         raise exc             # using verbose alternative to support older
                               # Python versions--see PEP 415.

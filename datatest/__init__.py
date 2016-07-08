@@ -10,7 +10,7 @@ from .sources.csv import CsvSource
 from .sources.excel import ExcelSource
 from .sources.pandas import PandasSource
 
-from .error import DataAssertionError
+from .error import DataError
 
 from .differences import Extra
 from .differences import Missing
@@ -52,7 +52,7 @@ __all__ = [
     'CompareDict',
 
     # Error.
-    'DataAssertionError',
+    'DataError',
 
     # Differences.
     'Extra',
