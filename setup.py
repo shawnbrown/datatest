@@ -122,9 +122,9 @@ if __name__ == '__main__':
 
 # Release Checklist
 # -----------------
-# Set version number in:
+# Make sure correct version number is set in:
 #   datatest/__init__.py
-#   docs/config.py
+#   docs/conf.py
 # Commit and push version change to upstream repository.
 # Add version tag to upstream repository.
 # Remove all existing files in the dist/ folder.
