@@ -106,12 +106,30 @@ DataTestCase
         suppressed but those that exceed the range will trigger
         a test failure.
 
-        .. note:: The "``tolerance, /,``" part of this method's
-                  signature means that *tolerance* is a positional-only
-                  parameter---it cannot be specified using keyword
-                  syntax.
+    .. method:: allowPercentDeviation(tolerance, /, msg=None, **kwds_filter)
+                allowPercentDeviation(lower, upper, msg=None, **kwds_filter)
 
-    .. automethod:: allowPercentDeviation
+        Context manager to allow for deviations from required numeric
+        values within a given error percentage without triggering a test
+        failure.
+
+        Allowing deviations of plus-or-minus a given *tolerance*::
+
+            with self.allowDeviation(0.02):  # tolerance of +/- 2%
+                self.assertSubjectSum('column2', keys=['column1'])
+
+        Specifying different *lower* and *upper* bounds::
+
+            with self.allowDeviation(-0.02, 0.03):  # tolerance from -2% to +3%
+                self.assertSubjectSum('column2', keys=['column1'])
+
+        All deviations within the accepted tolerance range are
+        suppressed but those that exceed the range will trigger a test
+        failure.
+
+    .. note:: The "``tolerance, /,``" part of these method signatures
+              mean that *tolerance* is a positional-only parameter---it
+              cannot be specified using keyword syntax.
 
 
 .. _kwds-filter:

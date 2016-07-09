@@ -429,8 +429,9 @@ class DataTestCase(TestCase):
         suppressed but those that exceed the range will trigger
         a test failure.
         """
-        if msg == None and isinstance(upper, str):  # Adjust positional 'msg'
-            upper, msg = None, upper                # for "tolerance" syntax.
+        if msg == None and isinstance(upper, str):
+            msg = upper   # Adjust positional 'msg' for "tolerance" syntax.
+            upper = None
 
         if upper == None:
             tolerance = lower
@@ -439,22 +440,45 @@ class DataTestCase(TestCase):
                                     'bounds, use "lower, upper" syntax.')
             lower, upper = -tolerance, tolerance
 
-        assert lower <= 0 <= upper
+        assert lower <= upper
         return _AllowDeviation(lower, upper, self, msg, **kwds_filter)
 
-    def allowPercentDeviation(self, deviation, msg=None, **kwds_filter):
-        """Context manager to allow positive or negative numeric
-        differences of less than or equal to the given *deviation* as a
-        percentage of the matching reference value::
+    def allowPercentDeviation(self, lower, upper=None, msg=None, **kwds_filter):
+        """
+        allowPercentDeviation(tolerance, /, msg=None, **kwds_filter)
+        allowPercentDeviation(lower, upper, msg=None, **kwds_filter)
 
-            with self.allowPercentDeviation(0.02):  # Allows +/- 2%
+        Context manager to allow for deviations from required numeric
+        values within a given error percentage without triggering a test
+        failure.
+
+        Allowing deviations of plus-or-minus a given *tolerance*::
+
+            with self.allowDeviation(0.02):  # tolerance of +/- 2%
                 self.assertSubjectSum('column2', keys=['column1'])
 
-        If differences exceed *deviation*, the test case will fail with
-        a :class:`DataError` containing the excessive differences.
+        Specifying different *lower* and *upper* bounds::
+
+            with self.allowDeviation(-0.02, 0.03):  # tolerance from -2% to +3%
+                self.assertSubjectSum('column2', keys=['column1'])
+
+        All deviations within the accepted tolerance range are
+        suppressed but those that exceed the range will trigger a test
+        failure.
         """
-        tolerance = _make_decimal(deviation)
-        return _AllowPercentDeviation(deviation, self, msg, **kwds_filter)
+        if msg == None and isinstance(upper, str):
+            msg = upper   # Adjust positional 'msg' for "tolerance" syntax.
+            upper = None
+
+        if upper == None:
+            tolerance = lower
+            assert tolerance >= 0, ('tolerance should not be negative, '
+                                    'for full control of lower and upper '
+                                    'bounds, use "lower, upper" syntax.')
+            lower, upper = -tolerance, tolerance
+
+        assert lower <= upper
+        return _AllowPercentDeviation(lower, upper, self, msg, **kwds_filter)
 
     def fail(self, msg, differences=None):
         """Signals a test failure unconditionally, with *msg* for the
@@ -475,14 +499,22 @@ class DataTestCase(TestCase):
             raise self.failureException(msg)
 
 
-# Prettify signature of DataTestCase.allowDeviation() by making "tolerance"
-# syntax the default option when introspected.
+# Prettify signature of allowDeviation() and allowPercentDeviation() by
+# making the "tolerance" syntax the default option when introspected.
 try:
+    # DataTestCase.allowDeviation():
     _sig = inspect.signature(DataTestCase.allowDeviation)
     _self, _lower, _upper, _msg, _kwds_filter = _sig.parameters.values()
     _self = _self.replace(kind=inspect.Parameter.POSITIONAL_ONLY)
     _tolerance = inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY)
     _sig = _sig.replace(parameters=[_self, _tolerance, _msg, _kwds_filter])
     DataTestCase.allowDeviation.__signature__ = _sig
+    # DataTestCase.allowPercentDeviation():
+    _sig = inspect.signature(DataTestCase.allowPercentDeviation)
+    _self, _lower, _upper, _msg, _kwds_filter = _sig.parameters.values()
+    _self = _self.replace(kind=inspect.Parameter.POSITIONAL_ONLY)
+    _tolerance = inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY)
+    _sig = _sig.replace(parameters=[_self, _tolerance, _msg, _kwds_filter])
+    DataTestCase.allowPercentDeviation.__signature__ = _sig
 except AttributeError:  # Fails for Python 3.2 and earlier.
     pass

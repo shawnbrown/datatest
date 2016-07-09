@@ -173,8 +173,6 @@ class _AllowExtra(_AllowAny):
 class _AllowDeviation(_BaseAllowance):
     """Context manager for DataTestCase.allowDeviation() method."""
     def __init__(self, lower, upper, test_case, msg, **filter_by):
-        #assert deviation >= 0, 'Tolerance cannot be defined with a negative number.'
-
         lower = _make_decimal(lower)
         upper = _make_decimal(upper)
 
@@ -202,14 +200,16 @@ class _AllowDeviation(_BaseAllowance):
 
 
 class _AllowPercentDeviation(_BaseAllowance):
-    """Context manager for DataTestCase.allowPercentDeviation()
-    method.
-    """
-    def __init__(self, deviation, test_case, msg, **filter_by):
-        assert 1 >= deviation >= 0, 'Percent tolerance must be between 0 and 1.'
+    """Context manager for DataTestCase.allowPercentDeviation() method."""
+    def __init__(self, lower, upper, test_case, msg, **filter_by):
+        lower = _make_decimal(lower)
+        upper = _make_decimal(upper)
+
         wrap = lambda v: [v] if isinstance(v, str) else v
         self._filter_by = dict((k, wrap(v)) for k, v in filter_by.items())
-        self.deviation = deviation
+
+        self.lower = lower
+        self.upper = upper
         super(_AllowPercentDeviation, self).__init__(test_case, msg=None)
 
     def __exit__(self, exc_type, exc_value, tb):
@@ -217,15 +217,19 @@ class _AllowPercentDeviation(_BaseAllowance):
         message = getattr(exc_value, 'msg', 'No error raised')
 
         def _not_allowed(obj):
-            if not obj.required:
-                return True  # <- EXIT!
             for k, v in self._filter_by.items():
                 if (k not in obj.kwds) or (obj.kwds[k] not in v):
                     return True
-            percent = obj.value / obj.required
-            return abs(percent) > self.deviation
+            if obj.required != 0:
+                percent = obj.value / obj.required  # Percentage error calc.
+            else:
+                if obj.value == 0:  #  Handle zero denominator.
+                    percent = 0
+                else:
+                    return True  # <- EXIT!
+            return (percent > self.upper) or (percent < self.lower)
 
-        failed = [x for x in differences if _not_allowed(x)]
-        if failed:
-            self._raiseFailure(message, failed)  # <- EXIT!
+        not_allowed = [x for x in differences if _not_allowed(x)]
+        if not_allowed:
+            self._raiseFailure(message, not_allowed)  # <- EXIT!
         return True

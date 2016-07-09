@@ -1140,6 +1140,44 @@ class TestAllowDeviation(TestHelperCase):
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertRegex(failure, 'tolerance should not be negative')
 
+    def test_lower_upper_ranges(self):
+        """Lower/upper syntax allow deviations that fall within given
+        bounds.
+        """
+        class _TestClass(DataTestCase):
+            def test_method1(_self):
+                with _self.allowDeviation(-2, 3):  # <- Good range.
+                    differences = [Deviation(-1, 10), Deviation(+1, 10)]
+                    raise DataError('error', differences)
+
+            def test_method2(_self):
+                with _self.allowDeviation(3, -2):  # <- lower must be < upper.
+                    differences = [Deviation(-3, 10), Deviation(-3, 10)]
+                    raise DataError('error', differences)
+
+            def test_method3(_self):
+                with _self.allowDeviation(3, 5):  # <- All over zero.
+                    differences = [Deviation(2, 10), Deviation(4, 10), Deviation(6, 10)]
+                    raise DataError('error', differences)
+
+            def test_method4(_self):
+                with _self.allowDeviation(4, 4):  # <- lower == upper is OK
+                    differences = [Deviation(2, 10), Deviation(4, 10), Deviation(6, 10)]
+                    raise DataError('error', differences)
+
+        failure = self._run_one_test(_TestClass, 'test_method1')
+        self.assertIsNone(failure)
+
+        failure = self._run_one_test(_TestClass, 'test_method2')
+        self.assertRegex(failure, 'assert lower <= upper')
+
+        failure = self._run_one_test(_TestClass, 'test_method3')
+        self.assertRegex(failure, 'Deviation\(\+2, 10\),\n Deviation\(\+6, 10\)')
+
+        failure = self._run_one_test(_TestClass, 'test_method4')
+        self.assertRegex(failure, 'Deviation\(\+2, 10\),\n Deviation\(\+6, 10\)')
+
+
     # QUESTION: Should tolerances raise an error if there are no
     #           observed differences or if the maximum oberved
     #           difference is less than the acceptable tolerance?
@@ -1231,12 +1269,11 @@ class TestAllowPercentDeviation(TestHelperCase):
                 _self.subject = self.bad_subject
 
             def test_method(_self):
-                with _self.allowPercentDeviation(1.1):  # <- invalid
+                with _self.allowPercentDeviation(1.1):  # <- Greater than 100% is OK
                     _self.assertSubjectSum('value', ['label1'])
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = ('AssertionError: Percent tolerance must be between 0 and 1.')
-        self.assertRegex(failure, pattern)
+        self.assertIsNone(failure)
 
     def test_zero_denominator(self):
         """Test for divide-by-zero condition."""
@@ -1263,6 +1300,44 @@ class TestAllowPercentDeviation(TestHelperCase):
         pattern = ("DataError: different u?'value' sums:\n"
                    " Deviation\(\+70, 0, label1=u?'b'\)")
         self.assertRegex(failure, pattern)
+
+    def test_lower_upper_ranges(self):
+        """Lower/upper syntax allow deviations that fall within given
+        bounds.
+        """
+        class _TestClass(DataTestCase):
+            def test_method1(_self):
+                #with _self.allowDeviation(-0.1, 1):  # <- Good range.
+                with _self.allowPercentDeviation(-0.1, 0.1):  # <- Good range.
+                    differences = [Deviation(-1, 10), Deviation(+1, 10)]
+                    raise DataError('error', differences)
+
+            def test_method2(_self):
+                with _self.allowPercentDeviation(0.3, -0.2):  # <- BAD! (lower must be < upper)
+                    differences = [Deviation(-3, 10), Deviation(-3, 10)]
+                    raise DataError('error', differences)
+
+            def test_method3(_self):
+                with _self.allowPercentDeviation(0.3, 0.5):  # <- All over zero.
+                    differences = [Deviation(2, 10), Deviation(4, 10), Deviation(6, 10)]
+                    raise DataError('error', differences)
+
+            def test_method4(_self):
+                with _self.allowPercentDeviation(-1.0, -1.0):  # <- lower == upper is OK
+                    differences = [Deviation(-11, 10), Deviation(-10, 10), Deviation(+1, 10)]
+                    raise DataError('error', differences)
+
+        failure = self._run_one_test(_TestClass, 'test_method1')
+        self.assertIsNone(failure)
+
+        failure = self._run_one_test(_TestClass, 'test_method2')
+        self.assertRegex(failure, 'assert lower <= upper')
+
+        failure = self._run_one_test(_TestClass, 'test_method3')
+        self.assertRegex(failure, 'Deviation\(\+2, 10\),\n Deviation\(\+6, 10\)')
+
+        failure = self._run_one_test(_TestClass, 'test_method4')
+        self.assertRegex(failure, 'Deviation\(-11, 10\),\n Deviation\(\+1, 10\)')
 
 
 class TestNestedAllowances(TestHelperCase):
