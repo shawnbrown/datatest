@@ -17,7 +17,7 @@ class CsvSource(SqliteBase):
 
         subject = datatest.CsvSource('mydata.csv')
     """
-    def __init__(self, file, encoding=None, in_memory=False):
+    def __init__(self, file, encoding=None, in_memory=False, **fmtparams):
         """Initialize self."""
         self._file_repr = repr(file)
 
@@ -31,17 +31,17 @@ class CsvSource(SqliteBase):
 
         # Create temporary SQLite table object.
         if encoding:
-            with UnicodeCsvReader(file, encoding=encoding) as reader:
+            with UnicodeCsvReader(file, encoding=encoding, **fmtparams) as reader:
                 columns = next(reader)  # Header row.
                 temptable = TemporarySqliteTable(reader, columns)
         else:
             try:
-                with UnicodeCsvReader(file, encoding='utf-8') as reader:
+                with UnicodeCsvReader(file, encoding='utf-8', **fmtparams) as reader:
                     columns = next(reader)  # Header row.
                     temptable = TemporarySqliteTable(reader, columns)
 
             except UnicodeDecodeError:
-                with UnicodeCsvReader(file, encoding='iso8859-1') as reader:
+                with UnicodeCsvReader(file, encoding='iso8859-1', **fmtparams) as reader:
                     columns = next(reader)  # Header row.
                     temptable = TemporarySqliteTable(reader, columns)
 

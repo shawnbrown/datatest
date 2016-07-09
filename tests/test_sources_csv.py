@@ -96,7 +96,7 @@ class TestCsvSource_ActualFileHandling(MkdtempTestCase):
 
         CsvSource(abspath, encoding='iso8859-1')  # Pass without error.
 
-        msg = ('When encoding us unspecified, tries UTF-8 first then '
+        msg = ('When encoding is unspecified, tries UTF-8 first then '
                'fallsback to ISO-8859-1 and raises a Warning.')
         with self.assertWarns(UserWarning, msg=msg):
             CsvSource(abspath)
@@ -128,3 +128,32 @@ class TestCsvSource_ActualFileHandling(MkdtempTestCase):
         with self.assertRaises(Exception):
             with open(filename, incorrect_mode) as fh:
                 CsvSource(fh, encoding='utf-8')  # Raise exception.
+
+
+class TestCsvSource_fmtparams(unittest.TestCase):
+    @staticmethod
+    def _get_filelike(string, encoding=None):
+        """Return file-like stream object."""
+        filelike = io.BytesIO(string)
+        if encoding and sys.version >= '3':
+            filelike = io.TextIOWrapper(filelike, encoding=encoding)
+        return filelike
+
+    def test_fmtparams(self):
+        fh = self._get_filelike(b'label1\tlabel2\tvalue\n'
+                                b'a\tx\t18\n'
+                                b'a\tx\t13\n'
+                                b'a\ty\t20\n'
+                                b'a\tz\t15\n', encoding='ascii')
+
+        # Load using valid fmtparams option ("delimiter")
+        source = CsvSource(fh, delimiter='\t')
+
+        result = list(source.__iter__())
+        expected = [
+            {'label1': 'a', 'label2': 'x', 'value': '18'},
+            {'label1': 'a', 'label2': 'x', 'value': '13'},
+            {'label1': 'a', 'label2': 'y', 'value': '20'},
+            {'label1': 'a', 'label2': 'z', 'value': '15'},
+        ]
+        self.assertEqual(result, expected)
