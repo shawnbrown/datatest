@@ -454,12 +454,12 @@ class DataTestCase(TestCase):
 
         Allowing deviations of plus-or-minus a given *tolerance*::
 
-            with self.allowDeviation(0.02):  # tolerance of +/- 2%
+            with self.allowPercentDeviation(0.02):  # tolerance of +/- 2%
                 self.assertSubjectSum('column2', keys=['column1'])
 
         Specifying different *lower* and *upper* bounds::
 
-            with self.allowDeviation(-0.02, 0.03):  # tolerance from -2% to +3%
+            with self.allowPercentDeviation(-0.02, 0.03):  # tolerance from -2% to +3%
                 self.assertSubjectSum('column2', keys=['column1'])
 
         All deviations within the accepted tolerance range are
