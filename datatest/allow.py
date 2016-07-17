@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from math import isnan
 from .utils import itertools
 
 from .differences import _make_decimal
@@ -191,7 +192,12 @@ class _AllowDeviation(_BaseAllowance):
             for k, v in self._filter_by.items():
                 if (k not in obj.kwds) or (obj.kwds[k] not in v):
                     return True
-            return (obj.value > self.upper) or (obj.value < self.lower)
+            normalize = lambda x: x if x else 0
+            value = normalize(obj.value)
+            required = normalize(obj.required)
+            if isnan(value) or isnan(required):
+                return True
+            return (value > self.upper) or (value < self.lower)
 
         not_allowed = [x for x in differences if _not_allowed(x)]
         if not_allowed:
@@ -220,13 +226,14 @@ class _AllowPercentDeviation(_BaseAllowance):
             for k, v in self._filter_by.items():
                 if (k not in obj.kwds) or (obj.kwds[k] not in v):
                     return True
-            if obj.required != 0:
-                percent = obj.value / obj.required  # Percentage error calc.
-            else:
-                if obj.value == 0:  #  Handle zero denominator.
-                    percent = 0
-                else:
-                    return True  # <- EXIT!
+            normalize = lambda x: x if x else 0
+            value = normalize(obj.value)
+            required = normalize(obj.required)
+            if isnan(value) or isnan(required):
+                return True
+            if value != 0 and required == 0:
+                return True
+            percent = value / required if required else 0  # % error calc.
             return (percent > self.upper) or (percent < self.lower)
 
         not_allowed = [x for x in differences if _not_allowed(x)]

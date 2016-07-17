@@ -353,22 +353,36 @@ class TestCompareDict(unittest.TestCase):
         expected = [Deviation(-2.5, 2.5, foo='bbb')]
         self.assertEqual(expected, a.compare(b))
 
-        # 'b' is missing from self/subject.
-        a = CompareDict({'aaa': 1,             'ccc': 3, 'ddd': 4}, 'foo')
-        b = CompareDict({'aaa': 1, 'bbb': 2.5, 'ccc': 3, 'ddd': 4}, 'foo')
-        expected = [Deviation(-2.5, 2.5, foo='bbb')]
-        self.assertEqual(expected, a.compare(b))
-
-        # 'b' is zero in other/reference.
+        # 'bbb' is zero in other/reference.
         a = CompareDict({'aaa': 1, 'bbb': 2, 'ccc': 3, 'ddd': 4}, 'foo')
         b = CompareDict({'aaa': 1, 'bbb': 0, 'ccc': 3, 'ddd': 4}, 'foo')
         expected = [Deviation(+2, 0, foo='bbb')]
         self.assertEqual(expected, a.compare(b))
 
-        # 'b' is missing from other/reference.
-        a = CompareDict({'aaa': 1, 'bbb': 2, 'ccc': 3, 'ddd': 4}, 'foo')
+        # 'bbb' is missing from self/subject.
+        a = CompareDict({'aaa': 1,             'ccc': 3, 'ddd': 4}, 'foo')
+        b = CompareDict({'aaa': 1, 'bbb': 2.5, 'ccc': 3, 'ddd': 4}, 'foo')
+        expected = [Deviation(-2.5, 2.5, foo='bbb')]  # <- QUESTION: This
+        self.assertEqual(expected, a.compare(b))      #    deviation looks the
+                                                      #    same as 0 vs 2.5.
+                                                      #    Is this OK?
+
+        # 'bbb' is missing from a/subject.
+        a = CompareDict({'aaa': 1,           'ccc': 3, 'ddd': 4}, 'foo')
+        b = CompareDict({'aaa': 1, 'bbb': 0, 'ccc': 3, 'ddd': 4}, 'foo')
+        expected = [Deviation(None, 0, foo='bbb')]
+        self.assertEqual(expected, a.compare(b))
+
+        # 'bbb' is empty string in a/subject.
+        a = CompareDict({'aaa': 1, 'bbb': '', 'ccc': 3, 'ddd': 4}, 'foo')
+        b = CompareDict({'aaa': 1, 'bbb':  0, 'ccc': 3, 'ddd': 4}, 'foo')
+        expected = [Deviation('', 0, foo='bbb')]
+        self.assertEqual(expected, a.compare(b))
+
+        # 'bbb' is missing from b/reference.
+        a = CompareDict({'aaa': 1, 'bbb': 0, 'ccc': 3, 'ddd': 4}, 'foo')
         b = CompareDict({'aaa': 1,           'ccc': 3, 'ddd': 4}, 'foo')
-        expected = [Deviation(+2, None, foo='bbb')]
+        expected = [Deviation(0, None, foo='bbb')]
         self.assertEqual(expected, a.compare(b))
 
         # Test coersion of *other*.

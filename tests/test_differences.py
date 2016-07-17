@@ -107,14 +107,49 @@ class TestDeviation(unittest.TestCase):
         diff = Deviation(3, 50, col1='a', col2='b')  # Using kwds.
         self.assertRegex(repr(diff), "Deviation\(\+3, 50, col1=u?'a', col2=u?'b'\)")
 
-        with self.assertRaises(ValueError):
-            diff = Deviation(0, 100)  # Zero diff.
-
-        with self.assertRaises(ValueError):
-            diff = Deviation(None, 100)  # None diff.
-
         diff = Deviation(1, None, col1='a')  # None reference.
         self.assertRegex(repr(diff), "Deviation\(\+1, None, col1=u?'a'\)")
+
+    def test_empty_value_handling(self):
+        with self.assertRaises(ValueError):
+            Deviation(0, 100)  # Zero diff.
+
+        Deviation(0, None)
+        Deviation(+5, None)
+        Deviation(None, 0)
+        with self.assertRaises(ValueError):
+            Deviation(None, 5)  # Should be Deviation(-5, 5)
+
+        Deviation(0, '')
+        Deviation(+5, '')
+        Deviation('', 0)
+        with self.assertRaises(ValueError):
+            Deviation('', 5)  # Should be Deviation(-5, 5)
+
+        Deviation(0, float('nan'))
+        Deviation(+5, float('nan'))
+        Deviation(float('nan'), 0)
+        with self.assertRaises(ValueError):
+            Deviation(float('nan'), 5)  # Should be Deviation(-5, 5)
+
+        with self.assertRaises(ValueError):
+            Deviation(0, 1)  # Just no.
+
+        # False is treated the same as zero.
+        Deviation(+5, 0)
+        Deviation(+5, False)
+
+        with self.assertRaises(ValueError):
+            Deviation(0, 0)
+
+        with self.assertRaises(ValueError):
+            Deviation(0, False)
+
+        with self.assertRaises(ValueError):
+            Deviation(False, 0)
+
+        with self.assertRaises(ValueError):
+            Deviation(False, 5)  # Should be Deviation(-5, 5)
 
     def test_str(self):
         diff = Deviation(5, 75, col1='a')

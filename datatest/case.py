@@ -428,6 +428,9 @@ class DataTestCase(TestCase):
         All deviations within the accepted tolerance range are
         suppressed but those that exceed the range will trigger
         a test failure.
+
+        When allowing deviations, empty values (like None or empty
+        string) are treated as zeros.
         """
         if msg == None and isinstance(upper, str):
             msg = upper   # Adjust positional 'msg' for "tolerance" syntax.
@@ -465,6 +468,9 @@ class DataTestCase(TestCase):
         All deviations within the accepted tolerance range are
         suppressed but those that exceed the range will trigger a test
         failure.
+
+        When allowing deviations, empty values (like None or empty
+        string) are treated as zeros.
         """
         if msg == None and isinstance(upper, str):
             msg = upper   # Adjust positional 'msg' for "tolerance" syntax.

@@ -1041,6 +1041,27 @@ class TestAllowDeviation(TestHelperCase):
                     required = {'a': 65, 'b': 70}
                     _self.assertSubjectSum('value', ['label1'], required)
 
+            def test_empty_value_handling(_self):
+                differences = [
+                    Deviation(None, 0),
+                    Deviation(0, ''),
+                ]
+                with _self.allowDeviation(0):  # <- "tolerance" signature
+                    raise DataError('error', differences)
+
+                with _self.allowDeviation(0, 0):  # <- "lower/upper" signature
+                    raise DataError('error', differences)
+
+            def test_nan_handling1(_self):
+                with _self.allowDeviation(0):  # <- "tolerance" signature
+                    diff = [Deviation(float('nan'), 0)]
+                    raise DataError('error', diff)
+
+            def test_nan_handling2(_self):
+                with _self.allowDeviation(0):  # <- "tolerance" signature
+                    diff = [Deviation(0, float('nan'))]
+                    raise DataError('error', diff)
+
         failure = self._run_one_test(_TestClass, 'test_tolerance_syntax')
         self.assertIsNone(failure)
 
@@ -1049,6 +1070,17 @@ class TestAllowDeviation(TestHelperCase):
 
         failure = self._run_one_test(_TestClass, 'test_lowerupper_syntax')
         self.assertIsNone(failure)
+
+        failure = self._run_one_test(_TestClass, 'test_empty_value_handling')
+        self.assertIsNone(failure)
+
+        failure = self._run_one_test(_TestClass, 'test_nan_handling1')
+        pattern = 'Deviation\(\+NaN, 0\)'
+        self.assertRegex(failure, pattern)
+
+        failure = self._run_one_test(_TestClass, 'test_nan_handling2')
+        pattern = 'Deviation\(0, NaN\)'
+        self.assertRegex(failure, pattern)
 
     def test_passing_with_filter(self):
         """Using filter label1='a', Deviation(...label1='b') should be raised."""
@@ -1226,8 +1258,21 @@ class TestAllowPercentDeviation(TestHelperCase):
                 with _self.allowPercentDeviation(0.05):  # <- test tolerance
                     _self.assertSubjectSum('value', ['label1'])
 
+            def test_empty_value_handling(_self):
+                with _self.allowPercentDeviation(0.0):
+                    differences = [
+                        Deviation(None, 0),
+                        Deviation(0, ''),
+                        Deviation(float('nan'), 0),
+                    ]
+                    raise DataError('error', differences)
+
         failure = self._run_one_test(_TestClass, 'test_method')
         self.assertIsNone(failure)
+
+        failure = self._run_one_test(_TestClass, 'test_empty_value_handling')
+        pattern = (" Deviation\(\+NaN, 0\)")
+        self.assertRegex(failure, pattern)
 
     def test_with_filter(self):
         """If accepted differences not found, raise exception."""

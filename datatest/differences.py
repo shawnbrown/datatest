@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import pprint
+from numbers import Number
+from math import isnan
 from .utils import decimal
 
 
@@ -79,18 +81,29 @@ class Invalid(BaseDifference):
 class Deviation(BaseDifference):
     """Deviation from a required numeric value."""
     def __init__(self, value, required, **kwds):
-        if not value:
-            raise ValueError('value must be positive or negative number')
-        self.value = _make_decimal(value)
-        if required != None:
+        empty = lambda x: not x or isnan(x)
+        if (not empty(required) and empty(value)) or (required == 0 and value == 0):
+            raise ValueError('numeric deviation must be positive or negative')
+
+        if value or value is 0:
+            value = _make_decimal(value)
+        self.value = value
+
+        if required or required is 0:
             required = _make_decimal(required)
         self.required = required
+
         self.kwds = kwds
 
     def __repr__(self):
         clsname = self.__class__.__name__
         kwds = self._format_kwds(self.kwds)
-        value = '{0:+}'.format(self.value)  # Apply +/- sign.
+        value = self.value
+        if value:
+            try:
+                value = '{0:+}'.format(value)  # Apply +/- sign.
+            except (TypeError, ValueError):
+                pass
         return '{0}({1}, {2}{3})'.format(clsname, value, self.required, kwds)
 
 

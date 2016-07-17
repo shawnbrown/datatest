@@ -272,29 +272,30 @@ class CompareDict(BaseCompare, dict):
             for key in keys:
                 self_val = self.get(key)
                 other_val = other.get(key)
+
                 if not _is_nscontainer(key):
                     key = (key,)
-                one_num = any((
-                    isinstance(self_val, Number),
-                    isinstance(other_val, Number),
-                ))
-                num_or_none = all((
-                    isinstance(self_val, Number) or self_val == None,
-                    isinstance(other_val, Number) or other_val == None,
-                ))
+                kwds = dict(zip(self.key_names, key))
+
                 # Numeric comparison.
-                if one_num and num_or_none:
-                    self_num = self_val if self_val != None else 0
-                    other_num = other_val if other_val != None else 0
-                    if self_num != other_num:
-                        diff = self_num - other_num
-                        kwds = dict(zip(self.key_names, key))
-                        invalid = Deviation(diff, other_val, **kwds)
+                if isinstance(self_val, Number) and isinstance(other_val, Number):
+                    diff = self_val - other_val
+                    if diff:
                         differences.append(Deviation(diff, other_val, **kwds))
-                # Object comparison.
+                # Numeric vs empty.
+                elif isinstance(self_val, Number) and not other_val:
+                    diff = self_val - 0
+                    differences.append(Deviation(diff, other_val, **kwds))
+                # Empty vs numeric.
+                elif not self_val and isinstance(other_val, Number):
+                    if other_val == 0:
+                        diff = self_val
+                    else:
+                        diff = 0 - other_val
+                    differences.append(Deviation(diff, other_val, **kwds))
+                # Object vs object comparison.
                 else:
                     if self_val != other_val:
-                        kwds = dict(zip(self.key_names, key))
                         differences.append(Invalid(self_val, other_val, **kwds))
 
         return differences
