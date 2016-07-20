@@ -176,62 +176,68 @@ except AttributeError:
 try:
     _sys.modules['unittest'].case._AssertRaisesContext  # New in 2.7
 except AttributeError:
+    # While assertRaises() method was implemented in 3.1, it's not
+    # entirely compatible with the 2.7 or 3.2+ versions.  For this
+    # reason, we include 3.1 in this compatibility patch.
     try:
-        _sys.modules['unittest']._AssertRaisesContext  # Changed briefly (for 3.1 only)
-    except AttributeError:
-        # The following code was adapted from the Python 2.7 Standard Library.
-        import re as _re
-        class _AssertRaisesContext(object):
-            """A context manager used to implement
-            TestCase.assertRaises* methods.
-            """
-            def __init__(self, expected, test_case, expected_regexp=None):
-                self.expected = expected
-                self.failureException = test_case.failureException
-                self.expected_regexp = expected_regexp
+        basestring  # <- Not defined in 3.1, but required by this patch.
+    except NameError:
+        basestring = str
 
-            def __enter__(self):
-                return self
+    # The following code was adapted from the Python 2.7 Standard Library.
+    import re as _re
+    class _AssertRaisesContext(object):
+        """A context manager used to implement
+        TestCase.assertRaises* methods.
+        """
+        def __init__(self, expected, test_case, expected_regexp=None):
+            self.expected = expected
+            self.failureException = test_case.failureException
+            self.expected_regexp = expected_regexp
 
-            def __exit__(self, exc_type, exc_value, tb):
-                if exc_type is None:
-                    try:
-                        exc_name = self.expected.__name__
-                    except AttributeError:
-                        exc_name = str(self.expected)
-                    raise self.failureException(
-                        "{0} not raised".format(exc_name))
-                if not issubclass(exc_type, self.expected):
-                    # let unexpected exceptions pass through
-                    return False
-                self.exception = exc_value # store for later retrieval
-                if self.expected_regexp is None:
-                    return True
-                expected_regexp = self.expected_regexp
-                if isinstance(expected_regexp, basestring):
-                    expected_regexp = _re.compile(expected_regexp)
-                if not expected_regexp.search(str(exc_value)):
-                    raise self.failureException('"%s" does not match "%s"' %
-                             (expected_regexp.pattern, str(exc_value)))
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_value, tb):
+            if exc_type is None:
+                try:
+                    exc_name = self.expected.__name__
+                except AttributeError:
+                    exc_name = str(self.expected)
+                raise self.failureException(
+                    "{0} not raised".format(exc_name))
+            if not issubclass(exc_type, self.expected):
+                # let unexpected exceptions pass through
+                return False
+            self.exception = exc_value # store for later retrieval
+            if self.expected_regexp is None:
                 return True
+            expected_regexp = self.expected_regexp
+            if isinstance(expected_regexp, basestring):
+                expected_regexp = _re.compile(expected_regexp)
+            if not expected_regexp.search(str(exc_value)):
+                raise self.failureException('"%s" does not match "%s"' %
+                         (expected_regexp.pattern, str(exc_value)))
+            return True
 
-        def _assertRaises(self, excClass, callableObj=None, *args, **kwargs):
-            context = _AssertRaisesContext(excClass, self)
-            if callableObj is None:
-                return context
-            with context:
-                callableObj(*args, **kwargs)
+    def _assertRaises(self, excClass, callableObj=None, *args, **kwargs):
+        context = _AssertRaisesContext(excClass, self)
+        if callableObj is None:
+            return context
+        with context:
+            callableObj(*args, **kwargs)
 
-        def _assertRaisesRegexp(self, expected_exception, expected_regexp,
-                                callable_obj=None, *args, **kwargs):
-            context = _AssertRaisesContext(expected_exception, self, expected_regexp)
-            if callable_obj is None:
-                return context
-            with context:
-                callable_obj(*args, **kwargs)
+    def _assertRaisesRegexp(self, expected_exception, expected_regexp,
+                            callable_obj=None, *args, **kwargs):
+        context = _AssertRaisesContext(expected_exception, self, expected_regexp)
+        if callable_obj is None:
+            return context
+        with context:
+            callable_obj(*args, **kwargs)
 
-        TestCase.assertRaises = _assertRaises
-        TestCase.assertRaisesRegexp = _assertRaisesRegexp
+    TestCase.assertRaises = _assertRaises
+    TestCase.assertRaisesRegexp = _assertRaisesRegexp
+
 
 try:
     TestCase.assertRaisesRegex  # Renamed in 3.2 (previously assertRaisesRegexp)
