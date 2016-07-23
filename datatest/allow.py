@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 from math import isnan
+from .utils.builtins import *
+from .utils import functools
 from .utils import itertools
 
 from .differences import _make_decimal
@@ -29,6 +31,85 @@ def _walk_diff(diff):
             if not isinstance(item, BaseDifference):
                 raise TypeError('Object {0!r} is not derived from BaseDifference.'.format(item))
             yield item
+
+
+class allow_iter(object):
+    """Context manager to allow differences without triggering a test
+    failure.  *function* should accept an iterable of differences and
+    return an iterable of only those differences which are not allowed.
+
+    .. note::
+        :class:`allow_iter` is the base context manager on which all
+        other allowences are implemented.
+    """
+    def __init__(self, function, msg=None, **kwds):
+        assert callable(function), 'must be function or other callable'
+        self.function = function
+        self.msg = msg
+        self.kwds = kwds
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, tb):
+        if exc_type is None:  # <- Values are None when no exeption was raised.
+            if self.msg:
+                msg = self.msg
+            else:
+                msg = getattr(self.function, '__name__', str(self.function))
+            exc = AssertionError('Allowed differences not found: ' + str(msg))
+            exc.__cause__ = None
+            raise exc
+
+        if not issubclass(exc_type, DataError):
+            raise exc_value  # If not DataError, re-raise without changes.
+
+        diffs = exc_value.differences
+        rejected_kwds, accepted_kwds = self._partition_kwds(diffs, **self.kwds)
+        rejected_func = self.function(accepted_kwds)  # <- Apply function!
+        not_allowed = itertools.chain(rejected_kwds, rejected_func)
+
+        not_allowed = list(not_allowed)
+        if not_allowed:
+            exc = DataError(self.msg, not_allowed)
+            exc.__cause__ = None  # Suppress context using verbose
+            raise exc             # alternative to support older Python
+                                  # versions--see PEP 415 (same as
+                                  # effect as "raise ... from None").
+
+        return True  # <- Suppress original exception.
+
+    @staticmethod
+    def _partition_kwds(differences, **kwds):
+        """Takes an iterable of *differences* and keyword filters,
+        returns a 2-tuple of lists containing *nonmatches* and
+        *matches* differences.
+        """
+        if not kwds:
+            return ([], differences)  # <- EXIT!
+
+        # Normalize values.
+        for k, v in kwds.items():
+            if isinstance(v, str):
+                kwds[k] = (v,)
+        filter_items = tuple(kwds.items())
+
+        # Make predicate and partition into "rejected" and "accepted".
+        def predicate(obj):
+            for k, v in filter_items:  # Closes over filter_items.
+                if (k not in obj.kwds) or (obj.kwds[k] not in v):
+                    return False
+            return True
+        t1, t2 = itertools.tee(differences)
+        return itertools.filterfalse(predicate, t1), filter(predicate, t2)
+
+
+class allow_each(allow_iter):
+    def __init__(self, function, msg=None, **kwds):
+        @functools.wraps(function)
+        def filterfalse(iterable):  # Returns elements where function evals to False.
+            return (x for x in iterable if not function(x))
+        super(allow_each, self).__init__(filterfalse, msg, **kwds)
 
 
 class _BaseAllowance(object):
