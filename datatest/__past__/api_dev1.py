@@ -3,6 +3,7 @@
 from __future__ import absolute_import
 import inspect
 import datatest
+from datatest.utils import itertools
 from datatest import DataTestCase
 
 
@@ -16,7 +17,6 @@ DataTestCase.assertDataSum = DataTestCase.assertSubjectSum
 DataTestCase.assertDataRegex = DataTestCase.assertSubjectRegex
 DataTestCase.assertDataNotRegex = DataTestCase.assertSubjectNotRegex
 datatest.DataAssertionError = datatest.DataError
-
 
 _wrapped_find_data_source = DataTestCase._find_data_source
 @staticmethod
@@ -55,9 +55,54 @@ def _normalize_required(self, required, method, *args, **kwds):
 DataTestCase._normalize_required = _normalize_required
 
 
+# This method was removed entirely.
 def _assertDataCount(self, column, keys, required=None, msg=None, **kwds_filter):
     subject_dict = self.subject.count(column, keys, **kwds_filter)
     required = self._normalize_required(required, 'sum', column, keys, **kwds_filter)
     msg = msg or 'row counts different than {0!r} sums'.format(column)
     self.assertEqual(subject_dict, required, msg)
 DataTestCase.assertDataCount = _assertDataCount
+
+
+# Function signature and behavior was changed.
+def _allowAny(self, number=None, msg=None, **kwds_filter):
+    if number:
+        return datatest.allow_limit(number, msg, **kwds_filter)
+    return datatest.allow_any(msg, **kwds_filter)
+DataTestCase.allowAny = _allowAny
+
+
+# Function signature and behavior was changed.
+def _allowMissing(self, number=None, msg=None):
+    def function(iterable):
+        t1, t2 = itertools.tee(iterable)
+        not_allowed = []
+        count = 0
+        for x in t1:
+            if not isinstance(x, datatest.Missing):
+                not_allowed.append(x)
+            else:
+                count += 1
+            if count > number:
+                return t2  # <- EXIT! Exceeds limit, return all.
+        return not_allowed
+    return datatest.allow_iter(function, msg)
+DataTestCase.allowMissing = _allowMissing
+
+
+# Function signature and behavior was changed.
+def _allowExtra(self, number=None, msg=None):
+    def function(iterable):
+        t1, t2 = itertools.tee(iterable)
+        not_allowed = []
+        count = 0
+        for x in t1:
+            if not isinstance(x, datatest.Extra):
+                not_allowed.append(x)
+            else:
+                count += 1
+            if count > number:
+                return t2  # <- EXIT! Exceeds limit, return all.
+        return not_allowed
+    return datatest.allow_iter(function, msg)
+DataTestCase.allowExtra = _allowExtra

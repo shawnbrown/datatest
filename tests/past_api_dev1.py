@@ -24,8 +24,24 @@ class TestApiDev1(unittest.TestCase):
         self.assertTrue(hasattr(datatest.DataTestCase, 'assertDataSum'))
         self.assertTrue(hasattr(datatest.DataTestCase, 'assertDataRegex'))
         self.assertTrue(hasattr(datatest.DataTestCase, 'assertDataNotRegex'))
+        self.assertTrue(hasattr(datatest.DataTestCase, 'allowPercentDeviation'))
 
         self.assertTrue(hasattr(datatest, 'DataAssertionError'))
+
+
+class TestHelperCase(unittest.TestCase):
+    """Helper class for subsequent cases."""
+    def _run_one_test(self, case, method):
+        suite = unittest.TestSuite()
+        audit_case = case(method)
+        runner = unittest.TextTestRunner(stream=io.StringIO())
+        test_result = runner.run(audit_case)
+        self.assertEqual(test_result.testsRun, 1, 'Should one run test.')
+        if test_result.errors:
+            return test_result.errors[0][1]
+        if test_result.failures:
+            return test_result.failures[0][1]
+        return None
 
 
 class TestAssertDataCount(unittest.TestCase):
@@ -115,6 +131,141 @@ class TestAssertDataCount(unittest.TestCase):
         pattern = ("DataError: row counts different than 'total_rows' sums:\n"
                    " Deviation\(\+1, 4, label1=u?'a'\),\n"
                    " Deviation\(-1, 3, label1=u?'b'\)")
+        self.assertRegex(failure, pattern)
+
+
+class TestAllowAny_Missing_Extra(TestHelperCase):
+    """Behavior for allowAny, allowMissing, and allowExtra was changed.
+    These context managers no longer accept an optional *number*
+    argument (new usage is `allow_limit()` for these cases).
+    """
+    def test_passing(self):
+        """Pass when observed number is less-than or equal-to allowed number."""
+        class _TestClass(datatest.DataTestCase):
+            def test_method1(_self):
+                with _self.allowAny(3):  # <- allow three
+                    differences = [
+                        datatest.Extra('foo'),
+                        datatest.Missing('bar'),
+                        datatest.Invalid('baz'),
+                    ]
+                    raise datatest.DataError('some differences', differences)
+
+            def test_method2(_self):
+                with _self.allowAny(4):  # <- allow four
+                    differences = [
+                        datatest.Extra('foo'),
+                        datatest.Missing('bar'),
+                        datatest.Invalid('baz'),
+                    ]
+                    raise datatest.DataError('some differences', differences)
+
+            def test_method3(_self):
+                with _self.allowAny():  # <- allow unlimited
+                    differences = [
+                        datatest.Extra('foo'),
+                        datatest.Missing('bar'),
+                        datatest.Invalid('baz'),
+                        datatest.Invalid('qux'),
+                        datatest.Invalid('quux'),
+                    ]
+                    raise datatest.DataError('some differences', differences)
+
+        failure = self._run_one_test(_TestClass, 'test_method1')
+        self.assertIsNone(failure)
+
+        failure = self._run_one_test(_TestClass, 'test_method2')
+        self.assertIsNone(failure)
+
+        failure = self._run_one_test(_TestClass, 'test_method3')
+        self.assertIsNone(failure)
+
+    def test_failing(self):
+        """Fail when observed number is greater-than allowed number."""
+        class _TestClass(datatest.DataTestCase):
+            def test_method(_self):
+                with _self.allowAny(2):  # <- allow two
+                    differences = [
+                        datatest.Missing('foo'),
+                        datatest.Missing('bar'),
+                        datatest.Missing('baz'),
+                    ]
+                    raise datatest.DataError('some differences', differences)
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        pattern = ("DataError: expected at most 2 matching differences: some differences:\n"
+                   " Missing[^\n]+\n"
+                   " Missing[^\n]+\n"
+                   " Missing[^\n]+\n$")
+        self.assertRegex(failure, pattern)
+
+    def test_filter(self):
+        """Fail when observed number is greater-than allowed number."""
+        class _TestClass(datatest.DataTestCase):
+            def test_passing(_self):
+                with _self.allowAny(3, label1='a'):  # <- allow 3 where label1 equals 'a'
+                    differences = [
+                        datatest.Deviation(-1, 3, label1='a', label2='x'),
+                        datatest.Deviation(+1, 4, label1='a', label2='y'),
+                        datatest.Deviation(-2, 5, label1='a', label2='z'),
+                    ]
+                    raise datatest.DataError('some differences', differences)
+
+            def test_fail_with_nonmatched(_self):
+                with _self.allowAny(label1='a'):  # <- allow unlimited where label1 equals 'a'
+                    differences = [
+                        datatest.Deviation(-1, 3, label1='a', label2='x'),
+                        datatest.Deviation(+1, 4, label1='a', label2='y'),
+                        datatest.Deviation(-2, 5, label1='b', label2='z'),  # <- label='b'
+                    ]
+                    raise datatest.DataError('some differences', differences)
+
+        failure = self._run_one_test(_TestClass, 'test_passing')
+        self.assertIsNone(failure)
+
+        failure = self._run_one_test(_TestClass, 'test_fail_with_nonmatched')
+        pattern = ("DataError: some differences:\n"
+                   " Deviation\(-2, 5, label1=u?'b', label2=u?'z'\)$")
+        self.assertRegex(failure, pattern)
+
+
+class TestAllowMissing(TestHelperCase):
+    def test_class_restriction(self):
+        """Non-Missing differences should fail."""
+        class _TestClass(datatest.DataTestCase):
+            def test_method(_self):
+                with _self.allowMissing(3):
+                    differences = [
+                        datatest.Missing('foo'),
+                        datatest.Extra('bar'),
+                        datatest.Extra('baz'),
+                    ]
+                    raise datatest.DataError('some differences', differences)
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        pattern = ("DataError: some differences:\n"
+                   " Extra[^\n]+\n"
+                   " Extra[^\n]+\n$")
+        self.assertRegex(failure, pattern)
+
+
+class TestAllowExtra(TestHelperCase):
+    def test_class_restriction(self):
+        """Non-Extra differences should fail."""
+        class _TestClass(datatest.DataTestCase):
+            def test_method(_self):
+                with _self.allowExtra(3):
+                    differences = [
+                        datatest.Extra('foo'),
+                        datatest.Missing('bar'),
+                        datatest.Missing('baz'),
+                    ]
+                    raise datatest.DataError('some differences', differences)
+
+        failure = self._run_one_test(_TestClass, 'test_method')
+        pattern = ("DataError: some differences:\n"
+                   " Missing[^\n]+\n"
+                   " Missing[^\n]+\n$")
         self.assertRegex(failure, pattern)
 
 

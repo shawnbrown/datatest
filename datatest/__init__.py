@@ -10,6 +10,9 @@ from .sources.csv import CsvSource
 from .sources.excel import ExcelSource
 from .sources.pandas import PandasSource
 
+from .compare import CompareSet
+from .compare import CompareDict
+
 from .error import DataError
 
 from .differences import Extra
@@ -19,8 +22,15 @@ from .differences import Deviation
 from .differences import NotProperSubset
 from .differences import NotProperSuperset
 
-from .compare import CompareSet
-from .compare import CompareDict
+from .allow import allow_iter
+from .allow import allow_each
+from .allow import allow_only
+from .allow import allow_any
+from .allow import allow_extra
+from .allow import allow_missing
+from .allow import allow_limit
+from .allow import allow_deviation
+from .allow import allow_percent_deviation
 
 from .runner import mandatory
 from .runner import skip
@@ -42,6 +52,7 @@ __all__ = [
     'BaseSource',
     'SqliteSource',
     'CsvSource',
+    'AdapterSource',
     'MultiSource',
     'ExcelSource',
     'PandasSource',
@@ -59,6 +70,17 @@ __all__ = [
     'Missing',
     'Invalid',
     'Deviation',
+
+    # Allowance context mangers.
+    'allow_iter',
+    'allow_each',
+    'allow_only',
+    'allow_any',
+    'allow_extra',
+    'allow_missing',
+    'allow_limit',
+    'allow_deviation',
+    'allow_percent_deviation',
 
     # Test runner and command-line program.
     'mandatory',

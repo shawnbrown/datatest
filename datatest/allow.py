@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
+import inspect
 from math import isnan
+from numbers import Number
 from .utils.builtins import *
+from .utils import collections
 from .utils import functools
 from .utils import itertools
 
@@ -8,29 +11,12 @@ from .differences import _make_decimal
 from .differences import BaseDifference
 from .differences import Missing
 from .differences import Extra
+from .differences import Deviation
+
 from .error import DataError
-#from .differences import Invalid
-#from .differences import Deviation
 
 __datatest = True  # Used to detect in-module stack frames (which are
                    # omitted from output).
-
-
-def _walk_diff(diff):
-    """Iterate over difference or collection of differences."""
-    if isinstance(diff, dict):
-        diff = diff.values()
-    elif isinstance(diff, BaseDifference):
-        diff = (diff,)
-
-    for item in diff:
-        if isinstance(item, (dict, list, tuple)):
-            for elt2 in _walk_diff(item):
-                yield elt2
-        else:
-            if not isinstance(item, BaseDifference):
-                raise TypeError('Object {0!r} is not derived from BaseDifference.'.format(item))
-            yield item
 
 
 class allow_iter(object):
@@ -57,7 +43,7 @@ class allow_iter(object):
                 msg = self.msg
             else:
                 msg = getattr(self.function, '__name__', str(self.function))
-            exc = AssertionError('Allowed differences not found: ' + str(msg))
+            exc = AssertionError('No differences found: ' + str(msg))
             exc.__cause__ = None
             raise exc
 
@@ -71,7 +57,9 @@ class allow_iter(object):
 
         not_allowed = list(not_allowed)
         if not_allowed:
-            exc = DataError(self.msg, not_allowed)
+            msg = [self.msg, getattr(exc_value, 'msg')]
+            msg = ': '.join(x for x in msg if x)
+            exc = DataError(msg, not_allowed)
             exc.__cause__ = None  # Suppress context using verbose
             raise exc             # alternative to support older Python
                                   # versions--see PEP 415 (same as
@@ -112,212 +100,181 @@ class allow_each(allow_iter):
         super(allow_each, self).__init__(filterfalse, msg, **kwds)
 
 
-class _BaseAllowance(object):
-    """Base class for DataTestCase.allow...() context managers."""
-    def __init__(self, test_case, msg=None):
-        self.test_case = test_case
-        self.obj_name = None
-        self.msg = msg
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, tb):
-        raise NotImplementedError()
-
-    def _raiseFailure(self, standardMsg, differences):
-        msg = self.test_case._formatMessage(self.msg, standardMsg)
-        #subject = self.test_case.subject
-        try:
-            subject = self.test_case.subject
-        except NameError:
-            subject = None
-        #required = getattr(self.test_case, 'reference', None)
-        try:
-            required = self.test_case.reference
-        except NameError:
-            required = None
-
-        exc = DataError(msg, differences, subject, required)
-        exc.__cause__ = None  # Suppress context (usu. "raise ... from None")
-        raise exc             # using verbose alternative to support older
-                              # Python versions--see PEP 415.
+class allow_any(allow_iter):
+    def __init__(self, msg=None, **kwds):
+        function = lambda iterable: iter([])
+        function.__name__ = self.__class__.__name__
+        super(allow_any, self).__init__(function, msg, **kwds)
 
 
-class _AllowOnly(_BaseAllowance):
-    """Context manager for DataTestCase.allowOnly() method."""
-    def __init__(self, differences, test_case, msg=None):
-        self.differences = differences
-        super(_AllowOnly, self).__init__(test_case, msg=None)
-
-    def __exit__(self, exc_type, exc_value, tb):
-        diff = getattr(exc_value, 'differences', [])
-        message = getattr(exc_value, 'msg', 'No error raised')
-
-        observed = list(_walk_diff(diff))
-        allowed = list(_walk_diff(self.differences))
-        not_allowed = [x for x in observed if x not in allowed]
-        if not_allowed:
-            self._raiseFailure(message, not_allowed)  # <- EXIT!
-
-        not_found = [x for x in allowed if x not in observed]
-        if not_found:
-            message = 'Allowed difference not found'
-            self._raiseFailure(message, not_found)  # <- EXIT!
-        return True
+class allow_extra(allow_each):
+    def __init__(self, msg=None, **kwds):
+        function = lambda diff: isinstance(diff, Extra)
+        function.__name__ = self.__class__.__name__
+        super(allow_extra, self).__init__(function, msg, **kwds)
 
 
-# TODO: Fix and normalize *msg* handling for all allowance managers.
-class _AllowAny(_BaseAllowance):
-    """Context manager for DataTestCase.allowAny() method."""
-    def __init__(self, test_case, number=None, msg=None, **filter_by):
-        if number != None:
-            assert number > 0, 'number must be positive'
-        self.number = number
-        #self.msg = msg
-        self.filter_kwds = filter_by
-        self.filter_class = BaseDifference
-        super(_AllowAny, self).__init__(test_case, msg=None)
+class allow_missing(allow_each):
+    def __init__(self, msg=None, **kwds):
+        function = lambda diff: isinstance(diff, Missing)
+        function.__name__ = self.__class__.__name__
+        super(allow_missing, self).__init__(function, msg, **kwds)
 
-    def __exit__(self, exc_type, exc_value, tb):
-        differences = getattr(exc_value, 'differences', [])
 
-        filter_class = self.filter_class
-        is_class = lambda x: isinstance(x, filter_class)
-        rejected_class, matched_class = self._partition(is_class, differences)
-
-        rejected_kwds, matched_kwds = self._partition_kwds(matched_class, **self.filter_kwds)
-        not_allowed = itertools.chain(rejected_kwds, rejected_class)
-
-        message = getattr(exc_value, 'msg', '')
-        matched_kwds = list(matched_kwds)
-        observed = len(matched_kwds)
-        if self.number and observed > self.number:
-            not_allowed = itertools.chain(matched_kwds, not_allowed)  # Matching diffs go first.
-            prefix = 'expected at most {0} matching difference{1}, got {2}: '
-            plural = 's' if self.number != 1 else ''
-            prefix = prefix.format(self.number, plural, observed)
-            message = prefix + message
-
-        not_allowed = list(not_allowed)
-        if not_allowed:
-            #if self.msg:
-            #    message = self.msg + ': ' + message
-            self._raiseFailure(message, not_allowed)  # <- EXIT!
-
-        return True
+class allow_only(allow_iter):
+    def __init__(self, differences, msg=None):
+        def function(iterable):
+            allowed = self._walk_diff(differences)  # <- Closes over *differences*.
+            allowed = collections.Counter(allowed)
+            not_allowed = []
+            for x in iterable:
+                if allowed[x]:
+                    allowed[x] -= 1
+                else:
+                    not_allowed.append(x)
+            if not_allowed:
+                return not_allowed  # <- EXIT!
+            not_found = list(allowed.elements())
+            if not_found:
+                exc = DataError('Allowed difference not found', not_found)
+                exc.__cause__ = None
+                raise exc
+            return iter([])
+        function.__name__ = self.__class__.__name__
+        super(allow_only, self).__init__(function, msg)
 
     @classmethod
-    def _partition_kwds(cls, differences, **filter_by):
-        """Takes an iterable of *differences* and keyword filters,
-        returns a 2-tuple of lists containing *nonmatches* and
-        *matches* differences.
+    def _walk_diff(cls, diff):
+        """Iterate over difference or collection of differences."""
+        if isinstance(diff, dict):
+            diff = diff.values()
+        elif isinstance(diff, BaseDifference):
+            diff = (diff,)
+
+        for item in diff:
+            if isinstance(item, (dict, list, tuple)):
+                for elt2 in cls._walk_diff(item):
+                    yield elt2
+            else:
+                if not isinstance(item, BaseDifference):
+                    raise TypeError('Object {0!r} is not derived from BaseDifference.'.format(item))
+                yield item
+
+
+class allow_limit(allow_iter):
+    def __init__(self, number, msg=None, **kwds):
+        if not isinstance(number, Number):
+            raise TypeError('number can not be type '+ number.__class__.__name__)
+
+        def function(iterable):
+            t1, t2 = itertools.tee(iterable)
+            # Consume *number* of items (closes over *number*).
+            next(itertools.islice(t1, number, number), None)
+            try:
+                next(t1)
+                too_many = True
+            except StopIteration:
+                too_many = False
+            return t2 if too_many else iter([])
+        function.__name__ = self.__class__.__name__
+
+        if not msg:
+            msg = 'expected at most {0} matching difference{1}'
+            msg = msg.format(number, ('' if number == 1 else 's'))
+        super(allow_limit, self).__init__(function, msg, **kwds)
+
+
+def _prettify_deviation_signature(method):
+    """Helper function intended for internal use.  Prettify signature
+    of deviation __init__ classes by patching its signature to make
+    the "tolerance" syntax the default option when introspected (with
+    an IDE, REPL, or other user interface).
+    """
+    try:
+        signature = inspect.signature(method)
+        parameters = list(signature.parameters.values())
+
+        if parameters[0].name == 'self':
+            _self = parameters.pop(0)
+            _self = _self.replace(kind=inspect.Parameter.POSITIONAL_ONLY)
+        else:
+            _self = None
+        _lower, _upper, _msg, _kwds = parameters  # Unpack remaining.
+
+        _tolerance = inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY)
+        if _self:
+            parameters = [_self, _tolerance, _msg, _kwds]
+        else:
+            parameters = [_tolerance, _msg, _kwds]
+        method.__signature__ = signature.replace(parameters=parameters)
+
+    except AttributeError:
+        pass  # In Python 3.2 and older, lower/upper syntax is the default.
+
+
+def _normalize_deviation_args(lower, upper, msg):
+    """Helper function intended for internal use.  Normalize __init__
+    arguments for deviation classes to provide support for both
+    "tolerance" and "lower/upper" signatures.
+    """
+    if msg == None and isinstance(upper, str):
+        msg = upper   # Adjust positional 'msg' for "tolerance" syntax.
+        upper = None
+
+    if upper == None:
+        tolerance = lower
+        assert tolerance >= 0, ('tolerance should not be negative, '
+                                'for full control of lower and upper '
+                                'bounds, use "lower, upper" syntax')
+        lower, upper = -tolerance, tolerance
+
+    assert lower <= upper
+
+    lower = _make_decimal(lower)
+    upper = _make_decimal(upper)
+    return (lower, upper, msg)
+
+
+class allow_deviation(allow_each):
+    def __init__(self, lower, upper=None, msg=None, **kwds):
         """
-        if not filter_by:
-            return ([], differences)  # <- EXIT!
-
-        for k, v in filter_by.items():
-            if isinstance(v, str):
-                filter_by[k] = (v,)  # If string, wrap in 1-tuple.
-        filter_items = tuple(filter_by.items())
-
-        def matches_filter(obj):
-            for k, v in filter_items:
-                if (k not in obj.kwds) or (obj.kwds[k] not in v):
-                    return False
-            return True
-
-        return cls._partition(matches_filter, differences)
-
-    @staticmethod
-    def _partition(pred, iterable):
-        """Use a predicate to partition entries into false entries and
-        true entries.
+        allow_deviation(tolerance, /, msg=None, **kwds)
+        allow_deviation(lower, upper, msg=None, **kwds)
         """
-        t1, t2 = itertools.tee(iterable)
-        return itertools.filterfalse(pred, t1), filter(pred, t2)
-
-
-class _AllowMissing(_AllowAny):
-    """Context manager for DataTestCase.allowMissing() method."""
-    def __init__(self, test_case, number=None, msg=None, **filter_by):
-        super(_AllowMissing, self).__init__(test_case, number, msg, **filter_by)
-        self.filter_class = Missing  # <- Only Missing differences.
-
-
-class _AllowExtra(_AllowAny):
-    """Context manager for DataTestCase.allowExtra() method."""
-    def __init__(self, test_case, number=None, msg=None, **filter_by):
-        super(_AllowExtra, self).__init__(test_case, number, msg, **filter_by)
-        self.filter_class = Extra  # <- Only Extra differences.
-
-
-class _AllowDeviation(_BaseAllowance):
-    """Context manager for DataTestCase.allowDeviation() method."""
-    def __init__(self, lower, upper, test_case, msg, **filter_by):
-        lower = _make_decimal(lower)
-        upper = _make_decimal(upper)
-
-        wrap = lambda v: [v] if isinstance(v, str) else v
-        self._filter_by = dict((k, wrap(v)) for k, v in filter_by.items())
-
-        self.lower = lower
-        self.upper = upper
-        super(_AllowDeviation, self).__init__(test_case, msg=None)
-
-    def __exit__(self, exc_type, exc_value, tb):
-        differences = getattr(exc_value, 'differences', [])
-        message = getattr(exc_value, 'msg', 'No error raised')
-
-        def _not_allowed(obj):
-            for k, v in self._filter_by.items():
-                if (k not in obj.kwds) or (obj.kwds[k] not in v):
-                    return True
-            normalize = lambda x: x if x else 0
-            value = normalize(obj.value)
-            required = normalize(obj.required)
+        lower, upper, msg = _normalize_deviation_args(lower, upper, msg)
+        normalize_numbers = lambda x: x if x else 0
+        def function(diff):
+            if not isinstance(diff, Deviation):
+                return False
+            value = normalize_numbers(diff.value)  # Closes over normalize_numbers().
+            required = normalize_numbers(diff.required)
             if isnan(value) or isnan(required):
-                return True
-            return (value > self.upper) or (value < self.lower)
-
-        not_allowed = [x for x in differences if _not_allowed(x)]
-        if not_allowed:
-            self._raiseFailure(message, not_allowed)  # <- EXIT!
-        return True
+                return False
+            return lower <= value <= upper  # Closes over *lower* and *upper*.
+        function.__name__ = self.__class__.__name__
+        super(allow_deviation, self).__init__(function, msg, **kwds)
+_prettify_deviation_signature(allow_deviation.__init__)
 
 
-class _AllowPercentDeviation(_BaseAllowance):
-    """Context manager for DataTestCase.allowPercentDeviation() method."""
-    def __init__(self, lower, upper, test_case, msg, **filter_by):
-        lower = _make_decimal(lower)
-        upper = _make_decimal(upper)
-
-        wrap = lambda v: [v] if isinstance(v, str) else v
-        self._filter_by = dict((k, wrap(v)) for k, v in filter_by.items())
-
-        self.lower = lower
-        self.upper = upper
-        super(_AllowPercentDeviation, self).__init__(test_case, msg=None)
-
-    def __exit__(self, exc_type, exc_value, tb):
-        differences = getattr(exc_value, 'differences', [])
-        message = getattr(exc_value, 'msg', 'No error raised')
-
-        def _not_allowed(obj):
-            for k, v in self._filter_by.items():
-                if (k not in obj.kwds) or (obj.kwds[k] not in v):
-                    return True
-            normalize = lambda x: x if x else 0
-            value = normalize(obj.value)
-            required = normalize(obj.required)
+class allow_percent_deviation(allow_each):
+    def __init__(self, lower, upper=None, msg=None, **kwds):
+        """
+        allow_percent_deviation(tolerance, /, msg=None, **kwds)
+        allow_percent_deviation(lower, upper, msg=None, **kwds)
+        """
+        lower, upper, msg = _normalize_deviation_args(lower, upper, msg)
+        normalize_numbers = lambda x: x if x else 0
+        def function(diff):
+            if not isinstance(diff, Deviation):
+                return False
+            value = normalize_numbers(diff.value)  # Closes over normalize_numbers().
+            required = normalize_numbers(diff.required)
             if isnan(value) or isnan(required):
-                return True
+                return False
             if value != 0 and required == 0:
-                return True
+                return False
             percent = value / required if required else 0  # % error calc.
-            return (percent > self.upper) or (percent < self.lower)
-
-        not_allowed = [x for x in differences if _not_allowed(x)]
-        if not_allowed:
-            self._raiseFailure(message, not_allowed)  # <- EXIT!
-        return True
+            return lower <= percent <= upper  # Closes over *lower* and *upper*.
+        function.__name__ = self.__class__.__name__
+        super(allow_percent_deviation, self).__init__(function, msg, **kwds)
+_prettify_deviation_signature(allow_percent_deviation.__init__)

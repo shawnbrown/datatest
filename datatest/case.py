@@ -6,11 +6,14 @@ from unittest import TestCase
 
 from .utils.builtins import *
 from .utils import collections
+from .utils import itertools
 
 from .compare import CompareSet  # TODO!!!: Remove after assertSubjectColumns fixed!
 from .compare import BaseCompare
 from .differences import _make_decimal
 from .differences import Extra  # TODO: Move when assertSubjectUnique us moved.
+from .differences import Missing  # TODO: Move when assertSubjectUnique us moved.
+
 from .error import DataError
 from .sources.base import BaseSource
 
@@ -21,15 +24,13 @@ __datatest = True  # Used to detect in-module stack frames (which are
 _re_type = type(re.compile(''))
 
 
-from .allow import _walk_diff
-from .allow import _BaseAllowance
-
-from .allow import _AllowOnly
-from .allow import _AllowAny
-from .allow import _AllowMissing
-from .allow import _AllowExtra
-from .allow import _AllowDeviation
-from .allow import _AllowPercentDeviation
+from .allow import allow_only
+from .allow import allow_any
+from .allow import allow_missing
+from .allow import allow_extra
+from .allow import allow_limit
+from .allow import allow_deviation
+from .allow import allow_percent_deviation
 
 
 class DataTestCase(TestCase):
@@ -368,49 +369,42 @@ class DataTestCase(TestCase):
             with self.allowOnly(differences):
                 self.assertSubjectSum('population', ['town'])
         """
-        return _AllowOnly(differences, self, msg)
+        return allow_only(differences, msg)
 
-    def allowAny(self, number=None, msg=None, **kwds_filter):
-        """Allows a given *number* of differences (of any kind) without
-        triggering a test failure::
-
-            with self.allowAny(10):  # Allows up to ten differences.
-                self.assertSubjectSet('city_name')
-
-        If *number* is omitted, allows an unlimited number of
-        differences as long as they match a given keyword filter::
+    def allowAny(self, msg=None, **kwds):
+        """Allows any difference that matches the given
+        keywords::
 
             with self.allowAny(city_name='not a city'):
                 self.assertSubjectSum('population', ['city_name'])
-
-        If the count of differences exceeds the given *number*, the
-        test case will fail with a :class:`DataError` containing all
-        observed differences.
         """
-        return _AllowAny(self, number, msg, **kwds_filter)
+        return allow_any(msg, **kwds)
 
-    def allowMissing(self, number=None, msg=None):
+    def allowMissing(self, msg=None, **kwds):
         """Context manager to allow for missing values without
         triggering a test failure::
 
             with self.allowMissing():  # Allows Missing differences.
                 self.assertSubjectSet('column1')
         """
-        return _AllowMissing(self, number, msg)
+        return allow_missing(msg, **kwds)
 
-    def allowExtra(self, number=None, msg=None):
+    def allowExtra(self, msg=None, **kwds):
         """Context manager to allow for extra values without triggering
         a test failure::
 
             with self.allowExtra():  # Allows Extra differences.
                 self.assertSubjectSet('column1')
         """
-        return _AllowExtra(self, number, msg)
+        return allow_extra(msg, **kwds)
 
-    def allowDeviation(self, lower, upper=None, msg=None, **kwds_filter):
+    def allowLimit(self, number, msg=None, **kwds):
+        return allow_limit(number, msg, **kwds)
+
+    def allowDeviation(self, lower, upper=None, msg=None, **kwds):
         """
-        allowDeviation(tolerance, /, msg=None, **kwds_filter)
-        allowDeviation(lower, upper, msg=None, **kwds_filter)
+        allowDeviation(tolerance, /, msg=None, **kwds)
+        allowDeviation(lower, upper, msg=None, **kwds)
 
         Context manager to allow for deviations from required
         numeric values without triggering a test failure.
@@ -432,24 +426,12 @@ class DataTestCase(TestCase):
         When allowing deviations, empty values (like None or empty
         string) are treated as zeros.
         """
-        if msg == None and isinstance(upper, str):
-            msg = upper   # Adjust positional 'msg' for "tolerance" syntax.
-            upper = None
+        return allow_deviation(lower, upper, msg, **kwds)
 
-        if upper == None:
-            tolerance = lower
-            assert tolerance >= 0, ('tolerance should not be negative, '
-                                    'for full control of lower and upper '
-                                    'bounds, use "lower, upper" syntax.')
-            lower, upper = -tolerance, tolerance
-
-        assert lower <= upper
-        return _AllowDeviation(lower, upper, self, msg, **kwds_filter)
-
-    def allowPercentDeviation(self, lower, upper=None, msg=None, **kwds_filter):
+    def allowPercentDeviation(self, lower, upper=None, msg=None, **kwds):
         """
-        allowPercentDeviation(tolerance, /, msg=None, **kwds_filter)
-        allowPercentDeviation(lower, upper, msg=None, **kwds_filter)
+        allowPercentDeviation(tolerance, /, msg=None, **kwds)
+        allowPercentDeviation(lower, upper, msg=None, **kwds)
 
         Context manager to allow for deviations from required numeric
         values within a given error percentage without triggering a test
@@ -472,19 +454,7 @@ class DataTestCase(TestCase):
         When allowing deviations, empty values (like None or empty
         string) are treated as zeros.
         """
-        if msg == None and isinstance(upper, str):
-            msg = upper   # Adjust positional 'msg' for "tolerance" syntax.
-            upper = None
-
-        if upper == None:
-            tolerance = lower
-            assert tolerance >= 0, ('tolerance should not be negative, '
-                                    'for full control of lower and upper '
-                                    'bounds, use "lower, upper" syntax.')
-            lower, upper = -tolerance, tolerance
-
-        assert lower <= upper
-        return _AllowPercentDeviation(lower, upper, self, msg, **kwds_filter)
+        return allow_percent_deviation(lower, upper, msg, **kwds)
 
     def fail(self, msg, differences=None):
         """Signals a test failure unconditionally, with *msg* for the
