@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 import ast
-import os.path
+import os
 
 try:
     from setuptools import setup
@@ -11,6 +11,8 @@ except ImportError:
     from distutils.core import setup
     from distutils.core import Command
 
+
+WORKING_DIR = os.path.dirname(os.path.abspath(__file__))
 
 class TestCommand(Command):
     """Implement 'setup.py test' command."""
@@ -68,7 +70,7 @@ class RestrictedCommand(Command):
 
 def get_version(filepath):
     """Return value of file's __version__ attribute."""
-    fullpath = os.path.join(os.path.dirname(__file__), filepath)
+    fullpath = os.path.join(WORKING_DIR, filepath)
     with open(fullpath) as fh:
         for line in fh:
             line = line.strip()
@@ -78,53 +80,59 @@ def get_version(filepath):
 
 
 if __name__ == '__main__':
-    with open('README.rst') as file:
-        long_description = file.read()
+    original_dir = os.path.abspath(os.getcwd())
+    try:
+        os.chdir(WORKING_DIR)
+        with open('README.rst') as file:
+            long_description = file.read()
 
-    setup(
-        # Required meta-data:
-        name='datatest',
-        version=get_version('datatest/__init__.py'),
-        url='https://pypi.python.org/pypi/datatest',
-        packages=[
-            'datatest',
-            'datatest.sources',
-            'datatest.utils',
-            'datatest.__past__',
-        ],
-        # Additional fields:
-        description='Testing tools for data preparation.',
-        long_description=long_description,
-        author='Shawn Brown',
-        classifiers  = [
-            'Topic :: Software Development :: Quality Assurance',
-            'Topic :: Software Development :: Testing',
-            'License :: OSI Approved :: Apache Software License',
-            'Development Status :: 4 - Beta',
-            'Programming Language :: Python :: 2',
-            'Programming Language :: Python :: 2.6',
-            'Programming Language :: Python :: 2.7',
-            'Programming Language :: Python :: 3',
-            'Programming Language :: Python :: 3.1',
-            'Programming Language :: Python :: 3.2',
-            'Programming Language :: Python :: 3.3',
-            'Programming Language :: Python :: 3.4',
-            'Programming Language :: Python :: 3.5',
-        ],
-        cmdclass={
-            'test': TestCommand,
-            # Restrict setup commands (use twine instead):
-            'register': RestrictedCommand,  # Use: twine register dist/*
-            'upload': RestrictedCommand,    # Use: twine upload dist/*
-            'upload_docs': RestrictedCommand,
-        },
-    )
+        setup(
+            # Required meta-data:
+            name='datatest',
+            version=get_version('datatest/__init__.py'),
+            url='https://pypi.python.org/pypi/datatest',
+            packages=[
+                'datatest',
+                'datatest.sources',
+                'datatest.utils',
+                'datatest.__past__',
+            ],
+            # Additional fields:
+            description='Testing tools for data preparation.',
+            long_description=long_description,
+            author='Shawn Brown',
+            classifiers  = [
+                'Topic :: Software Development :: Quality Assurance',
+                'Topic :: Software Development :: Testing',
+                'License :: OSI Approved :: Apache Software License',
+                'Development Status :: 4 - Beta',
+                'Programming Language :: Python :: 2',
+                'Programming Language :: Python :: 2.6',
+                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3',
+                'Programming Language :: Python :: 3.1',
+                'Programming Language :: Python :: 3.2',
+                'Programming Language :: Python :: 3.3',
+                'Programming Language :: Python :: 3.4',
+                'Programming Language :: Python :: 3.5',
+            ],
+            cmdclass={
+                'test': TestCommand,
+                # Restrict setup commands (use twine instead):
+                'register': RestrictedCommand,  # Use: twine register dist/*
+                'upload': RestrictedCommand,    # Use: twine upload dist/*
+                'upload_docs': RestrictedCommand,
+            },
+        )
+    finally:
+        os.chdir(original_dir)
 
 # Release Checklist
 # -----------------
 # Make sure correct version number is set in:
 #   datatest/__init__.py
 #   docs/conf.py
+# Update README.rst (incl. "Backward Compatibility" section).
 # Commit and push version change to upstream repository.
 # Add version tag to upstream repository.
 # Remove all existing files in the dist/ folder.
