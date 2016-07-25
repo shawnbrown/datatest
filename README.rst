@@ -110,7 +110,7 @@ be supported in the future with the following import::
 To maintain existing test code, this project makes a best-effort
 attempt to provide backward compatibility support for older features.
 The API will be improved in the future but only in measured and
-sustainalbe ways.
+sustainable ways.
 
 All of the data used at the `National Committee for an Effective
 Congress <http://ncec.org/about>`_ has been checked with datatest for
