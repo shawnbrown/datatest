@@ -10,8 +10,8 @@ Datatest extends the Python standard library's unittest package to
 provide testing tools for asserting data correctness.
 
 * Documentation:
-    - http://datatest.readthedocs.io/ (current release)
-    - http://datatest.readthedocs.io/en/latest/ (unstable)
+    - http://datatest.readthedocs.io/ (stable)
+    - http://datatest.readthedocs.io/en/latest/ (latest)
 * Official Releases:
    - https://pypi.python.org/pypi/datatest
 * Development:
@@ -23,8 +23,11 @@ tidying process, automate checklists, log discrepancies, and measure
 progress.
 
 .. note::
-    This is a pre-1.0.0 release that is under active development (see
-    `Future Plans`_ for more information).
+    This is a pre-1.0.0 release that is under active development.
+    I'm aiming to release a stable API by the end of the year. But
+    before this happens, I want to get some feedback, add support
+    for more data sources, and improve py.test integration
+    (including a pytest plugin).
 
 
 Installation
@@ -90,28 +93,29 @@ implementations without issues (check with "setup.py test" before
 installing).
 
 
-Future Plans
-============
+Backward Compatibility
+======================
 
-I'm aiming to release a 1.0.0, stable API by the end of the year. But
-before this happens, I want to get some feedback, add support for more
-data sources, and improve py.test integration (including a py.test
-plugin).
+If you have existing tests that use features which have changed since
+0.6.0.dev1, you can still run your old code by adding the following
+import to the beginning of each file::
 
-As I tighten the integration with unittest and py.test, expect some
-assertions and properties to be renamed.  But don't panic---test suites
-that rely on the current version's assertion names (version 0.6.0.dev1)
-will still run by adding the following import to the beginning of each
-file::
+  from datatest.__past__ import api_dev1
 
-    from datatest.__past__ import api_dev1
+Likewise, code written using the current API (version 0.7.0.dev2) will
+be supported in the future with the following import::
 
-This said, all of the data used at the `National Committee for an
-Effective Congress <http://ncec.org/about>`_ has been checked with
-datatest for more than a year so there is, already, an existing codebase
+  from datatest.__past__ import api_dev2
+
+To maintain existing test code, this project makes a best-effort
+attempt to provide backward compatibility support for older features.
+The API will be improved in the future but only in measured and
+sustainalbe ways.
+
+All of the data used at the `National Committee for an Effective
+Congress <http://ncec.org/about>`_ has been checked with datatest for
+more than a year so there is, already, a large and growing codebase
 that relies on current features and must be maintained into the future.
-It is my intention that the API only change in measured and sustainable
-ways.
 
 
 Dependencies
