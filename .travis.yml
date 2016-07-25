@@ -10,10 +10,12 @@ python:
   - "pypy"
 #  - "3.1"  # not currently supported by Travis CI
 
+install: true
 #install:
 #  - pip install xlrd
 #  - pip install pandas
-#  - python setup.py install
 
-# command to run tests
-script: python setup.py test
+# command to run tests and check installation
+script:
+  - python setup.py test
+  - python setup.py install
