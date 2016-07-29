@@ -83,7 +83,7 @@ def _allowMissing(self, number=None, msg=None):
                 not_allowed.append(x)
             else:
                 count += 1
-            if count > number:
+            if number and count > number:
                 return t2  # <- EXIT! Exceeds limit, return all.
         return not_allowed
     return datatest.allow_iter(function, msg)
@@ -101,7 +101,7 @@ def _allowExtra(self, number=None, msg=None):
                 not_allowed.append(x)
             else:
                 count += 1
-            if count > number:
+            if number and count > number:
                 return t2  # <- EXIT! Exceeds limit, return all.
         return not_allowed
     return datatest.allow_iter(function, msg)
