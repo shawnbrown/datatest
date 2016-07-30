@@ -22,8 +22,9 @@ class BaseDifference(object):
             raise NotImplementedError(msg)
         return super(BaseDifference, cls).__new__(cls)
 
-    def __init__(self, value, **kwds):
+    def __init__(self, value, required=None, **kwds):
         self.value = value
+        self.required = required
         self.kwds = kwds
 
     def __repr__(self):
@@ -53,21 +54,18 @@ class BaseDifference(object):
 
 class Extra(BaseDifference):
     """Additional value that is not part of a required set."""
-    pass
+    def __init__(self, value, **kwds):
+        super(Extra, self).__init__(value, **kwds)
 
 
 class Missing(BaseDifference):
     """Missing value that is part of a required set."""
-    pass
+    def __init__(self, value, **kwds):
+        super(Missing, self).__init__(value, **kwds)
 
 
 class Invalid(BaseDifference):
     """Invalid item that does not match a required check."""
-    def __init__(self, value, required=None, **kwds):
-        self.value = value
-        self.required = required
-        self.kwds = kwds
-
     def __repr__(self):
         clsname = self.__class__.__name__
         kwds = self._format_kwds(self.kwds)
@@ -87,13 +85,11 @@ class Deviation(BaseDifference):
 
         if value or value is 0:
             value = _make_decimal(value)
-        self.value = value
 
         if required or required is 0:
             required = _make_decimal(required)
-        self.required = required
 
-        self.kwds = kwds
+        super(Deviation, self).__init__(value, required, **kwds)
 
     def __repr__(self):
         clsname = self.__class__.__name__
@@ -108,9 +104,7 @@ class Deviation(BaseDifference):
 
 
 class NonStrictRelation(BaseDifference):
-    """Base class for to indicate non-strict subset or superset
-    relationships.
-    """
+    """Base class for non-strict subset or superset relationships."""
     def __new__(cls, *args, **kwds):
         if cls is NonStrictRelation:
             msg = 'cannot instantiate NonStrictRelation directly - make a subclass'
@@ -118,7 +112,7 @@ class NonStrictRelation(BaseDifference):
         return super(NonStrictRelation, cls).__new__(cls)
 
     def __init__(self, **kwds):
-        self.kwds = kwds
+        super(NonStrictRelation, self).__init__(None, None, **kwds)
 
     def __repr__(self):
         clsname = self.__class__.__name__
