@@ -187,11 +187,10 @@ class SqliteBase(BaseSource):
         return clause, params
 
     def create_index(self, *columns):
-        """Creating an index for certain columns can speed up data
-        testing in some cases.
+        """Create an index for specified columns---can speed up testing
+        in some cases.
 
-        See :meth:`SqliteSource.create_index
-        <datatest.SqliteSource.create_index>` for more details.
+        See :meth:`SqliteSource.create_index` for more details.
         """
         self._assert_columns_exist(columns)
 
@@ -263,18 +262,18 @@ class SqliteSource(SqliteBase):
         return cls(temptable.connection, temptable.name)
 
     def create_index(self, *columns):
-        """Creating an index for certain columns can speed up data
-        testing in some cases.
+        """Create an index for specified columns---can speed up testing
+        in some cases.
 
         Indexes should be added one-by-one to tune a test suite's
         over-all performance.  Creating several indexes before testing
         even begins could lead to worse performance so use them with
         discretion.
 
-        For example:  If you're using "town" to group aggregation
-        tests (like ``self.assertSubjectSum('population', ['town'])``),
-        then you might be able to improve performance by adding an
-        index for the "town" column::
+        An example:  If you're using "town" to group aggregation tests
+        (like ``self.assertSubjectSum('population', ['town'])``), then
+        you might be able to improve performance by adding an index for
+        the "town" column::
 
             subject.create_index('town')
 

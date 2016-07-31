@@ -15,6 +15,7 @@ from .compare import CompareDict
 
 from .error import DataError
 
+from .differences import BaseDifference
 from .differences import Extra
 from .differences import Missing
 from .differences import Invalid
@@ -66,6 +67,7 @@ __all__ = [
     'DataError',
 
     # Differences.
+    'BaseDifference',
     'Extra',
     'Missing',
     'Invalid',

@@ -37,20 +37,25 @@ class DataTestCase(TestCase):
     """This class wraps and extends unittest.TestCase and implements
     additional properties and methods for testing data quality.  When a
     data assertion fails, it raises a :class:`DataError` which contains
-    a list of detected errors.
+    a list of differences between the data under test and the data
+    required.
 
-    In addition to the new functionality, the familiar TestCase methods
-    (like setUp, assertEqual, etc.) are still available.
+    In addition to the new functionality, familiar methods (like setUp,
+    assertEqual, etc.) are still available---see
+    :py:class:`unittest.TestCase` for full details.
     """
     @property
     def subject(self):
         """A data source containing the data under test---the *subject*
-        of the tests.  A :attr:`subject` can be defined at the
-        class-level or at the module-level.
+        of the tests.  A subject must be defined to use any of the
+        "assertSubject…" methods (e.g., :meth:`assertSubjectColumns`,
+        :meth:`assertSubjectSet`, etc.).
 
-        When defining :attr:`subject` at the module-level, this property
-        will reach into its parent scopes and return the :attr:`subject`
-        from the nearest enclosed scope::
+        A subject can be defined at the class-level or at the
+        module-level.  This property will return the :attr:`subject`
+        from the nearest enclosed scope.
+
+        Module-level declaration::
 
             def setUpModule():
                 global subject
@@ -73,10 +78,13 @@ class DataTestCase(TestCase):
 
     @property
     def reference(self):
-        """An optional data source containing data that is trusted to
-        be correct.  A :attr:`reference` can be defined at the
-        class-level or at the module-level.  This property will return
-        the :attr:`reference` from the nearest enclosed scope.
+        """A data source containing data that is trusted to be correct.
+        This property is used by the "assertSubject…" methods when their
+        *required* argument is omitted.
+
+        A reference can be defined at the class-level or at the
+        module-level.  This property will return the :attr:`reference`
+        from the nearest enclosed scope.
 
         Module-level declaration::
 
@@ -131,7 +139,7 @@ class DataTestCase(TestCase):
         """Fail if the two objects are unequal as determined by the '=='
         operator.
 
-        If the *first* argument is a datatest comparison object
+        If the *first* argument is a comparison object
         (:class:`CompareSet`, :class:`CompareDict`, etc.), a failure
         will raise the differences between *first* and *second*::
 
@@ -146,9 +154,9 @@ class DataTestCase(TestCase):
 
             def test_column1(self):
                 compare_obj = self.subject.set('col1')
-                def length_of_one(x):  # <- Helper function.
-                    return len(str(x)) == 1
-                self.assertEqual(compare_obj, length_of_one)
+                def uppercase(x):  # <- Helper function.
+                    return str(x).isupper()
+                self.assertEqual(compare_obj, uppercase)
         """
         if isinstance(first, BaseCompare):
             if callable(second):
@@ -208,9 +216,9 @@ class DataTestCase(TestCase):
         acceptable values::
 
             def test_column1(self):
-                def length_of_one(x):  # <- Helper function.
-                    return len(str(x)) == 1
-                self.assertSubjectSet('col1', length_of_one)
+                def uppercase(x):  # <- Helper function.
+                    return str(x).isupper()
+                self.assertSubjectSet('col1', uppercase)
 
         If the *required* argument is omitted, then values from
         :attr:`reference` will be used in its place::
@@ -330,8 +338,9 @@ class DataTestCase(TestCase):
         self.assertEqual(subject_result, func, msg)
 
     def allowOnly(self, differences, msg=None):
-        """Context manager to allow specific *differences* without
-        triggering a test failure::
+        """A convenience wrapper for :class:`allow_only`.
+
+        .. code-block:: python
 
             differences = [
                 Extra('foo'),
@@ -339,66 +348,47 @@ class DataTestCase(TestCase):
             ]
             with self.allowOnly(differences):
                 self.assertSubjectSet('column1')
-
-        If the raised differences do not match *differences*, the test
-        will fail with a :class:`DataError` of the remaining
-        differences.
-
-        In the above example, *differences* is a list but it is also
-        possible to pass a single difference or a dictionary.
-
-        Using a single difference::
-
-            with self.allowOnly(Extra('foo')):
-                self.assertSubjectSet('column2')
-
-        When using a dictionary, the keys are strings that provide
-        context (for future reference and derived reports) and the
-        values are the individual difference objects themselves::
-
-            differences = {
-                'Totals from state do not match totals from county.': [
-                    Deviation(+436, 38032, town='Springfield'),
-                    Deviation(-83, 8631, town='Union')
-                ],
-                'Some small towns were omitted from county report.': [
-                    Deviation(-102, 102, town='Anderson'),
-                    Deviation(-177, 177, town='Westfield')
-                ]
-            }
-            with self.allowOnly(differences):
-                self.assertSubjectSum('population', ['town'])
         """
         return allow_only(differences, msg)
 
     def allowAny(self, msg=None, **kwds):
-        """Allows any difference that matches the given
-        keywords::
+        """A convenience wrapper for :class:`allow_any`.
 
-            with self.allowAny(city_name='not a city'):
-                self.assertSubjectSum('population', ['city_name'])
+        .. code-block:: python
+
+            with self.allowAny(town='unknown'):
+                self.assertSubjectSum('population', ['town'])
         """
         return allow_any(msg, **kwds)
 
     def allowMissing(self, msg=None, **kwds):
-        """Context manager to allow for missing values without
-        triggering a test failure::
+        """A convenience wrapper for :class:`allow_missing`.
 
-            with self.allowMissing():  # Allows Missing differences.
+        .. code-block:: python
+
+            with self.allowMissing():
                 self.assertSubjectSet('column1')
         """
         return allow_missing(msg, **kwds)
 
     def allowExtra(self, msg=None, **kwds):
-        """Context manager to allow for extra values without triggering
-        a test failure::
+        """A convenience wrapper for :class:`allow_extra`.
 
-            with self.allowExtra():  # Allows Extra differences.
+        .. code-block:: python
+
+            with self.allowExtra():
                 self.assertSubjectSet('column1')
         """
         return allow_extra(msg, **kwds)
 
     def allowLimit(self, number, msg=None, **kwds):
+        """A convenience wrapper for :class:`allow_limit`.
+
+        .. code-block:: python
+
+            with self.allowLimit(10):  # Allow up to ten differences.
+                self.assertSubjectSet('column1')
+        """
         return allow_limit(number, msg, **kwds)
 
     def allowDeviation(self, lower, upper=None, msg=None, **kwds):
@@ -406,26 +396,17 @@ class DataTestCase(TestCase):
         allowDeviation(tolerance, /, msg=None, **kwds)
         allowDeviation(lower, upper, msg=None, **kwds)
 
-        Context manager to allow for deviations from required
-        numeric values without triggering a test failure.
+        A convenience wrapper for :class:`allow_deviation`.
 
-        Allowing deviations of plus-or-minus a given *tolerance*::
+        .. code-block:: python
 
             with self.allowDeviation(5):  # tolerance of +/- 5
                 self.assertSubjectSum('column2', keys=['column1'])
-
-        Specifying different *lower* and *upper* bounds::
-
-            with self.allowDeviation(-2, 3):  # tolerance from -2 to +3
-                self.assertSubjectSum('column2', keys=['column1'])
-
-        All deviations within the accepted tolerance range are
-        suppressed but those that exceed the range will trigger
-        a test failure.
-
-        When allowing deviations, empty values (like None or empty
-        string) are treated as zeros.
         """
+        # NOTE: CHANGES TO THE ABOVE DOCSTRING SHOULD BE REPLICATED IN
+        # THE DOCUMENTATION (.RST FILE)!  This docstring is not included
+        # using the Sphinx "autoclass" directive because there is no way
+        # to automatically handle multiple file signatures for Python.
         return allow_deviation(lower, upper, msg, **kwds)
 
     def allowPercentDeviation(self, lower, upper=None, msg=None, **kwds):
@@ -433,27 +414,17 @@ class DataTestCase(TestCase):
         allowPercentDeviation(tolerance, /, msg=None, **kwds)
         allowPercentDeviation(lower, upper, msg=None, **kwds)
 
-        Context manager to allow for deviations from required numeric
-        values within a given error percentage without triggering a test
-        failure.
+        A convenience wrapper for :class:`allow_percent_deviation`.
 
-        Allowing deviations of plus-or-minus a given *tolerance*::
+        .. code-block:: python
 
             with self.allowPercentDeviation(0.02):  # tolerance of +/- 2%
                 self.assertSubjectSum('column2', keys=['column1'])
-
-        Specifying different *lower* and *upper* bounds::
-
-            with self.allowPercentDeviation(-0.02, 0.03):  # tolerance from -2% to +3%
-                self.assertSubjectSum('column2', keys=['column1'])
-
-        All deviations within the accepted tolerance range are
-        suppressed but those that exceed the range will trigger a test
-        failure.
-
-        When allowing deviations, empty values (like None or empty
-        string) are treated as zeros.
         """
+        # NOTE: CHANGES TO THE ABOVE DOCSTRING SHOULD BE REPLICATED IN
+        # THE DOCUMENTATION (.RST FILE)!  This docstring is not included
+        # using the Sphinx "autoclass" directive because there is no way
+        # to automatically handle multiple file signatures for Python.
         return allow_percent_deviation(lower, upper, msg, **kwds)
 
     def fail(self, msg, differences=None):

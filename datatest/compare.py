@@ -68,7 +68,11 @@ class BaseCompare(object):
 
 
 class CompareSet(BaseCompare, set):
-    """DataSource query result set."""
+    """A set of values, usually returned from a data source method like
+    :meth:`columns() <BaseSource.columns>` or :meth:`distinct()
+    <BaseSource.distinct>`, that can be compared against required data
+    to produce a collection of differences.
+    """
     def __init__(self, data):
         """Initialize object."""
         if isinstance(data, collections.Mapping):
@@ -167,8 +171,8 @@ class CompareSet(BaseCompare, set):
         return differences
 
 
-# Decorate CompareSet comparison magic methods (cannot be decorated in-line as
-# class must first be defined).
+# Decorate CompareSet comparison magic methods (cannot be decorated
+# in-line as class must first be defined).
 _other_to_compareset = _coerce_other(CompareSet)
 CompareSet.__lt__ = _other_to_compareset(CompareSet.__lt__)
 CompareSet.__gt__ = _other_to_compareset(CompareSet.__gt__)
@@ -177,7 +181,11 @@ CompareSet.__ge__ = _other_to_compareset(CompareSet.__ge__)
 
 
 class CompareDict(BaseCompare, dict):
-    """DataSource query result mapping."""
+    """A dictionary of values, usually returned from a data source
+    method like :meth:`sum() <BaseSource.sum>` or :meth:`mapreduce()
+    <BaseSource.mapreduce>`, that can be compared against required data
+    to produce a collection of differences.
+    """
     def __init__(self, data, key_names):
         """Initialize object."""
         if not isinstance(data, collections.Mapping):

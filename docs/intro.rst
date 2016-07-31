@@ -175,7 +175,7 @@ Download and run :download:`failure_message_example.zip
     written.
 
 1. Check column names (against a set of values):
-    To check the columns, we call :meth:`assertSubjectColumns(...)
+    To check the columns, we call :meth:`assertSubjectColumns(…)
     <datatest.DataTestCase.assertSubjectColumns>`.  But we detect a number of
     differences in this new file:
 
@@ -199,7 +199,7 @@ Download and run :download:`failure_message_example.zip
     convert the CSV column names to lowercase and the failure goes away.
 
 2. Check "user_id" values (with a helper-function):
-    To check the "user_id" column, we call :meth:`assertSubjectSet(...)
+    To check the "user_id" column, we call :meth:`assertSubjectSet(…)
     <datatest.DataTestCase.assertSubjectSet>` with a helper function:
 
     .. code-block:: none
@@ -219,7 +219,7 @@ Download and run :download:`failure_message_example.zip
     allows the test to pass.
 
 3. Check "active" values (against a set of values):
-    To check the "active" column, we call :meth:`assertSubjectSet(...)
+    To check the "active" column, we call :meth:`assertSubjectSet(…)
     <datatest.DataTestCase.assertSubjectSet>` to make sure it contains
     the required values ("Y" and "N"):
 

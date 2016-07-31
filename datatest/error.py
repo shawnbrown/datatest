@@ -3,18 +3,25 @@ import pprint
 
 
 class DataError(AssertionError):
-    """Data assertion failure---includes a list of differences."""
+    """Raised when a data assertion fails."""
     def __init__(self, msg, differences, subject=None, required=None):
         """Initialize self, store *differences* for later reference."""
         if not differences:
             raise ValueError('Missing differences.')
-        self.differences = differences
+        self._differences = differences
         self.msg = msg
         self.subject = str(subject)    # Subject data source.
         self.required = str(required)  # Required object or reference source.
         self._verbose = False  # <- Set by DataTestResult if verbose.
 
         return AssertionError.__init__(self, msg)
+
+    @property
+    def differences(self):
+        """An iterable of differences between the data under test and
+        the data required.
+        """
+        return self._differences
 
     def __repr__(self):
         return self.__class__.__name__ + ': ' + self.__str__()

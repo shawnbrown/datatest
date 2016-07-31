@@ -84,25 +84,25 @@ class BaseSource(object):
         return self.mapreduce(mapper, reducer, column, keys, **kwds_filter)
 
     def mapreduce(self, mapper, reducer, columns, keys=None, **kwds_filter):
-        """Apply *mapper* to the values in *columns* (which are grouped
-        by *keys* and filtered by keywords) then apply a *reducer* of
-        two arguments cumulatively to the mapped values, from left to
-        right, so as to reduce the values to a single result (per group
-        of *keys*).  If *keys* is omitted, a single result is returned,
+        """Apply a *mapper* to specified *columns* (which are grouped by
+        *keys* and filtered by keywords) then apply a *reducer* of two
+        arguments cumulatively to the mapped values, from left to right,
+        so as to reduce the values to a single result (per group of
+        *keys*).  If *keys* is omitted, a single result is returned,
         otherwise returns a :class:`CompareDict` object.
 
         *mapper* (function or other callable):
-            Should accept column values from a single row and return a
-            single computed result.  Mapper always receives a single
-            argument---if *columns* is a sequence, *mapper* will receive
-            a tuple of values containing in the specified columns.
+            Should accept a column value and return a computed result.
+            Mapper always receives a single argument---if *columns* is a
+            sequence, *mapper* will receive a tuple of values from the
+            specified columns.
         *reducer* (function or other callable):
-            Should accept two arguments which are applied cumulatively
-            to the values produced by *mapper*, from left to right, so
-            as to reduce them to a single value (for each group of
-            *keys*).
+            Should accept two arguments (values produced by *mapper*)
+            and apply them, from left to right, to return a single
+            result.
         *columns* (string or sequence):
-            Name of column or columns that are passed into *mapper*.
+            Name of column or columns whose values are passed to
+            *mapper*.
         *keys* (None, string, or sequence):
             Name of key or keys used to group column values.
         *kwds_filter*:
@@ -126,17 +126,17 @@ class BaseSource(object):
             keys = (keys,)
         self._assert_columns_exist(keys)
 
-        result = {}
-        for row in filtered_rows:              # Do not remove this loop
+        result = {}                            # Do not remove this
+        for row in filtered_rows:              # accumulator and loop
             y = get_value(row)                 # without a good reason!
             y = mapper(y)                      # While a more functional
             key = tuple(row[k] for k in keys)  # style (using sorted,
-            if key in result:                  # groupby, and reduce) is
-                x = result[key]                # nicer to read, this base
-                result[key] = reducer(x, y)    # class should prioritize
-            else:                              # memory efficiency over
-                result[key] = y                # speed.
-        return CompareDict(result, keys)
+            if key in result:                  # groupby, and reduce)
+                x = result[key]                # is nicer to read, this
+                result[key] = reducer(x, y)    # base class should
+            else:                              # prioritize memory
+                result[key] = y                # efficiency over other
+        return CompareDict(result, keys)       # considerations.
 
     def _assert_columns_exist(self, columns):
         """Asserts that given columns are present in data source,

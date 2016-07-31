@@ -16,6 +16,7 @@ def _make_decimal(d):
 
 
 class BaseDifference(object):
+    """The base class from which all differences must inherit."""
     def __new__(cls, *args, **kwds):
         if cls is BaseDifference:
             msg = 'cannot instantiate BaseDifference directly - make a subclass'
@@ -23,9 +24,29 @@ class BaseDifference(object):
         return super(BaseDifference, cls).__new__(cls)
 
     def __init__(self, value, required=None, **kwds):
-        self.value = value
-        self.required = required
-        self.kwds = kwds
+        self._value = value
+        self._required = required
+        self._kwds = kwds
+
+    @property
+    def value(self):
+        """The subject *value* that was determined to be different from
+        what was required.
+        """
+        return self._value
+
+    @property
+    def required(self):
+        """The *required* value that was expected (not all differences
+        will use this property)."""
+        return self._required
+
+    @property
+    def kwds(self):
+        """A dictionary of the keyword arguments provided when the
+        difference was initialized.
+        """
+        return self._kwds
 
     def __repr__(self):
         clsname = self.__class__.__name__
@@ -52,20 +73,27 @@ class BaseDifference(object):
         return ', ' + kwds
 
 
-class Extra(BaseDifference):
-    """Additional value that is not part of a required set."""
-    def __init__(self, value, **kwds):
-        super(Extra, self).__init__(value, **kwds)
-
-
 class Missing(BaseDifference):
-    """Missing value that is part of a required set."""
+    """A value missing from the subject data which was part of the
+    required data.
+    """
     def __init__(self, value, **kwds):
         super(Missing, self).__init__(value, **kwds)
 
 
+class Extra(BaseDifference):
+    """An extra value found in the subject data that was not part of the
+    required data.
+    """
+    def __init__(self, value, **kwds):
+        super(Extra, self).__init__(value, **kwds)
+
+
 class Invalid(BaseDifference):
-    """Invalid item that does not match a required check."""
+    """A value in the subject data that did not satisfy a required
+    condition (well-formedness, date range, regular expression match,
+    etc.).
+    """
     def __repr__(self):
         clsname = self.__class__.__name__
         kwds = self._format_kwds(self.kwds)
@@ -77,7 +105,9 @@ class Invalid(BaseDifference):
 
 
 class Deviation(BaseDifference):
-    """Deviation from a required numeric value."""
+    """The deviation between a numeric value in the subject data and a
+    numeric value in the required data.
+    """
     def __init__(self, value, required, **kwds):
         empty = lambda x: not x or isnan(x)
         if (not empty(required) and empty(value)) or (required == 0 and value == 0):

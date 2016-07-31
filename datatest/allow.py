@@ -21,12 +21,25 @@ __datatest = True  # Used to detect in-module stack frames (which are
 
 class allow_iter(object):
     """Context manager to allow differences without triggering a test
-    failure.  *function* should accept an iterable of differences and
-    return an iterable of only those differences which are not allowed.
+    failure.  The *function* should accept an iterable of differences
+    and return an iterable of only those differences which are **not**
+    allowed::
 
-    .. note::
+        def function(iterable):
+            for diff in iterable:
+                value = str(diff.value)
+                is_note = value.startswith('NOTE: ')
+                if not is_note:  # Return differences when values
+                    yield diff   # DON'T start with "NOTE: ".
+
+        with datatest.allow_iter(function):  # Allows differences that
+            ...                              # start with "NOTE: ".
+
+    .. admonition:: Fun Fact
+        :class: note
+
         :class:`allow_iter` is the base context manager on which all
-        other allowences are implemented.
+        other allowances are implemented.
     """
     def __init__(self, function, msg=None, **kwds):
         assert callable(function), 'must be function or other callable'
@@ -60,7 +73,7 @@ class allow_iter(object):
             msg = [self.msg, getattr(exc_value, 'msg')]
             msg = ': '.join(x for x in msg if x)
             exc = DataError(msg, not_allowed)
-            exc.__cause__ = None  # Suppress context using verbose
+            exc.__cause__ = None  # <- Suppress context using verbose
             raise exc             # alternative to support older Python
                                   # versions--see PEP 415 (same as
                                   # effect as "raise ... from None").
@@ -93,6 +106,17 @@ class allow_iter(object):
 
 
 class allow_each(allow_iter):
+    """Allows differences for which *function* returns True.  The
+    *function* should accept a single difference and return True if the
+    difference should be allowed or False if it should not::
+
+        def function(diff):
+            value = str(diff.value)            # Returns True if value
+            return value.startswith('NOTE: ')  # starts with "NOTE: ".
+
+        with datatest.allow_each(function):    # Allows differences that
+            ...                                # start with "NOTE: ".
+    """
     def __init__(self, function, msg=None, **kwds):
         @functools.wraps(function)
         def filterfalse(iterable):  # Returns elements where function evals to False.
@@ -101,27 +125,82 @@ class allow_each(allow_iter):
 
 
 class allow_any(allow_iter):
+    """Allows differences of any type that match the given
+    keywords::
+
+        with datatest.allow_any(town='UNLISTED'):
+            ...
+    """
     def __init__(self, msg=None, **kwds):
+        """Initialize self."""
         function = lambda iterable: iter([])
         function.__name__ = self.__class__.__name__
         super(allow_any, self).__init__(function, msg, **kwds)
 
 
-class allow_extra(allow_each):
-    def __init__(self, msg=None, **kwds):
-        function = lambda diff: isinstance(diff, Extra)
-        function.__name__ = self.__class__.__name__
-        super(allow_extra, self).__init__(function, msg, **kwds)
-
-
 class allow_missing(allow_each):
+    """Allows :class:`Missing` values without triggering a test
+    failure::
+
+        with datatest.allow_missing():
+            ...
+    """
     def __init__(self, msg=None, **kwds):
         function = lambda diff: isinstance(diff, Missing)
         function.__name__ = self.__class__.__name__
         super(allow_missing, self).__init__(function, msg, **kwds)
 
 
+class allow_extra(allow_each):
+    """Allows :class:`Extra` values without triggering a test
+    failure::
+
+        with datatest.allow_extra():
+            ...
+    """
+    def __init__(self, msg=None, **kwds):
+        function = lambda diff: isinstance(diff, Extra)
+        function.__name__ = self.__class__.__name__
+        super(allow_extra, self).__init__(function, msg, **kwds)
+
+
 class allow_only(allow_iter):
+    """Context manager to allow specified *differences* without
+    triggering a test failure.  If a test fails with some differences
+    that have not been allowed, the :class:`DataError` is re-raised with
+    the remaining differences.
+
+    Using a list::
+
+        differences = [
+            Extra('foo'),
+            Missing('bar'),
+        ]
+        with datatest.allow_only(differences):
+            ...
+
+    Using a single difference::
+
+        with datatest.allow_only(Extra('foo')):
+            ...
+
+    Using a dictionary---keys are strings that provide context (for
+    future reference and derived reports) and values are the individual
+    differences themselves::
+
+        differences = {
+            'Totals from state do not match totals from county.': [
+                Deviation(+436, 38032, town='Springfield'),
+                Deviation(-83, 8631, town='Union')
+            ],
+            'Some small towns were omitted from county report.': [
+                Deviation(-102, 102, town='Anderson'),
+                Deviation(-177, 177, town='Westfield')
+            ]
+        }
+        with datatest.allow_only(differences):
+            ...
+    """
     def __init__(self, differences, msg=None):
         def function(iterable):
             allowed = self._walk_diff(differences)  # <- Closes over *differences*.
@@ -162,6 +241,16 @@ class allow_only(allow_iter):
 
 
 class allow_limit(allow_iter):
+    """Allows a limited *number* of differences (of any type) without
+    triggering a test failure::
+
+        with datatest.allow_limit(10):  # Allow up to ten differences.
+            ...
+
+    If the count of differences exceeds the given *number*, the test
+    case will fail with a :class:`DataError` containing all observed
+    differences.
+    """
     def __init__(self, number, msg=None, **kwds):
         if not isinstance(number, Number):
             raise TypeError('number can not be type '+ number.__class__.__name__)
@@ -185,10 +274,10 @@ class allow_limit(allow_iter):
 
 
 def _prettify_deviation_signature(method):
-    """Helper function intended for internal use.  Prettify signature
-    of deviation __init__ classes by patching its signature to make
-    the "tolerance" syntax the default option when introspected (with
-    an IDE, REPL, or other user interface).
+    """Helper function intended for internal use.  Prettify signature of
+    deviation __init__ classes by patching its signature to make the
+    "tolerance" syntax the default option when introspected (with an
+    IDE, REPL, or other user interface).
     """
     try:
         signature = inspect.signature(method)
@@ -236,11 +325,34 @@ def _normalize_deviation_args(lower, upper, msg):
 
 
 class allow_deviation(allow_each):
+    """
+    allow_deviation(tolerance, /, msg=None, **kwds)
+    allow_deviation(lower, upper, msg=None, **kwds)
+
+    Context manager to allow for deviations from required numeric values
+    without triggering a test failure.
+
+    Allowing deviations of plus-or-minus a given *tolerance*::
+
+        with datatest.allow_deviation(5):  # tolerance of +/- 5
+            ...
+
+    Specifying different *lower* and *upper* bounds::
+
+        with datatest.allow_deviation(-2, 3):  # tolerance from -2 to +3
+            ...
+
+    All deviations within the accepted tolerance range are suppressed
+    but those outside the range will trigger a test failure.
+
+    When allowing deviations, empty values (like None or empty string)
+    are treated as zeros.
+    """
+    # NOTE: CHANGES TO THE ABOVE DOCSTRING SHOULD BE REPLICATED IN THE
+    # DOCUMENTATION (.RST FILE)!  This docstring is not included using
+    # the Sphinx "autoclass" directive because there is no way to
+    # automatically handle multiple file signatures for Python.
     def __init__(self, lower, upper=None, msg=None, **kwds):
-        """
-        allow_deviation(tolerance, /, msg=None, **kwds)
-        allow_deviation(lower, upper, msg=None, **kwds)
-        """
         lower, upper, msg = _normalize_deviation_args(lower, upper, msg)
         normalize_numbers = lambda x: x if x else 0
         def function(diff):
@@ -257,11 +369,34 @@ _prettify_deviation_signature(allow_deviation.__init__)
 
 
 class allow_percent_deviation(allow_each):
+    """
+    allow_percent_deviation(tolerance, /, msg=None, **kwds)
+    allow_percent_deviation(lower, upper, msg=None, **kwds)
+
+    Context manager to allow for deviations from required numeric values
+    within a given error percentage without triggering a test failure.
+
+    Allowing deviations of plus-or-minus a given *tolerance*::
+
+        with datatest.allow_percent_deviation(0.02):  # tolerance of +/- 2%
+            ...
+
+    Specifying different *lower* and *upper* bounds::
+
+        with datatest.allow_percent_deviation(-0.02, 0.03):  # tolerance from -2% to +3%
+            ...
+
+    All deviations within the accepted tolerance range are suppressed
+    but those that exceed the range will trigger a test failure.
+
+    When allowing deviations, empty values (like None or empty string)
+    are treated as zeros.
+    """
+    # NOTE: CHANGES TO THE ABOVE DOCSTRING SHOULD BE REPLICATED IN THE
+    # DOCUMENTATION (.RST FILE)!  This docstring is not included using
+    # the Sphinx "autoclass" directive because there is no way to
+    # automatically handle multiple file signatures for Python.
     def __init__(self, lower, upper=None, msg=None, **kwds):
-        """
-        allow_percent_deviation(tolerance, /, msg=None, **kwds)
-        allow_percent_deviation(lower, upper, msg=None, **kwds)
-        """
         lower, upper, msg = _normalize_deviation_args(lower, upper, msg)
         normalize_numbers = lambda x: x if x else 0
         def function(diff):

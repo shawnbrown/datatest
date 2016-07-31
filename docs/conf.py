@@ -28,7 +28,13 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.coverage',
     'sphinx.ext.todo',
+    'sphinx.ext.intersphinx',
 ]
+
+# intersphinx settins for external project references
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/3', None),
+}
 
 # autodoc settings
 sys.path.insert(0, '..')
