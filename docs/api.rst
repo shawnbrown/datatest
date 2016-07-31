@@ -280,7 +280,7 @@ Error and Differences
 
 -----------------
 
-.. autoclass:: datatest.BaseDifference
+.. autoclass:: datatest.BaseDifference(...)
 
     .. autoattribute:: value
     .. autoattribute:: required

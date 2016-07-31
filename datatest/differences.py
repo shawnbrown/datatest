@@ -30,21 +30,19 @@ class BaseDifference(object):
 
     @property
     def value(self):
-        """The subject *value* that was determined to be different from
-        what was required.
-        """
+        """The subject *value* that differs from the required value."""
         return self._value
 
     @property
     def required(self):
-        """The *required* value that was expected (not all differences
-        will use this property)."""
+        """The *required* value that was expected by the test (not all
+        differences will use this property)."""
         return self._required
 
     @property
     def kwds(self):
-        """A dictionary of the keyword arguments provided when the
-        difference was initialized.
+        """A dictionary of the keyword arguments to help indicate where
+        the difference was detected in the subject data.
         """
         return self._kwds
 
