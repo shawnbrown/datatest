@@ -87,10 +87,10 @@ package::
 Supported Versions
 ==================
 
-Tested on Python versions 3.5, 3.4, 3.3, 3.2, 3.1, 2.7 and 2.6.
-Datatest is pure Python and is likely to run on PyPy, Jython, and other
-implementations without issues (check with "setup.py test" before
-installing).
+Tested on Python 2.6, 2.7, and 3.1 through 3.5; PyPy and PyPy3.
+Datatest is pure Python and is also likely to run on Jython, Stackless,
+and other implementations without issue (check using "setup.py test"
+before installing).
 
 
 Backward Compatibility
