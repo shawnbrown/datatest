@@ -133,10 +133,11 @@ class allow_any(allow_iter):
     """
     def __init__(self, msg=None, **kwds):
         """Initialize self."""
+        if not kwds:
+            raise TypeError('requires 1 or more keyword arguments (0 given)')
         function = lambda iterable: iter([])
         function.__name__ = self.__class__.__name__
         super(allow_any, self).__init__(function, msg, **kwds)
-
 
 class allow_missing(allow_each):
     """Allows :class:`Missing` values without triggering a test

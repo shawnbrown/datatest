@@ -151,10 +151,6 @@ class TestAllowEach(unittest.TestCase):
 
 class TestAllowAny(unittest.TestCase):
     """Test allow_any() behavior."""
-    def test_allow_all(self):
-        with allow_any():
-            raise DataError('example error', [Extra('xxx'), Missing('yyy')])
-
     def test_kwds(self):
         in_diffs = [
             Extra('xxx', aaa='foo'),
@@ -168,9 +164,22 @@ class TestAllowAny(unittest.TestCase):
         rejected = list(cm.exception.differences)
         self.assertEqual(rejected, [Extra('yyy', aaa='bar')])
 
+    def test_no_kwds(self):
+        in_diffs = [
+            Extra('xxx', aaa='foo'),
+            Extra('yyy', aaa='bar'),
+        ]
+        with self.assertRaises(TypeError) as cm:
+            with allow_any('example allowance'):  # <- Missing keyword argument!
+                raise DataError('example error', in_diffs)
+
+        result = cm.exception
+        expected = 'requires 1 or more keyword arguments (0 given)'
+        self.assertEqual(expected, str(result))
+
     def test_no_exception(self):
         with self.assertRaises(AssertionError) as cm:
-            with allow_any():
+            with allow_any(foo='bar'):
                 pass  # No exceptions raised
 
         exc = cm.exception
