@@ -10,8 +10,8 @@ Datatest extends the Python standard library's unittest package to
 provide testing tools for asserting data correctness.
 
 * Documentation:
-    - http://datatest.readthedocs.io/ (stable)
     - http://datatest.readthedocs.io/en/latest/ (latest)
+    - http://datatest.readthedocs.io/ (stable)
 * Official Releases:
    - https://pypi.python.org/pypi/datatest
 * Development:
