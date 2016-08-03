@@ -102,11 +102,6 @@ import to the beginning of each file::
 
   from datatest.__past__ import api_dev1
 
-Likewise, code written using the current API (version 0.7.0.dev2) will
-be supported in the future with the following import::
-
-  from datatest.__past__ import api_dev2
-
 To maintain existing test code, this project makes a best-effort
 attempt to provide backward compatibility support for older features.
 The API will be improved in the future but only in measured and
