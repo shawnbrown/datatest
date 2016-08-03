@@ -115,6 +115,8 @@ if __name__ == '__main__':
                 'Programming Language :: Python :: 3.3',
                 'Programming Language :: Python :: 3.4',
                 'Programming Language :: Python :: 3.5',
+                'Programming Language :: Python :: Implementation :: CPython',
+                'Programming Language :: Python :: Implementation :: PyPy',
             ],
             cmdclass={
                 'test': TestCommand,
@@ -129,16 +131,24 @@ if __name__ == '__main__':
 
 # Release Checklist
 # -----------------
-# Make sure correct version number is set in:
-#   datatest/__init__.py
-#   docs/conf.py
-# Update README.rst (incl. "Backward Compatibility" section).
-# Commit and push version change to upstream repository.
-# Add version tag to upstream repository.
-# Remove all existing files in the dist/ folder.
-# Build new distributions:
-#   python setup.py sdist bdist_wheel
-# Register source distribution with PyPI:
-#   twine register dist/datatest.X.Y.Z.tar.gz
-# Upload source and wheel distributions to PyPI:
-#   twine upload dist/*
+#  1. Make sure correct version number is set in:
+#       datatest/__init__.py
+#       docs/conf.py
+#  2. Make sure __past__ sub-package includes a stub module for the
+#     current API version.
+#  3. Update README.rst (including "Backward Compatibility" section).
+#  4. Commit and push final changes to upstream repository.
+#  5. Remove all existing files in the dist/ folder.
+#  6. Build new distributions:
+#       $ python setup.py sdist bdist_wheel
+#  7. Register source distribution with PyPI:
+#       $ twine register dist/datatest.X.Y.Z.tar.gz
+#  8. Upload source and wheel distributions to PyPI:
+#       $ twine upload dist/*
+#  9. Double check PyPI project page and test installation from PyPI.
+# 10. Add version tag to upstream repository (also used by readthedocs.org).
+# 11. Publish update announcement.
+# 12. Iterate version number in repository so that "latest" docs aren't
+#     confused with the just-published "stable" docs:
+#       datatest/__init__.py
+#       docs/conf.py
