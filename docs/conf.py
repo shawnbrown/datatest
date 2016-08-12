@@ -65,7 +65,7 @@ author = 'Shawn Brown'
 #
 # The short X.Y version.
 #from datatest import __version__
-__version__ = '0.7.0.dev2'
+__version__ = '0.7.1.dev2'
 version = __version__
 
 # The full version, including alpha/beta/rc tags.
@@ -292,9 +292,18 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  (master_doc, 'datatest', 'datatest Documentation',
-   author, 'datatest', 'One line description of project.',
-   'Miscellaneous'),
+    (
+        master_doc,
+        'datatest',
+        'datatest Documentation',
+        author,
+        'datatest',
+        'Test driven data wrangling.',
+        (
+            'Datatest extends the standard library’s unittest package '
+            'to provide testing tools for asserting data correctness.'
+        ),
+    ),
 ]
 
 # Documents to append as an appendix to all manuals.

@@ -43,7 +43,7 @@ from .main import DataTestProgram
 from .main import main
 
 
-__version__ = '0.7.0.dev2'
+__version__ = '0.7.1.dev2'
 
 __all__ = [
     # Test case.
