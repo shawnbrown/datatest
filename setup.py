@@ -98,7 +98,7 @@ if __name__ == '__main__':
                 'datatest.__past__',
             ],
             # Additional fields:
-            description='Testing tools for data preparation.',
+            description='Test driven data wrangling.',
             long_description=long_description,
             author='Shawn Brown',
             classifiers  = [
