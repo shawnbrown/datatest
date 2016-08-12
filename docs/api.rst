@@ -1,9 +1,9 @@
 
 .. module:: datatest
 
-###################
-Developer Interface
-###################
+#############
+API Reference
+#############
 
 
 ************

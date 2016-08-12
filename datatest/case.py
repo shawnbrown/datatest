@@ -35,21 +35,18 @@ from .allow import allow_percent_deviation
 
 class DataTestCase(TestCase):
     """This class wraps and extends unittest.TestCase and implements
-    additional properties and methods for testing data quality.  When a
-    data assertion fails, it raises a :class:`DataError` which contains
-    a list of differences between the data under test and the data
-    required.
-
-    In addition to the new functionality, familiar methods (like setUp,
-    assertEqual, etc.) are still available---see
+    additional properties and methods for testing data quality.  In
+    addition to the new functionality, familiar methods (like setUp,
+    addCleanup, etc.) are still available---see
     :py:class:`unittest.TestCase` for full details.
     """
     @property
     def subject(self):
-        """A data source containing the data under test---the *subject*
+        """This property contains the data under test---the *subject*
         of the tests.  A subject must be defined to use any of the
         "assertSubject…" methods (e.g., :meth:`assertSubjectColumns`,
-        :meth:`assertSubjectSet`, etc.).
+        :meth:`assertSubjectSet`, etc.).  It must be a data source
+        object.
 
         A subject can be defined at the class-level or at the
         module-level.  This property will return the :attr:`subject`
@@ -78,9 +75,10 @@ class DataTestCase(TestCase):
 
     @property
     def reference(self):
-        """A data source containing data that is trusted to be correct.
-        This property is used by the "assertSubject…" methods when their
-        *required* argument is omitted.
+        """This property contains data that is trusted to be correct.
+        A reference data source is optional.  It's used by the
+        "assertSubject…" methods when their *required* argument is
+        omitted.
 
         A reference can be defined at the class-level or at the
         module-level.  This property will return the :attr:`reference`
