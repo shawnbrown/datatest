@@ -133,28 +133,27 @@ class DataTestCase(TestCase):
 
         return required
 
-    def assertEqual(self, first, second, msg=None):
-        """Fail if the two objects are unequal as determined by the '=='
-        operator.
+    def assertValid(self, first, second, msg=None):
+        """Fail if *first* does not satisfy *second* as determined by
+        appropriate validation comparison.
 
-        If the *first* argument is a comparison object
-        (:class:`CompareSet`, :class:`CompareDict`, etc.), a failure
-        will raise the differences between *first* and *second*::
+        If *first* and *second* are comparable, a failure will raise a
+        DataError containing the differences between the two::
 
             def test_column1(self):
-                first = self.subject.set('col1')     # The set() method
-                second = self.reference.set('col1')  # returns a CompareSet.
-                self.assertEqual(first, second)
+                first = self.subject.distinct('col1')
+                second = self.reference.distinct('col1')
+                self.assertValid(first, second)
 
         If the *second* argument is a helper-function (or other
         callable), it is used as a key which must return True for
         acceptable values::
 
             def test_column1(self):
-                compare_obj = self.subject.set('col1')
+                compare_obj = self.subject.distinct('col1')
                 def uppercase(x):  # <- Helper function.
                     return str(x).isupper()
-                self.assertEqual(compare_obj, uppercase)
+                self.assertValid(compare_obj, uppercase)
         """
         if isinstance(first, BaseCompare):
             if callable(second):
@@ -192,7 +191,7 @@ class DataTestCase(TestCase):
         subject_set = CompareSet(self.subject.columns())
         required = self._normalize_required(required, 'columns')
         msg = msg or 'different column names'
-        self.assertEqual(subject_set, required, msg)
+        self.assertValid(subject_set, required, msg)
 
     def assertSubjectSet(self, columns, required=None, msg=None, **kwds_filter):
         """Test that the column or *columns* in :attr:`subject` contain
@@ -230,7 +229,7 @@ class DataTestCase(TestCase):
         subject_set = self.subject.distinct(columns, **kwds_filter)
         required = self._normalize_required(required, 'distinct', columns, **kwds_filter)
         msg = msg or 'different {0!r} values'.format(columns)
-        self.assertEqual(subject_set, required, msg)
+        self.assertValid(subject_set, required, msg)
 
     def assertSubjectSum(self, column, keys, required=None, msg=None, **kwds_filter):
         """Test that the sum of *column* in :attr:`subject`, when
@@ -259,7 +258,7 @@ class DataTestCase(TestCase):
         subject_dict = self.subject.sum(column, keys, **kwds_filter)
         required = self._normalize_required(required, 'sum', column, keys, **kwds_filter)
         msg = msg or 'different {0!r} sums'.format(column)
-        self.assertEqual(subject_dict, required, msg)
+        self.assertValid(subject_dict, required, msg)
 
     def assertSubjectUnique(self, columns, msg=None, **kwds_filter):
         """Test that values in column or *columns* of :attr:`subject`
@@ -315,7 +314,7 @@ class DataTestCase(TestCase):
             required = re.compile(required)
         func = lambda x: required.search(x) is not None
         msg = msg or 'non-matching {0!r} values'.format(column)
-        self.assertEqual(subject_result, func, msg)
+        self.assertValid(subject_result, func, msg)
 
     def assertSubjectNotRegex(self, column, required, msg=None, **kwds_filter):
         """Test that *column* in :attr:`subject` contains values that
@@ -333,7 +332,7 @@ class DataTestCase(TestCase):
             required = re.compile(required)
         func = lambda x: required.search(x) is None
         msg = msg or 'matching {0!r} values'.format(column)
-        self.assertEqual(subject_result, func, msg)
+        self.assertValid(subject_result, func, msg)
 
     def allowOnly(self, differences, msg=None):
         """A convenience wrapper for :class:`allow_only`.

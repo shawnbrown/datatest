@@ -69,28 +69,28 @@ class TestNoDefaultSubject(TestHelperCase):
         self.assertRegex(failure, "cannot find 'subject'")
 
 
-class TestAssertEqual(TestHelperCase):
-    def test_assertEqual(self):
+class TestAssertValid(TestHelperCase):
+    def test_assertValid(self):
         class _TestClass(DataTestCase):
             def test_method1(_self):
                 first  = CompareSet([1,2,3,4,5,6,7])
                 second = CompareSet([1,2,3,4,5,6])
-                _self.assertEqual(first, second)
+                _self.assertValid(first, second)
 
             def test_method2(_self):
                 first  = CompareSet([1,2,3,4,5,6,7])
                 second = set([1,2,3,4,5,6])  # <- Built-in set type!!!
-                _self.assertEqual(first, second)
+                _self.assertValid(first, second)
 
             def test_method3(_self):
                 first  = CompareSet([1,2,3,4,5,6,7])
                 second = lambda x: x <= 6  # <- callable
-                _self.assertEqual(first, second)
+                _self.assertValid(first, second)
 
             def test_method4(_self):
                 first  = CompareSet([1,2,3,4,5,6,7])
                 second = lambda x: x < 10  # <- callable
-                _self.assertEqual(first, second)
+                _self.assertValid(first, second)
 
         pattern = r"first object does not match second object:\n Extra\(7\)"
 

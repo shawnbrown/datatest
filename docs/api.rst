@@ -15,7 +15,7 @@ DataTestCase
     .. autoattribute:: subject
     .. autoattribute:: reference
 
-    .. automethod:: assertEqual
+    .. automethod:: assertValid
 
     .. _assert-methods:
 
