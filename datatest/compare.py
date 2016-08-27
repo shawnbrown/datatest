@@ -186,12 +186,10 @@ class CompareDict(BaseCompare, dict):
     <BaseSource.mapreduce>`, that can be compared against required data
     to produce a collection of differences.
     """
-    def __init__(self, data, key_names):
+    def __init__(self, data, key_names=None):
         """Initialize object."""
         if not isinstance(data, collections.Mapping):
             data = dict(data)
-        if not _is_nscontainer(key_names):
-            key_names = (key_names,)
 
         try:
             iterable = iter(data.items())
@@ -201,9 +199,16 @@ class CompareDict(BaseCompare, dict):
                 iterable = ((k[0], v) for k, v in iterable)
                 data = dict(iterable)
         except StopIteration:
-            pass
+            first_key = []
 
         dict.__init__(self, data)
+
+        if key_names == None:  # If missing, make keys (_0, _1, ...).
+            key_names = range(len(first_key))
+            key_names = tuple('_' + str(x) for x in key_names)
+        elif not _is_nscontainer(key_names):
+            key_names = (key_names,)
+
         self.key_names = key_names
 
     def __repr__(self):

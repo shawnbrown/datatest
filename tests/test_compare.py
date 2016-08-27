@@ -229,6 +229,17 @@ class TestCompareDict(unittest.TestCase):
         unwrapped = {'a': 1, 'b': 2, 'c': 3, 'd': 4}
         self.assertEqual(unwrapped, x)
 
+        # Omitted *key_names*.
+        data = {'a': 1, 'b': 2, 'c': 3, 'd': 4}
+        x = CompareDict(data)
+        self.assertEqual(data, x)
+        self.assertEqual(x.key_names, ('_0',))
+
+        data = {('a', 'a'): 1, ('b', 'b'): 2, ('c', 'c'): 3}
+        x = CompareDict(data)
+        self.assertEqual(data, x)
+        self.assertEqual(x.key_names, ('_0', '_1'))
+
         # IMPLEMENT THIS?
         # Mis-matched group_by and keys.
         #with self.assertRaises(ValueError):
