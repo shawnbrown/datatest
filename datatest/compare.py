@@ -290,7 +290,7 @@ class CompareDict(BaseCompare, dict):
                     key = (key,)
                 kwds = dict(zip(self.key_names, key))
 
-                # Numeric comparison.
+                # Numeric vs numeric.
                 if isinstance(self_val, Number) and isinstance(other_val, Number):
                     diff = self_val - other_val
                     if diff:
@@ -306,7 +306,13 @@ class CompareDict(BaseCompare, dict):
                     else:
                         diff = 0 - other_val
                     differences.append(Deviation(diff, other_val, **kwds))
-                # Object vs object comparison.
+                # Object vs empty.
+                elif self_val and not other_val:
+                    differences.append(Extra(self_val, **kwds))
+                # Empty vs object.
+                elif not self_val and other_val:
+                    differences.append(Missing(other_val, **kwds))
+                # Object vs object.
                 else:
                     if self_val != other_val:
                         differences.append(Invalid(self_val, other_val, **kwds))

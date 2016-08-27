@@ -9,6 +9,7 @@ from .utils import collections
 from .utils import itertools
 
 from .compare import CompareSet  # TODO!!!: Remove after assertSubjectColumns fixed!
+from .compare import CompareDict  # TODO!!!: Remove after assertSubjectColumns fixed!
 from .compare import BaseCompare
 from .differences import _make_decimal
 from .differences import Extra  # TODO: Move when assertSubjectUnique us moved.
@@ -155,21 +156,24 @@ class DataTestCase(TestCase):
                     return str(x).isupper()
                 self.assertValid(compare_obj, uppercase)
         """
-        if isinstance(first, BaseCompare):
-            if callable(second):
-                equal = first.all(second)
-                default_msg = 'first object contains invalid items'
-            else:
-                equal = first == second
-                default_msg = 'first object does not match second object'
+        if not isinstance(first, BaseCompare):
+            if isinstance(first, str) or not isinstance(first, collections.Container):
+                first = CompareSet([first])
+            elif isinstance(first, collections.Set):
+                first = CompareSet(first)
+            elif isinstance(first, collections.Mapping):
+                first = CompareDict(first)
 
-            if not equal:
-                differences = first.compare(second)
-                self.fail(msg or default_msg, differences)
-
+        if callable(second):
+            equal = first.all(second)
+            default_msg = 'first object contains invalid items'
         else:
-            super(DataTestCase, self).assertEqual(first, second, msg)
-            # Called super() using older convention for 2.x support.
+            equal = first == second
+            default_msg = 'first object does not match second object'
+
+        if not equal:
+            differences = first.compare(second)
+            self.fail(msg or default_msg, differences)
 
     def assertSubjectColumns(self, required=None, msg=None):
         """Test that the column names of :attr:`subject` match the
