@@ -41,6 +41,10 @@ class TestBackwardsCompatibility(unittest.TestCase):
         """Test compatibility with API of first development-release."""
         self.assertSubprocess('tests.past_api_dev1')
 
+    def test_api_dev2(self):
+        """Test compatibility with API of second development-release."""
+        self.assertSubprocess('tests.past_api_dev2')
+
 
 if __name__ == '__main__':
     unittest.main()
