@@ -10,6 +10,8 @@ from datatest.differences import Extra
 from datatest.differences import Missing
 from datatest.differences import Invalid
 from datatest.differences import Deviation
+from datatest.differences import _NOTFOUND
+from datatest.differences import _getdiff
 
 
 class TestBaseDifference(unittest.TestCase):
@@ -194,3 +196,85 @@ class TestDeviation(unittest.TestCase):
 
         diff = Deviation(-1, 100, col4='foo', col5='bar')
         self.assertEqual(diff, eval(repr(diff)))  # Test __repr__ eval
+
+
+class Test_getdiff(unittest.TestCase):
+    def test_object_vs_notfound(self):
+        diff = _getdiff('a', _NOTFOUND)
+        self.assertEqual(diff, Extra('a'))
+
+        diff = _getdiff(5, _NOTFOUND)
+        self.assertEqual(diff, Extra(5))
+
+    def test_notfound_vs_object(self):
+        diff = _getdiff(_NOTFOUND, 'b')
+        self.assertEqual(diff, Missing('b'))
+
+        diff = _getdiff(_NOTFOUND, 6)
+        self.assertEqual(diff, Missing(6))
+
+    def test_numeric_vs_numeric(self):
+        diff = _getdiff(5, 6)
+        self.assertEqual(diff, Deviation(-1, 6))
+
+    def test_numeric_vs_none(self):
+        diff = _getdiff(5, None)
+        self.assertEqual(diff, Deviation(+5, None))
+
+        diff = _getdiff(0, None)
+        self.assertEqual(diff, Deviation(+0, None))
+
+    def test_none_vs_numeric(self):
+        diff = _getdiff(None, 6)                  # For None vs non-zero,
+        self.assertEqual(diff, Deviation(-6, 6))  # difference is calculated
+                                                  # as 0 - other.
+
+        diff = _getdiff(None, 0)                    # For None vs zero,
+        self.assertEqual(diff, Deviation(None, 0))  # difference remains None.
+
+    def test_object_vs_object(self):
+        """Non-numeric comparisons return Invalid type."""
+        diff = _getdiff('a', 'b')
+        self.assertEqual(diff, Invalid('a', 'b'))
+
+        diff = _getdiff(5, 'b')
+        self.assertEqual(diff, Invalid(5, 'b'))
+
+        diff = _getdiff('a', 6)
+        self.assertEqual(diff, Invalid('a', 6))
+
+        diff = _getdiff(float('nan'), 6)
+        self.assertEqual(diff, Invalid(float('nan'), 6))
+
+        diff = _getdiff(5, float('nan'))
+        self.assertEqual(diff, Invalid(5, float('nan')))
+
+        fn = lambda x: True
+        diff = _getdiff('a', fn)
+        self.assertEqual(diff, Invalid('a', fn))
+
+        regex = re.compile('^test$')
+        diff = _getdiff('a', regex)
+        self.assertEqual(diff, Invalid('a', re.compile('^test$')))
+
+    def test_keywords(self):
+        """Keywords should be passed to diff objet."""
+        diff = _getdiff(5, 6, col1='AAA')
+        self.assertEqual(diff, Deviation(-1, 6, col1='AAA'))
+
+        diff = _getdiff('a', 6, col1='AAA')
+        self.assertEqual(diff, Invalid('a', 6, col1='AAA'))
+
+        diff = _getdiff(_NOTFOUND, 6, col1='AAA')
+        self.assertEqual(diff, Missing(6, col1='AAA'))
+
+    def test_same(self):
+        """The _getdiff() function returns differences for objects that
+        are known to be different--it does not test for differences
+        itself.
+        """
+        diff = _getdiff('a', 'a')
+        self.assertEqual(diff, Invalid('a', 'a'))
+
+        diff = _getdiff(None, None)
+        self.assertEqual(diff, Invalid(None, None))

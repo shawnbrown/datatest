@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-import pprint
-from numbers import Number
 from math import isnan
+from numbers import Number
 from .utils import decimal
 
 
@@ -156,3 +155,48 @@ class NotProperSubset(NonStrictRelation):
 class NotProperSuperset(NonStrictRelation):
     """Not a proper superset of a required set."""
     pass
+
+
+class _NotFoundSentinel(object):
+    """Sentinel for handling membership in collections."""
+    def __repr__(self):
+        return '<not found>'
+_NOTFOUND = _NotFoundSentinel()
+del _NotFoundSentinel
+
+
+def _getdiff(first, second, **kwds):
+    """Returns difference object for two objects known to be unequal."""
+    # Object vs _NOTFOUND.
+    if second == _NOTFOUND:
+        return Extra(first, **kwds)
+
+    # _NOTFOUND vs object.
+    if first == _NOTFOUND:
+        return Missing(second, **kwds)
+
+    # Prepare for numeric comparisons.
+    _isnum = lambda x: isinstance(x, Number) and not isnan(x)
+    first_isnum = _isnum(first)
+    second_isnum = _isnum(second)
+
+    # Numeric vs numeric.
+    if first_isnum and second_isnum:
+        difference = first - second
+        return Deviation(difference, second, **kwds)
+
+    # Numeric vs empty (or zero).
+    if first_isnum and not second:
+        difference = first - 0
+        return Deviation(difference, second, **kwds)
+
+    # Empty (or zero) vs numeric.
+    if not first and second_isnum:
+        if second == 0:
+            difference = first
+        else:
+            difference = 0 - second
+        return Deviation(difference, second, **kwds)
+
+    # All other pairs of objects.
+    return Invalid(first, second, **kwds)
