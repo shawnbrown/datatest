@@ -15,6 +15,45 @@ from .differences import NotProperSubset
 from .differences import NotProperSuperset
 
 
+def _compare_str_notiterable(data, required):
+    """Compare *data* object against *required* condition.  The
+    *required* argument can be a callable, regex pattern, str, or any
+    not-iterable object.
+    """
+    # Wrap *required* to change exceptions to False.
+    def wrapper(arg):
+        try:
+            return required(arg)
+        except Exception:
+            return False
+
+    if isinstance(data, collections.Mapping):
+        diffs = dict()
+        for key, val in data.items():
+            if not wrapper(val):
+                diffs[key] = Invalid(val, required)
+        return diffs  # <- EXIT!
+
+    is_not_str = not isinstance(data, str)
+
+    if isinstance(data, collections.Sequence) and is_not_str:
+        diffs = dict()
+        for index, val in enumerate(data):
+            if not wrapper(val):
+                diffs[index] = Invalid(val, required)
+        return diffs  # <- EXIT!
+
+    # For Sets and other Iterables.
+    if isinstance(data, collections.Iterable) and is_not_str:
+        diffs = [Invalid(x, required) for x in data if not wrapper(x)]
+        return diffs  # <- EXIT!
+
+    # For string or non-iterable.
+    if not wrapper(data):
+        return Invalid(data, required)
+    return None
+
+
 def _is_nscontainer(x):
     """Returns True if *x* is a non-string container object."""
     return not isinstance(x, str) and isinstance(x, collections.Container)

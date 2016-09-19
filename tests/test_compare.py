@@ -4,6 +4,7 @@ from . import _unittest as unittest
 from datatest.compare import _coerce_other
 from datatest.compare import CompareSet
 from datatest.compare import CompareDict
+from datatest.compare import _compare_str_notiterable
 
 from datatest import Extra
 from datatest import Missing
@@ -11,6 +12,84 @@ from datatest import Invalid
 from datatest import Deviation
 from datatest import NotProperSubset
 from datatest import NotProperSuperset
+
+
+class Test_compare_str_notiterable(unittest.TestCase):
+    def test_set(self):
+        isalpha = lambda x: x.isalpha()
+
+        data = set(['a', 'b', 'c'])
+        result = _compare_str_notiterable(data, isalpha)
+        self.assertEqual(result, [])
+
+        data = set(['a', 'b', 'c', '3'])
+        result = _compare_str_notiterable(data, isalpha)
+        self.assertEqual(result, [Invalid('3', isalpha)])
+
+    def test_mapping(self):
+        isalpha = lambda x: x.isalpha()
+
+        data = {'AAA': 'a', 'BBB': 'b', 'CCC': 'c'}
+        result = _compare_str_notiterable(data, isalpha)
+        self.assertEqual(result, {})
+
+        data = {'AAA': 'a', 'BBB': 'b', 'CCC': 'c', 'DDD': '3'}
+        result = _compare_str_notiterable(data, isalpha)
+        self.assertEqual(result, {'DDD': Invalid('3', isalpha)})
+
+    def test_sequence(self):
+        isalpha = lambda x: x.isalpha()
+
+        data = ['a', 'b', 'c']
+        result = _compare_str_notiterable(data, isalpha)
+        self.assertEqual(result, {})
+
+        data = ['a', 'b', 'c', '9']
+        result = _compare_str_notiterable(data, isalpha)
+        self.assertEqual(result, {3: Invalid('9', isalpha)})
+
+    def test_iterable(self):
+        isalpha = lambda x: x.isalpha()
+
+        data = iter(['a', 'b', 'c'])
+        result = _compare_str_notiterable(data, isalpha)
+        self.assertEqual(result, [])
+
+        data = iter(['a', 'b', 'c', '9'])
+        result = _compare_str_notiterable(data, isalpha)
+        self.assertEqual(result, [Invalid('9', isalpha)])
+
+    def test_str_or_noniterable(self):
+        isalpha = lambda x: x.isalpha()
+
+        data = 'ABCD'
+        result = _compare_str_notiterable(data, isalpha)
+        self.assertEqual(result, None)
+
+        data = '!@#$'
+        result = _compare_str_notiterable(data, isalpha)
+        self.assertEqual(result, Invalid('!@#$', isalpha))
+
+        data = 5
+        required = lambda x: 10 < x
+        result = _compare_str_notiterable(data, required)
+        self.assertEqual(result, Invalid(5, required))
+
+    def test_error_condition(self):
+        """If callable raises an Exception, the result is counted as
+        False.
+        """
+        isalpha = lambda x: x.isalpha()  # Raises TypeError if given
+                                         # a non-string value.
+
+        data = set(['a', 'b', 3, '4'])  # <- Value 3 raises an error.
+        result = _compare_str_notiterable(data, isalpha)
+        expected = [Invalid(3, isalpha), Invalid('4', isalpha)]
+        self.assertEqual(set(result), set(expected))
+
+        data = 10
+        result = _compare_str_notiterable(data, isalpha)
+        self.assertEqual(result, Invalid(data, isalpha))
 
 
 class TestMethodDecorator(unittest.TestCase):
