@@ -15,17 +15,30 @@ from .differences import NotProperSubset
 from .differences import NotProperSuperset
 
 
-def _compare_str_notiterable(data, required):
+def _compare_other(data, required):
     """Compare *data* object against *required* condition.  The
-    *required* argument can be a callable, regex pattern, str, or any
-    not-iterable object.
+    *required* argument can be a callable, regular expression, str, or
+    any not-iterable object.
     """
-    # Wrap *required* to change exceptions to False.
-    def wrapper(arg):
-        try:
-            return required(arg)
-        except Exception:
-            return False
+    # Prepare wrapper function.
+    if _expects_multiple_params(required):
+        def wrapper(args):
+            try:
+                return required(*args)  # <- Unpack args.
+            except TypeError:
+                if not isinstance(args, collections.Iterable):
+                    args = (args,)          # If arg not iterable, rerun using
+                    return required(*args)  # 1-tuple for clearer error msg.
+                else:
+                    raise  # Re-raise previous exception.
+            except Exception:
+                return False  # All others, return False.
+    else:
+        def wrapper(arg):
+            try:
+                return required(arg)
+            except Exception:
+                return False
 
     if isinstance(data, collections.Mapping):
         diffs = dict()

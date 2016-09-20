@@ -4,7 +4,7 @@ from . import _unittest as unittest
 from datatest.compare import _coerce_other
 from datatest.compare import CompareSet
 from datatest.compare import CompareDict
-from datatest.compare import _compare_str_notiterable
+from datatest.compare import _compare_other
 
 from datatest import Extra
 from datatest import Missing
@@ -14,66 +14,100 @@ from datatest import NotProperSubset
 from datatest import NotProperSuperset
 
 
-class Test_compare_str_notiterable(unittest.TestCase):
+class Test_compare_other(unittest.TestCase):
     def test_set(self):
         isalpha = lambda x: x.isalpha()
 
         data = set(['a', 'b', 'c'])
-        result = _compare_str_notiterable(data, isalpha)
+        result = _compare_other(data, isalpha)
         self.assertEqual(result, [])
 
         data = set(['a', 'b', 'c', '3'])
-        result = _compare_str_notiterable(data, isalpha)
+        result = _compare_other(data, isalpha)
         self.assertEqual(result, [Invalid('3', isalpha)])
 
     def test_mapping(self):
         isalpha = lambda x: x.isalpha()
 
         data = {'AAA': 'a', 'BBB': 'b', 'CCC': 'c'}
-        result = _compare_str_notiterable(data, isalpha)
+        result = _compare_other(data, isalpha)
         self.assertEqual(result, {})
 
         data = {'AAA': 'a', 'BBB': 'b', 'CCC': 'c', 'DDD': '3'}
-        result = _compare_str_notiterable(data, isalpha)
+        result = _compare_other(data, isalpha)
         self.assertEqual(result, {'DDD': Invalid('3', isalpha)})
 
     def test_sequence(self):
         isalpha = lambda x: x.isalpha()
 
         data = ['a', 'b', 'c']
-        result = _compare_str_notiterable(data, isalpha)
+        result = _compare_other(data, isalpha)
         self.assertEqual(result, {})
 
         data = ['a', 'b', 'c', '9']
-        result = _compare_str_notiterable(data, isalpha)
+        result = _compare_other(data, isalpha)
         self.assertEqual(result, {3: Invalid('9', isalpha)})
 
     def test_iterable(self):
         isalpha = lambda x: x.isalpha()
 
         data = iter(['a', 'b', 'c'])
-        result = _compare_str_notiterable(data, isalpha)
+        result = _compare_other(data, isalpha)
         self.assertEqual(result, [])
 
         data = iter(['a', 'b', 'c', '9'])
-        result = _compare_str_notiterable(data, isalpha)
+        result = _compare_other(data, isalpha)
         self.assertEqual(result, [Invalid('9', isalpha)])
 
     def test_str_or_noniterable(self):
         isalpha = lambda x: x.isalpha()
 
         data = 'ABCD'
-        result = _compare_str_notiterable(data, isalpha)
+        result = _compare_other(data, isalpha)
         self.assertEqual(result, None)
 
         data = '!@#$'
-        result = _compare_str_notiterable(data, isalpha)
+        result = _compare_other(data, isalpha)
         self.assertEqual(result, Invalid('!@#$', isalpha))
 
         data = 5
         required = lambda x: 10 < x
-        result = _compare_str_notiterable(data, required)
+        result = _compare_other(data, required)
         self.assertEqual(result, Invalid(5, required))
+
+    def test_multiargument_callable(self):
+        """Should unpack arguments if callable expects multiple
+        parameters.
+        """
+        data = set([(5, 2), (1, 4), (10, 8)])
+
+        required = lambda x, y: x > y  # <- Multiple positional parameters.
+        result = _compare_other(data, required)
+        self.assertEqual(result, [Invalid((1, 4), required)])
+
+        required = lambda *z: z[0] > z[1]  # <- Variable parameters.
+        result = _compare_other(data, required)
+        self.assertEqual(result, [Invalid((1, 4), required)])
+
+        required = lambda a: a[0] > a[1]  # <- Single parameter.
+        result = _compare_other(data, required)
+        self.assertEqual(result, [Invalid((1, 4), required)])
+
+        data = [[], [], []]
+        required = lambda x, y: x > y  # <- Multiple positional params.
+        with self.assertRaisesRegex(TypeError, 'missing 2|0 given'):
+            _compare_other(data, required)
+
+        data = (5, 2)
+        required = lambda x, y: x > y  # <- Multiple positional params.
+        with self.assertRaisesRegex(TypeError, 'missing 1|1 given'):
+            _compare_other(data, required)
+
+        data = set([(5, 2), (1, 4), (10, 8)])  # Args and params match
+        def required(x, y):                    # but function raises
+            raise TypeError('other error')     # some other TypeError.
+        with self.assertRaisesRegex(TypeError, 'other error'):
+            _compare_other(data, required)
 
     def test_error_condition(self):
         """If callable raises an Exception, the result is counted as
@@ -83,12 +117,12 @@ class Test_compare_str_notiterable(unittest.TestCase):
                                          # a non-string value.
 
         data = set(['a', 'b', 3, '4'])  # <- Value 3 raises an error.
-        result = _compare_str_notiterable(data, isalpha)
+        result = _compare_other(data, isalpha)
         expected = [Invalid(3, isalpha), Invalid('4', isalpha)]
         self.assertEqual(set(result), set(expected))
 
         data = 10
-        result = _compare_str_notiterable(data, isalpha)
+        result = _compare_other(data, isalpha)
         self.assertEqual(result, Invalid(data, isalpha))
 
 
