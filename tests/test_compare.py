@@ -1,4 +1,5 @@
 """Result objects for DataSource queries."""
+import re
 from . import _unittest as unittest
 
 from datatest.compare import _coerce_other
@@ -124,6 +125,24 @@ class Test_compare_other(unittest.TestCase):
         data = 10
         result = _compare_other(data, isalpha)
         self.assertEqual(result, Invalid(data, isalpha))
+
+    def test_required_regex(self):
+        data = set(['a1', 'b2', 'c3', 'd', 'e5'])
+        regex = re.compile('[a-z][0-9]+')
+        result = _compare_other(data, regex)
+        self.assertEqual(result, [Invalid('d', regex)])
+
+    def test_required_string(self):
+        data = set(['AAA', 'BBB'])
+        string_val = 'AAA'
+        result = _compare_other(data, string_val)
+        self.assertEqual(result, [Invalid('BBB', string_val)])
+
+    def test_required_integer(self):
+        data = set([11, 22])
+        integer_val = 11
+        result = _compare_other(data, integer_val)
+        self.assertEqual(result, [Invalid(22, integer_val)])
 
 
 class TestMethodDecorator(unittest.TestCase):

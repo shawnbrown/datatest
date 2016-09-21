@@ -1,5 +1,6 @@
 """Comparison objects returned by data source queries."""
 import inspect
+import re
 from numbers import Number
 
 from .utils.builtins import *
@@ -15,30 +16,45 @@ from .differences import NotProperSubset
 from .differences import NotProperSuperset
 
 
+_regex_type = type(re.compile(''))
+
+
 def _compare_other(data, required):
     """Compare *data* object against *required* condition.  The
-    *required* argument can be a callable, regular expression, str, or
-    any not-iterable object.
+    *required* argument can be a callable, regular expression, or other
+    object.
     """
-    # Prepare wrapper function.
-    if _expects_multiple_params(required):
-        def wrapper(args):
+    # Prepare wrapper for callable.
+    if callable(required):
+        if _expects_multiple_params(required):
+            def wrapper(args):
+                try:
+                    return required(*args)  # <- Unpack args.
+                except TypeError:
+                    if not isinstance(args, collections.Iterable):
+                        args = (args,)          # If arg not iterable, rerun using
+                        return required(*args)  # 1-tuple for clearer error msg.
+                    else:
+                        raise  # Re-raise previous exception.
+                except Exception:
+                    return False  # All others, return False.
+        else:
+            def wrapper(x):
+                try:
+                    return required(x)
+                except Exception:
+                    return False
+    # Prepare wrapper for compiled regular expression.
+    elif isinstance(required, _regex_type):
+        def wrapper(x):
             try:
-                return required(*args)  # <- Unpack args.
-            except TypeError:
-                if not isinstance(args, collections.Iterable):
-                    args = (args,)          # If arg not iterable, rerun using
-                    return required(*args)  # 1-tuple for clearer error msg.
-                else:
-                    raise  # Re-raise previous exception.
-            except Exception:
-                return False  # All others, return False.
-    else:
-        def wrapper(arg):
-            try:
-                return required(arg)
+                return required.search(x) != None
             except Exception:
                 return False
+    # Prepare wrapper for str or other object comparison.
+    else:
+        def wrapper(x):
+            return x == required
 
     if isinstance(data, collections.Mapping):
         diffs = dict()
