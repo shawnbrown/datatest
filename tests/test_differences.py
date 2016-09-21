@@ -199,20 +199,6 @@ class TestDeviation(unittest.TestCase):
 
 
 class Test_getdiff(unittest.TestCase):
-    def test_object_vs_notfound(self):
-        diff = _getdiff('a', _NOTFOUND)
-        self.assertEqual(diff, Extra('a'))
-
-        diff = _getdiff(5, _NOTFOUND)
-        self.assertEqual(diff, Extra(5))
-
-    def test_notfound_vs_object(self):
-        diff = _getdiff(_NOTFOUND, 'b')
-        self.assertEqual(diff, Missing('b'))
-
-        diff = _getdiff(_NOTFOUND, 6)
-        self.assertEqual(diff, Missing(6))
-
     def test_numeric_vs_numeric(self):
         diff = _getdiff(5, 6)
         self.assertEqual(diff, Deviation(-1, 6))
@@ -257,6 +243,27 @@ class Test_getdiff(unittest.TestCase):
         diff = _getdiff('a', regex)
         self.assertEqual(diff, Invalid('a', re.compile('^test$')))
 
+    def test_notfound_comparisons(self):
+        diff = _getdiff('a', _NOTFOUND)
+        self.assertEqual(diff, Extra('a'))
+
+        diff = _getdiff(_NOTFOUND, 'b')
+        self.assertEqual(diff, Missing('b'))
+
+        # For numeric comparisons, _NOTFOUND behaves like None.
+        diff = _getdiff(5, _NOTFOUND)
+        self.assertEqual(diff, Deviation(+5, None))
+
+        diff = _getdiff(0, _NOTFOUND)
+        self.assertEqual(diff, Deviation(0, None))
+
+        diff = _getdiff(_NOTFOUND, 6)
+        self.assertEqual(diff, Deviation(-6, 6))  # <- Assymetric behavior
+                                                  #    (see None vs numeric)!
+
+        diff = _getdiff(_NOTFOUND, 0)
+        self.assertEqual(diff, Deviation(None, 0))
+
     def test_keywords(self):
         """Keywords should be passed to diff objet."""
         diff = _getdiff(5, 6, col1='AAA')
@@ -266,11 +273,11 @@ class Test_getdiff(unittest.TestCase):
         self.assertEqual(diff, Invalid('a', 6, col1='AAA'))
 
         diff = _getdiff(_NOTFOUND, 6, col1='AAA')
-        self.assertEqual(diff, Missing(6, col1='AAA'))
+        self.assertEqual(diff, Deviation(-6, 6, col1='AAA'))
 
     def test_same(self):
         """The _getdiff() function returns differences for objects that
-        are known to be different--it does not test for differences
+        are KNOWN TO BE DIFFERENT--it does not test for differences
         itself.
         """
         diff = _getdiff('a', 'a')
