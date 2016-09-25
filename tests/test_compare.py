@@ -139,10 +139,15 @@ class Test_compare_other(unittest.TestCase):
         self.assertEqual(result, [Invalid('BBB', string_val)])
 
     def test_required_integer(self):
-        data = set([11, 22])
+        data = set([11, 8])
         integer_val = 11
         result = _compare_other(data, integer_val)
-        self.assertEqual(result, [Invalid(22, integer_val)])
+        self.assertEqual(result, [Deviation(-3, integer_val)])
+
+        data = {'foo': 11, 'bar': 8}
+        integer_val = 11
+        result = _compare_other(data, integer_val)
+        self.assertEqual(result, {'bar': Deviation(-3, integer_val)})
 
 
 class TestMethodDecorator(unittest.TestCase):

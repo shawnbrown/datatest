@@ -14,7 +14,7 @@ from .differences import Invalid
 from .differences import Deviation
 from .differences import NotProperSubset
 from .differences import NotProperSuperset
-
+from .differences import _getdiff
 
 _regex_type = type(re.compile(''))
 
@@ -60,7 +60,7 @@ def _compare_other(data, required):
         diffs = dict()
         for key, val in data.items():
             if not wrapper(val):
-                diffs[key] = Invalid(val, required)
+                diffs[key] = _getdiff(val, required)
         return diffs  # <- EXIT!
 
     is_not_str = not isinstance(data, str)
@@ -69,17 +69,17 @@ def _compare_other(data, required):
         diffs = dict()
         for index, val in enumerate(data):
             if not wrapper(val):
-                diffs[index] = Invalid(val, required)
+                diffs[index] = _getdiff(val, required)
         return diffs  # <- EXIT!
 
     # For Sets and other Iterables.
     if isinstance(data, collections.Iterable) and is_not_str:
-        diffs = [Invalid(x, required) for x in data if not wrapper(x)]
+        diffs = [_getdiff(x, required) for x in data if not wrapper(x)]
         return diffs  # <- EXIT!
 
     # For string or non-iterable.
     if not wrapper(data):
-        return Invalid(data, required)
+        return _getdiff(data, required)
     return None
 
 
