@@ -79,8 +79,8 @@ def _compare_other(data, required):
 
     # For string or non-iterable.
     if not wrapper(data):
-        return _getdiff(data, required)
-    return None
+        return [_getdiff(data, required)]
+    return []
 
 
 def _is_nscontainer(x):

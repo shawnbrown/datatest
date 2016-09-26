@@ -65,16 +65,16 @@ class Test_compare_other(unittest.TestCase):
 
         data = 'ABCD'
         result = _compare_other(data, isalpha)
-        self.assertEqual(result, None)
+        self.assertEqual(result, [])
 
         data = '!@#$'
         result = _compare_other(data, isalpha)
-        self.assertEqual(result, Invalid('!@#$', isalpha))
+        self.assertEqual(result, [Invalid('!@#$', isalpha)])
 
         data = 5
         required = lambda x: 10 < x
         result = _compare_other(data, required)
-        self.assertEqual(result, Invalid(5, required))
+        self.assertEqual(result, [Invalid(5, required)])
 
     def test_multiargument_callable(self):
         """Should unpack arguments if callable expects multiple
@@ -124,7 +124,7 @@ class Test_compare_other(unittest.TestCase):
 
         data = 10
         result = _compare_other(data, isalpha)
-        self.assertEqual(result, Invalid(data, isalpha))
+        self.assertEqual(result, [Invalid(data, isalpha)])
 
     def test_required_regex(self):
         data = set(['a1', 'b2', 'c3', 'd', 'e5'])
