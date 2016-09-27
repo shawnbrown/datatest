@@ -15,6 +15,28 @@ from datatest import NotProperSubset
 from datatest import NotProperSuperset
 
 
+# Comparison functions should impelement the following types of
+# object comparisons:
+#
+#   +--------------------------------------------------------------+
+#   |             OBJECT COMPARISONS AND RETURN VALUES             |
+#   +-------------------+------------------------------------------+
+#   |                   |              *requirement*               |
+#   | *data under test* +------+---------+----------+--------------+
+#   |                   | set  | mapping | sequence | str or other |
+#   +===================+======+=========+==========+==============+
+#   | **set**           | list |         |          | list         |
+#   +-------------------+------+---------+----------+--------------+
+#   | **mapping**       | dict | dict    |          | dict         |
+#   +-------------------+------+---------+----------+--------------+
+#   | **sequence**      | dict |         | dict     | dict         |
+#   +-------------------+------+---------+----------+--------------+
+#   | **iterable**      | list |         |          | list         |
+#   +-------------------+------+---------+----------+--------------+
+#   | **str or other**  |      |         |          | list         |
+#   +-------------------+------+---------+----------+--------------+
+
+
 class Test_compare_other(unittest.TestCase):
     def test_set(self):
         isalpha = lambda x: x.isalpha()
