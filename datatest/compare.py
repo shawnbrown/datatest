@@ -19,6 +19,29 @@ from .differences import _getdiff
 _regex_type = type(re.compile(''))
 
 
+def _compare_set(data, required):
+    """Compare *data* object against *required* set."""
+    assert isinstance(required, collections.Set)
+
+    if isinstance(data, collections.Mapping):
+        data = data.values()
+
+    if not isinstance(data, collections.Set):
+        if isinstance(data, str):
+            raise TypeError("uncomparable types: 'str' and 'set'")
+
+        try:
+            data = set(data)
+        except TypeError:
+            type_name = type(data).__name__
+            msg = "uncomparable types: '{0}' and 'set'".format(type_name)
+            raise TypeError(msg)
+
+    missing = (Missing(x) for x in required.difference(data))
+    extra = (Extra(x) for x in data.difference(required))
+    return list(itertools.chain(missing, extra))
+
+
 def _compare_other(data, required):
     """Compare *data* object against *required* condition.  The
     *required* argument can be a callable, regular expression, or other

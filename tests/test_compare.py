@@ -6,6 +6,7 @@ from datatest.compare import _coerce_other
 from datatest.compare import CompareSet
 from datatest.compare import CompareDict
 from datatest.compare import _compare_other
+from datatest.compare import _compare_set
 
 from datatest import Extra
 from datatest import Missing
@@ -27,14 +28,92 @@ from datatest import NotProperSuperset
 #   +===================+======+=========+==========+==============+
 #   | **set**           | list |         |          | list         |
 #   +-------------------+------+---------+----------+--------------+
-#   | **mapping**       | dict | dict    |          | dict         |
+#   | **mapping**       | list | dict    |          | dict         |
 #   +-------------------+------+---------+----------+--------------+
-#   | **sequence**      | dict |         | dict     | dict         |
+#   | **sequence**      | list |         | dict     | dict         |
 #   +-------------------+------+---------+----------+--------------+
 #   | **iterable**      | list |         |          | list         |
 #   +-------------------+------+---------+----------+--------------+
 #   | **str or other**  |      |         |          | list         |
 #   +-------------------+------+---------+----------+--------------+
+
+
+class Test_compare_set(unittest.TestCase):
+    def test_set(self):
+        required = set(['a', 'b', 'c'])
+
+        data = set(['a', 'b', 'c'])
+        result = _compare_set(data, required)
+        self.assertEqual(result, [])
+
+        data = set(['a', 'b', 'c', '3'])
+        result = _compare_set(data, required)
+        self.assertEqual(result, [Extra('3')])
+
+        data = set(['a', 'c', '3'])
+        result = _compare_set(data, required)
+        result = set(result)
+        self.assertEqual(result, set([Missing('b'), Extra('3')]))
+
+    def test_mapping(self):
+        required = set(['a', 'b', 'c'])
+
+        data = {'AAA': 'a', 'BBB': 'b', 'CCC': 'c'}
+        result = _compare_set(data, required)
+        self.assertEqual(result, [])
+
+        data = {'AAA': 'a', 'BBB': 'b', 'CCC': 'c', 'DDD': '3'}
+        result = _compare_set(data, required)
+        self.assertEqual(result, [Extra('3')])
+
+        data = {'AAA': 'a', 'CCC': 'c', 'DDD': '3'}
+        result = _compare_set(data, required)
+        result = set(result)
+        self.assertEqual(result, set([Missing('b'), Extra('3')]))
+
+    def test_sequence(self):
+        required = set(['a', 'b', 'c'])
+
+        data = ['a', 'b', 'c']
+        result = _compare_set(data, required)
+        self.assertEqual(result, [])
+
+        data = ['a', 'b', 'c', '3']
+        result = _compare_set(data, required)
+        self.assertEqual(result, [Extra('3')])
+
+        data = ['a', 'c', '3']
+        result = _compare_set(data, required)
+        result = set(result)
+        self.assertEqual(result, set([Missing('b'), Extra('3')]))
+
+    def test_iterable(self):
+        required = set(['a', 'b', 'c'])
+
+        data = iter(['a', 'b', 'c'])
+        result = _compare_set(data, required)
+        self.assertEqual(result, [])
+
+        data = iter(['a', 'b', 'c', '3'])
+        result = _compare_set(data, required)
+        self.assertEqual(result, [Extra('3')])
+
+        data = iter(['a', 'c', '3'])
+        result = _compare_set(data, required)
+        result = set(result)
+        self.assertEqual(result, set([Missing('b'), Extra('3')]))
+
+    def test_str_other(self):
+        required = set(['a', 'b', 'c'])
+
+        with self.assertRaises(TypeError):
+            _compare_set('abc', required)
+
+        with self.assertRaises(TypeError):
+            _compare_set(123, required)
+
+        with self.assertRaises(TypeError):
+            _compare_set(object(), required)
 
 
 class Test_compare_other(unittest.TestCase):
