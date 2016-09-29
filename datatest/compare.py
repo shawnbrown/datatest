@@ -14,13 +14,44 @@ from .differences import Invalid
 from .differences import Deviation
 from .differences import NotProperSubset
 from .differences import NotProperSuperset
+
 from .differences import _getdiff
+from .differences import _NOTFOUND
 
 _regex_type = type(re.compile(''))
 
 
+def _unique_everseen(iterable):
+    """"List unique elements, preserving order. Remember all elements
+    ever seen.
+    """
+    seen = set()
+    seen_add = seen.add
+    for element in itertools.filterfalse(seen.__contains__, iterable):
+        seen_add(element)
+        yield element
+
+
+def _compare_mapping(data, required):
+    """Compare *data* against mapping of *required* values."""
+    assert isinstance(required, collections.Mapping)
+    if not isinstance(data, collections.Mapping):
+        type_name = type(data).__name__
+        msg = "expected mapping type, but got " + repr(type_name)
+        raise ValueError(msg)
+
+    differences = dict()
+    all_keys = itertools.chain(required.keys(), data.keys())
+    for key in _unique_everseen(all_keys):
+        data_val = data.get(key, _NOTFOUND)
+        required_val = required.get(key, _NOTFOUND)
+        if data_val != required_val:
+            differences[key] = _getdiff(data_val, required_val)
+    return differences
+
+
 def _compare_set(data, required):
-    """Compare *data* object against *required* set."""
+    """Compare *data* against set of *required* values."""
     assert isinstance(required, collections.Set)
 
     if isinstance(data, collections.Mapping):
@@ -43,9 +74,8 @@ def _compare_set(data, required):
 
 
 def _compare_other(data, required):
-    """Compare *data* object against *required* condition.  The
-    *required* argument can be a callable, regular expression, or other
-    object.
+    """Compare *data* against *required* condition.  The *required*
+    argument can be a callable, regular expression, or other object.
     """
     # Prepare wrapper for callable.
     if callable(required):

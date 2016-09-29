@@ -7,6 +7,7 @@ from datatest.compare import CompareSet
 from datatest.compare import CompareDict
 from datatest.compare import _compare_other
 from datatest.compare import _compare_set
+from datatest.compare import _compare_mapping
 
 from datatest import Extra
 from datatest import Missing
@@ -36,6 +37,35 @@ from datatest import NotProperSuperset
 #   +-------------------+------+---------+----------+--------------+
 #   | **str or other**  |      |         |          | list         |
 #   +-------------------+------+---------+----------+--------------+
+
+
+class Test_compare_mapping(unittest.TestCase):
+    def test_mapping(self):
+        required = {'AAA': 'a', 'BBB': 'b', 'CCC': 'c'}
+
+        data = {'AAA': 'a', 'BBB': 'b', 'CCC': 'c'}
+        result = _compare_mapping(data, required)
+        self.assertEqual(result, {})
+
+        data = {'AAA': 'a', 'BBB': 'b', 'CCC': 'c', 'DDD': '3'}
+        result = _compare_mapping(data, required)
+        self.assertEqual(result, {'DDD': Extra('3')})
+
+        data = {'AAA': 'a', 'CCC': 'c', 'DDD': '3'}
+        result = _compare_mapping(data, required)
+        self.assertEqual(result, {'BBB': Missing('b'), 'DDD': Extra('3')})
+
+    def test_other(self):
+        required = {'AAA': 'a', 'BBB': 'b', 'CCC': 'c'}
+
+        with self.assertRaises(ValueError):
+            _compare_mapping(123, required)
+
+        with self.assertRaises(ValueError):
+            _compare_mapping(object(), required)
+
+        with self.assertRaises(ValueError):
+            _compare_mapping('abc', required)
 
 
 class Test_compare_set(unittest.TestCase):
