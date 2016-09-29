@@ -21,6 +21,26 @@ from .differences import _NOTFOUND
 _regex_type = type(re.compile(''))
 
 
+def _compare_sequence(data, required):
+    """Compare *data* against sequence of *required* values."""
+    assert isinstance(required, collections.Sequence)
+
+    if isinstance(data, str):
+        raise ValueError("uncomparable types: 'str' and sequence type")
+
+    if not isinstance(data, collections.Sequence):
+        type_name = type(data).__name__
+        msg = "expected sequence type, but got " + repr(type_name)
+        raise ValueError(msg)
+
+    differences = dict()
+    zipped = itertools.zip_longest(data, required, fillvalue=_NOTFOUND)
+    for index, (data_val, required_val) in enumerate(zipped):
+        if data_val != required_val:
+            differences[index] = _getdiff(data_val, required_val)
+    return differences
+
+
 def _unique_everseen(iterable):
     """"List unique elements, preserving order. Remember all elements
     ever seen.

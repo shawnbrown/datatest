@@ -6,3 +6,9 @@ try:
     filterfalse  # New in Python 3.
 except NameError:
     filterfalse = ifilterfalse
+
+
+try:
+    zip_longest
+except NameError:
+    zip_longest = izip_longest

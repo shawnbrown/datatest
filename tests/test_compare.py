@@ -8,6 +8,7 @@ from datatest.compare import CompareDict
 from datatest.compare import _compare_other
 from datatest.compare import _compare_set
 from datatest.compare import _compare_mapping
+from datatest.compare import _compare_sequence
 
 from datatest import Extra
 from datatest import Missing
@@ -37,6 +38,51 @@ from datatest import NotProperSuperset
 #   +-------------------+------+---------+----------+--------------+
 #   | **str or other**  |      |         |          | list         |
 #   +-------------------+------+---------+----------+--------------+
+
+
+class Test_compare_sequence(unittest.TestCase):
+    def test_sequence(self):
+        required = ['a', 'b', 'c']
+
+        data = ['a', 'b', 'c']
+        result = _compare_sequence(data, required)
+        self.assertEqual(result, {})
+
+        data = ['a', 'b', 'c', 'd']
+        result = _compare_sequence(data, required)
+        self.assertEqual(result, {3: Extra('d')})
+
+        data = ['a', 'b']
+        result = _compare_sequence(data, required)
+        self.assertEqual(result, {2: Missing('c')})
+
+        data = ['a', 'x', 'c', 'y']
+        result = _compare_sequence(data, required)
+        self.assertEqual(result, {1: Invalid('x', 'b'), 3: Extra('y')})
+
+    def test_other(self):
+        required = ['a', 'b', 'c']
+
+        with self.assertRaises(ValueError):
+            data = set(['a', 'b', 'c'])  # Set.
+            _compare_sequence(data, required)
+
+        with self.assertRaises(ValueError):
+            data = {'AAA': 'a', 'BBB': 'b', 'CCC': 'c'}  # Mapping.
+            _compare_sequence(data, required)
+
+        with self.assertRaises(ValueError):
+            data = iter(['a', 'b', 'c'])  # Iterable.
+            _compare_sequence(data, required)
+
+        with self.assertRaises(ValueError):
+            _compare_sequence('abc', required)  # String.
+
+        with self.assertRaises(ValueError):
+            _compare_sequence(123, required)  # Integer.
+
+        with self.assertRaises(ValueError):
+            _compare_sequence(object(), required)  # Object.
 
 
 class Test_compare_mapping(unittest.TestCase):
