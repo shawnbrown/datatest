@@ -46,7 +46,7 @@ def _unique_everseen(iterable):
     ever seen.
     """
     seen = set()
-    seen_add = seen.add
+    seen_add = seen.add  # Assign locally to prevent repeated look-up.
     for element in itertools.filterfalse(seen.__contains__, iterable):
         seen_add(element)
         yield element
