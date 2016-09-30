@@ -69,28 +69,28 @@ class TestNoDefaultSubject(TestHelperCase):
         self.assertRegex(failure, "cannot find 'subject'")
 
 
-class TestAssertValid(TestHelperCase):
-    def test_assertValid(self):
+class TestAssertEqual(TestHelperCase):
+    def testAssertEqual(self):
         class _TestClass(DataTestCase):
             def test_method1(_self):
                 first  = CompareSet([1,2,3,4,5,6,7])
                 second = CompareSet([1,2,3,4,5,6])
-                _self.assertValid(first, second)
+                _self.assertEqual(first, second)
 
             def test_method2(_self):
                 first  = CompareSet([1,2,3,4,5,6,7])
                 second = set([1,2,3,4,5,6])  # <- Built-in set type!!!
-                _self.assertValid(first, second)
+                _self.assertEqual(first, second)
 
             def test_method3(_self):
                 first  = CompareSet([1,2,3,4,5,6,7])
                 second = lambda x: x <= 6  # <- callable
-                _self.assertValid(first, second)
+                _self.assertEqual(first, second)
 
             def test_method4(_self):
                 first  = CompareSet([1,2,3,4,5,6,7])
                 second = lambda x: x < 10  # <- callable
-                _self.assertValid(first, second)
+                _self.assertEqual(first, second)
 
         pattern = r"first object does not match second object:\n Extra\(7\)"
 
@@ -112,17 +112,17 @@ class TestAssertValid(TestHelperCase):
             def test_method1(_self):
                 first  = set([1,2,3,4,5,6,7])
                 second = set([1,2,3,4,5,6])
-                _self.assertValid(first, second)
+                _self.assertEqual(first, second)
 
             def test_method2(_self):
                 first  = {'foo': 'AAA', 'bar': 'BBB'}
                 second = {'foo': 'AAA', 'bar': 'BBB', 'baz': 'CCC'}
-                _self.assertValid(first, second)
+                _self.assertEqual(first, second)
 
             def test_method3(_self):
                 first  = {'foo': 1, 'bar': 2, 'baz': 2}
                 second = {'foo': 1, 'bar': 2, 'baz': 3}
-                _self.assertValid(first, second)
+                _self.assertEqual(first, second)
 
         pattern = r"first object does not match second object:\n Extra\(7\)"
         failure = self._run_one_test(_TestClass, 'test_method1')
@@ -141,12 +141,12 @@ class TestAssertValid(TestHelperCase):
             def test_method1(_self):
                 first  = 4
                 second = set([4, 7])
-                _self.assertValid(first, second)
+                _self.assertEqual(first, second)
 
             def test_method3(_self):
                 first  = 'foo'
                 second = set(['foo', 'bar'])
-                _self.assertValid(first, second)
+                _self.assertEqual(first, second)
 
         pattern = r"first object does not match second object:\n Missing\(7\)"
         failure = self._run_one_test(_TestClass, 'test_method1')

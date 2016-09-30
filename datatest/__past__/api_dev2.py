@@ -3,4 +3,4 @@
 from __future__ import absolute_import
 from datatest import DataTestCase
 
-DataTestCase.assertEqual = DataTestCase.assertValid
+#DataTestCase.assertEqual = DataTestCase.assertValid

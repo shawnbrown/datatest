@@ -60,7 +60,7 @@ def _assertDataCount(self, column, keys, required=None, msg=None, **kwds_filter)
     subject_dict = self.subject.count(column, keys, **kwds_filter)
     required = self._normalize_required(required, 'sum', column, keys, **kwds_filter)
     msg = msg or 'row counts different than {0!r} sums'.format(column)
-    self.assertValid(subject_dict, required, msg)
+    self.assertEqual(subject_dict, required, msg)
 DataTestCase.assertDataCount = _assertDataCount
 
 

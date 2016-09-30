@@ -134,7 +134,7 @@ class DataTestCase(TestCase):
 
         return required
 
-    def assertValid(self, first, second, msg=None):
+    def assertEqual(self, first, second, msg=None):
         """Fail if *first* does not satisfy *second* as determined by
         appropriate validation comparison.
 
@@ -144,7 +144,7 @@ class DataTestCase(TestCase):
             def test_column1(self):
                 first = self.subject.distinct('col1')
                 second = self.reference.distinct('col1')
-                self.assertValid(first, second)
+                self.assertEqual(first, second)
 
         If the *second* argument is a helper-function (or other
         callable), it is used as a key which must return True for
@@ -154,7 +154,7 @@ class DataTestCase(TestCase):
                 compare_obj = self.subject.distinct('col1')
                 def uppercase(x):  # <- Helper function.
                     return str(x).isupper()
-                self.assertValid(compare_obj, uppercase)
+                self.assertEqual(compare_obj, uppercase)
         """
         if not isinstance(first, BaseCompare):
             if isinstance(first, str) or not isinstance(first, collections.Container):
@@ -195,7 +195,7 @@ class DataTestCase(TestCase):
         subject_set = CompareSet(self.subject.columns())
         required = self._normalize_required(required, 'columns')
         msg = msg or 'different column names'
-        self.assertValid(subject_set, required, msg)
+        self.assertEqual(subject_set, required, msg)
 
     def assertSubjectSet(self, columns, required=None, msg=None, **kwds_filter):
         """Test that the column or *columns* in :attr:`subject` contain
@@ -233,7 +233,7 @@ class DataTestCase(TestCase):
         subject_set = self.subject.distinct(columns, **kwds_filter)
         required = self._normalize_required(required, 'distinct', columns, **kwds_filter)
         msg = msg or 'different {0!r} values'.format(columns)
-        self.assertValid(subject_set, required, msg)
+        self.assertEqual(subject_set, required, msg)
 
     def assertSubjectSum(self, column, keys, required=None, msg=None, **kwds_filter):
         """Test that the sum of *column* in :attr:`subject`, when
@@ -262,7 +262,7 @@ class DataTestCase(TestCase):
         subject_dict = self.subject.sum(column, keys, **kwds_filter)
         required = self._normalize_required(required, 'sum', column, keys, **kwds_filter)
         msg = msg or 'different {0!r} sums'.format(column)
-        self.assertValid(subject_dict, required, msg)
+        self.assertEqual(subject_dict, required, msg)
 
     def assertSubjectUnique(self, columns, msg=None, **kwds_filter):
         """Test that values in column or *columns* of :attr:`subject`
@@ -318,7 +318,7 @@ class DataTestCase(TestCase):
             required = re.compile(required)
         func = lambda x: required.search(x) is not None
         msg = msg or 'non-matching {0!r} values'.format(column)
-        self.assertValid(subject_result, func, msg)
+        self.assertEqual(subject_result, func, msg)
 
     def assertSubjectNotRegex(self, column, required, msg=None, **kwds_filter):
         """Test that *column* in :attr:`subject` contains values that
@@ -336,7 +336,7 @@ class DataTestCase(TestCase):
             required = re.compile(required)
         func = lambda x: required.search(x) is None
         msg = msg or 'matching {0!r} values'.format(column)
-        self.assertValid(subject_result, func, msg)
+        self.assertEqual(subject_result, func, msg)
 
     def allowOnly(self, differences, msg=None):
         """A convenience wrapper for :class:`allow_only`.
