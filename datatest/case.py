@@ -11,6 +11,12 @@ from .utils import itertools
 from .compare import CompareSet  # TODO!!!: Remove after assertSubjectColumns fixed!
 from .compare import CompareDict  # TODO!!!: Remove after assertSubjectColumns fixed!
 from .compare import BaseCompare
+
+from .compare import _compare_mapping
+from .compare import _compare_sequence
+from .compare import _compare_set
+from .compare import _compare_other
+
 from .differences import _make_decimal
 from .differences import Extra  # TODO: Move when assertSubjectUnique us moved.
 from .differences import Missing  # TODO: Move when assertSubjectUnique us moved.
@@ -133,6 +139,31 @@ class DataTestCase(TestCase):
             required = fn(*args, **kwds)
 
         return required
+
+    def assertValid(self, data, required, msg=None):
+        """Fail if *data* does not satisfy *required* object as
+        determined by an appropriate validation operation.
+        """
+        # Get appropriate comparison function (as determined by
+        # *required* argument).
+        if isinstance(required, collections.Mapping):
+            compare = _compare_mapping
+            default_msg = 'data does not match required mapping'
+        elif (isinstance(required, collections.Sequence)
+                and not isinstance(required, str)):
+            compare = _compare_sequence
+            default_msg = 'order and values do not match required sequence'
+        elif isinstance(required, collections.Set):
+            compare = _compare_set
+            default_msg = 'data does not match required set'
+        else:
+            compare = _compare_other
+            default_msg = 'data does not satisfy required object'
+
+        # Apply comparison function and fail if there are any differences.
+        differences = compare(data, required)
+        if differences:
+            self.fail(msg or default_msg, differences)
 
     def assertEqual(self, first, second, msg=None):
         """Fail if *first* does not satisfy *second* as determined by

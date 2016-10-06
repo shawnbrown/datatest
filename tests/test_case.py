@@ -69,6 +69,80 @@ class TestNoDefaultSubject(TestHelperCase):
         self.assertRegex(failure, "cannot find 'subject'")
 
 
+class TestAssertValid(DataTestCase):
+    """The assertValid() method should handle all supported validation
+    comparisons.  These comparisons are implemented using four separate
+    functions (one for each supported *required* type):
+
+    +--------------------------------------------------------------+
+    |       Object Comparisons and Returned Difference Type        |
+    +-------------------+------------------------------------------+
+    |                   |           *required* condition           |
+    | *data* under test +------+---------+----------+--------------+
+    |                   | set  | mapping | sequence | str or other |
+    +===================+======+=========+==========+==============+
+    | **set**           | list |         |          | list         |
+    +-------------------+------+---------+----------+--------------+
+    | **mapping**       | list | dict    |          | dict         |
+    +-------------------+------+---------+----------+--------------+
+    | **sequence**      | list |         | dict     | dict         |
+    +-------------------+------+---------+----------+--------------+
+    | **iterable**      | list |         |          | list         |
+    +-------------------+------+---------+----------+--------------+
+    | **str or other**  |      |         |          | list         |
+    +-------------------+------+---------+----------+--------------+
+
+    Currently, this test checks that the appropriate underlying function
+    is called given the type of the *required* argument.  For a
+    comprehensive test of all underlying functions, see the
+    test_compare.py file.
+    """
+    def test_required_set(self):
+        """When *required* is a set, _compare_set() should be called."""
+        with self.assertRaises(DataError) as cm:
+            required = set([1, 2, 4])
+            data = set([1, 2, 3])
+            self.assertValid(data, required)
+
+        differences = cm.exception.differences
+        self.assertEqual(set(differences), set([Extra(3), Missing(4)]))
+
+    def test_required_mapping(self):
+        """When *required* is a mapping, _compare_mapping() should be
+        called."""
+        with self.assertRaises(DataError) as cm:
+            required = {'AAA': 'a', 'BBB': 'b', 'CCC': 'c'}
+            data = {'AAA': 'a', 'BBB': 'b', 'DDD': 'd'}
+            self.assertValid(data, required)
+
+        differences = cm.exception.differences
+        self.assertEqual(differences, {'CCC': Missing('c'), 'DDD': Extra('d')})
+
+    def test_required_sequence(self):
+        """When *required* is a sequence, _compare_sequence() should be
+        called."""
+        with self.assertRaises(DataError) as cm:
+            required = ['a', 2, 'c', 4]
+            data = ['a', 2, 'x', 3]
+            self.assertValid(data, required)
+
+        differences = cm.exception.differences
+        self.assertEqual = super(DataTestCase, self).assertEqual
+        self.assertEqual(differences, {2: Invalid('x', 'c'), 3: Deviation(-1, 4)})
+
+    def test_required_other(self):
+        """When *required* is a string or other object, _compare_other()
+        should be called."""
+        with self.assertRaises(DataError) as cm:
+            required = lambda x: x.isupper()
+            data = ['AAA', 'BBB', 'ccc', 'DDD']
+            self.assertValid(data, required)
+
+        differences = cm.exception.differences
+        self.assertEqual = super(DataTestCase, self).assertEqual
+        self.assertEqual(differences, {2: Invalid('ccc', required)})
+
+
 class TestAssertEqual(TestHelperCase):
     def testAssertEqual(self):
         class _TestClass(DataTestCase):
