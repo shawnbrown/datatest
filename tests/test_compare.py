@@ -18,29 +18,14 @@ from datatest import NotProperSubset
 from datatest import NotProperSuperset
 
 
-# Comparison functions should impelement the following types of
-# object comparisons:
-#
-#   +--------------------------------------------------------------+
-#   |             OBJECT COMPARISONS AND RETURN VALUES             |
-#   +-------------------+------------------------------------------+
-#   |                   |              *requirement*               |
-#   | *data under test* +------+---------+----------+--------------+
-#   |                   | set  | mapping | sequence | str or other |
-#   +===================+======+=========+==========+==============+
-#   | **set**           | list |         |          | list         |
-#   +-------------------+------+---------+----------+--------------+
-#   | **mapping**       | list | dict    |          | dict         |
-#   +-------------------+------+---------+----------+--------------+
-#   | **sequence**      | list |         | dict     | dict         |
-#   +-------------------+------+---------+----------+--------------+
-#   | **iterable**      | list |         |          | list         |
-#   +-------------------+------+---------+----------+--------------+
-#   | **str or other**  |      |         |          | list         |
-#   +-------------------+------+---------+----------+--------------+
-
-
 class Test_compare_sequence(unittest.TestCase):
+    """Calling _compare_sequence(data, required) can only be used to
+    compare sequences. Both *data* and *required* arguments must,
+    themselves, be sequences.
+
+    The returned value should always be a mapping where keys correlate
+    with the appropriate index of the given sequences.
+    """
     def test_sequence(self):
         required = ['a', 'b', 'c']
 
@@ -86,6 +71,12 @@ class Test_compare_sequence(unittest.TestCase):
 
 
 class Test_compare_mapping(unittest.TestCase):
+    """Calling _compare_mapping(data, required) can only be used to
+    compare mappings. Both *data* and *required* arguments must,
+    themselves, be mappings.
+
+    The returned value should always be a mapping.
+    """
     def test_mapping(self):
         required = {'AAA': 'a', 'BBB': 'b', 'CCC': 'c'}
 
@@ -115,6 +106,13 @@ class Test_compare_mapping(unittest.TestCase):
 
 
 class Test_compare_set(unittest.TestCase):
+    """Calling _compare_set(data, required) can be used to compare a
+    number of different data types.  The *data* argument can be a set,
+    mapping, sequence, or iterable.  The *require* argument must always
+    be a set.
+
+    The return value should always be a sequence (list).
+    """
     def test_set(self):
         required = set(['a', 'b', 'c'])
 
@@ -193,6 +191,16 @@ class Test_compare_set(unittest.TestCase):
 
 
 class Test_compare_other(unittest.TestCase):
+    """Calling _compare_other(data, required) can be used to compare a
+    number of different data types.  The *data* argument can be a set,
+    mapping, sequence, iterable, string, or other object.  The
+    *required* argument can be a callable, string, regular expression,
+    or other object.
+
+    When used to compare a mapping or sequence, the return value will be
+    a mapping.  When used to compare a set, iterable, string, or other
+    object, the return value will be a list.
+    """
     def test_set(self):
         isalpha = lambda x: x.isalpha()
 
