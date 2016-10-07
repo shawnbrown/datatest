@@ -144,6 +144,15 @@ class TestAssertValid(DataTestCase):
 
 
 class TestAssertEqual(TestHelperCase):
+    @unittest.skip('Waiting until assertEqual() is migrated to __past__.')
+    def test_method_identity(self):
+        """The datatest.TestCase class should NOT wrap the assertEqual()
+        method of its superclass.
+        """
+        datatest_assertEqual = DataTestCase.assertEqual
+        unittest_assertEqual = unittest.TestCase.assertEqual
+        self.assertIs(datatest_assertEqual, unittest_assertEqual)
+
     def testAssertEqual(self):
         class _TestClass(DataTestCase):
             def test_method1(_self):
