@@ -12,8 +12,8 @@ class TestDataError(unittest.TestCase):
     def test_instantiation(self):
         DataError('column names', Missing('foo'))
         DataError('column names', [Missing('foo')])
-        DataError('column names', {'Explanation here.': Missing('foo')})
-        DataError('column names', {'Explanation here.': [Missing('foo')]})
+        DataError('column names', {'foo': Missing('bar')})
+        DataError('column names', {('foo', 'bar'): Missing('baz')})
 
         with self.assertRaises(ValueError, msg='Empty error should raise exception.'):
             DataError(msg='', differences={})
@@ -29,20 +29,16 @@ class TestDataError(unittest.TestCase):
 
         # Test pprint lists.
         error = DataError('different columns', [Missing('foo'),
-                                                         Missing('bar')])
+                                                Missing('bar')])
         pattern = ("DataError: different columns:\n"
                    " Missing('foo'),\n"
                    " Missing('bar')")
         self.assertEqual(repr(error), pattern)
 
-        # Test dictionary with nested list.
-        error = DataError('different columns', {'Omitted': [Missing('foo'),
-                                                                     Missing('bar'),
-                                                                     Missing('baz')]})
+        # Test dictionary.
+        error = DataError('different columns', {'FOO': Missing('bar')})
         pattern = ("DataError: different columns:\n"
-                   " 'Omitted': [Missing('foo'),\n"
-                   "             Missing('bar'),\n"
-                   "             Missing('baz')]")
+                   " 'FOO': Missing('bar')")
         self.assertEqual(repr(error), pattern)
 
     def test_verbose_repr(self):
