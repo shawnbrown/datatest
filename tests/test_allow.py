@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 import inspect
 from . import _unittest as unittest
+from datatest.utils import collections
 
 from datatest import DataError
 from datatest import Missing
 from datatest import Extra
 from datatest import Deviation
+from datatest.allow import allow_iter2
 from datatest.allow import allow_iter
 from datatest.allow import allow_each
 from datatest.allow import allow_any
@@ -15,6 +17,201 @@ from datatest.allow import allow_only
 from datatest.allow import allow_limit
 from datatest.allow import allow_deviation
 from datatest.allow import allow_percent_deviation
+
+
+class TestAllowIter2(unittest.TestCase):
+    def test_iterable_all_bad(self):
+        """Given a non-mapping iterable in which all items are invalid,
+        *function* should return a non-mapping iterable containing all
+        items.
+        """
+        function = lambda iterable: iterable  # <- Rejects everything.
+        in_diffs = [Extra('foo'), Extra('bar')]
+
+        with self.assertRaises(DataError) as cm:
+            with allow_iter2(function):
+                raise DataError('example error', in_diffs)
+
+        out_diffs = cm.exception.differences
+        self.assertEqual(out_diffs, in_diffs)
+
+    def test_iterable_all_good(self):
+        """Given a non-mapping iterable in which all items are valid,
+        *function* should omit all items and simply return an empty
+        iterable.
+        """
+        function = lambda iterable: list()  # <- Accepts everything.
+        in_diffs =  [Missing('foo'), Missing('bar')]
+
+        with allow_iter2(function):  # <- Passes without error.
+            raise DataError('example error', in_diffs)
+
+    def test_iterable_some_good(self):
+        """Given a non-mapping iterable, *function* should return those
+        items which are invalid and omit those items which are valid.
+        """
+        function = lambda iterable: (x for x in iterable if x.value != 'bar')
+        in_diffs = [Missing('foo'), Missing('bar')]
+
+        with self.assertRaises(DataError) as cm:
+            with allow_iter2(function):
+                raise DataError('example error', in_diffs)
+
+        out_diffs = cm.exception.differences
+        self.assertEqual(list(out_diffs), [Missing('foo')])
+
+    def test_mapping_all_bad(self):
+        """Given a mapping in which all items are invalid, *function*
+        should return a mapping containing all items.
+        """
+        function = lambda mapping: mapping  # <- Rejects entire mapping.
+        in_diffs = {('AAA', 'xxx'): Missing('foo'),
+                    ('BBB', 'yyy'): Missing('bar')}
+
+        with self.assertRaises(DataError) as cm:
+            with allow_iter2(function):
+                raise DataError('example error', in_diffs)
+
+        out_diffs = cm.exception.differences
+        self.assertEqual(out_diffs, in_diffs)
+
+    def test_mapping_all_good(self):
+        """Given a mapping in which all items are valid, *function*
+        should omit all items and simply return an empty mapping.
+        """
+        function = lambda mapping: {}  # <- Accepts everything.
+        in_diffs = {('AAA', 'xxx'): Missing('foo'),
+                    ('BBB', 'yyy'): Missing('bar')}
+
+        with allow_iter2(function):  # <- Passes without error.
+            raise DataError('example error', in_diffs)
+
+    def test_mapping_some_good(self):
+        """Given a mapping in which all items are valid, *function*
+        should omit all items and simply return an empty mapping.
+        """
+        def function(mapping):
+            for key, diff in mapping.items():
+                if diff.value == 'bar':
+                    yield (key, diff)
+
+        in_diffs = {('AAA', 'xxx'): Missing('foo'),
+                    ('BBB', 'yyy'): Missing('bar')}
+
+        with self.assertRaises(DataError) as cm:
+            with allow_iter2(function):
+                raise DataError('example error', in_diffs)
+
+        out_diffs = cm.exception.differences
+        self.assertEqual(out_diffs, {('BBB', 'yyy'): Missing('bar')})
+
+    def test_returns_sequence(self):
+        """If given a mapping, *function* may return an iterable of
+        sequences (instead of a mapping).  Each sequence must contain
+        exactly two objects---the first object will be use as the key
+        and the second object will be used as the value (same as
+        Python's 'dict' behavior).
+        """
+        # Simple key.
+        in_diffs = {'AAA': Missing('foo'),
+                    'BBB': Missing('bar')}
+        return_val = [['AAA', Missing('foo')],  # <- Two items.
+                      ['BBB', Missing('bar')]]  # <- Two items.
+
+        with self.assertRaises(DataError) as cm:
+            with allow_iter2(lambda x: return_val):
+                raise DataError('example error', in_diffs)
+
+        out_diffs = cm.exception.differences
+        self.assertEqual(out_diffs, in_diffs)
+
+        # Compound key.
+        in_diffs = {('AAA', 'xxx'): Missing('foo'),
+                    ('BBB', 'yyy'): Missing('bar')}
+        return_val = [[('AAA', 'xxx'), Missing('foo')],  # <- Two items.
+                      [('BBB', 'yyy'), Missing('bar')]]  # <- Two items.
+
+        with self.assertRaises(DataError) as cm:
+            with allow_iter2(lambda x: return_val):
+                raise DataError('example error', in_diffs)
+
+        out_diffs = cm.exception.differences
+        self.assertEqual(out_diffs, in_diffs)
+
+        # Duplicate keys--last defined value (bar) appears in mapping.
+        in_diffs = {'AAA': Missing('foo'),
+                    'BBB': Missing('bar')}
+        return_val = [['AAA', Missing('foo')],
+                      ['BBB', Missing('xxx')],  # <- Duplicate key.
+                      ['BBB', Missing('yyy')],  # <- Duplicate key.
+                      ['BBB', Missing('zzz')],  # <- Duplicate key.
+                      ['BBB', Missing('bar')]]  # <- Duplicate key.
+
+        with self.assertRaises(DataError) as cm:
+            with allow_iter2(lambda x: return_val):
+                raise DataError('example error', in_diffs)
+
+        out_diffs = cm.exception.differences
+        self.assertEqual(out_diffs, in_diffs)
+
+    def test_returns_bad_sequence(self):
+        """In place of mapping objects, *function* may instead return an
+        iterable of two-item sequences but if the sequence contains more
+        or less items, a ValueError should be raised.
+        """
+        in_diffs = {('AAA', 'xxx'): Missing('foo'),
+                    ('BBB', 'yyy'): Missing('bar')}
+
+        # mapping / iterable of 1-item sequences.
+        return_val = [[Missing('foo')],  # <- One item.
+                      [Missing('bar')]]  # <- One item.
+
+        regex = ('has length 1.*2 is required')
+        with self.assertRaisesRegex(ValueError, regex):  # <- ValueError!
+            with allow_iter2(lambda x: return_val):
+                raise DataError('example error', in_diffs)
+
+        # mapping / iterable of 3-item sequences.
+        return_val = [[('AAA', 'xxx'), Missing('foo'), None],  # <- Three items.
+                      [('BBB', 'yyy'), Missing('bar'), None]]  # <- Three items.
+
+        regex = 'has length 3.*2 is required'
+        with self.assertRaisesRegex(ValueError, regex):  # <- ValueError!
+            with allow_iter2(lambda x: return_val):
+                raise DataError('example error', in_diffs)
+
+    def test_returns_bad_type(self):
+        """The *function* should return the same type it was given or a
+        compatible object--if not, a TypeError should be raised.
+        """
+        in_diffs = {('AAA', 'xxx'): Missing('foo'),
+                    ('BBB', 'yyy'): Missing('bar')}
+
+        # mapping / iterable ot 2-char strings
+        return_val = ['Ax', 'By']  # <- Two-character strings.
+
+        regex = r"must be non-string sequence.*found 'str' instead"
+        with self.assertRaisesRegex(TypeError, regex):
+            with allow_iter2(lambda x: return_val):
+                raise DataError('example error', in_diffs)
+
+        # mapping / iterable of non-sequence items
+        return_val = [Missing('foo'),  # <- Non-sequence item.
+                      Missing('bar')]  # <- Non-sequence item.
+
+        regex = ("must be non-string sequence.*found 'Missing'")
+        with self.assertRaisesRegex(TypeError, regex):
+            with allow_iter2(lambda x: return_val):
+                raise DataError('example error', in_diffs)
+
+        # nonmapping / mapping
+        in_diffs = [Missing('foo'), Missing('bar')]  # <- List (non-mapping)!
+        return_val = {'AAA': Missing('foo'), 'BBB': Missing('bar')}  # <- Mapping!
+
+        regex = "input was 'list' but function returned a mapping"
+        with self.assertRaisesRegex(TypeError, regex):
+            with allow_iter2(lambda x: return_val):
+                raise DataError('example error', in_diffs)
 
 
 class TestAllowIter(unittest.TestCase):

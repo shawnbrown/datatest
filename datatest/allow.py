@@ -19,6 +19,75 @@ __datatest = True  # Used to detect in-module stack frames (which are
                    # omitted from output).
 
 
+class allow_iter2(object):
+    def __init__(self, function):
+        if not callable(function):
+            msg = "'function' must be a function or other callable"
+            raise TypeError(msg.format(kwd))
+        self.function = function
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, tb):
+        if exc_type is None:  # <- Values are None when no exeption was raised.
+            # TODO!!!: Look at getting __doc__ in addition to name for msg.
+            msg = getattr(self.function, '__name__', str(self.function))
+            exc = AssertionError('No differences found: ' + str(msg))
+            exc.__cause__ = None
+            raise exc
+
+        if not issubclass(exc_type, DataError):
+            raise exc_value  # If not DataError, re-raise without changes.
+
+        differences = self.function(exc_value.differences)  # <- Apply function!
+
+        if isinstance(exc_value.differences, collections.Mapping):
+            if not isinstance(differences, collections.Mapping):
+                # Get first_item from iterable of differences.
+                try:
+                    differences = iter(differences)
+                    first_item = next(differences)
+                    differences = itertools.chain([first_item], differences)  # Rebuild original.
+                except StopIteration:
+                    first_item = tuple()  # Empty tuple.
+
+                # Check that first_item is usable as a mapping constructor.
+                if isinstance(first_item, str) or not isinstance(first_item, collections.Sequence):
+                    type_name = type(first_item).__name__
+                    msg = ("mapping update element must be non-string sequence; "
+                           "found '{0}' instead")
+                    raise TypeError(msg.format(type_name))
+                else:
+                    if len(first_item) == 2:
+                        if not isinstance(first_item[1], BaseDifference):
+                            msg = ("mapping update sequence elements should "
+                                   "contain values which are subclasses of "
+                                   "BaseDifference; found '{0}' instead")
+                            type_name = type(first_item[1]).__name__
+                            raise TypeError(msg.format(type_name))
+                    else:
+                        msg = 'mapping update sequence element has length {0}; 2 is required'
+                        raise ValueError(msg.format(len(first_item)))
+
+                differences = dict(differences)
+        else:
+            if isinstance(differences, collections.Mapping):
+                msg = "input was '{0}' but function returned a mapping"
+                type_name = type(exc_value.differences).__name__
+                raise TypeError(msg.format(type_name))
+
+        if differences:
+            msg = getattr(exc_value, 'msg')
+            exc = DataError(msg, differences)
+            exc.__cause__ = None  # <- Suppress context using verbose
+            raise exc             # alternative to support older Python
+                                  # versions--see PEP 415 (same as
+                                  # effect as "raise ... from None").
+
+        return True  # <- Suppress original exception.
+
+
 class allow_iter(object):
     """Context manager to allow differences without triggering a test
     failure.  The *function* should accept an iterable of differences
