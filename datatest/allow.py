@@ -22,8 +22,7 @@ __datatest = True  # Used to detect in-module stack frames (which are
 class allow_iter2(object):
     def __init__(self, function):
         if not callable(function):
-            msg = "'function' must be a function or other callable"
-            raise TypeError(msg.format(kwd))
+            raise TypeError("'function' must be a function or other callable")
         self.function = function
 
     def __enter__(self):
