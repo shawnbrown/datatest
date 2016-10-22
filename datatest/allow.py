@@ -29,28 +29,32 @@ class allow_iter2(object):
         return self
 
     def __exit__(self, exc_type, exc_value, tb):
-        if exc_type is None:  # <- Values are None when no exeption was raised.
-            # TODO!!!: Look at getting __doc__ in addition to name for msg.
+        # If required exception is missing, raise an error.
+        if exc_type is None:
             msg = getattr(self.function, '__name__', str(self.function))
             exc = AssertionError('No differences found: ' + str(msg))
             exc.__cause__ = None
             raise exc
 
+        # If exception is not DataError, re-raise without changes.
         if not issubclass(exc_type, DataError):
-            raise exc_value  # If not DataError, re-raise without changes.
+            raise exc_value
 
-        differences = self.function(exc_value.differences)  # <- Apply function!
+        # Apply *function* and get any remaining differences.
+        differences = self.function(exc_value.differences)
+
+        # Get first_item or exit if all differences were allowed.
+        try:
+            first_item = next(iter(differences))
+        except StopIteration:
+            return True  # <- EXIT! (Return True to suppress exception.)
+
+        # If differences object is consumable, then rebuild it.
+        if differences is iter(differences):
+            differences = itertools.chain([first_item], differences)
 
         if isinstance(exc_value.differences, collections.Mapping):
             if not isinstance(differences, collections.Mapping):
-                # Get first_item from iterable of differences.
-                try:
-                    differences = iter(differences)
-                    first_item = next(differences)
-                    differences = itertools.chain([first_item], differences)  # Rebuild original.
-                except StopIteration:
-                    first_item = tuple()  # Empty tuple.
-
                 # Check that first_item is usable as a mapping constructor.
                 if isinstance(first_item, str) or not isinstance(first_item, collections.Sequence):
                     type_name = type(first_item).__name__
@@ -76,15 +80,12 @@ class allow_iter2(object):
                 type_name = type(exc_value.differences).__name__
                 raise TypeError(msg.format(type_name))
 
-        if differences:
-            msg = getattr(exc_value, 'msg')
-            exc = DataError(msg, differences)
-            exc.__cause__ = None  # <- Suppress context using verbose
-            raise exc             # alternative to support older Python
-                                  # versions--see PEP 415 (same as
-                                  # effect as "raise ... from None").
-
-        return True  # <- Suppress original exception.
+        msg = getattr(exc_value, 'msg')
+        exc = DataError(msg, differences)
+        exc.__cause__ = None  # <- Suppress context using verbose
+        raise exc             # alternative to support older Python
+                              # versions--see PEP 415 (same as
+                              # effect as "raise ... from None").
 
 
 class allow_iter(object):

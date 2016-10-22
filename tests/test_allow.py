@@ -46,6 +46,16 @@ class TestAllowIter2(unittest.TestCase):
         with allow_iter2(function):  # <- Passes without error.
             raise DataError('example error', in_diffs)
 
+    def test_empty_generator(self):
+        """If all items are valid, returning an empty generator or other
+        iterable non-container should work, too.
+        """
+        function = lambda iterable: (x for x in [])  # <- Empty generator.
+        in_diffs =  [Missing('foo'), Missing('bar')]
+
+        with allow_iter2(function):  # <- Passes without error.
+            raise DataError('example error', in_diffs)
+
     def test_iterable_some_good(self):
         """Given a non-mapping iterable, *function* should return those
         items which are invalid and omit those items which are valid.
