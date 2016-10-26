@@ -8,6 +8,7 @@ from datatest import Missing
 from datatest import Extra
 from datatest import Deviation
 from datatest.allow import allow_iter2
+from datatest.allow import allow_any2
 from datatest.allow import allow_iter
 from datatest.allow import allow_each
 from datatest.allow import allow_any
@@ -222,6 +223,154 @@ class TestAllowIter2(unittest.TestCase):
         with self.assertRaisesRegex(TypeError, regex):
             with allow_iter2(lambda x: return_val):
                 raise DataError('example error', in_diffs)
+
+
+class TestAllowAny2(unittest.TestCase):
+    def test_keywords_omitted(self):
+        regex = "keyword argument required: must be one of 'keys', 'diffs', 'items'"
+        with self.assertRaisesRegex(TypeError, regex):
+            with allow_any2():  # <- Keyword arg omitted!
+                pass
+
+    def test_keywords_invalid(self):
+        regex = "'foo' is an invalid keyword argument: must be one of"
+        with self.assertRaisesRegex(TypeError, regex):
+            function = lambda x: True
+            with allow_any2(foo=function):  # <- foo is invalid!
+                pass
+
+    def test_diffs_nonmapping(self):
+        in_diffs = [Missing('foo'), Missing('bar')]
+        function = lambda x: x.value == 'foo'
+
+        with self.assertRaises(DataError) as cm:
+            with allow_any2(diffs=function):  # <- Using diffs keyword!
+                raise DataError('example error', in_diffs)
+
+        rejected = cm.exception.differences
+        self.assertEqual(rejected, [Missing('bar')])
+
+    def test_diffs_mapping(self):
+        in_diffs = {'AAA': Missing('foo'), 'BBB': Missing('bar')}
+        function = lambda x: x.value == 'foo'
+
+        with self.assertRaises(DataError) as cm:
+            with allow_any2(diffs=function):
+                raise DataError('example error', in_diffs)
+
+        rejected = cm.exception.differences
+        self.assertEqual(rejected, {'BBB': Missing('bar')})
+
+    def test_keys_nonmapping(self):
+        # Missing required keyword 'diffs'.
+        in_diffs = [Missing('foo'), Missing('bar')]
+        function = lambda first, second: first == 'AAA'
+
+        regex = "must use 'diffs' keyword"
+        with self.assertRaisesRegex(ValueError, regex):
+            with allow_any2(keys=function):  # <- expects 'diffs='.
+                raise DataError('example error', in_diffs)
+
+        # Disallowed keywords ('keys').
+        in_diffs = [Missing('foo'), Missing('bar')]
+        function = lambda first, second: first == 'AAA'
+
+        with self.assertRaisesRegex(ValueError, "found 'keys'"):
+            with allow_any2(diffs=function, keys=function):  # <- 'keys=' not allowed.
+                raise DataError('example error', in_diffs)
+
+    def test_keys_mapping(self):
+        # Function accepts single argument.
+        in_diffs = {'AAA': Missing('foo'), 'BBB': Missing('bar')}
+        function = lambda x: x == 'AAA'
+
+        with self.assertRaises(DataError) as cm:
+            with allow_any2(keys=function):
+                raise DataError('example error', in_diffs)
+
+        rejected = cm.exception.differences
+        self.assertEqual(rejected, {'BBB': Missing('bar')})
+
+        # Function accepts multiple arguments.
+        in_diffs = {('AAA', 'XXX'): Missing('foo'),
+                    ('BBB', 'YYY'): Missing('bar')}
+
+        def function(first, second):  # <- Multiple args.
+            return second == 'XXX'
+
+        with self.assertRaises(DataError) as cm:
+            with allow_any2(keys=function):
+                raise DataError('example error', in_diffs)
+
+        rejected = cm.exception.differences
+        self.assertEqual(rejected, {('BBB', 'YYY'): Missing('bar')})
+
+    def test_items_nonmapping(self):
+        # TODO: Explore the idea of accepting mapping-compatible
+        # iterator of items.
+        pass
+
+    def test_items_mapping(self):
+        # Function of one argument.
+        in_diffs = {'AAA': Missing('foo'), 'BBB': Missing('bar')}
+
+        def function(item):
+            key, diff = item  # Unpack item tuple.
+            return key == 'AAA'
+
+        with self.assertRaises(DataError) as cm:
+            with allow_any2(items=function):
+                raise DataError('example error', in_diffs)
+
+        rejected = cm.exception.differences
+        self.assertEqual(rejected, {'BBB': Missing('bar')})
+
+        # Function of two arguments.
+        in_diffs = {'AAA': Missing('foo'), 'BBB': Missing('bar')}
+
+        def function(key, diff):
+            return key == 'AAA'
+
+        with self.assertRaises(DataError) as cm:
+            with allow_any2(items=function):
+                raise DataError('example error', in_diffs)
+
+        rejected = cm.exception.differences
+        self.assertEqual(rejected, {'BBB': Missing('bar')})
+
+        # Function of three arguments.
+        in_diffs = {('AAA', 'XXX'): Missing('foo'),
+                    ('BBB', 'YYY'): Missing('bar')}
+
+        def function(key1, key2, diff):
+            return key2 == 'XXX'
+
+        with self.assertRaises(DataError) as cm:
+            with allow_any2(items=function):
+                raise DataError('example error', in_diffs)
+
+        rejected = cm.exception.differences
+        self.assertEqual(rejected, {('BBB', 'YYY'): Missing('bar')})
+
+    def test_keyword_combinations(self):
+        in_diffs = {('AAA', 'XXX'): Missing('foo'),
+                    ('BBB', 'YYY'): Missing('foo'),
+                    ('CCC', 'XXX'): Extra('bar'),
+                    ('DDD', 'XXX'): Missing('foo')}
+
+        def fn1(key1, key2):
+            return key2 == 'XXX'
+
+        def fn2(diff):
+            return diff.value == 'foo'
+
+        with self.assertRaises(DataError) as cm:
+            with allow_any2(keys=fn1, diffs=fn2):
+                raise DataError('example error', in_diffs)
+
+        rejected = cm.exception.differences
+        self.assertEqual(rejected, {('BBB', 'YYY'): Missing('foo'),
+                                    ('CCC', 'XXX'): Extra('bar')})
 
 
 class TestAllowIter(unittest.TestCase):

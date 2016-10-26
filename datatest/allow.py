@@ -73,7 +73,9 @@ class allow_iter2(object):
                         msg = 'mapping update sequence element has length {0}; 2 is required'
                         raise ValueError(msg.format(len(first_item)))
 
-                differences = dict(differences)
+                differences = dict(differences)  # TODO: Explore idea
+                                                 # of replacing dict
+                                                 # with item-generator.
         else:
             if isinstance(differences, collections.Mapping):
                 msg = "input was '{0}' but function returned a mapping"
@@ -86,6 +88,101 @@ class allow_iter2(object):
         raise exc             # alternative to support older Python
                               # versions--see PEP 415 (same as
                               # effect as "raise ... from None").
+
+
+def _get_arg_lengths(func):
+    """Returns a two-tuple containing the number of positional arguments
+    as the first item and the number of variable positional arguments as
+    the second item.
+    """
+    try:
+        funcsig = inspect.signature(func)
+        params_dict = funcsig.parameters
+        parameters = params_dict.values()
+        args_type = (inspect._POSITIONAL_OR_KEYWORD, inspect._POSITIONAL_ONLY)
+        args = [x for x in parameters if x.kind in args_type]
+        vararg = [x for x in parameters if x.kind == inspect._VAR_POSITIONAL]
+        vararg = vararg.pop() if vararg else None
+    except AttributeError:
+        try:  # For Python 3.2 and earlier.
+            args, vararg = inspect.getfullargspec(func)[:2]
+        except AttributeError:  # For Python 2.7 and earlier.
+            args, vararg = inspect.getargspec(func)[:2]
+    return (len(args), (1 if vararg else 0))
+
+
+def _expects_multiple_params(func):
+    """Returns True if *func* accepts 1 or more positional arguments."""
+    arglen, vararglen = _get_arg_lengths(func)
+    return (arglen > 1) or (vararglen > 0)
+
+
+class allow_any2(allow_iter2):
+    def __init__(self, **kwds_func):
+        function_types = ('keys', 'diffs', 'items')
+
+        if not kwds_func:
+            msg = 'keyword argument required: must be one of {0}'
+            msg = msg.format(', '.join(repr(x) for x in function_types))
+            raise TypeError(msg)
+
+        for key in kwds_func:
+            if key not in function_types:
+                msg = "'{0}' is an invalid keyword argument: must be one of {1}"
+                types = ', '.join(repr(x) for x in function_types)
+                raise TypeError(msg.format(key, types))
+
+        def filterfalse(iterable):
+            if isinstance(iterable, collections.Mapping):
+                function_list = []
+                # Get keys function and adapt argument input.
+                keys_fn = kwds_func.pop('keys', None)
+                if keys_fn:
+                    if _expects_multiple_params(keys_fn):
+                        adapted_fn = lambda item: keys_fn(*item[0])
+                    else:
+                        adapted_fn = lambda item: keys_fn(item[0])
+                    function_list.append(adapted_fn)
+                # Get diffs function and adapt argument input.
+                diffs_fn = kwds_func.pop('diffs', None)
+                if diffs_fn:
+                    adapted_fn = lambda item: diffs_fn(item[1])
+                    function_list.append(adapted_fn)
+                # Get items function and adapt argument input.
+                items_fn = kwds_func.pop('items', None)
+                if items_fn:
+                    (args_len, vararg_len) = _get_arg_lengths(items_fn)
+                    if args_len <= 2 and vararg_len == 0:
+                        if args_len == 2:
+                            adapted_fn = lambda item: items_fn(*item)
+                        else:
+                            adapted_fn = lambda item: items_fn(item)
+                    else:
+                        adapted_fn = lambda item: items_fn(*(item[0] + (item[1],)))
+                    function_list.append(adapted_fn)
+                # Change mapping to iterable of items, build final function.
+                iterable = iterable.items()
+                if len(function_list) > 1:
+                    function = lambda x: all(fn(x) for fn in function_list)
+                else:
+                    function = function_list.pop()
+            else:
+                try:
+                    function = kwds_func.pop('diffs')
+                except KeyError:
+                    exc = ValueError("non-mapping iterable, must use 'diffs' keyword")
+                    exc.__cause__ = None
+                    raise exc
+
+            if kwds_func:  # There should be no remaining keywords.
+                msg = "invalid keywords, found {0}"
+                msg = msg.format(', '.join(repr(x) for x in kwds_func))
+                raise ValueError(msg)
+
+            return list(x for x in iterable if not function(x))
+            # TODO: Explore idea of replacing above list with generator.
+
+        super(allow_any2, self).__init__(filterfalse)
 
 
 class allow_iter(object):
