@@ -29,37 +29,31 @@ class allow_iter2(object):
         return self
 
     def __exit__(self, exc_type, exc_value, tb):
-        # If required exception is missing, raise an error.
-        if exc_type is None:
+        if exc_type is None:  # Exception equired.
             msg = getattr(self.function, '__name__', str(self.function))
             exc = AssertionError('No differences found: ' + str(msg))
             exc.__cause__ = None
             raise exc
-
-        # If exception is not DataError, re-raise without changes.
-        if not issubclass(exc_type, DataError):
+        elif not issubclass(exc_type, DataError):  # If not DataError, re-raise.
             raise exc_value
 
-        # Apply *function* and get any remaining differences.
-        differences = self.function(exc_value.differences)
+        differences = self.function(exc_value.differences)  # Apply function!
 
-        # Get first_item or exit if all differences were allowed.
-        try:
+        try:  # Get 1st item and rebuild if differences are consumable.
             first_item = next(iter(differences))
-        except StopIteration:
-            return True  # <- EXIT! (Return True to suppress exception.)
-
-        # If differences object is consumable, then rebuild it.
-        if differences is iter(differences):
-            differences = itertools.chain([first_item], differences)
+            if differences is iter(differences):
+                differences = itertools.chain([first_item], differences)
+        except StopIteration:  # If no diffs, return True to suppress error.
+            return True  # <- EXIT!
 
         if isinstance(exc_value.differences, collections.Mapping):
             if not isinstance(differences, collections.Mapping):
-                # Check that first_item is usable as a mapping constructor.
-                if isinstance(first_item, str) or not isinstance(first_item, collections.Sequence):
+                is_bad_type = (isinstance(first_item, str) or not
+                               isinstance(first_item, collections.Sequence))
+                if is_bad_type:
                     type_name = type(first_item).__name__
-                    msg = ("mapping update element must be non-string sequence; "
-                           "found '{0}' instead")
+                    msg = ("mapping update element must be non-string "
+                           "sequence; found '{0}' instead")
                     raise TypeError(msg.format(type_name))
                 else:
                     if len(first_item) == 2:
@@ -135,22 +129,22 @@ class allow_any2(allow_iter2):
         def filterfalse(iterable):
             if isinstance(iterable, collections.Mapping):
                 function_list = []
-                # Get keys function and adapt argument input.
-                keys_fn = kwds_func.pop('keys', None)
-                if keys_fn:
+
+                keys_fn = kwds_func.pop('keys', None)  # Get keys function and
+                if keys_fn:                            # adapt arguments.
                     if _expects_multiple_params(keys_fn):
                         adapted_fn = lambda item: keys_fn(*item[0])
                     else:
                         adapted_fn = lambda item: keys_fn(item[0])
                     function_list.append(adapted_fn)
-                # Get diffs function and adapt argument input.
-                diffs_fn = kwds_func.pop('diffs', None)
-                if diffs_fn:
+
+                diffs_fn = kwds_func.pop('diffs', None)  # Get diffs function
+                if diffs_fn:                             # and adapt arguments.
                     adapted_fn = lambda item: diffs_fn(item[1])
                     function_list.append(adapted_fn)
-                # Get items function and adapt argument input.
-                items_fn = kwds_func.pop('items', None)
-                if items_fn:
+
+                items_fn = kwds_func.pop('items', None)  # Get items function
+                if items_fn:                             # and adapt arguments.
                     (args_len, vararg_len) = _get_arg_lengths(items_fn)
                     if args_len <= 2 and vararg_len == 0:
                         if args_len == 2:
@@ -160,14 +154,14 @@ class allow_any2(allow_iter2):
                     else:
                         adapted_fn = lambda item: items_fn(*(item[0] + (item[1],)))
                     function_list.append(adapted_fn)
-                # Change mapping to iterable of items, build final function.
-                iterable = iterable.items()
-                if len(function_list) > 1:
+
+                iterable = iterable.items()  # Change mapping to iterable of
+                if len(function_list) > 1:   # items, build final function.
                     function = lambda x: all(fn(x) for fn in function_list)
                 else:
                     function = function_list.pop()
             else:
-                try:
+                try:  # If not a mapping, then handle 'diffs' keyword only.
                     function = kwds_func.pop('diffs')
                 except KeyError:
                     exc = ValueError("non-mapping iterable, must use 'diffs' keyword")
