@@ -126,6 +126,12 @@ class allow_any2(allow_iter2):
                 types = ', '.join(repr(x) for x in function_types)
                 raise TypeError(msg.format(key, types))
 
+        if len(kwds_func) == 1:
+            function_name = tuple(kwds_func.values())[0].__name__
+        else:
+            names = (x.__name__ for x in kwds_func.values())
+            function_name = ' and '.join(x for x in names if x)
+
         def filterfalse(iterable):
             if isinstance(iterable, collections.Mapping):
                 function_list = []
@@ -176,7 +182,136 @@ class allow_any2(allow_iter2):
             return list(x for x in iterable if not function(x))
             # TODO: Explore idea of replacing above list with generator.
 
+        filterfalse.__name__ = function_name
         super(allow_any2, self).__init__(filterfalse)
+
+
+class allow_missing2(allow_any2):
+    def __init__(self, **kwds_func):
+        if 'diffs' in kwds_func:
+            diffs_orig = kwds_func.pop('diffs')
+            diffs_fn = lambda diff: diffs_orig(diff) and isinstance(diff, Missing)
+            diffs_fn.__name__ = diffs_orig.__name__
+        else:
+            diffs_fn = lambda diff: isinstance(diff, Missing)
+            diffs_fn.__name__ = self.__class__.__name__
+        kwds_func['diffs'] = diffs_fn
+        super(allow_missing2, self).__init__(**kwds_func)
+
+
+class allow_extra2(allow_any2):
+    def __init__(self, **kwds_func):
+        if 'diffs' in kwds_func:
+            diffs_orig = kwds_func.pop('diffs')
+            diffs_fn = lambda diff: diffs_orig(diff) and isinstance(diff, Extra)
+            diffs_fn.__name__ = diffs_orig.__name__
+        else:
+            diffs_fn = lambda diff: isinstance(diff, Extra)
+            diffs_fn.__name__ = self.__class__.__name__
+        kwds_func['diffs'] = diffs_fn
+        super(allow_extra2, self).__init__(**kwds_func)
+
+
+def _prettify_deviation_signature2(method):
+    """Helper function intended for internal use.  Prettify signature of
+    deviation __init__ classes by patching its signature to make the
+    "tolerance" syntax the default option when introspected (with an
+    IDE, REPL, or other user interface).
+    """
+    assert method.__name__ == '__init__'
+    try:
+        signature = inspect.signature(method)
+    except AttributeError:  # Not supported in Python 3.2 or older.
+        return  # <- EXIT!
+    _self = inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY)
+    _tolerance = inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY)
+    _kwds_func = inspect.Parameter('kwds_func', inspect.Parameter.VAR_KEYWORD)
+    parameters = [_self, _tolerance, _kwds_func]
+    method.__signature__ = signature.replace(parameters=parameters)
+
+
+def _normalize_lower_upper(lower, upper):
+    """Helper function intended for internal use.  Normalize __init__
+    arguments for deviation classes to provide support for both
+    "tolerance" and "lower, upper" signatures.
+    """
+    if upper == None:
+        tolerance = lower
+        assert tolerance >= 0, ('tolerance should not be negative, '
+                                'for full control of lower and upper '
+                                'bounds, use "lower, upper" syntax')
+        lower, upper = -tolerance, tolerance
+    lower = _make_decimal(lower)
+    upper = _make_decimal(upper)
+    assert lower <= upper
+    return (lower, upper)
+
+
+class allow_deviation2(allow_any2):
+    def __init__(self, lower, upper=None, **kwds_func):
+        lower, upper = _normalize_lower_upper(lower, upper)
+        normalize_numbers = lambda x: x if x else 0
+        def function(diff):                      # Function closes over
+            if not isinstance(diff, Deviation):  # lower, upper, and
+                return False                     # normalize_numbers().
+            value = normalize_numbers(diff.value)
+            required = normalize_numbers(diff.required)
+            if isnan(value) or isnan(required):
+                return False
+            return lower <= value <= upper
+        function.__name__ = self.__class__.__name__
+
+        if 'diffs' in kwds_func:
+            diffs_orig = kwds_func.pop('diffs')
+            diffs_fn = lambda diff: diffs_orig(diff) and function(diff)
+            diffs_fn.__name__ = diffs_orig.__name__
+        else:
+            diffs_fn = function
+            diffs_fn.__name__ = self.__class__.__name__
+        kwds_func['diffs'] = diffs_fn
+
+        super(allow_deviation2, self).__init__(**kwds_func)
+
+_prettify_deviation_signature2(allow_deviation2.__init__)
+
+
+class allow_percent_deviation2(allow_any2):
+    def __init__(self, lower, upper=None, **kwds_func):
+        lower, upper = _normalize_lower_upper(lower, upper)
+        normalize_numbers = lambda x: x if x else 0
+        def function(diff):                      # Function closes over
+            if not isinstance(diff, Deviation):  # lower, upper, and
+                return False                     # normalize_numbers().
+            value = normalize_numbers(diff.value)
+            required = normalize_numbers(diff.required)
+            if isnan(value) or isnan(required):
+                return False
+            if value != 0 and required == 0:
+                return False
+            percent = value / required if required else 0  # % error calc.
+            return lower <= percent <= upper
+        function.__name__ = self.__class__.__name__
+
+        if 'diffs' in kwds_func:
+            diffs_orig = kwds_func.pop('diffs')
+            diffs_fn = lambda diff: diffs_orig(diff) and function(diff)
+            diffs_fn.__name__ = diffs_orig.__name__
+        else:
+            diffs_fn = function
+            diffs_fn.__name__ = self.__class__.__name__
+        kwds_func['diffs'] = diffs_fn
+
+        super(allow_percent_deviation2, self).__init__(**kwds_func)
+
+_prettify_deviation_signature2(allow_percent_deviation2.__init__)
+
+
+#class allow_limit2(allow_iter2):
+#    pass
+
+
+#class allow_only2(???):
+#    pass
 
 
 class allow_iter(object):

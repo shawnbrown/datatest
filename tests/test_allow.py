@@ -9,6 +9,12 @@ from datatest import Extra
 from datatest import Deviation
 from datatest.allow import allow_iter2
 from datatest.allow import allow_any2
+from datatest.allow import allow_missing2
+from datatest.allow import allow_extra2
+#from datatest.allow import allow_only2
+#from datatest.allow import allow_limit2
+from datatest.allow import allow_deviation2
+from datatest.allow import allow_percent_deviation2
 from datatest.allow import allow_iter
 from datatest.allow import allow_each
 from datatest.allow import allow_any
@@ -371,6 +377,343 @@ class TestAllowAny2(unittest.TestCase):
         rejected = cm.exception.differences
         self.assertEqual(rejected, {('BBB', 'YYY'): Missing('foo'),
                                     ('CCC', 'XXX'): Extra('bar')})
+
+
+class TestAllowMissing2(unittest.TestCase):
+    """Test allow_missing2() behavior."""
+    def test_allow_some(self):
+        differences = [Extra('xxx'), Missing('yyy')]
+
+        with self.assertRaises(DataError) as cm:
+            with allow_missing2():
+                raise DataError('example error', differences)
+
+        rejected = list(cm.exception.differences)
+        self.assertEqual(rejected, [Extra('xxx')])
+
+    def test_allow_all(self):
+        with allow_missing2():
+            raise DataError('example error', [Missing('xxx'), Missing('yyy')])
+
+    def test_diffs_keyword(self):
+        in_diffs = {
+            'foo': Missing('xxx'),
+            'bar': Missing('yyy'),
+            'baz': Extra('zzz'),
+        }
+        with self.assertRaises(DataError) as cm:
+            def additional_helper(x):
+                return x.value in ('yyy', 'zzz')
+
+            with allow_missing2(diffs=additional_helper):
+                raise DataError('example error', in_diffs)
+
+        rejected = cm.exception.differences
+        self.assertEqual(rejected, {'foo': Missing('xxx'), 'baz': Extra('zzz')})
+
+    def test_keys_keyword(self):
+        in_diffs = {
+            'foo': Missing('xxx'),
+            'bar': Missing('yyy'),
+            'baz': Extra('zzz'),
+        }
+        with self.assertRaises(DataError) as cm:
+            def additional_helper(x):
+                return x in ('foo', 'baz')
+
+            with allow_missing2(keys=additional_helper):
+                raise DataError('example error', in_diffs)
+
+        rejected = cm.exception.differences
+        self.assertEqual(rejected, {'bar': Missing('yyy'), 'baz': Extra('zzz')})
+
+    def test_no_exception(self):
+        with self.assertRaises(AssertionError) as cm:
+            with allow_missing2():
+                pass  # No exception raised
+
+        exc = cm.exception
+        self.assertEqual('No differences found: allow_missing2', str(exc))
+
+
+class TestAllowExtra2(unittest.TestCase):
+    """Test allow_extra2() behavior."""
+    def test_allow_some(self):
+        differences = [Extra('xxx'), Missing('yyy')]
+
+        with self.assertRaises(DataError) as cm:
+            with allow_extra2():
+                raise DataError('example error', differences)
+
+        rejected = list(cm.exception.differences)
+        self.assertEqual(rejected, [Missing('yyy')])
+
+    def test_allow_all(self):
+        with allow_extra2():
+            raise DataError('example error', [Extra('xxx'), Extra('yyy')])
+
+    def test_diffs_keyword(self):
+        in_diffs = {
+            'foo': Extra('xxx'),
+            'bar': Extra('yyy'),
+            'baz': Missing('zzz'),
+        }
+        with self.assertRaises(DataError) as cm:
+            def additional_helper(x):
+                return x.value in ('yyy', 'zzz')
+
+            with allow_extra2(diffs=additional_helper):
+                raise DataError('example error', in_diffs)
+
+        rejected = cm.exception.differences
+        self.assertEqual(rejected, {'foo': Extra('xxx'), 'baz': Missing('zzz')})
+
+    def test_keys_keyword(self):
+        in_diffs = {
+            'foo': Extra('xxx'),
+            'bar': Extra('yyy'),
+            'baz': Missing('zzz'),
+        }
+        with self.assertRaises(DataError) as cm:
+            def additional_helper(x):
+                return x in ('foo', 'baz')
+
+            with allow_extra2(keys=additional_helper):
+                raise DataError('example error', in_diffs)
+
+        rejected = cm.exception.differences
+        self.assertEqual(rejected, {'bar': Extra('yyy'), 'baz': Missing('zzz')})
+
+    def test_no_exception(self):
+        with self.assertRaises(AssertionError) as cm:
+            with allow_extra2():
+                pass  # No exception raised
+
+        exc = cm.exception
+        self.assertEqual('No differences found: allow_extra2', str(exc))
+
+
+class TestAllowDeviation2(unittest.TestCase):
+    """Test allow_deviation2() behavior."""
+    def test_method_signature(self):
+        """Check for prettified default signature in Python 3.3 and later."""
+        try:
+            sig = inspect.signature(allow_deviation2)
+            parameters = list(sig.parameters)
+            self.assertEqual(parameters, ['tolerance', 'kwds_func'])
+        except AttributeError:
+            pass  # Python 3.2 and older use ugly signature as default.
+
+    def test_tolerance_syntax(self):
+        differences = {
+            'aaa': Deviation(-1, 10),
+            'bbb': Deviation(+3, 10),  # <- Not in allowed range.
+        }
+        with self.assertRaises(DataError) as cm:
+            with allow_deviation2(2):  # <- Allows +/- 2.
+                raise DataError('example error', differences)
+
+        #result_string = str(cm.exception)
+        #self.assertTrue(result_string.startswith('example allowance: example error'))
+
+        result_diffs = cm.exception.differences
+        self.assertEqual({'bbb': Deviation(+3, 10)}, result_diffs)
+
+    def test_lowerupper_syntax(self):
+        differences = {
+            'aaa': Deviation(-1, 10),  # <- Not in allowed range.
+            'bbb': Deviation(+3, 10),
+        }
+        with self.assertRaises(DataError) as cm:
+            with allow_deviation2(0, 3):  # <- Allows from 0 to 3.
+                raise DataError('example error', differences)
+
+        #result_string = str(cm.exception)
+        #self.assertTrue(result_string.startswith('example allowance: example error'))
+
+        result_diffs = cm.exception.differences
+        self.assertEqual({'aaa': Deviation(-1, 10)}, result_diffs)
+
+    def test_single_value_allowance(self):
+        differences = [
+            Deviation(+2.9, 10),  # <- Not allowed.
+            Deviation(+3.0, 10),
+            Deviation(+3.0, 5),
+            Deviation(+3.1, 10),  # <- Not allowed.
+        ]
+        with self.assertRaises(DataError) as cm:
+            with allow_deviation2(3, 3):  # <- Allows +3 only.
+                raise DataError('example error', differences)
+
+        result_diffs = set(cm.exception.differences)
+        expected_diffs = set([
+            Deviation(+2.9, 10),
+            Deviation(+3.1, 10),
+        ])
+        self.assertEqual(expected_diffs, result_diffs)
+
+    def test_keys_keyword(self):
+        with self.assertRaises(DataError) as cm:
+            differences = {
+                'aaa': Deviation(-1, 10),
+                'bbb': Deviation(+2, 10),
+                'ccc': Deviation(+2, 10),
+                'ddd': Deviation(+3, 10),
+            }
+            fn = lambda key: key in ('aaa', 'bbb', 'ddd')
+            with allow_deviation2(2, keys=fn):  # <- Allows +/- 2.
+                raise DataError('example error', differences)
+
+        actual = cm.exception.differences
+        expected = {
+            'ccc': Deviation(+2, 10),  # <- Keyword value not allowed.
+            'ddd': Deviation(+3, 10),  # <- Not in allowed range.
+        }
+        self.assertEqual(expected, actual)
+
+    def test_invalid_tolerance(self):
+        with self.assertRaises(AssertionError) as cm:
+            with allow_deviation2(-5):  # <- invalid
+                pass
+        exc = str(cm.exception)
+        self.assertTrue(exc.startswith('tolerance should not be negative'))
+
+    def test_empty_value_handling(self):
+        # Test NoneType.
+        with allow_deviation2(0):  # <- Pass without failure.
+            raise DataError('example error', [Deviation(None, 0)])
+
+        with allow_deviation2(0):  # <- Pass without failure.
+            raise DataError('example error', [Deviation(0, None)])
+
+        # Test empty string.
+        with allow_deviation2(0):  # <- Pass without failure.
+            raise DataError('example error', [Deviation('', 0)])
+
+        with allow_deviation2(0):  # <- Pass without failure.
+            raise DataError('example error', [Deviation(0, '')])
+
+        # Test NaN (not a number) values.
+        with self.assertRaises(DataError):  # <- NaN values should not be caught!
+            with allow_deviation2(0):
+                raise DataError('example error', [Deviation(float('nan'), 0)])
+
+        with self.assertRaises(DataError):  # <- NaN values should not be caught!
+            with allow_deviation2(0):
+                raise DataError('example error', [Deviation(0, float('nan'))])
+
+    # AN OPEN QUESTION: Should deviation allowances raise an error if
+    # the maximum oberved deviation is _less_ than the given tolerance?
+
+
+class TestAllowPercentDeviation2(unittest.TestCase):
+    """Test allow_percent_deviation2() behavior."""
+    def test_method_signature(self):
+        """Check for prettified default signature in Python 3.3 and later."""
+        try:
+            sig = inspect.signature(allow_percent_deviation2)
+            parameters = list(sig.parameters)
+            self.assertEqual(parameters, ['tolerance', 'kwds_func'])
+        except AttributeError:
+            pass  # Python 3.2 and older use ugly signature as default.
+
+    def test_tolerance_syntax(self):
+        differences = [
+            Deviation(-1, 10),
+            Deviation(+3, 10),  # <- Not in allowed range.
+        ]
+        with self.assertRaises(DataError) as cm:
+            with allow_percent_deviation2(0.2):  # <- Allows +/- 20%.
+                raise DataError('example error', differences)
+
+        result_string = str(cm.exception)
+        self.assertTrue(result_string.startswith('example error'))
+
+        result_diffs = list(cm.exception.differences)
+        self.assertEqual([Deviation(+3, 10)], result_diffs)
+
+    def test_lowerupper_syntax(self):
+        differences = {
+            'aaa': Deviation(-1, 10),  # <- Not in allowed range.
+            'bbb': Deviation(+3, 10),
+        }
+        with self.assertRaises(DataError) as cm:
+            with allow_percent_deviation2(0.0, 0.3):  # <- Allows from 0 to 30%.
+                raise DataError('example error', differences)
+
+        result_string = str(cm.exception)
+        self.assertTrue(result_string.startswith('example error'))
+
+        result_diffs = cm.exception.differences
+        self.assertEqual({'aaa': Deviation(-1, 10)}, result_diffs)
+
+    def test_single_value_allowance(self):
+        differences = [
+            Deviation(+2.9, 10, label='aaa'),  # <- Not allowed.
+            Deviation(+3.0, 10, label='bbb'),
+            Deviation(+6.0, 20, label='ccc'),
+            Deviation(+3.1, 10, label='ddd'),  # <- Not allowed.
+        ]
+        with self.assertRaises(DataError) as cm:
+            with allow_percent_deviation2(0.3, 0.3):  # <- Allows +30% only.
+                raise DataError('example error', differences)
+
+        result_diffs = set(cm.exception.differences)
+        expected_diffs = set([
+            Deviation(+2.9, 10, label='aaa'),
+            Deviation(+3.1, 10, label='ddd'),
+        ])
+        self.assertEqual(expected_diffs, result_diffs)
+
+    def test_kwds_handling(self):
+        differences = {
+            'aaa': Deviation(-1, 10),
+            'bbb': Deviation(+2, 10),
+            'ccc': Deviation(+2, 10),
+            'ddd': Deviation(+3, 10),
+        }
+        with self.assertRaises(DataError) as cm:
+            fn = lambda x: x in ('aaa', 'bbb', 'ddd')
+            with allow_percent_deviation2(0.2, keys=fn):  # <- Allows +/- 20%.
+                raise DataError('example error', differences)
+
+        result_set = cm.exception.differences
+        expected_set = {
+            'ccc': Deviation(+2, 10),  # <- Key value not 'aaa'.
+            'ddd': Deviation(+3, 10),  # <- Not in allowed range.
+        }
+        self.assertEqual(expected_set, result_set)
+
+    def test_invalid_tolerance(self):
+        with self.assertRaises(AssertionError) as cm:
+            with allow_percent_deviation2(-0.5):  # <- invalid
+                pass
+        exc = str(cm.exception)
+        self.assertTrue(exc.startswith('tolerance should not be negative'))
+
+    def test_empty_value_handling(self):
+        # Test NoneType.
+        with allow_percent_deviation2(0):  # <- Pass without failure.
+            raise DataError('example error', [Deviation(None, 0)])
+
+        with allow_percent_deviation2(0):  # <- Pass without failure.
+            raise DataError('example error', [Deviation(0, None)])
+
+        # Test empty string.
+        with allow_percent_deviation2(0):  # <- Pass without failure.
+            raise DataError('example error', [Deviation('', 0)])
+
+        with allow_percent_deviation2(0):  # <- Pass without failure.
+            raise DataError('example error', [Deviation(0, '')])
+
+        # Test NaN (not a number) values.
+        with self.assertRaises(DataError):  # <- NaN values should not be caught!
+            with allow_percent_deviation2(0):
+                raise DataError('example error', [Deviation(float('nan'), 0)])
+
+        with self.assertRaises(DataError):  # <- NaN values should not be caught!
+            with allow_percent_deviation2(0):
+                raise DataError('example error', [Deviation(0, float('nan'))])
 
 
 class TestAllowIter(unittest.TestCase):
