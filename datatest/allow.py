@@ -113,6 +113,24 @@ def _expects_multiple_params(func):
 
 class allow_any2(allow_iter2):
     def __init__(self, **kwds_func):
+        self._validate_kwds_func(**kwds_func)
+
+        def filterfalse(iterable):
+            if isinstance(iterable, collections.Mapping):
+                function = self._get_mapping_function(**kwds_func)
+                iterable = iterable.items()  # Change to iterable of items.
+            else:
+                function = self._get_nonmapping_function(**kwds_func)
+            return list(x for x in iterable if not function(x))
+            # TODO: Explore idea of replacing above list with generator.
+
+        names = (x.__name__ for x in kwds_func.values())
+        filterfalse.__name__ = ' and '.join(x for x in names if x)
+
+        super(allow_any2, self).__init__(filterfalse)
+
+    @staticmethod
+    def _validate_kwds_func(**kwds_func):
         function_types = ('keys', 'diffs', 'items')
 
         if not kwds_func:
@@ -126,64 +144,53 @@ class allow_any2(allow_iter2):
                 types = ', '.join(repr(x) for x in function_types)
                 raise TypeError(msg.format(key, types))
 
-        if len(kwds_func) == 1:
-            function_name = tuple(kwds_func.values())[0].__name__
-        else:
-            names = (x.__name__ for x in kwds_func.values())
-            function_name = ' and '.join(x for x in names if x)
+    @staticmethod
+    def _get_mapping_function(**kwds_func):
+        function_list = []
 
-        def filterfalse(iterable):
-            if isinstance(iterable, collections.Mapping):
-                function_list = []
-
-                keys_fn = kwds_func.pop('keys', None)  # Get keys function and
-                if keys_fn:                            # adapt arguments.
-                    if _expects_multiple_params(keys_fn):
-                        adapted_fn = lambda item: keys_fn(*item[0])
-                    else:
-                        adapted_fn = lambda item: keys_fn(item[0])
-                    function_list.append(adapted_fn)
-
-                diffs_fn = kwds_func.pop('diffs', None)  # Get diffs function
-                if diffs_fn:                             # and adapt arguments.
-                    adapted_fn = lambda item: diffs_fn(item[1])
-                    function_list.append(adapted_fn)
-
-                items_fn = kwds_func.pop('items', None)  # Get items function
-                if items_fn:                             # and adapt arguments.
-                    (args_len, vararg_len) = _get_arg_lengths(items_fn)
-                    if args_len <= 2 and vararg_len == 0:
-                        if args_len == 2:
-                            adapted_fn = lambda item: items_fn(*item)
-                        else:
-                            adapted_fn = lambda item: items_fn(item)
-                    else:
-                        adapted_fn = lambda item: items_fn(*(item[0] + (item[1],)))
-                    function_list.append(adapted_fn)
-
-                iterable = iterable.items()  # Change mapping to iterable of
-                if len(function_list) > 1:   # items, build final function.
-                    function = lambda x: all(fn(x) for fn in function_list)
-                else:
-                    function = function_list.pop()
+        # Get 'keys', 'diffs' and 'items' functions and adapt arguments
+        # to accept dictionary item.
+        if 'keys' in kwds_func:
+            keys_fn = kwds_func['keys']
+            if _expects_multiple_params(keys_fn):
+                adapted_fn = lambda item: keys_fn(*item[0])
             else:
-                try:  # If not a mapping, then handle 'diffs' keyword only.
-                    function = kwds_func.pop('diffs')
-                except KeyError:
-                    exc = ValueError("non-mapping iterable, must use 'diffs' keyword")
-                    exc.__cause__ = None
-                    raise exc
+                adapted_fn = lambda item: keys_fn(item[0])
+            function_list.append(adapted_fn)
 
-            if kwds_func:  # There should be no remaining keywords.
-                msg = "invalid keywords, found {0}"
-                msg = msg.format(', '.join(repr(x) for x in kwds_func))
-                raise ValueError(msg)
+        if 'diffs' in kwds_func:
+            diffs_fn = kwds_func['diffs']
+            adapted_fn = lambda item: diffs_fn(item[1])
+            function_list.append(adapted_fn)
 
-            return list(x for x in iterable if not function(x))
-            # TODO: Explore idea of replacing above list with generator.
+        if 'items' in kwds_func:
+            items_fn = kwds_func['items']
+            args_len, vararg_len = _get_arg_lengths(items_fn)
+            if args_len <= 2 and vararg_len == 0:
+                if args_len == 2:
+                    adapted_fn = lambda item: items_fn(*item)
+                else:
+                    adapted_fn = lambda item: items_fn(item)
+            else:
+                adapted_fn = lambda item: items_fn(*(item[0] + (item[1],)))
+            function_list.append(adapted_fn)
 
-        filterfalse.__name__ = function_name
-        super(allow_any2, self).__init__(filterfalse)
+        if len(function_list) == 1:
+            return function_list.pop()
+        return lambda x: all(fn(x) for fn in function_list)
+
+    @staticmethod
+    def _get_nonmapping_function(**kwds_func):
+        if list(kwds_func.keys()) != ['diffs']:
+            invalid = set(kwds_func.keys()) - set(['diffs'])
+            invalid = ', '.join(repr(x) for x in invalid)
+            msg = ("non-mapping iterable, accepts only 'diffs' "
+                   "keyword, found {0}".format(invalid))
+            exc = ValueError(msg)
+            exc.__cause__ = None
+            raise exc
+
+        return kwds_func['diffs']
 
 
 class allow_missing2(allow_any2):

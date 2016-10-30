@@ -272,7 +272,7 @@ class TestAllowAny2(unittest.TestCase):
         in_diffs = [Missing('foo'), Missing('bar')]
         function = lambda first, second: first == 'AAA'
 
-        regex = "must use 'diffs' keyword"
+        regex = "accepts only 'diffs' keyword, found 'keys'"
         with self.assertRaisesRegex(ValueError, regex):
             with allow_any2(keys=function):  # <- expects 'diffs='.
                 raise DataError('example error', in_diffs)
