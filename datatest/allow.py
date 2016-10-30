@@ -230,10 +230,12 @@ def _prettify_deviation_signature2(method):
         signature = inspect.signature(method)
     except AttributeError:  # Not supported in Python 3.2 or older.
         return  # <- EXIT!
-    _self = inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY)
-    _tolerance = inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY)
-    _kwds_func = inspect.Parameter('kwds_func', inspect.Parameter.VAR_KEYWORD)
-    parameters = [_self, _tolerance, _kwds_func]
+
+    parameters = [
+        inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY),
+        inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),
+        inspect.Parameter('kwds_func', inspect.Parameter.VAR_KEYWORD),
+    ]
     method.__signature__ = signature.replace(parameters=parameters)
 
 
