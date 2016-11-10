@@ -315,12 +315,90 @@ class allow_percent_deviation2(allow_any2):
 _prettify_deviation_signature2(allow_percent_deviation2.__init__)
 
 
-#class allow_limit2(allow_iter2):
-#    pass
+class allow_limit2(allow_any2):
+    def __init__(self, number, **kwds_func):
+        if not kwds_func:
+            kwds_func['diffs'] = lambda x: True
+        self._validate_kwds_func(**kwds_func)
+
+        def filterfalse(iterable):
+            if isinstance(iterable, collections.Mapping):
+                function = self._get_mapping_function(**kwds_func)
+                iterable = iterable.items()  # Change to iterable of items.
+            else:
+                function = self._get_nonmapping_function(**kwds_func)
+
+            t1, t2 = itertools.tee(iterable)
+            count = 0
+            item = next(t1, None)
+            while item and count <= number:
+                if function(item):
+                    count += 1
+                item = next(t1, None)
+
+            if count > number:   # If count exceeds number, return all
+                return list(t2)  # diffs, else return non-matching only.
+            return list(itertools.filterfalse(function, t2))
+            # TODO: Explore idea of replacing above list with generator.
+
+        names = (x.__name__ for x in kwds_func.values())
+        filterfalse.__name__ = ' and '.join(x for x in names if x)
+        super(allow_any2, self).__init__(filterfalse)  # Calls ancestor method!
 
 
-#class allow_only2(???):
-#    pass
+class allow_only2(allow_iter2):
+    def __init__(self, differences):
+        def filterfalse(differences, iterable):         # filterfalse() is,
+            allowed = collections.Counter(differences)  # later, wrapped to
+            not_allowed = []                            # handle either mapping
+            for x in iterable:                          # or non-mapping
+                if allowed[x]:                          # differences.
+                    allowed[x] -= 1
+                else:
+                    not_allowed.append(x)
+
+            if not_allowed:
+                return not_allowed  # <- EXIT!
+
+            not_found = list(allowed.elements())
+            if not_found:
+                exc = DataError('allowed difference not found', not_found)
+                exc.__cause__ = None
+                raise exc
+            return iter([])
+
+        if isinstance(differences, collections.Mapping):
+            @functools.wraps(filterfalse)
+            def function(differences, iterable):
+                differences = differences.items()
+                if isinstance(iterable, collections.Mapping):  # *iterable* must be
+                    iterable = iterable.items()                # mapping-compatible
+                elif not isinstance(iterable, collections.ItemsView):
+                    msg = ('{class_name} expects mapping of differences but '
+                           'found {unexpected_type!r} of differences')
+                    msg = msg.format(
+                        class_name=self.__class__.__name__,
+                        unexpected_type=type(iterable).__name__,
+                    )
+                    raise ValueError(msg)  # *iterable* must be mapping-compatible.
+                return filterfalse(differences, iterable)
+        else:
+            @functools.wraps(filterfalse)
+            def function(differences, iterable):
+                if isinstance(iterable, collections.Mapping):
+                    msg = ('{class_name} expects non-mapping differences but '
+                           'found {unexpected_type!r} of differences')
+                    msg = msg.format(
+                        class_name=self.__class__.__name__,
+                        unexpected_type=type(iterable).__name__,
+                    )
+                    raise ValueError(msg)  # *iterable* must not be mapping.
+                return filterfalse(differences, iterable)
+
+        # Change to a function of one argument, with partial(), and pass to
+        # parent's __init__().
+        function = functools.partial(function, differences)
+        super(allow_only2, self).__init__(function)
 
 
 class allow_iter(object):

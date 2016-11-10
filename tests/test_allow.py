@@ -11,8 +11,8 @@ from datatest.allow import allow_iter2
 from datatest.allow import allow_any2
 from datatest.allow import allow_missing2
 from datatest.allow import allow_extra2
-#from datatest.allow import allow_only2
-#from datatest.allow import allow_limit2
+from datatest.allow import allow_only2
+from datatest.allow import allow_limit2
 from datatest.allow import allow_deviation2
 from datatest.allow import allow_percent_deviation2
 from datatest.allow import allow_iter
@@ -714,6 +714,182 @@ class TestAllowPercentDeviation2(unittest.TestCase):
         with self.assertRaises(DataError):  # <- NaN values should not be caught!
             with allow_percent_deviation2(0):
                 raise DataError('example error', [Deviation(0, float('nan'))])
+
+
+class TestAllowLimit2(unittest.TestCase):
+    """Test allow_limit2() behavior."""
+    def test_exceeds_limit(self):
+        differences = [Extra('xxx'), Missing('yyy')]
+
+        with self.assertRaises(DataError) as cm:
+            with allow_limit2(1):  # <- Allows only 1 but there are 2!
+                raise DataError('example error', differences)
+
+        rejected = list(cm.exception.differences)
+        self.assertEqual(differences, rejected)
+
+    def test_matches_limit(self):
+        with allow_limit2(2):  # <- Allows 2 and there are only 2.
+            raise DataError('example error', [Missing('xxx'), Missing('yyy')])
+
+    def test_under_limit(self):
+        with allow_limit2(3):  # <- Allows 3 and there are only 2.
+            raise DataError('example error', [Missing('xxx'), Missing('yyy')])
+
+    def test_kwds_exceeds_limit(self):
+        differences = [Extra('xxx'), Missing('yyy'), Extra('zzz')]
+
+        with self.assertRaises(DataError) as cm:
+            is_extra = lambda x: isinstance(x, Extra)
+            with allow_limit2(1, diffs=is_extra):  # <- Limit of 1 and is_extra().
+                raise DataError('example error', differences)
+
+        rejected = list(cm.exception.differences)
+        self.assertEqual(differences, rejected)
+
+    def test_kwds_matches_limit(self):
+        differences = [Extra('xxx'), Missing('yyy'), Extra('zzz')]
+
+        with self.assertRaises(DataError) as cm:
+            is_extra = lambda x: isinstance(x, Extra)
+            with allow_limit2(2, diffs=is_extra):  # <- Limit of 2 and is_extra().
+                raise DataError('example error', differences)
+
+        rejected = list(cm.exception.differences)
+        self.assertEqual([Missing('yyy')], rejected)
+
+    def test_kwds_under_limit(self):
+        differences = [Extra('xxx'), Missing('yyy'), Extra('zzz')]
+
+        with self.assertRaises(DataError) as cm:
+            is_extra = lambda x: isinstance(x, Extra)
+            with allow_limit2(4, diffs=is_extra):  # <- Limit of 4 and is_extra().
+                raise DataError('example error', differences)
+
+        rejected = list(cm.exception.differences)
+        self.assertEqual([Missing('yyy')], rejected)
+
+    def test_dict_of_diffs_exceeds(self):
+        differences = {'foo': Extra('xxx'), 'bar': Missing('yyy')}
+
+        with self.assertRaises(DataError) as cm:
+            with allow_limit2(1):  # <- Allows only 1 but there are 2!
+                raise DataError('example error', differences)
+
+        rejected = cm.exception.differences
+        self.assertEqual(differences, rejected)
+
+    def test_dict_of_diffs_kwds_func_under_limit(self):
+        differences = {'foo': Extra('xxx'), 'bar': Missing('yyy')}
+
+        with self.assertRaises(DataError) as cm:
+            is_extra = lambda x: isinstance(x, Extra)
+            with allow_limit2(2, diffs=is_extra):
+                raise DataError('example error', differences)
+
+        rejected = cm.exception.differences
+        self.assertEqual({'bar': Missing('yyy')}, rejected)
+
+
+class TestAllowOnly2(unittest.TestCase):
+    """Test allow_only2() behavior."""
+    def test_some_allowed(self):
+        differences = [Extra('xxx'), Missing('yyy')]
+        allowed = [Extra('xxx')]
+
+        with self.assertRaises(DataError) as cm:
+            with allow_only2(allowed):
+                raise DataError('example error', differences)
+
+        expected = [Missing('yyy')]
+        actual = list(cm.exception.differences)
+        self.assertEqual(expected, actual)
+
+    def test_all_allowed(self):
+        diffs = [Extra('xxx'), Missing('yyy')]
+        allowed = [Extra('xxx'), Missing('yyy')]
+        with allow_only2(allowed):
+            raise DataError('example error', diffs)
+
+    def test_duplicates(self):
+        # Three of the exact-same differences.
+        differences = [Extra('xxx'), Extra('xxx'), Extra('xxx')]
+
+        # Only allow one of them.
+        with self.assertRaises(DataError) as cm:
+            allowed = [Extra('xxx')]
+            with allow_only2(allowed):
+                raise DataError('example error', differences)
+
+        expected = [Extra('xxx'), Extra('xxx')]  # Expect two remaining.
+        actual = list(cm.exception.differences)
+        self.assertEqual(expected, actual)
+
+        # Only allow two of them.
+        with self.assertRaises(DataError) as cm:
+            allowed = [Extra('xxx'), Extra('xxx')]
+            with allow_only2(allowed):
+                raise DataError('example error', differences)
+
+        expected = [Extra('xxx')]  # Expect one remaining.
+        actual = list(cm.exception.differences)
+        self.assertEqual(expected, actual)
+
+        # Allow all three.
+        allowed = [Extra('xxx'), Extra('xxx'), Extra('xxx')]
+        with allow_only2(allowed):
+            raise DataError('example error', differences)
+
+    def test_mapping_some_allowed(self):
+        differences = {'foo': Extra('xxx'), 'bar': Missing('yyy')}
+        allowed = {'foo': Extra('xxx')}
+
+        with self.assertRaises(DataError) as cm:
+            with allow_only2(allowed):
+                raise DataError('example error', differences)
+
+        expected = {'bar': Missing('yyy')}
+        actual = cm.exception.differences
+        self.assertEqual(expected, actual)
+
+    def test_mapping_none_allowed(self):
+        differences = {'foo': Extra('xxx'), 'bar': Missing('yyy')}
+        allowed = {}
+
+        with self.assertRaises(DataError) as cm:
+            with allow_only2(allowed):
+                raise DataError('example error', differences)
+
+        actual = cm.exception.differences
+        self.assertEqual(differences, actual)
+
+    def test_mapping_all_allowed(self):
+        differences = {'foo': Extra('xxx'), 'bar': Missing('yyy')}
+        allowed = differences
+
+        with allow_only2(allowed):  # <- Catches all differences, no error!
+            raise DataError('example error', differences)
+
+    def test_mapping_mismatched_types(self):
+        # Dict of diffs vs list of allowed.
+        differences = {'foo': Extra('xxx'), 'bar': Missing('yyy')}
+        allowed = [Extra('xxx'), Missing('yyy')]
+
+        regex = ("expects non-mapping differences but found 'dict' of "
+                 "differences")
+        with self.assertRaisesRegex(ValueError, regex):
+            with allow_only2(allowed):
+                raise DataError('example error', differences)
+
+        # List of diffs vs dict of allowed.
+        differences = [Extra('xxx'), Missing('yyy')]
+        allowed = {'foo': Extra('xxx'), 'bar': Missing('yyy')}
+
+        regex = ("expects mapping of differences but found 'list' of "
+                 "differences")
+        with self.assertRaisesRegex(ValueError, regex):
+            with allow_only2(allowed):
+                raise DataError('example error', differences)
 
 
 class TestAllowIter(unittest.TestCase):
