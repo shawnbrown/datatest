@@ -7,12 +7,10 @@ from datatest import DataTestCase
 
 datatest.DataAssertionError = datatest.DataError
 
-
 # Allowances.
 DataTestCase.allowSpecified = DataTestCase.allowOnly
 DataTestCase.allowUnspecified = DataTestCase.allowAny
 DataTestCase.allowDeviationPercent = DataTestCase.allowPercentDeviation
-
 
 # Assertions.
 from .api_dev1 import _assertDataCount
@@ -30,8 +28,12 @@ def _assertColumnSubset(self, ref=None, msg=None):
     columns.  If *ref* is provided, it is used in-place of the set
     from ``referenceData``.
     """
-    with self.allowMissing():
+    try:
         self.assertColumnSet(ref, msg)
+    except datatest.DataError:
+        with self.allowMissing():
+            self.assertColumnSet(ref, msg)
+
 DataTestCase.assertColumnSubset = _assertColumnSubset
 
 
@@ -40,8 +42,12 @@ def _assertColumnSuperset(self, ref=None, msg=None):
     columns.  If *ref* is provided, it is used in-place of the set
     from ``referenceData``.
     """
-    with self.allowExtra():
+    try:
         self.assertColumnSet(ref, msg)
+    except datatest.DataError:
+        with self.allowExtra():
+            self.assertColumnSet(ref, msg)
+
 DataTestCase.assertColumnSuperset = _assertColumnSuperset
 
 
@@ -50,8 +56,12 @@ def _assertValueSubset(self, column, ref=None, msg=None, **filter_by):
     values for the given *column*.  If *ref* is provided, it is used
     in place of the set from ``referenceData``.
     """
-    with self.allowMissing():
+    try:
         self.assertValueSet(column, ref, msg, **filter_by)
+    except datatest.DataError:
+        with self.allowMissing():
+            self.assertValueSet(column, ref, msg, **filter_by)
+
 DataTestCase.assertValueSubset = _assertValueSubset
 
 
@@ -60,6 +70,10 @@ def _assertValueSuperset(self, column, ref=None, msg=None, **filter_by):
     values for the given *column*.  If *ref* is provided, it is used
     in place of the set from ``referenceData``.
     """
-    with self.allowExtra():
+    try:
         self.assertValueSet(column, ref, msg, **filter_by)
+    except datatest.DataError:
+        with self.allowExtra():
+            self.assertValueSet(column, ref, msg, **filter_by)
+
 DataTestCase.assertValueSuperset = _assertValueSuperset
