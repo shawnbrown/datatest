@@ -133,7 +133,7 @@ def _compare_other(data, required):
         diffs = dict()
         for key, val in data.items():
             if not wrapper(val):
-                diffs[key] = _getdiff(val, required)
+                diffs[key] = _getdiff(val, required, is_common=True)
         return diffs  # <- EXIT!
 
     is_not_str = not isinstance(data, str)
@@ -142,18 +142,19 @@ def _compare_other(data, required):
         diffs = dict()
         for index, val in enumerate(data):
             if not wrapper(val):
-                diffs[index] = _getdiff(val, required)
+                diffs[index] = _getdiff(val, required, is_common=True)
         return diffs  # <- EXIT!
 
     # For Sets and other Iterables.
     if isinstance(data, collections.Iterable) and is_not_str:
-        diffs = [_getdiff(x, required) for x in data if not wrapper(x)]
+        diffs = [_getdiff(x, required, is_common=True) for x in data if not wrapper(x)]
         return diffs  # <- EXIT!
 
     # For string or non-iterable.
     if not wrapper(data):
-        return [_getdiff(data, required)]
-    return []
+        return [_getdiff(data, required, is_common=True)]
+
+    return []  # If no differences, return empty list.
 
 
 def _is_nscontainer(x):

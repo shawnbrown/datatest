@@ -165,8 +165,12 @@ _NOTFOUND = _NotFoundSentinel()
 del _NotFoundSentinel
 
 
-def _getdiff(first, second, **kwds):
-    """Returns difference object for two objects known to be unequal."""
+# TODO: Investigate possibility of removing **kwds from _getdiff().
+def _getdiff(first, second, is_common=False, **kwds):
+    """Returns difference object for two objects known to be unequal.
+    The *is_common* flag, when True, signals that the *second* argument
+    should be omitted when creating an "Invalid" difference.
+    """
     # Prepare for numeric comparisons.
     _isnum = lambda x: isinstance(x, Number) and not isnan(x)
     first_isnum = _isnum(first)
@@ -205,4 +209,6 @@ def _getdiff(first, second, **kwds):
         return Missing(second, **kwds)
 
     # All other pairs of objects.
+    if is_common:
+        return Invalid(first, **kwds)
     return Invalid(first, second, **kwds)

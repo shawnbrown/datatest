@@ -275,6 +275,16 @@ class Test_getdiff(unittest.TestCase):
         diff = _getdiff(_NOTFOUND, 6, col1='AAA')
         self.assertEqual(diff, Deviation(-6, 6, col1='AAA'))
 
+    def test_is_common(self):
+        """If requirement is common it should be omitted from Invalid
+        difference (but not from Deviation differences).
+        """
+        diff = _getdiff('a', 6, is_common=True)
+        self.assertEqual(diff, Invalid('a'))
+
+        diff = _getdiff(_NOTFOUND, 6, is_common=True)
+        self.assertEqual(diff, Deviation(-6, 6))
+
     def test_same(self):
         """The _getdiff() function returns differences for objects that
         are KNOWN TO BE DIFFERENT--it does not test for differences

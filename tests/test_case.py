@@ -140,7 +140,7 @@ class TestAssertValid(DataTestCase):
 
         differences = cm.exception.differences
         self.assertEqual = super(DataTestCase, self).assertEqual
-        self.assertEqual(differences, {2: Invalid('ccc', required)})
+        self.assertEqual(differences, {2: Invalid('ccc')})
 
 
 class TestAssertEqual(TestHelperCase):
