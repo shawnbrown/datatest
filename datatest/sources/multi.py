@@ -33,6 +33,9 @@ class MultiSource(BaseSource):
 
         Initialize self.
         """
+        if not sources:
+            raise TypeError('expected 1 or more sources, got 0')
+
         # Accept `missing` as a keyword-only argument.
         try:
             missing = kwd.pop('missing')
@@ -44,8 +47,8 @@ class MultiSource(BaseSource):
             msg = "__init__() got an unexpected keyword argument " + repr(key)
             raise TypeError(msg)
 
-        msg = 'Sources must be derived from BaseSource'
-        assert all(isinstance(s, BaseSource) for s in sources), msg
+        if not all(isinstance(s, BaseSource) for s in sources):
+            raise TypeError('sources must be derived from BaseSource')
 
         all_columns = []
         for s in sources:

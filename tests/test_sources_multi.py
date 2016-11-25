@@ -67,6 +67,16 @@ class TestMultiSource(OtherTests, unittest.TestCase):
         expected = {'a': 1}
         self.assertEqual(expected, source.count('label1', 'label1', label2='x'))
 
+    def test_invalid_sources(self):
+        regex = 'sources must be derived from BaseSource'
+        with self.assertRaisesRegex(TypeError, regex):
+            MultiSource(object(), object())
+
+    def test_missing_sources(self):
+        regex = 'expected 1 or more sources, got 0'
+        with self.assertRaisesRegex(TypeError, regex):
+            MultiSource()
+
 
 class TestMixedMultiSource(OtherTests, unittest.TestCase):
     """Test MultiSource with sub-sources of different types."""
