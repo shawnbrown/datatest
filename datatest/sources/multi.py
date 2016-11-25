@@ -36,11 +36,7 @@ class MultiSource(BaseSource):
         if not sources:
             raise TypeError('expected 1 or more sources, got 0')
 
-        # Accept `missing` as a keyword-only argument.
-        try:
-            missing = kwd.pop('missing')
-        except KeyError:
-            missing = ''
+        missing = kwd.pop('missing', '')  # Accept as keyword-only argument.
 
         if kwd:                     # Enforce keyword-only argument
             key, _ = kwd.popitem()  # behavior that works in Python 2.x.
