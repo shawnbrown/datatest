@@ -140,10 +140,22 @@ class DataTestCase(TestCase):
 
         return required
 
-    def assertValid(self, data, required, msg=None):
-        """Fail if *data* does not satisfy *required* object as
+    def assertValid(self, data, required=None, msg=None):
+        """
+        self.assertValid(data, required, msg=None)
+        self.assertValid(function, /, msg=None)
+
+        Fail if *data* does not satisfy *required* object as
         determined by an appropriate validation operation.
         """
+        # If using *function* signature, normalize arguments and get data.
+        if callable(data) and (not required or isinstance(required, str)):
+            function, data = data, None         # Shuffle arguments
+            if not msg:                         # to fit *function*
+                msg, required = required, None  # signature.
+            data = function(self.subject)
+            required = function(self.reference)
+
         # Get appropriate comparison function (as determined by
         # *required* argument).
         if isinstance(required, collections.Mapping):
@@ -478,17 +490,24 @@ class DataTestCase(TestCase):
             raise self.failureException(msg)
 
 
-# Prettify signature of allowDeviation() and allowPercentDeviation() by
-# making the "tolerance" syntax the default option when introspected.
+# Prettify default signature of methods that accept multiple signatures.
 try:
-    # DataTestCase.allowDeviation():
+    # For DataTestCase.assertValid(), remove default parameter.
+    _sig = inspect.signature(DataTestCase.assertValid)
+    _self, _data, _required, _msg = _sig.parameters.values()
+    _required = _required.replace(default=inspect.Parameter.empty)
+    _sig = _sig.replace(parameters=[_self, _data, _required, _msg])
+    DataTestCase.assertValid.__signature__ = _sig
+
+    # For DataTestCase.allowDeviation(), build "tolerance" signature.
     _sig = inspect.signature(DataTestCase.allowDeviation)
     _self, _lower, _upper, _msg, _kwds_filter = _sig.parameters.values()
     _self = _self.replace(kind=inspect.Parameter.POSITIONAL_ONLY)
     _tolerance = inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY)
     _sig = _sig.replace(parameters=[_self, _tolerance, _msg, _kwds_filter])
     DataTestCase.allowDeviation.__signature__ = _sig
-    # DataTestCase.allowPercentDeviation():
+
+    # For DataTestCase.allowPercentDeviation(), build "tolerance" signature.
     _sig = inspect.signature(DataTestCase.allowPercentDeviation)
     _self, _lower, _upper, _msg, _kwds_filter = _sig.parameters.values()
     _self = _self.replace(kind=inspect.Parameter.POSITIONAL_ONLY)

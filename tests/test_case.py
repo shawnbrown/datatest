@@ -143,6 +143,39 @@ class TestAssertValid(DataTestCase):
         self.assertEqual(differences, {2: Invalid('ccc')})
 
 
+class TestFunctionSignature(DataTestCase):
+    """In addition to its normal *data/requirement* signature, the
+    assertValid() method also supports a *function* signature.
+
+    When calling assertValid() with a function of one argument, the
+    function is used to get the data and requirement from the test
+    case's subject and reference sources.
+    """
+    def setUp(self):
+        self.subject = MinimalSource(data=[['AAA', 1], ['BBB', 2], ['CCC', 3]],
+                                     fieldnames=['col1', 'col2'])
+        self.reference = MinimalSource(data=[['AAA', 1], ['BBB', 2], ['CCC', 3]],
+                                       fieldnames=['col1', 'col2'])
+
+    def test_function(self):
+        def function(src):
+            return src.sum('col2')
+
+        self.assertValid(function)
+
+    def test_lambda(self):
+        function = lambda src: src.sum('col2')
+        self.assertValid(function)
+
+    def test_msg(self):
+        def function(src):
+            return src.sum('col2')
+
+        self.assertValid(function, 'test message')  # As positional argument.
+
+        self.assertValid(function, msg='test message')  # As keyword argument.
+
+
 class TestAssertEqual(TestHelperCase):
     @unittest.skip('Waiting until assertEqual() is migrated to __past__.')
     def test_method_identity(self):
