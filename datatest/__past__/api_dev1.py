@@ -3,6 +3,7 @@
 from __future__ import absolute_import
 import inspect
 import datatest
+from datatest.__past__ import api_dev2
 from datatest.utils import itertools
 from datatest import DataTestCase
 

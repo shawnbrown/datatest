@@ -8,8 +8,14 @@ development-release API.
 """
 from . import _io as io
 from . import _unittest as unittest
+from .common import MinimalSource
 import datatest
 from datatest.__past__ import api_dev2  # <- MONKEY PATCH!!!
+
+from datatest import DataError
+from datatest import Missing
+from datatest import Extra
+from datatest import Invalid
 
 
 class TestNamesAndAttributes(unittest.TestCase):
@@ -53,6 +59,78 @@ class TestNamesAndAttributes(unittest.TestCase):
         error, failure = self._run_wrapped_test(_TestWrapper, 'test_method')
         self.assertIsNone(error)
         self.assertIsNone(failure)
+
+
+class TestAssertSubjectColumns(datatest.DataTestCase):
+    def setUp(self):
+        data = [('label1', 'value'),
+                ('a', '6'),
+                ('b', '7')]
+        self.subject = MinimalSource(data)
+
+    def test_required_set(self):
+        required_set = set(['label1', 'value'])
+        self.assertSubjectColumns(required=required_set)  # <- test assert
+
+    def test_required_source(self):
+        data = [('label1', 'value'),
+                ('a', '6'),
+                ('b', '7')]
+        required_source = MinimalSource(data)
+        self.assertSubjectColumns(required=required_source)  # <- test assert
+
+    def test_required_function(self):
+        def lowercase(x):  # <- Helper function!!!
+            return x == x.lower()
+        self.assertSubjectColumns(required=lowercase)  # <- test assert
+
+    def test_using_reference(self):
+        data = [('label1', 'value'),
+                ('a', '6'),
+                ('b', '7')]
+        self.subject = MinimalSource(data)
+        self.reference = MinimalSource(data)
+        self.assertSubjectColumns()  # <- test assert
+
+    def test_extra(self):
+        data = [('label1', 'label2', 'value'),
+                ('a', 'x', '6'),
+                ('b', 'y', '7')]
+        self.subject = MinimalSource(data)
+
+        with self.assertRaises(DataError) as cm:
+            required_set = set(['label1', 'value'])
+            self.assertSubjectColumns(required=required_set)  # <- test assert
+
+        differences = cm.exception.differences
+        self.assertEqual(set(differences), set([Extra('label2')]))
+
+    def test_missing(self):
+        data = [('label1',),
+                ('a',),
+                ('b',)]
+        self.subject = MinimalSource(data)
+
+        with self.assertRaises(DataError) as cm:
+            required_set = set(['label1', 'value'])
+            self.assertSubjectColumns(required=required_set)  # <- test assert
+
+        differences = cm.exception.differences
+        self.assertEqual(set(differences), set([Missing('value')]))
+
+    def test_invalid(self):
+        data = [('LABEL1', 'value'),
+                ('a', '6'),
+                ('b', '7')]
+        self.subject = MinimalSource(data)
+
+        with self.assertRaises(DataError) as cm:
+            def lowercase(x):  # <- Helper function!!!
+                return x == x.lower()
+            self.assertSubjectColumns(required=lowercase)  # <- test assert
+
+        differences = cm.exception.differences
+        self.assertEqual(set(differences), set([Invalid('LABEL1')]))
 
 
 if __name__ == '__main__':

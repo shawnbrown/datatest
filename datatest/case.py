@@ -218,28 +218,6 @@ class DataTestCase(TestCase):
             differences = first.compare(second)
             self.fail(msg or default_msg, differences)
 
-    def assertSubjectColumns(self, required=None, msg=None):
-        """Test that the column names of :attr:`subject` match the
-        *required* values.  The *required* argument can be a collection,
-        callable, data source, or None::
-
-            def test_columns(self):
-                required_names = {'col1', 'col2'}
-                self.assertSubjectColumns(required_names)
-
-        If *required* is omitted, the column names from
-        :attr:`reference` are used in its place::
-
-            def test_columns(self):
-                self.assertSubjectColumns()
-        """
-        # TODO: Explore the idea of implementing CompareList to assert
-        # column order.
-        subject_set = CompareSet(self.subject.columns())
-        required = self._normalize_required(required, 'columns')
-        msg = msg or 'different column names'
-        self.assertEqual(subject_set, required, msg)
-
     def assertSubjectSet(self, columns, required=None, msg=None, **kwds_filter):
         """Test that the column or *columns* in :attr:`subject` contain
         the *required* values::
