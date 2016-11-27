@@ -16,7 +16,6 @@ from .compare import _compare_set
 from .compare import _compare_other
 
 from .error import DataError
-from .sources.base import BaseSource
 
 __datatest = True  # Used to detect in-module stack frames (which are
                    # omitted from output).
@@ -115,20 +114,6 @@ class DataTestCase(TestCase):
             if name in frame.f_globals:
                 return frame.f_globals[name]  # <- EXIT!
         raise NameError('cannot find {0!r}'.format(name))
-
-    def _normalize_required(self, required, method, *args, **kwds):
-        """If *required* is None, query data from :attr:`reference`; if
-        it is another data source, query from this other source; else,
-        return unchanged.
-        """
-        if required == None:
-            required = self.reference
-
-        if isinstance(required, BaseSource):
-            fn = getattr(required, method)
-            required = fn(*args, **kwds)
-
-        return required
 
     def assertValid(self, data, required=None, msg=None):
         """

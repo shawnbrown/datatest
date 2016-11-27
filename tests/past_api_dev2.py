@@ -68,6 +68,40 @@ class TestNamesAndAttributes(unittest.TestCase):
         self.assertIsNone(failure)
 
 
+class TestNormalizeReference(datatest.DataTestCase):
+    def setUp(self):
+        self.reference = MinimalSource([
+            ('label1', 'value'),
+            ('a', '65'),
+            ('b', '70'),
+        ])
+
+        self.subject = MinimalSource([
+            ('label1', 'label2', 'value'),
+            ('a', 'x', '17'),
+            ('a', 'x', '13'),
+            ('a', 'y', '20'),
+            ('a', 'z', '15'),
+            ('b', 'z',  '5'),
+            ('b', 'y', '40'),
+            ('b', 'x', '25'),
+        ])
+
+    def test_normalize_set(self):
+        original = set(['x', 'y', 'z'])
+        normalized = self._normalize_required(original, 'distinct', 'label2')
+        self.assertIs(original, normalized)  # Should return original unchanged.
+
+    def test_alternate_reference_source(self):
+        altsrc = MinimalSource([
+            ('label1', 'value'),
+            ('c', '75'),
+            ('d', '80'),
+        ])
+        normalized = self._normalize_required(altsrc, 'distinct', 'label1')
+        self.assertEqual(set(['c', 'd']), normalized)
+
+
 class TestAssertSubjectColumns(datatest.DataTestCase):
     def setUp(self):
         data = [('label1', 'value'),

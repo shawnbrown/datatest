@@ -281,53 +281,6 @@ class TestAssertEqual(TestHelperCase):
         self.assertRegex(failure, pattern)
 
 
-class TestNormalizeReference(TestHelperCase):
-    def setUp(self):
-        _fh = io.StringIO('label1,value\n'
-                          'a,65\n'
-                          'b,70\n')
-        self.test_reference = CsvSource(_fh, in_memory=True)
-
-        _fh = io.StringIO('label1,label2,value\n'
-                          'a,x,17\n'
-                          'a,x,13\n'
-                          'a,y,20\n'
-                          'a,z,15\n'
-                          'b,z,5\n'
-                          'b,y,40\n'
-                          'b,x,25\n')
-        self.test_subject = CsvSource(_fh, in_memory=True)
-
-    def test_normalize_required(self):
-        class _TestClass(DataTestCase):
-            def setUp(_self):
-                _self.reference = self.test_reference
-                _self.subject = self.test_subject
-
-            def test_method(_self):  # Dummy method for instantiation.
-                pass
-
-        instance = _TestClass('test_method')
-
-        #original = set(['x', 'y', 'z'])
-        #normalized = instance._normalize_required(None, 'distinct', 'label2')
-        #self.assertIsNot(original, normalized)
-        #self.assertEqual(original, normalized)
-
-        # Set object should return unchanged.
-        original = set(['x', 'y', 'z'])
-        normalized = instance._normalize_required(original, 'distinct', 'label2')
-        self.assertIs(original, normalized)
-
-        # Alternate reference source.
-        _fh = io.StringIO('label1,value\n'
-                          'c,75\n'
-                          'd,80\n')
-        altsrc = CsvSource(_fh, in_memory=True)
-        normalized = instance._normalize_required(altsrc, 'distinct', 'label1')
-        self.assertEqual(set(['c', 'd']), normalized)
-
-
 class TestAllowanceWrappers(unittest.TestCase):
     """Test method wrappers for allowance context managers."""
     def setUp(self):

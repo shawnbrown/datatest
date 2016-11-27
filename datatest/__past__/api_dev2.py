@@ -7,8 +7,25 @@ import re
 from datatest import DataTestCase
 from datatest import CompareSet
 from datatest import Extra
+from datatest import BaseSource
 
 _re_type = type(re.compile(''))
+
+
+def _normalize_required(self, required, method, *args, **kwds):
+    """If *required* is None, query data from reference; if it is
+    another data source, query from this other source; else, return
+    unchanged.
+    """
+    if required == None:
+        required = self.reference
+
+    if isinstance(required, BaseSource):
+        fn = getattr(required, method)
+        required = fn(*args, **kwds)
+
+    return required
+DataTestCase._normalize_required = _normalize_required
 
 
 def assertSubjectColumns(self, required=None, msg=None):
