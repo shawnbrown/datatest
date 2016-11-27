@@ -243,7 +243,7 @@ class TestAssertSubjectSet(datatest.DataTestCase):
             self.assertSubjectSet(['label1', 'label2'])
 
         differences = cm.exception.differences
-        self.assertEqual(differences, [Missing(('d', '#'))])
+        super(DataTestCase, self).assertEqual(differences, [Missing(('d', '#'))])
 
 
 if __name__ == '__main__':

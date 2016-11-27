@@ -157,6 +157,33 @@ class TestFunctionSignature(DataTestCase):
         self.assertValid(function, msg='test message')  # As keyword argument.
 
 
+class TestFunctionSignatureDataSourceErrors(DataTestCase):
+    def test_missing_subject(self):
+        self.reference = MinimalSource(data=[['AAA', 1], ['BBB', 2], ['CCC', 3]],
+                                       fieldnames=['col1', 'col2'])
+        with self.assertRaisesRegex(NameError, "cannot find 'subject'"):
+            function = lambda src: src.sum('col2')
+            self.assertValid(function)
+
+    def test_missing_reference(self):
+        self.subject = MinimalSource(data=[['AAA', 1], ['BBB', 2], ['CCC', 3]],
+                                     fieldnames=['col1', 'col2'])
+        with self.assertRaisesRegex(NameError, "cannot find 'reference'"):
+            function = lambda src: src.sum('col2')
+            self.assertValid(function)
+
+    def test_function_and_object_mismatch(self):
+        self.subject = MinimalSource(data=[['AAA', 1], ['BBB', 2], ['CCC', 3]],
+                                     fieldnames=['col1', 'col2'])
+        self.reference = MinimalSource(data=[['AAA', 1], ['BBB', 2], ['CCC', 3]],
+                                       fieldnames=['col1', 'col2'])
+
+        regex = "'MinimalSource' object has no attribute 'bad_method_name'"
+        with self.assertRaisesRegex(AttributeError, regex):
+            function = lambda src: src.bad_method_name()
+            self.assertValid(function)
+
+
 class TestAssertEqual(TestHelperCase):
     @unittest.skip('Waiting until assertEqual() is migrated to __past__.')
     def test_method_identity(self):
