@@ -6,10 +6,6 @@ from unittest import TestCase
 from .utils.builtins import *
 from .utils import collections
 
-from .compare import CompareSet  # TODO!!!: Remove after assertSubjectColumns fixed!
-from .compare import CompareDict  # TODO!!!: Remove after assertSubjectColumns fixed!
-from .compare import BaseCompare
-
 from .compare import _compare_mapping
 from .compare import _compare_sequence
 from .compare import _compare_set
@@ -150,47 +146,6 @@ class DataTestCase(TestCase):
         # Apply comparison function and fail if there are any differences.
         differences = compare(data, required)
         if differences:
-            self.fail(msg or default_msg, differences)
-
-    def assertEqual(self, first, second, msg=None):
-        """Fail if *first* does not satisfy *second* as determined by
-        appropriate validation comparison.
-
-        If *first* and *second* are comparable, a failure will raise a
-        DataError containing the differences between the two::
-
-            def test_column1(self):
-                first = self.subject.distinct('col1')
-                second = self.reference.distinct('col1')
-                self.assertEqual(first, second)
-
-        If the *second* argument is a helper-function (or other
-        callable), it is used as a key which must return True for
-        acceptable values::
-
-            def test_column1(self):
-                compare_obj = self.subject.distinct('col1')
-                def uppercase(x):  # <- Helper function.
-                    return str(x).isupper()
-                self.assertEqual(compare_obj, uppercase)
-        """
-        if not isinstance(first, BaseCompare):
-            if isinstance(first, str) or not isinstance(first, collections.Container):
-                first = CompareSet([first])
-            elif isinstance(first, collections.Set):
-                first = CompareSet(first)
-            elif isinstance(first, collections.Mapping):
-                first = CompareDict(first)
-
-        if callable(second):
-            equal = first.all(second)
-            default_msg = 'first object contains invalid items'
-        else:
-            equal = first == second
-            default_msg = 'first object does not match second object'
-
-        if not equal:
-            differences = first.compare(second)
             self.fail(msg or default_msg, differences)
 
     #def assertUnique(self, data, msg=None):

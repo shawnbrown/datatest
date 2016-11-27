@@ -4,10 +4,17 @@ from __future__ import absolute_import
 import collections
 import re
 
+from datatest.utils.builtins import *
+
 from datatest import DataTestCase
 from datatest import CompareSet
 from datatest import Extra
 from datatest import BaseSource
+
+# Needed for assertEqual() wrapper.
+from datatest.compare import CompareSet
+from datatest.compare import CompareDict
+from datatest.compare import BaseCompare
 
 _re_type = type(re.compile(''))
 
@@ -26,6 +33,38 @@ def _normalize_required(self, required, method, *args, **kwds):
 
     return required
 DataTestCase._normalize_required = _normalize_required
+
+
+def assertEqual(self, first, second, msg=None):
+    """Fail if *first* does not satisfy *second* as determined by
+    appropriate validation comparison.
+
+    If *first* and *second* are comparable, a failure will raise a
+    DataError containing the differences between the two.
+
+    If the *second* argument is a helper-function (or other
+    callable), it is used as a key which must return True for
+    acceptable values.
+    """
+    if not isinstance(first, BaseCompare):
+        if isinstance(first, str) or not isinstance(first, collections.Container):
+            first = CompareSet([first])
+        elif isinstance(first, collections.Set):
+            first = CompareSet(first)
+        elif isinstance(first, collections.Mapping):
+            first = CompareDict(first)
+
+    if callable(second):
+        equal = first.all(second)
+        default_msg = 'first object contains invalid items'
+    else:
+        equal = first == second
+        default_msg = 'first object does not match second object'
+
+    if not equal:
+        differences = first.compare(second)
+        self.fail(msg or default_msg, differences)
+DataTestCase.assertEqual = assertEqual
 
 
 def assertSubjectColumns(self, required=None, msg=None):

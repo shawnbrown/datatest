@@ -39,10 +39,6 @@ class TestNamesAndAttributes(unittest.TestCase):
         """In the 0.7.0 API, the assertEqual() method should be wrapped
         in a datatest.DataTestCase method of the same name.
         """
-        # TODO: Add this check once the class has been renamed.
-        # Check for DataTestCase name (now TestCase).
-        #self.assertTrue(hasattr(datatest, 'DataTestCase'))
-
         # Check that wrapper exists.
         datatest_eq = datatest.DataTestCase.assertEqual
         unittest_eq = unittest.TestCase.assertEqual
@@ -66,6 +62,86 @@ class TestNamesAndAttributes(unittest.TestCase):
         error, failure = self._run_wrapped_test(_TestWrapper, 'test_method')
         self.assertIsNone(error)
         self.assertIsNone(failure)
+
+
+class TestAssertEqual(datatest.DataTestCase):
+    """Test behavior of wrapped assertEqual() method."""
+    def test_compareset_v_compareset_fail(self):
+        with self.assertRaises(DataError) as cm:
+            first  = CompareSet([1,2,3,4,5,6,7])
+            second = CompareSet([1,2,3,4,5,6])
+            self.assertEqual(first, second)
+
+        differences = cm.exception.differences
+        super(DataTestCase, self).assertEqual(differences, [Extra(7)])
+
+    def test_compareset_v_set_fail(self):
+        with self.assertRaises(DataError) as cm:
+            first  = CompareSet([1,2,3,4,5,6,7])
+            second = set([1,2,3,4,5,6])
+            self.assertEqual(first, second)
+
+        differences = cm.exception.differences
+        super(DataTestCase, self).assertEqual(differences, [Extra(7)])
+
+    def test_compareset_v_callable_fail(self):
+        with self.assertRaises(DataError) as cm:
+            first  = CompareSet([1,2,3,4,5,6,7])
+            second = lambda x: x <= 6
+            self.assertEqual(first, second)
+
+        differences = cm.exception.differences
+        super(DataTestCase, self).assertEqual(differences, [Invalid(7)])
+
+    def test_compareset_v_callable_pass(self):
+        first  = CompareSet([1,2,3,4,5,6,7])
+        second = lambda x: x < 10
+        self.assertEqual(first, second)
+
+    def test_set_v_set_fail(self):
+        with self.assertRaises(DataError) as cm:
+            first  = set([1,2,3,4,5,6,7])
+            second = set([1,2,3,4,5,6])
+            self.assertEqual(first, second)
+
+        differences = cm.exception.differences
+        super(DataTestCase, self).assertEqual(differences, [Extra(7)])
+
+    def test_dict_v_dict_membership_fail(self):
+        with self.assertRaises(DataError) as cm:
+            first  = {'foo': 'AAA', 'bar': 'BBB'}
+            second = {'foo': 'AAA', 'bar': 'BBB', 'baz': 'CCC'}
+            self.assertEqual(first, second)
+
+        differences = cm.exception.differences
+        super(DataTestCase, self).assertEqual(differences, [Missing('CCC', _0='baz')])
+
+    def test_dict_v_dict_numeric_fail(self):
+        with self.assertRaises(DataError) as cm:
+            first  = {'foo': 1, 'bar': 2, 'baz': 2}
+            second = {'foo': 1, 'bar': 2, 'baz': 3}
+            self.assertEqual(first, second)
+
+        differences = cm.exception.differences
+        super(DataTestCase, self).assertEqual(differences, [Deviation(-1, 3, _0='baz')])
+
+    def test_int_v_set_fail(self):
+        with self.assertRaises(DataError) as cm:
+            first  = 4
+            second = set([4, 7])
+            self.assertEqual(first, second)
+
+        differences = cm.exception.differences
+        super(DataTestCase, self).assertEqual(differences, [Missing(7)])
+
+    def test_str_v_set_fail(self):
+        with self.assertRaises(DataError) as cm:
+            first  = 'foo'
+            second = set(['foo', 'bar'])
+            self.assertEqual(first, second)
+
+        differences = cm.exception.differences
+        super(DataTestCase, self).assertEqual(differences, [Missing('bar')])
 
 
 class TestNormalizeReference(datatest.DataTestCase):

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import inspect
 import re
+from sys import version_info as _version_info
 from unittest import TestCase as _TestCase  # Originial TestCase, not
                                             # compatibility layer.
 
@@ -184,101 +185,19 @@ class TestFunctionSignatureDataSourceErrors(DataTestCase):
             self.assertValid(function)
 
 
-class TestAssertEqual(TestHelperCase):
-    @unittest.skip('Waiting until assertEqual() is migrated to __past__.')
+class TestAssertEqual(unittest.TestCase):
     def test_method_identity(self):
-        """The datatest.TestCase class should NOT wrap the assertEqual()
-        method of its superclass.
+        """The datatest.DataTestCase class should NOT wrap the
+        assertEqual() method of its superclass. In version 0.7.0,
+        datatest DID wrap this method--this test should remain part
+        of the suite to prevent regression.
         """
-        datatest_assertEqual = DataTestCase.assertEqual
-        unittest_assertEqual = unittest.TestCase.assertEqual
-        self.assertIs(datatest_assertEqual, unittest_assertEqual)
-
-    def testAssertEqual(self):
-        class _TestClass(DataTestCase):
-            def test_method1(_self):
-                first  = CompareSet([1,2,3,4,5,6,7])
-                second = CompareSet([1,2,3,4,5,6])
-                _self.assertEqual(first, second)
-
-            def test_method2(_self):
-                first  = CompareSet([1,2,3,4,5,6,7])
-                second = set([1,2,3,4,5,6])  # <- Built-in set type!!!
-                _self.assertEqual(first, second)
-
-            def test_method3(_self):
-                first  = CompareSet([1,2,3,4,5,6,7])
-                second = lambda x: x <= 6  # <- callable
-                _self.assertEqual(first, second)
-
-            def test_method4(_self):
-                first  = CompareSet([1,2,3,4,5,6,7])
-                second = lambda x: x < 10  # <- callable
-                _self.assertEqual(first, second)
-
-        pattern = r"first object does not match second object:\n Extra\(7\)"
-
-        failure = self._run_one_test(_TestClass, 'test_method1')
-        self.assertRegex(failure, pattern)
-
-        failure = self._run_one_test(_TestClass, 'test_method2')
-        self.assertRegex(failure, pattern)
-
-        pattern = r"first object contains invalid items:\n Invalid\(7\)"
-        failure = self._run_one_test(_TestClass, 'test_method3')
-        self.assertRegex(failure, pattern)
-
-        failure = self._run_one_test(_TestClass, 'test_method4')
-        self.assertIsNone(failure)
-
-    def test_set_dict(self):
-        class _TestClass(DataTestCase):
-            def test_method1(_self):
-                first  = set([1,2,3,4,5,6,7])
-                second = set([1,2,3,4,5,6])
-                _self.assertEqual(first, second)
-
-            def test_method2(_self):
-                first  = {'foo': 'AAA', 'bar': 'BBB'}
-                second = {'foo': 'AAA', 'bar': 'BBB', 'baz': 'CCC'}
-                _self.assertEqual(first, second)
-
-            def test_method3(_self):
-                first  = {'foo': 1, 'bar': 2, 'baz': 2}
-                second = {'foo': 1, 'bar': 2, 'baz': 3}
-                _self.assertEqual(first, second)
-
-        pattern = r"first object does not match second object:\n Extra\(7\)"
-        failure = self._run_one_test(_TestClass, 'test_method1')
-        self.assertRegex(failure, pattern)
-
-        pattern = r"first object does not match second object:\n Missing\('CCC', _0=u?'baz'\)"
-        failure = self._run_one_test(_TestClass, 'test_method2')
-        self.assertRegex(failure, pattern)
-
-        pattern = r"first object does not match second object:\n Deviation\(-1, 3, _0=u?'baz'\)"
-        failure = self._run_one_test(_TestClass, 'test_method3')
-        self.assertRegex(failure, pattern)
-
-    def test_int_str(self):
-        class _TestClass(DataTestCase):
-            def test_method1(_self):
-                first  = 4
-                second = set([4, 7])
-                _self.assertEqual(first, second)
-
-            def test_method3(_self):
-                first  = 'foo'
-                second = set(['foo', 'bar'])
-                _self.assertEqual(first, second)
-
-        pattern = r"first object does not match second object:\n Missing\(7\)"
-        failure = self._run_one_test(_TestClass, 'test_method1')
-        self.assertRegex(failure, pattern)
-
-        pattern = r"first object does not match second object:\n Missing\('bar'\)"
-        failure = self._run_one_test(_TestClass, 'test_method3')
-        self.assertRegex(failure, pattern)
+        if _version_info[:2] > (2, 7):  # For versions newer than 2.7.
+            self.assertIs(DataTestCase.assertEqual, unittest.TestCase.assertEqual)
+        else:
+            id_val1 = id(DataTestCase.assertEqual)
+            id_val2 = id(unittest.TestCase.assertEqual)
+            self.assertEqual(id_val1, id_val2)
 
 
 class TestAllowanceWrappers(unittest.TestCase):
