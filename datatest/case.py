@@ -218,44 +218,6 @@ class DataTestCase(TestCase):
             differences = first.compare(second)
             self.fail(msg or default_msg, differences)
 
-    def assertSubjectSet(self, columns, required=None, msg=None, **kwds_filter):
-        """Test that the column or *columns* in :attr:`subject` contain
-        the *required* values::
-
-            def test_column1(self):
-                required_values = {'a', 'b'}
-                self.assertSubjectSet('col1', required_values)
-
-        If *columns* is a sequence of strings, we can check for distinct
-        groups of values::
-
-            def test_column1and2(self):
-                required_groups = {('a', 'x'), ('a', 'y'), ('b', 'x'), ('b', 'y')}
-                self.assertSubjectSet(['col1', 'col2'], required_groups)
-
-        If the *required* argument is a helper-function (or other
-        callable), it is used as a key which must return True for
-        acceptable values::
-
-            def test_column1(self):
-                def uppercase(x):  # <- Helper function.
-                    return str(x).isupper()
-                self.assertSubjectSet('col1', uppercase)
-
-        If the *required* argument is omitted, then values from
-        :attr:`reference` will be used in its place::
-
-            def test_column1(self):
-                self.assertSubjectSet('col1')
-
-            def test_column1and2(self):
-                self.assertSubjectSet(['col1', 'col2'])
-        """
-        subject_set = self.subject.distinct(columns, **kwds_filter)
-        required = self._normalize_required(required, 'distinct', columns, **kwds_filter)
-        msg = msg or 'different {0!r} values'.format(columns)
-        self.assertEqual(subject_set, required, msg)
-
     def assertSubjectSum(self, column, keys, required=None, msg=None, **kwds_filter):
         """Test that the sum of *column* in :attr:`subject`, when
         grouped by *keys*, matches a dict of *required* values::

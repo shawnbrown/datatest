@@ -16,6 +16,9 @@ from datatest import DataError
 from datatest import Missing
 from datatest import Extra
 from datatest import Invalid
+from datatest import CsvSource
+from datatest import DataTestCase
+from datatest import CompareSet
 
 
 class TestNamesAndAttributes(unittest.TestCase):
@@ -131,6 +134,116 @@ class TestAssertSubjectColumns(datatest.DataTestCase):
 
         differences = cm.exception.differences
         self.assertEqual(set(differences), set([Invalid('LABEL1')]))
+
+
+class TestNoDefaultSubject(datatest.DataTestCase):
+    def test_no_subject(self):
+        required = CompareSet([1,2,3])
+        with self.assertRaisesRegex(NameError, "cannot find 'subject'"):
+            self.assertSubjectSet(required)
+
+
+class TestAssertSubjectSet(datatest.DataTestCase):
+    def setUp(self):
+        data = [('label1', 'label2'),
+                ('a', 'x'),
+                ('b', 'y'),
+                ('c', 'z')]
+        self.subject = MinimalSource(data)
+
+    def test_collections(self):
+        # Should all pass without error.
+        required = set(['a', 'b', 'c'])
+        self.assertSubjectSet('label1', required)  # <- test set
+
+        required = ['a', 'b', 'c']
+        self.assertSubjectSet('label1', required)  # <- test list
+
+        required = iter(['a', 'b', 'c'])
+        self.assertSubjectSet('label1', required)  # <- test iterator
+
+        required = (x for x in ['a', 'b', 'c'])
+        self.assertSubjectSet('label1', required)  # <- test generator
+
+    def test_callable(self):
+        # Should pass without error.
+        required = lambda x: x in ['a', 'b', 'c']
+        self.assertSubjectSet('label1', required)  # <- test callable
+
+        # Multiple args. Should pass without error
+        required = lambda x, y: x in ['a', 'b', 'c'] and y in ['x', 'y', 'z']
+        self.assertSubjectSet(['label1', 'label2'], required)  # <- test callable
+
+    def test_same(self):
+        self.reference = self.subject
+        self.assertSubjectSet('label1')  # <- test implicit reference
+
+    def test_same_using_reference_from_argument(self):
+        required = set(['a', 'b', 'c'])
+        self.assertSubjectSet('label1', required)  # <- test using arg
+
+    def test_same_group_using_reference_from_argument(self):
+        required = set([('a', 'x'), ('b', 'y'), ('c', 'z')])
+        self.assertSubjectSet(['label1', 'label2'], required)  # <- test using arg
+
+    def test_missing(self):
+        ref = [
+            ('label1', 'label2'),
+            ('a', 'x'),
+            ('b', 'y'),
+            ('c', 'z'),
+            ('d', '#'),  # <- Reference has one additional item.
+        ]
+        self.reference = MinimalSource(ref)
+
+        with self.assertRaises(DataError) as cm:
+            self.assertSubjectSet('label1')
+
+        differences = cm.exception.differences
+        self.assertEqual(differences, [Missing('d')])
+
+    def test_extra(self):
+        ref = [
+            ('label1', 'label2'),
+            ('a', 'x'),
+            ('b', 'y'),
+            #('c', 'z'), <- Intentionally omitted.
+        ]
+        self.reference = MinimalSource(ref)
+
+        with self.assertRaises(DataError) as cm:
+            self.assertSubjectSet('label1')
+
+        differences = cm.exception.differences
+        self.assertEqual(differences, [Extra('c')])
+
+    def test_invalid(self):
+        with self.assertRaises(DataError) as cm:
+            required = lambda x: x in ('a', 'b')
+            self.assertSubjectSet('label1', required)
+
+        differences = cm.exception.differences
+        self.assertEqual(differences, [Invalid('c')])
+
+    def test_same_group(self):
+        self.reference = self.subject
+        self.assertSubjectSet(['label1', 'label2'])
+
+    def test_missing_group(self):
+        ref = [
+            ('label1', 'label2'),
+            ('a', 'x'),
+            ('b', 'y'),
+            ('c', 'z'),
+            ('d', '#'),  # <- Reference has one additional item.
+        ]
+        self.reference = MinimalSource(ref)
+
+        with self.assertRaises(DataError) as cm:
+            self.assertSubjectSet(['label1', 'label2'])
+
+        differences = cm.exception.differences
+        self.assertEqual(differences, [Missing(('d', '#'))])
 
 
 if __name__ == '__main__':
