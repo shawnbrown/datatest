@@ -414,6 +414,32 @@ class TestAssertSubjectRegexAndNotDataRegex(datatest.DataTestCase):
         self.assertSubjectNotRegex('label1', regex)
 
 
+class TestAssertSubjectUnique(datatest.DataTestCase):
+    def setUp(self):
+        self.subject = MinimalSource([
+            ('label1', 'label2'),
+            ('a', 'x'),
+            ('b', 'y'),
+            ('c', 'z'),
+            ('d', 'z'),
+            ('e', 'z'),
+            ('f', 'z'),
+        ])
+
+    def test_single_column(self):
+        self.assertSubjectUnique('label1')
+
+    def test_multiple_columns(self):
+        self.assertSubjectUnique(['label1', 'label2'])
+
+    def test_duplicates(self):
+        with self.assertRaises(DataError) as cm:
+            self.assertSubjectUnique('label2')
+
+        differences = cm.exception.differences
+        super(DataTestCase, self).assertEqual(differences, [Extra('z')])
+
+
 if __name__ == '__main__':
     unittest.main()
 else:

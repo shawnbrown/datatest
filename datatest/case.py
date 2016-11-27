@@ -5,7 +5,6 @@ from unittest import TestCase
 
 from .utils.builtins import *
 from .utils import collections
-from .utils import itertools
 
 from .compare import CompareSet  # TODO!!!: Remove after assertSubjectColumns fixed!
 from .compare import CompareDict  # TODO!!!: Remove after assertSubjectColumns fixed!
@@ -15,10 +14,6 @@ from .compare import _compare_mapping
 from .compare import _compare_sequence
 from .compare import _compare_set
 from .compare import _compare_other
-
-from .differences import _make_decimal
-from .differences import Extra  # TODO: Move when assertSubjectUnique us moved.
-from .differences import Missing  # TODO: Move when assertSubjectUnique us moved.
 
 from .error import DataError
 from .sources.base import BaseSource
@@ -213,43 +208,8 @@ class DataTestCase(TestCase):
             differences = first.compare(second)
             self.fail(msg or default_msg, differences)
 
-    def assertSubjectUnique(self, columns, msg=None, **kwds_filter):
-        """Test that values in column or *columns* of :attr:`subject`
-        are unique.  Any duplicate values are raised as Extra
-        differences.
-
-        .. warning::
-
-            This method is unoptimized---it performs all operations
-            in-memory. Avoid using this method on data sets that exceed
-            available memory.
-
-        .. todo::
-
-            Optimize for memory usage (see issue #9 in development
-            repository). Move functionality into compare.py when
-            preparing for better py.test integration.
-        """
-        if isinstance(columns, str):
-            get_value = lambda row: row[columns]
-        elif isinstance(columns, collections.Sequence):
-            get_value = lambda row: tuple(row[column] for column in columns)
-        else:
-            raise TypeError('colums must be str or sequence')
-
-        seen_before = set()
-        extras = set()
-        for row in self.subject.filter_rows(**kwds_filter):
-            values =get_value(row)
-            if values in seen_before:
-                extras.add(values)
-            else:
-                seen_before.add(values)
-
-        if extras:
-            differences = sorted([Extra(x) for x in extras])
-            default_msg = 'values in {0!r} are not unique'.format(columns)
-            self.fail(msg or default_msg, differences)
+    #def assertUnique(self, data, msg=None):
+    #    pass
 
     def allowOnly(self, differences, msg=None):
         """A convenience wrapper for :class:`allow_only`.

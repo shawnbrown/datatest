@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 """Backward compatibility for version 0.7.0.dev2 API."""
 from __future__ import absolute_import
+import collections
 import re
 
 from datatest import DataTestCase
 from datatest import CompareSet
+from datatest import Extra
 
 _re_type = type(re.compile(''))
 
@@ -86,3 +88,42 @@ def assertSubjectNotRegex(self, column, required, msg=None, **kwds_filter):
     msg = msg or 'matching {0!r} values'.format(column)
     self.assertEqual(subject_result, func, msg)
 DataTestCase.assertSubjectNotRegex = assertSubjectNotRegex
+
+
+def assertSubjectUnique(self, columns, msg=None, **kwds_filter):
+    """Test that values in column or *columns* of subject are unique.
+    Any duplicate values are raised as Extra differences.
+
+    .. warning::
+
+        This method is unoptimized---it performs all operations
+        in-memory. Avoid using this method on data sets that exceed
+        available memory.
+
+    .. todo::
+
+        Optimize for memory usage (see issue #9 in development
+        repository). Move functionality into compare.py when
+        preparing for better py.test integration.
+    """
+    if isinstance(columns, str):
+        get_value = lambda row: row[columns]
+    elif isinstance(columns, collections.Sequence):
+        get_value = lambda row: tuple(row[column] for column in columns)
+    else:
+        raise TypeError('colums must be str or sequence')
+
+    seen_before = set()
+    extras = set()
+    for row in self.subject.filter_rows(**kwds_filter):
+        values =get_value(row)
+        if values in seen_before:
+            extras.add(values)
+        else:
+            seen_before.add(values)
+
+    if extras:
+        differences = sorted([Extra(x) for x in extras])
+        default_msg = 'values in {0!r} are not unique'.format(columns)
+        self.fail(msg or default_msg, differences)
+DataTestCase.assertSubjectUnique = assertSubjectUnique

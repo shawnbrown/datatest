@@ -328,41 +328,6 @@ class TestNormalizeReference(TestHelperCase):
         self.assertEqual(set(['c', 'd']), normalized)
 
 
-class TestAssertSubjectUnique(TestHelperCase):
-    def test_required_set(self):
-        class _TestClass(DataTestCase):
-            def setUp(_self):
-                data = [
-                    ('label1', 'label2'),
-                    ('a', 'x'),
-                    ('b', 'y'),
-                    ('c', 'z'),
-                    ('d', 'z'),
-                    ('e', 'z'),
-                    ('f', 'z'),
-                ]
-                _self.subject = MinimalSource(data)
-
-            def test_method1(_self):
-                _self.assertSubjectUnique('label1')  # <- test assert
-
-            def test_method2(_self):
-                _self.assertSubjectUnique(['label1', 'label2'])  # <- test assert
-
-            def test_method3(_self):
-                _self.assertSubjectUnique('label2')  # <- test assert
-
-        failure = self._run_one_test(_TestClass, 'test_method1')
-        self.assertIsNone(failure)
-
-        failure = self._run_one_test(_TestClass, 'test_method2')
-        self.assertIsNone(failure)
-
-        failure = self._run_one_test(_TestClass, 'test_method3')
-        pattern = "values in 'label2' are not unique:\n Extra\('z'\)"
-        self.assertRegex(failure, pattern)
-
-
 class TestAllowanceWrappers(unittest.TestCase):
     """Test method wrappers for allowance context managers."""
     def setUp(self):
