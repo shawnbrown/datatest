@@ -6,6 +6,7 @@ development-release API.
           ``datatest`` package, these tests should be run in a separate
           process.
 """
+import re
 from . import _io as io
 from . import _unittest as unittest
 from datatest.utils.decimal import Decimal
@@ -373,6 +374,44 @@ class TestAssertSubjectSumGroupsAndFilters(datatest.DataTestCase):
         expected = [Deviation(+1, 20, label1='a'),
                     Deviation(-1, 40, label1='b')]
         super(DataTestCase, self).assertEqual(set(differences), set(expected))
+
+
+class TestAssertSubjectRegexAndNotDataRegex(datatest.DataTestCase):
+    def setUp(self):
+        self.subject = MinimalSource([
+            ('label1', 'label2'),
+            ('0aaa', '001'),
+            ('b9bb',   '2'),
+            (' ccc', '003'),
+        ])
+
+    def test_regex_passing(self):
+        self.assertSubjectRegex('label1', '\w\w')  # Should pass without error.
+
+    def test_regex_failing(self):
+        with self.assertRaises(DataError) as cm:
+            self.assertSubjectRegex('label2', '\d\d\d')
+
+        differences = cm.exception.differences
+        super(DataTestCase, self).assertEqual(differences, [Invalid('2')])
+
+    def test_regex_precompiled(self):
+        regex = re.compile('[ABC]$', re.IGNORECASE)
+        self.assertSubjectRegex('label1', regex)
+
+    def test_not_regex_passing(self):
+        self.assertSubjectNotRegex('label1', '\d\d\d')
+
+    def test_not_regex_failing(self):
+        with self.assertRaises(DataError) as cm:
+            self.assertSubjectNotRegex('label2', '^\d{1,2}$')
+
+        differences = cm.exception.differences
+        super(DataTestCase, self).assertEqual(differences, [Invalid('2')])
+
+    def test_not_regex_precompiled(self):
+        regex = re.compile('^[ABC]')  # <- pre-compiled
+        self.assertSubjectNotRegex('label1', regex)
 
 
 if __name__ == '__main__':

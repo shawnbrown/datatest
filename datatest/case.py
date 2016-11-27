@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
 import inspect
-import re
 from unittest import TestCase
 
 from .utils.builtins import *
@@ -24,12 +23,8 @@ from .differences import Missing  # TODO: Move when assertSubjectUnique us moved
 from .error import DataError
 from .sources.base import BaseSource
 
-
 __datatest = True  # Used to detect in-module stack frames (which are
                    # omitted from output).
-
-_re_type = type(re.compile(''))
-
 
 from .allow import allow_only
 from .allow import allow_any
@@ -255,42 +250,6 @@ class DataTestCase(TestCase):
             differences = sorted([Extra(x) for x in extras])
             default_msg = 'values in {0!r} are not unique'.format(columns)
             self.fail(msg or default_msg, differences)
-
-    def assertSubjectRegex(self, column, required, msg=None, **kwds_filter):
-        """Test that *column* in :attr:`subject` contains values that
-        match a *required* regular expression::
-
-            def test_date(self):
-                wellformed = r'\d\d\d\d-\d\d-\d\d'  # Matches YYYY-MM-DD.
-                self.assertSubjectRegex('date', wellformed)
-
-        The *required* argument must be a string or a compiled regular
-        expression object (it can not be omitted).
-        """
-        subject_result = self.subject.distinct(column, **kwds_filter)
-        if not isinstance(required, _re_type):
-            required = re.compile(required)
-        func = lambda x: required.search(x) is not None
-        msg = msg or 'non-matching {0!r} values'.format(column)
-        self.assertEqual(subject_result, func, msg)
-
-    def assertSubjectNotRegex(self, column, required, msg=None, **kwds_filter):
-        """Test that *column* in :attr:`subject` contains values that
-        do **not** match a *required* regular expression::
-
-            def test_name(self):
-                bad_whitespace = r'^\s|\s$'  # Leading or trailing whitespace.
-                self.assertSubjectNotRegex('name', bad_whitespace)
-
-        The *required* argument must be a string or a compiled regular
-        expression object (it can not be omitted).
-        """
-        subject_result = self.subject.distinct(column, **kwds_filter)
-        if not isinstance(required, _re_type):
-            required = re.compile(required)
-        func = lambda x: required.search(x) is None
-        msg = msg or 'matching {0!r} values'.format(column)
-        self.assertEqual(subject_result, func, msg)
 
     def allowOnly(self, differences, msg=None):
         """A convenience wrapper for :class:`allow_only`.
