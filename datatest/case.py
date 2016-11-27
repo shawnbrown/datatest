@@ -218,35 +218,6 @@ class DataTestCase(TestCase):
             differences = first.compare(second)
             self.fail(msg or default_msg, differences)
 
-    def assertSubjectSum(self, column, keys, required=None, msg=None, **kwds_filter):
-        """Test that the sum of *column* in :attr:`subject`, when
-        grouped by *keys*, matches a dict of *required* values::
-
-            per_dept = {'finance': 146564,
-                        'marketing': 152530,
-                        'research': 158397}
-            self.assertSubjectSum('budget', 'department', per_dept)
-
-        Grouping by multiple *keys*::
-
-            dept_quarter = {('finance', 'q1'): 85008,
-                            ('finance', 'q2'): 61556,
-                            ('marketing', 'q1'): 86941,
-                            ('marketing', 'q2'): 65589,
-                            ('research', 'q1'): 93454,
-                            ('research', 'q2'): 64943}
-            self.assertSubjectSum('budget', ['department', 'quarter'], dept_quarter)
-
-        If *required* argument is omitted, then values from
-        :attr:`reference` are used in its place::
-
-            self.assertSubjectSum('budget', ['department', 'quarter'])
-        """
-        subject_dict = self.subject.sum(column, keys, **kwds_filter)
-        required = self._normalize_required(required, 'sum', column, keys, **kwds_filter)
-        msg = msg or 'different {0!r} sums'.format(column)
-        self.assertEqual(subject_dict, required, msg)
-
     def assertSubjectUnique(self, columns, msg=None, **kwds_filter):
         """Test that values in column or *columns* of :attr:`subject`
         are unique.  Any duplicate values are raised as Extra

@@ -37,3 +37,17 @@ def assertSubjectSet(self, columns, required=None, msg=None, **kwds_filter):
     msg = msg or 'different {0!r} values'.format(columns)
     self.assertEqual(subject_set, required, msg)
 DataTestCase.assertSubjectSet = assertSubjectSet
+
+
+def assertSubjectSum(self, column, keys, required=None, msg=None, **kwds_filter):
+    """Test that the sum of *column* in subject, when grouped by
+    *keys*, matches a dict of *required* values.
+
+    If *required* argument is omitted, then values from reference
+    are used in its place.
+    """
+    subject_dict = self.subject.sum(column, keys, **kwds_filter)
+    required = self._normalize_required(required, 'sum', column, keys, **kwds_filter)
+    msg = msg or 'different {0!r} sums'.format(column)
+    self.assertEqual(subject_dict, required, msg)
+DataTestCase.assertSubjectSum = assertSubjectSum

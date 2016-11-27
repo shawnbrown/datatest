@@ -8,6 +8,8 @@ development-release API.
 """
 from . import _io as io
 from . import _unittest as unittest
+from datatest.utils.decimal import Decimal
+
 from .common import MinimalSource
 import datatest
 from datatest.__past__ import api_dev2  # <- MONKEY PATCH!!!
@@ -16,6 +18,7 @@ from datatest import DataError
 from datatest import Missing
 from datatest import Extra
 from datatest import Invalid
+from datatest import Deviation
 from datatest import CsvSource
 from datatest import DataTestCase
 from datatest import CompareSet
@@ -244,6 +247,132 @@ class TestAssertSubjectSet(datatest.DataTestCase):
 
         differences = cm.exception.differences
         super(DataTestCase, self).assertEqual(differences, [Missing(('d', '#'))])
+
+
+class TestSubjectSum(datatest.DataTestCase):
+    def setUp(self):
+        self.src1_totals = MinimalSource([
+            ('label1', 'value'),
+            ('a', '65'),
+            ('b', '70'),
+        ])
+
+        self.src1_records = MinimalSource([
+            ('label1', 'label2', 'value'),
+            ('a', 'x', '17'),
+            ('a', 'x', '13'),
+            ('a', 'y', '20'),
+            ('a', 'z', '15'),
+            ('b', 'z',  '5'),
+            ('b', 'y', '40'),
+            ('b', 'x', '25'),
+        ])
+
+        self.src2_records = MinimalSource([
+            ('label1', 'label2', 'value'),
+            ('a', 'x', '18'),  # <- off by +1 (compared to src1)
+            ('a', 'x', '13'),
+            ('a', 'y', '20'),
+            ('a', 'z', '15'),
+            ('b', 'z',  '4'),  # <- off by -1 (compared to src1)
+            ('b', 'y', '40'),
+            ('b', 'x', '25'),
+        ])
+
+    def test_passing_explicit_dict(self):
+        self.subject = self.src1_records
+
+        required = {'a': 65, 'b': 70}
+        self.assertSubjectSum('value', ['label1'], required)
+
+    def test_passing_explicit_callable(self):
+        self.subject = self.src1_records
+
+        required = lambda x: x in (65, 70)
+        self.assertSubjectSum('value', ['label1'], required)
+
+    def test_passing_implicit_reference(self):
+        self.subject = self.src1_records
+        self.reference = self.src1_totals
+
+        self.assertSubjectSum('value', ['label1'])
+
+    def test_failing_explicit_dict(self):
+        self.subject = self.src2_records  # <- src1 != src2
+
+        with self.assertRaises(DataError) as cm:
+            required = {'a': 65, 'b': 70}
+            self.assertSubjectSum('value', ['label1'], required)
+
+        differences = cm.exception.differences
+        expected = [Deviation(+1, 65, label1='a'),
+                    Deviation(-1, 70, label1='b')]
+        super(DataTestCase, self).assertEqual(set(differences), set(expected))
+
+    def test_failing_explicit_callable(self):
+        self.subject = self.src2_records
+
+        with self.assertRaises(DataError) as cm:
+            required = lambda x: x in (65, 70)
+            self.assertSubjectSum('value', ['label1'], required)
+
+        differences = cm.exception.differences
+        expected = [Invalid(Decimal(66), label1='a'),
+                    Invalid(Decimal(69), label1='b')]
+        #expected = [Invalid(66, label1='a'),
+        #            Invalid(69, label1='b')]
+        super(DataTestCase, self).assertEqual(set(differences), set(expected))
+
+    def test_failing_implicit_reference(self):
+        self.subject = self.src2_records  # <- src1 != src2
+        self.reference = self.src1_totals
+
+        with self.assertRaises(DataError) as cm:
+            self.assertSubjectSum('value', ['label1'])
+
+        differences = cm.exception.differences
+        expected = [Deviation(+1, 65, label1='a'),
+                    Deviation(-1, 70, label1='b')]
+        super(DataTestCase, self).assertEqual(set(differences), set(expected))
+
+
+class TestAssertSubjectSumGroupsAndFilters(datatest.DataTestCase):
+    def setUp(self):
+        self.subject = MinimalSource([
+            ('label1', 'label2', 'label3', 'value'),
+            ('a', 'x', 'foo', '18'),
+            ('a', 'x', 'bar', '13'),
+            ('a', 'y', 'foo', '11'),
+            ('a', 'y', 'bar', '10'),
+            ('a', 'z', 'foo',  '5'),
+            ('a', 'z', 'bar', '10'),
+            ('b', 'z', 'baz',  '4'),
+            ('b', 'y', 'bar', '39'),
+            ('b', 'x', 'foo', '25'),
+        ])
+
+        self.reference = MinimalSource([
+            ('label1', 'label2', 'value'),
+            ('a', 'x', '18'),
+            ('a', 'x', '13'),
+            ('a', 'y', '20'),
+            ('a', 'z', '15'),
+            ('b', 'z',  '4'),
+            ('b', 'y', '40'),
+            ('b', 'x', '25'),
+        ])
+
+    def test_group_and_filter(self):
+        """Only groupby fields should appear in diff errors
+        (kwds-filters should be omitted).
+        """
+        with self.assertRaises(DataError) as cm:
+            self.assertSubjectSum('value', ['label1'], label2='y')
+
+        differences = cm.exception.differences
+        expected = [Deviation(+1, 20, label1='a'),
+                    Deviation(-1, 40, label1='b')]
+        super(DataTestCase, self).assertEqual(set(differences), set(expected))
 
 
 if __name__ == '__main__':
