@@ -186,18 +186,18 @@ class TestFunctionSignatureDataSourceErrors(DataTestCase):
 
 
 class TestAssertEqual(unittest.TestCase):
-    def test_method_identity(self):
+    def test_for_unwrapped_behavior(self):
         """The datatest.DataTestCase class should NOT wrap the
         assertEqual() method of its superclass. In version 0.7.0,
         datatest DID wrap this method--this test should remain part
         of the suite to prevent regression.
         """
-        if _version_info[:2] > (2, 7):  # For versions newer than 2.7.
-            self.assertIs(DataTestCase.assertEqual, unittest.TestCase.assertEqual)
-        else:
-            id_val1 = id(DataTestCase.assertEqual)
-            id_val2 = id(unittest.TestCase.assertEqual)
-            self.assertEqual(id_val1, id_val2)
+        with self.assertRaises(Exception) as cm:
+            first  = set([1,2,3,4,5,6,7])
+            second = set([1,2,3,4,5,6])
+            self.assertEqual(first, second)
+
+        self.assertIsNot(type(cm.exception), DataError)
 
 
 class TestAllowanceWrappers(unittest.TestCase):
