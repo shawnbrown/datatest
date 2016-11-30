@@ -16,13 +16,13 @@ from .error import DataError
 __datatest = True  # Used to detect in-module stack frames (which are
                    # omitted from output).
 
-from .allow import allow_only
-from .allow import allow_any
-from .allow import allow_missing
-from .allow import allow_extra
-from .allow import allow_limit
-from .allow import allow_deviation
-from .allow import allow_percent_deviation
+from .allow import allow_only2
+from .allow import allow_any2
+from .allow import allow_missing2
+from .allow import allow_extra2
+from .allow import allow_limit2
+from .allow import allow_deviation2
+from .allow import allow_percent_deviation2
 
 
 class DataTestCase(TestCase):
@@ -163,9 +163,10 @@ class DataTestCase(TestCase):
             with self.allowOnly(differences):
                 self.assertSubjectSet('column1')
         """
-        return allow_only(differences, msg)
+        #return allow_only2(differences, msg)
+        return allow_only2(differences)
 
-    def allowAny(self, msg=None, **kwds):
+    def allowAny(self, msg=None, **kwds_func):
         """A convenience wrapper for :class:`allow_any`.
 
         .. code-block:: python
@@ -173,9 +174,10 @@ class DataTestCase(TestCase):
             with self.allowAny(town='unknown'):
                 self.assertSubjectSum('population', ['town'])
         """
-        return allow_any(msg, **kwds)
+        #return allow_any2(msg, **kwds_func)
+        return allow_any2(**kwds_func)
 
-    def allowMissing(self, msg=None, **kwds):
+    def allowMissing(self, msg=None, **kwds_func):
         """A convenience wrapper for :class:`allow_missing`.
 
         .. code-block:: python
@@ -183,9 +185,10 @@ class DataTestCase(TestCase):
             with self.allowMissing():
                 self.assertSubjectSet('column1')
         """
-        return allow_missing(msg, **kwds)
+        return allow_missing2(**kwds_func)
+        #return allow_missing2(msg, **kwds_func)
 
-    def allowExtra(self, msg=None, **kwds):
+    def allowExtra(self, msg=None, **kwds_func):
         """A convenience wrapper for :class:`allow_extra`.
 
         .. code-block:: python
@@ -193,22 +196,24 @@ class DataTestCase(TestCase):
             with self.allowExtra():
                 self.assertSubjectSet('column1')
         """
-        return allow_extra(msg, **kwds)
+        return allow_extra2(**kwds_func)
+        #return allow_extra2(msg, **kwds_func)
 
-    def allowLimit(self, number, msg=None, **kwds):
-        """A convenience wrapper for :class:`allow_limit`.
+    def allowLimit(self, number, msg=None, **kwds_func):
+        """A convenience wrapper for :class:`allow_limit2`.
 
         .. code-block:: python
 
             with self.allowLimit(10):  # Allow up to ten differences.
                 self.assertSubjectSet('column1')
         """
-        return allow_limit(number, msg, **kwds)
+        return allow_limit2(number, **kwds_func)
+        #return allow_limit2(number, msg, **kwds_func)
 
-    def allowDeviation(self, lower, upper=None, msg=None, **kwds):
+    def allowDeviation(self, lower, upper=None, msg=None, **kwds_func):
         """
-        allowDeviation(tolerance, /, msg=None, **kwds)
-        allowDeviation(lower, upper, msg=None, **kwds)
+        allowDeviation(tolerance, /, msg=None, **kwds_func)
+        allowDeviation(lower, upper, msg=None, **kwds_func)
 
         A convenience wrapper for :class:`allow_deviation`.
 
@@ -221,12 +226,13 @@ class DataTestCase(TestCase):
         # THE DOCUMENTATION (.RST FILE)!  This docstring is not included
         # using the Sphinx "autoclass" directive because there is no way
         # to automatically handle multiple file signatures for Python.
-        return allow_deviation(lower, upper, msg, **kwds)
+        return allow_deviation2(lower, upper, **kwds_func)
+        #return allow_deviation2(lower, upper, msg, **kwds_func)
 
-    def allowPercentDeviation(self, lower, upper=None, msg=None, **kwds):
+    def allowPercentDeviation(self, lower, upper=None, msg=None, **kwds_func):
         """
-        allowPercentDeviation(tolerance, /, msg=None, **kwds)
-        allowPercentDeviation(lower, upper, msg=None, **kwds)
+        allowPercentDeviation(tolerance, /, msg=None, **kwds_func)
+        allowPercentDeviation(lower, upper, msg=None, **kwds_func)
 
         A convenience wrapper for :class:`allow_percent_deviation`.
 
@@ -239,7 +245,8 @@ class DataTestCase(TestCase):
         # THE DOCUMENTATION (.RST FILE)!  This docstring is not included
         # using the Sphinx "autoclass" directive because there is no way
         # to automatically handle multiple file signatures for Python.
-        return allow_percent_deviation(lower, upper, msg, **kwds)
+        return allow_percent_deviation2(lower, upper, **kwds_func)
+        #return allow_percent_deviation2(lower, upper, msg, **kwds_func)
 
     def fail(self, msg, differences=None):
         """Signals a test failure unconditionally, with *msg* for the
