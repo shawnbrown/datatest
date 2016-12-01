@@ -19,7 +19,7 @@ __datatest = True  # Used to detect in-module stack frames (which are
                    # omitted from output).
 
 
-class allow_iter2(object):
+class allow_iter(object):
     def __init__(self, function):
         if not callable(function):
             raise TypeError("'function' must be a function or other callable")
@@ -111,7 +111,7 @@ def _expects_multiple_params(func):
     return (arglen > 1) or (vararglen > 0)
 
 
-class allow_any2(allow_iter2):
+class allow_any(allow_iter):
     def __init__(self, **kwds_func):
         self._validate_kwds_func(**kwds_func)
 
@@ -127,7 +127,7 @@ class allow_any2(allow_iter2):
         names = (x.__name__ for x in kwds_func.values())
         filterfalse.__name__ = ' and '.join(x for x in names if x)
 
-        super(allow_any2, self).__init__(filterfalse)
+        super(allow_any, self).__init__(filterfalse)
 
     @staticmethod
     def _validate_kwds_func(**kwds_func):
@@ -193,7 +193,7 @@ class allow_any2(allow_iter2):
         return kwds_func['diffs']
 
 
-class allow_missing2(allow_any2):
+class allow_missing(allow_any):
     def __init__(self, **kwds_func):
         if 'diffs' in kwds_func:
             diffs_orig = kwds_func.pop('diffs')
@@ -203,10 +203,10 @@ class allow_missing2(allow_any2):
             diffs_fn = lambda diff: isinstance(diff, Missing)
             diffs_fn.__name__ = self.__class__.__name__
         kwds_func['diffs'] = diffs_fn
-        super(allow_missing2, self).__init__(**kwds_func)
+        super(allow_missing, self).__init__(**kwds_func)
 
 
-class allow_extra2(allow_any2):
+class allow_extra(allow_any):
     def __init__(self, **kwds_func):
         if 'diffs' in kwds_func:
             diffs_orig = kwds_func.pop('diffs')
@@ -216,10 +216,10 @@ class allow_extra2(allow_any2):
             diffs_fn = lambda diff: isinstance(diff, Extra)
             diffs_fn.__name__ = self.__class__.__name__
         kwds_func['diffs'] = diffs_fn
-        super(allow_extra2, self).__init__(**kwds_func)
+        super(allow_extra, self).__init__(**kwds_func)
 
 
-def _prettify_deviation_signature2(method):
+def _prettify_deviation_signature(method):
     """Helper function intended for internal use.  Prettify signature of
     deviation __init__ classes by patching its signature to make the
     "tolerance" syntax the default option when introspected (with an
@@ -256,7 +256,7 @@ def _normalize_lower_upper(lower, upper):
     return (lower, upper)
 
 
-class allow_deviation2(allow_any2):
+class allow_deviation(allow_any):
     def __init__(self, lower, upper=None, **kwds_func):
         lower, upper = _normalize_lower_upper(lower, upper)
         normalize_numbers = lambda x: x if x else 0
@@ -278,13 +278,11 @@ class allow_deviation2(allow_any2):
             diffs_fn = function
             diffs_fn.__name__ = self.__class__.__name__
         kwds_func['diffs'] = diffs_fn
-
-        super(allow_deviation2, self).__init__(**kwds_func)
-
-_prettify_deviation_signature2(allow_deviation2.__init__)
+        super(allow_deviation, self).__init__(**kwds_func)
+_prettify_deviation_signature(allow_deviation.__init__)
 
 
-class allow_percent_deviation2(allow_any2):
+class allow_percent_deviation(allow_any):
     def __init__(self, lower, upper=None, **kwds_func):
         lower, upper = _normalize_lower_upper(lower, upper)
         normalize_numbers = lambda x: x if x else 0
@@ -310,12 +308,12 @@ class allow_percent_deviation2(allow_any2):
             diffs_fn.__name__ = self.__class__.__name__
         kwds_func['diffs'] = diffs_fn
 
-        super(allow_percent_deviation2, self).__init__(**kwds_func)
+        super(allow_percent_deviation, self).__init__(**kwds_func)
 
-_prettify_deviation_signature2(allow_percent_deviation2.__init__)
+_prettify_deviation_signature(allow_percent_deviation.__init__)
 
 
-class allow_limit2(allow_any2):
+class allow_limit(allow_any):
     def __init__(self, number, **kwds_func):
         if not kwds_func:
             kwds_func['diffs'] = lambda x: True
@@ -343,10 +341,11 @@ class allow_limit2(allow_any2):
 
         names = (x.__name__ for x in kwds_func.values())
         filterfalse.__name__ = ' and '.join(x for x in names if x)
-        super(allow_any2, self).__init__(filterfalse)  # Calls ancestor method!
+        super(allow_any, self).__init__(filterfalse)  # <- Calls ancestor method
+                                                      #    (not parent method)!
 
 
-class allow_only2(allow_iter2):
+class allow_only(allow_iter):
     def __init__(self, differences):
         def filterfalse(differences, iterable):         # filterfalse() is,
             allowed = collections.Counter(differences)  # later, wrapped to
@@ -398,4 +397,4 @@ class allow_only2(allow_iter2):
         # Change to a function of one argument, with partial(), and pass to
         # parent's __init__().
         function = functools.partial(function, differences)
-        super(allow_only2, self).__init__(function)
+        super(allow_only, self).__init__(function)
