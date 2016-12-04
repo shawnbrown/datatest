@@ -317,6 +317,11 @@ class allow_only(allow_iter):
 datatest.allow_only = allow_only
 
 
+def allowOnly(self, differences, msg=None):
+    return allow_only(differences, msg)
+DataTestCase.allowOnly = allowOnly
+
+
 class allow_limit(allow_iter):
     """Allows a limited *number* of differences (of any type) without
     triggering a test failure.
@@ -347,6 +352,11 @@ class allow_limit(allow_iter):
 datatest.allow_limit = allow_limit
 
 
+def allowLimit(self, number, msg=None, **kwds):
+    return allow_limit(number, msg, **kwds)
+DataTestCase.allowLimit = allowLimit
+
+
 class allow_any(allow_iter):
     """Allows differences of any type that match the given
     keywords.
@@ -359,6 +369,11 @@ class allow_any(allow_iter):
         function.__name__ = self.__class__.__name__
         super(allow_any, self).__init__(function, msg, **kwds)
 datatest.allow_any = allow_any
+
+
+def allowAny(self, msg=None, **kwds):
+    return allow_any(msg, **kwds)
+DataTestCase.allowAny = allowAny
 
 
 class allow_each(allow_iter):
@@ -395,6 +410,11 @@ class allow_missing(allow_each):
 datatest.allow_missing = allow_missing
 
 
+def allowMissing(self, msg=None, **kwds):
+    return allow_missing(msg, **kwds)
+DataTestCase.allowMissing = allowMissing
+
+
 class allow_extra(allow_each):
     """Allows :class:`Extra` values without triggering a test
     failure::
@@ -407,6 +427,11 @@ class allow_extra(allow_each):
         function.__name__ = self.__class__.__name__
         super(allow_extra, self).__init__(function, msg, **kwds)
 datatest.allow_extra = allow_extra
+
+
+def allowExtra(self, msg=None, **kwds):
+    return allow_extra(msg, **kwds)
+DataTestCase.allowExtra = allowExtra
 
 
 def _normalize_deviation_args(lower, upper, msg):
@@ -456,10 +481,6 @@ class allow_deviation(allow_each):
     When allowing deviations, empty values (like None or empty string)
     are treated as zeros.
     """
-    # NOTE: CHANGES TO THE ABOVE DOCSTRING SHOULD BE REPLICATED IN THE
-    # DOCUMENTATION (.RST FILE)!  This docstring is not included using
-    # the Sphinx "autoclass" directive because there is no way to
-    # automatically handle multiple file signatures for Python.
     def __init__(self, lower, upper=None, msg=None, **kwds):
         lower, upper, msg = _normalize_deviation_args(lower, upper, msg)
         normalize_numbers = lambda x: x if x else 0
@@ -475,6 +496,11 @@ class allow_deviation(allow_each):
         super(allow_deviation, self).__init__(function, msg, **kwds)
 #_prettify_deviation_signature(allow_deviation.__init__)
 datatest.allow_deviation = allow_deviation
+
+
+def allowDeviation(self, lower, upper=None, msg=None, **kwds):
+    return allow_deviation(lower, upper, msg, **kwds)
+DataTestCase.allowDeviation = allowDeviation
 
 
 class allow_percent_deviation(allow_each):
@@ -501,10 +527,6 @@ class allow_percent_deviation(allow_each):
     When allowing deviations, empty values (like None or empty string)
     are treated as zeros.
     """
-    # NOTE: CHANGES TO THE ABOVE DOCSTRING SHOULD BE REPLICATED IN THE
-    # DOCUMENTATION (.RST FILE)!  This docstring is not included using
-    # the Sphinx "autoclass" directive because there is no way to
-    # automatically handle multiple file signatures for Python.
     def __init__(self, lower, upper=None, msg=None, **kwds):
         lower, upper, msg = _normalize_deviation_args(lower, upper, msg)
         normalize_numbers = lambda x: x if x else 0
@@ -523,3 +545,8 @@ class allow_percent_deviation(allow_each):
         super(allow_percent_deviation, self).__init__(function, msg, **kwds)
 #_prettify_deviation_signature(allow_percent_deviation.__init__)
 datatest.allow_percent_deviation = allow_percent_deviation
+
+
+def allowPercentDeviation(self, lower, upper=None, msg=None, **kwds):
+    return allow_percent_deviation(lower, upper, msg, **kwds)
+DataTestCase.allowPercentDeviation = allowPercentDeviation
