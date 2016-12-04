@@ -13,66 +13,70 @@ DataTestCase
 .. autoclass:: datatest.DataTestCase
 
     .. autoattribute:: subject
+
     .. autoattribute:: reference
 
-    .. automethod:: assertValid
+    .. method:: assertValid(data, requirement, msg=None)
 
-    .. _assert-methods:
+        Fail if *data* does not satisfy *requirement*.
 
-    +-----------------------------------------------------------------+------------------------------------------+
-    | Subject method                                                  | Checks :attr:`subject` to assure that    |
-    +=================================================================+==========================================+
-    | :meth:`assertSubjectColumns(required=None)                      | column names match *required*            |
-    | <datatest.DataTestCase.assertSubjectColumns>`                   |                                          |
-    +-----------------------------------------------------------------+------------------------------------------+
-    | :meth:`assertSubjectSet(columns, required=None)                 | one or more *columns* contains           |
-    | <datatest.DataTestCase.assertSubjectSet>`                       | *required*                               |
-    +-----------------------------------------------------------------+------------------------------------------+
-    | :meth:`assertSubjectSum(column, keys, required=None)            | sums of *column* values, grouped by      |
-    | <datatest.DataTestCase.assertSubjectSum>`                       | *keys*, match *required* dict            |
-    +-----------------------------------------------------------------+------------------------------------------+
-    | :meth:`assertSubjectRegex(column, required)                     | *required*.search(val) for each val in   |
-    | <datatest.DataTestCase.assertSubjectRegex>`                     | *column*                                 |
-    +-----------------------------------------------------------------+------------------------------------------+
-    | :meth:`assertSubjectNotRegex(column, required)                  | not *required*.search(val) for each val  |
-    | <datatest.DataTestCase.assertSubjectNotRegex>`                  | in *column*                              |
-    +-----------------------------------------------------------------+------------------------------------------+
-    | :meth:`assertSubjectUnique(columns)                             | values in *columns* are unique and       |
-    | <datatest.DataTestCase.assertSubjectUnique>`                    | contain no duplicates                    |
-    +-----------------------------------------------------------------+------------------------------------------+
+        .. code-block:: python
 
-    .. automethod:: assertSubjectColumns
-    .. automethod:: assertSubjectSet
-    .. automethod:: assertSubjectSum
-    .. automethod:: assertSubjectRegex
-    .. automethod:: assertSubjectNotRegex
-    .. automethod:: assertSubjectUnique
+            def test_mydata(self):
+                data = ...
+                requirement = ...
+                self.assertValid(data, requirement)
 
+        The *data* can be a set, mapping, sequence, iterable, or
+        other object. The *requirement* type determines how the
+        *data* is checked:
 
-    +---------------------------------------------------------+------------------------------------------+
-    | Context Manager                                         | Allows                                   |
-    +=========================================================+==========================================+
-    | :meth:`allowOnly(differences) <DataTestCase.allowOnly>` | only specified *differences*             |
-    +---------------------------------------------------------+------------------------------------------+
-    | :meth:`allowAny(**kwds) <DataTestCase.allowAny>`        | differences of any type that match given |
-    |                                                         | :ref:`keyword filters <kwds-filter>`     |
-    +---------------------------------------------------------+------------------------------------------+
-    | :meth:`allowMissing() <DataTestCase.allowMissing>`      | :class:`Missing <datatest.Missing>`      |
-    |                                                         | differences                              |
-    +---------------------------------------------------------+------------------------------------------+
-    | :meth:`allowExtra() <DataTestCase.allowExtra>`          | :class:`Extra <datatest.Extra>`          |
-    |                                                         | differences                              |
-    +---------------------------------------------------------+------------------------------------------+
-    | :meth:`allowLimit(number) <DataTestCase.allowLimit>`    | given *number* of differences of any     |
-    |                                                         | type                                     |
-    +---------------------------------------------------------+------------------------------------------+
-    | :meth:`allowDeviation(tolerance)                        | :class:`Deviations <datatest.Deviation>` |
-    | <DataTestCase.allowDeviation>`                          | of plus or minus given *tolerance*       |
-    +---------------------------------------------------------+------------------------------------------+
-    | :meth:`allowPercentDeviation(tolerance)                 | :class:`Deviations <datatest.Deviation>` |
-    | <DataTestCase.allowPercentDeviation>`                   | of plus or minus given *tolerance*       |
-    |                                                         | percentage                               |
-    +---------------------------------------------------------+------------------------------------------+
+        +-------------------------------------+--------------------+
+        |                                     | When *requirement* |
+        | Check that *data* values...         | is...              |
+        +=====================================+====================+
+        | are members of set                  | set                |
+        +-------------------------------------+--------------------+
+        | return True when passed to callable | callable           |
+        +-------------------------------------+--------------------+
+        | match regular expression pattern    | regex object       |
+        +-------------------------------------+--------------------+
+        | equal string or object              | str or other       |
+        +-------------------------------------+--------------------+
+        | equal string or object of matching  | mapping            |
+        | key                                 |                    |
+        +-------------------------------------+--------------------+
+        | equal string or object in matching  | sequence           |
+        | order                               |                    |
+        +-------------------------------------+--------------------+
+
+        **Alternative Method Signature:**
+
+        When using reference data, it's common to make pairs of calls
+        using the same parameters (one for the :attr:`subject` and one
+        for the :attr:`reference`).  To reduce this duplication,
+        :meth:`assertValid` provides an alternative, helper-function
+        shorthand.
+
+        .. method:: assertValid(function, /, msg=None)
+
+            Helper-function shorthand::
+
+                def test_population(self):
+                    def helperfn(x):
+                        return x('population', state='TX').sum()
+                    self.assertValid(helperfn)
+
+            Equivalent test without helper-function::
+
+                def test_population(self):
+                    data = self.subject('population', state='TX').sum()
+                    requirement = self.reference('population', state='TX').sum()
+                    self.assertValid(data, requirement)
+
+            When provided, a helper-function fetches data from both
+            :attr:`subject` and :attr:`reference` before comparing the
+            results.  Without it, two separate calls would be required.
 
     .. automethod:: allowOnly
 
@@ -84,35 +88,43 @@ DataTestCase
 
     .. automethod:: allowLimit
 
-    .. method:: allowDeviation(tolerance, /, msg=None, **kwds_filter)
-                allowDeviation(lower, upper, msg=None, **kwds_filter)
+    .. method:: allowDeviation(tolerance, /, msg=None, **kwds_func)
+                allowDeviation(lower, upper, msg=None, **kwds_func)
 
-        A convenience wrapper for :class:`allow_deviation`.
+        alias of :class:`allow_deviation`
 
         .. code-block:: python
 
             with self.allowDeviation(5):  # tolerance of +/- 5
-                self.assertSubjectSum('column2', keys=['column1'])
-
-        .. THE ABOVE DEFINITION SHOULD BE REPLICATED FROM THE DOCSTRING IN
-           THE datatest.case SUB-PACKAGE.  THE "AUTOCLASS" FUNCTIONALITY
-           IS NOT USED IN THIS CASE BECAUSE THIS CLASS' __init__ METHOD
-           HAS TWO SIGNATURES.
-
-    .. method:: allowPercentDeviation(tolerance, /, msg=None, **kwds_filter)
-                allowPercentDeviation(lower, upper, msg=None, **kwds_filter)
-
-        A convenience wrapper for :class:`allow_percent_deviation`.
+                data = ...
+                requirement = ...
+                self.assertValid(data, requirement)
 
         .. code-block:: python
 
-            with self.allowPercentDeviation(0.02):  # tolerance of +/- 2%
-                self.assertSubjectSum('column2', keys=['column1'])
+            with datatest.allowDeviation(-2, 3):  # tolerance from -2 to +3
+                data = ...
+                requirement = ...
+                self.assertValid(data, requirement)
 
-        .. THE ABOVE DEFINITION SHOULD BE REPLICATED FROM THE DOCSTRING IN
-           THE datatest.case SUB-PACKAGE.  THE "AUTOCLASS" FUNCTIONALITY
-           IS NOT USED IN THIS CASE BECAUSE THIS CLASS' __init__ METHOD
-           HAS TWO SIGNATURES.
+    .. method:: allowPercentDeviation(tolerance, /, msg=None, **kwds_func)
+                allowPercentDeviation(lower, upper, msg=None, **kwds_func)
+
+        alias of :class:`allow_percent_deviation`
+
+        .. code-block:: python
+
+            with self.allowPercentDeviation(0.03):  # tolerance of +/- 3%
+                data = ...
+                requirement = ...
+                self.assertValid(data, requirement)
+
+        .. code-block:: python
+
+            with self.allowPercentDeviation(-0.02, 0.01):  # tolerance from -2% to +1%
+                data = ...
+                requirement = ...
+                self.assertValid(data, requirement)
 
     .. note:: The "``tolerance, /``" part of these method signatures
               mean that *tolerance* is a positional-only parameter---it
@@ -270,61 +282,79 @@ CompareDict
         Column names for result keys.
 
 
-*********************
-Error and Differences
-*********************
+**********************
+Errors and Differences
+**********************
 
-.. autoclass:: datatest.DataError
+.. autoexception:: datatest.DataError
 
     .. autoattribute:: differences
 
------------------
-
-.. autoclass:: datatest.BaseDifference(...)
-
-    .. autoattribute:: value
-    .. autoattribute:: required
-    .. autoattribute:: kwds
-
-.. autoclass:: datatest.Extra
-   :members:
+Differences
+===========
 
 .. autoclass:: datatest.Missing
-   :members:
+
+
+.. autoclass:: datatest.Extra
+
 
 .. autoclass:: datatest.Invalid
-   :members:
+
 
 .. autoclass:: datatest.Deviation
-   :members:
+
 
 
 **********
 Allowances
 **********
 
++---------------------------------------------------------+------------------------------------------+
+| Context Manager                                         | Allows                                   |
++=========================================================+==========================================+
+| :class:`allow_only(differences) <datatest.allow_only>`  | only specified *differences*             |
++---------------------------------------------------------+------------------------------------------+
+| :class:`allow_any(**kwds_func) <datatest.allow_any>`    | differences of any type that match given |
+|                                                         | :ref:`keyword filters <kwds-filter>`     |
++---------------------------------------------------------+------------------------------------------+
+| :class:`allow_missing() <datatest.allow_missing>`       | :class:`Missing <datatest.Missing>`      |
+|                                                         | differences                              |
++---------------------------------------------------------+------------------------------------------+
+| :class:`allow_extra() <datatest.allow_extra>`           | :class:`Extra <datatest.Extra>`          |
+|                                                         | differences                              |
++---------------------------------------------------------+------------------------------------------+
+| :class:`allow_limit(number) <datatest.allow_limit>`     | given *number* of differences of any     |
+|                                                         | type                                     |
++---------------------------------------------------------+------------------------------------------+
+| :class:`allow_deviation(tolerance)                      | :class:`Deviations <datatest.Deviation>` |
+| <datatest.allow_deviation>`                             | of plus or minus given *tolerance*       |
++---------------------------------------------------------+------------------------------------------+
+| :class:`allow_percent_deviation(tolerance)              | :class:`Deviations <datatest.Deviation>` |
+| <datatest.allow_percent_deviation>`                     | of plus or minus given *tolerance*       |
+|                                                         | percentage                               |
++---------------------------------------------------------+------------------------------------------+
+
 .. autoclass:: datatest.allow_only
-   :members:
+
 
 .. autoclass:: datatest.allow_any
-   :members:
+
 
 .. autoclass:: datatest.allow_missing
-   :members:
+
 
 .. autoclass:: datatest.allow_extra
-   :members:
+
 
 .. autoclass:: datatest.allow_limit
-   :members:
 
-.. class:: allow_deviation(tolerance, /, msg=None, **kwds)
-           allow_deviation(lower, upper, msg=None, **kwds)
 
-    Context manager to allow for deviations from required numeric values
-    without triggering a test failure.
+.. class:: allow_deviation(tolerance, /, msg=None, **kwds_func)
+           allow_deviation(lower, upper, msg=None, **kwds_func)
 
-    Allowing deviations of plus-or-minus a given *tolerance*::
+    Context manager that allows :class:`Deviations <datatest.Deviation>`
+    within a given *tolerance* without triggering a test failure::
 
         with datatest.allow_deviation(5):  # tolerance of +/- 5
             ...
@@ -334,49 +364,36 @@ Allowances
         with datatest.allow_deviation(-2, 3):  # tolerance from -2 to +3
             ...
 
-    All deviations within the accepted tolerance range are suppressed
-    but those outside the range will trigger a test failure.
+    Deviations within the given range are suppressed while those
+    outside the range will trigger a test failure.
 
-    When allowing deviations, empty values (like None or empty string)
-    are treated as zeros.
+    Empty values (None, empty string, etc.) are treated as zeros when
+    performing comparisons.
 
-    .. THE ABOVE DEFINITION SHOULD BE REPLICATED FROM THE DOCSTRING IN
-       THE datatest.allow SUB-PACKAGE.  THE "AUTOCLASS" FUNCTIONALITY
-       IS NOT USED IN THIS CASE BECAUSE THIS CLASS' __init__ METHOD
-       HAS TWO SIGNATURES.
 
-.. class:: allow_percent_deviation(tolerance, /, msg=None, **kwds)
-           allow_percent_deviation(lower, upper, msg=None, **kwds)
+.. class:: allow_percent_deviation(tolerance, /, msg=None, **kwds_func)
+           allow_percent_deviation(lower, upper, msg=None, **kwds_func)
 
-    Context manager to allow for deviations from required numeric values
-    within a given error percentage without triggering a test failure.
+    Context manager that allows :class:`Deviations <datatest.Deviation>`
+    within a given percentage of error without triggering a test
+    failure::
 
-    Allowing deviations of plus-or-minus a given *tolerance*::
-
-        with datatest.allow_percent_deviation(0.02):  # tolerance of +/- 2%
+        with datatest.allow_percent_deviation(0.03):  # tolerance of +/- 3%
             ...
 
     Specifying different *lower* and *upper* bounds::
 
-        with datatest.allow_percent_deviation(-0.02, 0.03):  # tolerance from -2% to +3%
+        with datatest.allow_percent_deviation(-0.02, 0.01):  # tolerance from -2% to +1%
             ...
 
-    All deviations within the accepted tolerance range are suppressed
-    but those that exceed the range will trigger a test failure.
+    Deviations within the given range are suppressed while those
+    outside the range will trigger a test failure.
 
-    When allowing deviations, empty values (like None or empty string)
-    are treated as zeros.
+    Empty values (None, empty string, etc.) are treated as zeros when
+    performing comparisons.
 
-    .. THE ABOVE DEFINITION SHOULD BE REPLICATED FROM THE DOCSTRING IN
-       THE datatest.allow SUB-PACKAGE.  THE "AUTOCLASS" FUNCTIONALITY
-       IS NOT USED IN THIS CASE BECAUSE THIS CLASS' __init__ METHOD
-       HAS TWO SIGNATURES.
-
-.. autoclass:: datatest.allow_each
-   :members:
 
 .. autoclass:: datatest.allow_iter
-   :members:
 
 
 *******************

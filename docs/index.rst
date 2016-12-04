@@ -14,7 +14,7 @@
 :mod:`datatest` --- Testing driven data wrangling
 #################################################
 
-Datatest extends the standard library's `unittest
+Datatest extends Python's `unittest
 <http://docs.python.org/3/library/unittest.html>`_ package to provide
 testing tools for asserting data correctness.
 

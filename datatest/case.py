@@ -34,15 +34,10 @@ class DataTestCase(TestCase):
     """
     @property
     def subject(self):
-        """This property contains the data under test---the *subject*
-        of the tests.  A subject must be defined to use any of the
-        "assertSubject…" methods (e.g., :meth:`assertSubjectColumns`,
-        :meth:`assertSubjectSet`, etc.).  It must be a data source
-        object.
-
-        A subject can be defined at the class-level or at the
-        module-level.  This property will return the :attr:`subject`
-        from the nearest enclosed scope.
+        """A convenience property that references the data under
+        test---the *subject* of the tests.  A subject can be defined at
+        the module-level or at the class-level.  This property will
+        return the :attr:`subject` from the nearest enclosed scope.
 
         Module-level declaration::
 
@@ -56,6 +51,9 @@ class DataTestCase(TestCase):
                 @classmethod
                 def setUpClass(cls):
                     cls.subject = datatest.CsvSource('myfile.csv')
+
+        This property is required when using the :meth:`assertValid`
+        method's helper-function shorthand.
         """
         if hasattr(self, '_subject_data'):
             return self._subject_data
@@ -67,14 +65,10 @@ class DataTestCase(TestCase):
 
     @property
     def reference(self):
-        """This property contains data that is trusted to be correct.
-        A reference data source is optional.  It's used by the
-        "assertSubject…" methods when their *required* argument is
-        omitted.
-
-        A reference can be defined at the class-level or at the
-        module-level.  This property will return the :attr:`reference`
-        from the nearest enclosed scope.
+        """A convenience property that references data trusted to be
+        correct.  A reference can be defined at the module-level or at
+        the class-level.  This property will return the
+        :attr:`reference` from the nearest enclosed scope.
 
         Module-level declaration::
 
@@ -90,6 +84,9 @@ class DataTestCase(TestCase):
                 def setUpClass(cls):
                     cls.subject = datatest.CsvSource('myfile.csv')
                     cls.reference = datatest.CsvSource('myreference.csv')
+
+        This property is required when using the :meth:`assertValid`
+        method's helper-function shorthand.
         """
         if hasattr(self, '_reference_data'):
             return self._reference_data
@@ -111,40 +108,41 @@ class DataTestCase(TestCase):
                 return frame.f_globals[name]  # <- EXIT!
         raise NameError('cannot find {0!r}'.format(name))
 
-    def assertValid(self, data, required=None, msg=None):
+    def assertValid(self, data, requirement=None, msg=None):
         """
-        self.assertValid(data, required, msg=None)
-        self.assertValid(function, /, msg=None)
+        assertValid(data, requirement, msg=None)
+        assertValid(function, /, msg=None)
 
-        Fail if *data* does not satisfy *required* object as
-        determined by an appropriate validation operation.
+        Fail if *data* does not satisfy *requirement*.
+
+        See documentation for full details.
         """
         # If using *function* signature, normalize arguments and get data.
-        if callable(data) and (not required or isinstance(required, str)):
+        if callable(data) and (not requirement or isinstance(requirement, str)):
             function, data = data, None         # Shuffle arguments
             if not msg:                         # to fit *function*
-                msg, required = required, None  # signature.
+                msg, requirement = requirement, None  # signature.
             data = function(self.subject)
-            required = function(self.reference)
+            requirement = function(self.reference)
 
         # Get appropriate comparison function (as determined by
-        # *required* argument).
-        if isinstance(required, collections.Mapping):
+        # *requirement*).
+        if isinstance(requirement, collections.Mapping):
             compare = _compare_mapping
-            default_msg = 'data does not match required mapping'
-        elif (isinstance(required, collections.Sequence)
-                and not isinstance(required, str)):
+            default_msg = 'data does not match mapping requirement'
+        elif (isinstance(requirement, collections.Sequence)
+                and not isinstance(requirement, str)):
             compare = _compare_sequence
-            default_msg = 'order and values do not match required sequence'
-        elif isinstance(required, collections.Set):
+            default_msg = 'order and values do not match sequence requirement'
+        elif isinstance(requirement, collections.Set):
             compare = _compare_set
-            default_msg = 'data does not match required set'
+            default_msg = 'data does not match set requirement'
         else:
             compare = _compare_other
-            default_msg = 'data does not satisfy required object'
+            default_msg = 'data does not satisfy object requirement'
 
         # Apply comparison function and fail if there are any differences.
-        differences = compare(data, required)
+        differences = compare(data, requirement)
         if differences:
             self.fail(msg or default_msg, differences)
 
@@ -152,60 +150,74 @@ class DataTestCase(TestCase):
     #    pass
 
     def allowOnly(self, differences, msg=None):
-        """A convenience wrapper for :class:`allow_only`.
+        """alias of :class:`allow_only`
 
         .. code-block:: python
 
             differences = [
-                Extra('foo'),
-                Missing('bar'),
+                Missing('X'),
+                Missing('Y'),
+                Extra('Z'),
             ]
             with self.allowOnly(differences):
-                self.assertSubjectSet('column1')
+                data = ...
+                requirement = ...
+                self.assertValid(data, requirement)
         """
         #return allow_only(differences, msg)
         return allow_only(differences)
 
     def allowAny(self, msg=None, **kwds_func):
-        """A convenience wrapper for :class:`allow_any`.
+        """alias of :class:`allow_any`
 
         .. code-block:: python
 
-            with self.allowAny(town='unknown'):
-                self.assertSubjectSum('population', ['town'])
+            def is_unknown(x):
+                return x == 'unknown'
+
+            with self.allowAny(keys=is_unknown):
+                data = ...
+                required = ...
+                self.assertValid(data, requirement)
         """
         #return allow_any(msg, **kwds_func)
         return allow_any(**kwds_func)
 
     def allowMissing(self, msg=None, **kwds_func):
-        """A convenience wrapper for :class:`allow_missing`.
+        """alias of :class:`allow_missing`
 
         .. code-block:: python
 
             with self.allowMissing():
-                self.assertSubjectSet('column1')
+                data = ...
+                requirement = ...
+                self.assertValid(data, requirement)
         """
         return allow_missing(**kwds_func)
         #return allow_missing(msg, **kwds_func)
 
     def allowExtra(self, msg=None, **kwds_func):
-        """A convenience wrapper for :class:`allow_extra`.
+        """alias of :class:`allow_extra`
 
         .. code-block:: python
 
             with self.allowExtra():
-                self.assertSubjectSet('column1')
+                data = ...
+                requirement = ...
+                self.assertValid(data, requirement)
         """
         return allow_extra(**kwds_func)
         #return allow_extra(msg, **kwds_func)
 
     def allowLimit(self, number, msg=None, **kwds_func):
-        """A convenience wrapper for :class:`allow_limit`.
+        """alias of :class:`allow_limit`
 
         .. code-block:: python
 
             with self.allowLimit(10):  # Allow up to ten differences.
-                self.assertSubjectSet('column1')
+                data = ...
+                requirement = ...
+                self.assertValid(data, requirement)
         """
         return allow_limit(number, **kwds_func)
         #return allow_limit(number, msg, **kwds_func)
@@ -215,17 +227,10 @@ class DataTestCase(TestCase):
         allowDeviation(tolerance, /, msg=None, **kwds_func)
         allowDeviation(lower, upper, msg=None, **kwds_func)
 
-        A convenience wrapper for :class:`allow_deviation`.
+        alias of :class:`allow_deviation`
 
-        .. code-block:: python
-
-            with self.allowDeviation(5):  # tolerance of +/- 5
-                self.assertSubjectSum('column2', keys=['column1'])
+        See documentation for full details.
         """
-        # NOTE: CHANGES TO THE ABOVE DOCSTRING SHOULD BE REPLICATED IN
-        # THE DOCUMENTATION (.RST FILE)!  This docstring is not included
-        # using the Sphinx "autoclass" directive because there is no way
-        # to automatically handle multiple file signatures for Python.
         return allow_deviation(lower, upper, **kwds_func)
         #return allow_deviation(lower, upper, msg, **kwds_func)
 
@@ -234,17 +239,10 @@ class DataTestCase(TestCase):
         allowPercentDeviation(tolerance, /, msg=None, **kwds_func)
         allowPercentDeviation(lower, upper, msg=None, **kwds_func)
 
-        A convenience wrapper for :class:`allow_percent_deviation`.
+        alias of :class:`allow_percent_deviation`
 
-        .. code-block:: python
-
-            with self.allowPercentDeviation(0.02):  # tolerance of +/- 2%
-                self.assertSubjectSum('column2', keys=['column1'])
+        See documentation for full details.
         """
-        # NOTE: CHANGES TO THE ABOVE DOCSTRING SHOULD BE REPLICATED IN
-        # THE DOCUMENTATION (.RST FILE)!  This docstring is not included
-        # using the Sphinx "autoclass" directive because there is no way
-        # to automatically handle multiple file signatures for Python.
         return allow_percent_deviation(lower, upper, **kwds_func)
         #return allow_percent_deviation(lower, upper, msg, **kwds_func)
 

@@ -71,25 +71,20 @@ class BaseDifference(object):
 
 
 class Missing(BaseDifference):
-    """A value missing from the subject data which was part of the
-    required data.
-    """
+    """A value **not found in data** that is in *requirement*."""
     def __init__(self, value, **kwds):
         super(Missing, self).__init__(value, **kwds)
 
 
 class Extra(BaseDifference):
-    """An extra value found in the subject data that was not part of the
-    required data.
-    """
+    """A value found in *data* that is **not in requirement**."""
     def __init__(self, value, **kwds):
         super(Extra, self).__init__(value, **kwds)
 
 
 class Invalid(BaseDifference):
-    """A value in the subject data that did not satisfy a required
-    condition (well-formedness, date range, regular expression match,
-    etc.).
+    """A value in *data* that does not satisfy a function or regular
+    expression *requirement*.
     """
     def __repr__(self):
         clsname = self.__class__.__name__
@@ -102,8 +97,8 @@ class Invalid(BaseDifference):
 
 
 class Deviation(BaseDifference):
-    """The deviation between a numeric value in the subject data and a
-    numeric value in the required data.
+    """The difference between a numeric value in *data* and a matching
+    numeric value in *requirement*.
     """
     def __init__(self, value, required, **kwds):
         empty = lambda x: not x or isnan(x)

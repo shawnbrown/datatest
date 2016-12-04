@@ -3,7 +3,9 @@ import pprint
 
 
 class DataError(AssertionError):
-    """Raised when a data assertion fails."""
+    """Raised when :meth:`assertValid` finds differences between *data*
+    and *requirement*.
+    """
     def __init__(self, msg, differences, subject=None, required=None):
         """Initialize self, store *differences* for later reference."""
         if not differences:
@@ -18,9 +20,7 @@ class DataError(AssertionError):
 
     @property
     def differences(self):
-        """An iterable of differences between the data under test and
-        the data required.
-        """
+        """An iterable (list or dict) of differences."""
         return self._differences
 
     def __repr__(self):

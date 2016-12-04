@@ -6,8 +6,8 @@ datatest: Test driven data wrangling
 .. image:: https://api.travis-ci.org/shawnbrown/datatest.png
     :target: https://travis-ci.org/shawnbrown/datatest
 
-Datatest extends the Python standard library's unittest package to
-provide testing tools for asserting data correctness.
+Datatest extends Python's unittest package to provide testing tools
+for asserting data correctness.
 
 * Documentation:
     - http://datatest.readthedocs.io/ (latest)

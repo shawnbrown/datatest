@@ -257,6 +257,15 @@ def _normalize_lower_upper(lower, upper):
 
 
 class allow_deviation(allow_any):
+    """
+    allow_deviation(tolerance, /, msg=None, **kwds_func)
+    allow_deviation(lower, upper, msg=None, **kwds_func)
+
+    Context manager that allows Deviations within a given tolerance
+    without triggering a test failure.
+
+    See documentation for full details.
+    """
     def __init__(self, lower, upper=None, **kwds_func):
         lower, upper = _normalize_lower_upper(lower, upper)
         normalize_numbers = lambda x: x if x else 0
@@ -283,6 +292,15 @@ _prettify_deviation_signature(allow_deviation.__init__)
 
 
 class allow_percent_deviation(allow_any):
+    """
+    allow_percent_deviation(tolerance, /, msg=None, **kwds_func)
+    allow_percent_deviation(lower, upper, msg=None, **kwds_func)
+
+    Context manager that allows Deviations within a given percentage
+    of error without triggering a test failure.
+
+    See documentation for full details.
+    """
     def __init__(self, lower, upper=None, **kwds_func):
         lower, upper = _normalize_lower_upper(lower, upper)
         normalize_numbers = lambda x: x if x else 0
