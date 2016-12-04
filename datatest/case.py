@@ -155,9 +155,8 @@ class DataTestCase(TestCase):
         .. code-block:: python
 
             differences = [
-                Missing('X'),
-                Missing('Y'),
-                Extra('Z'),
+                Extra('X'),
+                Missing('Y')
             ]
             with self.allowOnly(differences):
                 data = ...

@@ -20,6 +20,17 @@ __datatest = True  # Used to detect in-module stack frames (which are
 
 
 class allow_iter(object):
+    """Context manager to allow differences without triggering a test
+    failure.  The *function* should accept an iterable of differences
+    and return an iterable of only those differences which are **not**
+    allowed.
+
+    .. admonition:: Fun Fact
+        :class: note
+
+        :class:`allow_iter` is the base context manager on which all
+        other allowances are implemented.
+    """
     def __init__(self, function):
         if not callable(function):
             raise TypeError("'function' must be a function or other callable")
@@ -112,6 +123,12 @@ def _expects_multiple_params(func):
 
 
 class allow_any(allow_iter):
+    """Allows differences that match given keyword functions without
+    triggering a teest failure::
+
+        with datatest.allow_any(keys=capitalized):
+            ...
+    """
     def __init__(self, **kwds_func):
         self._validate_kwds_func(**kwds_func)
 
@@ -163,6 +180,12 @@ class allow_any(allow_iter):
             adapted_fn = lambda item: diffs_fn(item[1])
             function_list.append(adapted_fn)
 
+        # TODO: Consider implementing something like this...
+        #if 'values' in kwds_func:
+        #    values_fn = kwds_func['values']
+        #    adapted_fn = lambda item: values_fn(item[1].value)
+        #    function_list.append(adapted_fn)
+
         if 'items' in kwds_func:
             items_fn = kwds_func['items']
             args_len, vararg_len = _get_arg_lengths(items_fn)
@@ -194,6 +217,12 @@ class allow_any(allow_iter):
 
 
 class allow_missing(allow_any):
+    """Allows :class:`Missing` values without triggering a test
+    failure::
+
+        with datatest.allow_missing():
+            ...
+    """
     def __init__(self, **kwds_func):
         if 'diffs' in kwds_func:
             diffs_orig = kwds_func.pop('diffs')
@@ -207,6 +236,12 @@ class allow_missing(allow_any):
 
 
 class allow_extra(allow_any):
+    """Allows :class:`Extra` values without triggering a test
+    failure::
+
+        with datatest.allow_extra():
+            ...
+    """
     def __init__(self, **kwds_func):
         if 'diffs' in kwds_func:
             diffs_orig = kwds_func.pop('diffs')
@@ -332,6 +367,16 @@ _prettify_deviation_signature(allow_percent_deviation.__init__)
 
 
 class allow_limit(allow_any):
+    """Context manager to allow a limited *number* of differences (of
+    any type) without triggering a test failure::
+
+        with datatest.allow_limit(10):  # Allows up to ten differences.
+            ...
+
+    If the count of differences exceeds the given *number*, the test
+    will fail with a :class:`DataError` containing all observed
+    differences.
+    """
     def __init__(self, number, **kwds_func):
         if not kwds_func:
             kwds_func['diffs'] = lambda x: True
@@ -364,6 +409,16 @@ class allow_limit(allow_any):
 
 
 class allow_only(allow_iter):
+    """Context manager to allow specified *differences* without
+    triggering a test failure::
+
+        differences = [
+            Extra('X'),
+            Missing('Y')
+        ]
+        with datatest.allow_only(differences):
+            ...
+    """
     def __init__(self, differences):
         def filterfalse(differences, iterable):         # filterfalse() is,
             allowed = collections.Counter(differences)  # later, wrapped to
