@@ -796,6 +796,18 @@ class TestAllowOnly(unittest.TestCase):
         actual = list(cm.exception.differences)
         self.assertEqual(expected, actual)
 
+    def test_single_diff_without_container(self):
+        differences = [Extra('xxx'), Missing('yyy')]
+        allowed = Extra('xxx')  # <- Single diff, not in list.
+
+        with self.assertRaises(DataError) as cm:
+            with allow_only(allowed):
+                raise DataError('example error', differences)
+
+        expected = [Missing('yyy')]
+        actual = list(cm.exception.differences)
+        self.assertEqual(expected, actual)
+
     def test_all_allowed(self):
         diffs = [Extra('xxx'), Missing('yyy')]
         allowed = [Extra('xxx'), Missing('yyy')]

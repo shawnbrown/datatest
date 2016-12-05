@@ -418,6 +418,9 @@ class allow_only(allow_iter):
         ]
         with datatest.allow_only(differences):
             ...
+
+    The *differences* argument can be a :py:obj:`list` or
+    :py:obj:`dict` of differences or a single difference.
     """
     def __init__(self, differences):
         def filterfalse(differences, iterable):         # filterfalse() is,
@@ -438,6 +441,9 @@ class allow_only(allow_iter):
                 exc.__cause__ = None
                 raise exc
             return iter([])
+
+        if not isinstance(differences, collections.Iterable):
+            differences = [differences]  # Wrap single-difference as list.
 
         if isinstance(differences, collections.Mapping):
             @functools.wraps(filterfalse)
