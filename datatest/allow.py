@@ -124,7 +124,7 @@ def _expects_multiple_params(func):
 
 class allow_any(allow_iter):
     """Allows differences that match given keyword functions without
-    triggering a teest failure::
+    triggering a test failure::
 
         with datatest.allow_any(keys=capitalized):
             ...
