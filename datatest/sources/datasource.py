@@ -54,37 +54,65 @@ class DataSource(object):
             raise LookupError(msg)
 
     def __call__(self, *columns, **kwds_filter):
-        if columns and _is_nscontainer(columns[0]):
-            groupby = tuple(columns[0])
-            columns = columns[1:]
-
-            self._assert_columns_exist(groupby)
-            select_clause = [self._normalize_column(x) for x in groupby]
-            select_clause = ', '.join(select_clause)
-            select_clause = 'DISTINCT ' + select_clause
-
-            keys_cursor = self._execute_query(self._table, select_clause, **kwds_filter)
-            output = {}
-            for keys in keys_cursor:
-                kwds_subfltr = kwds_filter.copy()
-                kwds_subfltr.update(dict(zip(groupby, keys)))
-                values_result = self(*columns, **kwds_subfltr)
-                if len(keys) == 1:
-                    keys = keys[0]
-                output[keys] = values_result
-        else:
-            if columns:
-                self._assert_columns_exist(columns)
-                select_clause = [self._normalize_column(x) for x in columns]
-                select_clause = ', '.join(select_clause)
+        flattened_columns = []
+        groups = []
+        for column in columns:
+            if _is_nscontainer(column):
+                flattened_columns += list(column)
+                groups.append(column)
             else:
-                select_clause = '*'
-            cursor = self._execute_query(self._table, select_clause, **kwds_filter)
-            if len(columns) == 1:
-                cursor = (x[0] for x in cursor)  # Unwrap single item.
-            output = list(cursor)
+                flattened_columns.append(column)
 
-        return output
+        self._assert_columns_exist(flattened_columns)
+        select_clause = [self._normalize_column(x) for x in flattened_columns]
+        select_clause = ', '.join(select_clause)
+
+        cursor = self._execute_query(self._table, select_clause, **kwds_filter)
+
+        if not groups:
+            if len(flattened_columns) == 1:
+                cursor = (row[0] for row in cursor)
+            return list(cursor)
+        else:
+            result = {}
+
+            # Get indexes for group columns.
+            indexes = []
+            begin = 0
+            for group in groups:
+                end = begin + len(group)
+                indexes.append((begin, end))
+                begin = end
+
+            # Helper function to slice and normalize.
+            def get_slice(row, begin, end=None):
+                item = row[begin:end]
+                return item[0] if len(item) == 1 else item
+
+            # Get and format all rows.
+            for row in cursor:
+                keys = [get_slice(row, begin, end) for begin, end in indexes]
+                value = get_slice(row, indexes[-1][-1])  # Value gets items
+                                                         # after last key.
+
+                last_key = keys.pop()  # Separate last key for assigning value.
+
+                # Handle nested dict of dicts
+                dictref = result
+                for key in keys:
+                    try:
+                        dictref = dictref[key]
+                    except KeyError:
+                        dictref[key] = {}
+                        dictref = dictref[key]
+
+                # Append value to list.
+                try:
+                    dictref[last_key].append(value)
+                except KeyError:
+                    dictref[last_key] = [value]
+
+            return result
 
     def __repr__(self):
         """Return a string representation of the data source."""

@@ -22,7 +22,6 @@ class TestDataSourceBasics(unittest.TestCase):
     def test_iter(self):
         """Test __iter__."""
         result = [row for row in self.source]
-
         expected = [
             {'label1': 'a', 'label2': 'x', 'value': '17'},
             {'label1': 'a', 'label2': 'x', 'value': '13'},
@@ -36,7 +35,15 @@ class TestDataSourceBasics(unittest.TestCase):
 
     def test_select(self):
         result = self.source('label1')
-        expected = ['a', 'a', 'a', 'a', 'b', 'b', 'b']
+        expected = [
+            'a',
+            'a',
+            'a',
+            'a',
+            'b',
+            'b',
+            'b',
+        ]
         self.assertEqual(list(result), expected)
 
         result = self.source('label1', 'label2')
@@ -51,9 +58,60 @@ class TestDataSourceBasics(unittest.TestCase):
         ]
         self.assertEqual(list(result), expected)
 
-        expected = {
-            'a': ['17', '13', '20', '15'],
-            'b': ['5', '40', '25'],
-        }
         result = self.source(['label1'], 'value')
+        expected = {
+            'a': [
+                '17',
+                '13',
+                '20',
+                '15',
+            ],
+            'b': [
+                '5',
+                '40',
+                '25',
+            ],
+        }
+        self.assertEqual(result, expected)
+
+        result = self.source(['label1'], 'label2', 'value')
+        expected = {
+            'a': [
+                ('x', '17'),
+                ('x', '13'),
+                ('y', '20'),
+                ('z', '15'),
+            ],
+            'b': [
+                ('z', '5'),
+                ('y', '40'),
+                ('x', '25'),
+            ],
+        }
+        self.assertEqual(result, expected)
+
+        result = self.source(['label1', 'label2'], 'value')
+        expected = {
+            ('a', 'x'): ['17', '13'],
+            ('a', 'y'): ['20'],
+            ('a', 'z'): ['15'],
+            ('b', 'z'): ['5'],
+            ('b', 'y'): ['40'],
+            ('b', 'x'): ['25'],
+        }
+        self.assertEqual(result, expected)
+
+        result = self.source(['label1'], ['label2'], 'value')
+        expected = {
+            'a': {
+                'x': ['17', '13'],
+                'y': ['20'],
+                'z': ['15'],
+            },
+            'b': {
+                'z': ['5'],
+                'y': ['40'],
+                'x': ['25'],
+            },
+        }
         self.assertEqual(result, expected)
