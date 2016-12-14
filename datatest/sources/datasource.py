@@ -54,65 +54,49 @@ class DataSource(object):
             raise LookupError(msg)
 
     def __call__(self, *columns, **kwds_filter):
-        flattened_columns = []
-        groups = []
-        for column in columns:
-            if _is_nscontainer(column):
-                flattened_columns += list(column)
-                groups.append(column)
-            else:
-                flattened_columns.append(column)
+        if columns and _is_nscontainer(columns[0]):
+            groupby = tuple(columns[0])
+            columns = columns[1:]
+        else:
+            groupby = tuple()
 
-        self._assert_columns_exist(flattened_columns)
-        select_clause = [self._normalize_column(x) for x in flattened_columns]
-        select_clause = ', '.join(select_clause)
+        all_columns = groupby + columns
+        self._assert_columns_exist(all_columns)
+        all_columns = [self._normalize_column(x) for x in all_columns]
 
+        select_clause = ', '.join(all_columns)
         cursor = self._execute_query(self._table, select_clause, **kwds_filter)
 
-        if not groups:
-            if len(flattened_columns) == 1:
-                cursor = (row[0] for row in cursor)
-            return list(cursor)
+        if not groupby:
+            if len(columns) == 1:
+                result = (row[0] for row in cursor)
+            else:
+                result = cursor
+            return list(result)  # <- EXIT!
+
+        # Prepare key and value functions.
+        slice_index = len(groupby)
+        if slice_index == 1:
+            get_key = lambda row: row[0]
         else:
-            result = {}
+            get_key = lambda row: row[:slice_index]
 
-            # Get indexes for group columns.
-            indexes = []
-            begin = 0
-            for group in groups:
-                end = begin + len(group)
-                indexes.append((begin, end))
-                begin = end
+        if len(all_columns) - slice_index == 1:
+            get_value = lambda row: row[-1]
+        else:
+            get_value = lambda row: row[slice_index:]
 
-            # Helper function to slice and normalize.
-            def get_slice(row, begin, end=None):
-                item = row[begin:end]
-                return item[0] if len(item) == 1 else item
+        # Parse rows.
+        result = {}
+        for row in cursor:
+            key = get_key(row)
+            value = get_value(row)
+            try:
+                result[key].append(value)
+            except KeyError:
+                result[key] = [value]
 
-            # Get and format all rows.
-            for row in cursor:
-                keys = [get_slice(row, begin, end) for begin, end in indexes]
-                value = get_slice(row, indexes[-1][-1])  # Value gets items
-                                                         # after last key.
-
-                last_key = keys.pop()  # Separate last key for assigning value.
-
-                # Handle nested dict of dicts
-                dictref = result
-                for key in keys:
-                    try:
-                        dictref = dictref[key]
-                    except KeyError:
-                        dictref[key] = {}
-                        dictref = dictref[key]
-
-                # Append value to list.
-                try:
-                    dictref[last_key].append(value)
-                except KeyError:
-                    dictref[last_key] = [value]
-
-            return result
+        return result
 
     def __repr__(self):
         """Return a string representation of the data source."""

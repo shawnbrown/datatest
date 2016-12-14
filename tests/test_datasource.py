@@ -112,17 +112,6 @@ class TestDataSourceBasics(unittest.TestCase):
         }
         self.assertEqual(result, expected)
 
-        result = self.source(['label1'], ['label2'], 'value')
-        expected = {
-            'a': {
-                'x': ['17', '13'],
-                'y': ['20'],
-                'z': ['15'],
-            },
-            'b': {
-                'z': ['5'],
-                'y': ['40'],
-                'x': ['25'],
-            },
-        }
-        self.assertEqual(result, expected)
+        msg = 'Support for nested dictionaries removed (for now).'
+        with self.assertRaises(Exception, msg=msg):
+            self.source(['label1'], ['label2'], 'value')
