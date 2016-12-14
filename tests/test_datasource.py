@@ -101,6 +101,17 @@ class TestDataSourceBasics(unittest.TestCase):
         }
         self.assertEqual(result, expected)
 
+        result = self.source(['label1', 'label2'], 'label2', 'value')
+        expected = {
+            ('a', 'x'): [('x', '17'), ('x', '13')],
+            ('a', 'y'): [('y', '20')],
+            ('a', 'z'): [('z', '15')],
+            ('b', 'z'): [('z', '5')],
+            ('b', 'y'): [('y', '40')],
+            ('b', 'x'): [('x', '25')],
+        }
+        self.assertEqual(result, expected)
+
         result = self.source(['label1'], ['label2'], 'value')
         expected = {
             'a': {
