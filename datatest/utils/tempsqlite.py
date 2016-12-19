@@ -3,10 +3,7 @@
 from __future__ import absolute_import
 import sqlite3
 
-from . import decimal
 from . import itertools
-
-sqlite3.register_adapter(decimal.Decimal, str)
 
 
 class TemporarySqliteTable(object):

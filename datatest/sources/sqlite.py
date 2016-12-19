@@ -13,7 +13,7 @@ from ..compare import _is_nscontainer
 from .base import BaseSource
 
 
-sqlite3.register_adapter(decimal.Decimal, str)
+sqlite3.register_adapter(decimal.Decimal, float)
 
 
 class SqliteBase(BaseSource):
