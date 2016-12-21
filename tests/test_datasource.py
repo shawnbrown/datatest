@@ -225,6 +225,40 @@ class TestSqliteSortkey(unittest.TestCase):
         self.assertEqual(sortkey_order, sqlite_order)
 
 
+class TestResultSequenceMaxAndMin(unittest.TestCase):
+    def test_max(self):
+        result = ResultSequence([None, 10, 20, 30]).max()
+        self.assertEqual(result, 30)
+
+        result = ResultSequence([None, 10, '20', 30]).max()
+        self.assertEqual(result, '20')
+
+        blob_10 = sqlite3.Binary(b'10')
+        result = ResultSequence([None, blob_10, '20', 30]).max()
+        self.assertEqual(result, blob_10)
+
+        result = ResultSequence([None, None, None, None]).max()
+        self.assertEqual(result, None)
+
+    def test_min(self):
+        blob_30 = sqlite3.Binary(b'30')
+        blob_20 = sqlite3.Binary(b'20')
+        blob_10 = sqlite3.Binary(b'10')
+        blob_empty = sqlite3.Binary(b'')
+
+        result = ResultSequence([blob_30, blob_20, blob_10, blob_empty]).min()
+        self.assertEqual(result, blob_empty)
+
+        result = ResultSequence([blob_30, blob_20, '10', blob_empty]).min()
+        self.assertEqual(result, '10')
+
+        result = ResultSequence([blob_30, 20, '10', blob_empty]).min()
+        self.assertEqual(result, 20)
+
+        result = ResultSequence([None, 20, '10', blob_empty]).min()
+        self.assertEqual(result, None)
+
+
 class TestDataSourceBasics(unittest.TestCase):
     def setUp(self):
         columns = ['label1', 'label2', 'value']

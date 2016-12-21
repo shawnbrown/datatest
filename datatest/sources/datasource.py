@@ -3,7 +3,6 @@ from numbers import Number
 from sqlite3 import Binary
 
 from ..utils.builtins import *
-from ..utils import decimal
 from ..utils import functools
 from ..utils import TemporarySqliteTable
 from ..utils import UnicodeCsvReader
@@ -85,6 +84,12 @@ class ResultSequence(object):
         except StopIteration:  # From SQLite docs: "If there are no non-NULL
             return None        # input rows then sum() returns NULL..."
         return sum(iterable, start_value)
+
+    def max(self):
+        return max(self, key=_sqlite_sortkey)
+
+    def min(self):
+        return min(self, key=_sqlite_sortkey)
 
 
 class DataSource(object):
