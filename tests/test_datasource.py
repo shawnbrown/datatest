@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+import datetime
+import sqlite3
+import sys
+
 from . import _unittest as unittest
 from datatest.utils.collections import Iterable
 from datatest.utils.decimal import Decimal
@@ -6,6 +10,7 @@ from datatest.utils import TemporarySqliteTable
 
 from datatest.sources.datasource import DataSource
 from datatest.sources.datasource import ResultSequence
+from datatest.sources.datasource import _sqlite_sortkey
 
 
 class TestResultSequence(unittest.TestCase):
@@ -141,6 +146,83 @@ class TestResultSequenceSum(SqliteHelper):
 
         result = ResultSequence(values).sum()
         self.assertEqual(result, None)
+
+
+class TestSqliteSortkey(unittest.TestCase):
+    """Text _sqlite_sortkey() behavior--should match SQLite sort behavior
+    for supported cases.
+    """
+    def test_sqlite_blob(self):
+        """Confirm SQLite blob-type handling."""
+        # Create in-memory database.
+        connection = sqlite3.connect(':memory:')
+        cursor = connection.cursor()
+        cursor.execute('CREATE TABLE testtable(testcolumn BLOB);')
+
+        # Make blob and insert into database.
+        blob_in = sqlite3.Binary(b'blob contents')
+        insert_stmnt = "INSERT INTO testtable (testcolumn) VALUES(?)"
+        cursor.execute(insert_stmnt, (sqlite3.Binary(blob_in),))
+        connection.commit()
+
+        # Fetch and unpack blob result.
+        cursor.execute("SELECT * FROM testtable")
+        blob_out = cursor.fetchall()[0][0]
+
+        if sys.version_info[0] >= 3:
+            sqlite3_blob_type = bytes
+        else:
+            sqlite3_blob_type = sqlite3.Binary
+        self.assertIsInstance(blob_out, sqlite3_blob_type)
+
+    def test_null_key(self):
+        self.assertEqual(_sqlite_sortkey(None), (0, 0))
+
+    def test_numeric_key(self):
+        self.assertEqual(_sqlite_sortkey(5), (1, 5))
+        self.assertEqual(_sqlite_sortkey(2.0), (1, 2.0))
+        self.assertEqual(_sqlite_sortkey(Decimal(50)), (1, Decimal(50)))
+
+    def test_text_key(self):
+        self.assertEqual(_sqlite_sortkey('A'), (2, 'A'))
+
+    def test_blob_key(self):
+        blob = sqlite3.Binary( b'other value')
+        self.assertEqual(_sqlite_sortkey(blob), (3, blob))
+
+    def test_other_key(self):
+        list_value = ['other', 'value']
+        self.assertEqual(_sqlite_sortkey(list_value), (4, list_value))
+
+        dict_value = {'other': 'value'}
+        self.assertEqual(_sqlite_sortkey(dict_value), (4, dict_value))
+
+        date_value = datetime.datetime(2014, 2, 14, 9, 30)  # YYYY-MM-DD HH:MM:SS.mmmmmm
+        self.assertEqual(_sqlite_sortkey(date_value), (4, date_value))
+
+    def test_mixed_type_sort(self):
+        blob = sqlite3.Binary(b'aaa')
+        unordered = ['-5', blob, -5, 'N', Decimal(1), 'n', 0, '', None, 1.5]
+        expected_order = [None, -5, 0, Decimal(1), 1.5, '', '-5', 'N', 'n', blob]
+
+        # Build SQLite table of unordered values.
+        values = [[x] for x in unordered]  # Wrap as single-column rows.
+        temptable = TemporarySqliteTable(values, ['values'])
+        cursor = temptable.connection.cursor()
+        table = temptable.name
+
+        # Query SQLite using ORDER BY.
+        query = 'SELECT "values" FROM {0} ORDER BY "values"'.format(table)
+        cursor.execute(query)
+        sqlite_order = [x[0] for x in cursor.fetchall()]
+        cursor.close()
+
+        # Check that SQLite order matches expected order.
+        self.assertEqual(sqlite_order, expected_order)
+
+        # Check that _sqlite_sortkey() order matches SQLite order.
+        sortkey_order = sorted(unordered, key=_sqlite_sortkey)
+        self.assertEqual(sortkey_order, sqlite_order)
 
 
 class TestDataSourceBasics(unittest.TestCase):

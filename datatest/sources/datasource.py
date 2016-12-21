@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+from numbers import Number
+from sqlite3 import Binary
+
 from ..utils.builtins import *
 from ..utils import decimal
 from ..utils import functools
@@ -6,6 +9,38 @@ from ..utils import TemporarySqliteTable
 from ..utils import UnicodeCsvReader
 from ..compare import _is_nscontainer
 from ..allow import _expects_multiple_params
+
+
+# The SQLite BLOB/Binary type in sortable Python 2 but unsortable in Python 3.
+_unsortable_blob_type = not hasattr(Binary(b''), '__cmp__')
+
+
+def _sqlite_sortkey(value):
+    """Key function for use with sorted(), min(), max(), etc. that
+    makes a best effort to match SQLite ORDER BY behavior for
+    supported classes.
+
+    From SQLite docs:
+
+        "...values with storage class NULL come first, followed by
+        INTEGER and REAL values interspersed in numeric order, followed
+        by TEXT values in collating sequence order, and finally BLOB
+        values in memcmp() order."
+
+    For more details see "Datatypes In SQLite Version 3" section
+    "4.1. Sort Order" <https://www.sqlite.org/datatype3.html>.
+    """
+    if value is None:              # NULL (sort group 0)
+        return (0, 0)
+    if isinstance(value, Number):  # INTEGER and REAL (sort group 1)
+        return (1, value)
+    if isinstance(value, str):     # TEXT (sort group 2)
+        return (2, value)
+    if isinstance(value, Binary):  # BLOB (sort group 3)
+        if _unsortable_blob_type:
+            value = bytes(value)
+        return (3, value)
+    return (4, value)  # unsupported type (sort group 4)
 
 
 class ResultSequence(object):
