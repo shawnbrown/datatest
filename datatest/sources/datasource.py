@@ -6,6 +6,20 @@ from ..utils import UnicodeCsvReader
 from ..compare import _is_nscontainer
 
 
+class ResultSequence(object):
+    """."""
+    def __init__(self, iterable):
+        self._iterable = iterable
+
+    def __repr__(self):
+        class_name = self.__class__.__name__
+        iterable_repr = repr(self._iterable)
+        return '{0}({1})'.format(class_name, iterable_repr)
+
+    def __iter__(self):
+        return iter(self._iterable)
+
+
 class DataSource(object):
     """
     .. warning:: This class is a work in progress.  Eventually this

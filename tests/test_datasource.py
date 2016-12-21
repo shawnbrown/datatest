@@ -1,6 +1,27 @@
 # -*- coding: utf-8 -*-
 from . import _unittest as unittest
+from datatest.utils.collections import Iterable
+
 from datatest.sources.datasource import DataSource
+from datatest.sources.datasource import ResultSequence
+
+
+class TestResultSequence(unittest.TestCase):
+    def test_repr(self):
+        sequence = ResultSequence([1, 2, 3, 4, 5])
+        sequence_repr = repr(sequence)
+
+        expected = 'ResultSequence([1, 2, 3, 4, 5])'
+        self.assertEqual(sequence_repr, expected)
+
+    def test_iter(self):
+        sequence = ResultSequence([1, 2, 3, 4, 5])
+
+        as_iter = iter(sequence)
+        self.assertIsInstance(as_iter, Iterable)
+
+        as_list = [x for x in sequence]
+        self.assertEqual(as_list, [1, 2, 3, 4, 5])
 
 
 class TestDataSourceBasics(unittest.TestCase):
