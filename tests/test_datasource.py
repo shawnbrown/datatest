@@ -23,6 +23,34 @@ class TestResultSequence(unittest.TestCase):
         as_list = [x for x in sequence]
         self.assertEqual(as_list, [1, 2, 3, 4, 5])
 
+    def test_map(self):
+        sequence = ResultSequence([1, 2, 3, 4, 5])
+
+        sequence = sequence.map(lambda x: x * 2)
+        self.assertIsInstance(sequence, ResultSequence)
+
+        as_list = list(sequence)
+        self.assertEqual(as_list, [2, 4, 6, 8, 10])
+
+    def test_map_multiple_args(self):
+        sequence = ResultSequence([(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)])
+
+        # Using a function of one argument.
+        function = lambda x: '{0}-{1}'.format(x[0], x[1])
+        as_list = list(sequence.map(function))
+        self.assertEqual(as_list, ['1-1', '2-2', '3-3', '4-4', '5-5'])
+
+        # Using a function of two arguments.
+        function = lambda x, y: '{0}-{1}'.format(x, y)
+        as_list = list(sequence.map(function))
+        self.assertEqual(as_list, ['1-1', '2-2', '3-3', '4-4', '5-5'])
+
+    def test_reduce(self):
+        sequence = ResultSequence([2, 2, 2, 2, 2])
+        multiply = lambda x, y: x * y
+        result = sequence.reduce(multiply)
+        self.assertEqual(result, 32)
+
 
 class TestDataSourceBasics(unittest.TestCase):
     def setUp(self):

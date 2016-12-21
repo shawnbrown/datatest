@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 from ..utils.builtins import *
 from ..utils import decimal
+from ..utils import functools
 from ..utils import TemporarySqliteTable
 from ..utils import UnicodeCsvReader
 from ..compare import _is_nscontainer
+from ..allow import _expects_multiple_params
 
 
 class ResultSequence(object):
@@ -18,6 +20,21 @@ class ResultSequence(object):
 
     def __iter__(self):
         return iter(self._iterable)
+
+    def map(self, function):
+        """Return a ResultSequence iterator that applies *function* to
+        the elements, yielding the results.
+        """
+        if _expects_multiple_params(function):
+            return ResultSequence(function(*x) for x in self)
+        return ResultSequence(function(x) for x in self)
+
+    def reduce(self, function):
+        """Apply a *function* of two arguments cumulatively to the
+        elements, from left to right, so as to reduce the values to a
+        single result.
+        """
+        return functools.reduce(function, self)
 
 
 class DataSource(object):
