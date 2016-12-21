@@ -52,6 +52,25 @@ class TestResultSequence(unittest.TestCase):
         self.assertEqual(result, 32)
 
 
+class SqliteHelper(unittest.TestCase):
+    """Helper class for testing DataSource parity with SQLite behavior."""
+    @staticmethod
+    def sqlite3_aggregate(function_name, values):
+        """Test SQLite3 aggregation function on list of values."""
+        assert function_name in ('AVG', 'COUNT', 'GROUP_CONCAT', 'MAX', 'MIN', 'SUM', 'TOTAL')
+        values = [[x] for x in values]  # Wrap as single-column rows.
+        temptable = TemporarySqliteTable(values, ['values'])
+
+        cursor = temptable.connection.cursor()
+        table = temptable.name
+        query = 'SELECT {0}("values") FROM {1}'.format(function_name, table)
+        cursor.execute(query)
+
+        result = cursor.fetchall()[0][0]
+        cursor.close()
+        return result
+
+
 class TestDataSourceBasics(unittest.TestCase):
     def setUp(self):
         columns = ['label1', 'label2', 'value']
