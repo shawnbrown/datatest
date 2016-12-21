@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from . import _unittest as unittest
 from datatest.utils.collections import Iterable
+from datatest.utils.decimal import Decimal
+from datatest.utils import TemporarySqliteTable
 
 from datatest.sources.datasource import DataSource
 from datatest.sources.datasource import ResultSequence
@@ -69,6 +71,76 @@ class SqliteHelper(unittest.TestCase):
         result = cursor.fetchall()[0][0]
         cursor.close()
         return result
+
+
+class TestResultSequenceSum(SqliteHelper):
+    def test_numeric(self):
+        """Sum numeric values of different types (int, float, Decimal)."""
+        values = [10, 10.0, Decimal('10')]
+
+        result = self.sqlite3_aggregate('SUM', values)
+        self.assertEqual(result, 30)
+
+        result = ResultSequence(values).sum()
+        self.assertEqual(result, 30)
+
+    def test_strings(self):
+        """Sum strings--cast as float, internally."""
+        values = ['10', '10', '10']
+
+        result = self.sqlite3_aggregate('SUM', values)
+        self.assertEqual(result, 30)
+
+        result = ResultSequence(values).sum()
+        self.assertEqual(result, 30)
+
+    def test_some_empty(self):
+        """Sum list containing empty values."""
+        values = [None, '10', '', '10']
+
+        result = self.sqlite3_aggregate('SUM', values)
+        self.assertEqual(result, 20)
+
+        result = ResultSequence(values).sum()
+        self.assertEqual(result, 20)
+
+    def test_some_nonnumeric(self):
+        """Sum list containing some non-numeric strings."""
+        values = ['10', 'AAA', '10', '-5']
+
+        result = self.sqlite3_aggregate('SUM', values)
+        self.assertEqual(result, 15)
+
+        result = ResultSequence(values).sum()
+        self.assertEqual(result, 15)
+
+    def test_all_nonnumeric(self):
+        """Sum list containing some non-numeric strings."""
+        values = ['AAA', 'BBB', 'CCC']
+
+        result = self.sqlite3_aggregate('SUM', values)
+        self.assertEqual(result, 0)
+
+        result = ResultSequence(values).sum()
+        self.assertEqual(result, 0)
+
+    def test_none_or_emptystring(self):
+        values = [None, None, '']
+
+        result = self.sqlite3_aggregate('SUM', values)
+        self.assertEqual(result, 0)
+
+        result = ResultSequence(values).sum()
+        self.assertEqual(result, 0)
+
+    def test_all_none(self):
+        values = [None, None, None]
+
+        result = self.sqlite3_aggregate('SUM', values)
+        self.assertEqual(result, None)
+
+        result = ResultSequence(values).sum()
+        self.assertEqual(result, None)
 
 
 class TestDataSourceBasics(unittest.TestCase):

@@ -36,6 +36,21 @@ class ResultSequence(object):
         """
         return functools.reduce(function, self)
 
+    def sum(self):
+        """Sum the elements and return the total."""
+        def make_float(x):
+            try:                             # Convert to float or
+                return float(x)              # default to zero (to
+            except (TypeError, ValueError):  # match SQLite's SUM
+                return 0.0                   # behavior).
+
+        iterable = (make_float(x) for x in self if x != None)
+        try:
+            start_value = next(iterable)
+        except StopIteration:  # From SQLite docs: "If there are no non-NULL
+            return None        # input rows then sum() returns NULL..."
+        return sum(iterable, start_value)
+
 
 class DataSource(object):
     """
