@@ -10,8 +10,17 @@ from ..compare import _is_nscontainer
 from ..allow import _expects_multiple_params
 
 
+def _is_sortable(obj):
+    """Returns True if *obj* is sortable else returns False."""
+    try:
+        sorted([obj, obj])
+        return True
+    except TypeError:
+        return False
+
+
 # The SQLite BLOB/Binary type in sortable Python 2 but unsortable in Python 3.
-_unsortable_blob_type = not hasattr(Binary(b''), '__cmp__')
+_unsortable_blob_type = not _is_sortable(Binary(b'0'))
 
 
 def _sqlite_sortkey(value):
