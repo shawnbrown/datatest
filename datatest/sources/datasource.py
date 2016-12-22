@@ -52,10 +52,13 @@ def _sqlite_sortkey(value):
 
 
 def _sqlite_make_float(value):
-    try:                             # Convert to float or
-        return float(value)          # default to zero (to
-    except (TypeError, ValueError):  # match SQLite's SUM
-        return 0.0                   # behavior).
+    """Convert value to float or default to 0.0 (to match SQLite's
+    SUM behavior).
+    """
+    try:
+        return float(value)
+    except ValueError:
+        return 0.0
 
 
 class ResultSequence(object):
