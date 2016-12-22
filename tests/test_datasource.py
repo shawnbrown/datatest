@@ -86,7 +86,7 @@ class TestResultSequenceSum(SqliteHelper):
         https://www.sqlite.org/lang_aggfunc.html
     """
     def test_numeric(self):
-        """Sum numeric values of different types (int, float, Decimal)."""
+        """Test numeric values of different types (int, float, Decimal)."""
         values = [10, 10.0, Decimal('10')]
 
         result = self.sqlite3_aggregate('SUM', values)
@@ -96,7 +96,7 @@ class TestResultSequenceSum(SqliteHelper):
         self.assertEqual(result, 30)
 
     def test_strings(self):
-        """Sum strings--cast as float, internally."""
+        """Test strings that coerce to numeric values."""
         values = ['10', '10', '10']
 
         result = self.sqlite3_aggregate('SUM', values)
@@ -106,7 +106,7 @@ class TestResultSequenceSum(SqliteHelper):
         self.assertEqual(result, 30)
 
     def test_some_empty(self):
-        """Sum list containing empty values."""
+        """Test empty string handling."""
         values = [None, '10', '', '10']
 
         result = self.sqlite3_aggregate('SUM', values)
@@ -116,7 +116,7 @@ class TestResultSequenceSum(SqliteHelper):
         self.assertEqual(result, 20)
 
     def test_some_nonnumeric(self):
-        """Sum list containing some non-numeric strings."""
+        """Test strings that do not look like numbers."""
         values = ['10', 'AAA', '10', '-5']
 
         result = self.sqlite3_aggregate('SUM', values)
@@ -126,7 +126,7 @@ class TestResultSequenceSum(SqliteHelper):
         self.assertEqual(result, 15)
 
     def test_all_nonnumeric(self):
-        """Sum list containing some non-numeric strings."""
+        """Average list containing all non-numeric strings."""
         values = ['AAA', 'BBB', 'CCC']
 
         result = self.sqlite3_aggregate('SUM', values)
@@ -135,7 +135,18 @@ class TestResultSequenceSum(SqliteHelper):
         result = ResultSequence(values).sum()
         self.assertEqual(result, 0)
 
+    def test_some_none(self):
+        """Test None value handling."""
+        values = [None, 10, 10]  # SQLite SUM skips NULL values.
+
+        result = self.sqlite3_aggregate('SUM', values)
+        self.assertEqual(result, 20)
+
+        result = ResultSequence(values).sum()
+        self.assertEqual(result, 20)
+
     def test_none_or_emptystring(self):
+        """Test all None or empty string handling."""
         values = [None, None, '']
 
         result = self.sqlite3_aggregate('SUM', values)
@@ -145,6 +156,7 @@ class TestResultSequenceSum(SqliteHelper):
         self.assertEqual(result, 0)
 
     def test_all_none(self):
+        """Test all None handling."""
         values = [None, None, None]
 
         result = self.sqlite3_aggregate('SUM', values)
@@ -162,7 +174,7 @@ class TestResultSequenceAvg(SqliteHelper):
         https://www.sqlite.org/lang_aggfunc.html
     """
     def test_numeric(self):
-        """Sum numeric values of different types (int, float, Decimal)."""
+        """Test numeric values of different types (int, float, Decimal)."""
         values = [0, 6.0, Decimal('9')]
 
         result = self.sqlite3_aggregate('AVG', values)
@@ -172,7 +184,7 @@ class TestResultSequenceAvg(SqliteHelper):
         self.assertEqual(result, 5)
 
     def test_strings(self):
-        """Average strings--cast as float, internally."""
+        """Test strings that coerce to numeric values."""
         values = ['0', '6.0', '9']
 
         result = self.sqlite3_aggregate('AVG', values)
@@ -182,7 +194,7 @@ class TestResultSequenceAvg(SqliteHelper):
         self.assertEqual(result, 5)
 
     def test_some_empty(self):
-        """Sum list containing empty values."""
+        """Test empty string handling."""
         values = ['', 3, 9]  # SQLite AVG coerces empty string to 0.0.
 
         result = self.sqlite3_aggregate('AVG', values)
@@ -191,18 +203,8 @@ class TestResultSequenceAvg(SqliteHelper):
         result = ResultSequence(values).avg()
         self.assertEqual(result, 4.0)
 
-    def test_some_none(self):
-        """Sum list containing empty values."""
-        values = [None, 3, 9]  # SQLite AVG skips NULL values.
-
-        result = self.sqlite3_aggregate('AVG', values)
-        self.assertEqual(result, 6.0)
-
-        result = ResultSequence(values).avg()
-        self.assertEqual(result, 6.0)
-
     def test_some_nonnumeric(self):
-        """Sum list containing some non-numeric strings."""
+        """Test strings that do not look like numbers."""
         values = ['AAA', '3', '9']  # SQLite coerces invalid strings to 0.0.
 
         result = self.sqlite3_aggregate('AVG', values)
@@ -212,7 +214,7 @@ class TestResultSequenceAvg(SqliteHelper):
         self.assertEqual(result, 4.0)
 
     def test_all_nonnumeric(self):
-        """Sum list containing some non-numeric strings."""
+        """Average list containing all non-numeric strings."""
         values = ['AAA', 'BBB', 'CCC']
 
         result = self.sqlite3_aggregate('AVG', values)
@@ -221,7 +223,18 @@ class TestResultSequenceAvg(SqliteHelper):
         result = ResultSequence(values).avg()
         self.assertEqual(result, 0)
 
+    def test_some_none(self):
+        """Test None value handling."""
+        values = [None, 3, 9]  # SQLite AVG skips NULL values.
+
+        result = self.sqlite3_aggregate('AVG', values)
+        self.assertEqual(result, 6.0)
+
+        result = ResultSequence(values).avg()
+        self.assertEqual(result, 6.0)
+
     def test_none_or_emptystring(self):
+        """Test all None or empty string handling."""
         values = [None, None, '']
 
         result = self.sqlite3_aggregate('AVG', values)
@@ -231,6 +244,7 @@ class TestResultSequenceAvg(SqliteHelper):
         self.assertEqual(result, 0)
 
     def test_all_none(self):
+        """Test all None handling."""
         values = [None, None, None]
 
         result = self.sqlite3_aggregate('AVG', values)
