@@ -51,6 +51,13 @@ def _sqlite_sortkey(value):
     return (4, value)  # unsupported type (sort group 4)
 
 
+def _sqlite_make_float(value):
+    try:                             # Convert to float or
+        return float(value)          # default to zero (to
+    except (TypeError, ValueError):  # match SQLite's SUM
+        return 0.0                   # behavior).
+
+
 class ResultSequence(object):
     """."""
     def __init__(self, iterable):
@@ -81,18 +88,22 @@ class ResultSequence(object):
 
     def sum(self):
         """Sum the elements and return the total."""
-        def make_float(x):
-            try:                             # Convert to float or
-                return float(x)              # default to zero (to
-            except (TypeError, ValueError):  # match SQLite's SUM
-                return 0.0                   # behavior).
-
-        iterable = (make_float(x) for x in self if x != None)
+        iterable = (_sqlite_make_float(x) for x in self if x != None)
         try:
             start_value = next(iterable)
         except StopIteration:  # From SQLite docs: "If there are no non-NULL
             return None        # input rows then sum() returns NULL..."
         return sum(iterable, start_value)
+
+    def avg(self):
+        """Return the average of elements."""
+        iterable = (_sqlite_make_float(x) for x in self if x != None)
+        total = 0.0
+        count = 0
+        for x in iterable:
+            total = total + x
+            count += 1
+        return total / count if count else None
 
     def max(self):
         return max(self, key=_sqlite_sortkey)
