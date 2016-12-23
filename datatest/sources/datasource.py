@@ -109,10 +109,17 @@ class ResultSequence(object):
         return total / count if count else None
 
     def max(self):
-        return max(self, key=_sqlite_sortkey)
+        """Return the maximum value of all values.  Returns None if
+        all values are None.
+        """
+        return max(self, default=None, key=_sqlite_sortkey)
 
     def min(self):
-        return min(self, key=_sqlite_sortkey)
+        """Return the minimum non-None value of all values.
+        Returns None only if all values are None.
+        """
+        iterable = (x for x in self if x != None)
+        return min(iterable, default=None, key=_sqlite_sortkey)
 
 
 class DataSource(object):

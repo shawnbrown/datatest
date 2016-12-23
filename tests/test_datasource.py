@@ -332,6 +332,12 @@ class TestSqliteSortkey(unittest.TestCase):
 
 
 class TestResultSequenceMaxAndMin(unittest.TestCase):
+    """Should match SQLite MAX() and MIN() aggregation behavior.
+
+    See SQLite docs for full details:
+
+        https://www.sqlite.org/lang_aggfunc.html
+    """
     def test_max(self):
         result = ResultSequence([None, 10, 20, 30]).max()
         self.assertEqual(result, 30)
@@ -343,7 +349,14 @@ class TestResultSequenceMaxAndMin(unittest.TestCase):
         result = ResultSequence([None, blob_10, '20', 30]).max()
         self.assertEqual(result, blob_10)
 
-        result = ResultSequence([None, None, None, None]).max()
+    def test_max_null_handling(self):
+        """Should return None if and only if there are non-None values
+        in the group.
+        """
+        result = ResultSequence([None, None]).max()
+        self.assertEqual(result, None)
+
+        result = ResultSequence([]).max()
         self.assertEqual(result, None)
 
     def test_min(self):
@@ -361,7 +374,17 @@ class TestResultSequenceMaxAndMin(unittest.TestCase):
         result = ResultSequence([blob_30, 20, '10', blob_empty]).min()
         self.assertEqual(result, 20)
 
-        result = ResultSequence([None, 20, '10', blob_empty]).min()
+    def test_min_null_handling(self):
+        """The minimum value is the first non-None value that would
+        appear in when sorted in _sqlite_sortkey() order.
+
+        Should return None if and only if there are non-None values
+        in the group.
+        """
+        result = ResultSequence([None, 20, '10', sqlite3.Binary(b'')]).min()
+        self.assertEqual(result, 20)  # Since 20 is non-None, it is returned.
+
+        result = ResultSequence([None, None, None, None]).min()
         self.assertEqual(result, None)
 
 
