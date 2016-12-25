@@ -443,23 +443,14 @@ class TestDataSourceBasics(unittest.TestCase):
         ]
         self.assertEqual(list(result), expected)
 
-        result = self.source(['label1'], 'value')
+        result = self.source({'label1': 'value'})
         expected = {
-            'a': [
-                '17',
-                '13',
-                '20',
-                '15',
-            ],
-            'b': [
-                '5',
-                '40',
-                '25',
-            ],
+            'a': ['17', '13', '20', '15'],
+            'b': ['5', '40', '25'],
         }
         self.assertEqual(result, expected)
 
-        result = self.source(['label1'], 'label2', 'value')
+        result = self.source({'label1': ('label2', 'value')})
         expected = {
             'a': [
                 ('x', '17'),
@@ -475,7 +466,7 @@ class TestDataSourceBasics(unittest.TestCase):
         }
         self.assertEqual(result, expected)
 
-        result = self.source(['label1', 'label2'], 'value')
+        result = self.source({('label1', 'label2'): 'value'})
         expected = {
             ('a', 'x'): ['17', '13'],
             ('a', 'y'): ['20'],
@@ -486,7 +477,7 @@ class TestDataSourceBasics(unittest.TestCase):
         }
         self.assertEqual(result, expected)
 
-        result = self.source(['label1', 'label2'], 'label2', 'value')
+        result = self.source({('label1', 'label2'): ('label2', 'value')})
         expected = {
             ('a', 'x'): [('x', '17'), ('x', '13')],
             ('a', 'y'): [('y', '20')],
@@ -498,5 +489,6 @@ class TestDataSourceBasics(unittest.TestCase):
         self.assertEqual(result, expected)
 
         msg = 'Support for nested dictionaries removed (for now).'
-        with self.assertRaises(Exception, msg=msg):
-            self.source(['label1'], ['label2'], 'value')
+        regex = "{'label2': 'value'} not in DataSource"
+        with self.assertRaisesRegex(LookupError, regex, msg=msg):
+            self.source({'label1': {'label2': 'value'}})

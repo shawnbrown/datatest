@@ -3,6 +3,7 @@ from numbers import Number
 from sqlite3 import Binary
 
 from ..utils.builtins import *
+from ..utils import collections
 from ..utils import functools
 from ..utils import TemporarySqliteTable
 from ..utils import UnicodeCsvReader
@@ -170,9 +171,13 @@ class DataSource(object):
             raise LookupError(msg)
 
     def __call__(self, *columns, **kwds_filter):
-        if columns and _is_nscontainer(columns[0]):
-            groupby = tuple(columns[0])
-            columns = columns[1:]
+        if len(columns) == 1 and isinstance(columns[0], collections.Mapping):
+            columns_dict = columns[0]
+            groupby, columns = tuple(columns_dict.items())[0]
+            if isinstance(groupby, str):
+                groupby = tuple([groupby])
+            if isinstance(columns, (str, collections.Mapping)):
+                columns = tuple([columns])
         else:
             groupby = tuple()
 
