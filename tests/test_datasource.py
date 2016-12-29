@@ -10,6 +10,7 @@ from datatest.utils import TemporarySqliteTable
 
 from datatest.sources.datasource import DataSource
 from datatest.sources.datasource import ResultSequence
+from datatest.sources.datasource import ResultMapping
 from datatest.sources.datasource import _sqlite_sortkey
 
 
@@ -386,6 +387,54 @@ class TestResultSequenceMaxAndMin(unittest.TestCase):
 
         result = ResultSequence([None, None, None, None]).min()
         self.assertEqual(result, None)
+
+
+class TestResultMapping(unittest.TestCase):
+    def test_repr(self):
+        sequence = ResultMapping({'a': [1, 2, 3, 4, 5]})
+        sequence_repr = repr(sequence)
+        expected = "ResultMapping({'a': [1, 2, 3, 4, 5]})"
+        self.assertEqual(sequence_repr, expected)
+
+    def test_map(self):
+        mapping = ResultMapping({'a': [1, 2, 3, 4, 5]})
+
+        mapping = mapping.map(lambda x: x * 2)
+        self.assertIsInstance(mapping, ResultMapping)
+
+        result_a = list(mapping['a'])
+        self.assertEqual(result_a, [2, 4, 6, 8, 10])
+
+    def test_map_multiple_args(self):
+        mapping = ResultMapping({'a': [(1, 1), (2, 2), (3, 3)]})
+        expected = ResultMapping({'a': ['1-1', '2-2', '3-3']})
+
+        # Using a function of one argument.
+        function = lambda x: '{0}-{1}'.format(x[0], x[1])
+        result = mapping.map(function)
+        result_a = list(result['a'])
+        self.assertEqual(result_a, ['1-1', '2-2', '3-3'])
+
+        # Using a function of two arguments.
+        function = lambda x, y: '{0}-{1}'.format(x, y)
+        result = mapping.map(function)
+        result_a = list(result['a'])
+        self.assertEqual(result_a, ['1-1', '2-2', '3-3'])
+
+    def test_sum(self):
+        mapping = ResultMapping({'a': [1, 2, 3, 4, 5]})
+
+        mapping = mapping.sum()
+        self.assertIsInstance(mapping, ResultMapping)
+
+        expected = ResultMapping({'a': 15})
+        self.assertEqual(mapping, expected)
+
+    def test_reduce(self):
+        mapping = ResultMapping({'a': [2, 2, 2, 2, 2]})
+        multiply = lambda x, y: x * y
+        result = mapping.reduce(multiply)
+        self.assertEqual(result, ResultMapping({'a': 32}))
 
 
 class TestDataSourceBasics(unittest.TestCase):

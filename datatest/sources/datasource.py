@@ -123,6 +123,59 @@ class ResultSequence(object):
         return min(iterable, default=None, key=_sqlite_sortkey)
 
 
+class ResultMapping(collections.Mapping):
+    def __init__(self, iterable):
+        self._iterable = iterable
+
+    def __repr__(self):
+        class_name = self.__class__.__name__
+        iterable_repr = repr(self._iterable)
+        return '{0}({1})'.format(class_name, iterable_repr)
+
+    def __getitem__(self, key):
+        return self._iterable.__getitem__(key)
+
+    def __iter__(self):
+        return iter(self._iterable)
+
+    def __len__(self):
+        return len(self._iterable)
+
+    def map(self, function):
+        if _expects_multiple_params(function):
+            function_orig = function
+            function = lambda x: function_orig(*x)
+
+        result = {}
+        for key, value in self._iterable.items():
+            if isinstance(value, ResultSequence):
+                value = value.map(function)
+            else:
+                value = map(function, value)
+            result[key] = value
+        return ResultMapping(result)
+
+    def reduce(self, function):
+        result = {}
+        for key, value in self._iterable.items():
+            if isinstance(value, ResultSequence):
+                value = value.reduce(function)
+            else:
+                value = functools.reduce(function, value)
+            result[key] = value
+        return ResultMapping(result)
+
+    def sum(self):
+        result = {}
+        for key, value in self._iterable.items():
+            if isinstance(value, ResultSequence):
+                value = value.sum()
+            else:
+                value = sum(value)
+            result[key] = value
+        return ResultMapping(result)
+
+
 class DataSource(object):
     """
     .. warning:: This class is a work in progress.  Eventually this
