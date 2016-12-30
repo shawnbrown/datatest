@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+import re
 
 from .base import BaseSource
 from .sqlite import SqliteSource
@@ -8,8 +9,18 @@ def _version_info(module):
     """Helper function returns a tuple containing the version number
     components for a given module.
     """
-    version = module.__version__
-    return tuple(int(i) for i in version.split('.'))
+    try:
+        version = module.__version__
+    except AttributeError:
+        version = str(module)
+
+    def cast_as_int(value):
+        try:
+            return int(value)
+        except ValueError:
+            return value
+
+    return tuple(cast_as_int(x) for x in re.split('[.+]', version))
 
 
 class PandasSource(BaseSource):
