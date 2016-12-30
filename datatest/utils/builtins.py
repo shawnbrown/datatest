@@ -23,6 +23,69 @@ try:
     filter.__iter__
     zip.__iter__
 except AttributeError:
-    from itertools import imap    as map
+    from itertools import imap as map
     from itertools import ifilter as filter
-    from itertools import izip    as zip
+    from itertools import izip as zip
+
+
+try:
+    max([0, 1], default=None)  # The default keyword for max()
+    min([0, 1], default=None)  # and min() is new in 3.4.
+except TypeError:
+    from itertools import chain as _chain
+
+    _max = max
+    def max(*iterable, **kwds):
+        """
+        max(iterable, *[, default, key])
+        max(arg1, arg2, *args, *[, key])
+        """
+        allowed_kwds = ('default', 'key')
+        for key in kwds:
+            if key not in allowed_kwds:
+                msg = "'{0}' is an invalid keyword argument for this function"
+                raise TypeError(msg.format(key))
+
+        if len(iterable) == 1:
+            iterable = iterable[0]
+
+        try:
+            first_item = next(iter(iterable))
+            if iterable is iter(iterable):  # If consumable, rebuild it.
+                iterable = _chain([first_item], iterable)
+        except StopIteration:
+            if 'default' not in kwds:
+                raise ValueError('max() arg is an empty sequence')
+            return kwds['default']
+
+        if 'key' in kwds:
+            return _max(iterable, key=kwds['key'])
+        return _max(iterable)
+
+    _min = min
+    def min(*iterable, **kwds):
+        """
+        min(iterable, *[, default, key])
+        min(arg1, arg2, *args, *[, key])
+        """
+        allowed_kwds = ('default', 'key')
+        for key in kwds:
+            if key not in allowed_kwds:
+                msg = "'{0}' is an invalid keyword argument for this function"
+                raise TypeError(msg.format(key))
+
+        if len(iterable) == 1:
+            iterable = iterable[0]
+
+        try:
+            first_item = next(iter(iterable))
+            if iterable is iter(iterable):  # If consumable, rebuild it.
+                iterable = _chain([first_item], iterable)
+        except StopIteration:
+            if 'default' not in kwds:
+                raise ValueError('min() arg is an empty sequence')
+            return kwds['default']
+
+        if 'key' in kwds:
+            return _min(iterable, key=kwds['key'])
+        return _min(iterable)

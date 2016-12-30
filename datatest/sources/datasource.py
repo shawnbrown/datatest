@@ -1,9 +1,126 @@
 # -*- coding: utf-8 -*-
+from numbers import Number
+from sqlite3 import Binary
+
 from ..utils.builtins import *
-from ..utils import decimal
+from ..utils import collections
+from ..utils import functools
 from ..utils import TemporarySqliteTable
 from ..utils import UnicodeCsvReader
 from ..compare import _is_nscontainer
+from ..allow import _expects_multiple_params
+
+
+def _is_sortable(obj):
+    """Returns True if *obj* is sortable else returns False."""
+    try:
+        sorted([obj, obj])
+        return True
+    except TypeError:
+        return False
+
+
+# The SQLite BLOB/Binary type in sortable Python 2 but unsortable in Python 3.
+_unsortable_blob_type = not _is_sortable(Binary(b'0'))
+
+
+def _sqlite_sortkey(value):
+    """Key function for use with sorted(), min(), max(), etc. that
+    makes a best effort to match SQLite ORDER BY behavior for
+    supported classes.
+
+    From SQLite docs:
+
+        "...values with storage class NULL come first, followed by
+        INTEGER and REAL values interspersed in numeric order, followed
+        by TEXT values in collating sequence order, and finally BLOB
+        values in memcmp() order."
+
+    For more details see "Datatypes In SQLite Version 3" section
+    "4.1. Sort Order" <https://www.sqlite.org/datatype3.html>.
+    """
+    if value is None:              # NULL (sort group 0)
+        return (0, 0)
+    if isinstance(value, Number):  # INTEGER and REAL (sort group 1)
+        return (1, value)
+    if isinstance(value, str):     # TEXT (sort group 2)
+        return (2, value)
+    if isinstance(value, Binary):  # BLOB (sort group 3)
+        if _unsortable_blob_type:
+            value = bytes(value)
+        return (3, value)
+    return (4, value)  # unsupported type (sort group 4)
+
+
+def _sqlite_make_float(value):
+    """Convert value to float or default to 0.0 (to match SQLite's
+    SUM behavior).
+    """
+    try:
+        return float(value)
+    except ValueError:
+        return 0.0
+
+
+class ResultSequence(object):
+    """."""
+    def __init__(self, iterable):
+        self._iterable = iterable
+
+    def __repr__(self):
+        class_name = self.__class__.__name__
+        iterable_repr = repr(self._iterable)
+        return '{0}({1})'.format(class_name, iterable_repr)
+
+    def __iter__(self):
+        return iter(self._iterable)
+
+    def map(self, function):
+        """Return a ResultSequence iterator that applies *function* to
+        the elements, yielding the results.
+        """
+        if _expects_multiple_params(function):
+            return ResultSequence(function(*x) for x in self)
+        return ResultSequence(function(x) for x in self)
+
+    def reduce(self, function):
+        """Apply a *function* of two arguments cumulatively to the
+        elements, from left to right, so as to reduce the values to a
+        single result.
+        """
+        return functools.reduce(function, self)
+
+    def sum(self):
+        """Sum the elements and return the total."""
+        iterable = (_sqlite_make_float(x) for x in self if x != None)
+        try:
+            start_value = next(iterable)
+        except StopIteration:  # From SQLite docs: "If there are no non-NULL
+            return None        # input rows then sum() returns NULL..."
+        return sum(iterable, start_value)
+
+    def avg(self):
+        """Return the average of elements."""
+        iterable = (_sqlite_make_float(x) for x in self if x != None)
+        total = 0.0
+        count = 0
+        for x in iterable:
+            total = total + x
+            count += 1
+        return total / count if count else None
+
+    def max(self):
+        """Return the maximum value of all values.  Returns None if
+        all values are None.
+        """
+        return max(self, default=None, key=_sqlite_sortkey)
+
+    def min(self):
+        """Return the minimum non-None value of all values.
+        Returns None only if all values are None.
+        """
+        iterable = (x for x in self if x != None)
+        return min(iterable, default=None, key=_sqlite_sortkey)
 
 
 class DataSource(object):
@@ -54,9 +171,13 @@ class DataSource(object):
             raise LookupError(msg)
 
     def __call__(self, *columns, **kwds_filter):
-        if columns and _is_nscontainer(columns[0]):
-            groupby = tuple(columns[0])
-            columns = columns[1:]
+        if len(columns) == 1 and isinstance(columns[0], collections.Mapping):
+            columns_dict = columns[0]
+            groupby, columns = tuple(columns_dict.items())[0]
+            if isinstance(groupby, str):
+                groupby = tuple([groupby])
+            if isinstance(columns, (str, collections.Mapping)):
+                columns = tuple([columns])
         else:
             groupby = tuple()
 
