@@ -52,14 +52,27 @@ def _sqlite_sortkey(value):
     return (4, value)  # unsupported type (sort group 4)
 
 
-def _sqlite_make_float(value):
-    """Convert value to float or default to 0.0 (to match SQLite's
-    SUM behavior).
+def _sqlite_cast_as_real(value):
+    """Convert value to REAL (float) or default to 0.0 to match SQLite
+    behavior. See the "Conversion Processing" table in the "CAST
+    expressions" section for details:
+
+        https://www.sqlite.org/lang_expr.html#castexpr
     """
     try:
         return float(value)
     except ValueError:
         return 0.0
+
+
+def _sqlite_sum(iterable):
+    """Sum the elements and return the total."""
+    iterable = (_sqlite_cast_as_real(x) for x in iterable if x != None)
+    try:
+        start_value = next(iterable)
+    except StopIteration:  # From SQLite docs: "If there are no non-NULL
+        return None        # input rows then sum() returns NULL..."
+    return sum(iterable, start_value)
 
 
 class ResultSequence(object):
@@ -92,16 +105,11 @@ class ResultSequence(object):
 
     def sum(self):
         """Sum the elements and return the total."""
-        iterable = (_sqlite_make_float(x) for x in self if x != None)
-        try:
-            start_value = next(iterable)
-        except StopIteration:  # From SQLite docs: "If there are no non-NULL
-            return None        # input rows then sum() returns NULL..."
-        return sum(iterable, start_value)
+        return _sqlite_sum(self)
 
     def avg(self):
         """Return the average of elements."""
-        iterable = (_sqlite_make_float(x) for x in self if x != None)
+        iterable = (_sqlite_cast_as_real(x) for x in self if x != None)
         total = 0.0
         count = 0
         for x in iterable:
@@ -167,12 +175,8 @@ class ResultMapping(collections.Mapping):
 
     def sum(self):
         result = {}
-        for key, value in self._iterable.items():
-            if isinstance(value, ResultSequence):
-                value = value.sum()
-            else:
-                value = sum(value)
-            result[key] = value
+        for key, iterable in self._iterable.items():
+            result[key] = _sqlite_sum(iterable)
         return ResultMapping(result)
 
 
@@ -247,6 +251,7 @@ class DataSource(object):
             else:
                 result = cursor
             return list(result)  # <- EXIT!
+            #return ResultSequence(list(result))  # <- EXIT!
 
         # Prepare key and value functions.
         slice_index = len(groupby)
@@ -271,6 +276,7 @@ class DataSource(object):
                 result[key] = [value]
 
         return result
+        #return ResultMapping(result)
 
     def __repr__(self):
         """Return a string representation of the data source."""
