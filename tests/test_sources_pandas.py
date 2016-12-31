@@ -7,6 +7,24 @@ from datatest import PandasSource
 from datatest.sources.pandas import _version_info
 
 
+########################################################################
+# Test version parsing and import ``pandas`` if available.
+########################################################################
+class TestVersionInfo(unittest.TestCase):
+    def test_public_version(self):
+        public_version = '0.19.2'
+        info_tuple = _version_info(public_version)
+        self.assertEqual(info_tuple, (0, 19, 2))
+
+    def test_local_version(self):
+        """Version items after a "+" are considered "local" version
+        identifiers (see PEP 440).
+        """
+        local_version = '0.19.2+0.g825876c.dirty'
+        info_tuple = _version_info(local_version)
+        self.assertEqual(info_tuple, (0, 19, 2, 0, 'g825876c', 'dirty'))
+
+
 try:
     import pandas
     assert (_version_info(pandas) >= (0, 13, 0)
