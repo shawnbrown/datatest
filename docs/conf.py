@@ -56,7 +56,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'datatest'
-copyright = '2014 - 2016, NCEC Services LLC and contributing authors'
+copyright = '2014 - 2017, NCEC Services LLC and contributing authors'
 author = 'Shawn Brown'
 
 # The version info for the project you're documenting, acts as replacement for
