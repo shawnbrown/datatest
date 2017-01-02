@@ -222,6 +222,14 @@ class QuerySequence(object):
 
         self._data_source = data_source
 
+    def map(self, function):
+        call_chain = self._call_chain + (('map', (function,), {}),)
+        return self.__class__(self._data_source, call_chain)
+
+    def reduce(self, function):
+        call_chain = self._call_chain + (('reduce', (function,), {}),)
+        return self.__class__(self._data_source, call_chain)
+
 
 class DataSource(object):
     """

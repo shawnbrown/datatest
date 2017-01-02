@@ -79,6 +79,28 @@ class TestQuerySequence(unittest.TestCase):
         self.assertIs(query._data_source, source)
         self.assertEqual(query._call_chain, tuple(chain), 'should be tuple, not list')
 
+    def test_map(self):
+        source = self.mocked_source
+        chain = [('foo', (), {})]
+        userfunc = lambda x: str(x).strip()
+        query = QuerySequence(source, chain).map(userfunc)
+
+        self.assertIsInstance(query, QuerySequence)
+
+        expected = (('foo', (), {}), ('map', (userfunc,), {}))
+        self.assertEqual(query._call_chain, expected)
+
+    def test_reduce(self):
+        source = self.mocked_source
+        chain = [('foo', (), {})]
+        userfunc = lambda x, y: x + y
+        query = QuerySequence(source, chain).reduce(userfunc)
+
+        self.assertIsInstance(query, QuerySequence)
+
+        expected = (('foo', (), {}), ('reduce', (userfunc,), {}))
+        self.assertEqual(query._call_chain, expected)
+
 
 class TestResultSequence(unittest.TestCase):
     def test_repr(self):
