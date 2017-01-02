@@ -13,6 +13,7 @@ from datatest.sources.datasource import ResultSequence
 from datatest.sources.datasource import ResultMapping
 from datatest.sources.datasource import _sqlite_sortkey
 from datatest.sources.datasource import _validate_call_chain
+from datatest.sources.datasource import QuerySequence
 
 
 class TestValidateCallChain(unittest.TestCase):
@@ -50,6 +51,33 @@ class TestValidateCallChain(unittest.TestCase):
         regex = r"third item must be \*\*kwds 'dict', found 'int'"
         with self.assertRaisesRegex(TypeError, regex):
             _validate_call_chain([('sum', (), 123)])
+
+
+class TestQuerySequence(unittest.TestCase):
+    def setUp(self):
+        class MockedSource(DataSource):
+            def __init__(self, *args, **kwds):
+                pass
+
+            def __repr__(self):
+                return 'MockedSource()'
+
+        self.mocked_source = MockedSource()
+
+    def test_source_only(self):
+        source = self.mocked_source
+        query = QuerySequence(source)  # <- source only (no call chain)
+
+        self.assertIs(query._data_source, source)
+        self.assertEqual(query._call_chain, tuple(), 'should be empty')
+
+    def test_source_and_chain(self):
+        source = self.mocked_source
+        chain = [('foo', (), {})]
+        query = QuerySequence(source, chain)
+
+        self.assertIs(query._data_source, source)
+        self.assertEqual(query._call_chain, tuple(chain), 'should be tuple, not list')
 
 
 class TestResultSequence(unittest.TestCase):

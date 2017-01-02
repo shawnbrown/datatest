@@ -212,6 +212,17 @@ def _validate_call_chain(call_chain):
             raise TypeError(err_msg.format(repr(err_obj)))
 
 
+class QuerySequence(object):
+    def __init__(self, data_source, call_chain=None):
+        if call_chain:
+            _validate_call_chain(call_chain)
+            self._call_chain = tuple(call_chain)
+        else:
+            self._call_chain = tuple()
+
+        self._data_source = data_source
+
+
 class DataSource(object):
     """
     .. warning:: This class is a work in progress.  Eventually this
