@@ -180,6 +180,38 @@ class ResultMapping(collections.Mapping):
         return ResultMapping(result)
 
 
+def _validate_call_chain(call_chain):
+    """Validate call chain--if invalid, raises TypeError else returns
+    None. Call chain should be an iterable of 3-tuples where each item
+    contains a name 'str', an *args 'tuple', and a **kwds 'dict'.
+    """
+    if isinstance(call_chain, str):
+        raise TypeError("cannot be 'str'")
+
+    for item in call_chain:
+        if not isinstance(item, tuple):
+            err_msg = 'item must be 3-tuple, found {0}'
+            err_obj = type(item).__name__
+        elif len(item) != 3:
+            err_msg = 'expected 3-tuple, found {0}-tuple'
+            err_obj = len(item)
+        elif not isinstance(item[0], str):
+            err_msg = "first item must be method name 'str', found {0}"
+            err_obj = type(item[0]).__name__
+        elif not isinstance(item[1], tuple):
+            err_msg = "second item must be *args 'tuple', found {0}"
+            err_obj = type(item[1]).__name__
+        elif not isinstance(item[2], dict):
+            err_msg = "third item must be **kwds 'dict', found {0}"
+            err_obj = type(item[2]).__name__
+        else:
+            err_msg = None
+            err_obj = None
+
+        if err_msg:
+            raise TypeError(err_msg.format(repr(err_obj)))
+
+
 class DataSource(object):
     """
     .. warning:: This class is a work in progress.  Eventually this

@@ -12,6 +12,44 @@ from datatest.sources.datasource import DataSource
 from datatest.sources.datasource import ResultSequence
 from datatest.sources.datasource import ResultMapping
 from datatest.sources.datasource import _sqlite_sortkey
+from datatest.sources.datasource import _validate_call_chain
+
+
+class TestValidateCallChain(unittest.TestCase):
+    def test_passing(self):
+        _validate_call_chain([])
+        _validate_call_chain([('sum', (), {})])
+
+    def test_container(self):
+        with self.assertRaisesRegex(TypeError, "cannot be 'str'"):
+            call_chain = 'bad container'
+            _validate_call_chain(call_chain)
+
+    def test_type(self):
+        regex = "item must be 3-tuple, found 'str'"
+        with self.assertRaisesRegex(TypeError, regex):
+            call_chain = ['bad item']
+            _validate_call_chain(call_chain)
+
+    def test_len(self):
+        regex = "expected 3-tuple, found 2-tuple"
+        with self.assertRaisesRegex(TypeError, regex):
+            _validate_call_chain([('sum', ())])
+
+    def test_first_item(self):
+        regex = "first item must be method name 'str', found 'int'"
+        with self.assertRaisesRegex(TypeError, regex):
+            _validate_call_chain([(123, (), {})])
+
+    def test_second_item(self):
+        regex = r"second item must be \*args 'tuple', found 'int'"
+        with self.assertRaisesRegex(TypeError, regex):
+            _validate_call_chain([('sum', 123, {})])
+
+    def test_third_item(self):
+        regex = r"third item must be \*\*kwds 'dict', found 'int'"
+        with self.assertRaisesRegex(TypeError, regex):
+            _validate_call_chain([('sum', (), 123)])
 
 
 class TestResultSequence(unittest.TestCase):
