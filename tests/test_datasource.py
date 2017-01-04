@@ -13,6 +13,8 @@ from datatest.sources.datasource import ResultSequence
 from datatest.sources.datasource import ResultMapping
 from datatest.sources.datasource import _sqlite_sortkey
 from datatest.sources.datasource import _validate_call_chain
+from datatest.sources.datasource import _ProxyRepr
+from datatest.sources.datasource import _rindex
 from datatest.sources.datasource import QuerySequence
 
 
@@ -51,6 +53,49 @@ class TestValidateCallChain(unittest.TestCase):
         regex = r"third item must be \*\*kwds 'dict', found 'int'"
         with self.assertRaisesRegex(TypeError, regex):
             _validate_call_chain([('sum', (), 123)])
+
+
+class TestProxyRepr(unittest.TestCase):
+    def test_noncallable(self):
+        proxy = _ProxyRepr(1)
+        self.assertEqual(repr(proxy), '1')
+
+        proxy = _ProxyRepr('AAA')
+        self.assertEqual(repr(proxy), "'AAA'")
+
+    def test_function(self):
+        def userfunc(x):
+            return str(x).upper()
+        proxy = _ProxyRepr(userfunc)
+        self.assertEqual(repr(proxy), 'userfunc')
+
+    def test_lambda(self):
+        userlambda = lambda x: str(x).upper()
+        proxy = _ProxyRepr(userlambda)
+        self.assertEqual(repr(proxy), '<lambda>')
+
+    def test_lambda_with_name(self):
+        userlambda = lambda x: str(x).upper()
+        userlambda.__name__ = 'userlambda'
+        proxy = _ProxyRepr(userlambda)
+        self.assertEqual(repr(proxy), 'userlambda')
+
+
+class TestRindex(unittest.TestCase):
+    def test_indexes(self):
+        lst = ['c', 'b', 'b', 'a', 'a']
+        self.assertEqual(_rindex(lst, 'a'), 4)
+        self.assertEqual(_rindex(lst, 'b'), 2)
+        self.assertEqual(_rindex(lst, 'c'), 0)
+
+    def test_missing(self):
+        # Raises error if value is missing from sequence.
+        with self.assertRaisesRegex(ValueError, "'c' is not in sequence"):
+            _rindex(['a', 'b'], 'c')
+
+        # Returns default if value is missing but default is provided.
+        index = _rindex(['a', 'b'], 'c', default=0)
+        self.assertEqual(index, 0)
 
 
 class TestQuerySequence(unittest.TestCase):
@@ -100,6 +145,57 @@ class TestQuerySequence(unittest.TestCase):
 
         expected = (('foo', (), {}), ('reduce', (userfunc,), {}))
         self.assertEqual(query._call_chain, expected)
+
+    def test_repr(self):
+        source = self.mocked_source
+
+        def userfunc(x):
+            return str(x).upper()
+
+        # No call chain.
+        query = QuerySequence(source)
+        self.assertEqual(repr(query), 'QuerySequence(MockedSource())')
+
+        # Call chain with unknown methods.
+        query = QuerySequence(source, [('foo', (), {})])
+        expected = "QuerySequence(MockedSource(), (('foo', (), {}),))"
+        self.assertEqual(repr(query), expected)
+
+        # Call chain with known method.
+        query = QuerySequence(source, [('map', (userfunc,), {})])
+        expected = "QuerySequence(MockedSource()).map(userfunc)"
+        self.assertEqual(repr(query), expected)
+
+        # Call chain with multiple known methods.
+        call_chain = [
+            ('map', (userfunc,), {}),
+            ('reduce', (userfunc,), {}),
+        ]
+        query = QuerySequence(source, call_chain)
+        expected = "QuerySequence(MockedSource()).map(userfunc).reduce(userfunc)"
+        self.assertEqual(repr(query), expected)
+
+        # Call chain with known method using keyword-args.
+        call_chain = [
+            ('reduce', (), {'function': userfunc}),
+        ]
+        query = QuerySequence(source, call_chain)
+        expected = "QuerySequence(MockedSource()).reduce(function=userfunc)"
+        self.assertEqual(repr(query), expected)
+
+        # Call chain with known and unknown methods.
+        call_chain = [
+            ('map', (userfunc,), {}),
+            ('blerg', (), {}),
+            ('map', (userfunc,), {}),
+            ('reduce', (userfunc,), {}),
+        ]
+        query = QuerySequence(source, call_chain)
+        expected = ("QuerySequence("
+                    "MockedSource(), "
+                    "(('map', (userfunc,), {}), ('blerg', (), {}))"
+                    ").map(userfunc).reduce(userfunc)")
+        self.assertEqual(repr(query), expected)
 
 
 class TestResultSequence(unittest.TestCase):

@@ -212,6 +212,32 @@ def _validate_call_chain(call_chain):
             raise TypeError(err_msg.format(repr(err_obj)))
 
 
+class _ProxyRepr(object):
+    """Helper class returns __name__ for repr of callable object."""
+    def __init__(self, item):
+        self.item = item
+
+    def __repr__(self):
+        item = self.item
+        if callable(item):
+            try:
+                return item.__name__
+            except NameError:
+                pass
+        return repr(item)
+
+
+def _rindex(sequence, x, default=None):
+    """Helper function returns index of last item whose value is x."""
+    length = len(sequence)
+    for rindex, value in enumerate(reversed(sequence), start=1):
+        if value == x:
+            return length - rindex
+    if default == None:
+        raise ValueError(repr(x) + ' is not in sequence')
+    return default
+
+
 class QuerySequence(object):
     def __init__(self, data_source, call_chain=None):
         if call_chain:
@@ -229,6 +255,45 @@ class QuerySequence(object):
     def reduce(self, function):
         call_chain = self._call_chain + (('reduce', (function,), {}),)
         return self.__class__(self._data_source, call_chain)
+
+    def __repr__(self):
+        # Get _ProxyRepr() objects for args and key-word values.
+        def func(item):
+            name, args, kwds = item  # Unpack tuple.
+            args = tuple(_ProxyRepr(x) for x in args)
+            kwds = dict((k, _ProxyRepr(v)) for k, v in kwds.items())
+            return (name, args, kwds)
+        call_chain =[func(x) for x in self._call_chain]
+
+        # Slice consecutive known methods from end of call_chain.
+        is_known = [hasattr(self, x[0]) for x in call_chain]
+        pos = _rindex(is_known, False, default=-1) + 1
+        known_methods = call_chain[pos:]
+        call_chain = call_chain[:pos]
+
+        # Format call_chain repr.
+        if call_chain:
+            chain_repr = ', ' + repr(tuple(call_chain))
+        else:
+            chain_repr = ''
+
+        # Format know_methods repr.
+        if known_methods:
+            known_repr = []
+            for call in known_methods:
+                name, args, kwds = call  # Unpack tuple.
+                args = [repr(x) for x in args]
+                kwds = ['{0}={1!r}'.format(k, v) for k, v in kwds.items()]
+                all_args = ', '.join(args + kwds)
+                call_repr = '.{0}({1})'.format(name, all_args)
+                known_repr.append(call_repr)
+            known_repr = ''.join(known_repr)
+        else:
+            known_repr = ''
+
+        class_name = self.__class__.__name__
+        source_repr = repr(self._data_source)
+        return '{0}({1}{2}){3}'.format(class_name, source_repr, chain_repr, known_repr)
 
 
 class DataSource(object):
