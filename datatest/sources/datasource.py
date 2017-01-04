@@ -253,12 +253,10 @@ class QuerySequence(object):
         return self.__class__(self._data_source, call_chain)
 
     def map(self, function):
-        call_chain = self._call_chain + (('map', (function,), {}),)
-        return self.__class__(self._data_source, call_chain)
+        return self._new_call('map', function)
 
     def reduce(self, function):
-        call_chain = self._call_chain + (('reduce', (function,), {}),)
-        return self.__class__(self._data_source, call_chain)
+        return self._new_call('reduce', function)
 
     def sum(self):
         return self._new_call('sum')
