@@ -756,3 +756,10 @@ class TestDataSourceBasics(unittest.TestCase):
         regex = "{'label2': 'value'} not in DataSource"
         with self.assertRaisesRegex(LookupError, regex, msg=msg):
             self.source.select({'label1': {'label2': 'value'}})
+
+    def test_call(self):
+        result = self.source('label1')
+        self.assertIsInstance(result, QuerySequence)
+
+        result = self.source({'label1': 'label2'})
+        self.assertIsInstance(result, dict)  # TODO: Change to QueryMapping.

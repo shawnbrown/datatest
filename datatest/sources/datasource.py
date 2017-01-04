@@ -360,6 +360,11 @@ class DataSource(object):
             msg = '{0} not in {1}'.format(missing, self.__repr__())
             raise LookupError(msg)
 
+    def __call__(self, *columns, **kwds_filter):
+        if len(columns) == 1 and isinstance(columns[0], collections.Mapping):
+            return self.select(*columns, **kwds_filter)
+        return QuerySequence(self, [('select', columns, kwds_filter)])
+
     def select(self, *columns, **kwds_filter):
         if len(columns) == 1 and isinstance(columns[0], collections.Mapping):
             columns_dict = columns[0]
