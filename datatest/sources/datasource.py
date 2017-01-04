@@ -360,7 +360,7 @@ class DataSource(object):
             msg = '{0} not in {1}'.format(missing, self.__repr__())
             raise LookupError(msg)
 
-    def __call__(self, *columns, **kwds_filter):
+    def select(self, *columns, **kwds_filter):
         if len(columns) == 1 and isinstance(columns[0], collections.Mapping):
             columns_dict = columns[0]
             groupby, columns = tuple(columns_dict.items())[0]
@@ -383,8 +383,7 @@ class DataSource(object):
                 result = (row[0] for row in cursor)
             else:
                 result = cursor
-            return list(result)  # <- EXIT!
-            #return ResultSequence(list(result))  # <- EXIT!
+            return ResultSequence(result)  # <- EXIT!
 
         # Prepare key and value functions.
         slice_index = len(groupby)
