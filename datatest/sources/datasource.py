@@ -248,6 +248,10 @@ class QuerySequence(object):
 
         self._data_source = data_source
 
+    def _new_call(self, method, *args, **kwds):
+        call_chain = self._call_chain + ((method, args, kwds),)
+        return self.__class__(self._data_source, call_chain)
+
     def map(self, function):
         call_chain = self._call_chain + (('map', (function,), {}),)
         return self.__class__(self._data_source, call_chain)
@@ -255,6 +259,21 @@ class QuerySequence(object):
     def reduce(self, function):
         call_chain = self._call_chain + (('reduce', (function,), {}),)
         return self.__class__(self._data_source, call_chain)
+
+    def sum(self):
+        return self._new_call('sum')
+
+    def avg(self):
+        return self._new_call('avg')
+
+    def count(self):
+        return self._new_call('count')
+
+    def min(self):
+        return self._new_call('min')
+
+    def max(self):
+        return self._new_call('max')
 
     def __repr__(self):
         # Get _ProxyRepr() objects for args and key-word values.

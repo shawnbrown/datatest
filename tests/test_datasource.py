@@ -197,6 +197,36 @@ class TestQuerySequence(unittest.TestCase):
                     ").map(userfunc).reduce(userfunc)")
         self.assertEqual(repr(query), expected)
 
+    def test_new_call(self):
+        source = self.mocked_source
+
+        query = QuerySequence(source)._new_call('methodname')
+        self.assertEqual(query._call_chain, (('methodname', (), {}),))
+
+        query = QuerySequence(source)._new_call('methodname', 'aaa')
+        self.assertEqual(query._call_chain, (('methodname', ('aaa',), {}),))
+
+        query = QuerySequence(source)._new_call('methodname', 'aaa', bbb='BBB')
+        self.assertEqual(query._call_chain, (('methodname', ('aaa',), {'bbb': 'BBB'}),))
+
+    def test_aggregations(self):
+        source = self.mocked_source
+
+        query = QuerySequence(source).sum()
+        self.assertEqual(query._call_chain, (('sum', (), {}),))
+
+        query = QuerySequence(source).avg()
+        self.assertEqual(query._call_chain, (('avg', (), {}),))
+
+        query = QuerySequence(source).count()
+        self.assertEqual(query._call_chain, (('count', (), {}),))
+
+        query = QuerySequence(source).min()
+        self.assertEqual(query._call_chain, (('min', (), {}),))
+
+        query = QuerySequence(source).max()
+        self.assertEqual(query._call_chain, (('max', (), {}),))
+
 
 class TestResultSequence(unittest.TestCase):
     def test_repr(self):
