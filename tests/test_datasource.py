@@ -15,7 +15,7 @@ from datatest.sources.datasource import _sqlite_sortkey
 from datatest.sources.datasource import _validate_call_chain
 from datatest.sources.datasource import _ProxyRepr
 from datatest.sources.datasource import _rindex
-from datatest.sources.datasource import QuerySequence
+from datatest.sources.datasource import DataQuery
 
 
 class TestValidateCallChain(unittest.TestCase):
@@ -98,7 +98,7 @@ class TestRindex(unittest.TestCase):
         self.assertEqual(index, 0)
 
 
-class TestQuerySequence(unittest.TestCase):
+class TestDataQuery(unittest.TestCase):
     def setUp(self):
         class MockedSource(DataSource):
             def __init__(self, *args, **kwds):
@@ -111,7 +111,7 @@ class TestQuerySequence(unittest.TestCase):
 
     def test_source_only(self):
         source = self.mocked_source
-        query = QuerySequence(source)  # <- source only (no call chain)
+        query = DataQuery(source)  # <- source only (no call chain)
 
         self.assertIs(query._data_source, source)
         self.assertEqual(query._call_chain, tuple(), 'should be empty')
@@ -119,7 +119,7 @@ class TestQuerySequence(unittest.TestCase):
     def test_source_and_chain(self):
         source = self.mocked_source
         chain = [('foo', (), {})]
-        query = QuerySequence(source, chain)
+        query = DataQuery(source, chain)
 
         self.assertIs(query._data_source, source)
         self.assertEqual(query._call_chain, tuple(chain), 'should be tuple, not list')
@@ -128,9 +128,9 @@ class TestQuerySequence(unittest.TestCase):
         source = self.mocked_source
         chain = [('foo', (), {})]
         userfunc = lambda x: str(x).strip()
-        query = QuerySequence(source, chain).map(userfunc)
+        query = DataQuery(source, chain).map(userfunc)
 
-        self.assertIsInstance(query, QuerySequence)
+        self.assertIsInstance(query, DataQuery)
 
         expected = (('foo', (), {}), ('map', (userfunc,), {}))
         self.assertEqual(query._call_chain, expected)
@@ -139,9 +139,9 @@ class TestQuerySequence(unittest.TestCase):
         source = self.mocked_source
         chain = [('foo', (), {})]
         userfunc = lambda x, y: x + y
-        query = QuerySequence(source, chain).reduce(userfunc)
+        query = DataQuery(source, chain).reduce(userfunc)
 
-        self.assertIsInstance(query, QuerySequence)
+        self.assertIsInstance(query, DataQuery)
 
         expected = (('foo', (), {}), ('reduce', (userfunc,), {}))
         self.assertEqual(query._call_chain, expected)
@@ -153,17 +153,17 @@ class TestQuerySequence(unittest.TestCase):
             return str(x).upper()
 
         # No call chain.
-        query = QuerySequence(source)
-        self.assertEqual(repr(query), 'QuerySequence(MockedSource())')
+        query = DataQuery(source)
+        self.assertEqual(repr(query), 'DataQuery(MockedSource())')
 
         # Call chain with unknown methods.
-        query = QuerySequence(source, [('foo', (), {})])
-        expected = "QuerySequence(MockedSource(), (('foo', (), {}),))"
+        query = DataQuery(source, [('foo', (), {})])
+        expected = "DataQuery(MockedSource(), (('foo', (), {}),))"
         self.assertEqual(repr(query), expected)
 
         # Call chain with known method.
-        query = QuerySequence(source, [('map', (userfunc,), {})])
-        expected = "QuerySequence(MockedSource()).map(userfunc)"
+        query = DataQuery(source, [('map', (userfunc,), {})])
+        expected = "DataQuery(MockedSource()).map(userfunc)"
         self.assertEqual(repr(query), expected)
 
         # Call chain with multiple known methods.
@@ -171,16 +171,16 @@ class TestQuerySequence(unittest.TestCase):
             ('map', (userfunc,), {}),
             ('reduce', (userfunc,), {}),
         ]
-        query = QuerySequence(source, call_chain)
-        expected = "QuerySequence(MockedSource()).map(userfunc).reduce(userfunc)"
+        query = DataQuery(source, call_chain)
+        expected = "DataQuery(MockedSource()).map(userfunc).reduce(userfunc)"
         self.assertEqual(repr(query), expected)
 
         # Call chain with known method using keyword-args.
         call_chain = [
             ('reduce', (), {'function': userfunc}),
         ]
-        query = QuerySequence(source, call_chain)
-        expected = "QuerySequence(MockedSource()).reduce(function=userfunc)"
+        query = DataQuery(source, call_chain)
+        expected = "DataQuery(MockedSource()).reduce(function=userfunc)"
         self.assertEqual(repr(query), expected)
 
         # Call chain with known and unknown methods.
@@ -190,8 +190,8 @@ class TestQuerySequence(unittest.TestCase):
             ('map', (userfunc,), {}),
             ('reduce', (userfunc,), {}),
         ]
-        query = QuerySequence(source, call_chain)
-        expected = ("QuerySequence("
+        query = DataQuery(source, call_chain)
+        expected = ("DataQuery("
                     "MockedSource(), "
                     "(('map', (userfunc,), {}), ('blerg', (), {}))"
                     ").map(userfunc).reduce(userfunc)")
@@ -200,31 +200,31 @@ class TestQuerySequence(unittest.TestCase):
     def test_new_call(self):
         source = self.mocked_source
 
-        query = QuerySequence(source)._new_call('methodname')
+        query = DataQuery(source)._new_call('methodname')
         self.assertEqual(query._call_chain, (('methodname', (), {}),))
 
-        query = QuerySequence(source)._new_call('methodname', 'aaa')
+        query = DataQuery(source)._new_call('methodname', 'aaa')
         self.assertEqual(query._call_chain, (('methodname', ('aaa',), {}),))
 
-        query = QuerySequence(source)._new_call('methodname', 'aaa', bbb='BBB')
+        query = DataQuery(source)._new_call('methodname', 'aaa', bbb='BBB')
         self.assertEqual(query._call_chain, (('methodname', ('aaa',), {'bbb': 'BBB'}),))
 
     def test_aggregations(self):
         source = self.mocked_source
 
-        query = QuerySequence(source).sum()
+        query = DataQuery(source).sum()
         self.assertEqual(query._call_chain, (('sum', (), {}),))
 
-        query = QuerySequence(source).avg()
+        query = DataQuery(source).avg()
         self.assertEqual(query._call_chain, (('avg', (), {}),))
 
-        query = QuerySequence(source).count()
+        query = DataQuery(source).count()
         self.assertEqual(query._call_chain, (('count', (), {}),))
 
-        query = QuerySequence(source).min()
+        query = DataQuery(source).min()
         self.assertEqual(query._call_chain, (('min', (), {}),))
 
-        query = QuerySequence(source).max()
+        query = DataQuery(source).max()
         self.assertEqual(query._call_chain, (('max', (), {}),))
 
 
@@ -759,7 +759,7 @@ class TestDataSourceBasics(unittest.TestCase):
 
     def test_call(self):
         result = self.source('label1')
-        self.assertIsInstance(result, QuerySequence)
+        self.assertIsInstance(result, DataQuery)
 
         result = self.source({'label1': 'label2'})
         self.assertIsInstance(result, dict)  # TODO: Change to QueryMapping.

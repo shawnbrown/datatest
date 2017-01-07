@@ -238,7 +238,7 @@ def _rindex(sequence, x, default=None):
     return default
 
 
-class QuerySequence(object):
+class DataQuery(object):
     def __init__(self, data_source, call_chain=None):
         if call_chain:
             _validate_call_chain(call_chain)
@@ -363,7 +363,7 @@ class DataSource(object):
     def __call__(self, *columns, **kwds_filter):
         if len(columns) == 1 and isinstance(columns[0], collections.Mapping):
             return self.select(*columns, **kwds_filter)
-        return QuerySequence(self, [('select', columns, kwds_filter)])
+        return DataQuery(self, [('select', columns, kwds_filter)])
 
     def select(self, *columns, **kwds_filter):
         if len(columns) == 1 and isinstance(columns[0], collections.Mapping):
