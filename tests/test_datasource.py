@@ -56,24 +56,21 @@ class TestValidateCallChain(unittest.TestCase):
 
 class TestDataQuery(unittest.TestCase):
     def setUp(self):
-        class MockedSource(DataSource):
-            def __init__(self, *args, **kwds):
-                pass
-
+        class MockSource(object):
             def __repr__(self):
-                return 'MockedSource()'
+                return '<MockSource object>'
 
-        self.mocked_source = MockedSource()
+        self.mock_source = MockSource()
 
     def test_source_only(self):
-        source = self.mocked_source
+        source = self.mock_source
         query = DataQuery(source)  # <- source only (no call chain)
 
         self.assertIs(query._data_source, source)
         self.assertEqual(query._call_chain, tuple(), 'should be empty')
 
     def test_source_and_chain(self):
-        source = self.mocked_source
+        source = self.mock_source
         chain = [('foo', (), {})]
         query = DataQuery(source, chain)
 
@@ -81,7 +78,7 @@ class TestDataQuery(unittest.TestCase):
         self.assertEqual(query._call_chain, tuple(chain), 'should be tuple, not list')
 
     def test_map(self):
-        source = self.mocked_source
+        source = self.mock_source
         chain = [('foo', (), {})]
         userfunc = lambda x: str(x).strip()
         query = DataQuery(source, chain).map(userfunc)
@@ -92,7 +89,7 @@ class TestDataQuery(unittest.TestCase):
         self.assertEqual(query._call_chain, expected)
 
     def test_reduce(self):
-        source = self.mocked_source
+        source = self.mock_source
         chain = [('foo', (), {})]
         userfunc = lambda x, y: x + y
         query = DataQuery(source, chain).reduce(userfunc)
@@ -103,7 +100,7 @@ class TestDataQuery(unittest.TestCase):
         self.assertEqual(query._call_chain, expected)
 
     def test_repr(self):
-        source = self.mocked_source
+        source = self.mock_source
 
         def userfunc(x):
             return str(x).upper()
@@ -112,7 +109,7 @@ class TestDataQuery(unittest.TestCase):
         query = DataQuery(source)
         expected = """
             DataQuery(
-                data_source=MockedSource(),
+                data_source=<MockSource object>,
                 call_chain=[],
                 optimizer=None
             )
@@ -124,7 +121,7 @@ class TestDataQuery(unittest.TestCase):
         query = DataQuery(source, [('foo', (), {})])
         expected = """
             DataQuery(
-                data_source=MockedSource(),
+                data_source=<MockSource object>,
                 call_chain=[
                     ('foo', (), {})
                 ],
@@ -138,7 +135,7 @@ class TestDataQuery(unittest.TestCase):
         query = DataQuery(source, [('map', (userfunc,), {})])
         expected = """
             DataQuery(
-                data_source=MockedSource(),
+                data_source=<MockSource object>,
                 call_chain=[
                     ('map', (userfunc,), {})
                 ],
@@ -156,7 +153,7 @@ class TestDataQuery(unittest.TestCase):
         query = DataQuery(source, call_chain)
         expected = """
             DataQuery(
-                data_source=MockedSource(),
+                data_source=<MockSource object>,
                 call_chain=[
                     ('map', (userfunc,), {}),
                     ('reduce', (userfunc,), {})
@@ -174,7 +171,7 @@ class TestDataQuery(unittest.TestCase):
         query = DataQuery(source, call_chain)
         expected = """
             DataQuery(
-                data_source=MockedSource(),
+                data_source=<MockSource object>,
                 call_chain=[
                     ('reduce', (), {'function': userfunc})
                 ],
@@ -194,7 +191,7 @@ class TestDataQuery(unittest.TestCase):
         query = DataQuery(source, call_chain)
         expected = """
             DataQuery(
-                data_source=MockedSource(),
+                data_source=<MockSource object>,
                 call_chain=[
                     ('map', (userfunc,), {}),
                     ('blerg', (), {}),
@@ -208,7 +205,7 @@ class TestDataQuery(unittest.TestCase):
         self.assertEqual(repr(query), expected)
 
     def test_new_call(self):
-        source = self.mocked_source
+        source = self.mock_source
 
         query = DataQuery(source)._new_call('methodname')
         self.assertEqual(query._call_chain, (('methodname', (), {}),))
@@ -220,7 +217,7 @@ class TestDataQuery(unittest.TestCase):
         self.assertEqual(query._call_chain, (('methodname', ('aaa',), {'bbb': 'BBB'}),))
 
     def test_aggregations(self):
-        source = self.mocked_source
+        source = self.mock_source
 
         query = DataQuery(source).sum()
         self.assertEqual(query._call_chain, (('sum', (), {}),))
