@@ -20,7 +20,8 @@ from datatest.sources.datasource import DataQuery
 class TestValidateCallChain(unittest.TestCase):
     def test_passing(self):
         _validate_call_chain([])
-        _validate_call_chain([('sum', (), {})])
+        _validate_call_chain(['foo'])
+        _validate_call_chain(['sum', ((), {})])
 
     def test_container(self):
         with self.assertRaisesRegex(TypeError, "cannot be 'str'"):
@@ -28,30 +29,25 @@ class TestValidateCallChain(unittest.TestCase):
             _validate_call_chain(call_chain)
 
     def test_type(self):
-        regex = "item must be 3-tuple, found 'str'"
+        regex = "call_chain must be iterable"
         with self.assertRaisesRegex(TypeError, regex):
-            call_chain = ['bad item']
+            call_chain = 123
             _validate_call_chain(call_chain)
 
     def test_len(self):
-        regex = "expected 3-tuple, found 2-tuple"
+        regex = 'expected string or 2-tuple, found 3-tuple'
         with self.assertRaisesRegex(TypeError, regex):
-            _validate_call_chain([('sum', ())])
+            _validate_call_chain([((), {}, {})])
 
     def test_first_item(self):
-        regex = "first item must be method name 'str', found 'int'"
+        regex = r"first item must be \*args 'tuple', found 'int'"
         with self.assertRaisesRegex(TypeError, regex):
-            _validate_call_chain([(123, (), {})])
+            _validate_call_chain([(123, {})])
 
     def test_second_item(self):
-        regex = r"second item must be \*args 'tuple', found 'int'"
+        regex = r"second item must be \*\*kwds 'dict', found 'int'"
         with self.assertRaisesRegex(TypeError, regex):
-            _validate_call_chain([('sum', 123, {})])
-
-    def test_third_item(self):
-        regex = r"third item must be \*\*kwds 'dict', found 'int'"
-        with self.assertRaisesRegex(TypeError, regex):
-            _validate_call_chain([('sum', (), 123)])
+            _validate_call_chain([((), 123)])
 
 
 class TestDataQuery(unittest.TestCase):
@@ -71,7 +67,7 @@ class TestDataQuery(unittest.TestCase):
 
     def test_source_and_chain(self):
         source = self.mock_source
-        chain = [('foo', (), {})]
+        chain = ['foo', ((), {})]
         query = DataQuery(source, chain)
 
         self.assertIs(query._data_source, source)
@@ -79,24 +75,24 @@ class TestDataQuery(unittest.TestCase):
 
     def test_map(self):
         source = self.mock_source
-        chain = [('foo', (), {})]
+        chain = ['foo', ((), {})]
         userfunc = lambda x: str(x).strip()
         query = DataQuery(source, chain).map(userfunc)
 
         self.assertIsInstance(query, DataQuery)
 
-        expected = (('foo', (), {}), ('map', (userfunc,), {}))
+        expected = ('foo', ((), {}), 'map', ((userfunc,), {}))
         self.assertEqual(query._call_chain, expected)
 
     def test_reduce(self):
         source = self.mock_source
-        chain = [('foo', (), {})]
+        chain = ['foo', ((), {})]
         userfunc = lambda x, y: x + y
         query = DataQuery(source, chain).reduce(userfunc)
 
         self.assertIsInstance(query, DataQuery)
 
-        expected = (('foo', (), {}), ('reduce', (userfunc,), {}))
+        expected = ('foo', ((), {}), 'reduce', ((userfunc,), {}))
         self.assertEqual(query._call_chain, expected)
 
     def test_repr(self):
@@ -118,12 +114,13 @@ class TestDataQuery(unittest.TestCase):
         self.assertEqual(repr(query), expected)
 
         # Call chain with unknown methods.
-        query = DataQuery(source, [('foo', (), {})])
+        query = DataQuery(source, ['foo', ((), {})])
         expected = """
             DataQuery(
                 data_source=<MockSource object>,
                 call_chain=[
-                    ('foo', (), {})
+                    'foo',
+                    ((), {})
                 ],
                 optimizer=None
             )
@@ -132,12 +129,13 @@ class TestDataQuery(unittest.TestCase):
         self.assertEqual(repr(query), expected)
 
         # Call chain with known method.
-        query = DataQuery(source, [('map', (userfunc,), {})])
+        query = DataQuery(source, ['map', ((userfunc,), {})])
         expected = """
             DataQuery(
                 data_source=<MockSource object>,
                 call_chain=[
-                    ('map', (userfunc,), {})
+                    'map',
+                    ((userfunc,), {})
                 ],
                 optimizer=None
             )
@@ -147,16 +145,20 @@ class TestDataQuery(unittest.TestCase):
 
         # Call chain with multiple known methods.
         call_chain = [
-            ('map', (userfunc,), {}),
-            ('reduce', (userfunc,), {}),
+            'map',
+            ((userfunc,), {}),
+            'reduce',
+            ((userfunc,), {}),
         ]
         query = DataQuery(source, call_chain)
         expected = """
             DataQuery(
                 data_source=<MockSource object>,
                 call_chain=[
-                    ('map', (userfunc,), {}),
-                    ('reduce', (userfunc,), {})
+                    'map',
+                    ((userfunc,), {}),
+                    'reduce',
+                    ((userfunc,), {})
                 ],
                 optimizer=None
             )
@@ -166,14 +168,16 @@ class TestDataQuery(unittest.TestCase):
 
         # Call chain with known method using keyword-args.
         call_chain = [
-            ('reduce', (), {'function': userfunc}),
+            'reduce',
+            ((), {'function': userfunc}),
         ]
         query = DataQuery(source, call_chain)
         expected = """
             DataQuery(
                 data_source=<MockSource object>,
                 call_chain=[
-                    ('reduce', (), {'function': userfunc})
+                    'reduce',
+                    ((), {'function': userfunc})
                 ],
                 optimizer=None
             )
@@ -183,20 +187,28 @@ class TestDataQuery(unittest.TestCase):
 
         # Call chain with known and unknown methods.
         call_chain = [
-            ('map', (userfunc,), {}),
-            ('blerg', (), {}),
-            ('map', (userfunc,), {}),
-            ('reduce', (userfunc,), {}),
+            'map',
+            ((userfunc,), {}),
+            'blerg',
+            ((), {}),
+            'map',
+            ((userfunc,), {}),
+            'reduce',
+            ((userfunc,), {}),
         ]
         query = DataQuery(source, call_chain)
         expected = """
             DataQuery(
                 data_source=<MockSource object>,
                 call_chain=[
-                    ('map', (userfunc,), {}),
-                    ('blerg', (), {}),
-                    ('map', (userfunc,), {}),
-                    ('reduce', (userfunc,), {})
+                    'map',
+                    ((userfunc,), {}),
+                    'blerg',
+                    ((), {}),
+                    'map',
+                    ((userfunc,), {}),
+                    'reduce',
+                    ((userfunc,), {})
                 ],
                 optimizer=None
             )
@@ -208,31 +220,31 @@ class TestDataQuery(unittest.TestCase):
         source = self.mock_source
 
         query = DataQuery(source)._new_call('methodname')
-        self.assertEqual(query._call_chain, (('methodname', (), {}),))
+        self.assertEqual(query._call_chain, ('methodname', ((), {})))
 
         query = DataQuery(source)._new_call('methodname', 'aaa')
-        self.assertEqual(query._call_chain, (('methodname', ('aaa',), {}),))
+        self.assertEqual(query._call_chain, ('methodname', (('aaa',), {})))
 
         query = DataQuery(source)._new_call('methodname', 'aaa', bbb='BBB')
-        self.assertEqual(query._call_chain, (('methodname', ('aaa',), {'bbb': 'BBB'}),))
+        self.assertEqual(query._call_chain, ('methodname', (('aaa',), {'bbb': 'BBB'})))
 
     def test_aggregations(self):
         source = self.mock_source
 
         query = DataQuery(source).sum()
-        self.assertEqual(query._call_chain, (('sum', (), {}),))
+        self.assertEqual(query._call_chain, ('sum', ((), {})))
 
         query = DataQuery(source).avg()
-        self.assertEqual(query._call_chain, (('avg', (), {}),))
+        self.assertEqual(query._call_chain, ('avg', ((), {})))
 
         query = DataQuery(source).count()
-        self.assertEqual(query._call_chain, (('count', (), {}),))
+        self.assertEqual(query._call_chain, ('count', ((), {})))
 
         query = DataQuery(source).min()
-        self.assertEqual(query._call_chain, (('min', (), {}),))
+        self.assertEqual(query._call_chain, ('min', ((), {})))
 
         query = DataQuery(source).max()
-        self.assertEqual(query._call_chain, (('max', (), {}),))
+        self.assertEqual(query._call_chain, ('max', ((), {})))
 
 
 class TestResultSequence(unittest.TestCase):

@@ -182,28 +182,34 @@ class ResultMapping(collections.Mapping):
 
 def _validate_call_chain(call_chain):
     """Validate call chain--if invalid, raises TypeError else returns
-    None. Call chain should be an iterable of 3-tuples where each item
-    contains a name 'str', an *args 'tuple', and a **kwds 'dict'.
+    None. Call chain should be an iterable containing strings and
+    2-tuples. In the case of 2-tuples, the first item must be an *args
+    'tuple' and the second item must be a **kwds dict.
     """
     if isinstance(call_chain, str):
         raise TypeError("cannot be 'str'")
 
-    for item in call_chain:
+    try:
+        iterable = iter(call_chain)
+    except TypeError:
+        raise TypeError('call_chain must be iterable')
+
+    for item in iterable:
+        if isinstance(item, str):
+            continue  # Skip to next item.
+
         if not isinstance(item, tuple):
-            err_msg = 'item must be 3-tuple, found {0}'
+            err_msg = 'item must be string or 2-tuple, found {0}'
             err_obj = type(item).__name__
-        elif len(item) != 3:
-            err_msg = 'expected 3-tuple, found {0}-tuple'
+        elif len(item) != 2:
+            err_msg = 'expected string or 2-tuple, found {0}-tuple'
             err_obj = len(item)
-        elif not isinstance(item[0], str):
-            err_msg = "first item must be method name 'str', found {0}"
+        elif not isinstance(item[0], tuple):
+            err_msg = "first item must be *args 'tuple', found {0}"
             err_obj = type(item[0]).__name__
-        elif not isinstance(item[1], tuple):
-            err_msg = "second item must be *args 'tuple', found {0}"
+        elif not isinstance(item[1], dict):
+            err_msg = "second item must be **kwds 'dict', found {0}"
             err_obj = type(item[1]).__name__
-        elif not isinstance(item[2], dict):
-            err_msg = "third item must be **kwds 'dict', found {0}"
-            err_obj = type(item[2]).__name__
         else:
             err_msg = None
             err_obj = None
@@ -214,9 +220,10 @@ def _validate_call_chain(call_chain):
 
 def _get_call_repr(call):
     """Helper function returns repr for a single call chain item."""
-    name, args, kwds = call
+    if isinstance(call, str):
+        return repr(call)  # <- EXIT!
 
-    name_repr = repr(name)
+    args, kwds = call
 
     def _callable_name_or_repr(x):  # <- Helper function for
         if callable(x):             #    the helper function!
@@ -236,7 +243,7 @@ def _get_call_repr(call):
     kwds_repr = ', '.join(kwds_repr)
     kwds_repr = '{' + kwds_repr + '}'
 
-    return '({0}, {1}, {2})'.format(name_repr, args_repr, kwds_repr)
+    return '({0}, {1})'.format(args_repr, kwds_repr)
 
 
 class DataQuery(object):
@@ -254,7 +261,8 @@ class DataQuery(object):
         self._data_source = data_source
 
     def _new_call(self, method, *args, **kwds):
-        call_chain = self._call_chain + ((method, args, kwds),)
+        call_chain = self._call_chain
+        call_chain += (method, (args, kwds))
         return self.__class__(self._data_source, call_chain)
 
     def map(self, function):
@@ -344,7 +352,7 @@ class DataSource(object):
     def __call__(self, *columns, **kwds_filter):
         if len(columns) == 1 and isinstance(columns[0], collections.Mapping):
             return self.select(*columns, **kwds_filter)
-        return DataQuery(self, [('select', columns, kwds_filter)])
+        return DataQuery(self, ['select', (columns, kwds_filter)])
 
     def select(self, *columns, **kwds_filter):
         if len(columns) == 1 and isinstance(columns[0], collections.Mapping):
