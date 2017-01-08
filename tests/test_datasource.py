@@ -14,7 +14,6 @@ from datatest.sources.datasource import ResultSequence
 from datatest.sources.datasource import ResultMapping
 from datatest.sources.datasource import _sqlite_sortkey
 from datatest.sources.datasource import _validate_call_chain
-from datatest.sources.datasource import _rindex
 from datatest.sources.datasource import DataQuery
 
 
@@ -53,23 +52,6 @@ class TestValidateCallChain(unittest.TestCase):
         regex = r"third item must be \*\*kwds 'dict', found 'int'"
         with self.assertRaisesRegex(TypeError, regex):
             _validate_call_chain([('sum', (), 123)])
-
-
-class TestRindex(unittest.TestCase):
-    def test_indexes(self):
-        lst = ['c', 'b', 'b', 'a', 'a']
-        self.assertEqual(_rindex(lst, 'a'), 4)
-        self.assertEqual(_rindex(lst, 'b'), 2)
-        self.assertEqual(_rindex(lst, 'c'), 0)
-
-    def test_missing(self):
-        # Raises error if value is missing from sequence.
-        with self.assertRaisesRegex(ValueError, "'c' is not in sequence"):
-            _rindex(['a', 'b'], 'c')
-
-        # Returns default if value is missing but default is provided.
-        index = _rindex(['a', 'b'], 'c', default=0)
-        self.assertEqual(index, 0)
 
 
 class TestDataQuery(unittest.TestCase):

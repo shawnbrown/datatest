@@ -239,17 +239,6 @@ def _get_call_repr(call):
     return '({0}, {1}, {2})'.format(name_repr, args_repr, kwds_repr)
 
 
-def _rindex(sequence, x, default=None):
-    """Helper function returns index of last item whose value is x."""
-    length = len(sequence)
-    for rindex, value in enumerate(reversed(sequence), start=1):
-        if value == x:
-            return length - rindex
-    if default == None:
-        raise ValueError(repr(x) + ' is not in sequence')
-    return default
-
-
 class DataQuery(object):
     def __init__(self, data_source, call_chain=None, optimizer=None):
         assert optimizer == None or callable(optimizer)
