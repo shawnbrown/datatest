@@ -2,6 +2,7 @@
 import datetime
 import sqlite3
 import sys
+import textwrap
 
 from . import _unittest as unittest
 from datatest.utils.collections import Iterable
@@ -13,7 +14,6 @@ from datatest.sources.datasource import ResultSequence
 from datatest.sources.datasource import ResultMapping
 from datatest.sources.datasource import _sqlite_sortkey
 from datatest.sources.datasource import _validate_call_chain
-from datatest.sources.datasource import _ProxyRepr
 from datatest.sources.datasource import _rindex
 from datatest.sources.datasource import DataQuery
 
@@ -53,32 +53,6 @@ class TestValidateCallChain(unittest.TestCase):
         regex = r"third item must be \*\*kwds 'dict', found 'int'"
         with self.assertRaisesRegex(TypeError, regex):
             _validate_call_chain([('sum', (), 123)])
-
-
-class TestProxyRepr(unittest.TestCase):
-    def test_noncallable(self):
-        proxy = _ProxyRepr(1)
-        self.assertEqual(repr(proxy), '1')
-
-        proxy = _ProxyRepr('AAA')
-        self.assertEqual(repr(proxy), "'AAA'")
-
-    def test_function(self):
-        def userfunc(x):
-            return str(x).upper()
-        proxy = _ProxyRepr(userfunc)
-        self.assertEqual(repr(proxy), 'userfunc')
-
-    def test_lambda(self):
-        userlambda = lambda x: str(x).upper()
-        proxy = _ProxyRepr(userlambda)
-        self.assertEqual(repr(proxy), '<lambda>')
-
-    def test_lambda_with_name(self):
-        userlambda = lambda x: str(x).upper()
-        userlambda.__name__ = 'userlambda'
-        proxy = _ProxyRepr(userlambda)
-        self.assertEqual(repr(proxy), 'userlambda')
 
 
 class TestRindex(unittest.TestCase):
@@ -154,16 +128,42 @@ class TestDataQuery(unittest.TestCase):
 
         # No call chain.
         query = DataQuery(source)
-        self.assertEqual(repr(query), 'DataQuery(MockedSource())')
+        expected = """
+            DataQuery(
+                data_source=MockedSource(),
+                call_chain=[],
+                optimizer=None
+            )
+        """
+        expected = textwrap.dedent(expected).strip()
+        self.assertEqual(repr(query), expected)
 
         # Call chain with unknown methods.
         query = DataQuery(source, [('foo', (), {})])
-        expected = "DataQuery(MockedSource(), (('foo', (), {}),))"
+        expected = """
+            DataQuery(
+                data_source=MockedSource(),
+                call_chain=[
+                    ('foo', (), {})
+                ],
+                optimizer=None
+            )
+        """
+        expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)
 
         # Call chain with known method.
         query = DataQuery(source, [('map', (userfunc,), {})])
-        expected = "DataQuery(MockedSource()).map(userfunc)"
+        expected = """
+            DataQuery(
+                data_source=MockedSource(),
+                call_chain=[
+                    ('map', (userfunc,), {})
+                ],
+                optimizer=None
+            )
+        """
+        expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)
 
         # Call chain with multiple known methods.
@@ -172,7 +172,17 @@ class TestDataQuery(unittest.TestCase):
             ('reduce', (userfunc,), {}),
         ]
         query = DataQuery(source, call_chain)
-        expected = "DataQuery(MockedSource()).map(userfunc).reduce(userfunc)"
+        expected = """
+            DataQuery(
+                data_source=MockedSource(),
+                call_chain=[
+                    ('map', (userfunc,), {}),
+                    ('reduce', (userfunc,), {})
+                ],
+                optimizer=None
+            )
+        """
+        expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)
 
         # Call chain with known method using keyword-args.
@@ -180,7 +190,16 @@ class TestDataQuery(unittest.TestCase):
             ('reduce', (), {'function': userfunc}),
         ]
         query = DataQuery(source, call_chain)
-        expected = "DataQuery(MockedSource()).reduce(function=userfunc)"
+        expected = """
+            DataQuery(
+                data_source=MockedSource(),
+                call_chain=[
+                    ('reduce', (), {'function': userfunc})
+                ],
+                optimizer=None
+            )
+        """
+        expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)
 
         # Call chain with known and unknown methods.
@@ -191,10 +210,19 @@ class TestDataQuery(unittest.TestCase):
             ('reduce', (userfunc,), {}),
         ]
         query = DataQuery(source, call_chain)
-        expected = ("DataQuery("
-                    "MockedSource(), "
-                    "(('map', (userfunc,), {}), ('blerg', (), {}))"
-                    ").map(userfunc).reduce(userfunc)")
+        expected = """
+            DataQuery(
+                data_source=MockedSource(),
+                call_chain=[
+                    ('map', (userfunc,), {}),
+                    ('blerg', (), {}),
+                    ('map', (userfunc,), {}),
+                    ('reduce', (userfunc,), {})
+                ],
+                optimizer=None
+            )
+        """
+        expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)
 
     def test_new_call(self):

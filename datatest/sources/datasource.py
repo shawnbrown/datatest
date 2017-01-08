@@ -212,19 +212,31 @@ def _validate_call_chain(call_chain):
             raise TypeError(err_msg.format(repr(err_obj)))
 
 
-class _ProxyRepr(object):
-    """Helper class returns __name__ for repr of callable object."""
-    def __init__(self, item):
-        self.item = item
+def _get_call_repr(call):
+    """Helper function returns repr for a single call chain item."""
+    name, args, kwds = call
 
-    def __repr__(self):
-        item = self.item
-        if callable(item):
+    name_repr = repr(name)
+
+    def _callable_name_or_repr(x):  # <- Helper function for
+        if callable(x):             #    the helper function!
             try:
-                return item.__name__
+                return x.__name__
             except NameError:
                 pass
-        return repr(item)
+        return repr(x)
+
+    args_repr = [_callable_name_or_repr(x) + ',' for x in args]
+    args_repr = ' '.join(args_repr)
+    args_repr = '(' + args_repr + ')'
+
+    kwds_repr = kwds.items()
+    kwds_repr = [(repr(k), _callable_name_or_repr(v)) for k, v in kwds_repr]
+    kwds_repr = ['{0}: {1}'.format(k, v) for k, v in kwds_repr]
+    kwds_repr = ', '.join(kwds_repr)
+    kwds_repr = '{' + kwds_repr + '}'
+
+    return '({0}, {1}, {2})'.format(name_repr, args_repr, kwds_repr)
 
 
 def _rindex(sequence, x, default=None):
@@ -239,13 +251,17 @@ def _rindex(sequence, x, default=None):
 
 
 class DataQuery(object):
-    def __init__(self, data_source, call_chain=None):
+    def __init__(self, data_source, call_chain=None, optimizer=None):
+        assert optimizer == None or callable(optimizer)
+        self._optimizer = optimizer
+
         if call_chain:
             _validate_call_chain(call_chain)
-            self._call_chain = tuple(call_chain)
+            call_chain = tuple(call_chain)
         else:
-            self._call_chain = tuple()
+            call_chain = tuple()
 
+        self._call_chain = call_chain
         self._data_source = data_source
 
     def _new_call(self, method, *args, **kwds):
@@ -274,43 +290,18 @@ class DataQuery(object):
         return self._new_call('max')
 
     def __repr__(self):
-        # Get _ProxyRepr() objects for args and key-word values.
-        def func(item):
-            name, args, kwds = item  # Unpack tuple.
-            args = tuple(_ProxyRepr(x) for x in args)
-            kwds = dict((k, _ProxyRepr(v)) for k, v in kwds.items())
-            return (name, args, kwds)
-        call_chain =[func(x) for x in self._call_chain]
-
-        # Slice consecutive known methods from end of call_chain.
-        is_known = [hasattr(self, x[0]) for x in call_chain]
-        pos = _rindex(is_known, False, default=-1) + 1
-        known_methods = call_chain[pos:]
-        call_chain = call_chain[:pos]
-
-        # Format call_chain repr.
-        if call_chain:
-            chain_repr = ', ' + repr(tuple(call_chain))
-        else:
-            chain_repr = ''
-
-        # Format know_methods repr.
-        if known_methods:
-            known_repr = []
-            for call in known_methods:
-                name, args, kwds = call  # Unpack tuple.
-                args = [repr(x) for x in args]
-                kwds = ['{0}={1!r}'.format(k, v) for k, v in kwds.items()]
-                all_args = ', '.join(args + kwds)
-                call_repr = '.{0}({1})'.format(name, all_args)
-                known_repr.append(call_repr)
-            known_repr = ''.join(known_repr)
-        else:
-            known_repr = ''
-
         class_name = self.__class__.__name__
         source_repr = repr(self._data_source)
-        return '{0}({1}{2}){3}'.format(class_name, source_repr, chain_repr, known_repr)
+        chain_repr = [_get_call_repr(call) for call in self._call_chain]
+        chain_repr = ',\n        '.join(chain_repr)
+        if chain_repr:
+            chain_repr = '\n        ' + chain_repr + '\n    '
+        optimizer_repr = repr(self._optimizer)
+        return ('{0}(\n'
+                '    data_source={1},\n'
+                '    call_chain=[{2}],\n'
+                '    optimizer={3}\n'
+                ')').format(class_name, source_repr, chain_repr, optimizer_repr)
 
 
 class DataSource(object):
