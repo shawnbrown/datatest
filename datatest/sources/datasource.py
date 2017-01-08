@@ -345,8 +345,6 @@ class DataSource(object):
             raise LookupError(msg)
 
     def __call__(self, *columns, **kwds_filter):
-        if len(columns) == 1 and isinstance(columns[0], collections.Mapping):
-            return self.select(*columns, **kwds_filter)
         return DataQuery(self, ['select', (columns, kwds_filter)])
 
     def select(self, *columns, **kwds_filter):

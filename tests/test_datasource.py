@@ -801,5 +801,16 @@ class TestDataSourceBasics(unittest.TestCase):
         result = self.source('label1')
         self.assertIsInstance(result, DataQuery)
 
+        result = list(result._execute())
+        expected = ['a', 'a', 'a', 'a', 'b', 'b', 'b']
+        self.assertEqual(result, expected)
+
         result = self.source({'label1': 'label2'})
-        self.assertIsInstance(result, dict)  # TODO: Change to QueryMapping.
+        self.assertIsInstance(result, DataQuery)
+
+        result = dict(result._execute())
+        expected = {
+            'a': ['x', 'x', 'y', 'z'],
+            'b': ['z', 'y', 'x'],
+        }
+        self.assertEqual(result, expected)
