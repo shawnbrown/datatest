@@ -282,9 +282,10 @@ class DataQuery(object):
         class_name = self.__class__.__name__
         source_repr = repr(self._data_source)
         chain_repr = [_get_call_repr(call) for call in self._call_chain]
-        chain_repr = ',\n        '.join(chain_repr)
+        chain_repr = ['        ' + x for x in chain_repr]  # Indent items.
+        chain_repr = ',\n'.join(chain_repr)
         if chain_repr:
-            chain_repr = '\n        ' + chain_repr + '\n    '
+            chain_repr = '\n{0}\n    '.format(chain_repr)
         optimizer_repr = repr(self._optimizer)
         return ('{0}(\n'
                 '    data_source={1},\n'
