@@ -283,6 +283,19 @@ class DataQuery(object):
                 '    optimizer={3}\n'
                 ')').format(class_name, source_repr, chain_repr, optimizer_repr)
 
+    def _execute(self):
+        call_chain = self._call_chain
+        if self._optimizer:
+            call_chain = self._optimizer(call_chain)
+
+        def function(obj, val):
+            if isinstance(val, str):
+                return getattr(obj, val)
+            args, kwds = val  # Unpack tuple.
+            return obj(*args, **kwds)
+
+        return functools.reduce(function, call_chain, self._data_source)
+
 
 class DataSource(object):
     """

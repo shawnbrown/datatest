@@ -258,6 +258,15 @@ class TestDataQuery(unittest.TestCase):
         )
         self.assertEqual(query._call_chain, expected)
 
+    def test_execute(self):
+        query = DataQuery('hello world')
+        result = query.upper()._execute()
+        self.assertEqual(result, 'HELLO WORLD')
+
+        query = DataQuery('123')
+        result = query.isdigit()._execute()
+        self.assertEqual(result, True)
+
 
 class TestResultSequence(unittest.TestCase):
     def test_repr(self):
