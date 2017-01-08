@@ -260,31 +260,13 @@ class DataQuery(object):
         self._call_chain = call_chain
         self._data_source = data_source
 
-    def _new_call(self, method, *args, **kwds):
-        call_chain = self._call_chain
-        call_chain += (method, (args, kwds))
-        return self.__class__(self._data_source, call_chain)
+    def __getattr__(self, name):
+        call_chain = self._call_chain + (name,)
+        return self.__class__(self._data_source, call_chain, self._optimizer)
 
-    def map(self, function):
-        return self._new_call('map', function)
-
-    def reduce(self, function):
-        return self._new_call('reduce', function)
-
-    def sum(self):
-        return self._new_call('sum')
-
-    def avg(self):
-        return self._new_call('avg')
-
-    def count(self):
-        return self._new_call('count')
-
-    def min(self):
-        return self._new_call('min')
-
-    def max(self):
-        return self._new_call('max')
+    def __call__(self, *args, **kwds):
+        call_chain = self._call_chain + ((args, kwds),)
+        return self.__class__(self._data_source, call_chain, self._optimizer)
 
     def __repr__(self):
         class_name = self.__class__.__name__

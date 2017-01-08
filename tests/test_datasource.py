@@ -216,35 +216,47 @@ class TestDataQuery(unittest.TestCase):
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)
 
-    def test_new_call(self):
-        source = self.mock_source
+    def test_getattr(self):
+        query = DataQuery(self.mock_source)
 
-        query = DataQuery(source)._new_call('methodname')
-        self.assertEqual(query._call_chain, ('methodname', ((), {})))
+        query = query.foo
+        self.assertEqual(query._call_chain, ('foo',))
 
-        query = DataQuery(source)._new_call('methodname', 'aaa')
-        self.assertEqual(query._call_chain, ('methodname', (('aaa',), {})))
+        query = query.bar
+        self.assertEqual(query._call_chain, ('foo', 'bar'))
 
-        query = DataQuery(source)._new_call('methodname', 'aaa', bbb='BBB')
-        self.assertEqual(query._call_chain, ('methodname', (('aaa',), {'bbb': 'BBB'})))
+    def test_call(self):
+        query = DataQuery(self.mock_source)
 
-    def test_aggregations(self):
-        source = self.mock_source
+        query = query.foo()
+        expected = (
+            'foo', ((), {}),
+        )
+        self.assertEqual(query._call_chain, expected)
 
-        query = DataQuery(source).sum()
-        self.assertEqual(query._call_chain, ('sum', ((), {})))
+        query = query.bar('BAR')
+        expected = (
+            'foo', ((), {}),
+            'bar', (('BAR',), {})
+        )
+        self.assertEqual(query._call_chain, expected)
 
-        query = DataQuery(source).avg()
-        self.assertEqual(query._call_chain, ('avg', ((), {})))
+        query = query.baz
+        expected = (
+            'foo', ((), {}),
+            'bar', (('BAR',), {}),
+            'baz',
+        )
+        self.assertEqual(query._call_chain, expected)
 
-        query = DataQuery(source).count()
-        self.assertEqual(query._call_chain, ('count', ((), {})))
-
-        query = DataQuery(source).min()
-        self.assertEqual(query._call_chain, ('min', ((), {})))
-
-        query = DataQuery(source).max()
-        self.assertEqual(query._call_chain, ('max', ((), {})))
+        query = query.corge(qux='quux')
+        expected = (
+            'foo', ((), {}),
+            'bar', (('BAR',), {}),
+            'baz',
+            'corge', ((), {'qux': 'quux'})
+        )
+        self.assertEqual(query._call_chain, expected)
 
 
 class TestResultSequence(unittest.TestCase):
