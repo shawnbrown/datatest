@@ -75,26 +75,26 @@ def _sqlite_sum(iterable):
     return sum(iterable, start_value)
 
 
-class ResultSequence(object):
+class IterSequence(object):
     """."""
     def __init__(self, iterable):
-        self._iterable = iterable
+        self._iterator = iter(iterable)
 
     def __repr__(self):
         class_name = self.__class__.__name__
-        iterable_repr = repr(self._iterable)
-        return '{0}({1})'.format(class_name, iterable_repr)
+        iterator_repr = repr(self._iterator)
+        return '{0}({1})'.format(class_name, iterator_repr)
 
     def __iter__(self):
-        return iter(self._iterable)
+        return iter(self._iterator)
 
     def map(self, function):
-        """Return a ResultSequence iterator that applies *function* to
-        the elements, yielding the results.
+        """Return a IterSequence that applies *function* to the
+        elements, yielding the results.
         """
         if _expects_multiple_params(function):
-            return ResultSequence(function(*x) for x in self)
-        return ResultSequence(function(x) for x in self)
+            return IterSequence(function(*x) for x in self)
+        return IterSequence(function(x) for x in self)
 
     def reduce(self, function):
         """Apply a *function* of two arguments cumulatively to the
@@ -109,10 +109,10 @@ class ResultSequence(object):
 
     def avg(self):
         """Return the average of elements."""
-        iterable = (_sqlite_cast_as_real(x) for x in self if x != None)
+        iterator = (_sqlite_cast_as_real(x) for x in self if x != None)
         total = 0.0
         count = 0
-        for x in iterable:
+        for x in iterator:
             total = total + x
             count += 1
         return total / count if count else None
@@ -127,8 +127,8 @@ class ResultSequence(object):
         """Return the minimum non-None value of all values.
         Returns None only if all values are None.
         """
-        iterable = (x for x in self if x != None)
-        return min(iterable, default=None, key=_sqlite_sortkey)
+        iterator = (x for x in self if x != None)
+        return min(iterator, default=None, key=_sqlite_sortkey)
 
 
 class ResultMapping(collections.Mapping):
@@ -156,7 +156,7 @@ class ResultMapping(collections.Mapping):
 
         result = {}
         for key, value in self._iterable.items():
-            if isinstance(value, ResultSequence):
+            if isinstance(value, IterSequence):
                 value = value.map(function)
             else:
                 value = map(function, value)
@@ -166,7 +166,7 @@ class ResultMapping(collections.Mapping):
     def reduce(self, function):
         result = {}
         for key, value in self._iterable.items():
-            if isinstance(value, ResultSequence):
+            if isinstance(value, IterSequence):
                 value = value.reduce(function)
             else:
                 value = functools.reduce(function, value)
@@ -389,7 +389,7 @@ class DataSource(object):
                 result = (row[0] for row in cursor)
             else:
                 result = cursor
-            return ResultSequence(result)  # <- EXIT!
+            return IterSequence(result)  # <- EXIT!
 
         # Prepare key and value functions.
         slice_index = len(groupby)

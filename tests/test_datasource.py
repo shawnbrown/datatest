@@ -10,7 +10,7 @@ from datatest.utils.decimal import Decimal
 from datatest.utils import TemporarySqliteTable
 
 from datatest.sources.datasource import DataSource
-from datatest.sources.datasource import ResultSequence
+from datatest.sources.datasource import IterSequence
 from datatest.sources.datasource import ResultMapping
 from datatest.sources.datasource import _sqlite_sortkey
 from datatest.sources.datasource import _validate_call_chain
@@ -265,49 +265,44 @@ class TestBaseQuery(unittest.TestCase):
         self.assertEqual(result, True)
 
 
-class TestResultSequence(unittest.TestCase):
+class TestIterSequence(unittest.TestCase):
     def test_repr(self):
-        sequence = ResultSequence([1, 2, 3, 4, 5])
-        sequence_repr = repr(sequence)
+        iterator = IterSequence([1, 2, 3, 4, 5])
+        iterator_repr = repr(iterator)
 
-        expected = 'ResultSequence([1, 2, 3, 4, 5])'
-        self.assertEqual(sequence_repr, expected)
+        expected = 'IterSequence({0})'.format(repr(iterator._iterator))
+        self.assertEqual(iterator_repr, expected)
 
     def test_iter(self):
-        sequence = ResultSequence([1, 2, 3, 4, 5])
+        iterator = IterSequence([1, 2, 3, 4, 5])
 
-        as_iter = iter(sequence)
-        self.assertIsInstance(as_iter, Iterable)
-
-        as_list = [x for x in sequence]
-        self.assertEqual(as_list, [1, 2, 3, 4, 5])
+        self.assertIsInstance(iterator, Iterable)
+        self.assertEqual(list(iterator), [1, 2, 3, 4, 5])
 
     def test_map(self):
-        sequence = ResultSequence([1, 2, 3, 4, 5])
+        iterator = IterSequence([1, 2, 3, 4, 5])
+        iterator = iterator.map(lambda x: x * 2)
 
-        sequence = sequence.map(lambda x: x * 2)
-        self.assertIsInstance(sequence, ResultSequence)
-
-        as_list = list(sequence)
-        self.assertEqual(as_list, [2, 4, 6, 8, 10])
+        self.assertIsInstance(iterator, IterSequence)
+        self.assertEqual(list(iterator), [2, 4, 6, 8, 10])
 
     def test_map_multiple_args(self):
-        sequence = ResultSequence([(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)])
-
         # Using a function of one argument.
+        iterator = IterSequence([(1, 1), (2, 2), (3, 3)])
         function = lambda x: '{0}-{1}'.format(x[0], x[1])
-        as_list = list(sequence.map(function))
-        self.assertEqual(as_list, ['1-1', '2-2', '3-3', '4-4', '5-5'])
+        as_list = list(iterator.map(function))
+        self.assertEqual(as_list, ['1-1', '2-2', '3-3'])
 
         # Using a function of two arguments.
+        iterator = IterSequence([(1, 1), (2, 2), (3, 3)])
         function = lambda x, y: '{0}-{1}'.format(x, y)
-        as_list = list(sequence.map(function))
-        self.assertEqual(as_list, ['1-1', '2-2', '3-3', '4-4', '5-5'])
+        as_list = list(iterator.map(function))
+        self.assertEqual(as_list, ['1-1', '2-2', '3-3'])
 
     def test_reduce(self):
-        sequence = ResultSequence([2, 2, 2, 2, 2])
+        iterator = IterSequence([2, 2, 2, 2, 2])
         multiply = lambda x, y: x * y
-        result = sequence.reduce(multiply)
+        result = iterator.reduce(multiply)
         self.assertEqual(result, 32)
 
 
@@ -330,8 +325,8 @@ class SqliteHelper(unittest.TestCase):
         return result
 
 
-class TestResultSequenceSum(SqliteHelper):
-    """The ResultSequence's sum() method should behave the same as
+class TestIterSequenceSum(SqliteHelper):
+    """The IterSequence's sum() method should behave the same as
     SQLite's SUM function.
 
     See SQLite docs for more details:
@@ -344,7 +339,7 @@ class TestResultSequenceSum(SqliteHelper):
         result = self.sqlite3_aggregate('SUM', values)
         self.assertEqual(result, 30)
 
-        result = ResultSequence(values).sum()
+        result = IterSequence(values).sum()
         self.assertEqual(result, 30)
 
     def test_strings(self):
@@ -354,7 +349,7 @@ class TestResultSequenceSum(SqliteHelper):
         result = self.sqlite3_aggregate('SUM', values)
         self.assertEqual(result, 30)
 
-        result = ResultSequence(values).sum()
+        result = IterSequence(values).sum()
         self.assertEqual(result, 30)
 
     def test_some_empty(self):
@@ -364,7 +359,7 @@ class TestResultSequenceSum(SqliteHelper):
         result = self.sqlite3_aggregate('SUM', values)
         self.assertEqual(result, 20)
 
-        result = ResultSequence(values).sum()
+        result = IterSequence(values).sum()
         self.assertEqual(result, 20)
 
     def test_some_nonnumeric(self):
@@ -374,7 +369,7 @@ class TestResultSequenceSum(SqliteHelper):
         result = self.sqlite3_aggregate('SUM', values)
         self.assertEqual(result, 15)
 
-        result = ResultSequence(values).sum()
+        result = IterSequence(values).sum()
         self.assertEqual(result, 15)
 
     def test_all_nonnumeric(self):
@@ -384,7 +379,7 @@ class TestResultSequenceSum(SqliteHelper):
         result = self.sqlite3_aggregate('SUM', values)
         self.assertEqual(result, 0)
 
-        result = ResultSequence(values).sum()
+        result = IterSequence(values).sum()
         self.assertEqual(result, 0)
 
     def test_some_none(self):
@@ -394,7 +389,7 @@ class TestResultSequenceSum(SqliteHelper):
         result = self.sqlite3_aggregate('SUM', values)
         self.assertEqual(result, 20)
 
-        result = ResultSequence(values).sum()
+        result = IterSequence(values).sum()
         self.assertEqual(result, 20)
 
     def test_none_or_emptystring(self):
@@ -404,7 +399,7 @@ class TestResultSequenceSum(SqliteHelper):
         result = self.sqlite3_aggregate('SUM', values)
         self.assertEqual(result, 0)
 
-        result = ResultSequence(values).sum()
+        result = IterSequence(values).sum()
         self.assertEqual(result, 0)
 
     def test_all_none(self):
@@ -414,12 +409,12 @@ class TestResultSequenceSum(SqliteHelper):
         result = self.sqlite3_aggregate('SUM', values)
         self.assertEqual(result, None)
 
-        result = ResultSequence(values).sum()
+        result = IterSequence(values).sum()
         self.assertEqual(result, None)
 
 
-class TestResultSequenceAvg(SqliteHelper):
-    """The ResultSequence's avg() method should behave the same as
+class TestIterSequenceAvg(SqliteHelper):
+    """The IterSequence's avg() method should behave the same as
     SQLite's AVG function.
 
     See SQLite docs for more details:
@@ -432,7 +427,7 @@ class TestResultSequenceAvg(SqliteHelper):
         result = self.sqlite3_aggregate('AVG', values)
         self.assertEqual(result, 5)
 
-        result = ResultSequence(values).avg()
+        result = IterSequence(values).avg()
         self.assertEqual(result, 5)
 
     def test_strings(self):
@@ -442,7 +437,7 @@ class TestResultSequenceAvg(SqliteHelper):
         result = self.sqlite3_aggregate('AVG', values)
         self.assertEqual(result, 5)
 
-        result = ResultSequence(values).avg()
+        result = IterSequence(values).avg()
         self.assertEqual(result, 5)
 
     def test_some_empty(self):
@@ -452,7 +447,7 @@ class TestResultSequenceAvg(SqliteHelper):
         result = self.sqlite3_aggregate('AVG', values)
         self.assertEqual(result, 4.0)
 
-        result = ResultSequence(values).avg()
+        result = IterSequence(values).avg()
         self.assertEqual(result, 4.0)
 
     def test_some_nonnumeric(self):
@@ -462,7 +457,7 @@ class TestResultSequenceAvg(SqliteHelper):
         result = self.sqlite3_aggregate('AVG', values)
         self.assertEqual(result, 4.0)
 
-        result = ResultSequence(values).avg()
+        result = IterSequence(values).avg()
         self.assertEqual(result, 4.0)
 
     def test_all_nonnumeric(self):
@@ -472,7 +467,7 @@ class TestResultSequenceAvg(SqliteHelper):
         result = self.sqlite3_aggregate('AVG', values)
         self.assertEqual(result, 0)
 
-        result = ResultSequence(values).avg()
+        result = IterSequence(values).avg()
         self.assertEqual(result, 0)
 
     def test_some_none(self):
@@ -482,7 +477,7 @@ class TestResultSequenceAvg(SqliteHelper):
         result = self.sqlite3_aggregate('AVG', values)
         self.assertEqual(result, 6.0)
 
-        result = ResultSequence(values).avg()
+        result = IterSequence(values).avg()
         self.assertEqual(result, 6.0)
 
     def test_none_or_emptystring(self):
@@ -492,7 +487,7 @@ class TestResultSequenceAvg(SqliteHelper):
         result = self.sqlite3_aggregate('AVG', values)
         self.assertEqual(result, 0)
 
-        result = ResultSequence(values).avg()
+        result = IterSequence(values).avg()
         self.assertEqual(result, 0)
 
     def test_all_none(self):
@@ -502,7 +497,7 @@ class TestResultSequenceAvg(SqliteHelper):
         result = self.sqlite3_aggregate('AVG', values)
         self.assertEqual(result, None)
 
-        result = ResultSequence(values).avg()
+        result = IterSequence(values).avg()
         self.assertEqual(result, None)
 
 
@@ -583,7 +578,7 @@ class TestSqliteSortkey(unittest.TestCase):
         self.assertEqual(sortkey_order, sqlite_order)
 
 
-class TestResultSequenceMaxAndMin(unittest.TestCase):
+class TestIterSequenceMaxAndMin(unittest.TestCase):
     """Should match SQLite MAX() and MIN() aggregation behavior.
 
     See SQLite docs for full details:
@@ -591,24 +586,24 @@ class TestResultSequenceMaxAndMin(unittest.TestCase):
         https://www.sqlite.org/lang_aggfunc.html
     """
     def test_max(self):
-        result = ResultSequence([None, 10, 20, 30]).max()
+        result = IterSequence([None, 10, 20, 30]).max()
         self.assertEqual(result, 30)
 
-        result = ResultSequence([None, 10, '20', 30]).max()
+        result = IterSequence([None, 10, '20', 30]).max()
         self.assertEqual(result, '20')
 
         blob_10 = sqlite3.Binary(b'10')
-        result = ResultSequence([None, blob_10, '20', 30]).max()
+        result = IterSequence([None, blob_10, '20', 30]).max()
         self.assertEqual(result, blob_10)
 
     def test_max_null_handling(self):
         """Should return None if and only if there are non-None values
         in the group.
         """
-        result = ResultSequence([None, None]).max()
+        result = IterSequence([None, None]).max()
         self.assertEqual(result, None)
 
-        result = ResultSequence([]).max()
+        result = IterSequence([]).max()
         self.assertEqual(result, None)
 
     def test_min(self):
@@ -617,13 +612,13 @@ class TestResultSequenceMaxAndMin(unittest.TestCase):
         blob_10 = sqlite3.Binary(b'10')
         blob_empty = sqlite3.Binary(b'')
 
-        result = ResultSequence([blob_30, blob_20, blob_10, blob_empty]).min()
+        result = IterSequence([blob_30, blob_20, blob_10, blob_empty]).min()
         self.assertEqual(result, blob_empty)
 
-        result = ResultSequence([blob_30, blob_20, '10', blob_empty]).min()
+        result = IterSequence([blob_30, blob_20, '10', blob_empty]).min()
         self.assertEqual(result, '10')
 
-        result = ResultSequence([blob_30, 20, '10', blob_empty]).min()
+        result = IterSequence([blob_30, 20, '10', blob_empty]).min()
         self.assertEqual(result, 20)
 
     def test_min_null_handling(self):
@@ -633,10 +628,10 @@ class TestResultSequenceMaxAndMin(unittest.TestCase):
         Should return None if and only if there are non-None values
         in the group.
         """
-        result = ResultSequence([None, 20, '10', sqlite3.Binary(b'')]).min()
+        result = IterSequence([None, 20, '10', sqlite3.Binary(b'')]).min()
         self.assertEqual(result, 20)  # Since 20 is non-None, it is returned.
 
-        result = ResultSequence([None, None, None, None]).min()
+        result = IterSequence([None, None, None, None]).min()
         self.assertEqual(result, None)
 
 
@@ -720,7 +715,7 @@ class TestDataSourceBasics(unittest.TestCase):
 
     def test_select(self):
         result = self.source.select('label1')
-        self.assertIsInstance(result, ResultSequence)
+        self.assertIsInstance(result, IterSequence)
         expected = [
             'a',
             'a',
