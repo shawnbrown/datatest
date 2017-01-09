@@ -14,6 +14,7 @@ from datatest.sources.datasource import ResultSequence
 from datatest.sources.datasource import ResultMapping
 from datatest.sources.datasource import _sqlite_sortkey
 from datatest.sources.datasource import _validate_call_chain
+from datatest.sources.datasource import BaseQuery
 from datatest.sources.datasource import DataQuery
 
 
@@ -50,7 +51,7 @@ class TestValidateCallChain(unittest.TestCase):
             _validate_call_chain([((), 123)])
 
 
-class TestDataQuery(unittest.TestCase):
+class TestBaseQuery(unittest.TestCase):
     def setUp(self):
         class MockSource(object):
             def __repr__(self):
@@ -60,7 +61,7 @@ class TestDataQuery(unittest.TestCase):
 
     def test_source_only(self):
         source = self.mock_source
-        query = DataQuery(source)  # <- source only (no call chain)
+        query = BaseQuery(source)  # <- source only (no call chain)
 
         self.assertIs(query._data_source, source)
         self.assertEqual(query._call_chain, tuple(), 'should be empty')
@@ -68,7 +69,7 @@ class TestDataQuery(unittest.TestCase):
     def test_source_and_chain(self):
         source = self.mock_source
         chain = ['foo', ((), {})]
-        query = DataQuery(source, chain)
+        query = BaseQuery(source, chain)
 
         self.assertIs(query._data_source, source)
         self.assertEqual(query._call_chain, tuple(chain), 'should be tuple, not list')
@@ -77,9 +78,9 @@ class TestDataQuery(unittest.TestCase):
         source = self.mock_source
         chain = ['foo', ((), {})]
         userfunc = lambda x: str(x).strip()
-        query = DataQuery(source, chain).map(userfunc)
+        query = BaseQuery(source, chain).map(userfunc)
 
-        self.assertIsInstance(query, DataQuery)
+        self.assertIsInstance(query, BaseQuery)
 
         expected = ('foo', ((), {}), 'map', ((userfunc,), {}))
         self.assertEqual(query._call_chain, expected)
@@ -88,9 +89,9 @@ class TestDataQuery(unittest.TestCase):
         source = self.mock_source
         chain = ['foo', ((), {})]
         userfunc = lambda x, y: x + y
-        query = DataQuery(source, chain).reduce(userfunc)
+        query = BaseQuery(source, chain).reduce(userfunc)
 
-        self.assertIsInstance(query, DataQuery)
+        self.assertIsInstance(query, BaseQuery)
 
         expected = ('foo', ((), {}), 'reduce', ((userfunc,), {}))
         self.assertEqual(query._call_chain, expected)
@@ -102,42 +103,39 @@ class TestDataQuery(unittest.TestCase):
             return str(x).upper()
 
         # No call chain.
-        query = DataQuery(source)
+        query = BaseQuery(source)
         expected = """
-            DataQuery(
+            BaseQuery(
                 data_source=<MockSource object>,
-                call_chain=[],
-                optimizer=None
+                call_chain=[]
             )
         """
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)
 
         # Call chain with unknown methods.
-        query = DataQuery(source, ['foo', ((), {})])
+        query = BaseQuery(source, ['foo', ((), {})])
         expected = """
-            DataQuery(
+            BaseQuery(
                 data_source=<MockSource object>,
                 call_chain=[
                     'foo',
                     ((), {})
-                ],
-                optimizer=None
+                ]
             )
         """
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)
 
         # Call chain with known method.
-        query = DataQuery(source, ['map', ((userfunc,), {})])
+        query = BaseQuery(source, ['map', ((userfunc,), {})])
         expected = """
-            DataQuery(
+            BaseQuery(
                 data_source=<MockSource object>,
                 call_chain=[
                     'map',
                     ((userfunc,), {})
-                ],
-                optimizer=None
+                ]
             )
         """
         expected = textwrap.dedent(expected).strip()
@@ -150,17 +148,16 @@ class TestDataQuery(unittest.TestCase):
             'reduce',
             ((userfunc,), {}),
         ]
-        query = DataQuery(source, call_chain)
+        query = BaseQuery(source, call_chain)
         expected = """
-            DataQuery(
+            BaseQuery(
                 data_source=<MockSource object>,
                 call_chain=[
                     'map',
                     ((userfunc,), {}),
                     'reduce',
                     ((userfunc,), {})
-                ],
-                optimizer=None
+                ]
             )
         """
         expected = textwrap.dedent(expected).strip()
@@ -171,15 +168,14 @@ class TestDataQuery(unittest.TestCase):
             'reduce',
             ((), {'function': userfunc}),
         ]
-        query = DataQuery(source, call_chain)
+        query = BaseQuery(source, call_chain)
         expected = """
-            DataQuery(
+            BaseQuery(
                 data_source=<MockSource object>,
                 call_chain=[
                     'reduce',
                     ((), {'function': userfunc})
-                ],
-                optimizer=None
+                ]
             )
         """
         expected = textwrap.dedent(expected).strip()
@@ -196,9 +192,9 @@ class TestDataQuery(unittest.TestCase):
             'reduce',
             ((userfunc,), {}),
         ]
-        query = DataQuery(source, call_chain)
+        query = BaseQuery(source, call_chain)
         expected = """
-            DataQuery(
+            BaseQuery(
                 data_source=<MockSource object>,
                 call_chain=[
                     'map',
@@ -209,15 +205,14 @@ class TestDataQuery(unittest.TestCase):
                     ((userfunc,), {}),
                     'reduce',
                     ((userfunc,), {})
-                ],
-                optimizer=None
+                ]
             )
         """
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)
 
     def test_getattr(self):
-        query = DataQuery(self.mock_source)
+        query = BaseQuery(self.mock_source)
 
         query = query.foo
         self.assertEqual(query._call_chain, ('foo',))
@@ -226,7 +221,7 @@ class TestDataQuery(unittest.TestCase):
         self.assertEqual(query._call_chain, ('foo', 'bar'))
 
     def test_call(self):
-        query = DataQuery(self.mock_source)
+        query = BaseQuery(self.mock_source)
 
         query = query.foo()
         expected = (
@@ -258,13 +253,15 @@ class TestDataQuery(unittest.TestCase):
         )
         self.assertEqual(query._call_chain, expected)
 
-    def test_execute(self):
-        query = DataQuery('hello world')
-        result = query.upper()._execute()
+    def test_eval(self):
+        query = BaseQuery('hello world')
+        result = query.upper()._eval()
+        self.assertIsInstance(result, str, "should be 'str' not a result object")
         self.assertEqual(result, 'HELLO WORLD')
 
-        query = DataQuery('123')
-        result = query.isdigit()._execute()
+        query = BaseQuery('123')
+        result = query.isdigit()._eval()
+        self.assertIsInstance(result, bool, "should be 'bool' not a result object")
         self.assertEqual(result, True)
 
 
@@ -801,14 +798,14 @@ class TestDataSourceBasics(unittest.TestCase):
         result = self.source('label1')
         self.assertIsInstance(result, DataQuery)
 
-        result = list(result._execute())
+        result = list(result.eval())
         expected = ['a', 'a', 'a', 'a', 'b', 'b', 'b']
         self.assertEqual(result, expected)
 
         result = self.source({'label1': 'label2'})
         self.assertIsInstance(result, DataQuery)
 
-        result = dict(result._execute())
+        result = dict(result.eval())
         expected = {
             'a': ['x', 'x', 'y', 'z'],
             'b': ['z', 'y', 'x'],

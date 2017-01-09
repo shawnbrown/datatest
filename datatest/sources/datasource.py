@@ -246,27 +246,23 @@ def _get_call_repr(call):
     return '({0}, {1})'.format(args_repr, kwds_repr)
 
 
-class DataQuery(object):
-    def __init__(self, data_source, call_chain=None, optimizer=None):
-        assert optimizer == None or callable(optimizer)
-        self._optimizer = optimizer
-
+class BaseQuery(object):
+    def __init__(self, data_source, call_chain=None):
         if call_chain:
             _validate_call_chain(call_chain)
             call_chain = tuple(call_chain)
         else:
             call_chain = tuple()
-
         self._call_chain = call_chain
         self._data_source = data_source
 
     def __getattr__(self, name):
         call_chain = self._call_chain + (name,)
-        return self.__class__(self._data_source, call_chain, self._optimizer)
+        return self.__class__(self._data_source, call_chain)
 
     def __call__(self, *args, **kwds):
         call_chain = self._call_chain + ((args, kwds),)
-        return self.__class__(self._data_source, call_chain, self._optimizer)
+        return self.__class__(self._data_source, call_chain)
 
     def __repr__(self):
         class_name = self.__class__.__name__
@@ -276,25 +272,48 @@ class DataQuery(object):
         chain_repr = ',\n'.join(chain_repr)
         if chain_repr:
             chain_repr = '\n{0}\n    '.format(chain_repr)
-        optimizer_repr = repr(self._optimizer)
         return ('{0}(\n'
                 '    data_source={1},\n'
-                '    call_chain=[{2}],\n'
-                '    optimizer={3}\n'
-                ')').format(class_name, source_repr, chain_repr, optimizer_repr)
+                '    call_chain=[{2}]\n'
+                ')').format(class_name, source_repr, chain_repr)
 
-    def _execute(self):
-        call_chain = self._call_chain
-        if self._optimizer:
-            call_chain = self._optimizer(call_chain)
-
+    def _eval(self):
+        """Evaluate query and return its result."""
         def function(obj, val):
             if isinstance(val, str):
                 return getattr(obj, val)
             args, kwds = val  # Unpack tuple.
             return obj(*args, **kwds)
 
-        return functools.reduce(function, call_chain, self._data_source)
+        return functools.reduce(function, self._call_chain, self._data_source)
+
+
+class DataQuery(BaseQuery):
+    def __init__(self, data_source, call_chain=None):
+        if not isinstance(data_source, DataSource):
+            class_name = data_source.__class__.__name__
+            msg = ("expected 'DataSource', got {1!r} (use BaseQuery "
+                   "for other data_source types)")
+            raise TypeError(msg.format(class_name))
+
+        super(DataQuery, self).__init__(data_source, call_chain)
+
+    def _optimize(self):
+        """Optimize call_chain for faster performance with DataSource
+        object.
+        """
+        call_chain = self._call_chain
+        # ...apply optimizations...
+        self._call_chain = call_chain
+
+    def _eval(self):
+        """Optimize query and return its evaluated result."""
+        self._optimize()
+        return super(DataQuery, self)._eval()
+
+    def eval(self):
+        """Evaluate query and immediately return its result."""
+        return self._eval()
 
 
 class DataSource(object):
