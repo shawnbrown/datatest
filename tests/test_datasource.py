@@ -5,7 +5,7 @@ import sys
 import textwrap
 
 from . import _unittest as unittest
-from datatest.utils.collections import Iterable
+from datatest.utils.collections import Iterator
 from datatest.utils.decimal import Decimal
 from datatest.utils import TemporarySqliteTable
 
@@ -266,6 +266,10 @@ class TestBaseQuery(unittest.TestCase):
 
 
 class TestIterSequence(unittest.TestCase):
+    def test_type(self):
+        iterator = IterSequence([1, 2, 3, 4, 5])
+        self.assertIsInstance(iterator, Iterator)
+
     def test_repr(self):
         iterator = IterSequence([1, 2, 3, 4, 5])
         iterator_repr = repr(iterator)
@@ -275,8 +279,6 @@ class TestIterSequence(unittest.TestCase):
 
     def test_iter(self):
         iterator = IterSequence([1, 2, 3, 4, 5])
-
-        self.assertIsInstance(iterator, Iterable)
         self.assertEqual(list(iterator), [1, 2, 3, 4, 5])
 
     def test_map(self):

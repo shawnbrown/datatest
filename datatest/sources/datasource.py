@@ -4,6 +4,7 @@ from sqlite3 import Binary
 
 from ..utils.builtins import *
 from ..utils import collections
+from ..utils import itertools
 from ..utils import functools
 from ..utils import TemporarySqliteTable
 from ..utils import UnicodeCsvReader
@@ -75,59 +76,131 @@ def _sqlite_sum(iterable):
     return sum(iterable, start_value)
 
 
-class IterSequence(object):
-    """."""
+class IterSequence(collections.Iterator):
+    """A queryable iterator that supports most sequence methods.
+
+    IterSequence supports map(), reduce(), etc. as well as all sequence
+    behaviors except len() and reversed(). Since these methods will
+    consume the iterator, only one call can be made per instance.
+    """
     def __init__(self, iterable):
         self._iterator = iter(iterable)
+        self._exhausted_by = None
+
+    def _exhaust_iterator(self, name, *args):
+        args_repr = ', '.join(repr(x) for x in args)
+        self._exhausted_by = '{0}({1})'.format(name, args_repr)
+        self._iterator = iter([])  # Set empty iterator.
+
+    def __iter__(self):
+        """x.__iter__() <==> iter(x)"""
+        return self
+
+    def __next__(self):
+        """x.__next__() <==> next(x)"""
+        try:
+            return next(self._iterator)
+        except StopIteration:
+            self._exhaust_iterator('__next__')
+            raise
+
+    def next(self):  # For Python 2.7 and earlier.
+        return self.__next__()
+
+    def __getitem__(self, index):
+        """x.__getitem__(index) <==> x[index]"""
+        item = next(itertools.islice(self._iterator, index, None))
+        self._exhaust_iterator('__getitem__({0})'.format(index))
+        return item
+
+    def index(self, value, start=0, stop=None):
+        """Return zero-based index in the iterator of the first item
+        that matches value. Raises a ValueError if there is no such
+        item.
+        """
+        iterator = itertools.islice(self._iterator, start, stop)
+        msg = 'index({0!r}, {1!r}, {2!r})'.format(value, start, stop)
+        self._exhaust_iterator(msg)
+        for i, x in enumerate(iterator, start):
+            if x == value:
+                return i
+        raise ValueError('{0!r} is not in iterable'.format(value))
+
+    def count(self, value):
+        """Return the number of times value appears in the iterator."""
+        result = sum(1 for x in self._iterator if x == value)
+        self._exhaust_iterator('count', value)
+        return result
+
+    def __contains__(self, value):
+        """x.__contains__(value) <==> value in x"""
+        result = False
+        for element in self._iterator:
+            if element == value:
+                result = True
+                break
+        self._exhaust_iterator('__contains__', value)
+        return result
 
     def __repr__(self):
+        """x.__repr__() <==> repr(x)"""
         class_name = self.__class__.__name__
         iterator_repr = repr(self._iterator)
         return '{0}({1})'.format(class_name, iterator_repr)
 
-    def __iter__(self):
-        return iter(self._iterator)
-
     def map(self, function):
-        """Return a IterSequence that applies *function* to the
+        """Return a new IterSequence that applies *function* to the
         elements, yielding the results.
         """
         if _expects_multiple_params(function):
-            return IterSequence(function(*x) for x in self)
-        return IterSequence(function(x) for x in self)
+            result = IterSequence(function(*x) for x in self._iterator)
+        else:
+            result = IterSequence(function(x) for x in self._iterator)
+        name = getattr(function, '__name__', repr(function))
+        self._exhaust_iterator('map', name)
+        return result
 
     def reduce(self, function):
         """Apply a *function* of two arguments cumulatively to the
         elements, from left to right, so as to reduce the values to a
         single result.
         """
-        return functools.reduce(function, self)
+        result = functools.reduce(function, self._iterator)
+        name = getattr(function, '__name__', repr(function))
+        self._exhaust_iterator('reduce', name)
+        return result
 
     def sum(self):
         """Sum the elements and return the total."""
-        return _sqlite_sum(self)
+        result = _sqlite_sum(self._iterator)
+        self._exhaust_iterator('sum')
+        return result
 
     def avg(self):
         """Return the average of elements."""
-        iterator = (_sqlite_cast_as_real(x) for x in self if x != None)
+        iterator = (x for x in self._iterator if x != None)
+        self._exhaust_iterator('avg')
         total = 0.0
         count = 0
         for x in iterator:
-            total = total + x
+            total = total + _sqlite_cast_as_real(x)
             count += 1
         return total / count if count else None
 
     def max(self):
-        """Return the maximum value of all values.  Returns None if
+        """Return the maximum value of all values. Returns None if
         all values are None.
         """
-        return max(self, default=None, key=_sqlite_sortkey)
+        result = max(self._iterator, default=None, key=_sqlite_sortkey)
+        self._exhaust_iterator('max')
+        return result
 
     def min(self):
-        """Return the minimum non-None value of all values.
-        Returns None only if all values are None.
+        """Return the minimum non-None value of all values. Returns
+        None only if all values are None.
         """
-        iterator = (x for x in self if x != None)
+        iterator = (x for x in self._iterator if x != None)
+        self._exhaust_iterator('min')
         return min(iterator, default=None, key=_sqlite_sortkey)
 
 
