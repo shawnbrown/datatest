@@ -440,9 +440,8 @@ class DataSource(object):
         return DataQuery(self, ['select', (columns, kwds_filter)])
 
     def select(self, *columns, **kwds_filter):
-        if len(columns) == 1 and isinstance(columns[0], collections.Mapping):
-            columns_dict = columns[0]
-            groupby, columns = tuple(columns_dict.items())[0]
+        if len(columns) == 1 and isinstance(columns[0], dict):
+            groupby, columns = columns[0].popitem()
             if isinstance(groupby, str):
                 groupby = tuple([groupby])
             if isinstance(columns, (str, collections.Mapping)):
