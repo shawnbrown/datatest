@@ -441,52 +441,57 @@ class DataSource(object):
 
     def select(self, *columns, **kwds_filter):
         if len(columns) == 1 and isinstance(columns[0], dict):
-            groupby, columns = columns[0].popitem()
-            if isinstance(groupby, str):
-                groupby = tuple([groupby])
-            if isinstance(columns, (str, collections.Mapping)):
-                columns = tuple([columns])
+            key_columns, value_columns = columns[0].popitem()
+            if isinstance(key_columns, str):
+                key_columns = tuple([key_columns])
+            if isinstance(value_columns, (str, collections.Mapping)):
+                value_columns = tuple([value_columns])
         else:
-            groupby = tuple()
+            key_columns = tuple()
+            value_columns = columns
 
-        all_columns = groupby + columns
-        self._assert_columns_exist(all_columns)
-        all_columns = [self._normalize_column(x) for x in all_columns]
+        self._assert_columns_exist(key_columns + value_columns)
+        key_columns = tuple(self._normalize_column(x) for x in key_columns)
+        value_columns = tuple(self._normalize_column(x) for x in value_columns)
 
-        select_clause = ', '.join(all_columns)
-        cursor = self._execute_query(self._table, select_clause, **kwds_filter)
+        select_clause = ', '.join(key_columns + value_columns)
 
-        if not groupby:
-            if len(columns) == 1:
-                result = (row[0] for row in cursor)
-            else:
-                result = cursor
-            return IterSequence(result)  # <- EXIT!
+        if not key_columns:
+            cursor = self._execute_query(
+                self._table,
+                select_clause,
+                **kwds_filter
+            )
+            if len(value_columns) == 1:
+                return IterSequence(row[0] for row in cursor)  # <- EXIT!
+            return IterSequence(cursor)  # <- EXIT!
 
-        # Prepare key and value functions.
-        slice_index = len(groupby)
+        trailing_clause = 'ORDER BY {0}'.format(', '.join(key_columns))
+        cursor = self._execute_query(
+            self._table,
+            select_clause,
+            trailing_clause,
+            **kwds_filter
+        )
+        # If one key column, get single key value, else get key tuples.
+        slice_index = len(key_columns)
         if slice_index == 1:
-            get_key = lambda row: row[0]
+            keyfunc = lambda row: row[0]
         else:
-            get_key = lambda row: row[:slice_index]
+            keyfunc = lambda row: row[:slice_index]
 
-        if len(all_columns) - slice_index == 1:
-            get_value = lambda row: row[-1]
+        # If one value column, get iterable of single values, else get
+        # an iterable of row tuples.
+        if len(value_columns) == 1:
+            valuefunc = lambda group: (row[-1] for row in group)
         else:
-            get_value = lambda row: row[slice_index:]
+            valuefunc = lambda group: (row[slice_index:] for row in group)
 
         # Parse rows.
-        result = {}
-        for row in cursor:
-            key = get_key(row)
-            value = get_value(row)
-            try:
-                result[key].append(value)
-            except KeyError:
-                result[key] = [value]
-
-        return result
-        #return ResultMapping(result)
+        grouped = itertools.groupby(cursor, keyfunc)
+        grouped = ((k, valuefunc(g)) for k, g in grouped)
+        return dict((k, list(g)) for k, g in grouped)
+        #return IterMapping((k, IterSequence(g)) for k, g in grouped)
 
     def __repr__(self):
         """Return a string representation of the data source."""
