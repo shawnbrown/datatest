@@ -350,15 +350,18 @@ class BaseQuery(object):
                 '    call_chain=[{2}]\n'
                 ')').format(class_name, source_repr, chain_repr)
 
-    def _eval(self):
+    def _eval(self, call_chain=False):
         """Evaluate query and return its result."""
+        if not call_chain:
+            call_chain = self._call_chain
+
         def function(obj, val):
             if isinstance(val, str):
                 return getattr(obj, val)
             args, kwds = val  # Unpack tuple.
             return obj(*args, **kwds)
 
-        return functools.reduce(function, self._call_chain, self._data_source)
+        return functools.reduce(function, call_chain, self._data_source)
 
 
 class DataQuery(BaseQuery):
@@ -371,22 +374,35 @@ class DataQuery(BaseQuery):
 
         super(DataQuery, self).__init__(data_source, call_chain)
 
-    def _optimize(self):
-        """Optimize call_chain for faster performance with DataSource
-        object.
+    def _optimize(self, call_chain):
+        """Return optimized call_chain for faster performance with
+        DataSource object.
+        """
+        return call_chain
+
+    def eval(self, lazy=False, optimize=True):
+        """Evaluate query and return its result.
+
+        Use ``lazy=True`` to evaluate the query but leave the result
+        in its raw, iterator form. By default, results are eagerly
+        evaluated and loaded into memory.
+
+        Use ``optimize=False`` to turn-off query optimization.
         """
         call_chain = self._call_chain
-        # ...apply optimizations...
-        self._call_chain = call_chain
+        if optimize:
+            call_chain = self._optimize(call_chain)
 
-    def _eval(self):
-        """Optimize query and return its evaluated result."""
-        self._optimize()
-        return super(DataQuery, self)._eval()
+        result = self._eval(call_chain)
 
-    def eval(self):
-        """Evaluate query and immediately return its result."""
-        return self._eval()
+        if lazy:
+            return result  # <- EXIT!
+
+        if isinstance(result, IterMapping):
+            result = dict((k, list(v)) for k, v in result)
+        elif isinstance(result, IterSequence):
+            result = list(result)
+        return result
 
 
 class DataSource(object):
