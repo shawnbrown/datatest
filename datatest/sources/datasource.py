@@ -204,6 +204,61 @@ class IterSequence(collections.Iterator):
         return min(iterator, default=None, key=_sqlite_sortkey)
 
 
+class IterItems(collections.Iterator):
+    """A queryable iterator of 2-tuple items that is suitable for
+    building a mapping.
+    """
+    def __init__(self, iterable):
+        iterator = iter(iterable)
+        # Inspect first item for suitability with dict constructor.
+        try:
+            first_item = tuple(next(iterator))
+            if len(first_item) != 2 or isinstance(first_item, str):
+                msg = 'expected key-value container, got {0!r}'
+                raise TypeError(msg.format(first_item))
+            iterator = itertools.chain([first_item], iterator)
+            _, first_value = first_item  # Unpack key-value pair (key not used).
+        except StopIteration:
+            first_value = None
+
+        self._iterator = iterator
+        self._value_hasattr_map = hasattr(first_value, 'map')
+        self._exhausted_by = None
+
+    def _exhaust_iterator(self, name, *args):
+        args_repr = ', '.join(repr(x) for x in args)
+        self._exhausted_by = '{0}({1})'.format(name, args_repr)
+        self._iterator = iter([])  # Set empty iterator.
+
+    def __iter__(self):
+        """x.__iter__() <==> iter(x)"""
+        return self
+
+    def __next__(self):
+        """x.__next__() <==> next(x)"""
+        try:
+            return next(self._iterator)
+        except StopIteration:
+            self._exhaust_iterator('__next__')
+            raise
+
+    def next(self):  # For Python 2.7 and earlier.
+        return self.__next__()
+
+    # Query methods.
+    def map(self, function):
+        if _expects_multiple_params(function):
+            function_orig = function
+            function = lambda x: function_orig(*x)
+
+        if self._value_hasattr_map:
+            wrapped_func = function
+            function = lambda value: value.map(wrapped_func)
+
+        iterator = ((k, function(v)) for k, v in self._iterator)
+        return self.__class__(iterator)
+
+
 class ResultMapping(collections.Mapping):
     def __init__(self, iterable):
         self._iterable = iterable
@@ -398,7 +453,7 @@ class DataQuery(BaseQuery):
         if lazy:
             return result  # <- EXIT!
 
-        if isinstance(result, IterMapping):
+        if isinstance(result, IterItems):
             result = dict((k, list(v)) for k, v in result)
         elif isinstance(result, IterSequence):
             result = list(result)
@@ -507,7 +562,7 @@ class DataSource(object):
         grouped = itertools.groupby(cursor, keyfunc)
         grouped = ((k, valuefunc(g)) for k, g in grouped)
         return dict((k, list(g)) for k, g in grouped)
-        #return IterMapping((k, IterSequence(g)) for k, g in grouped)
+        #return IterItems((k, IterSequence(g)) for k, g in grouped)
 
     def __repr__(self):
         """Return a string representation of the data source."""

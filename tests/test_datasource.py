@@ -10,6 +10,7 @@ from datatest.utils.decimal import Decimal
 from datatest.utils import TemporarySqliteTable
 
 from datatest.sources.datasource import DataSource
+from datatest.sources.datasource import IterItems
 from datatest.sources.datasource import IterSequence
 from datatest.sources.datasource import ResultMapping
 from datatest.sources.datasource import _sqlite_sortkey
@@ -635,6 +636,36 @@ class TestIterSequenceMaxAndMin(unittest.TestCase):
 
         result = IterSequence([None, None, None, None]).min()
         self.assertEqual(result, None)
+
+
+class TestIterItems(unittest.TestCase):
+    def test_type(self):
+        items = IterItems([('a', 1), ('b', 2), ('c', 3)])
+        self.assertIsInstance(items, Iterator)
+
+    def test_dict(self):
+        items = IterItems([('a', 1), ('b', 2), ('c', 3)])
+        self.assertEqual(dict(items), {'a': 1, 'b': 2, 'c': 3})
+
+    def test_map(self):
+        items = IterItems([('a', 1), ('b', 2), ('c', 3)])
+        items = items.map(lambda x: x * 2)
+        self.assertEqual(dict(items), {'a': 2, 'b': 4, 'c': 6})
+
+        items = IterItems([
+            ('a', IterSequence([1, 2, 3])),
+            ('b', IterSequence([2, 4, 6])),
+            ('c', IterSequence([3, 6, 9])),
+        ])
+        items = items.map(lambda x: x * 3)
+        items = dict((k, list(v)) for k, v in items)
+
+        expected = {
+            'a': [3, 6, 9],
+            'b': [6, 12, 18],
+            'c': [9, 18, 27],
+        }
+        self.assertEqual(items, expected)
 
 
 class TestResultMapping(unittest.TestCase):
