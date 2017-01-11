@@ -266,6 +266,23 @@ class TestBaseQuery(unittest.TestCase):
         self.assertEqual(result, True)
 
 
+class TestDataQuery(unittest.TestCase):
+    def setUp(self):
+        self.source = source = DataSource([
+            {'label1': 'a', 'label2': 'x', 'value': '17'},
+            {'label1': 'a', 'label2': 'x', 'value': '13'},
+            {'label1': 'a', 'label2': 'y', 'value': '20'},
+            {'label1': 'a', 'label2': 'z', 'value': '15'},
+            {'label1': 'b', 'label2': 'z', 'value':  '5'},
+            {'label1': 'b', 'label2': 'y', 'value': '40'},
+            {'label1': 'b', 'label2': 'x', 'value': '25'},
+        ])
+
+    def test_type(self):
+        query = DataQuery(self.source)
+        self.assertIsInstance(query, BaseQuery)
+
+
 class TestIterSequence(unittest.TestCase):
     def test_type(self):
         iterator = IterSequence([1, 2, 3, 4, 5])
