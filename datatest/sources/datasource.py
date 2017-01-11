@@ -258,6 +258,11 @@ class IterItems(collections.Iterator):
         iterator = ((k, function(v)) for k, v in self._iterator)
         return self.__class__(iterator)
 
+    def eval(self):
+        result = dict((k, list(v)) for k, v in self)
+        self._exhaust_iterator('eval')
+        return result
+
 
 class ResultMapping(collections.Mapping):
     def __init__(self, iterable):
@@ -454,7 +459,7 @@ class DataQuery(BaseQuery):
             return result  # <- EXIT!
 
         if isinstance(result, IterItems):
-            result = dict((k, list(v)) for k, v in result)
+            result = result.eval()
         elif isinstance(result, IterSequence):
             result = list(result)
         return result

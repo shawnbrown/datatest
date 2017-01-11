@@ -661,8 +661,34 @@ class TestIterItems(unittest.TestCase):
         self.assertIsInstance(items, Iterator)
 
     def test_dict(self):
-        items = IterItems([('a', 1), ('b', 2), ('c', 3)])
-        self.assertEqual(dict(items), {'a': 1, 'b': 2, 'c': 3})
+        value_a = IterSequence([1, 2, 3])
+        value_b = IterSequence([2, 4, 6])
+        value_c = IterSequence([3, 6, 9])
+
+        items = IterItems([
+            ('a', value_a),
+            ('b', value_b),
+            ('c', value_c),
+        ])
+        expected = {
+            'a': value_a,
+            'b': value_b,
+            'c': value_c,
+        }
+        self.assertEqual(dict(items), expected)
+
+    def test_eval(self):
+        items = IterItems([
+            ('a', IterSequence([1, 2, 3])),
+            ('b', IterSequence([2, 4, 6])),
+            ('c', IterSequence([3, 6, 9])),
+        ])
+        expected = {
+            'a': [1, 2, 3],
+            'b': [2, 4, 6],
+            'c': [3, 6, 9],
+        }
+        self.assertEqual(items.eval(), expected)
 
     def test_map(self):
         items = IterItems([('a', 1), ('b', 2), ('c', 3)])
