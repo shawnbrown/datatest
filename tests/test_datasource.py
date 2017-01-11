@@ -839,6 +839,10 @@ class TestDataSourceBasics(unittest.TestCase):
         with self.assertRaisesRegex(LookupError, regex, msg=msg):
             self.source.select({'label1': {'label2': 'value'}})
 
+        arg_dict = {'label1': 'value'}
+        result = self.source.select(arg_dict)
+        self.assertEqual(arg_dict, {'label1': 'value'}, 'should not alter arg_dict')
+
     def test_call(self):
         result = self.source('label1')
         self.assertIsInstance(result, DataQuery)

@@ -512,7 +512,7 @@ class DataSource(object):
 
     def select(self, *columns, **kwds_filter):
         if len(columns) == 1 and isinstance(columns[0], dict):
-            key_columns, value_columns = columns[0].popitem()
+            key_columns, value_columns = tuple(columns[0].items())[0]
             if isinstance(key_columns, str):
                 key_columns = tuple([key_columns])
             if isinstance(value_columns, (str, collections.Mapping)):
