@@ -536,9 +536,9 @@ class DataSource(object):
             raise LookupError(msg)
 
     def __call__(self, *columns, **kwds_filter):
-        return DataQuery(self, ['select', (columns, kwds_filter)])
+        return DataQuery(self, ['_select', (columns, kwds_filter)])
 
-    def select(self, *columns, **kwds_filter):
+    def _select(self, *columns, **kwds_filter):
         if len(columns) == 1 and isinstance(columns[0], dict):
             key_columns, value_columns = tuple(columns[0].items())[0]
             if isinstance(key_columns, str):
@@ -589,9 +589,8 @@ class DataSource(object):
         # Parse rows.
         grouped = itertools.groupby(cursor, keyfunc)
         grouped = ((k, valuefunc(g)) for k, g in grouped)
-        return dict((k, list(g)) for k, g in grouped)
-        #grouped = ((k, DataResult(g, evaluates_to=list)) for k, g in grouped)
-        #return DataResult(grouped, evaluates_to=dict)
+        grouped = ((k, DataResult(g, evaluates_to=list)) for k, g in grouped)
+        return DataResult(grouped, evaluates_to=dict)
 
     def __repr__(self):
         """Return a string representation of the data source."""

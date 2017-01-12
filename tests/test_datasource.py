@@ -804,7 +804,7 @@ class TestDataSourceBasics(unittest.TestCase):
         self.assertEqual(expected, result)
 
     def test_select(self):
-        result = self.source.select('label1')
+        result = self.source._select('label1')
         self.assertIsInstance(result, IterSequence)
         expected = [
             'a',
@@ -817,7 +817,7 @@ class TestDataSourceBasics(unittest.TestCase):
         ]
         self.assertEqual(list(result), expected)
 
-        result = self.source.select('label1', 'label2')
+        result = self.source._select('label1', 'label2')
         expected = [
             ('a', 'x'),
             ('a', 'x'),
@@ -829,14 +829,14 @@ class TestDataSourceBasics(unittest.TestCase):
         ]
         self.assertEqual(list(result), expected)
 
-        result = self.source.select({'label1': 'value'})
+        result = self.source._select({'label1': 'value'})
         expected = {
             'a': ['17', '13', '20', '15'],
             'b': ['5', '40', '25'],
         }
-        self.assertEqual(result, expected)
+        self.assertEqual(result.eval(), expected)
 
-        result = self.source.select({'label1': ('label2', 'value')})
+        result = self.source._select({'label1': ('label2', 'value')})
         expected = {
             'a': [
                 ('x', '17'),
@@ -850,9 +850,9 @@ class TestDataSourceBasics(unittest.TestCase):
                 ('x', '25'),
             ],
         }
-        self.assertEqual(result, expected)
+        self.assertEqual(result.eval(), expected)
 
-        result = self.source.select({('label1', 'label2'): 'value'})
+        result = self.source._select({('label1', 'label2'): 'value'})
         expected = {
             ('a', 'x'): ['17', '13'],
             ('a', 'y'): ['20'],
@@ -861,9 +861,9 @@ class TestDataSourceBasics(unittest.TestCase):
             ('b', 'y'): ['40'],
             ('b', 'x'): ['25'],
         }
-        self.assertEqual(result, expected)
+        self.assertEqual(result.eval(), expected)
 
-        result = self.source.select({('label1', 'label2'): ('label2', 'value')})
+        result = self.source._select({('label1', 'label2'): ('label2', 'value')})
         expected = {
             ('a', 'x'): [('x', '17'), ('x', '13')],
             ('a', 'y'): [('y', '20')],
@@ -872,15 +872,15 @@ class TestDataSourceBasics(unittest.TestCase):
             ('b', 'y'): [('y', '40')],
             ('b', 'x'): [('x', '25')],
         }
-        self.assertEqual(result, expected)
+        self.assertEqual(result.eval(), expected)
 
         msg = 'Support for nested dictionaries removed (for now).'
         regex = "{'label2': 'value'} not in DataSource"
         with self.assertRaisesRegex(LookupError, regex, msg=msg):
-            self.source.select({'label1': {'label2': 'value'}})
+            self.source._select({'label1': {'label2': 'value'}})
 
         arg_dict = {'label1': 'value'}
-        result = self.source.select(arg_dict)
+        result = self.source._select(arg_dict)
         self.assertEqual(arg_dict, {'label1': 'value'}, 'should not alter arg_dict')
 
     def test_call(self):
