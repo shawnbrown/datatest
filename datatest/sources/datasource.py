@@ -204,7 +204,7 @@ class IterSequence(collections.Iterator):
         return min(iterator, default=None, key=_sqlite_sortkey)
 
 
-class IterItems(collections.Iterator):
+class DataResult(collections.Iterator):
     """A queryable iterator of 2-tuple items that is suitable for
     building a mapping.
     """
@@ -458,7 +458,7 @@ class DataQuery(BaseQuery):
         if lazy:
             return result  # <- EXIT!
 
-        if isinstance(result, IterItems):
+        if isinstance(result, DataResult):
             result = result.eval()
         elif isinstance(result, IterSequence):
             result = list(result)
@@ -567,7 +567,8 @@ class DataSource(object):
         grouped = itertools.groupby(cursor, keyfunc)
         grouped = ((k, valuefunc(g)) for k, g in grouped)
         return dict((k, list(g)) for k, g in grouped)
-        #return IterItems((k, IterSequence(g)) for k, g in grouped)
+        #grouped = (k, DataResult(g, evaluates_to=list)) for k, g in grouped)
+        #return DataResult(grouped, evaluates_to=dict)
 
     def __repr__(self):
         """Return a string representation of the data source."""

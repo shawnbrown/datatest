@@ -10,7 +10,7 @@ from datatest.utils.decimal import Decimal
 from datatest.utils import TemporarySqliteTable
 
 from datatest.sources.datasource import DataSource
-from datatest.sources.datasource import IterItems
+from datatest.sources.datasource import DataResult
 from datatest.sources.datasource import IterSequence
 from datatest.sources.datasource import ResultMapping
 from datatest.sources.datasource import _sqlite_sortkey
@@ -655,9 +655,9 @@ class TestIterSequenceMaxAndMin(unittest.TestCase):
         self.assertEqual(result, None)
 
 
-class TestIterItems(unittest.TestCase):
+class TestDataResult(unittest.TestCase):
     def test_type(self):
-        items = IterItems([('a', 1), ('b', 2), ('c', 3)])
+        items = DataResult([('a', 1), ('b', 2), ('c', 3)])
         self.assertIsInstance(items, Iterator)
 
     def test_dict(self):
@@ -665,7 +665,7 @@ class TestIterItems(unittest.TestCase):
         value_b = IterSequence([2, 4, 6])
         value_c = IterSequence([3, 6, 9])
 
-        items = IterItems([
+        items = DataResult([
             ('a', value_a),
             ('b', value_b),
             ('c', value_c),
@@ -678,7 +678,7 @@ class TestIterItems(unittest.TestCase):
         self.assertEqual(dict(items), expected)
 
     def test_eval(self):
-        items = IterItems([
+        items = DataResult([
             ('a', IterSequence([1, 2, 3])),
             ('b', IterSequence([2, 4, 6])),
             ('c', IterSequence([3, 6, 9])),
@@ -691,11 +691,11 @@ class TestIterItems(unittest.TestCase):
         self.assertEqual(items.eval(), expected)
 
     def test_map(self):
-        items = IterItems([('a', 1), ('b', 2), ('c', 3)])
+        items = DataResult([('a', 1), ('b', 2), ('c', 3)])
         items = items.map(lambda x: x * 2)
         self.assertEqual(dict(items), {'a': 2, 'b': 4, 'c': 6})
 
-        items = IterItems([
+        items = DataResult([
             ('a', IterSequence([1, 2, 3])),
             ('b', IterSequence([2, 4, 6])),
             ('c', IterSequence([3, 6, 9])),
