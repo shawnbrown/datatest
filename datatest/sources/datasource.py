@@ -252,6 +252,23 @@ class DataResult(collections.Iterator):
         self._exhaust_iterator('map')
         return self.__class__(iterator, self._evaluates_to)
 
+    def reduce(self, function):
+        def apply(value):
+            try:
+                result = value.reduce(function)
+            except AttributeError:
+                result = functools.reduce(function, value)
+            return result
+
+        if issubclass(self._evaluates_to, dict):
+            result = ((k, apply(v)) for k, v in self._iterator)
+            result = self.__class__(result, self._evaluates_to)
+        else:
+            result = apply(self._iterator)
+
+        self._exhaust_iterator('reduce')
+        return result
+
     def eval(self):
         eval_type = self._evaluates_to
         if issubclass(eval_type, dict):
@@ -573,7 +590,7 @@ class DataSource(object):
         grouped = itertools.groupby(cursor, keyfunc)
         grouped = ((k, valuefunc(g)) for k, g in grouped)
         return dict((k, list(g)) for k, g in grouped)
-        #grouped = (k, DataResult(g, evaluates_to=list)) for k, g in grouped)
+        #grouped = ((k, DataResult(g, evaluates_to=list)) for k, g in grouped)
         #return DataResult(grouped, evaluates_to=dict)
 
     def __repr__(self):
