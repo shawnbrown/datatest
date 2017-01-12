@@ -657,32 +657,27 @@ class TestIterSequenceMaxAndMin(unittest.TestCase):
 
 class TestDataResult(unittest.TestCase):
     def test_type(self):
-        items = DataResult([('a', 1), ('b', 2), ('c', 3)])
-        self.assertIsInstance(items, Iterator)
+        result = DataResult([('a', 1), ('b', 2), ('c', 3)], dict)
+        self.assertIsInstance(result, Iterator)
+        self.assertIsInstance(result.eval(), dict)
 
-    def test_dict(self):
-        value_a = IterSequence([1, 2, 3])
-        value_b = IterSequence([2, 4, 6])
-        value_c = IterSequence([3, 6, 9])
+    def test_eval_to_list(self):
+        result = DataResult([1, 2, 3], evaluates_to=list)
+        self.assertEqual(result.eval(), [1, 2, 3])
 
-        items = DataResult([
-            ('a', value_a),
-            ('b', value_b),
-            ('c', value_c),
-        ])
-        expected = {
-            'a': value_a,
-            'b': value_b,
-            'c': value_c,
-        }
-        self.assertEqual(dict(items), expected)
+    def test_eval_to_set(self):
+        result = DataResult([1, 2, 3], evaluates_to=set)
+        self.assertEqual(result.eval(), set([1, 2, 3]))
 
-    def test_eval(self):
-        items = DataResult([
-            ('a', IterSequence([1, 2, 3])),
-            ('b', IterSequence([2, 4, 6])),
-            ('c', IterSequence([3, 6, 9])),
-        ])
+    def test_eval_to_dict(self):
+        items = DataResult(
+            [
+                ('a', DataResult([1, 2, 3], evaluates_to=list)),
+                ('b', DataResult([2, 4, 6], evaluates_to=list)),
+                ('c', DataResult([3, 6, 9], evaluates_to=list)),
+            ],
+            evaluates_to=dict
+        )
         expected = {
             'a': [1, 2, 3],
             'b': [2, 4, 6],
@@ -691,15 +686,18 @@ class TestDataResult(unittest.TestCase):
         self.assertEqual(items.eval(), expected)
 
     def test_map(self):
-        items = DataResult([('a', 1), ('b', 2), ('c', 3)])
+        items = DataResult([('a', 1), ('b', 2), ('c', 3)], evaluates_to=dict)
         items = items.map(lambda x: x * 2)
         self.assertEqual(dict(items), {'a': 2, 'b': 4, 'c': 6})
 
-        items = DataResult([
-            ('a', IterSequence([1, 2, 3])),
-            ('b', IterSequence([2, 4, 6])),
-            ('c', IterSequence([3, 6, 9])),
-        ])
+        items = DataResult(
+            [
+                ('a', IterSequence([1, 2, 3])),
+                ('b', IterSequence([2, 4, 6])),
+                ('c', IterSequence([3, 6, 9])),
+            ],
+            evaluates_to=dict
+        )
         items = items.map(lambda x: x * 3)
         items = dict((k, list(v)) for k, v in items)
 

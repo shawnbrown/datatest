@@ -205,24 +205,10 @@ class IterSequence(collections.Iterator):
 
 
 class DataResult(collections.Iterator):
-    """A queryable iterator of 2-tuple items that is suitable for
-    building a mapping.
-    """
-    def __init__(self, iterable):
-        iterator = iter(iterable)
-        # Inspect first item for suitability with dict constructor.
-        try:
-            first_item = tuple(next(iterator))
-            if len(first_item) != 2 or isinstance(first_item, str):
-                msg = 'expected key-value container, got {0!r}'
-                raise TypeError(msg.format(first_item))
-            iterator = itertools.chain([first_item], iterator)
-            _, first_value = first_item  # Unpack key-value pair (key not used).
-        except StopIteration:
-            first_value = None
-
-        self._iterator = iterator
-        self._value_hasattr_map = hasattr(first_value, 'map')
+    """A queryable iterator that can be evaluated to a given type."""
+    def __init__(self, iterable, evaluates_to):
+        self._iterator = iter(iterable)
+        self._evaluates_to = evaluates_to
         self._exhausted_by = None
 
     def _exhaust_iterator(self, name, *args):
@@ -251,15 +237,35 @@ class DataResult(collections.Iterator):
             function_orig = function
             function = lambda x: function_orig(*x)
 
-        if self._value_hasattr_map:
-            wrapped_func = function
-            function = lambda value: value.map(wrapped_func)
+        def apply(value):
+            try:
+                result = value.map(function)
+            except AttributeError:
+                result = function(value)
+            return result
 
-        iterator = ((k, function(v)) for k, v in self._iterator)
-        return self.__class__(iterator)
+        if issubclass(self._evaluates_to, dict):
+            iterator = ((k, apply(v)) for k, v in self._iterator)
+        else:
+            iterator = (apply(x) for x in self._iterator)
+
+        self._exhaust_iterator('map')
+        return self.__class__(iterator, self._evaluates_to)
 
     def eval(self):
-        result = dict((k, list(v)) for k, v in self)
+        eval_type = self._evaluates_to
+        if issubclass(eval_type, dict):
+            def apply(value):
+                try:
+                    return value.eval()
+                except AttributeError:
+                    return value
+            result = eval_type((k, apply(v)) for k, v in self._iterator)
+        elif eval_type:
+            result = eval_type(self._iterator)
+        else:
+            result = self._iterator
+
         self._exhaust_iterator('eval')
         return result
 
