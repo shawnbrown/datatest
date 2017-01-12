@@ -269,6 +269,22 @@ class DataResult(collections.Iterator):
         self._exhaust_iterator('reduce')
         return result
 
+    def sum(self):
+        def apply(value):
+            try:
+                return value.sum()
+            except AttributeError:
+                return _sqlite_sum(value)
+
+        if issubclass(self._evaluates_to, dict):
+            result = ((k, apply(v)) for k, v in self._iterator)
+            result = self.__class__(result, self._evaluates_to)
+        else:
+            result = apply(self._iterator)
+
+        self._exhaust_iterator('sum')
+        return result
+
     def eval(self):
         eval_type = self._evaluates_to
         if issubclass(eval_type, dict):

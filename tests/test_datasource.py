@@ -724,6 +724,22 @@ class TestDataResult(unittest.TestCase):
         items = items.reduce(lambda x, y: x + y)
         self.assertEqual(dict(items), {'a': 3, 'b': 6, 'c': 9})
 
+    def test_sum(self):
+        items = DataResult([1, 2, 3], evaluates_to=list)
+        items = items.sum()
+        self.assertEqual(items, 6)
+
+        items = DataResult(
+            [
+                ('a', DataResult([1, 1, 1], evaluates_to=list)),
+                ('b', DataResult([2, 2, 2], evaluates_to=list)),
+                ('c', DataResult([3, 3, 3], evaluates_to=list)),
+            ],
+            evaluates_to=dict
+        )
+        items = items.sum()
+        self.assertEqual(dict(items), {'a': 3, 'b': 6, 'c': 9})
+
 
 class TestResultMapping(unittest.TestCase):
     def test_repr(self):
