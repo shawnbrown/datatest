@@ -76,6 +76,39 @@ def _sqlite_sum(iterable):
     return sum(iterable, start_value)
 
 
+def _sqlite_count(iterable):
+    """Returns the number non-NULL (!= None) elements in iterable."""
+    return sum(1 for x in iterable if x != None)
+
+
+def _sqlite_avg(iterable):
+    """Return the average of elements in iterable. Returns None if all
+    elements are None.
+    """
+    iterable = (x for x in iterable if x != None)
+    total = 0.0
+    count = 0
+    for x in iterable:
+        total = total + _sqlite_cast_as_real(x)
+        count += 1
+    return total / count if count else None
+
+
+def _sqlite_min(iterable):
+    """Return the minimum non-None value of all values. Returns
+    None only if all values are None.
+    """
+    iterable = (x for x in iterable if x != None)
+    return min(iterable, default=None, key=_sqlite_sortkey)
+
+
+def _sqlite_max(iterable):
+    """Return the maximum value of all values. Returns None if all
+    values are None.
+    """
+    return max(iterable, default=None, key=_sqlite_sortkey)
+
+
 class IterSequence(collections.Iterator):
     """A queryable iterator that supports most sequence methods.
 
@@ -269,12 +302,13 @@ class DataResult(collections.Iterator):
         self._exhaust_iterator('reduce')
         return result
 
-    def sum(self):
+    def _sqlite_aggregate(self, method_name, alt_function):
         def apply(value):
             try:
-                return value.sum()
+                method = getattr(value, method_name)
+                return method()
             except AttributeError:
-                return _sqlite_sum(value)
+                return alt_function(value)
 
         if issubclass(self._evaluates_to, dict):
             result = ((k, apply(v)) for k, v in self._iterator)
@@ -282,8 +316,23 @@ class DataResult(collections.Iterator):
         else:
             result = apply(self._iterator)
 
-        self._exhaust_iterator('sum')
+        self._exhaust_iterator(method_name)
         return result
+
+    def sum(self):
+        return self._sqlite_aggregate('sum', _sqlite_sum)
+
+    def count(self):
+        return self._sqlite_aggregate('count', _sqlite_count)
+
+    def avg(self):
+        return self._sqlite_aggregate('avg', _sqlite_avg)
+
+    def min(self):
+        return self._sqlite_aggregate('min', _sqlite_min)
+
+    def max(self):
+        return self._sqlite_aggregate('max', _sqlite_max)
 
     def eval(self):
         eval_type = self._evaluates_to
@@ -578,8 +627,8 @@ class DataSource(object):
                 **kwds_filter
             )
             if len(value_columns) == 1:
-                return IterSequence(row[0] for row in cursor)  # <- EXIT!
-            return IterSequence(cursor)  # <- EXIT!
+                return DataResult((row[0] for row in cursor), list)  # <- EXIT!
+            return DataResult(cursor, list)  # <- EXIT!
 
         trailing_clause = 'ORDER BY {0}'.format(', '.join(key_columns))
         cursor = self._execute_query(
