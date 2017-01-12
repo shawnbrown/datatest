@@ -376,18 +376,16 @@ class DataQuery(BaseQuery):
         Use ``optimize=False`` to turn-off query optimization.
         """
         call_chain = self._call_chain
+
         if optimize:
             call_chain = self._optimize(call_chain)
-
         result = self._eval(call_chain)
 
-        if lazy:
-            return result  # <- EXIT!
-
-        if isinstance(result, DataResult):
-            result = result.eval()
-        elif isinstance(result, IterSequence):
-            result = list(result)
+        if not lazy:
+            try:
+                return result.eval()  # <- EXIT!
+            except AttributeError:
+                pass
         return result
 
 
