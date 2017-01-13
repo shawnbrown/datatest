@@ -5,10 +5,10 @@ from ..utils.builtins import *
 from ..utils import decimal
 from ..utils import TemporarySqliteTable
 from ..utils import UnicodeCsvReader
+from ..utils.misc import _is_nscontainer
 
 from ..compare import CompareDict
 from ..compare import CompareSet
-from ..compare import _is_nscontainer
 
 from .base import BaseSource
 

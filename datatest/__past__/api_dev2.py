@@ -11,7 +11,7 @@ from datatest.utils import collections
 from datatest.utils import itertools
 from datatest.utils import functools
 
-from datatest.differences import _make_decimal
+from datatest.utils.misc import _make_decimal
 
 from datatest import DataTestCase
 from datatest import CompareSet

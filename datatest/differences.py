@@ -1,17 +1,7 @@
 # -*- coding: utf-8 -*-
 from math import isnan
 from numbers import Number
-from .utils import decimal
-
-
-def _make_decimal(d):
-    if isinstance(d, float):
-        d = str(d)
-    d = decimal.Decimal(d)
-
-    if d == d.to_integral():                   # Remove_exponent (from official
-        return d.quantize(decimal.Decimal(1))  # docs: 9.4.10. Decimal FAQ).
-    return d.normalize()
+from .utils.misc import _make_decimal
 
 
 class BaseDifference(object):

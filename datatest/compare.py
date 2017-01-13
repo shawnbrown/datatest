@@ -8,6 +8,8 @@ from .utils import collections
 from .utils import functools
 from .utils import itertools
 
+from .utils.misc import _expects_multiple_params
+from .utils.misc import _is_nscontainer
 from .differences import Extra
 from .differences import Missing
 from .differences import Invalid
@@ -157,11 +159,6 @@ def _compare_other(data, required):
     return []  # If no differences, return empty list.
 
 
-def _is_nscontainer(x):
-    """Returns True if *x* is a non-string container object."""
-    return not isinstance(x, str) and isinstance(x, collections.Container)
-
-
 def _coerce_other(target_type, *type_args, **type_kwds):
     """Callable decorator for comparison methods to convert *other*
     argument into given *target_type* instance.
@@ -178,26 +175,6 @@ def _coerce_other(target_type, *type_args, **type_kwds):
         return wrapped
 
     return callable
-
-
-def _expects_multiple_params(func):
-    """Returns True if callable obj expects multiple parameters."""
-    try:
-        funcsig = inspect.signature(func)
-        params_dict = funcsig.parameters
-        parameters = params_dict.values()
-        args_type = (inspect._POSITIONAL_OR_KEYWORD, inspect._POSITIONAL_ONLY)
-        args = [x for x in parameters if x.kind in args_type]
-        varargs = [x for x in parameters if x.kind == inspect._VAR_POSITIONAL]
-
-    except AttributeError:  # For Python 3.2 and earlier
-        try:
-            args, varargs = inspect.getfullargspec(func)[:2]
-
-        except AttributeError:  # For Python 2.7 and earlier
-            args, varargs = inspect.getargspec(func)[:2]
-
-    return len(args) > 1 or bool(varargs)  # <- EXIT!
 
 
 class BaseCompare(object):

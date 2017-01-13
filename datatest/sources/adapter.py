@@ -4,7 +4,7 @@ from ..utils import collections
 
 from ..compare import CompareDict
 from ..compare import CompareSet
-from ..compare import _is_nscontainer
+from ..utils.misc import _is_nscontainer
 
 from .base import BaseSource
 

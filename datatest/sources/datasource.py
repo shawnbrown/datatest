@@ -8,17 +8,9 @@ from ..utils import itertools
 from ..utils import functools
 from ..utils import TemporarySqliteTable
 from ..utils import UnicodeCsvReader
-from ..compare import _is_nscontainer
-from ..allow import _expects_multiple_params
-
-
-def _is_sortable(obj):
-    """Returns True if *obj* is sortable else returns False."""
-    try:
-        sorted([obj, obj])
-        return True
-    except TypeError:
-        return False
+from ..utils.misc import _is_nscontainer
+from ..utils.misc import _expects_multiple_params
+from ..utils.misc import _is_sortable
 
 
 # The SQLite BLOB/Binary type in sortable Python 2 but unsortable in Python 3.

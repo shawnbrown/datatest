@@ -6,7 +6,7 @@ from ..utils import functools
 
 from ..compare import CompareDict
 from ..compare import CompareSet
-from ..compare import _is_nscontainer
+from ..utils.misc import _is_nscontainer
 
 
 class BaseSource(object):
