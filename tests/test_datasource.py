@@ -108,10 +108,9 @@ class TestBaseQuery(unittest.TestCase):
         # No call chain.
         query = BaseQuery(source)
         expected = """
-            BaseQuery(
-                data_source=<MockSource object>,
-                call_chain=[]
-            )
+            <class 'datatest.BaseQuery'>
+            Source: <MockSource object>
+            Query: <empty>
         """
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)
@@ -119,13 +118,10 @@ class TestBaseQuery(unittest.TestCase):
         # Call chain with unknown methods.
         query = BaseQuery(source, ['foo', ((), {})])
         expected = """
-            BaseQuery(
-                data_source=<MockSource object>,
-                call_chain=[
-                    'foo',
-                    ((), {})
-                ]
-            )
+            <class 'datatest.BaseQuery'>
+            Source: <MockSource object>
+            Query:
+            | foo()
         """
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)
@@ -133,13 +129,10 @@ class TestBaseQuery(unittest.TestCase):
         # Call chain with known method.
         query = BaseQuery(source, ['map', ((userfunc,), {})])
         expected = """
-            BaseQuery(
-                data_source=<MockSource object>,
-                call_chain=[
-                    'map',
-                    ((userfunc,), {})
-                ]
-            )
+            <class 'datatest.BaseQuery'>
+            Source: <MockSource object>
+            Query:
+            | map(userfunc)
         """
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)
@@ -153,15 +146,11 @@ class TestBaseQuery(unittest.TestCase):
         ]
         query = BaseQuery(source, call_chain)
         expected = """
-            BaseQuery(
-                data_source=<MockSource object>,
-                call_chain=[
-                    'map',
-                    ((userfunc,), {}),
-                    'reduce',
-                    ((userfunc,), {})
-                ]
-            )
+            <class 'datatest.BaseQuery'>
+            Source: <MockSource object>
+            Query:
+            | map(userfunc)
+              | reduce(userfunc)
         """
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)
@@ -173,13 +162,10 @@ class TestBaseQuery(unittest.TestCase):
         ]
         query = BaseQuery(source, call_chain)
         expected = """
-            BaseQuery(
-                data_source=<MockSource object>,
-                call_chain=[
-                    'reduce',
-                    ((), {'function': userfunc})
-                ]
-            )
+            <class 'datatest.BaseQuery'>
+            Source: <MockSource object>
+            Query:
+            | reduce(function=userfunc)
         """
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)
@@ -197,19 +183,13 @@ class TestBaseQuery(unittest.TestCase):
         ]
         query = BaseQuery(source, call_chain)
         expected = """
-            BaseQuery(
-                data_source=<MockSource object>,
-                call_chain=[
-                    'map',
-                    ((userfunc,), {}),
-                    'blerg',
-                    ((), {}),
-                    'map',
-                    ((userfunc,), {}),
-                    'reduce',
-                    ((userfunc,), {})
-                ]
-            )
+            <class 'datatest.BaseQuery'>
+            Source: <MockSource object>
+            Query:
+            | map(userfunc)
+              | blerg()
+                | map(userfunc)
+                  | reduce(userfunc)
         """
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)

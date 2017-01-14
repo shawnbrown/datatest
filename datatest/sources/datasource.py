@@ -269,12 +269,12 @@ def _validate_call_chain(call_chain):
             raise TypeError(err_msg.format(repr(err_obj)))
 
 
-def _get_call_repr(call):
-    """Helper function returns repr for a single call chain item."""
-    if isinstance(call, str):
-        return repr(call)  # <- EXIT!
+def _get_element_repr(element):
+    """Helper function returns repr for a single call chain element."""
+    if isinstance(element, str):
+        return repr(element)  # <- EXIT!
 
-    args, kwds = call
+    args, kwds = element
 
     def _callable_name_or_repr(x):  # <- Helper function for
         if callable(x):             #    the helper function!
@@ -284,17 +284,16 @@ def _get_call_repr(call):
                 pass
         return repr(x)
 
-    args_repr = [_callable_name_or_repr(x) + ',' for x in args]
-    args_repr = ' '.join(args_repr)
-    args_repr = '(' + args_repr + ')'
+    args_repr = ', '.join(_callable_name_or_repr(x) for x in args)
 
     kwds_repr = kwds.items()
-    kwds_repr = [(repr(k), _callable_name_or_repr(v)) for k, v in kwds_repr]
-    kwds_repr = ['{0}: {1}'.format(k, v) for k, v in kwds_repr]
+    kwds_repr = [(k, _callable_name_or_repr(v)) for k, v in kwds_repr]
+    kwds_repr = ['{0}={1}'.format(k, v) for k, v in kwds_repr]
     kwds_repr = ', '.join(kwds_repr)
-    kwds_repr = '{' + kwds_repr + '}'
+    if args_repr and kwds_repr:
+        kwds_repr = ', ' + kwds_repr
 
-    return '({0}, {1})'.format(args_repr, kwds_repr)
+    return '({0}{1})'.format(args_repr, kwds_repr)
 
 
 class BaseQuery(object):
@@ -318,15 +317,30 @@ class BaseQuery(object):
     def __repr__(self):
         class_name = self.__class__.__name__
         source_repr = repr(self._data_source)
-        chain_repr = [_get_call_repr(call) for call in self._call_chain]
-        chain_repr = ['        ' + x for x in chain_repr]  # Indent items.
-        chain_repr = ',\n'.join(chain_repr)
-        if chain_repr:
-            chain_repr = '\n{0}\n    '.format(chain_repr)
-        return ('{0}(\n'
-                '    data_source={1},\n'
-                '    call_chain=[{2}]\n'
-                ')').format(class_name, source_repr, chain_repr)
+
+        chain_copy = list(self._call_chain)
+        query_steps = collections.deque()
+        while chain_copy:
+            element = chain_copy.pop()
+            element_repr = _get_element_repr(element)
+            if isinstance(element, tuple):
+                if chain_copy and isinstance(chain_copy[-1], str):
+                    element_repr = chain_copy.pop() + element_repr
+                else:
+                    element_repr = '__call__' + element_repr
+            query_steps.appendleft(element_repr)
+
+        if query_steps:
+            #fn = lambda indent, step: f'{"  " * indent}| {step}'
+            fn = lambda indent, step: '{0}| {1}'.format(('  ' * indent), step)
+            query_repr = [fn(i, s) for i, s in enumerate(query_steps)]
+            query_repr = '\n' + '\n'.join(query_repr)
+        else:
+            query_repr = ' <empty>'
+
+        return ('<class \'datatest.{0}\'>\n'
+                'Source: {1}\n'
+                'Query:{2}').format(class_name, source_repr, query_repr)
 
     def _eval(self, call_chain=False):
         """Evaluate query and return its result."""
