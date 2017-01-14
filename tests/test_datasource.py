@@ -55,41 +55,34 @@ class TestValidateCallChain(unittest.TestCase):
 
 
 class TestBaseQuery(unittest.TestCase):
-    def setUp(self):
-        class MockSource(object):
-            def __repr__(self):
-                return '<MockSource object>'
-
-        self.mock_source = MockSource()
-
     def test_source_only(self):
-        source = self.mock_source
+        source = 'hello_world'
         query = BaseQuery(source)  # <- source only (no call chain)
 
         self.assertIs(query._data_source, source)
         self.assertEqual(query._call_chain, tuple(), 'should be empty')
 
     def test_source_and_chain(self):
-        source = self.mock_source
-        chain = ['foo', ((), {})]
+        source = 'hello_world'
+        chain = ['replace', (('_', ' '), {})]
         query = BaseQuery(source, chain)
 
         self.assertIs(query._data_source, source)
         self.assertEqual(query._call_chain, tuple(chain), 'should be tuple, not list')
 
     def test_map(self):
-        source = self.mock_source
-        chain = ['foo', ((), {})]
+        source = 'hello_world'
+        chain = ['replace', (('_', ' '), {})]
         userfunc = lambda x: str(x).strip()
         query = BaseQuery(source, chain).map(userfunc)
 
         self.assertIsInstance(query, BaseQuery)
 
-        expected = ('foo', ((), {}), 'map', ((userfunc,), {}))
+        expected = ('replace', (('_', ' '), {}), 'map', ((userfunc,), {}))
         self.assertEqual(query._call_chain, expected)
 
     def test_reduce(self):
-        source = self.mock_source
+        source = 'hello_world'
         chain = ['foo', ((), {})]
         userfunc = lambda x, y: x + y
         query = BaseQuery(source, chain).reduce(userfunc)
@@ -100,7 +93,7 @@ class TestBaseQuery(unittest.TestCase):
         self.assertEqual(query._call_chain, expected)
 
     def test_repr(self):
-        source = self.mock_source
+        source = 'hello_world'
 
         def userfunc(x):
             return str(x).upper()
@@ -109,102 +102,88 @@ class TestBaseQuery(unittest.TestCase):
         query = BaseQuery(source)
         expected = """
             <class 'datatest.BaseQuery'>
-            Source: <MockSource object>
+            Source: 'hello_world'
             Query: <empty>
         """
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)
 
-        # Call chain with unknown methods.
-        query = BaseQuery(source, ['foo', ((), {})])
+        # Call chain with single method.
+        query = BaseQuery(source, ['replace', (('_', ' '), {})])
         expected = """
             <class 'datatest.BaseQuery'>
-            Source: <MockSource object>
+            Source: 'hello_world'
             Query:
-            | foo()
+            | replace('_', ' ')
         """
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)
 
-        # Call chain with known method.
-        query = BaseQuery(source, ['map', ((userfunc,), {})])
-        expected = """
-            <class 'datatest.BaseQuery'>
-            Source: <MockSource object>
-            Query:
-            | map(userfunc)
-        """
-        expected = textwrap.dedent(expected).strip()
-        self.assertEqual(repr(query), expected)
-
-        # Call chain with multiple known methods.
+        # Call chain with multiple methods.
         call_chain = [
-            'map',
-            ((userfunc,), {}),
-            'reduce',
-            ((userfunc,), {}),
+            'replace',
+            (('_', ' '), {}),
+            'title',
+            ((), {}),
         ]
         query = BaseQuery(source, call_chain)
         expected = """
             <class 'datatest.BaseQuery'>
-            Source: <MockSource object>
+            Source: 'hello_world'
             Query:
-            | map(userfunc)
-              | reduce(userfunc)
+            | replace('_', ' ')
+              | title()
         """
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)
 
-        # Call chain with known method using keyword-args.
+        # Call chain with method using keyword-args.
         call_chain = [
-            'reduce',
+            'some_unknown_method',
             ((), {'function': userfunc}),
         ]
         query = BaseQuery(source, call_chain)
         expected = """
             <class 'datatest.BaseQuery'>
-            Source: <MockSource object>
+            Source: 'hello_world'
             Query:
-            | reduce(function=userfunc)
+            | some_unknown_method(function=userfunc)
         """
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)
 
-        # Call chain with known and unknown methods.
+        # Check nesting
         call_chain = [
-            'map',
-            ((userfunc,), {}),
-            'blerg',
+            'replace',
+            (('_', ' '), {}),
+            'title',
             ((), {}),
-            'map',
-            ((userfunc,), {}),
-            'reduce',
-            ((userfunc,), {}),
+            'center',
+            ((25,), {}),
         ]
         query = BaseQuery(source, call_chain)
         expected = """
             <class 'datatest.BaseQuery'>
-            Source: <MockSource object>
+            Source: 'hello_world'
             Query:
-            | map(userfunc)
-              | blerg()
-                | map(userfunc)
-                  | reduce(userfunc)
+            | replace('_', ' ')
+              | title()
+                | center(25)
         """
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)
 
     def test_getattr(self):
-        query = BaseQuery(self.mock_source)
+        query = BaseQuery('hello_world')
 
-        query = query.foo
-        self.assertEqual(query._call_chain, ('foo',))
+        query = query.replace
+        self.assertEqual(query._call_chain, ('replace',))
 
-        query = query.bar
-        self.assertEqual(query._call_chain, ('foo', 'bar'))
+        query = query.unknown_property
+        self.assertEqual(query._call_chain, ('replace', 'unknown_property'))
 
     def test_call(self):
-        query = BaseQuery(self.mock_source)
+        query = BaseQuery('hello_world')
 
         query = query.foo()
         expected = (
@@ -237,15 +216,14 @@ class TestBaseQuery(unittest.TestCase):
         self.assertEqual(query._call_chain, expected)
 
     def test_eval(self):
-        query = BaseQuery('hello world')
-        result = query.upper()._eval()
-        self.assertIsInstance(result, str, "should be 'str' not a result object")
-        self.assertEqual(result, 'HELLO WORLD')
+        query = BaseQuery('hello_world').upper()
+        self.assertEqual(query._eval(), 'HELLO_WORLD')
 
-        query = BaseQuery('123')
-        result = query.isdigit()._eval()
-        self.assertIsInstance(result, bool, "should be 'bool' not a result object")
-        self.assertEqual(result, True)
+        query = BaseQuery('AAA123').isdigit()
+        self.assertIs(query._eval(), False)
+
+        query = BaseQuery('AAA123').replace('A', '').isdigit()
+        self.assertIs(query._eval(), True)
 
 
 class TestDataQuery(unittest.TestCase):
