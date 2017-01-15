@@ -410,13 +410,11 @@ class DataQuery(BaseQuery):
 
         Use ``optimize=False`` to turn-off query optimization.
         """
-        data_source = self._data_source
         call_chain = self._call_chain
-
         if optimize:
             call_chain = self._optimize(call_chain)
 
-        result = self._eval(data_source, call_chain)  # <- Evaluate!
+        result = self._eval(call_chain=call_chain)  # <- Evaluate!
 
         if not lazy:
             try:
