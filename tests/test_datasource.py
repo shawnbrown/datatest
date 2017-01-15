@@ -814,3 +814,54 @@ class TestDataSourceBasics(unittest.TestCase):
             'b': ['z', 'y', 'x'],
         }
         self.assertEqual(result, expected)
+
+
+class TestDataSourceOptimizations(unittest.TestCase):
+    """."""
+    def setUp(self):
+        columns = ['label1', 'label2', 'value']
+        data = [['a', 'x', '17'],
+                ['a', 'x', '13'],
+                ['a', 'y', '20'],
+                ['a', 'z', '15'],
+                ['b', 'z', '5' ],
+                ['b', 'y', '40'],
+                ['b', 'x', '25']]
+        self.source = DataSource(data, columns)
+
+    def test_select_aggregate(self):
+        result = self.source._select_aggregate('SUM', 'value')
+        self.assertEqual(result, 135)
+
+        result = self.source._select_aggregate('SUM', 'value', label1='a')
+        self.assertEqual(result, 65)
+
+        result = self.source._select_aggregate('SUM', 'value', label1='z')
+        self.assertEqual(result, None)
+
+        with self.assertRaises(ValueError):
+            self.source._select_aggregate('SUM', 'value', 'value')
+
+    def test_select_aggregate_grouped(self):
+        result = self.source._select_aggregate('SUM', {'label1': 'value'})
+        self.assertEqual(result.eval(), {'a': 65, 'b': 70})
+
+        result = self.source._select_aggregate('MAX', {'label1': 'value'})
+        self.assertEqual(result.eval(), {'a': '20', 'b': '5'})
+
+        result = self.source._select_aggregate('SUM', {'label1': 'value'}, label2='x')
+        self.assertEqual(result.eval(), {'a': 30, 'b': 25})
+
+        result = self.source._select_aggregate('SUM', {('label1', 'label2'): 'value'})
+        expected = {
+            ('a', 'x'): 30,
+            ('a', 'y'): 20,
+            ('a', 'z'): 15,
+            ('b', 'x'): 25,
+            ('b', 'y'): 40,
+            ('b', 'z'): 5,
+        }
+        self.assertEqual(result.eval(), expected)
+
+        result = self.source._select_aggregate('COUNT', {'label2': 'value'})
+        self.assertEqual(result.eval(), {'x': 3, 'y': 2, 'z': 2})

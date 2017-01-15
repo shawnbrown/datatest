@@ -475,7 +475,8 @@ class DataSource(object):
     def __call__(self, *columns, **kwds_filter):
         return DataQuery._from_parts(self, ['_select', (columns, kwds_filter)])
 
-    def _select(self, *columns, **kwds_filter):
+    def _prepare_column_groups(self, *columns):
+        """Returns tuple of columns split into key and value groups."""
         if len(columns) == 1 and isinstance(columns[0], dict):
             key_columns, value_columns = tuple(columns[0].items())[0]
             if isinstance(key_columns, str):
@@ -485,11 +486,13 @@ class DataSource(object):
         else:
             key_columns = tuple()
             value_columns = columns
-
         self._assert_columns_exist(key_columns + value_columns)
         key_columns = tuple(self._normalize_column(x) for x in key_columns)
         value_columns = tuple(self._normalize_column(x) for x in value_columns)
+        return key_columns, value_columns
 
+    def _select(self, *columns, **kwds_filter):
+        key_columns, value_columns = self._prepare_column_groups(*columns)
         select_clause = ', '.join(key_columns + value_columns)
 
         if not key_columns:
@@ -528,6 +531,38 @@ class DataSource(object):
         grouped = ((k, valuefunc(g)) for k, g in grouped)
         grouped = ((k, DataResult(g, evaluates_to=list)) for k, g in grouped)
         return DataResult(grouped, evaluates_to=dict)
+
+    def _select_aggregate(self, sqlfunc, *columns, **kwds_filter):
+        key_columns, value_columns = self._prepare_column_groups(*columns)
+        if len(value_columns) != 1:
+            raise ValueError('expects single value column')
+        sql_function = '{0}({1})'.format(sqlfunc, value_columns[0])
+
+        if not key_columns:
+            cursor = self._execute_query(self._table, sql_function, **kwds_filter)
+            result = cursor.fetchone()
+            return result[0]  # <- EXIT!
+
+        group_by = ', '.join(key_columns)
+        select_clause = '{0}, {1}'.format(group_by, sql_function)
+        trailing_clause = 'GROUP BY ' + group_by
+
+        cursor = self._execute_query(
+            self._table,
+            select_clause,
+            trailing_clause,
+            **kwds_filter,
+        )
+        # If one key column, get single key value, else get key tuples.
+        slice_index = len(key_columns)
+        if slice_index == 1:
+            keyfunc = lambda row: row[0]
+        else:
+            keyfunc = lambda row: row[:slice_index]
+
+        # Parse rows.
+        iterable = ((keyfunc(x), x[-1]) for x in cursor)
+        return DataResult(iterable, evaluates_to=dict)
 
     def __repr__(self):
         """Return a string representation of the data source."""
