@@ -386,7 +386,7 @@ class DataQuery(BaseQuery):
     def _validate_source(data_source):
         if not isinstance(data_source, DataSource):
             class_name = data_source.__class__.__name__
-            msg = ("expected 'DataSource', got {1!r} (use BaseQuery "
+            msg = ("expected 'DataSource', got {0!r} (use BaseQuery "
                    "for other data_source types)")
             raise TypeError(msg.format(class_name))
 

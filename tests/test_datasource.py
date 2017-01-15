@@ -261,9 +261,18 @@ class TestDataQuery(unittest.TestCase):
             {'label1': 'b', 'label2': 'x', 'value': '25'},
         ])
 
-    def test_type(self):
-        query = DataQuery(self.source)
+    def test_empty(self):
+        query = DataQuery()
         self.assertIsInstance(query, BaseQuery)
+
+    def test_from_parts(self):
+        query = DataQuery._from_parts(self.source)
+        self.assertIsInstance(query, BaseQuery)
+
+        regex = "expected 'DataSource', got 'list'"
+        with self.assertRaisesRegex(TypeError, regex):
+            wrong_type = ['hello', 'world']
+            query = DataQuery._from_parts(wrong_type)
 
 
 class SqliteHelper(unittest.TestCase):
