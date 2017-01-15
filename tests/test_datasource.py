@@ -55,175 +55,198 @@ class TestValidateCallChain(unittest.TestCase):
 
 
 class TestBaseQuery(unittest.TestCase):
-    def test_source_only(self):
+    def test_init(self):
+        query = BaseQuery()
+        self.assertEqual(query._data_source, None)
+        self.assertEqual(query._call_chain, tuple())
+
+    def test_from_source(self):
+        """Test _from_parts() alternate constructor with source, only."""
         source = 'hello_world'
-        query = BaseQuery(source)  # <- source only (no call chain)
+        query = BaseQuery._from_parts(source)
+        self.assertIs(query._data_source, source, 'should be reference to source, not a copy')
+        self.assertEqual(query._call_chain, tuple(), 'should be empty tuple')
 
-        self.assertIs(query._data_source, source)
-        self.assertEqual(query._call_chain, tuple(), 'should be empty')
-
-    def test_source_and_chain(self):
+    def test_from_source_and_chain(self):
+        """Test _from_parts() alternate constructor with source and chain."""
         source = 'hello_world'
         chain = ['replace', (('_', ' '), {})]
-        query = BaseQuery(source, chain)
+        query = BaseQuery._from_parts(source, chain)
 
         self.assertIs(query._data_source, source)
         self.assertEqual(query._call_chain, tuple(chain), 'should be tuple, not list')
 
-    def test_map(self):
-        source = 'hello_world'
-        chain = ['replace', (('_', ' '), {})]
-        userfunc = lambda x: str(x).strip()
-        query = BaseQuery(source, chain).map(userfunc)
-
-        self.assertIsInstance(query, BaseQuery)
-
-        expected = ('replace', (('_', ' '), {}), 'map', ((userfunc,), {}))
-        self.assertEqual(query._call_chain, expected)
-
-    def test_reduce(self):
-        source = 'hello_world'
-        chain = ['foo', ((), {})]
-        userfunc = lambda x, y: x + y
-        query = BaseQuery(source, chain).reduce(userfunc)
-
-        self.assertIsInstance(query, BaseQuery)
-
-        expected = ('foo', ((), {}), 'reduce', ((userfunc,), {}))
-        self.assertEqual(query._call_chain, expected)
-
-    def test_repr(self):
-        source = 'hello_world'
-
-        def userfunc(x):
-            return str(x).upper()
-
-        # No call chain.
-        query = BaseQuery(source)
-        expected = """
-            <class 'datatest.BaseQuery'>
-            Source: 'hello_world'
-            Query: <empty>
-        """
-        expected = textwrap.dedent(expected).strip()
-        self.assertEqual(repr(query), expected)
-
-        # Call chain with single method.
-        query = BaseQuery(source, ['replace', (('_', ' '), {})])
-        expected = """
-            <class 'datatest.BaseQuery'>
-            Source: 'hello_world'
-            Query:
-            | replace('_', ' ')
-        """
-        expected = textwrap.dedent(expected).strip()
-        self.assertEqual(repr(query), expected)
-
-        # Call chain with multiple methods.
-        call_chain = [
-            'replace',
-            (('_', ' '), {}),
-            'title',
-            ((), {}),
-        ]
-        query = BaseQuery(source, call_chain)
-        expected = """
-            <class 'datatest.BaseQuery'>
-            Source: 'hello_world'
-            Query:
-            | replace('_', ' ')
-              | title()
-        """
-        expected = textwrap.dedent(expected).strip()
-        self.assertEqual(repr(query), expected)
-
-        # Call chain with method using keyword-args.
-        call_chain = [
-            'some_unknown_method',
-            ((), {'function': userfunc}),
-        ]
-        query = BaseQuery(source, call_chain)
-        expected = """
-            <class 'datatest.BaseQuery'>
-            Source: 'hello_world'
-            Query:
-            | some_unknown_method(function=userfunc)
-        """
-        expected = textwrap.dedent(expected).strip()
-        self.assertEqual(repr(query), expected)
-
-        # Check nesting
-        call_chain = [
-            'replace',
-            (('_', ' '), {}),
-            'title',
-            ((), {}),
-            'center',
-            ((25,), {}),
-        ]
-        query = BaseQuery(source, call_chain)
-        expected = """
-            <class 'datatest.BaseQuery'>
-            Source: 'hello_world'
-            Query:
-            | replace('_', ' ')
-              | title()
-                | center(25)
-        """
-        expected = textwrap.dedent(expected).strip()
-        self.assertEqual(repr(query), expected)
-
     def test_getattr(self):
-        query = BaseQuery('hello_world')
+        query_a = BaseQuery()
+        query_b = query_a.upper  # <- Triggers __getattr__().
+        self.assertIsInstance(query_b, BaseQuery, '__getattr__ should return BaseQuery')
+        self.assertIsNot(query_a, query_b, 'should return copy, not mutate the original')
+        self.assertEqual(query_b._call_chain, ('upper',))
 
-        query = query.replace
-        self.assertEqual(query._call_chain, ('replace',))
-
-        query = query.unknown_property
-        self.assertEqual(query._call_chain, ('replace', 'unknown_property'))
+        query = BaseQuery().foo.bar.baz
+        expected = ('foo', 'bar', 'baz')
+        self.assertEqual(query._call_chain, expected)
 
     def test_call(self):
-        query = BaseQuery('hello_world')
+        query_a = BaseQuery()
+        query_b = query_a.upper()  # <- Triggers __call__().
+        self.assertIsInstance(query_b, BaseQuery, '__call__ should return BaseQuery')
+        self.assertIsNot(query_a, query_b, 'should return copy, not mutate the original')
 
-        query = query.foo()
+        userfunc = lambda x: str(x).strip()
+        query = BaseQuery().map(userfunc).replace('_', ' ')
         expected = (
-            'foo', ((), {}),
+            'map',
+            ((userfunc,), {}),
+            'replace',
+            (('_', ' '), {}),
         )
-        self.assertEqual(query._call_chain, expected)
+        self.assertEqual(query._call_chain, expected, 'should use expected call chain format')
 
-        query = query.bar('BAR')
+        query = BaseQuery().foo(bar='baz')  # Test keywords.
         expected = (
-            'foo', ((), {}),
-            'bar', (('BAR',), {})
+            'foo',
+            ((), {'bar': 'baz'}),
         )
-        self.assertEqual(query._call_chain, expected)
+        self.assertEqual(query._call_chain, expected, 'should use expected call chain format')
 
-        query = query.baz
-        expected = (
-            'foo', ((), {}),
-            'bar', (('BAR',), {}),
-            'baz',
-        )
-        self.assertEqual(query._call_chain, expected)
+    def test_repr_empty(self):
+        query = BaseQuery()
+        expected = """
+            <class 'datatest.BaseQuery'>
+            Preset Source: <empty>
+            Query Steps: <empty>
+        """
+        expected = textwrap.dedent(expected).strip()
+        self.assertEqual(repr(query), expected)
 
-        query = query.corge(qux='quux')
-        expected = (
-            'foo', ((), {}),
-            'bar', (('BAR',), {}),
-            'baz',
-            'corge', ((), {'qux': 'quux'})
-        )
-        self.assertEqual(query._call_chain, expected)
+    def test_repr_source_only(self):
+        query = BaseQuery._from_parts('hello_world')
+        expected = """
+            <class 'datatest.BaseQuery'>
+            Preset Source: 'hello_world'
+            Query Steps: <empty>
+        """
+        expected = textwrap.dedent(expected).strip()
+        self.assertEqual(repr(query), expected)
+
+    def test_repr_getattr(self):
+        query = BaseQuery().upper
+        expected = """
+            <class 'datatest.BaseQuery'>
+            Preset Source: <empty>
+            Query Steps:
+            | upper
+        """
+        expected = textwrap.dedent(expected).strip()
+        self.assertEqual(repr(query), expected)
+
+    def test_repr_call(self):
+        query = BaseQuery().upper()
+        expected = """
+            <class 'datatest.BaseQuery'>
+            Preset Source: <empty>
+            Query Steps:
+            | upper()
+        """
+        expected = textwrap.dedent(expected).strip()
+        self.assertEqual(repr(query), expected)
+
+    def test_repr_call_with_args(self):
+        query = BaseQuery().replace('_', ' ')
+        expected = """
+            <class 'datatest.BaseQuery'>
+            Preset Source: <empty>
+            Query Steps:
+            | replace('_', ' ')
+        """
+        expected = textwrap.dedent(expected).strip()
+        self.assertEqual(repr(query), expected)
+
+    def test_repr_call_with_func_arg(self):
+        def userfunc(x):
+            return x
+        query = BaseQuery().map(userfunc)
+        expected = """
+            <class 'datatest.BaseQuery'>
+            Preset Source: <empty>
+            Query Steps:
+            | map(userfunc)
+        """
+        expected = textwrap.dedent(expected).strip()
+        self.assertEqual(repr(query), expected, "Should use usefunc.__name__ not normal repr.")
+
+        userlambda = lambda x: x
+        query = BaseQuery().map(userlambda)  # <- Passes lambda!
+        expected = """
+            <class 'datatest.BaseQuery'>
+            Preset Source: <empty>
+            Query Steps:
+            | map(<lambda>)
+        """
+        expected = textwrap.dedent(expected).strip()
+        self.assertEqual(repr(query), expected)
+
+    def test_repr_call_with_kwds(self):
+        query = BaseQuery().some_method(some_arg=123)
+        expected = """
+            <class 'datatest.BaseQuery'>
+            Preset Source: <empty>
+            Query Steps:
+            | some_method(some_arg=123)
+        """
+        expected = textwrap.dedent(expected).strip()
+        self.assertEqual(repr(query), expected)
+
+    def test_repr_indent(self):
+        query = BaseQuery().replace('_', ' ').title()
+        expected = """
+            <class 'datatest.BaseQuery'>
+            Preset Source: <empty>
+            Query Steps:
+            | replace('_', ' ')
+              | title()
+        """
+        expected = textwrap.dedent(expected).strip()
+        self.assertEqual(repr(query), expected)
+
+    def test_repr_integration(self):
+        """Test all cases in single query."""
+        query = BaseQuery().foo.bar().baz('_', ' ').qux(aa='AA').quux(10, bb='BB')('corge')
+        expected = """
+            <class 'datatest.BaseQuery'>
+            Preset Source: <empty>
+            Query Steps:
+            | foo
+              | bar()
+                | baz('_', ' ')
+                  | qux(aa='AA')
+                    | quux(10, bb='BB')
+                      | __call__('corge')
+        """
+        expected = textwrap.dedent(expected).strip()
+        self.assertEqual(repr(query), expected)
 
     def test_eval(self):
-        query = BaseQuery('hello_world').upper()
-        self.assertEqual(query._eval(), 'HELLO_WORLD')
+        query = BaseQuery().upper()
+        self.assertEqual(query._eval('hello_world'), 'HELLO_WORLD')
 
-        query = BaseQuery('AAA123').isdigit()
+        with self.assertRaisesRegex(ValueError, 'no preset found'):
+            query._eval()
+
+    def test_eval_preset(self):
+        query = BaseQuery._from_parts('AAA123')
+        query = query.isdigit()
         self.assertIs(query._eval(), False)
 
-        query = BaseQuery('AAA123').replace('A', '').isdigit()
+        query = BaseQuery._from_parts('AAA123')
+        query = query.replace('A', '').isdigit()
         self.assertIs(query._eval(), True)
+
+    def test_eval_overriding_preset(self):
+        query = BaseQuery._from_parts('AAA123')
+        query = query.replace('A', '').isdigit()
+        self.assertIs(query._eval('BBB123'), False)  # <- 'BBB123' overrides preset
 
 
 class TestDataQuery(unittest.TestCase):
@@ -684,20 +707,17 @@ class TestDataSourceBasics(unittest.TestCase):
         ]
         self.assertEqual(expected, result)
 
-    def test_select(self):
+    def test_select_single_value(self):
         result = self.source._select('label1')
         self.assertIsInstance(result, DataResult)
-        expected = [
-            'a',
-            'a',
-            'a',
-            'a',
-            'b',
-            'b',
-            'b',
-        ]
+        expected = ['a', 'a', 'a', 'a', 'b', 'b', 'b']
         self.assertEqual(list(result), expected)
 
+        arg_dict = {'label1': 'value'}
+        result = self.source._select(arg_dict)
+        self.assertEqual(arg_dict, {'label1': 'value'}, 'should not alter arg_dict')
+
+    def test_select_tuple_of_values(self):
         result = self.source._select('label1', 'label2')
         expected = [
             ('a', 'x'),
@@ -710,6 +730,7 @@ class TestDataSourceBasics(unittest.TestCase):
         ]
         self.assertEqual(list(result), expected)
 
+    def test_select_dict_of_values(self):
         result = self.source._select({'label1': 'value'})
         expected = {
             'a': ['17', '13', '20', '15'],
@@ -717,6 +738,7 @@ class TestDataSourceBasics(unittest.TestCase):
         }
         self.assertEqual(result.eval(), expected)
 
+    def test_select_dict_with_value_tuples(self):
         result = self.source._select({'label1': ('label2', 'value')})
         expected = {
             'a': [
@@ -733,6 +755,7 @@ class TestDataSourceBasics(unittest.TestCase):
         }
         self.assertEqual(result.eval(), expected)
 
+    def test_select_dict_with_key_tuples(self):
         result = self.source._select({('label1', 'label2'): 'value'})
         expected = {
             ('a', 'x'): ['17', '13'],
@@ -744,6 +767,7 @@ class TestDataSourceBasics(unittest.TestCase):
         }
         self.assertEqual(result.eval(), expected)
 
+    def test_select_dict_with_key_and_value_tuples(self):
         result = self.source._select({('label1', 'label2'): ('label2', 'value')})
         expected = {
             ('a', 'x'): [('x', '17'), ('x', '13')],
@@ -755,14 +779,14 @@ class TestDataSourceBasics(unittest.TestCase):
         }
         self.assertEqual(result.eval(), expected)
 
-        msg = 'Support for nested dictionaries removed (for now).'
+    def test_select_nested_dicts(self):
+        """Support for nested dictionaries was removed (for now).
+        It's likely that arbitrary nesting would complicate the ability
+        to check complex data types that are, themselves, mappings.
+        """
         regex = "{'label2': 'value'} not in DataSource"
-        with self.assertRaisesRegex(LookupError, regex, msg=msg):
+        with self.assertRaisesRegex(LookupError, regex):
             self.source._select({'label1': {'label2': 'value'}})
-
-        arg_dict = {'label1': 'value'}
-        result = self.source._select(arg_dict)
-        self.assertEqual(arg_dict, {'label1': 'value'}, 'should not alter arg_dict')
 
     def test_call(self):
         result = self.source('label1')

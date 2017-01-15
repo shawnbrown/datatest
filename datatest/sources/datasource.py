@@ -272,7 +272,7 @@ def _validate_call_chain(call_chain):
 def _get_element_repr(element):
     """Helper function returns repr for a single call chain element."""
     if isinstance(element, str):
-        return repr(element)  # <- EXIT!
+        return element  # <- EXIT!
 
     args, kwds = element
 
@@ -297,26 +297,43 @@ def _get_element_repr(element):
 
 
 class BaseQuery(object):
-    def __init__(self, data_source, call_chain=None):
+    def __init__(self, *args, **kwds):
+        if args or kwds:
+            self._call_chain = ((args, kwds),)
+        else:
+            self._call_chain = tuple()
+
+        self._data_source = None
+
+    @classmethod
+    def _from_parts(cls, data_source=None, call_chain=None):
         if call_chain:
             _validate_call_chain(call_chain)
             call_chain = tuple(call_chain)
         else:
             call_chain = tuple()
-        self._call_chain = call_chain
-        self._data_source = data_source
+
+        new_cls = cls()
+        new_cls._data_source = data_source
+        new_cls._call_chain = call_chain
+        return new_cls
 
     def __getattr__(self, name):
         call_chain = self._call_chain + (name,)
-        return self.__class__(self._data_source, call_chain)
+        new_query = self.__class__._from_parts(self._data_source, call_chain)
+        return new_query
 
     def __call__(self, *args, **kwds):
         call_chain = self._call_chain + ((args, kwds),)
-        return self.__class__(self._data_source, call_chain)
+        new_query = self.__class__._from_parts(self._data_source, call_chain)
+        return new_query
 
     def __repr__(self):
         class_name = self.__class__.__name__
-        source_repr = repr(self._data_source)
+        if self._data_source:
+            source_repr = repr(self._data_source)
+        else:
+            source_repr = '<empty>'
 
         chain_copy = list(self._call_chain)
         query_steps = collections.deque()
@@ -339,11 +356,14 @@ class BaseQuery(object):
             query_repr = ' <empty>'
 
         return ('<class \'datatest.{0}\'>\n'
-                'Source: {1}\n'
-                'Query:{2}').format(class_name, source_repr, query_repr)
+                'Preset Source: {1}\n'
+                'Query Steps:{2}').format(class_name, source_repr, query_repr)
 
-    def _eval(self, call_chain=False):
-        """Evaluate query and return its result."""
+    def _eval(self, data_source=None, call_chain=None):
+        data_source = data_source or self._data_source
+        if data_source == None:
+            raise ValueError('must provide data_source, no preset found')
+
         if not call_chain:
             call_chain = self._call_chain
 
@@ -353,18 +373,28 @@ class BaseQuery(object):
             args, kwds = val  # Unpack tuple.
             return obj(*args, **kwds)
 
-        return functools.reduce(function, call_chain, self._data_source)
+        return functools.reduce(function, call_chain, data_source)
 
 
 class DataQuery(BaseQuery):
-    def __init__(self, data_source, call_chain=None):
+    @classmethod
+    def _from_parts(cls, data_source=None, call_chain=None):
+        if data_source:
+            cls._validate_source(data_source)
+        return super(DataQuery, cls)._from_parts(data_source, call_chain)
+
+    @staticmethod
+    def _validate_source(data_source):
         if not isinstance(data_source, DataSource):
             class_name = data_source.__class__.__name__
             msg = ("expected 'DataSource', got {1!r} (use BaseQuery "
                    "for other data_source types)")
             raise TypeError(msg.format(class_name))
 
-        super(DataQuery, self).__init__(data_source, call_chain)
+    def _eval(self, data_source=None, call_chain=None):
+        data_source = data_source or self._data_source
+        self._validate_source(data_source)
+        return super(DataQuery, self)._eval(data_source, call_chain)
 
     def _optimize(self, call_chain):
         """Return optimized call_chain for faster performance with
@@ -381,11 +411,13 @@ class DataQuery(BaseQuery):
 
         Use ``optimize=False`` to turn-off query optimization.
         """
+        data_source = self._data_source
         call_chain = self._call_chain
 
         if optimize:
             call_chain = self._optimize(call_chain)
-        result = self._eval(call_chain)
+
+        result = self._eval(data_source, call_chain)  # <- Evaluate!
 
         if not lazy:
             try:
@@ -443,7 +475,7 @@ class DataSource(object):
             raise LookupError(msg)
 
     def __call__(self, *columns, **kwds_filter):
-        return DataQuery(self, ['_select', (columns, kwds_filter)])
+        return DataQuery._from_parts(self, ['_select', (columns, kwds_filter)])
 
     def _select(self, *columns, **kwds_filter):
         if len(columns) == 1 and isinstance(columns[0], dict):
