@@ -390,16 +390,17 @@ class DataQuery(BaseQuery):
                    "for other data_source types)")
             raise TypeError(msg.format(class_name))
 
-    def _eval(self, data_source=None, call_chain=None):
-        data_source = data_source or self._data_source
-        self._validate_source(data_source)
-        return super(DataQuery, self)._eval(data_source, call_chain)
-
-    def _optimize(self, call_chain):
+    @staticmethod
+    def _optimize(call_chain):
         """Return optimized call_chain for faster performance with
         DataSource object.
         """
         return call_chain
+
+    def _eval(self, data_source=None, call_chain=None):
+        data_source = data_source or self._data_source
+        self._validate_source(data_source)
+        return super(DataQuery, self)._eval(data_source, call_chain)
 
     def eval(self, lazy=False, optimize=True):
         """Evaluate query and return its result.
