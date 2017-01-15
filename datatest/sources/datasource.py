@@ -335,17 +335,16 @@ class BaseQuery(object):
         else:
             source_repr = '<empty>'
 
-        chain_copy = list(self._call_chain)
-        query_steps = collections.deque()
-        while chain_copy:
-            element = chain_copy.pop()
+        call_chain = collections.deque(self._call_chain)
+        query_steps = []
+        while call_chain:
+            element = call_chain.popleft()
             element_repr = _get_element_repr(element)
-            if isinstance(element, tuple):
-                if chain_copy and isinstance(chain_copy[-1], str):
-                    element_repr = chain_copy.pop() + element_repr
-                else:
-                    element_repr = '__call__' + element_repr
-            query_steps.appendleft(element_repr)
+            if (isinstance(element, str) and
+                    call_chain and isinstance(call_chain[0], tuple)):
+                arguments = call_chain.popleft()
+                element_repr = element_repr + _get_element_repr(arguments)
+            query_steps.append(element_repr)
 
         if query_steps:
             #fn = lambda indent, step: f'{"  " * indent}| {step}'

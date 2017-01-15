@@ -222,7 +222,7 @@ class TestBaseQuery(unittest.TestCase):
                 | baz('_', ' ')
                   | qux(aa='AA')
                     | quux(10, bb='BB')
-                      | __call__('corge')
+                      | ('corge')
         """
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)
