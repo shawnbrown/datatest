@@ -274,6 +274,54 @@ class TestDataQuery(unittest.TestCase):
             wrong_type = ['hello', 'world']
             query = DataQuery._from_parts(wrong_type)
 
+    def test_optimize_aggregate(self):
+        """Known, wellformed, aggregate queries should be optimized."""
+        unoptimized = (
+            '_select',  # <- Must be '_select'.
+            (({'label1': 'value'},), {'label2': 'x'}),  # <- Must be arg tuple.
+            'avg',      # <- Must be known aggregate method.
+            ((), {}),   # <- Must be empty.
+        )
+        output = DataQuery._optimize(unoptimized)
+        optimized = (
+            '_select_aggregate',
+            (('AVG', {'label1': 'value'},), {'label2': 'x'})
+        )
+        self.assertEqual(output, optimized)
+
+    def test_optimize_unknown_method_one(self):
+        """Call chains with unknown methods should not be optimized."""
+        unoptimized = (
+            'some_other_method',  # <- Not '_select'!
+            (({'label1': 'value'},), {'label2': 'x'}),
+            'avg',
+            ((), {}),
+        )
+        output = DataQuery._optimize(unoptimized)
+        self.assertEqual(output, unoptimized)
+
+    def test_optimize_unknown_method_two(self):
+        """Call chains with unknown methods should not be optimized."""
+        unoptimized = (
+            '_select',
+            (({'label1': 'value'},), {'label2': 'x'}),
+            'other_method',  # <- Not a known aggregate method.
+            ((), {}),
+        )
+        output = DataQuery._optimize(unoptimized)
+        self.assertEqual(output, unoptimized)
+
+    def test_optimize_unexpected_args(self):
+        """Call chains with unexpected arguments should not be optimized."""
+        unoptimized = (
+            '_select',
+            (({'label1': 'value'},), {'label2': 'x'}),
+            'avg',
+            (('not empty'), {}),  # <- Expected to be empty.
+        )
+        output = DataQuery._optimize(unoptimized)
+        self.assertEqual(output, unoptimized)
+
 
 class SqliteHelper(unittest.TestCase):
     """Helper class for testing DataSource parity with SQLite behavior."""

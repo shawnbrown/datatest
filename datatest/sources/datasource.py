@@ -393,8 +393,28 @@ class DataQuery(BaseQuery):
     @staticmethod
     def _optimize(call_chain):
         """Return optimized call_chain for faster performance with
-        DataSource object.
+        DataSource object (if possible). If call_chain cannot be
+        optimized, it will be returned without changes.
         """
+        try:
+            meth_one = call_chain[0]
+            args_one = call_chain[1]
+            meth_two = call_chain[2]
+            args_two = call_chain[3]
+        except IndexError:
+            return call_chain  # <- EXIT!
+
+        is_select = (meth_one == '_select'
+                     and isinstance(args_one, tuple))
+        is_aggregate = (meth_two in ('sum', 'avg', 'min', 'max')  # TODO: Add count.
+                        and args_two == ((), {}))
+
+        if is_select and is_aggregate:
+            args, kwds = args_one
+            args = (meth_two.upper(),) + args
+            call_chain = ('_select_aggregate', (args, kwds)) + call_chain[4:]
+            return call_chain  # <- EXIT!
+
         return call_chain
 
     def _eval(self, data_source=None, call_chain=None):
@@ -551,7 +571,7 @@ class DataSource(object):
             self._table,
             select_clause,
             trailing_clause,
-            **kwds_filter,
+            **kwds_filter
         )
         # If one key column, get single key value, else get key tuples.
         slice_index = len(key_columns)
