@@ -9,16 +9,16 @@ from datatest.utils.collections import Iterator
 from datatest.utils.decimal import Decimal
 from datatest.utils import TemporarySqliteTable
 
-from datatest.dataaccess import _sqlite_sum
-from datatest.dataaccess import _sqlite_avg
-from datatest.dataaccess import _sqlite_sortkey
-from datatest.dataaccess import _sqlite_min
-from datatest.dataaccess import _sqlite_max
-from datatest.dataaccess import DataResult
-from datatest.dataaccess import _validate_call_chain
-from datatest.dataaccess import BaseQuery
-from datatest.dataaccess import DataQuery
-from datatest.dataaccess import DataSource
+from datatest.dataaccess.source import _sqlite_sum
+from datatest.dataaccess.source import _sqlite_avg
+from datatest.dataaccess.source import _sqlite_sortkey
+from datatest.dataaccess.source import _sqlite_min
+from datatest.dataaccess.source import _sqlite_max
+from datatest.dataaccess.source import DataResult
+from datatest.dataaccess.source import _validate_call_chain
+from datatest.dataaccess.source import BaseQuery
+from datatest.dataaccess.source import DataQuery
+from datatest.dataaccess.source import DataSource
 
 
 class SqliteHelper(unittest.TestCase):

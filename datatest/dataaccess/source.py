@@ -2,15 +2,15 @@
 from numbers import Number
 from sqlite3 import Binary
 
-from .utils.builtins import *
-from .utils import collections
-from .utils import itertools
-from .utils import functools
-from .utils import TemporarySqliteTable
-from .utils import UnicodeCsvReader
-from .utils.misc import _is_nscontainer
-from .utils.misc import _expects_multiple_params
-from .utils.misc import _is_sortable
+from ..utils.builtins import *
+from ..utils import collections
+from ..utils import itertools
+from ..utils import functools
+from ..utils import TemporarySqliteTable
+from ..utils import UnicodeCsvReader
+from ..utils.misc import _is_nscontainer
+from ..utils.misc import _expects_multiple_params
+from ..utils.misc import _is_sortable
 
 
 # The SQLite BLOB/Binary type in sortable Python 2 but unsortable in Python 3.
