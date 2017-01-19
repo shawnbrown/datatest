@@ -3,8 +3,7 @@ import sqlite3
 
 from ..utils.builtins import *
 from ..utils import decimal
-from ..utils import TemporarySqliteTable
-from ..utils import UnicodeCsvReader
+from ..dataaccess.sqltemp import TemporarySqliteTable
 from ..utils.misc import _is_nscontainer
 
 from ..compare import CompareDict

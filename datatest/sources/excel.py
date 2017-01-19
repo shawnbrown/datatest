@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
-from datatest.utils import TemporarySqliteTable
+from ..dataaccess.sqltemp import TemporarySqliteTable
 from datatest import SqliteBase
 
 

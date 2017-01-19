@@ -3,9 +3,9 @@ from __future__ import absolute_import
 import collections
 import itertools
 
-from ..utils import TemporarySqliteTable
-from ..utils import UnicodeCsvReader
 from ..utils.misc import _is_nscontainer
+from .csvreader import UnicodeCsvReader
+from .sqltemp import TemporarySqliteTable
 from .result import DataResult
 from .query import _DataQuery
 

@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 """Temporary SQLite table loader and manager."""
 from __future__ import absolute_import
+import itertools
 import sqlite3
-
-from . import itertools
 
 
 class TemporarySqliteTable(object):

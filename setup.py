@@ -93,6 +93,7 @@ if __name__ == '__main__':
             url='https://pypi.python.org/pypi/datatest',
             packages=[
                 'datatest',
+                'datatest.dataaccess',
                 'datatest.sources',
                 'datatest.utils',
                 'datatest.__past__',

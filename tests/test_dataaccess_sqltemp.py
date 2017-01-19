@@ -6,7 +6,7 @@ from . import _unittest as unittest
 from datatest.utils import collections
 
 # Import code to test.
-from datatest.utils import TemporarySqliteTable
+from datatest.dataaccess.sqltemp import TemporarySqliteTable
 
 
 class TestTemporarySqliteTable(unittest.TestCase):
