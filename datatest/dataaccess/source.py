@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-from ..utils.builtins import *
-from ..utils import collections
-from ..utils import itertools
+from __future__ import absolute_import
+import collections
+import itertools
+
 from ..utils import TemporarySqliteTable
 from ..utils import UnicodeCsvReader
 from ..utils.misc import _is_nscontainer

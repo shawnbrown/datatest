@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from . import _unittest as unittest
+import unittest
 from datatest.dataaccess.source import DataSource
 from datatest.dataaccess.source import DataQuery
 from datatest.dataaccess.result import DataResult

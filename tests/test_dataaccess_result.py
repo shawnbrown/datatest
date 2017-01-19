@@ -2,12 +2,11 @@
 import datetime
 import sqlite3
 import sys
+import unittest
+from collections import Iterator
+from decimal import Decimal
 
-from . import _unittest as unittest
-from datatest.utils.collections import Iterator
-from datatest.utils.decimal import Decimal
 from datatest.utils import TemporarySqliteTable
-
 from datatest.dataaccess.result import _sqlite_sum
 from datatest.dataaccess.result import _sqlite_avg
 from datatest.dataaccess.result import _sqlite_sortkey

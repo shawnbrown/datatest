@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
+import collections
+import functools
 from numbers import Number
 from sqlite3 import Binary
 
-from ..utils.builtins import *
-from ..utils import collections
-from ..utils import functools
+from ..utils.builtins import min
+from ..utils.builtins import max
 from ..utils.misc import _expects_multiple_params
 from ..utils.misc import _is_sortable
 

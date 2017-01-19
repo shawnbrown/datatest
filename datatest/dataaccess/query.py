@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-from ..utils.builtins import *
-from ..utils import collections
-from ..utils import functools
+from __future__ import absolute_import
+import collections
+import functools
+from ..utils.builtins import callable
 
 
 def _validate_call_chain(call_chain):

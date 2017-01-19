@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import textwrap
+import unittest
 
-from . import _unittest as unittest
 from datatest.dataaccess.query import _validate_call_chain
 from datatest.dataaccess.query import BaseQuery
 from datatest.dataaccess.query import _DataQuery
