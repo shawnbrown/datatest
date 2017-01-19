@@ -4,12 +4,13 @@ from __future__ import absolute_import
 try:
     from io import open as _open
     assert open == _open  # Starting in 3.1
+    open = open
 except AssertionError:
     open = _open
 
 
 try:
-    callable  # Removed from 3.0 and 3.1, added back in 3.2.
+    callable = callable  # Removed from 3.0 and 3.1, added back in 3.2.
 except NameError:
     def callable(obj):
         parent_types = type(obj).__mro__
@@ -22,6 +23,9 @@ try:
     map.__iter__
     filter.__iter__
     zip.__iter__
+    map = map
+    filter = filter
+    zip = zip
 except AttributeError:
     from itertools import imap as map
     from itertools import ifilter as filter
@@ -31,6 +35,8 @@ except AttributeError:
 try:
     max([0, 1], default=None)  # The default keyword for max()
     min([0, 1], default=None)  # and min() is new in 3.4.
+    max = max
+    min = min
 except TypeError:
     from itertools import chain as _chain
 
