@@ -80,7 +80,7 @@ class BaseQuery(object):
         self._data_source = None
 
     @classmethod
-    def _from_parts(cls, data_source=None, call_chain=None):
+    def _from_parts(cls, call_chain=None, data_source=None):
         if call_chain:
             _validate_call_chain(call_chain)
             call_chain = tuple(call_chain)
@@ -94,12 +94,12 @@ class BaseQuery(object):
 
     def __getattr__(self, name):
         call_chain = self._call_chain + (name,)
-        new_query = self.__class__._from_parts(self._data_source, call_chain)
+        new_query = self.__class__._from_parts(call_chain, self._data_source)
         return new_query
 
     def __call__(self, *args, **kwds):
         call_chain = self._call_chain + ((args, kwds),)
-        new_query = self.__class__._from_parts(self._data_source, call_chain)
+        new_query = self.__class__._from_parts(call_chain, self._data_source)
         return new_query
 
     def __repr__(self):

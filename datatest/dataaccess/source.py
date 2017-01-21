@@ -18,10 +18,10 @@ class DataQuery(_DataQuery):
             raise TypeError(msg.format(data_source.__class__.__name__))
 
     @classmethod
-    def _from_parts(cls, data_source=None, call_chain=None):
+    def _from_parts(cls, call_chain=None, data_source=None):
         if data_source:
             cls._validate_source(data_source)
-        return super(DataQuery, cls)._from_parts(data_source, call_chain)
+        return super(DataQuery, cls)._from_parts(call_chain, data_source)
 
     def _eval(self, data_source=None, call_chain=None):
         data_source = data_source or self._data_source
@@ -77,7 +77,7 @@ class DataSource(object):
             raise LookupError(msg)
 
     def __call__(self, *columns, **kwds_filter):
-        return DataQuery._from_parts(self, ['_select', (columns, kwds_filter)])
+        return DataQuery._from_parts(['_select', (columns, kwds_filter)], self)
 
     def _prepare_column_groups(self, *columns):
         """Returns tuple of columns split into key and value groups."""

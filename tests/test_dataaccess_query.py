@@ -51,15 +51,15 @@ class TestBaseQuery(unittest.TestCase):
     def test_from_source(self):
         """Test _from_parts() alternate constructor with source, only."""
         source = 'hello_world'
-        query = BaseQuery._from_parts(source)
+        query = BaseQuery._from_parts(data_source=source)
         self.assertIs(query._data_source, source, 'should be reference to source, not a copy')
         self.assertEqual(query._call_chain, tuple(), 'should be empty tuple')
 
     def test_from_source_and_chain(self):
-        """Test _from_parts() alternate constructor with source and chain."""
+        """Test _from_parts() alternate constructor with chain and source."""
         source = 'hello_world'
         chain = ['replace', (('_', ' '), {})]
-        query = BaseQuery._from_parts(source, chain)
+        query = BaseQuery._from_parts(chain, source)
 
         self.assertIs(query._data_source, source)
         self.assertEqual(query._call_chain, tuple(chain), 'should be tuple, not list')
@@ -109,7 +109,7 @@ class TestBaseQuery(unittest.TestCase):
         self.assertEqual(repr(query), expected)
 
     def test_repr_source_only(self):
-        query = BaseQuery._from_parts('hello_world')
+        query = BaseQuery._from_parts(data_source='hello_world')
         expected = """
             <BaseQuery object at {0}>
             steps: <empty>
@@ -224,16 +224,16 @@ class TestBaseQuery(unittest.TestCase):
             query._eval()
 
     def test_eval_preset(self):
-        query = BaseQuery._from_parts('AAA123')
+        query = BaseQuery._from_parts(data_source='AAA123')
         query = query.isdigit()
         self.assertIs(query._eval(), False)
 
-        query = BaseQuery._from_parts('AAA123')
+        query = BaseQuery._from_parts(data_source='AAA123')
         query = query.replace('A', '').isdigit()
         self.assertIs(query._eval(), True)
 
     def test_eval_overriding_preset(self):
-        query = BaseQuery._from_parts('AAA123')
+        query = BaseQuery._from_parts(data_source='AAA123')
         query = query.replace('A', '').isdigit()
         self.assertIs(query._eval('BBB123'), False)  # <- 'BBB123' overrides preset
 
@@ -256,7 +256,7 @@ class Test_DataQuery_superclass(unittest.TestCase):
         self.assertIsInstance(query, BaseQuery)
 
     def test_from_parts(self):
-        query = _DataQuery._from_parts(self.source)
+        query = _DataQuery._from_parts(data_source=self.source)
         self.assertIsInstance(query, BaseQuery)
 
     def test_optimize_aggregate(self):
@@ -321,10 +321,10 @@ class TestDataQuery(unittest.TestCase):
         ])
 
     def test_from_parts(self):
-        query = DataQuery._from_parts(self.source)
+        query = DataQuery._from_parts(data_source=self.source)
         self.assertIsInstance(query, BaseQuery)
 
         regex = "expected 'DataSource', got 'list'"
         with self.assertRaisesRegex(TypeError, regex):
             wrong_type = ['hello', 'world']
-            query = DataQuery._from_parts(wrong_type)
+            query = DataQuery._from_parts(data_source=wrong_type)
