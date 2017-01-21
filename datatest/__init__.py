@@ -41,6 +41,10 @@ from .runner import DataTestRunner
 from .main import DataTestProgram
 from .main import main
 
+from .dataaccess.source import DataSource
+from .dataaccess.source import DataQuery
+from .dataaccess.result import DataResult
+
 
 __version__ = '0.8.0.dev3'
 
@@ -48,7 +52,7 @@ __all__ = [
     # Test case.
     'DataTestCase',
 
-    # Data sources.
+    # Data sources (TODO: remove once "data access" is complete).
     'BaseSource',
     'SqliteSource',
     'CsvSource',
@@ -90,6 +94,11 @@ __all__ = [
     'DataTestRunner',
     'DataTestProgram',
     'main',
+
+    # From Data Access sub-package.
+    'DataSource',
+    'DataQuery',
+    'DataResult',
 ]
 
 # Temporary alias for old "required" decorator.
