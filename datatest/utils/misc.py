@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 """Miscellaneous helper functions."""
+from __future__ import absolute_import
 import inspect
 from sys import version_info as _version_info
 from . import collections
 from . import decimal
+from .itertools import filterfalse
 
 
 def _is_nscontainer(x):
@@ -18,6 +20,16 @@ def _is_sortable(obj):
         return True
     except TypeError:
         return False
+
+
+def _unique_everseen(iterable):  # Adapted from itertools recipes.
+    """Returns unique elements, preserving order."""
+    seen = set()
+    seen_add = seen.add
+    iterable = filterfalse(seen.__contains__, iterable)
+    for element in iterable:
+        seen_add(element)
+        yield element
 
 
 def _make_decimal(d):

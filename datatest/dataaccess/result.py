@@ -2,6 +2,7 @@
 from __future__ import absolute_import
 import collections
 import functools
+import itertools
 from numbers import Number
 from sqlite3 import Binary
 
@@ -9,6 +10,7 @@ from ..utils.builtins import min
 from ..utils.builtins import max
 from ..utils.misc import _expects_multiple_params
 from ..utils.misc import _is_sortable
+from ..utils.misc import _unique_everseen
 
 
 # The SQLite BLOB/Binary type in sortable Python 2 but unsortable in Python 3.
@@ -210,6 +212,21 @@ class DataResult(collections.Iterator):
         all values are None.
         """
         return self._sqlite_aggregate('max', _sqlite_max)
+
+    def distinct(self):
+        """Return distinct values (removes duplicate records)."""
+        eval_type = self._evaluates_to
+        if issubclass(eval_type, dict):
+            def apply(value):
+                try:
+                    return value.distinct()
+                except AttributeError:
+                    return value
+            result = ((k, apply(v)) for k, v in self._iterator)
+        else:
+            result = _unique_everseen(self._iterator)
+
+        return self.__class__(result, eval_type)
 
     def eval(self):
         eval_type = self._evaluates_to

@@ -424,3 +424,19 @@ class TestDataResult(unittest.TestCase):
                            evaluates_to=dict)
         items = items._sqlite_aggregate('sum', _sqlite_sum)
         self.assertEqual(dict(items), {'a': 3, 'b': 6, 'c': 9})
+
+    def test_distinct(self):
+        items = DataResult([1, 1, 1, 2, 2, 3], evaluates_to=list)
+        items = items.distinct()
+        self.assertEqual(list(items), [1, 2, 3])
+
+        items = DataResult(
+            [
+                ('a', DataResult([1, 1, 1], evaluates_to=list)),
+                ('b', DataResult([1, 2, 2], evaluates_to=list)),
+                ('c', DataResult([1, 2, 3], evaluates_to=list)),
+            ],
+            evaluates_to=dict
+        )
+        items = items.distinct()
+        self.assertEqual(items.eval(), {'a': [1], 'b': [1, 2], 'c': [1, 2, 3]})
