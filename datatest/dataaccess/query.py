@@ -5,19 +5,19 @@ import functools
 from ..utils.builtins import callable
 
 
-def _validate_call_chain(call_chain):
-    """Validate call chain--if invalid, raises TypeError else returns
+def _validate_query_steps(query_steps):
+    """Validate query steps--if invalid, raises TypeError else returns
     None. Call chain should be an iterable containing strings and
     2-tuples. In the case of 2-tuples, the first item must be an *args
     'tuple' and the second item must be a **kwds dict.
     """
-    if isinstance(call_chain, str):
+    if isinstance(query_steps, str):
         raise TypeError("cannot be 'str'")
 
     try:
-        iterable = iter(call_chain)
+        iterable = iter(query_steps)
     except TypeError:
-        raise TypeError('call_chain must be iterable')
+        raise TypeError('query_steps must be iterable')
 
     for item in iterable:
         if isinstance(item, str):
@@ -43,8 +43,8 @@ def _validate_call_chain(call_chain):
             raise TypeError(err_msg.format(repr(err_obj)))
 
 
-def _get_element_repr(element):
-    """Helper function returns repr for a single call chain element."""
+def _get_step_repr(element):
+    """Helper function returns repr for a single query step."""
     if isinstance(element, str):
         return element  # <- EXIT!
 
@@ -73,33 +73,33 @@ def _get_element_repr(element):
 class BaseQuery(object):
     def __init__(self, *args, **kwds):
         if args or kwds:
-            self._call_chain = ((args, kwds),)
+            self._query_steps = ((args, kwds),)
         else:
-            self._call_chain = tuple()
+            self._query_steps = tuple()
 
-        self._data_source = None
+        self._initializer = None
 
     @classmethod
-    def _from_parts(cls, call_chain=None, data_source=None):
-        if call_chain:
-            _validate_call_chain(call_chain)
-            call_chain = tuple(call_chain)
+    def _from_parts(cls, query_steps=None, initializer=None):
+        if query_steps:
+            _validate_query_steps(query_steps)
+            query_steps = tuple(query_steps)
         else:
-            call_chain = tuple()
+            query_steps = tuple()
 
         new_cls = cls()
-        new_cls._data_source = data_source
-        new_cls._call_chain = call_chain
+        new_cls._query_steps = query_steps
+        new_cls._initializer = initializer
         return new_cls
 
     def __getattr__(self, name):
-        call_chain = self._call_chain + (name,)
-        new_query = self.__class__._from_parts(call_chain, self._data_source)
+        query_steps = self._query_steps + (name,)
+        new_query = self.__class__._from_parts(query_steps, self._initializer)
         return new_query
 
     def __call__(self, *args, **kwds):
-        call_chain = self._call_chain + ((args, kwds),)
-        new_query = self.__class__._from_parts(call_chain, self._data_source)
+        query_steps = self._query_steps + ((args, kwds),)
+        new_query = self.__class__._from_parts(query_steps, self._initializer)
         return new_query
 
     def __repr__(self):
@@ -107,40 +107,40 @@ class BaseQuery(object):
 
         hex_id = hex(id(self))
 
-        if self._data_source:
-            source_repr = '\n  ' + repr(self._data_source)
+        if self._initializer:
+            initial_repr = '\n  ' + repr(self._initializer)
         else:
-            source_repr = ' <empty>'
+            initial_repr = ' <empty>'
 
-        call_chain = collections.deque(self._call_chain)
-        query_steps = []
-        while call_chain:
-            element = call_chain.popleft()
-            element_repr = _get_element_repr(element)
-            if (isinstance(element, str) and
-                    call_chain and isinstance(call_chain[0], tuple)):
-                arguments = call_chain.popleft()
-                element_repr = element_repr + _get_element_repr(arguments)
-            query_steps.append(element_repr)
+        step_deque = collections.deque(self._query_steps)
+        repr_list = []
+        while step_deque:
+            one_step = step_deque.popleft()
+            one_repr = _get_step_repr(one_step)
+            if (isinstance(one_step, str) and
+                    step_deque and isinstance(step_deque[0], tuple)):
+                arguments = step_deque.popleft()
+                one_repr = one_repr + _get_step_repr(arguments)
+            repr_list.append(one_repr)
 
-        if query_steps:
-            #query_repr = [f'  {x}' for x in  query_steps]
-            query_repr = ['  {0}'.format(x) for x in  query_steps]
-            query_repr = '\n' + '\n'.join(query_repr)
+        if repr_list:
+            #steps_repr = [f'  {x}' for x in  repr_list]
+            steps_repr = ['  {0}'.format(x) for x in  repr_list]
+            steps_repr = '\n' + '\n'.join(steps_repr)
         else:
-            query_repr = ' <empty>'
+            steps_repr = ' <empty>'
 
         return ('<{0} object at {1}>\n'
-                'steps:{2}\n'
-                'initial:{3}').format(class_name, hex_id, query_repr, source_repr)
+                'query_steps:{2}\n'
+                'initializer:{3}').format(class_name, hex_id, steps_repr, initial_repr)
 
-    def _eval(self, data_source=None, call_chain=None):
-        data_source = data_source or self._data_source
-        if data_source == None:
-            raise ValueError('must provide data_source, no preset found')
+    def _eval(self, initializer=None, query_steps=None):
+        initializer = initializer or self._initializer
+        if initializer == None:
+            raise ValueError('must provide initializer, no preset found')
 
-        if not call_chain:
-            call_chain = self._call_chain
+        if not query_steps:
+            query_steps = self._query_steps
 
         def function(obj, val):
             if isinstance(val, str):
@@ -148,23 +148,23 @@ class BaseQuery(object):
             args, kwds = val  # Unpack tuple.
             return obj(*args, **kwds)
 
-        return functools.reduce(function, call_chain, data_source)
+        return functools.reduce(function, query_steps, initializer)
 
 
 class _DataQuery(BaseQuery):
     @staticmethod
-    def _optimize(call_chain):
-        """Return optimized call_chain for faster performance with
-        DataSource object (if possible). If call_chain cannot be
+    def _optimize(query_steps):
+        """Return optimized query_steps for faster performance with
+        DataSource object (if possible). If query_steps cannot be
         optimized, it will be returned without changes.
         """
         try:
-            meth_one = call_chain[0]
-            args_one = call_chain[1]
-            meth_two = call_chain[2]
-            args_two = call_chain[3]
+            meth_one = query_steps[0]
+            args_one = query_steps[1]
+            meth_two = query_steps[2]
+            args_two = query_steps[3]
         except IndexError:
-            return call_chain  # <- EXIT!
+            return query_steps  # <- EXIT!
 
         is_select = (meth_one == '_select'
                      and isinstance(args_one, tuple))
@@ -174,10 +174,10 @@ class _DataQuery(BaseQuery):
         if is_select and is_aggregate:
             args, kwds = args_one
             args = (meth_two.upper(),) + args
-            call_chain = ('_select_aggregate', (args, kwds)) + call_chain[4:]
-            return call_chain  # <- EXIT!
+            query_steps = ('_select_aggregate', (args, kwds)) + query_steps[4:]
+            return query_steps  # <- EXIT!
 
-        return call_chain
+        return query_steps
 
     def eval(self, lazy=False, optimize=True):
         """Evaluate query and return its result.
@@ -188,11 +188,11 @@ class _DataQuery(BaseQuery):
 
         Use ``optimize=False`` to turn-off query optimization.
         """
-        call_chain = self._call_chain
+        query_steps = self._query_steps
         if optimize:
-            call_chain = self._optimize(call_chain)
+            query_steps = self._optimize(query_steps)
 
-        result = self._eval(call_chain=call_chain)  # <- Evaluate!
+        result = self._eval(query_steps=query_steps)  # <- Evaluate!
 
         if not lazy:
             try:

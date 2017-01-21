@@ -2,7 +2,7 @@
 import textwrap
 import unittest
 
-from datatest.dataaccess.query import _validate_call_chain
+from datatest.dataaccess.query import _validate_query_steps
 from datatest.dataaccess.query import BaseQuery
 from datatest.dataaccess.query import _DataQuery
 from datatest.dataaccess.source import DataQuery
@@ -11,49 +11,49 @@ from datatest.dataaccess.source import DataSource
 
 class TestValidateCallChain(unittest.TestCase):
     def test_passing(self):
-        _validate_call_chain([])
-        _validate_call_chain(['foo'])
-        _validate_call_chain(['sum', ((), {})])
+        _validate_query_steps([])
+        _validate_query_steps(['foo'])
+        _validate_query_steps(['sum', ((), {})])
 
     def test_container(self):
         with self.assertRaisesRegex(TypeError, "cannot be 'str'"):
-            call_chain = 'bad container'
-            _validate_call_chain(call_chain)
+            query_steps = 'bad container'
+            _validate_query_steps(query_steps)
 
     def test_type(self):
-        regex = "call_chain must be iterable"
+        regex = "query_steps must be iterable"
         with self.assertRaisesRegex(TypeError, regex):
-            call_chain = 123
-            _validate_call_chain(call_chain)
+            query_steps = 123
+            _validate_query_steps(query_steps)
 
     def test_len(self):
         regex = 'expected string or 2-tuple, found 3-tuple'
         with self.assertRaisesRegex(TypeError, regex):
-            _validate_call_chain([((), {}, {})])
+            _validate_query_steps([((), {}, {})])
 
     def test_first_item(self):
         regex = r"first item must be \*args 'tuple', found 'int'"
         with self.assertRaisesRegex(TypeError, regex):
-            _validate_call_chain([(123, {})])
+            _validate_query_steps([(123, {})])
 
     def test_second_item(self):
         regex = r"second item must be \*\*kwds 'dict', found 'int'"
         with self.assertRaisesRegex(TypeError, regex):
-            _validate_call_chain([((), 123)])
+            _validate_query_steps([((), 123)])
 
 
 class TestBaseQuery(unittest.TestCase):
     def test_init(self):
         query = BaseQuery()
-        self.assertEqual(query._data_source, None)
-        self.assertEqual(query._call_chain, tuple())
+        self.assertEqual(query._initializer, None)
+        self.assertEqual(query._query_steps, tuple())
 
     def test_from_source(self):
         """Test _from_parts() alternate constructor with source, only."""
         source = 'hello_world'
-        query = BaseQuery._from_parts(data_source=source)
-        self.assertIs(query._data_source, source, 'should be reference to source, not a copy')
-        self.assertEqual(query._call_chain, tuple(), 'should be empty tuple')
+        query = BaseQuery._from_parts(initializer=source)
+        self.assertIs(query._initializer, source, 'should be reference to source, not a copy')
+        self.assertEqual(query._query_steps, tuple(), 'should be empty tuple')
 
     def test_from_source_and_chain(self):
         """Test _from_parts() alternate constructor with chain and source."""
@@ -61,19 +61,19 @@ class TestBaseQuery(unittest.TestCase):
         chain = ['replace', (('_', ' '), {})]
         query = BaseQuery._from_parts(chain, source)
 
-        self.assertIs(query._data_source, source)
-        self.assertEqual(query._call_chain, tuple(chain), 'should be tuple, not list')
+        self.assertIs(query._initializer, source)
+        self.assertEqual(query._query_steps, tuple(chain), 'should be tuple, not list')
 
     def test_getattr(self):
         query_a = BaseQuery()
         query_b = query_a.upper  # <- Triggers __getattr__().
         self.assertIsInstance(query_b, BaseQuery, '__getattr__ should return BaseQuery')
         self.assertIsNot(query_a, query_b, 'should return copy, not mutate the original')
-        self.assertEqual(query_b._call_chain, ('upper',))
+        self.assertEqual(query_b._query_steps, ('upper',))
 
         query = BaseQuery().foo.bar.baz
         expected = ('foo', 'bar', 'baz')
-        self.assertEqual(query._call_chain, expected)
+        self.assertEqual(query._query_steps, expected)
 
     def test_call(self):
         query_a = BaseQuery()
@@ -89,31 +89,31 @@ class TestBaseQuery(unittest.TestCase):
             'replace',
             (('_', ' '), {}),
         )
-        self.assertEqual(query._call_chain, expected, 'should use expected call chain format')
+        self.assertEqual(query._query_steps, expected, 'should use expected call chain format')
 
         query = BaseQuery().foo(bar='baz')  # Test keywords.
         expected = (
             'foo',
             ((), {'bar': 'baz'}),
         )
-        self.assertEqual(query._call_chain, expected, 'should use expected call chain format')
+        self.assertEqual(query._query_steps, expected, 'should use expected call chain format')
 
     def test_repr_empty(self):
         query = BaseQuery()
         expected = """
             <BaseQuery object at {0}>
-            steps: <empty>
-            initial: <empty>
+            query_steps: <empty>
+            initializer: <empty>
         """.format(hex(id(query)))
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)
 
     def test_repr_source_only(self):
-        query = BaseQuery._from_parts(data_source='hello_world')
+        query = BaseQuery._from_parts(initializer='hello_world')
         expected = """
             <BaseQuery object at {0}>
-            steps: <empty>
-            initial:
+            query_steps: <empty>
+            initializer:
               'hello_world'
         """.format(hex(id(query)))
         expected = textwrap.dedent(expected).strip()
@@ -123,9 +123,9 @@ class TestBaseQuery(unittest.TestCase):
         query = BaseQuery().upper
         expected = """
             <BaseQuery object at {0}>
-            steps:
+            query_steps:
               upper
-            initial: <empty>
+            initializer: <empty>
         """.format(hex(id(query)))
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)
@@ -134,9 +134,9 @@ class TestBaseQuery(unittest.TestCase):
         query = BaseQuery().upper()
         expected = """
             <BaseQuery object at {0}>
-            steps:
+            query_steps:
               upper()
-            initial: <empty>
+            initializer: <empty>
         """.format(hex(id(query)))
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)
@@ -145,9 +145,9 @@ class TestBaseQuery(unittest.TestCase):
         query = BaseQuery().replace('_', ' ')
         expected = """
             <BaseQuery object at {0}>
-            steps:
+            query_steps:
               replace('_', ' ')
-            initial: <empty>
+            initializer: <empty>
         """.format(hex(id(query)))
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)
@@ -158,9 +158,9 @@ class TestBaseQuery(unittest.TestCase):
         query = BaseQuery().map(userfunc)
         expected = """
             <BaseQuery object at {0}>
-            steps:
+            query_steps:
               map(userfunc)
-            initial: <empty>
+            initializer: <empty>
         """.format(hex(id(query)))
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected, "Should use usefunc.__name__ not normal repr.")
@@ -169,9 +169,9 @@ class TestBaseQuery(unittest.TestCase):
         query = BaseQuery().map(userlambda)  # <- Passes lambda!
         expected = """
             <BaseQuery object at {0}>
-            steps:
+            query_steps:
               map(<lambda>)
-            initial: <empty>
+            initializer: <empty>
         """.format(hex(id(query)))
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)
@@ -180,9 +180,9 @@ class TestBaseQuery(unittest.TestCase):
         query = BaseQuery().some_method(some_arg=123)
         expected = """
             <BaseQuery object at {0}>
-            steps:
+            query_steps:
               some_method(some_arg=123)
-            initial: <empty>
+            initializer: <empty>
         """.format(hex(id(query)))
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)
@@ -191,10 +191,10 @@ class TestBaseQuery(unittest.TestCase):
         query = BaseQuery().replace('_', ' ').title()
         expected = """
             <BaseQuery object at {0}>
-            steps:
+            query_steps:
               replace('_', ' ')
               title()
-            initial: <empty>
+            initializer: <empty>
         """.format(hex(id(query)))
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)
@@ -204,14 +204,14 @@ class TestBaseQuery(unittest.TestCase):
         query = BaseQuery().foo.bar().baz('_', ' ').qux(aa='AA').quux(10, bb='BB')('corge')
         expected = """
             <BaseQuery object at {0}>
-            steps:
+            query_steps:
               foo
               bar()
               baz('_', ' ')
               qux(aa='AA')
               quux(10, bb='BB')
               ('corge')
-            initial: <empty>
+            initializer: <empty>
         """.format(hex(id(query)))
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)
@@ -224,16 +224,16 @@ class TestBaseQuery(unittest.TestCase):
             query._eval()
 
     def test_eval_preset(self):
-        query = BaseQuery._from_parts(data_source='AAA123')
+        query = BaseQuery._from_parts(initializer='AAA123')
         query = query.isdigit()
         self.assertIs(query._eval(), False)
 
-        query = BaseQuery._from_parts(data_source='AAA123')
+        query = BaseQuery._from_parts(initializer='AAA123')
         query = query.replace('A', '').isdigit()
         self.assertIs(query._eval(), True)
 
     def test_eval_overriding_preset(self):
-        query = BaseQuery._from_parts(data_source='AAA123')
+        query = BaseQuery._from_parts(initializer='AAA123')
         query = query.replace('A', '').isdigit()
         self.assertIs(query._eval('BBB123'), False)  # <- 'BBB123' overrides preset
 
@@ -256,7 +256,7 @@ class Test_DataQuery_superclass(unittest.TestCase):
         self.assertIsInstance(query, BaseQuery)
 
     def test_from_parts(self):
-        query = _DataQuery._from_parts(data_source=self.source)
+        query = _DataQuery._from_parts(initializer=self.source)
         self.assertIsInstance(query, BaseQuery)
 
     def test_optimize_aggregate(self):
@@ -321,10 +321,10 @@ class TestDataQuery(unittest.TestCase):
         ])
 
     def test_from_parts(self):
-        query = DataQuery._from_parts(data_source=self.source)
+        query = DataQuery._from_parts(initializer=self.source)
         self.assertIsInstance(query, BaseQuery)
 
         regex = "expected 'DataSource', got 'list'"
         with self.assertRaisesRegex(TypeError, regex):
             wrong_type = ['hello', 'world']
-            query = DataQuery._from_parts(data_source=wrong_type)
+            query = DataQuery._from_parts(initializer=wrong_type)

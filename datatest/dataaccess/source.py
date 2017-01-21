@@ -12,21 +12,23 @@ from .query import _DataQuery
 
 class DataQuery(_DataQuery):
     @staticmethod
-    def _validate_source(data_source):
-        if not isinstance(data_source, DataSource):
-            msg = "expected 'DataSource', got {0!r}"
-            raise TypeError(msg.format(data_source.__class__.__name__))
+    def _validate_initializer(initializer):
+        if not isinstance(initializer, DataSource):
+            raise TypeError('expected {0!r}, got {1!r}'.format(
+                DataSource.__name__,
+                initializer.__class__.__name__,
+            ))
 
     @classmethod
-    def _from_parts(cls, call_chain=None, data_source=None):
-        if data_source:
-            cls._validate_source(data_source)
-        return super(DataQuery, cls)._from_parts(call_chain, data_source)
+    def _from_parts(cls, query_steps=None, initializer=None):
+        if initializer:
+            cls._validate_initializer(initializer)
+        return super(DataQuery, cls)._from_parts(query_steps, initializer)
 
-    def _eval(self, data_source=None, call_chain=None):
-        data_source = data_source or self._data_source
-        self._validate_source(data_source)
-        return super(DataQuery, self)._eval(data_source, call_chain)
+    def _eval(self, initializer=None, query_steps=None):
+        initializer = initializer or self._initializer
+        self._validate_initializer(initializer)
+        return super(DataQuery, self)._eval(initializer, query_steps)
 
 
 class DataSource(object):
