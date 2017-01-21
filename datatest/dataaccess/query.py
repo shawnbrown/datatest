@@ -104,10 +104,13 @@ class BaseQuery(object):
 
     def __repr__(self):
         class_name = self.__class__.__name__
+
+        hex_id = hex(id(self))
+
         if self._data_source:
-            source_repr = repr(self._data_source)
+            source_repr = '\n  ' + repr(self._data_source)
         else:
-            source_repr = '<empty>'
+            source_repr = ' <empty>'
 
         call_chain = collections.deque(self._call_chain)
         query_steps = []
@@ -121,16 +124,15 @@ class BaseQuery(object):
             query_steps.append(element_repr)
 
         if query_steps:
-            #fn = lambda indent, step: f'{"  " * indent}| {step}'
-            fn = lambda indent, step: '{0}| {1}'.format(('  ' * indent), step)
-            query_repr = [fn(i, s) for i, s in enumerate(query_steps)]
+            #query_repr = [f'  {x}' for x in  query_steps]
+            query_repr = ['  {0}'.format(x) for x in  query_steps]
             query_repr = '\n' + '\n'.join(query_repr)
         else:
             query_repr = ' <empty>'
 
-        return ('<class \'datatest.{0}\'>\n'
-                'Preset Source: {1}\n'
-                'Query Steps:{2}').format(class_name, source_repr, query_repr)
+        return ('<{0} object at {1}>\n'
+                'steps:{2}\n'
+                'initial:{3}').format(class_name, hex_id, query_repr, source_repr)
 
     def _eval(self, data_source=None, call_chain=None):
         data_source = data_source or self._data_source

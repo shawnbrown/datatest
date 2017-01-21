@@ -101,53 +101,54 @@ class TestBaseQuery(unittest.TestCase):
     def test_repr_empty(self):
         query = BaseQuery()
         expected = """
-            <class 'datatest.BaseQuery'>
-            Preset Source: <empty>
-            Query Steps: <empty>
-        """
+            <BaseQuery object at {0}>
+            steps: <empty>
+            initial: <empty>
+        """.format(hex(id(query)))
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)
 
     def test_repr_source_only(self):
         query = BaseQuery._from_parts('hello_world')
         expected = """
-            <class 'datatest.BaseQuery'>
-            Preset Source: 'hello_world'
-            Query Steps: <empty>
-        """
+            <BaseQuery object at {0}>
+            steps: <empty>
+            initial:
+              'hello_world'
+        """.format(hex(id(query)))
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)
 
     def test_repr_getattr(self):
         query = BaseQuery().upper
         expected = """
-            <class 'datatest.BaseQuery'>
-            Preset Source: <empty>
-            Query Steps:
-            | upper
-        """
+            <BaseQuery object at {0}>
+            steps:
+              upper
+            initial: <empty>
+        """.format(hex(id(query)))
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)
 
     def test_repr_call(self):
         query = BaseQuery().upper()
         expected = """
-            <class 'datatest.BaseQuery'>
-            Preset Source: <empty>
-            Query Steps:
-            | upper()
-        """
+            <BaseQuery object at {0}>
+            steps:
+              upper()
+            initial: <empty>
+        """.format(hex(id(query)))
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)
 
     def test_repr_call_with_args(self):
         query = BaseQuery().replace('_', ' ')
         expected = """
-            <class 'datatest.BaseQuery'>
-            Preset Source: <empty>
-            Query Steps:
-            | replace('_', ' ')
-        """
+            <BaseQuery object at {0}>
+            steps:
+              replace('_', ' ')
+            initial: <empty>
+        """.format(hex(id(query)))
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)
 
@@ -156,45 +157,45 @@ class TestBaseQuery(unittest.TestCase):
             return x
         query = BaseQuery().map(userfunc)
         expected = """
-            <class 'datatest.BaseQuery'>
-            Preset Source: <empty>
-            Query Steps:
-            | map(userfunc)
-        """
+            <BaseQuery object at {0}>
+            steps:
+              map(userfunc)
+            initial: <empty>
+        """.format(hex(id(query)))
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected, "Should use usefunc.__name__ not normal repr.")
 
         userlambda = lambda x: x
         query = BaseQuery().map(userlambda)  # <- Passes lambda!
         expected = """
-            <class 'datatest.BaseQuery'>
-            Preset Source: <empty>
-            Query Steps:
-            | map(<lambda>)
-        """
+            <BaseQuery object at {0}>
+            steps:
+              map(<lambda>)
+            initial: <empty>
+        """.format(hex(id(query)))
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)
 
     def test_repr_call_with_kwds(self):
         query = BaseQuery().some_method(some_arg=123)
         expected = """
-            <class 'datatest.BaseQuery'>
-            Preset Source: <empty>
-            Query Steps:
-            | some_method(some_arg=123)
-        """
+            <BaseQuery object at {0}>
+            steps:
+              some_method(some_arg=123)
+            initial: <empty>
+        """.format(hex(id(query)))
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)
 
     def test_repr_indent(self):
         query = BaseQuery().replace('_', ' ').title()
         expected = """
-            <class 'datatest.BaseQuery'>
-            Preset Source: <empty>
-            Query Steps:
-            | replace('_', ' ')
-              | title()
-        """
+            <BaseQuery object at {0}>
+            steps:
+              replace('_', ' ')
+              title()
+            initial: <empty>
+        """.format(hex(id(query)))
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)
 
@@ -202,16 +203,16 @@ class TestBaseQuery(unittest.TestCase):
         """Test all cases in single query."""
         query = BaseQuery().foo.bar().baz('_', ' ').qux(aa='AA').quux(10, bb='BB')('corge')
         expected = """
-            <class 'datatest.BaseQuery'>
-            Preset Source: <empty>
-            Query Steps:
-            | foo
-              | bar()
-                | baz('_', ' ')
-                  | qux(aa='AA')
-                    | quux(10, bb='BB')
-                      | ('corge')
-        """
+            <BaseQuery object at {0}>
+            steps:
+              foo
+              bar()
+              baz('_', ' ')
+              qux(aa='AA')
+              quux(10, bb='BB')
+              ('corge')
+            initial: <empty>
+        """.format(hex(id(query)))
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)
 
