@@ -220,7 +220,8 @@ class TestBaseQuery(unittest.TestCase):
         query = BaseQuery().upper()
         self.assertEqual(query._eval('hello_world'), 'HELLO_WORLD')
 
-        with self.assertRaisesRegex(ValueError, 'no preset found'):
+        regex = 'must provide initializer, none found'
+        with self.assertRaisesRegex(ValueError, regex):
             query._eval()
 
     def test_eval_preset(self):

@@ -134,14 +134,9 @@ class BaseQuery(object):
                 'query_steps:{2}\n'
                 'initializer:{3}').format(class_name, hex_id, steps_repr, initial_repr)
 
-    def _eval(self, initializer=None, query_steps=None):
-        initializer = initializer or self._initializer
-        if initializer == None:
-            raise ValueError('must provide initializer, no preset found')
-
-        if not query_steps:
-            query_steps = self._query_steps
-
+    @staticmethod
+    def _reduce(query_steps, initializer):
+        """."""
         def function(obj, val):
             if isinstance(val, str):
                 return getattr(obj, val)
@@ -149,6 +144,14 @@ class BaseQuery(object):
             return obj(*args, **kwds)
 
         return functools.reduce(function, query_steps, initializer)
+
+    def _eval(self, initializer=None):
+        initializer = initializer or self._initializer
+        if initializer is None:
+            raise ValueError('must provide initializer, none found')
+
+        query_steps = self._query_steps
+        return self._reduce(query_steps, initializer)
 
 
 class _DataQuery(BaseQuery):
@@ -179,8 +182,11 @@ class _DataQuery(BaseQuery):
 
         return query_steps
 
-    def eval(self, lazy=False, optimize=True):
-        """Evaluate query and return its result.
+    def eval(self, initializer=None, **kwds):
+        """
+        eval(initializer=None, *, lazy=False, optimize=True)
+
+        Evaluate query and return its result.
 
         Use ``lazy=True`` to evaluate the query but leave the result
         in its raw, iterator form. By default, results are eagerly
@@ -188,11 +194,22 @@ class _DataQuery(BaseQuery):
 
         Use ``optimize=False`` to turn-off query optimization.
         """
+        initializer = initializer or self._initializer
+        if initializer is None:
+            raise ValueError('must provide initializer, none found')
+
+        lazy = kwds.pop('lazy', False)         # Emulate keyword-only
+        optimize = kwds.pop('optimize', True)  # behavior for 2.7 and
+        if kwds:                               # 2.6 compatibility.
+            key, _ = kwds.popitem()
+            raise TypeError('got an unexpected keyword '
+                            'argument {0!r}'.format(key))
+
         query_steps = self._query_steps
         if optimize:
             query_steps = self._optimize(query_steps)
 
-        result = self._eval(query_steps=query_steps)  # <- Evaluate!
+        result = self._reduce(query_steps, initializer)
 
         if not lazy:
             try:
