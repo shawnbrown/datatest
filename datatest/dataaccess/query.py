@@ -169,17 +169,19 @@ class _DataQuery(BaseQuery):
         except IndexError:
             return query_steps  # <- EXIT!
 
-        is_select = (meth_one == '_select'
-                     and isinstance(args_one, tuple))
+        if meth_one != '_select' or not isinstance(args_one, tuple):
+            return query_steps  # <- EXIT!
+
         is_aggregate = (meth_two in ('sum', 'avg', 'min', 'max')  # TODO: Add count.
                         and args_two == ((), {}))
+        is_distinct = meth_two == 'distinct' and args_two == ((), {})
 
-        if is_select and is_aggregate:
+        if is_aggregate:
             args, kwds = args_one
             args = (meth_two.upper(),) + args
             query_steps = ('_select_aggregate', (args, kwds)) + query_steps[4:]
-            return query_steps  # <- EXIT!
-
+        elif is_distinct:
+            query_steps = ('_select_distinct', args_one) + query_steps[4:]
         return query_steps
 
     def eval(self, initializer=None, **kwds):

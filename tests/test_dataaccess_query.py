@@ -275,6 +275,21 @@ class Test_DataQuery_superclass(unittest.TestCase):
         )
         self.assertEqual(output, optimized)
 
+    def test_optimize_distinct(self):
+        """Wellformed, SELECT DISTINCT queries should be optimized."""
+        unoptimized = (
+            '_select',  # <- Must be '_select'.
+            (({'label1': 'value'},), {'label2': 'x'}),  # <- Must be arg tuple.
+            'distinct', # <- Must be "distinct".
+            ((), {}),   # <- Must be empty.
+        )
+        output = _DataQuery._optimize(unoptimized)
+        optimized = (
+            '_select_distinct',
+            (({'label1': 'value'},), {'label2': 'x'}),  # <- Unchanged.
+        )
+        self.assertEqual(output, optimized)
+
     def test_optimize_unknown_method_one(self):
         """Call chains with unknown methods should not be optimized."""
         unoptimized = (

@@ -138,6 +138,48 @@ class DataSource(object):
         grouped = ((k, DataResult(g, evaluates_to=list)) for k, g in grouped)
         return DataResult(grouped, evaluates_to=dict)
 
+    def _select_distinct(self, *columns, **kwds_filter):
+        key_columns, value_columns = self._prepare_column_groups(*columns)
+        select_clause = ', '.join(key_columns + value_columns)
+        select_clause = 'DISTINCT ' + select_clause
+
+        if not key_columns:
+            cursor = self._execute_query(
+                self._table,
+                select_clause,
+                **kwds_filter
+            )
+            if len(value_columns) == 1:
+                return DataResult((row[0] for row in cursor), list)  # <- EXIT!
+            return DataResult(cursor, list)  # <- EXIT!
+
+        trailing_clause = 'ORDER BY {0}'.format(', '.join(key_columns))
+        cursor = self._execute_query(
+            self._table,
+            select_clause,
+            trailing_clause,
+            **kwds_filter
+        )
+        # If one key column, get single key value, else get key tuples.
+        slice_index = len(key_columns)
+        if slice_index == 1:
+            keyfunc = lambda row: row[0]
+        else:
+            keyfunc = lambda row: row[:slice_index]
+
+        # If one value column, get iterable of single values, else get
+        # an iterable of row tuples.
+        if len(value_columns) == 1:
+            valuefunc = lambda group: (row[-1] for row in group)
+        else:
+            valuefunc = lambda group: (row[slice_index:] for row in group)
+
+        # Parse rows.
+        grouped = itertools.groupby(cursor, keyfunc)
+        grouped = ((k, valuefunc(g)) for k, g in grouped)
+        grouped = ((k, DataResult(g, evaluates_to=list)) for k, g in grouped)
+        return DataResult(grouped, evaluates_to=dict)
+
     def _select_aggregate(self, sqlfunc, *columns, **kwds_filter):
         key_columns, value_columns = self._prepare_column_groups(*columns)
         if len(value_columns) != 1:
