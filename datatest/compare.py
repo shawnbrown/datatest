@@ -10,6 +10,7 @@ from .utils import itertools
 
 from .utils.misc import _expects_multiple_params
 from .utils.misc import _is_nscontainer
+from .utils.misc import _unique_everseen
 from .differences import Extra
 from .differences import Missing
 from .differences import Invalid
@@ -41,17 +42,6 @@ def _compare_sequence(data, required):
         if data_val != required_val:
             differences[index] = _getdiff(data_val, required_val)
     return differences
-
-
-def _unique_everseen(iterable):
-    """"List unique elements, preserving order. Remember all elements
-    ever seen.
-    """
-    seen = set()
-    seen_add = seen.add  # Assign locally to prevent repeated look-up.
-    for element in itertools.filterfalse(seen.__contains__, iterable):
-        seen_add(element)
-        yield element
 
 
 def _compare_mapping(data, required):
