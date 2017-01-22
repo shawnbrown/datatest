@@ -86,12 +86,12 @@ class TestTemporarySqliteTable(unittest.TestCase):
 
         # Test too few columns.
         columns = ['foo', 'bar']
-        with self.assertRaises(sqlite3.OperationalError):
+        with self.assertRaises(sqlite3.ProgrammingError):
             temptable = TemporarySqliteTable(data, columns)
 
         # Test too many columns.
         columns = ['foo', 'bar', 'baz', 'qux']
-        with self.assertRaises(sqlite3.OperationalError):
+        with self.assertRaises(sqlite3.ProgrammingError):
             temptable = TemporarySqliteTable(data, columns)
 
     def test_init_with_dict(self):

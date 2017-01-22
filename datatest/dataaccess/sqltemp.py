@@ -112,21 +112,37 @@ class TemporarySqliteTable(object):
 
     @classmethod
     def _insert_data(cls, cursor, table, data, columns):
-        for row in data:  # Insert all rows.
-            if isinstance(row, dict):
-                row = tuple(row[x] for x in columns)
-            statement, params = cls._insert_into_statement(table, row)
-            try:
-                cursor.execute(statement, params)
-                #TODO!!!: Look at using execute_many() for faster loading.
-            except Exception as e:
-                exc_cls = e.__class__
-                msg = ('\n'
-                       '    row -> %s\n'
-                       '    sql -> %s\n'
-                       ' params -> %s') % (row, statement, params)
-                msg = str(e).strip() + msg
-                raise exc_cls(msg)
+        data_iter = iter(data)
+        first_row = next(data_iter)
+        data_iter = itertools.chain([first_row], data_iter)
+        if isinstance(first_row, dict):
+            get_values = lambda row: tuple(row[col] for col in columns)
+            data_iter = (get_values(row) for row in data_iter)
+        statement = 'INSERT INTO {0} ({1}) VALUES ({2})'.format(
+            table,
+            ', '.join(cls._normalize_column(col) for col in columns),
+            ', '.join(['?'] * len(columns)),
+        )
+        cursor.executemany(statement, data_iter)
+
+        # TODO (2017-01-22): Remove the following section if the above
+        # code proves stable for a few weeks on our in-house staging
+        # server.
+        #
+        #for row in data:  # Insert all rows.
+        #    if isinstance(row, dict):
+        #        row = tuple(row[x] for x in columns)
+        #    statement, params = cls._insert_into_statement(table, row)
+        #    try:
+        #        cursor.execute(statement, params)
+        #    except Exception as e:
+        #        exc_cls = e.__class__
+        #        msg = ('\n'
+        #               '    row -> %s\n'
+        #               '    sql -> %s\n'
+        #               ' params -> %s') % (row, statement, params)
+        #        msg = str(e).strip() + msg
+        #        raise exc_cls(msg)
 
     @staticmethod
     def _insert_into_statement(table, row):
