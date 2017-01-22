@@ -113,11 +113,16 @@ class TemporarySqliteTable(object):
     @classmethod
     def _insert_data(cls, cursor, table, data, columns):
         data_iter = iter(data)
-        first_row = next(data_iter)
+        try:
+            first_row = next(data_iter)
+        except StopIteration:
+            return  # <- EXIT! No data to insert.
         data_iter = itertools.chain([first_row], data_iter)
+
         if isinstance(first_row, dict):
             get_values = lambda row: tuple(row[col] for col in columns)
             data_iter = (get_values(row) for row in data_iter)
+
         statement = 'INSERT INTO {0} ({1}) VALUES ({2})'.format(
             table,
             ', '.join(cls._normalize_column(col) for col in columns),

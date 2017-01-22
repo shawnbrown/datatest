@@ -181,3 +181,16 @@ class TestTemporarySqliteTable(unittest.TestCase):
                  'contains dict-rows or namedtuple-rows')
         with self.assertRaisesRegex(TypeError, regex):
             temptable = TemporarySqliteTable(data_tuple)
+
+    def test_init_with_empty_data(self):
+        """Empty data iterable should result in empty table."""
+        columns = ['foo', 'bar', 'baz']
+        data = []  # <- Empty!
+        temptable = TemporarySqliteTable(data, columns)
+        cursor = temptable.connection.cursor()
+
+        self.assertEqual(temptable.columns, columns,
+                         msg='Table should exist and include given columns.')
+
+        cursor.execute('SELECT * FROM ' + temptable.name)
+        self.assertEqual(list(cursor), [], msg='Table should be empty.')
