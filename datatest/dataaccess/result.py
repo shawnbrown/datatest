@@ -228,6 +228,24 @@ class DataResult(collections.Iterator):
 
         return self.__class__(result, eval_type)
 
+    def _make_set(self):
+        """Return DataResult that evaluates to a set."""
+        if issubclass(self._evaluates_to, dict):
+            def apply(value):
+                try:
+                    return value._make_set()
+                except AttributeError:
+                    return value
+            result = ((k, apply(v)) for k, v in self._iterator)
+            return self.__class__(result, dict)  # <- EXIT!
+
+        return self.__class__(self._iterator, evaluates_to=set)
+
+    def set(self):
+        """."""
+        result = self.distinct()
+        return result._make_set()
+
     def eval(self):
         eval_type = self._evaluates_to
         if issubclass(eval_type, dict):

@@ -440,3 +440,21 @@ class TestDataResult(unittest.TestCase):
         )
         items = items.distinct()
         self.assertEqual(items.eval(), {'a': [1], 'b': [1, 2], 'c': [1, 2, 3]})
+
+    def test_set(self):
+        items = DataResult([1, 1, 1, 2, 2, 3], evaluates_to=list)
+        items = items.set()
+        self.assertEqual(items.eval(), set([1, 2, 3]))
+
+        items = DataResult(
+            [
+                ('a', DataResult([1, 1, 1], evaluates_to=list)),
+                ('b', DataResult([1, 2, 2], evaluates_to=list)),
+                ('c', DataResult([1, 2, 3], evaluates_to=list)),
+            ],
+            evaluates_to=dict
+        )
+        items = items.set()
+        self.assertEqual(items.eval(), {'a': set([1]),
+                                        'b': set([1, 2]),
+                                        'c': set([1, 2, 3])})
