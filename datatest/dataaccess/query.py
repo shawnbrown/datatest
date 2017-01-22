@@ -166,6 +166,7 @@ class _DataQuery(BaseQuery):
             args_one = query_steps[1]
             meth_two = query_steps[2]
             args_two = query_steps[3]
+            remaining_steps = query_steps[4:]
         except IndexError:
             return query_steps  # <- EXIT!
 
@@ -174,15 +175,23 @@ class _DataQuery(BaseQuery):
 
         is_aggregate = (meth_two in ('sum', 'avg', 'min', 'max')  # TODO: Add count.
                         and args_two == ((), {}))
-        is_distinct = meth_two == 'distinct' and args_two == ((), {})
+        is_distinct = (meth_two == 'distinct' and args_two == ((), {}))
+        is_set = (meth_two == 'set' and args_two == ((), {}))
 
         if is_aggregate:
             args, kwds = args_one
             args = (meth_two.upper(),) + args
-            query_steps = ('_select_aggregate', (args, kwds)) + query_steps[4:]
+            query_steps = ('_select_aggregate', (args, kwds))
         elif is_distinct:
-            query_steps = ('_select_distinct', args_one) + query_steps[4:]
-        return query_steps
+            query_steps = ('_select_distinct', args_one)
+        elif is_set:
+            query_steps = (
+                '_select_distinct',
+                args_one,
+                '_make_set',
+                ((), {}),
+            )
+        return query_steps + remaining_steps
 
     def eval(self, initializer=None, **kwds):
         """

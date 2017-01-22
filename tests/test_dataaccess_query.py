@@ -290,6 +290,23 @@ class Test_DataQuery_superclass(unittest.TestCase):
         )
         self.assertEqual(output, optimized)
 
+    def test_optimize_set(self):
+        """Wellformed, set queries should be optimized."""
+        unoptimized = (
+            '_select',  # <- Must be '_select'.
+            (({'label1': 'value'},), {'label2': 'x'}),  # <- Must be arg tuple.
+            'set', # <- Must be "set".
+            ((), {}),  # <- Must be empty.
+        )
+        output = _DataQuery._optimize(unoptimized)
+        optimized = (
+            '_select_distinct',
+            (({'label1': 'value'},), {'label2': 'x'}),  # <- Unchanged.
+            '_make_set',
+            ((), {}),
+        )
+        self.assertEqual(output, optimized)
+
     def test_optimize_unknown_method_one(self):
         """Call chains with unknown methods should not be optimized."""
         unoptimized = (
