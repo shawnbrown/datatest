@@ -181,17 +181,19 @@ class _DataQuery(BaseQuery):
         if is_aggregate:
             args, kwds = args_one
             args = (meth_two.upper(),) + args
-            query_steps = ('_select_aggregate', (args, kwds))
+            optimized_steps = ('_select_aggregate', (args, kwds))
         elif is_distinct:
-            query_steps = ('_select_distinct', args_one)
+            optimized_steps = ('_select_distinct', args_one)
         elif is_set:
-            query_steps = (
+            optimized_steps = (
                 '_select_distinct',
                 args_one,
                 '_make_set',
                 ((), {}),
             )
-        return query_steps + remaining_steps
+        else:
+            return query_steps  # <- Unchanged.
+        return optimized_steps + remaining_steps
 
     def eval(self, initializer=None, **kwds):
         """
