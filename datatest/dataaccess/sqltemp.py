@@ -42,7 +42,7 @@ class TemporarySqliteTable(object):
             table = self._make_new_table(existing_tables)
             statement = self._create_table_statement(table, columns)
             cursor.execute(statement)
-            self._insert_data(cursor, table, data, columns)
+            self._insert_data(cursor, table, columns, data)
             connection.commit()  # <- COMMIT!
 
         except Exception as e:
@@ -57,10 +57,10 @@ class TemporarySqliteTable(object):
             connection.isolation_level = _isolation_level
             cursor.execute('PRAGMA synchronous={0}'.format(_synchronous))
 
-            # Assign class properties.
-            self._connection = connection
-            self._name = table
-            self._columns = columns
+        # Assign class properties.
+        self._connection = connection
+        self._name = table
+        self._columns = columns
 
     @property
     def connection(self):
@@ -114,7 +114,7 @@ class TemporarySqliteTable(object):
         return 'CREATE TEMPORARY TABLE %s (%s)' % (table, ', '.join(columns))
 
     @classmethod
-    def _insert_data(cls, cursor, table, data, columns):
+    def _insert_data(cls, cursor, table, columns, data):
         data_iter = iter(data)
         try:
             first_row = next(data_iter)
