@@ -5,6 +5,22 @@ import itertools
 import sqlite3
 
 
+def _get_columns_from_data(data):
+    data = iter(data)
+    first_row = next(data)
+    if hasattr(first_row, 'keys'):  # Dict-like rows.
+        columns = first_row.keys()
+        columns = tuple(sorted(columns))
+    elif hasattr(first_row, '_fields'):  # Namedtuple-like rows.
+        columns = first_row._fields
+    else:
+        msg = ('columns argument can only be omitted if data '
+               'contains dict-rows or namedtuple-rows')
+        raise TypeError(msg)
+    data = itertools.chain([first_row], data)  # Rebuild original.
+    return columns, data
+
+
 class TemporarySqliteTable(object):
     """Creates a temporary SQLite table and inserts given data."""
     __shared_connection = sqlite3.connect('')  # Default connection shared by instances.
@@ -12,18 +28,7 @@ class TemporarySqliteTable(object):
     def __init__(self, data, columns=None, connection=None):
         """Initialize self."""
         if not columns:
-            data = iter(data)
-            first_row = next(data)
-            if hasattr(first_row, 'keys'):  # Dict-like rows.
-                columns = first_row.keys()
-                columns = tuple(sorted(columns))
-            elif hasattr(first_row, '_fields'):  # Namedtuple-like rows.
-                columns = first_row._fields
-            else:
-                msg = ('columns argument can only be omitted if data '
-                       'contains dict-rows or namedtuple-rows')
-                raise TypeError(msg)
-            data = itertools.chain([first_row], data)  # Rebuild original.
+            columns, data = _get_columns_from_data(data)
 
         if not connection:
             connection = self.__shared_connection
