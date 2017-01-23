@@ -2,7 +2,26 @@
 import unittest
 from datatest.dataaccess.source import DataSource
 from datatest.dataaccess.source import DataQuery
+from datatest.dataaccess.query import BaseQuery
 from datatest.dataaccess.result import DataResult
+
+
+class TestDataQuery(unittest.TestCase):
+    def test_from_parts(self):
+        source = DataSource([(1, 2), (1, 2)], columns=['A', 'B'])
+        query = DataQuery._from_parts(initializer=source)
+        self.assertIsInstance(query, BaseQuery)  # <- Subclass of BaseQuery.
+
+        regex = "expected 'DataSource', got 'list'"
+        with self.assertRaisesRegex(TypeError, regex):
+            wrong_type = ['hello', 'world']
+            query = DataQuery._from_parts(initializer=wrong_type)
+
+    def test_eval(self):
+        query = DataQuery()
+        regex = "expected 'DataSource', got 'list'"
+        with self.assertRaisesRegex(TypeError, regex):
+            query.eval(['hello', 'world'])  # <- Expects None or DataQuery, not list!
 
 
 class TestDataSourceBasics(unittest.TestCase):

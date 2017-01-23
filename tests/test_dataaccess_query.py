@@ -5,7 +5,6 @@ import unittest
 from datatest.dataaccess.query import _validate_query_steps
 from datatest.dataaccess.query import BaseQuery
 from datatest.dataaccess.query import _DataQuery
-from datatest.dataaccess.source import DataQuery
 from datatest.dataaccess.source import DataSource
 
 
@@ -364,31 +363,3 @@ class Test_DataQuery_superclass(unittest.TestCase):
         )
         output = _DataQuery._optimize(unoptimized)
         self.assertEqual(output, unoptimized)
-
-
-class TestDataQuery(unittest.TestCase):
-    def setUp(self):
-        self.source = source = DataSource([
-            {'label1': 'a', 'label2': 'x', 'value': '17'},
-            {'label1': 'a', 'label2': 'x', 'value': '13'},
-            {'label1': 'a', 'label2': 'y', 'value': '20'},
-            {'label1': 'a', 'label2': 'z', 'value': '15'},
-            {'label1': 'b', 'label2': 'z', 'value':  '5'},
-            {'label1': 'b', 'label2': 'y', 'value': '40'},
-            {'label1': 'b', 'label2': 'x', 'value': '25'},
-        ])
-
-    def test_from_parts(self):
-        query = DataQuery._from_parts(initializer=self.source)
-        self.assertIsInstance(query, BaseQuery)
-
-        regex = "expected 'DataSource', got 'list'"
-        with self.assertRaisesRegex(TypeError, regex):
-            wrong_type = ['hello', 'world']
-            query = DataQuery._from_parts(initializer=wrong_type)
-
-    def test_eval(self):
-        query = DataQuery()
-        regex = "expected 'DataSource', got 'list'"
-        with self.assertRaisesRegex(TypeError, regex):
-            query.eval(['hello', 'world'])  # <- Expects None or DataQuery, not list!
