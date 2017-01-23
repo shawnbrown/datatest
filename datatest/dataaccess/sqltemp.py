@@ -43,20 +43,13 @@ class TemporarySqliteTable(object):
 
         cursor.execute('BEGIN TRANSACTION')
         try:
-            existing_tables = self._get_existing_tables(cursor)
-            table = self._make_new_table(existing_tables)
-            statement = self._create_table_statement(table, columns)
-            cursor.execute(statement)
+            table = self._get_new_table_name(cursor)
+            self._create_table(cursor, table, columns)
             self._insert_data(cursor, table, columns, data)
             connection.commit()  # <- COMMIT!
-
-        except Exception as e:
+        except Exception:
             connection.rollback()  # <- ROLLBACK!
-            if isinstance(e, UnicodeDecodeError):
-                e.reason += '\n{0}'.format(statement)
-                raise e
-            raise e.__class__('{0}\n{1}'.format(e, statement))
-
+            raise
         finally:
             # Restore original connection attributes.
             connection.isolation_level = _isolation_level
@@ -111,12 +104,29 @@ class TemporarySqliteTable(object):
         return prefix + str(table_num)
 
     @classmethod
+    def _get_new_table_name(cls, cursor):
+        existing_tables = cls._get_existing_tables(cursor)
+        name = cls._make_new_table(existing_tables)
+        return name
+
+    @classmethod
     def _create_table_statement(cls, table, columns):
         """Return 'CREATE TEMPORARY TABLE' statement."""
         cls._assert_unique(columns)
         columns = [cls._normalize_column(x) for x in columns]
         #return 'CREATE TABLE %s (%s)' % (table, ', '.join(columns))
         return 'CREATE TEMPORARY TABLE %s (%s)' % (table, ', '.join(columns))
+
+    @classmethod
+    def _create_table(cls, cursor, table, columns):
+        try:
+            statement = cls._create_table_statement(table, columns)
+            cursor.execute(statement)
+        except Exception as e:
+            if isinstance(e, UnicodeDecodeError):
+                e.reason += '\n{0}'.format(statement)
+                raise e
+            raise e.__class__('{0}\n{1}'.format(e, statement))
 
     @classmethod
     def _insert_data(cls, cursor, table, columns, data):
