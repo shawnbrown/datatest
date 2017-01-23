@@ -386,3 +386,9 @@ class TestDataQuery(unittest.TestCase):
         with self.assertRaisesRegex(TypeError, regex):
             wrong_type = ['hello', 'world']
             query = DataQuery._from_parts(initializer=wrong_type)
+
+    def test_eval(self):
+        query = DataQuery()
+        regex = "expected 'DataSource', got 'list'"
+        with self.assertRaisesRegex(TypeError, regex):
+            query.eval(['hello', 'world'])  # <- Expects None or DataQuery, not list!

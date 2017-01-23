@@ -25,10 +25,10 @@ class DataQuery(_DataQuery):
             cls._validate_initializer(initializer)
         return super(DataQuery, cls)._from_parts(query_steps, initializer)
 
-    def _eval(self, initializer=None, query_steps=None):
+    def eval(self, initializer=None, **kwds):
         initializer = initializer or self._initializer
         self._validate_initializer(initializer)
-        return super(DataQuery, self)._eval(initializer, query_steps)
+        return super(DataQuery, self).eval(initializer, **kwds)
 
 
 class DataSource(object):
