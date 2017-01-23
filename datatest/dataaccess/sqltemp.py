@@ -29,10 +29,13 @@ class TemporarySqliteTable(object):
             connection = self.__shared_connection
 
         # Create table and load data.
-        _isolation_level = connection.isolation_level  # <- Isolation_level gets
-        connection.isolation_level = None              #    None for transactions.
+        _isolation_level = connection.isolation_level  # Isolation_level gets
+        connection.isolation_level = None              # None for transactions.
         cursor = connection.cursor()
+
+        _synchronous = cursor.execute("PRAGMA synchronous").fetchone()[0]
         cursor.execute('PRAGMA synchronous=OFF')  # For faster loading.
+
         cursor.execute('BEGIN TRANSACTION')
         try:
             existing_tables = self._get_existing_tables(cursor)
@@ -40,10 +43,10 @@ class TemporarySqliteTable(object):
             statement = self._create_table_statement(table, columns)
             cursor.execute(statement)
             self._insert_data(cursor, table, data, columns)
-            connection.commit()  # COMMIT TRANSACTION
+            connection.commit()  # <- COMMIT!
 
         except Exception as e:
-            connection.rollback()  # ROLLBACK TRANSACTION
+            connection.rollback()  # <- ROLLBACK!
             if isinstance(e, UnicodeDecodeError):
                 e.reason += '\n{0}'.format(statement)
                 raise e
@@ -52,7 +55,7 @@ class TemporarySqliteTable(object):
         finally:
             # Restore original connection attributes.
             connection.isolation_level = _isolation_level
-            cursor.execute('PRAGMA synchronous=ON')
+            cursor.execute('PRAGMA synchronous={0}'.format(_synchronous))
 
             # Assign class properties.
             self._connection = connection
