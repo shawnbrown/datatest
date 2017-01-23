@@ -216,27 +216,52 @@ class TestBaseQuery(unittest.TestCase):
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(repr(query), expected)
 
-    def test_eval(self):
-        query = BaseQuery().upper()
-        self.assertEqual(query._eval('hello_world'), 'HELLO_WORLD')
+    def test_reduce(self):
+        # Providing query_steps and initializer.
+        query = BaseQuery()
+        result = query._reduce(
+            query_steps=['upper', ((), {})],
+            initializer='hello_world',
+        )
+        self.assertEqual(result, 'HELLO_WORLD')
 
+        # Use existing initializer provide query_steps.
+        query = BaseQuery._from_parts(initializer='hello_world')
+        result = query._reduce(query_steps=['upper', ((), {})])
+        self.assertEqual(result, 'HELLO_WORLD')
+
+        # Use existing query_steps and provide initializer..
+        query = BaseQuery().upper()
+        result = query._reduce(initializer='hello_world')
+        self.assertEqual(result, 'HELLO_WORLD')
+
+        # Use existing initializer and existing query_steps.
+        query = BaseQuery._from_parts(initializer='hello_world').upper()
+        result = query._reduce()
+        self.assertEqual(result, 'HELLO_WORLD')
+
+    def test_reduce_missing_steps(self):
+        result = BaseQuery()._reduce(initializer='hello_world')
+        self.assertEqual(result, 'hello_world', msg='Should return initializer unchanged.')
+
+    def test_reduce_missing_initial(self):
         regex = 'must provide initializer, none found'
         with self.assertRaisesRegex(ValueError, regex):
-            query._eval()
+            BaseQuery().upper()._reduce()
 
-    def test_eval_preset(self):
+    def test_reduce_predefined_initial(self):
         query = BaseQuery._from_parts(initializer='AAA123')
         query = query.isdigit()
-        self.assertIs(query._eval(), False)
+        self.assertIs(query._reduce(), False)
 
         query = BaseQuery._from_parts(initializer='AAA123')
         query = query.replace('A', '').isdigit()
-        self.assertIs(query._eval(), True)
+        self.assertIs(query._reduce(), True)
 
-    def test_eval_overriding_preset(self):
+    def test_reduce_override_initial(self):
         query = BaseQuery._from_parts(initializer='AAA123')
         query = query.replace('A', '').isdigit()
-        self.assertIs(query._eval('BBB123'), False)  # <- 'BBB123' overrides preset
+        self.assertIs(query._reduce(initializer='BBB123'), False)  # <- 'BBB123' overrides preset
 
 
 class Test_DataQuery_superclass(unittest.TestCase):

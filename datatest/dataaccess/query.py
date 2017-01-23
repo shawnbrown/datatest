@@ -134,9 +134,13 @@ class BaseQuery(object):
                 'query_steps:{2}\n'
                 'initializer:{3}').format(class_name, hex_id, steps_repr, initial_repr)
 
-    @staticmethod
-    def _reduce(query_steps, initializer):
-        """."""
+    def _reduce(self, query_steps=None, initializer=None):
+        """Apply *query_steps* to *initializer* and result result."""
+        query_steps = query_steps or self._query_steps
+        initializer = initializer or self._initializer
+        if initializer is None:
+            raise ValueError('must provide initializer, none found')
+
         def function(obj, val):
             if isinstance(val, str):
                 return getattr(obj, val)
@@ -144,14 +148,6 @@ class BaseQuery(object):
             return obj(*args, **kwds)
 
         return functools.reduce(function, query_steps, initializer)
-
-    def _eval(self, initializer=None):
-        initializer = initializer or self._initializer
-        if initializer is None:
-            raise ValueError('must provide initializer, none found')
-
-        query_steps = self._query_steps
-        return self._reduce(query_steps, initializer)
 
 
 class _DataQuery(BaseQuery):
