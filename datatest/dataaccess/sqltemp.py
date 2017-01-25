@@ -21,6 +21,55 @@ def _get_columns_from_data(data):
     return columns, data
 
 
+class _TransactionSyncOff(object):
+    """Context manager to handle a single transaction that sets
+    synchronous=OFF temporarily and restores it's original value on
+    completion::
+
+        with _TransactionSyncOff(connection) as cursor:
+            ...
+
+    .. note::
+
+        This context manager is intended for use with temporary SQLite
+        databases in a single execution thread (like the ones used
+        internally by TemporarySqliteTable. Transactions are run with
+        synchronous=OFF for speed and since the databases are temporary,
+        long-term integrity is not a concern. In the unlikely event of
+        data corruption, it is entirely acceptable to simply rebuild
+        the temporary table.
+    """
+    def __init__(self, connection):
+        self.connection = connection
+        self._cursor = None
+        self._isolation_level = None
+        self._synchronous = None
+
+    def __enter__(self):
+        cursor = self.connection.cursor()
+        self._cursor = cursor
+
+        # Set isolation_level to None for explicit transaction control.
+        self._isolation_level = self.connection.isolation_level
+        self.connection.isolation_level = None
+
+        # Set synchronous=OFF for faster loading.
+        self._synchronous = cursor.execute("PRAGMA synchronous").fetchone()[0]
+        cursor.execute('PRAGMA synchronous=OFF')
+
+        cursor.execute('BEGIN TRANSACTION')
+        return cursor
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type is None:
+            self.connection.commit()  # <- COMMIT!
+        else:
+            self.connection.rollback()  # <- ROLLBACK!
+
+        self._cursor.execute('PRAGMA synchronous={0}'.format(self._synchronous))
+        self.connection.isolation_level = self._isolation_level
+
+
 class TemporarySqliteTable(object):
     """Creates a temporary SQLite table and inserts given data."""
     __shared_connection = sqlite3.connect('')  # Default connection shared by instances.
@@ -33,27 +82,10 @@ class TemporarySqliteTable(object):
         if not connection:
             connection = self.__shared_connection
 
-        # Create table and load data.
-        _isolation_level = connection.isolation_level  # Isolation_level gets
-        connection.isolation_level = None              # None for transactions.
-        cursor = connection.cursor()
-
-        _synchronous = cursor.execute("PRAGMA synchronous").fetchone()[0]
-        cursor.execute('PRAGMA synchronous=OFF')  # For faster loading.
-
-        cursor.execute('BEGIN TRANSACTION')
-        try:
+        with _TransactionSyncOff(connection) as cursor:
             table = self._get_new_table_name(cursor)
             self._create_table(cursor, table, columns)
             self._insert_data(cursor, table, columns, data)
-            connection.commit()  # <- COMMIT!
-        except Exception:
-            connection.rollback()  # <- ROLLBACK!
-            raise
-        finally:
-            # Restore original connection attributes.
-            connection.isolation_level = _isolation_level
-            cursor.execute('PRAGMA synchronous={0}'.format(_synchronous))
 
         # Assign class properties.
         self._connection = connection
