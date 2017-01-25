@@ -42,25 +42,30 @@ class TestGetArgLengths(unittest.TestCase):
                 misc._get_arg_lengths(max)
 
 
-
 class TestExpectsMultipleParams(unittest.TestCase):
+    def test_zero(self):
+        def userfunc():
+            return True
+        expects_multiple = misc._expects_multiple_params(userfunc)
+        self.assertIs(expects_multiple, False)
+
     def test_one_positional(self):
         def userfunc(a):
             return True
         expects_multiple = misc._expects_multiple_params(userfunc)
-        self.assertFalse(expects_multiple)
+        self.assertIs(expects_multiple, False)
 
     def test_multiple_positional(self):
         def userfunc(a, b, c):
             return True
         expects_multiple = misc._expects_multiple_params(userfunc)
-        self.assertTrue(expects_multiple)
+        self.assertIs(expects_multiple, True)
 
     def test_varargs(self):
         def userfunc(*args):
             return True
         expects_multiple = misc._expects_multiple_params(userfunc)
-        self.assertTrue(expects_multiple)
+        self.assertIs(expects_multiple, True)
 
     def test_builtin_type(self):
         expects_multiple = misc._expects_multiple_params(int)
@@ -68,8 +73,8 @@ class TestExpectsMultipleParams(unittest.TestCase):
 
     def test_builtin_function(self):
         if _PYPY2:
-            expects_multiple = misc._get_arg_lengths(max)  # Built-in functions
-            self.assertTrue(expects_multiple)              # only work in PyPy 2.
+            expects_multiple = misc._expects_multiple_params(max)  # Built-in functions
+            self.assertIs(expects_multiple, True)                  # only work in PyPy 2.
         else:
             expects_multiple = misc._expects_multiple_params(max)
             self.assertIsNone(expects_multiple)
