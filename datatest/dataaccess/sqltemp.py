@@ -90,7 +90,6 @@ class TemporarySqliteTable(object):
         # Assign class properties.
         self._connection = connection
         self._name = table
-        self._columns = columns
 
     @property
     def connection(self):
@@ -105,7 +104,9 @@ class TemporarySqliteTable(object):
     @property
     def columns(self):
         """Column names used in temporary table."""
-        return self._columns
+        cursor = self._connection.cursor()
+        cursor.execute('PRAGMA table_info(' + self._name + ')')
+        return [x[1] for x in cursor.fetchall()]
 
     def drop(self):
         """Drops temporary table from database."""
