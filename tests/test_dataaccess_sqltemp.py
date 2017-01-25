@@ -7,6 +7,7 @@ from datatest.utils import collections
 
 # Import code to test.
 from datatest.dataaccess.sqltemp import TemporarySqliteTable
+from datatest.dataaccess.sqltemp import TemporarySqliteTableForCsv
 
 
 class TestTemporarySqliteTable(unittest.TestCase):
@@ -194,3 +195,69 @@ class TestTemporarySqliteTable(unittest.TestCase):
 
         cursor.execute('SELECT * FROM ' + temptable.name)
         self.assertEqual(list(cursor), [], msg='Table should be empty.')
+
+
+class TestTemporarySqliteTableForCsv(unittest.TestCase):
+    def setUp(self):
+        columns = ['foo', 'bar']
+        data = [
+            ('a', '1'),
+            ('b', '2'),
+        ]
+        self.temptable = TemporarySqliteTableForCsv(data, columns)
+
+    def get_table(self):
+        cursor = self.temptable._connection.cursor()
+        cursor.execute('SELECT * FROM ' + self.temptable._name)
+        return list(cursor)
+
+    def test_concat_all_same(self):
+        columns = ['foo', 'bar']  # <- Same column names.
+        data = [
+            ('c', '3'),
+            ('d', '4'),
+        ]
+        self.temptable._concatenate_data(data, columns)
+
+        result = self.get_table()
+        expected = [
+            ('a', '1'),
+            ('b', '2'),
+            ('c', '3'),
+            ('d', '4'),
+        ]
+        self.assertEqual(result, expected)
+
+    def test_concat_one_different(self):
+        columns = ['foo', 'baz']  # <- Column 'baz' not in existing table.
+        data = [
+            ('c', '3'),
+            ('d', '4'),
+        ]
+        self.temptable._concatenate_data(data, columns)
+
+        result = self.get_table()
+        expected = [
+            ('a', '1',  ''),
+            ('b', '2',  ''),
+            ('c',  '', '3'),
+            ('d',  '', '4'),
+        ]
+        self.assertEqual(result, expected)
+
+    def test_concat_all_different(self):
+        columns = ['qux', 'quux']  # <- Neither column in existing table.
+        data = [
+            ('c', '3'),
+            ('d', '4'),
+        ]
+        self.temptable._concatenate_data(data, columns)
+
+        result = self.get_table()
+        expected = [
+            ('a', '1',  '',  ''),
+            ('b', '2',  '',  ''),
+            ('',  '',  'c', '3'),
+            ('',  '',  'd', '4'),
+        ]
+        self.assertEqual(result, expected)

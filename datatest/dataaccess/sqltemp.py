@@ -5,6 +5,10 @@ import itertools
 import sqlite3
 
 
+# Default connection shared by TemporarySqliteTable instances.
+_sqltemp_shared_connection = sqlite3.connect('')
+
+
 def _get_columns_from_data(data):
     data = iter(data)
     first_row = next(data)
@@ -72,15 +76,14 @@ class _TransactionSyncOff(object):
 
 class TemporarySqliteTable(object):
     """Creates a temporary SQLite table and inserts given data."""
-    __shared_connection = sqlite3.connect('')  # Default connection shared by instances.
-
     def __init__(self, data, columns=None, connection=None):
         """Initialize self."""
+        global _sqltemp_shared_connection
+        if not connection:
+            connection = _sqltemp_shared_connection
+
         if not columns:
             columns, data = _get_columns_from_data(data)
-
-        if not connection:
-            connection = self.__shared_connection
 
         with _TransactionSyncOff(connection) as cursor:
             table = self._get_new_table_name(cursor)
@@ -233,3 +236,27 @@ class TemporarySqliteTable(object):
 
         if duplicates:
             raise ValueError('Duplicate values: ' + ', '.join(duplicates))
+
+
+class TemporarySqliteTableForCsv(TemporarySqliteTable):
+    """."""
+    @classmethod
+    def _create_table_statement(cls, table, columns):
+        """Includes added default-to-empty-string clause for columns."""
+        cls._assert_unique(columns)
+        columns = [cls._normalize_column(x) for x in columns]
+        columns = ["{0} DEFAULT ''".format(col) for col in columns]
+        return 'CREATE TEMPORARY TABLE %s (%s)' % (table, ', '.join(columns))
+
+    def _concatenate_data(self, data, columns):
+        if not columns:
+            columns, data = _get_columns_from_data(data)
+
+        with _TransactionSyncOff(self._connection) as cursor:
+            existing_cols = self.columns
+            missing_cols = [x for x in columns if x not in existing_cols]
+            for column in missing_cols:
+                statement = "ALTER TABLE {0} ADD COLUMN {1} DEFAULT ''"
+                cursor.execute(statement.format(self._name, column))
+
+            self._insert_data(cursor, self._name, columns, data)
