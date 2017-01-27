@@ -4,9 +4,8 @@ import collections
 import itertools
 
 from ..utils.misc import _is_nscontainer
-from .csvreader import UnicodeCsvReader
 from .sqltemp import TemporarySqliteTable
-from .sqltemp import TemporarySqliteTableForCsv
+from .sqltemp import _from_csv
 from .result import DataResult
 from .query import _DataQuery
 
@@ -46,20 +45,7 @@ class DataSource(object):
 
     @classmethod
     def from_csv(cls, file, encoding=None, **fmtparams):
-        if not _is_nscontainer(file):
-            file = [file]
-        first_file = file[0]
-        other_files = file[1:]
-
-        with UnicodeCsvReader(first_file, encoding='utf-8', **fmtparams) as reader:
-            columns = next(reader)  # Header row.
-            temptable = TemporarySqliteTableForCsv(reader, columns)
-
-        for f in other_files:
-            with UnicodeCsvReader(f, encoding='utf-8', **fmtparams) as reader:
-                columns = next(reader)  # Header row.
-                temptable._concatenate_data(reader, columns)
-
+        temptable = _from_csv(file, encoding, **fmtparams)
         new_cls = cls.__new__(cls)
         new_cls._connection = temptable.connection
         new_cls._table = temptable.name

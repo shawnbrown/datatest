@@ -3,6 +3,8 @@
 from __future__ import absolute_import
 import itertools
 import sqlite3
+from .csvreader import UnicodeCsvReader
+from ..utils.misc import _is_nscontainer
 
 
 # Default connection shared by TemporarySqliteTable instances.
@@ -260,3 +262,22 @@ class TemporarySqliteTableForCsv(TemporarySqliteTable):
                 cursor.execute(statement.format(self._name, column))
 
             self._insert_data(cursor, self._name, columns, data)
+
+
+def _from_csv(file, encoding=None, **fmtparams):
+    """ """
+    if not _is_nscontainer(file):
+        file = [file]
+    first_file = file[0]
+    other_files = file[1:]
+
+    with UnicodeCsvReader(first_file, encoding='utf-8', **fmtparams) as reader:
+        columns = next(reader)  # Header row.
+        temptable = TemporarySqliteTableForCsv(reader, columns)
+
+    for f in other_files:
+        with UnicodeCsvReader(f, encoding='utf-8', **fmtparams) as reader:
+            columns = next(reader)  # Header row.
+            temptable._concatenate_data(reader, columns)
+
+    return temptable
