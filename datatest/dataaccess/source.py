@@ -99,12 +99,18 @@ class DataSource(object):
 
     def _prepare_column_groups(self, *columns):
         """Returns tuple of columns split into key and value groups."""
-        if len(columns) == 1 and isinstance(columns[0], dict):
-            key_columns, value_columns = tuple(columns[0].items())[0]
-            if isinstance(key_columns, str):
-                key_columns = tuple([key_columns])
-            if isinstance(value_columns, (str, collections.Mapping)):
-                value_columns = tuple([value_columns])
+        if _is_nscontainer(columns[0]):
+            if len(columns) != 1:
+                raise ValueError('cannot mix container and variable args')
+            if isinstance(columns[0], dict):
+                key_columns, value_columns = tuple(columns[0].items())[0]
+                if isinstance(key_columns, str):
+                    key_columns = tuple([key_columns])
+                if isinstance(value_columns, (str, collections.Mapping)):
+                    value_columns = tuple([value_columns])
+            else:
+                key_columns = tuple()
+                value_columns = tuple(columns[0])
         else:
             key_columns = tuple()
             value_columns = columns

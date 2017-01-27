@@ -65,7 +65,7 @@ class TestDataSourceBasics(unittest.TestCase):
         self.assertEqual(arg_dict, {'label1': 'value'}, 'should not alter arg_dict')
 
     def test_select_tuple_of_values(self):
-        result = self.source._select('label1', 'label2')
+        result = self.source._select('label1', 'label2')  # <- Using varargs.
         expected = [
             ('a', 'x'),
             ('a', 'x'),
@@ -76,6 +76,28 @@ class TestDataSourceBasics(unittest.TestCase):
             ('b', 'x'),
         ]
         self.assertEqual(list(result), expected)
+
+    def test_select_values_with_container(self):
+        result = self.source._select(['label1', 'label2'])  # <- Using container.
+        expected = [
+            ('a', 'x'),
+            ('a', 'x'),
+            ('a', 'y'),
+            ('a', 'z'),
+            ('b', 'z'),
+            ('b', 'y'),
+            ('b', 'x'),
+        ]
+        self.assertEqual(list(result), expected)
+
+        result = self.source._select(['label1'])  # <- Single-item container.
+        expected = ['a', 'a', 'a', 'a', 'b', 'b', 'b']
+        self.assertEqual(list(result), expected)
+
+        msg = ('should fail if the method call mixes '
+               'container and variable arguments')
+        with self.assertRaises(ValueError, msg=msg):
+            self.source._select(['label1'], 'label2')
 
     def test_select_dict_of_values(self):
         result = self.source._select({'label1': 'value'})
