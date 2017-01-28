@@ -2,8 +2,10 @@
 from __future__ import absolute_import
 import collections
 import itertools
+import os
 
 from ..utils.misc import _is_nscontainer
+from ..utils.misc import _get_calling_filename
 from .sqltemp import TemporarySqliteTable
 from .sqltemp import _from_csv
 from .result import DataResult
@@ -44,9 +46,22 @@ class DataSource(object):
         self._table = temptable.name
 
     @classmethod
-    def from_csv(cls, file, encoding=None, **fmtparams):
-        temptable = _from_csv(file, encoding, **fmtparams)
+    def from_csv(cls, file, encoding=None, relative_to=None, **fmtparams):
+        if not _is_nscontainer(file):
+            file = [file]
+
+        if relative_to is None:
+            relative_to = _get_calling_filename(frame_index=2)
+        dirname = os.path.dirname(relative_to)
+
+        def get_path(f):
+            if isinstance(f, str) and not os.path.isabs(f):
+                f = os.path.join(dirname, f)
+            return os.path.normpath(f)
+        file = [get_path(f) for f in file]
+
         new_cls = cls.__new__(cls)
+        temptable = _from_csv(file, encoding, **fmtparams)
         new_cls._connection = temptable.connection
         new_cls._table = temptable.name
         return new_cls
