@@ -6,6 +6,9 @@ from unittest import TestCase
 from .utils.builtins import *
 from .utils import collections
 
+from .dataaccess.source import DataQuery
+from .dataaccess.result import DataResult
+
 from .compare import _compare_mapping
 from .compare import _compare_sequence
 from .compare import _compare_set
@@ -117,6 +120,13 @@ class DataTestCase(TestCase):
 
         See documentation for full details.
         """
+        # Evaluate query and result objects.
+        if isinstance(data, (DataQuery, DataResult)):
+            data = data.eval()
+
+        if isinstance(requirement, (DataQuery, DataResult)):
+            requirement = requirement.eval()
+
         # If using *function* signature, normalize arguments and get data.
         if callable(data) and (not requirement or isinstance(requirement, str)):
             function, data = data, None         # Shuffle arguments
