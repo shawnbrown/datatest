@@ -2,6 +2,7 @@
 """Miscellaneous helper functions."""
 from __future__ import absolute_import
 import inspect
+import os
 from sys import version_info as _version_info
 from . import collections
 from . import decimal
@@ -41,6 +42,16 @@ def _make_decimal(d):
     if d == d.to_integral():                   # Remove_exponent (from official
         return d.quantize(decimal.Decimal(1))  # docs: 9.4.10. Decimal FAQ).
     return d.normalize()
+
+
+def _get_calling_filename(frame_index=1):
+    """Get the file name of calling frame (defaults to one frame up
+    the stack).
+    """
+    frame_list = inspect.stack()
+    record_tuple = frame_list[frame_index]
+    filename = record_tuple[1]
+    return os.path.abspath(filename)
 
 
 def _get_arg_lengths(func):
