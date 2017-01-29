@@ -66,6 +66,45 @@ class DataSource(object):
         new_cls._table = temptable.name
         return new_cls
 
+    @classmethod
+    def from_excel(cls, path, worksheet=0):
+        """Loads first worksheet from XLSX or XLS file *path*::
+
+            source = datatest.DataSource.from_excel('mydata.xlsx')
+
+        Specific worksheets can be accessed by name or index::
+
+            source = datatest.DataSource.from_excel('mydata.xlsx', 'Sheet 2')
+
+        .. note::
+            This constructor is optional---it requires the third-party
+            library `xlrd <https://pypi.python.org/pypi/xlrd>`_.
+        """
+        try:
+            import xlrd
+        except ImportError:
+            raise ImportError(
+                "No module named 'xlrd'\n"
+                "\n"
+                "This is an optional data source that requires the "
+                "third-party library 'xlrd'."
+            )
+
+        book = xlrd.open_workbook(path, on_demand=True)
+        try:
+            if isinstance(worksheet, int):
+                sheet = book.sheet_by_index(worksheet)
+            else:
+                sheet = book.sheet_by_name(worksheet)
+            data = (sheet.row(i) for i in range(sheet.nrows))  # Build *data*
+            data = ([x.value for x in row] for row in data)    # and *columns*
+            columns = next(data)                               # from rows.
+            new_instance = cls(data, columns)  # <- Create instance.
+        finally:
+            book.release_resources()
+
+        return new_instance
+
     def columns(self):
         """Return list of column names."""
         cursor = self._connection.cursor()
