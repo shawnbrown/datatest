@@ -14,7 +14,8 @@
 :mod:`datatest` --- Testing driven data wrangling
 #################################################
 
-Datatest extends Python's `unittest
+Datatest provides validation tools for test-driven data wrangling.
+It extends Python's `unittest
 <http://docs.python.org/3/library/unittest.html>`_ package to provide
 testing tools for asserting data correctness.
 
@@ -70,6 +71,7 @@ Contents
 
     intro
     dataprep
+    unittest_style_api
     api
 
 * :ref:`genindex`

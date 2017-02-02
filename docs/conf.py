@@ -300,8 +300,8 @@ texinfo_documents = [
         'datatest',
         'Test driven data wrangling.',
         (
-            'Datatest extends the standard library’s unittest package '
-            'to provide testing tools for asserting data correctness.'
+            'Datatest provides validation tools for test-driven data'
+            'wrangling.'
         ),
     ),
 ]

@@ -84,36 +84,6 @@ the most productive (Excel, `pandas <http://pandas.pydata.org/>`_, R,
 sed, etc.).
 
 
-Command-Line Interface
-======================
-
-The datatest module can be used from the command line just like
-unittest. To run the program with :ref:`test discovery <test-discovery>`,
-use the following command::
-
-    python -m datatest
-
-Run tests from specific modules, classes, or individual methods with::
-
-    python -m datatest test_module1 test_module2
-    python -m datatest test_module.TestClass
-    python -m datatest test_module.TestClass.test_method
-
-The syntax and command-line options (``-f``, ``-v``, etc.) are the same
-as unittest---see the
-`unittest documentation <http://docs.python.org/library/unittest.html#command-line-interface>`_
-for full details.
-
-.. _test-discovery:
-.. note::
-
-    The **test discovery** process searches for tests in the current
-    directory (including package folders and sub-package folders) or in
-    a specified directory.  To learn more, see the unittest
-    documentation on `Test Discovery
-    <https://docs.python.org/3/library/unittest.html#test-discovery>`_.
-
-
 ------------
 
 .. rubric:: Footnotes

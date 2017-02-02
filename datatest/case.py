@@ -29,11 +29,10 @@ from .allow import allow_only
 
 
 class DataTestCase(TestCase):
-    """This class wraps and extends unittest.TestCase and implements
-    additional properties and methods for testing data quality.  In
-    addition to the new functionality, familiar methods (like setUp,
-    addCleanup, etc.) are still available---see
-    :py:class:`unittest.TestCase` for full details.
+    """This class extends :py:class:`unittest.TestCase` with methods
+    for asserting data validity. In addition to the new functionality,
+    familiar methods (like setUp, addCleanup, etc.) are still
+    available.
     """
     @property
     def subject(self):
@@ -112,14 +111,80 @@ class DataTestCase(TestCase):
         raise NameError('cannot find {0!r}'.format(name))
 
     def assertValid(self, data, requirement=None, msg=None):
-        """
-        assertValid(data, requirement, msg=None)
-        assertValid(function, /, msg=None)
+        """Fail if the *data* under test does not satisfy the
+        *requirement*.
 
-        Fail if *data* does not satisfy *requirement*.
+        The given *data* can be a set, sequence, iterable, mapping,
+        or other object. The *requirement* type determines how the
+        data is validated.
 
-        See documentation for full details.
+        **Set membership:** When *requirement* is a set, elements
+        in *data* are checked for membership in this set. On failure,
+        :class:`Missing` or :class:`Extra` errors are raised::
+
+            def test_mydata(self):
+                data = ...
+                requirement = {'A', 'B', 'C', ...}  # <- set
+                self.assertValid(data, requirement)
+
+        **Regular expression match:** When *requirement* is a regular
+        expression, elements in *data* are checked to see if they match
+        the given pattern. On failure, :class:`Invalid` errors are
+        raised::
+
+            def test_mydata(self):
+                data = ...
+                requirement = re.compile(r'^[ ]+|[ ]$')  # <- regex
+                self.assertValid(data, requirement)
+
+        **Sequence order:** When *requirement* is a list or other
+        sequence, elements in *data* are checked for matching order and
+        value::
+
+            def test_mydata(self):
+                data = ...
+                requirement = ['A', 'B', 'C', ...]  # <- sequence
+                self.assertValid(data, requirement)
+
+        **Mapping comparison:** When *requirement* is a dict (or other
+        mapping), elements of matching keys are checked for equality.
+        This comparison also requires *data* to be a mapping. On
+        failure, :class:`Invalid` or :class:`Deviation` errors are
+        raised::
+
+            def test_mydata(self):
+                data = ...  # <- Should also be a mapping.
+                requirement = {'A': 1, 'B': 2, 'C': ...}  # <- mapping
+                self.assertValid(data, requirement)
+
+        **Function comparison:** When *requirement* is a function or
+        other callable, elements in *data* are checked to see if they
+        evaluate to True. When the function returns False,
+        :class:`Invalid` errors are raised::
+
+            def test_mydata(self):
+                data = ...
+                def requirement(x):  # <- callable (helper function)
+                    return x.isupper()
+                self.assertValid(data, requirement)
+
+        **Other comparison:** When *requirement* does not match any
+        previously specified type (e.g., str, float, etc.), elements
+        in *data* are checked to see if they are equal to the given
+        object. On failure, an :class:`Invalid` or :class:`Deviation`
+        error is raised::
+
+            def test_mydata(self):
+                data = ...
+                requirement = 'FOO'
+                self.assertValid(data, requirement)
         """
+        # TODO: "If the function raises or returns an error derived
+        #        from :class:`DataError`, this error is used instead"
+
+        # TODO: Sequence order:
+        #       "On failure, an :py:class:`AssertionError` is raised"
+
         # Evaluate query and result objects.
         if isinstance(data, (DataQuery, DataResult)):
             data = data.eval()
@@ -160,9 +225,8 @@ class DataTestCase(TestCase):
     #    pass
 
     def allowOnly(self, differences, msg=None):
-        """alias of :class:`allow_only`
-
-        .. code-block:: python
+        """Context manager to allow specified *differences* without
+        triggering a test failure::
 
             differences = [
                 Extra('X'),
@@ -172,14 +236,16 @@ class DataTestCase(TestCase):
                 data = ...
                 requirement = ...
                 self.assertValid(data, requirement)
+
+        The *differences* argument can be a :py:obj:`list` or
+        :py:obj:`dict` of differences or a single difference.
         """
         #return allow_only(differences, msg)
         return allow_only(differences)
 
     def allowAny(self, msg=None, **kwds_func):
-        """alias of :class:`allow_any`
-
-        .. code-block:: python
+        """Allows differences that match given keyword functions
+        without triggering a test failure::
 
             def is_unknown(x):
                 return x == 'unknown'
@@ -193,9 +259,8 @@ class DataTestCase(TestCase):
         return allow_any(**kwds_func)
 
     def allowMissing(self, msg=None, **kwds_func):
-        """alias of :class:`allow_missing`
-
-        .. code-block:: python
+        """Allows :class:`Missing` values without triggering a test
+        failure::
 
             with self.allowMissing():
                 data = ...
@@ -206,9 +271,8 @@ class DataTestCase(TestCase):
         #return allow_missing(msg, **kwds_func)
 
     def allowExtra(self, msg=None, **kwds_func):
-        """alias of :class:`allow_extra`
-
-        .. code-block:: python
+        """Allows :class:`Extra` values without triggering a test
+        failure::
 
             with self.allowExtra():
                 data = ...
@@ -219,14 +283,17 @@ class DataTestCase(TestCase):
         #return allow_extra(msg, **kwds_func)
 
     def allowLimit(self, number, msg=None, **kwds_func):
-        """alias of :class:`allow_limit`
-
-        .. code-block:: python
+        """Context manager to allow a limited *number* of differences
+        (of any type) without triggering a test failure::
 
             with self.allowLimit(10):  # Allow up to ten differences.
                 data = ...
                 requirement = ...
                 self.assertValid(data, requirement)
+
+        If the count of differences exceeds the given *number*, the test
+        will fail with a :class:`DataError` containing all observed
+        differences.
         """
         return allow_limit(number, **kwds_func)
         #return allow_limit(number, msg, **kwds_func)
@@ -235,8 +302,6 @@ class DataTestCase(TestCase):
         """
         allowDeviation(tolerance, /, msg=None, **kwds_func)
         allowDeviation(lower, upper, msg=None, **kwds_func)
-
-        alias of :class:`allow_deviation`
 
         See documentation for full details.
         """
@@ -247,8 +312,6 @@ class DataTestCase(TestCase):
         """
         allowPercentDeviation(tolerance, /, msg=None, **kwds_func)
         allowPercentDeviation(lower, upper, msg=None, **kwds_func)
-
-        alias of :class:`allow_percent_deviation`
 
         See documentation for full details.
         """

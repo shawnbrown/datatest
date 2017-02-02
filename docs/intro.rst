@@ -21,8 +21,8 @@ Introduction
     been temporarily removed.  A comprehensive introduction will
     be rewritten once the new features have been fully implemented.
 
-    For now, please refer to the :doc:`api` for development build
-    documentation.
+    For now, please refer to the :doc:`unittest_style_api` for
+    development build documentation.
 
 
 Basic Example
