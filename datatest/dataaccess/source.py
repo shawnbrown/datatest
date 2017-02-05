@@ -34,10 +34,30 @@ class DataQuery(_DataQuery):
 
 
 class DataSource(object):
-    """
-    .. warning:: This class is a work in progress.  Eventually this
-                 class will replace the current CsvSource(),
-                 ExcelSource(), etc. objects.
+    """A basic data source to quickly load and query data::
+
+        data = [
+            ['a', 'x', 100],
+            ['b', 'y', 100],
+            ['c', 'x', 100],
+            ['d', 'x', 100],
+            ['e', 'y', 100],
+        ]
+        columns = ['col1', 'col2', 'col3']
+        source = datatest.DataSource(data, columns)
+
+    If *data* is an iterable of :py:class:`dict` or
+    :py:func:`namedtuple <collections.namedtuple>` rows,
+    then *columns* can be omitted::
+
+        data = [
+            {'col1': 'a', 'col2': 'x', 'col3': 100},
+            {'col1': 'b', 'col2': 'y', 'col3': 100},
+            {'col1': 'c', 'col2': 'x', 'col3': 100},
+            {'col1': 'd', 'col2': 'x', 'col3': 100},
+            {'col1': 'e', 'col2': 'y', 'col3': 100},
+        ]
+        source = datatest.DataSource(data)
     """
     def __init__(self, data, columns=None):
         """Initialize self."""
@@ -47,6 +67,11 @@ class DataSource(object):
 
     @classmethod
     def from_csv(cls, file, encoding=None, relative_to=None, **fmtparams):
+        """Initialize :class:`DataSource` using CSV data from *file*
+        (a path or file-like object)::
+
+            source = datatest.DataSource.from_csv('mydata.csv')
+        """
         if not _is_nscontainer(file):
             file = [file]
 
@@ -68,16 +93,19 @@ class DataSource(object):
 
     @classmethod
     def from_excel(cls, path, worksheet=0):
-        """Loads first worksheet from XLSX or XLS file *path*::
+        """Initialize :class:`DataSource` using worksheet data from
+        an XLSX or XLS file *path*.
+
+        Load first worksheet::
 
             source = datatest.DataSource.from_excel('mydata.xlsx')
 
-        Specific worksheets can be accessed by name or index::
+        Specific worksheets can be loaded by name or index::
 
             source = datatest.DataSource.from_excel('mydata.xlsx', 'Sheet 2')
 
         .. note::
-            This constructor is optional---it requires the third-party
+            This constructor requires the optional, third-party
             library `xlrd <https://pypi.python.org/pypi/xlrd>`_.
         """
         try:
@@ -106,7 +134,13 @@ class DataSource(object):
         return new_instance
 
     def columns(self):
-        """Return list of column names."""
+        """Return list of column names.
+
+        .. code-block:: python
+
+            source = datatest.DataSource(...)
+            columns = source.columns()
+        """
         cursor = self._connection.cursor()
         cursor.execute('PRAGMA table_info(' + self._table + ')')
         return [x[1] for x in cursor.fetchall()]
