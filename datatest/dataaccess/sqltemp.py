@@ -186,33 +186,6 @@ class TemporarySqliteTable(object):
         )
         cursor.executemany(statement, data_iter)
 
-        # TODO (2017-01-22): Remove the following section if the above
-        # code proves stable for a few weeks on our in-house staging
-        # server.
-        #
-        #for row in data:  # Insert all rows.
-        #    if isinstance(row, dict):
-        #        row = tuple(row[x] for x in columns)
-        #    statement, params = cls._insert_into_statement(table, row)
-        #    try:
-        #        cursor.execute(statement, params)
-        #    except Exception as e:
-        #        exc_cls = e.__class__
-        #        msg = ('\n'
-        #               '    row -> %s\n'
-        #               '    sql -> %s\n'
-        #               ' params -> %s') % (row, statement, params)
-        #        msg = str(e).strip() + msg
-        #        raise exc_cls(msg)
-
-    @staticmethod
-    def _insert_into_statement(table, row):
-        """Return 'INSERT INTO' statement."""
-        assert not isinstance(row, str), "row must be non-string container"
-        statement = 'INSERT INTO ' + table + ' VALUES (' + ', '.join(['?'] * len(row)) + ')'
-        parameters = row
-        return statement, parameters
-
     @staticmethod
     def _normalize_column(name):
         """Normalize value for use as SQLite column name."""

@@ -32,14 +32,6 @@ class TestTemporarySqliteTable(unittest.TestCase):
         stmnt = TemporarySqliteTable._create_table_statement('mytable', ['col1', 'col2'])
         self.assertEqual('CREATE TEMPORARY TABLE mytable ("col1", "col2")', stmnt)
 
-    def test_insert_into_statement(self):
-        stmnt, param = TemporarySqliteTable._insert_into_statement('mytable', ['val1a', 'val2a'])
-        self.assertEqual('INSERT INTO mytable VALUES (?, ?)', stmnt)
-        self.assertEqual(['val1a', 'val2a'], param)
-
-        with self.assertRaisesRegex(AssertionError, 'must be non-string container'):
-            TemporarySqliteTable._insert_into_statement('mytable', 'val1')
-
     def test_make_new_table(self):
         tablename = TemporarySqliteTable._make_new_table(existing=[])
         self.assertEqual(tablename, 'tbl0')
