@@ -1,5 +1,7 @@
 """compatibility layer for built-in functions"""
 from __future__ import absolute_import
+from .misc import _is_consumable
+
 
 try:
     from io import open as _open
@@ -57,7 +59,7 @@ except TypeError:
 
         try:
             first_item = next(iter(iterable))
-            if iterable is iter(iterable):  # If consumable, rebuild it.
+            if _is_consumable(iterable):
                 iterable = _chain([first_item], iterable)
         except StopIteration:
             if 'default' not in kwds:
@@ -85,7 +87,7 @@ except TypeError:
 
         try:
             first_item = next(iter(iterable))
-            if iterable is iter(iterable):  # If consumable, rebuild it.
+            if _is_consumable(iterable):
                 iterable = _chain([first_item], iterable)
         except StopIteration:
             if 'default' not in kwds:

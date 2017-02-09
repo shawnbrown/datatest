@@ -23,6 +23,11 @@ def _is_sortable(obj):
         return False
 
 
+def _is_consumable(obj):
+    """Returns True of *obj* is a consumable iterator or generator."""
+    return iter(obj) is iter(obj)
+
+
 def _unique_everseen(iterable):  # Adapted from itertools recipes.
     """Returns unique elements, preserving order."""
     seen = set()

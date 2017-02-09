@@ -7,6 +7,7 @@ from .utils import collections
 from .utils import functools
 from .utils import itertools
 
+from .utils.misc import _is_consumable
 from .utils.misc import _get_arg_lengths
 from .utils.misc import _expects_multiple_params
 from .utils.misc import _make_decimal
@@ -54,7 +55,7 @@ class allow_iter(object):
 
         try:  # Get 1st item and rebuild if differences are consumable.
             first_item = next(iter(differences))
-            if differences is iter(differences):
+            if _is_consumable(differences):
                 differences = itertools.chain([first_item], differences)
         except StopIteration:  # If no diffs, return True to suppress error.
             return True  # <- EXIT!
