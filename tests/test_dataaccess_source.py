@@ -54,6 +54,88 @@ class TestDataSourceBasics(unittest.TestCase):
         ]
         self.assertEqual(expected, result)
 
+    def test_select2_column_no_container(self):
+        result = self.source._select2('label1')
+        expected = ['a', 'a', 'a', 'a', 'b', 'b', 'b']
+        self.assertEqual(list(result), expected)
+
+        #result = self.source._select2(['label1'])
+        #expected = ['a', 'a', 'a', 'a', 'b', 'b', 'b']
+        #self.assertEqual(list(result), expected)
+
+        #result = self.source._select2({'label1'})
+        #expected = {'a', 'b'}
+        #self.assertEqual(list(result), expected)
+
+
+    def test_select2_column_as_list(self):
+        result = self.source._select2(['label1'])
+        expected = [['a'], ['a'], ['a'], ['a'], ['b'], ['b'], ['b']]
+        self.assertEqual(list(result), expected)
+
+        result = self.source._select2(['label1', 'label2'])
+        expected = [['a', 'x'], ['a', 'x'], ['a', 'y'], ['a', 'z'],
+                    ['b', 'z'], ['b', 'y'], ['b', 'x']]
+        self.assertEqual(list(result), expected)
+
+    def test_select2_column_as_tuple(self):
+        result = self.source._select2(('label1',))
+        expected = [('a',), ('a',), ('a',), ('a',), ('b',), ('b',), ('b',)]
+        self.assertEqual(list(result), expected)
+
+    def test_select2_column_as_set(self):
+        result = self.source._select2(set(['label1']))
+        expected = [set(['a']), set(['a']), set(['a']), set(['a']),
+                    set(['b']), set(['b']), set(['b'])]
+        self.assertEqual(list(result), expected)
+
+    def test_select2_dict(self):
+        result = self.source._select2({('label1', 'label2'): 'value'})
+        expected = {
+            ('a', 'x'): ['17', '13'],
+            ('a', 'y'): ['20'],
+            ('a', 'z'): ['15'],
+            ('b', 'x'): ['25'],
+            ('b', 'y'): ['40'],
+            ('b', 'z'): ['5'],
+        }
+        self.assertEqual(dict(result), expected)
+
+    def test_select2_dict_with_values_container(self):
+        result = self.source._select2({('label1', 'label2'): ['value']})
+        expected = {
+            ('a', 'x'): [['17'], ['13']],
+            ('a', 'y'): [['20']],
+            ('a', 'z'): [['15']],
+            ('b', 'x'): [['25']],
+            ('b', 'y'): [['40']],
+            ('b', 'z'): [['5']],
+        }
+        self.assertEqual(dict(result), expected)
+
+    def test_select2_dict_frozenset_key(self):
+        result = self.source._select2({frozenset(['label1']): 'label2'})
+        expected = {
+            frozenset(['a']): ['x', 'x', 'y', 'z'],
+            frozenset(['b']): ['z', 'y', 'x'],
+        }
+        self.assertEqual(dict(result), expected)
+
+    def test_select2_dict_with_values_container2(self):
+        result = self.source._select2({'label1': ['label2', 'label2']})
+        expected = {
+            'a': [['x', 'x'], ['x', 'x'], ['y', 'y'], ['z', 'z']],
+            'b': [['z', 'z'], ['y', 'y'], ['x', 'x']]
+        }
+        self.assertEqual(dict(result), expected)
+
+        result = self.source._select2({'label1': set(['label2', 'label2'])})
+        expected = {
+            'a': [set(['x']), set(['x']), set(['y']), set(['z'])],
+            'b': [set(['z']), set(['y']), set(['x'])],
+        }
+        self.assertEqual(dict(result), expected)
+
     def test_select_single_value(self):
         result = self.source._select('label1')
         self.assertIsInstance(result, DataResult)

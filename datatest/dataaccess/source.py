@@ -193,6 +193,73 @@ class DataSource(object):
         value_columns = tuple(self._normalize_column(x) for x in value_columns)
         return key_columns, value_columns
 
+    def _select2(self, selection, **where):
+        if isinstance(selection, str):
+            select_clause = self._normalize_column(selection)
+            cursor = self._execute_query(
+                self._table,
+                select_clause,
+                trailing_clause=None,
+                **where
+            )
+            return (row[0] for row in cursor)  # <- EXIT!
+
+        if isinstance(selection, (collections.Sequence, collections.Set)):
+            row_type = type(selection)
+            select_clause = (self._normalize_column(x) for x in selection)
+            select_clause = ', '.join(select_clause)
+            cursor = self._execute_query(
+                self._table,
+                select_clause,
+                trailing_clause=None,
+                **where
+            )
+            return (row_type(x) for x  in cursor)  # <- EXIT!
+
+        if isinstance(selection, collections.Mapping):
+            assert len(selection) == 1
+            key, value = tuple(selection.items())[0]
+            key_type = type(key)
+            value_type = type(value)
+
+            if issubclass(key_type, str):
+                key = (key,)
+            if issubclass(value_type, str):
+                value = (value,)
+
+            key_tuple = tuple(self._normalize_column(x) for x in key)
+            value_tuple = tuple(self._normalize_column(x) for x in value)
+
+            cursor = self._execute_query(
+                table=self._table,
+                select_clause=', '.join(key_tuple + value_tuple),
+                trailing_clause='ORDER BY {0}'.format(', '.join(key_tuple)),
+                **where
+            )
+
+            slice_index = len(key_tuple)
+
+            # Group results by dictionary key.
+            if issubclass(key_type, str):
+                keyfunc = lambda row: row[0]
+            else:
+                key_type = type(key)
+                keyfunc = lambda row: key_type(row[:slice_index])
+            grouped = itertools.groupby(cursor, keyfunc)
+
+            # Parse values and return items iterator.
+            if issubclass(value_type, str):
+                def valuefunc(group):
+                    return list(row[-1] for row in group)
+            else:
+                value_type = type(value)
+                def valuefunc(group):
+                    group = (row[slice_index:] for row in group)
+                    return list(value_type(row) for row in group)
+            return ((k, valuefunc(g)) for k, g in grouped)  # <- EXIT!
+
+        raise TypeError('type {0!r} not supported'.format(type(selection)))
+
     def _select(self, *columns, **kwds_filter):
         key_columns, value_columns = self._prepare_column_groups(*columns)
         select_clause = ', '.join(key_columns + value_columns)
