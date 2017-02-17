@@ -292,6 +292,23 @@ class DataSource(object):
         )
         return self._format_results(selection, cursor)
 
+    def _select2_distinct(self, selection, **where):
+        select_cols = self._sql_select_cols(selection)
+        select_clause = 'DISTINCT {0}'.format(select_cols)
+        if isinstance(selection, collections.Mapping):
+            order_cols = self._sql_group_order_cols(selection)
+            trailing_clause = 'ORDER BY {0}'.format(order_cols)
+        else:
+            trailing_clause = None
+
+        cursor = self._execute_query(
+            self._table,
+            select_clause,
+            trailing_clause,
+            **where
+        )
+        return self._format_results(selection, cursor)
+
     def _select(self, *columns, **kwds_filter):
         key_columns, value_columns = self._prepare_column_groups(*columns)
         select_clause = ', '.join(key_columns + value_columns)
