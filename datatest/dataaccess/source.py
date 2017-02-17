@@ -193,72 +193,104 @@ class DataSource(object):
         value_columns = tuple(self._normalize_column(x) for x in value_columns)
         return key_columns, value_columns
 
-    def _select2(self, selection, **where):
+    def _sql_select_cols(self, selection):
+        """Returns a string of normalized columns to use with a
+        SELECT clause.
+        """
         if isinstance(selection, str):
-            select_clause = self._normalize_column(selection)
-            cursor = self._execute_query(
-                self._table,
-                select_clause,
-                trailing_clause=None,
-                **where
-            )
-            return (row[0] for row in cursor)  # <- EXIT!
+            return self._normalize_column(selection)  # <- EXIT!
 
         if isinstance(selection, (collections.Sequence, collections.Set)):
             row_type = type(selection)
             select_clause = (self._normalize_column(x) for x in selection)
-            select_clause = ', '.join(select_clause)
-            cursor = self._execute_query(
-                self._table,
-                select_clause,
-                trailing_clause=None,
-                **where
-            )
-            return (row_type(x) for x  in cursor)  # <- EXIT!
+            return ', '.join(select_clause)  # <- EXIT!
 
         if isinstance(selection, collections.Mapping):
             assert len(selection) == 1
             key, value = tuple(selection.items())[0]
-            key_type = type(key)
-            value_type = type(value)
-
-            if issubclass(key_type, str):
+            if isinstance(key, str):
                 key = (key,)
-            if issubclass(value_type, str):
+            if isinstance(value, str):
                 value = (value,)
-
             key_tuple = tuple(self._normalize_column(x) for x in key)
             value_tuple = tuple(self._normalize_column(x) for x in value)
+            return ', '.join(key_tuple + value_tuple)  # <- EXIT!
 
-            cursor = self._execute_query(
-                table=self._table,
-                select_clause=', '.join(key_tuple + value_tuple),
-                trailing_clause='ORDER BY {0}'.format(', '.join(key_tuple)),
-                **where
-            )
+        raise TypeError('type {0!r} not supported'.format(type(selection)))
 
-            slice_index = len(key_tuple)
+    def _sql_group_order_cols(self, selection):
+        """Returns a string of normalized column names appropriate
+        for use with a GROUP BY or ORDER BY clause.
 
-            # Group results by dictionary key.
+        The *selection* can be a string, sequence, set or mapping--see
+        the _select2() method for details.
+        """
+        if isinstance(selection, str):
+            return self._normalize_column(selection)  # <- EXIT!
+
+        if isinstance(selection, (collections.Sequence, collections.Set)):
+            columns = tuple(self._normalize_column(x) for x in selection)
+            return ', '.join(columns)  # <- EXIT!
+
+        if isinstance(selection, collections.Mapping):
+            key = tuple(selection.keys())[0]
+            key_tuple = tuple(self._normalize_column(x) for x in key)
+            return ', '.join(key_tuple)  # <- EXIT!
+
+        raise TypeError('type {0!r} not supported'.format(type(selection)))
+
+    def _format_results(self, selection, cursor):
+        """Returns iterator of results formatted by *selection* types
+        from DBAPI2-compliant *cursor*.
+
+        The *selection* can be a string, sequence, set or mapping--see
+        the _select2() method for details.
+        """
+        if isinstance(selection, str):
+            return (row[0] for row in cursor)  # <- EXIT!
+
+        if isinstance(selection, (collections.Sequence, collections.Set)):
+            result_type = type(selection)
+            return (result_type(x) for x  in cursor)  # <- EXIT!
+
+        if isinstance(selection, collections.Mapping):
+            key, value = tuple(selection.items())[0]
+            key_type = type(key)
+            value_type = type(value)
+            slice_index = 1 if issubclass(key_type, str) else len(key)
+
             if issubclass(key_type, str):
                 keyfunc = lambda row: row[0]
             else:
-                key_type = type(key)
                 keyfunc = lambda row: key_type(row[:slice_index])
             grouped = itertools.groupby(cursor, keyfunc)
 
-            # Parse values and return items iterator.
             if issubclass(value_type, str):
                 def valuefunc(group):
                     return list(row[-1] for row in group)
             else:
-                value_type = type(value)
                 def valuefunc(group):
                     group = (row[slice_index:] for row in group)
                     return list(value_type(row) for row in group)
             return ((k, valuefunc(g)) for k, g in grouped)  # <- EXIT!
 
         raise TypeError('type {0!r} not supported'.format(type(selection)))
+
+    def _select2(self, selection, **where):
+        select_clause = self._sql_select_cols(selection)
+        if isinstance(selection, collections.Mapping):
+            order_cols = self._sql_group_order_cols(selection)
+            trailing_clause = 'ORDER BY {0}'.format(order_cols)
+        else:
+            trailing_clause = None
+
+        cursor = self._execute_query(
+            self._table,
+            select_clause,
+            trailing_clause,
+            **where
+        )
+        return self._format_results(selection, cursor)
 
     def _select(self, *columns, **kwds_filter):
         key_columns, value_columns = self._prepare_column_groups(*columns)
