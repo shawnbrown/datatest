@@ -234,6 +234,8 @@ class DataSource(object):
 
         if isinstance(selection, collections.Mapping):
             key = tuple(selection.keys())[0]
+            if isinstance(key, str):
+                return self._normalize_column(key)  # <- EXIT
             key_tuple = tuple(self._normalize_column(x) for x in key)
             return ', '.join(key_tuple)  # <- EXIT!
 
@@ -308,6 +310,44 @@ class DataSource(object):
             **where
         )
         return self._format_results(selection, cursor)
+
+    def _select2_aggregate(self, sqlfunc, selection, **where):
+        """."""
+        sqlfunc = sqlfunc.upper()
+        if isinstance(selection, str):
+            normalized = self._normalize_column(selection)
+            select_clause = '{0}({1})'.format(sqlfunc, normalized)
+            groupby_clause = None
+        elif isinstance(selection, (collections.Sequence, collections.Set)):
+            normalized = [self._normalize_column(x) for x in selection]
+            formatted = ['{0}({1})'.format(sqlfunc, x) for x in normalized]
+            select_clause = ', '.join(formatted)
+            groupby_clause = None
+        elif isinstance(selection, collections.Mapping):
+            value_cols = tuple(selection.values())[0]
+            if isinstance(value_cols, str):
+                normalized = self._normalize_column(value_cols)
+                formatted = '{0}({1})'.format(sqlfunc, normalized)
+            else:
+                normalized = [self._normalize_column(x) for x in value_cols]
+                formatted = ['{0}({1})'.format(sqlfunc, x) for x in normalized]
+                formatted = ', '.join(formatted)
+            key_cols = self._sql_group_order_cols(selection)
+            select_clause = '{0}, {1}'.format(key_cols, formatted)
+            groupby_clause = 'GROUP BY {0}'.format(key_cols)
+
+        cursor = self._execute_query(
+            self._table,
+            select_clause,
+            groupby_clause,
+            **where
+        )
+        results = self._format_results(selection, cursor)
+
+        if not isinstance(selection, collections.Mapping):
+            return next(results)  # <- EXIT!
+        results = ((k, v[0]) for k, v in results)
+        return results
 
     def _select(self, *columns, **kwds_filter):
         key_columns, value_columns = self._prepare_column_groups(*columns)

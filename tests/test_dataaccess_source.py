@@ -208,6 +208,39 @@ class TestDataSourceBasics(unittest.TestCase):
         }
         self.assertEqual(dict(result), expected)
 
+    def test_select2_aggregate(self):
+        # Not grouped, single result.
+        result = self.source._select2_aggregate('SUM', 'value')
+        self.assertEqual(result, 135)
+
+        # Not grouped, multiple results.
+        result = self.source._select2_aggregate('SUM', ['value', 'value'])
+        self.assertEqual(result, [135, 135])
+
+        # Simple group by (grouped by keys).
+        result = self.source._select2_aggregate('SUM', {'label1': 'value'})
+        expected = {
+            'a': 65,
+            'b': 70,
+        }
+        self.assertEqual(dict(result), expected)
+
+        # Composite value.
+        result = self.source._select2_aggregate('SUM', {'label1': ['value', 'value']})
+        expected = {
+            'a': [65, 65],
+            'b': [70, 70],
+        }
+        self.assertEqual(dict(result), expected)
+
+        # Composite key and composite value.
+        result = self.source._select2_aggregate('SUM', {('label1', 'label1'): ['value', 'value']})
+        expected = {
+            ('a', 'a'): [65, 65],
+            ('b', 'b'): [70, 70],
+        }
+        self.assertEqual(dict(result), expected)
+
     def test_select_single_value(self):
         result = self.source._select('label1')
         self.assertIsInstance(result, DataResult)
