@@ -55,7 +55,7 @@ class SqliteBase(BaseSource):
     def filter_rows(self, **kwds):
         if kwds:
             cursor = self._connection.cursor()
-            cursor = self._execute_query(self._table, '*', **kwds)  # <- applies filter
+            cursor = self._execute_query('*', **kwds)  # <- applies filter
             column_names = self.columns()
             dict_row = lambda row: dict(zip(column_names, row))
             return (dict_row(row) for row in cursor)
@@ -72,7 +72,7 @@ class SqliteBase(BaseSource):
         select_clause = ', '.join(select_clause)
         select_clause = 'DISTINCT ' + select_clause
 
-        cursor = self._execute_query(self._table, select_clause, **kwds_filter)
+        cursor = self._execute_query(select_clause, **kwds_filter)
         return CompareSet(cursor)
 
     def sum(self, column, keys=None, **kwds_filter):
@@ -105,7 +105,7 @@ class SqliteBase(BaseSource):
 
         if keys == None:
             sql_function = ', '.join(sql_function)
-            cursor = self._execute_query(self._table, sql_function, **kwds_filter)
+            cursor = self._execute_query(sql_function, **kwds_filter)
             result = cursor.fetchone()
             if len(result) == 1:
                 return result[0]
@@ -119,7 +119,7 @@ class SqliteBase(BaseSource):
         select_clause = '{0}, {1}'.format(group_clause, ', '.join(sql_function))
         trailing_clause = 'GROUP BY ' + group_clause
 
-        cursor = self._execute_query(self._table, select_clause, trailing_clause, **kwds_filter)
+        cursor = self._execute_query(select_clause, trailing_clause, **kwds_filter)
         pos = len(sql_function)
         iterable = ((row[:-pos], getvals(row)) for row in cursor)
         if pos > 1:
@@ -139,7 +139,7 @@ class SqliteBase(BaseSource):
         # mapreduce() already uses filter_rows() internally, a separate
         # optimization is unnecessary.
 
-    def _execute_query(self, table, select_clause, trailing_clause=None, **kwds_filter):
+    def _execute_query(self, select_clause, trailing_clause=None, **kwds_filter):
         """Execute query and return cursor object."""
         try:
             stmnt, params = self._build_query(self._table, select_clause, **kwds_filter)

@@ -279,36 +279,24 @@ class DataSource(object):
         raise TypeError('type {0!r} not supported'.format(type(selection)))
 
     def _select2(self, selection, **where):
-        select_clause = self._sql_select_cols(selection)
+        select = self._sql_select_cols(selection)
         if isinstance(selection, collections.Mapping):
             order_cols = self._sql_group_order_cols(selection)
-            trailing_clause = 'ORDER BY {0}'.format(order_cols)
+            order_by = 'ORDER BY {0}'.format(order_cols)
         else:
-            trailing_clause = None
-
-        cursor = self._execute_query(
-            self._table,
-            select_clause,
-            trailing_clause,
-            **where
-        )
+            order_by = None
+        cursor = self._execute_query(select, order_by, **where)
         return self._format_results(selection, cursor)
 
     def _select2_distinct(self, selection, **where):
         select_cols = self._sql_select_cols(selection)
-        select_clause = 'DISTINCT {0}'.format(select_cols)
+        select = 'DISTINCT {0}'.format(select_cols)
         if isinstance(selection, collections.Mapping):
             order_cols = self._sql_group_order_cols(selection)
-            trailing_clause = 'ORDER BY {0}'.format(order_cols)
+            order_by = 'ORDER BY {0}'.format(order_cols)
         else:
-            trailing_clause = None
-
-        cursor = self._execute_query(
-            self._table,
-            select_clause,
-            trailing_clause,
-            **where
-        )
+            order_by = None
+        cursor = self._execute_query(select, order_by, **where)
         return self._format_results(selection, cursor)
 
     def _select2_aggregate(self, sqlfunc, selection, **where):
@@ -316,13 +304,13 @@ class DataSource(object):
         sqlfunc = sqlfunc.upper()
         if isinstance(selection, str):
             normalized = self._normalize_column(selection)
-            select_clause = '{0}({1})'.format(sqlfunc, normalized)
-            groupby_clause = None
+            select = '{0}({1})'.format(sqlfunc, normalized)
+            group_by = None
         elif isinstance(selection, (collections.Sequence, collections.Set)):
             normalized = [self._normalize_column(x) for x in selection]
             formatted = ['{0}({1})'.format(sqlfunc, x) for x in normalized]
-            select_clause = ', '.join(formatted)
-            groupby_clause = None
+            select = ', '.join(formatted)
+            group_by = None
         elif isinstance(selection, collections.Mapping):
             value_cols = tuple(selection.values())[0]
             if isinstance(value_cols, str):
@@ -333,15 +321,10 @@ class DataSource(object):
                 formatted = ['{0}({1})'.format(sqlfunc, x) for x in normalized]
                 formatted = ', '.join(formatted)
             key_cols = self._sql_group_order_cols(selection)
-            select_clause = '{0}, {1}'.format(key_cols, formatted)
-            groupby_clause = 'GROUP BY {0}'.format(key_cols)
+            select = '{0}, {1}'.format(key_cols, formatted)
+            group_by = 'GROUP BY {0}'.format(key_cols)
 
-        cursor = self._execute_query(
-            self._table,
-            select_clause,
-            groupby_clause,
-            **where
-        )
+        cursor = self._execute_query(select, group_by, **where)
         results = self._format_results(selection, cursor)
 
         if not isinstance(selection, collections.Mapping):
@@ -355,7 +338,6 @@ class DataSource(object):
 
         if not key_columns:
             cursor = self._execute_query(
-                self._table,
                 select_clause,
                 **kwds_filter
             )
@@ -365,7 +347,6 @@ class DataSource(object):
 
         trailing_clause = 'ORDER BY {0}'.format(', '.join(key_columns))
         cursor = self._execute_query(
-            self._table,
             select_clause,
             trailing_clause,
             **kwds_filter
@@ -397,7 +378,6 @@ class DataSource(object):
 
         if not key_columns:
             cursor = self._execute_query(
-                self._table,
                 select_clause,
                 **kwds_filter
             )
@@ -407,7 +387,6 @@ class DataSource(object):
 
         trailing_clause = 'ORDER BY {0}'.format(', '.join(key_columns))
         cursor = self._execute_query(
-            self._table,
             select_clause,
             trailing_clause,
             **kwds_filter
@@ -439,7 +418,7 @@ class DataSource(object):
         sql_function = '{0}({1})'.format(sqlfunc, value_columns[0])
 
         if not key_columns:
-            cursor = self._execute_query(self._table, sql_function, **kwds_filter)
+            cursor = self._execute_query(sql_function, **kwds_filter)
             result = cursor.fetchone()
             return result[0]  # <- EXIT!
 
@@ -448,7 +427,6 @@ class DataSource(object):
         trailing_clause = 'GROUP BY ' + group_by
 
         cursor = self._execute_query(
-            self._table,
             select_clause,
             trailing_clause,
             **kwds_filter
@@ -471,7 +449,7 @@ class DataSource(object):
         tbl_name = self._table
         return '{0}({1}, table={2!r})'.format(cls_name, conn_name, tbl_name)
 
-    def _execute_query(self, table, select_clause, trailing_clause=None, **kwds_filter):
+    def _execute_query(self, select_clause, trailing_clause=None, **kwds_filter):
         """Execute query and return cursor object."""
         try:
             stmnt, params = self._build_query(self._table, select_clause, **kwds_filter)
