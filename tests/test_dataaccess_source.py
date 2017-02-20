@@ -45,6 +45,33 @@ class TestDataQuery2(unittest.TestCase):
         result = query.execute()
         self.assertEqual(result, 8)
 
+    def test_map(self):
+        query1 = DataQuery2('col2')
+        query2 = query1.map(int)
+        self.assertIsNot(query1, query2, 'should return new object')
+
+        source = DataSource([('a', '2'), ('b', '2')], columns=['col1', 'col2'])
+        result = query2.execute(source)
+        self.assertEqual(list(result), [2, 2])
+
+    def test_filter(self):
+        query1 = DataQuery2('col1')
+        query2 = query1.filter(lambda x: x == 'a')
+        self.assertIsNot(query1, query2, 'should return new object')
+
+        source = DataSource([('a', '2'), ('b', '2')], columns=['col1', 'col2'])
+        result = query2.execute(source)
+        self.assertEqual(list(result), ['a'])
+
+    def test_reduce(self):
+        query1 = DataQuery2('col1')
+        query2 = query1.reduce(lambda x, y: x + y)
+        self.assertIsNot(query1, query2, 'should return new object')
+
+        source = DataSource([('a', '2'), ('b', '2')], columns=['col1', 'col2'])
+        result = query2.execute(source)
+        self.assertEqual(result, 'ab')
+
 
 class TestDataQuery(unittest.TestCase):
     def test_from_parts(self):

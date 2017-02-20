@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 import collections
+import functools
 import itertools
 import os
 
@@ -17,6 +18,18 @@ class _RESULT_TOKEN(object):
         return '<result>'
 RESULT_TOKEN = _RESULT_TOKEN()
 del _RESULT_TOKEN
+
+
+def _map_data(function, iterable):
+    return map(function, iterable)
+
+
+def _filter_data(function, iterable):
+    return filter(function, iterable)
+
+
+def _reduce_data(function, iterable):
+    return functools.reduce(function, iterable)
 
 
 class DataQuery2(object):
@@ -69,6 +82,23 @@ class DataQuery2(object):
         new_cls._query_steps = query_steps
         new_cls._initializer = initializer
         return new_cls
+
+    def _append_new(self, step):
+        steps = self._query_steps + (step,)
+        new_query = self.__class__._from_parts(steps, self._initializer)
+        return new_query
+
+    def map(self, function):
+        step = (_map_data, (function, RESULT_TOKEN), {})
+        return self._append_new(step)
+
+    def filter(self, function):
+        step = (_filter_data, (function, RESULT_TOKEN), {})
+        return self._append_new(step)
+
+    def reduce(self, function):
+        step = (_reduce_data, (function, RESULT_TOKEN), {})
+        return self._append_new(step)
 
 
 class DataQuery(_DataQuery):
