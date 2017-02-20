@@ -1,9 +1,49 @@
 # -*- coding: utf-8 -*-
-import unittest
+from . import _unittest as unittest
 from datatest.dataaccess.source import DataSource
 from datatest.dataaccess.source import DataQuery
+from datatest.dataaccess.source import DataQuery2
+from datatest.dataaccess.source import RESULT_TOKEN
 from datatest.dataaccess.query import BaseQuery
 from datatest.dataaccess.result import DataResult
+
+
+class TestDataQuery2(unittest.TestCase):
+    def test_init(self):
+        query = DataQuery2('foo', bar='baz')
+        expected = tuple([
+            (getattr, (RESULT_TOKEN, '_select2'), {}),
+            (RESULT_TOKEN, ('foo',), {'bar': 'baz'}),
+        ])
+        self.assertEqual(query._query_steps, expected)
+        self.assertEqual(query._initializer, None)
+
+        with self.assertRaises(TypeError, msg='should require select args'):
+            DataQuery2()
+
+    def test_from_parts(self):
+        source = DataSource([(1, 2), (1, 2)], columns=['A', 'B'])
+        query = DataQuery2._from_parts(initializer=source)
+        self.assertEqual(query._query_steps, tuple())
+        self.assertIs(query._initializer, source)
+
+        regex = "expected 'DataSource', got 'list'"
+        with self.assertRaisesRegex(TypeError, regex):
+            wrong_type = ['hello', 'world']
+            query = DataQuery2._from_parts(initializer=wrong_type)
+
+    def test_execute(self):
+        source = DataSource([('1', '2'), ('1', '2')], columns=['A', 'B'])
+        query = DataQuery2._from_parts(initializer=source)
+        query._query_steps = [
+            (getattr, (RESULT_TOKEN, '_select2'), {}),
+            (RESULT_TOKEN, ('B',), {}),
+            (map, (int, RESULT_TOKEN), {}),
+            (map, (lambda x: x * 2, RESULT_TOKEN), {}),
+            (sum, (RESULT_TOKEN,), {}),
+        ]
+        result = query.execute()
+        self.assertEqual(result, 8)
 
 
 class TestDataQuery(unittest.TestCase):

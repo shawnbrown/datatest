@@ -12,6 +12,65 @@ from .result import DataResult
 from .query import _DataQuery
 
 
+class _RESULT_TOKEN(object):
+    def __repr__(self):
+        return '<result>'
+RESULT_TOKEN = _RESULT_TOKEN()
+del _RESULT_TOKEN
+
+
+class DataQuery2(object):
+    def __init__(self, selection, **where):
+        self._query_steps = tuple([
+            (getattr, (RESULT_TOKEN, '_select2'), {}),
+            (RESULT_TOKEN, (selection,), where),
+        ])
+        self._initializer = None
+
+    @staticmethod
+    def _validate_initializer(initializer):
+        if not isinstance(initializer, DataSource):
+            raise TypeError('expected {0!r}, got {1!r}'.format(
+                DataSource.__name__,
+                initializer.__class__.__name__,
+            ))
+
+    def execute(self, initializer=None):
+        result = initializer or self._initializer
+        if result is None:
+            raise ValueError('must provide initializer, None found')
+        self._validate_initializer(result)
+
+        replace_token = lambda x: result if x is RESULT_TOKEN else x
+        for step in self._query_steps:
+            function, args, keywords = step  # Unpack 3-tuple.
+            function = replace_token(function)
+            args = tuple(replace_token(x) for x in args)
+            keywords = dict((k, replace_token(v)) for k, v in keywords.items())
+            result = function(*args, **keywords)
+
+        return result
+
+    #@staticmethod
+    #def _validate_steps(steps):
+    #    pass
+
+    @classmethod
+    def _from_parts(cls, query_steps=None, initializer=None):
+        if initializer:
+            cls._validate_initializer(initializer)
+
+        if query_steps:
+            query_steps = tuple(query_steps)
+        else:
+            query_steps = tuple()
+
+        new_cls = cls.__new__(cls)
+        new_cls._query_steps = query_steps
+        new_cls._initializer = initializer
+        return new_cls
+
+
 class DataQuery(_DataQuery):
     @staticmethod
     def _validate_initializer(initializer):
@@ -170,6 +229,11 @@ class DataSource(object):
 
     def __call__(self, *columns, **kwds_filter):
         return DataQuery._from_parts(['_select', (columns, kwds_filter)], self)
+        #steps = [
+        #    (getattr, (RESULT_TOKEN, '_select2',), {}),
+        #    (RESULT_TOKEN, columns, kwds_filter),
+        #]
+        #return DataQuery2._from_parts(steps, initializer=self)
 
     def _prepare_column_groups(self, *columns):
         """Returns tuple of columns split into key and value groups."""
