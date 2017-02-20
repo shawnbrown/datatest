@@ -45,7 +45,7 @@ class TypedIterator(collections.Iterator):
     def next(self):
         return self.__next__()
 
-    def __iter__(self, iterable):
+    def __iter__(self):
         return self._iterator
 
 
@@ -387,11 +387,18 @@ class DataSource(object):
         the _select2() method for details.
         """
         if isinstance(selection, str):
-            return (row[0] for row in cursor)  # <- EXIT!
+            result = (row[0] for row in cursor)
+            return TypedIterator(result, collection_hint=list) # <- EXIT!
 
-        if isinstance(selection, (collections.Sequence, collections.Set)):
+        if isinstance(selection, collections.Sequence):
             result_type = type(selection)
-            return (result_type(x) for x  in cursor)  # <- EXIT!
+            result = (result_type(x) for x  in cursor)
+            return TypedIterator(result, collection_hint=list) # <- EXIT!
+
+        if isinstance(selection, collections.Set):
+            result_type = type(selection)
+            result = (result_type(x) for x  in cursor)
+            return TypedIterator(result, collection_hint=set) # <- EXIT!
 
         if isinstance(selection, collections.Mapping):
             key, value = tuple(selection.items())[0]
@@ -412,7 +419,8 @@ class DataSource(object):
                 def valuefunc(group):
                     group = (row[slice_index:] for row in group)
                     return list(value_type(row) for row in group)
-            return ((k, valuefunc(g)) for k, g in grouped)  # <- EXIT!
+            result =  ((k, valuefunc(g)) for k, g in grouped)
+            return TypedIterator(result, collection_hint=ItemsIter) # <- EXIT!
 
         raise TypeError('type {0!r} not supported'.format(type(selection)))
 
