@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
+import abc
 import collections
 import functools
 import itertools
@@ -18,6 +19,49 @@ class _RESULT_TOKEN(object):
         return '<result>'
 RESULT_TOKEN = _RESULT_TOKEN()
 del _RESULT_TOKEN
+
+
+class TypedIterator(collections.Iterator):
+    """An iterator that includes a *collection_hint*. The hint should
+    be a type that describes the collection being iterated over.
+    """
+    def __init__(self, iterable, collection_hint):
+        if not isinstance(collection_hint, type):
+            msg = 'collection_hint must be a type, found instance of {0}'
+            raise TypeError(msg.format(collection_hint.__class__.__name__))
+        self._iterator = iter(iterable)
+        self.collection_hint = collection_hint
+
+    def __repr__(self):
+        cls_name = self.__class__.__name__
+        rtn_name = self.collection_hint.__name__
+        hex_id = hex(id(self))
+        template = '<{0} collection_hint={1} at {2}>'
+        return template.format(cls_name, rtn_name, hex_id)
+
+    def __next__(self):
+        return next(self._iterator)
+
+    def next(self):
+        return self.__next__()
+
+    def __iter__(self, iterable):
+        return self._iterator
+
+
+class ItemsIter(object):
+    """An abstract class to use with TypedIterator to indicate that
+    the underlying collection is an iterable of key-value pairs that
+    are appropriate for evaluating as a dictionary.
+    """
+    pass
+
+ItemsIter = abc.ABCMeta(  # Py 2 and 3 compatible way to add ABCMeta as
+    ItemsIter.__name__,   # the metaclass for ItemsIter. Done so we can
+    ItemsIter.__bases__,  # register ItemsView as a recognized subclass.
+    {'__module__': ItemsIter.__module__, '__doc__': None},
+)
+ItemsIter.register(collections.ItemsView)
 
 
 def _map_data(function, iterable):

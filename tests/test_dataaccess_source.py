@@ -1,11 +1,36 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 from . import _unittest as unittest
+from datatest.utils import collections
 from datatest.dataaccess.source import DataSource
 from datatest.dataaccess.source import DataQuery
 from datatest.dataaccess.source import DataQuery2
 from datatest.dataaccess.source import RESULT_TOKEN
+from datatest.dataaccess.source import TypedIterator
+from datatest.dataaccess.source import ItemsIter
 from datatest.dataaccess.query import BaseQuery
 from datatest.dataaccess.result import DataResult
+
+
+class TestTypedIterator(unittest.TestCase):
+    def test_init(self):
+        untyped = iter([1, 2, 3, 4])
+
+        typed = TypedIterator(untyped, list)
+        self.assertEqual(typed.collection_hint, list)
+
+        typed = TypedIterator(iterable=untyped, collection_hint=list)
+        self.assertEqual(typed.collection_hint, list)
+
+        regex = 'collection_hint must be a type, found instance of list'
+        with self.assertRaisesRegex(TypeError, regex):
+            typed = TypedIterator(untyped, [1, 2])
+
+
+class TestItemsIterator(unittest.TestCase):
+    def test_issubclass(self):
+        self.assertTrue(issubclass(ItemsIter, ItemsIter))
+        self.assertTrue(issubclass(collections.ItemsView, ItemsIter))
 
 
 class TestDataQuery2(unittest.TestCase):
