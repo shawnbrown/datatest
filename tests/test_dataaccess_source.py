@@ -77,7 +77,7 @@ class TestDataQuery2(unittest.TestCase):
 
         source = DataSource([('a', '2'), ('b', '2')], columns=['col1', 'col2'])
         result = query2.execute(source)
-        self.assertEqual(list(result), [2, 2])
+        self.assertEqual(result, [2, 2])
 
     def test_filter(self):
         query1 = DataQuery2('col1')
@@ -86,7 +86,7 @@ class TestDataQuery2(unittest.TestCase):
 
         source = DataSource([('a', '2'), ('b', '2')], columns=['col1', 'col2'])
         result = query2.execute(source)
-        self.assertEqual(list(result), ['a'])
+        self.assertEqual(result, ['a'])
 
     def test_reduce(self):
         query1 = DataQuery2('col1')

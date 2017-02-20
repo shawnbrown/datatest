@@ -65,14 +65,31 @@ ItemsIter.register(collections.ItemsView)
 
 
 def _map_data(function, iterable):
-    return map(function, iterable)
+    collection_hint = iterable.collection_hint
+    if issubclass(collection_hint, ItemsIter):
+        map_func = lambda v: TypedIterator(map(function, v), list)
+        result = ((k, map_func(v)) for k, v in iterable)
+    else:
+        result = map(function, iterable)
+    return TypedIterator(result, collection_hint)
 
 
 def _filter_data(function, iterable):
-    return filter(function, iterable)
+    collection_hint = iterable.collection_hint
+    if issubclass(collection_hint, ItemsIter):
+        filter_func = lambda v: TypedIterator(filter(function, v), list)
+        result = ((k, filter_func(v)) for k, v in iterable)
+    else:
+        result = filter(function, iterable)
+    return TypedIterator(result, collection_hint)
 
 
 def _reduce_data(function, iterable):
+    collection_hint = iterable.collection_hint
+    if issubclass(collection_hint, ItemsIter):
+        reduce_func = lambda v: functools.reduce(function, v)
+        result = ((k, reduce_func(v)) for k, v in iterable)
+        return TypedIterator(result, collection_hint)  # <- EXIT!
     return functools.reduce(function, iterable)
 
 
@@ -92,11 +109,29 @@ class DataQuery2(object):
                 initializer.__class__.__name__,
             ))
 
-    def execute(self, initializer=None):
+    def execute(self, initializer=None, **kwds):
+        """
+        execute(initializer=None, *, lazy=False, optimize=True)
+
+        Evaluate query and return its result.
+
+        Use ``lazy=True`` to evaluate the query but leave the result
+        in its raw, iterator form. By default, results are eagerly
+        evaluated and loaded into memory.
+
+        Use ``optimize=False`` to turn-off query optimization.
+        """
         result = initializer or self._initializer
         if result is None:
             raise ValueError('must provide initializer, None found')
         self._validate_initializer(result)
+
+        lazy = kwds.pop('lazy', False)         # Emulate keyword-only
+        optimize = kwds.pop('optimize', True)  # behavior for 2.7 and
+        if kwds:                               # 2.6 compatibility.
+            key, _ = kwds.popitem()
+            raise TypeError('got an unexpected keyword '
+                            'argument {0!r}'.format(key))
 
         replace_token = lambda x: result if x is RESULT_TOKEN else x
         for step in self._query_steps:
@@ -105,6 +140,17 @@ class DataQuery2(object):
             args = tuple(replace_token(x) for x in args)
             keywords = dict((k, replace_token(v)) for k, v in keywords.items())
             result = function(*args, **keywords)
+
+        if isinstance(result, TypedIterator) and not lazy:
+            def evaluate(obj):
+                if isinstance(obj, TypedIterator):
+                    return obj.collection_hint(obj)
+                return obj
+
+            if issubclass(result.collection_hint, ItemsIter):
+                result = dict((k, evaluate(v)) for k, v in result)
+            else:
+                result = evaluate(result)
 
         return result
 
