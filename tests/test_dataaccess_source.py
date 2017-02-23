@@ -7,6 +7,8 @@ from datatest.dataaccess.source import DataQuery
 from datatest.dataaccess.source import DataQuery2
 from datatest.dataaccess.source import RESULT_TOKEN
 from datatest.dataaccess.source import TypedIterator
+from datatest.dataaccess.source import _map_data
+from datatest.dataaccess.source import ABCItemsIter
 from datatest.dataaccess.source import ItemsIter
 from datatest.dataaccess.query import BaseQuery
 from datatest.dataaccess.result import DataResult
@@ -17,20 +19,46 @@ class TestTypedIterator(unittest.TestCase):
         untyped = iter([1, 2, 3, 4])
 
         typed = TypedIterator(untyped, list)
-        self.assertEqual(typed.collection_hint, list)
+        self.assertEqual(typed.intended_type, list)
 
-        typed = TypedIterator(iterable=untyped, collection_hint=list)
-        self.assertEqual(typed.collection_hint, list)
+        typed = TypedIterator(iterable=untyped, intended_type=list)
+        self.assertEqual(typed.intended_type, list)
 
-        regex = 'collection_hint must be a type, found instance of list'
+        regex = 'intended_type must be a type, found instance of list'
         with self.assertRaisesRegex(TypeError, regex):
             typed = TypedIterator(untyped, [1, 2])
 
 
-class TestItemsIterator(unittest.TestCase):
+class TestItemsIter(unittest.TestCase):
     def test_issubclass(self):
-        self.assertTrue(issubclass(ItemsIter, ItemsIter))
-        self.assertTrue(issubclass(collections.ItemsView, ItemsIter))
+        self.assertTrue(issubclass(ABCItemsIter, ABCItemsIter))  # Sanity check.
+
+        self.assertTrue(issubclass(collections.ItemsView, ABCItemsIter))
+        self.assertTrue(issubclass(ItemsIter, ABCItemsIter))
+
+    def test_thestuff(self):
+        foo = ItemsIter([1,2,3])
+        self.assertEqual(list(foo), [1,2,3])
+
+
+class Test_map_data(unittest.TestCase):
+    def test_foo(self):
+        function = lambda x: x * 2
+        #iterable = TypedIterator([1, 2, 3], list)
+        iterable = [1, 2, 3]
+
+        result = _map_data(function, iterable)
+        expected = [2, 4, 6]
+        self.assertEqual(list(result), expected)
+
+        #query1 = DataQuery2('col2')
+        #query2 = query1.map(int)
+        #self.assertIsNot(query1, query2, 'should return new object')
+
+        #source = DataSource([('a', '2'), ('b', '2')], columns=['col1', 'col2'])
+        #result = query2.execute(source)
+        #self.assertEqual(result, [2, 2])
+
 
 
 class TestDataQuery2(unittest.TestCase):

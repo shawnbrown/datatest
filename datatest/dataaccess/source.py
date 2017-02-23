@@ -21,75 +21,139 @@ RESULT_TOKEN = _RESULT_TOKEN()
 del _RESULT_TOKEN
 
 
-class TypedIterator(collections.Iterator):
-    """An iterator that includes a *collection_hint*. The hint should
-    be a type that describes the collection being iterated over.
+class ItemsIter(collections.Iterator):
+    """A simple wrapper used to identify iterators that should
+    return a 2-tuple of key-value pairs. The underlying iterable
+    should not contain duplicate keys and it should be appropriate
+    for constructing a dictionary or other mapping.
     """
-    def __init__(self, iterable, collection_hint):
-        if not isinstance(collection_hint, type):
-            msg = 'collection_hint must be a type, found instance of {0}'
-            raise TypeError(msg.format(collection_hint.__class__.__name__))
-        self._iterator = iter(iterable)
-        self.collection_hint = collection_hint
-
-    def __repr__(self):
-        cls_name = self.__class__.__name__
-        rtn_name = self.collection_hint.__name__
-        hex_id = hex(id(self))
-        template = '<{0} collection_hint={1} at {2}>'
-        return template.format(cls_name, rtn_name, hex_id)
-
+    def __init__(self, iterable):
+        self._iterator = iter(iterable)  # <- Here, we use _iterator
+                                         #    instead of __wrapped__
+    def __iter__(self):                  #    because this  iterable
+        return self                      #    should  not be
+                                         #    automatically unwrapped.
     def __next__(self):
         return next(self._iterator)
 
     def next(self):
-        return self.__next__()
-
-    def __iter__(self):
-        return self._iterator
+        return next(self._iterator)  # For Python 2 compatibility.
 
 
-class ItemsIter(object):
-    """An abstract class to use with TypedIterator to indicate that
-    the underlying collection is an iterable of key-value pairs that
-    are appropriate for evaluating as a dictionary.
+class ABCItemsIter(collections.Iterable):
+    """An abstract base class used to test if an iterable is expected
+    to return key-value pairs. Both ItemsIter and collection.ItemsView
+    are registered as subclasses of this type.
     """
     pass
 
-ItemsIter = abc.ABCMeta(  # Py 2 and 3 compatible way to add ABCMeta as
-    ItemsIter.__name__,   # the metaclass for ItemsIter. Done so we can
-    ItemsIter.__bases__,  # register ItemsView as a recognized subclass.
-    {'__module__': ItemsIter.__module__, '__doc__': None},
+ABCItemsIter = abc.ABCMeta(  # Python 2 and 3 compatible way to add
+    ABCItemsIter.__name__,   # ABCMeta as metaclass for ABCItemsIter.
+    ABCItemsIter.__bases__,
+    {'__module__': ABCItemsIter.__module__, '__doc__': None},
 )
-ItemsIter.register(collections.ItemsView)
+
+ABCItemsIter.register(collections.ItemsView)
+ABCItemsIter.register(ItemsIter)
+
+
+def _is_collection_of_items(obj):
+    while hasattr(obj, '__wrapped__'):
+        obj = obj.__wrapped__
+    return isinstance(obj, ABCItemsIter)
+
+
+class TypedIterator(collections.Iterator):
+    """An iterator that includes an *intended_type*. The hint
+    should be a type that describes the collection being iterated
+    over.
+
+    The original underlying iterable is accessible through the
+    __wrapped__ attribute. This is useful for introspection and
+    for rewrapping the iterable with a different wrapper class.
+    """
+    def __init__(self, iterable, intended_type):
+        if not isinstance(intended_type, type):
+            msg = 'intended_type must be a type, found instance of {0}'
+            raise TypeError(msg.format(intended_type.__class__.__name__))
+
+        while hasattr(iterable, '__wrapped__'):
+            iterable = iterable.__wrapped__
+
+        if (issubclass(intended_type, collections.Mapping)
+                and not _is_collection_of_items(iterable)):
+            cls_name = iterable.__class__.__name__
+            raise TypeError('when intended_type is a mapping, '
+                            'iterator must be ItemsIterator, '
+                            'found {0} instead'.format(cls_name))
+
+        self.__wrapped__ = iter(iterable)
+        self.intended_type = intended_type
+
+    def __iter__(self):
+        return self
+
+    def __repr__(self):
+        cls_name = self.__class__.__name__
+        rtn_name = self.intended_type.__name__
+        hex_id = hex(id(self))
+        template = '<{0} intended_type={1} at {2}>'
+        return template.format(cls_name, rtn_name, hex_id)
+
+    def __next__(self):
+        return next(self.__wrapped__)
+
+    def next(self):
+        return next(self.__wrapped__)  # For Python 2 compatibility.
+
+
+def _get_indented_type(obj):
+    """Return object's intended_type property. If object does not
+    have an intended_type, return the object's type if it is a
+    supported container. If obj is not a supported container type
+    but is an iterable, None is returned.
+    """
+    if hasattr(obj, 'intended_type'):
+        return obj.intended_type  # <- EXIT!
+
+    if isinstance(obj, (collections.Mapping,
+                        collections.Sequence,
+                        collections.Set)):
+        return type(obj)  # <- EXIT!
+
+    if isinstance(obj, collections.Iterable):
+        return None  # <- EXIT!
+
+    cls_name = obj.__class__.__name__
+    raise TypeError('unable to determine intended_type for {0!r}'.format(cls_name))
 
 
 def _map_data(function, iterable):
-    collection_hint = iterable.collection_hint
-    if issubclass(collection_hint, ItemsIter):
+    intended_type = _get_indented_type(iterable)
+    if _is_collection_of_items(iterable):
         map_func = lambda v: TypedIterator(map(function, v), list)
         result = ((k, map_func(v)) for k, v in iterable)
     else:
         result = map(function, iterable)
-    return TypedIterator(result, collection_hint)
+    return TypedIterator(result, intended_type)
 
 
 def _filter_data(function, iterable):
-    collection_hint = iterable.collection_hint
-    if issubclass(collection_hint, ItemsIter):
+    intended_type = _get_indented_type(iterable)
+    if _is_collection_of_items(iterable):
         filter_func = lambda v: TypedIterator(filter(function, v), list)
         result = ((k, filter_func(v)) for k, v in iterable)
     else:
         result = filter(function, iterable)
-    return TypedIterator(result, collection_hint)
+    return TypedIterator(result, intended_type)
 
 
 def _reduce_data(function, iterable):
-    collection_hint = iterable.collection_hint
-    if issubclass(collection_hint, ItemsIter):
+    intended_type = _get_indented_type(iterable)
+    if _is_collection_of_items(iterable):
         reduce_func = lambda v: functools.reduce(function, v)
         result = ((k, reduce_func(v)) for k, v in iterable)
-        return TypedIterator(result, collection_hint)  # <- EXIT!
+        return TypedIterator(result, intended_type)  # <- EXIT!
     return functools.reduce(function, iterable)
 
 
@@ -144,10 +208,10 @@ class DataQuery2(object):
         if isinstance(result, TypedIterator) and not lazy:
             def evaluate(obj):
                 if isinstance(obj, TypedIterator):
-                    return obj.collection_hint(obj)
+                    return obj.intended_type(obj)
                 return obj
 
-            if issubclass(result.collection_hint, ItemsIter):
+            if issubclass(result.intended_type, collections.Mapping):
                 result = dict((k, evaluate(v)) for k, v in result)
             else:
                 result = evaluate(result)
@@ -434,19 +498,20 @@ class DataSource(object):
         """
         if isinstance(selection, str):
             result = (row[0] for row in cursor)
-            return TypedIterator(result, collection_hint=list) # <- EXIT!
+            return TypedIterator(result, intended_type=list) # <- EXIT!
 
         if isinstance(selection, collections.Sequence):
             result_type = type(selection)
             result = (result_type(x) for x  in cursor)
-            return TypedIterator(result, collection_hint=list) # <- EXIT!
+            return TypedIterator(result, intended_type=list) # <- EXIT!
 
         if isinstance(selection, collections.Set):
             result_type = type(selection)
             result = (result_type(x) for x  in cursor)
-            return TypedIterator(result, collection_hint=set) # <- EXIT!
+            return TypedIterator(result, intended_type=set) # <- EXIT!
 
         if isinstance(selection, collections.Mapping):
+            result_type = type(selection)
             key, value = tuple(selection.items())[0]
             key_type = type(key)
             value_type = type(value)
@@ -465,8 +530,8 @@ class DataSource(object):
                 def valuefunc(group):
                     group = (row[slice_index:] for row in group)
                     return list(value_type(row) for row in group)
-            result =  ((k, valuefunc(g)) for k, g in grouped)
-            return TypedIterator(result, collection_hint=ItemsIter) # <- EXIT!
+            result =  ItemsIter((k, valuefunc(g)) for k, g in grouped)
+            return TypedIterator(result, intended_type=result_type) # <- EXIT!
 
         raise TypeError('type {0!r} not supported'.format(type(selection)))
 
