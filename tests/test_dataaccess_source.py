@@ -8,7 +8,6 @@ from datatest.dataaccess.source import DataQuery2
 from datatest.dataaccess.source import RESULT_TOKEN
 from datatest.dataaccess.source import TypedIterator
 from datatest.dataaccess.source import _map_data
-from datatest.dataaccess.source import ABCItemsIter
 from datatest.dataaccess.source import ItemsIter
 from datatest.dataaccess.query import BaseQuery
 from datatest.dataaccess.result import DataResult
@@ -30,13 +29,7 @@ class TestTypedIterator(unittest.TestCase):
 
 
 class TestItemsIter(unittest.TestCase):
-    def test_issubclass(self):
-        self.assertTrue(issubclass(ABCItemsIter, ABCItemsIter))  # Sanity check.
-
-        self.assertTrue(issubclass(collections.ItemsView, ABCItemsIter))
-        self.assertTrue(issubclass(ItemsIter, ABCItemsIter))
-
-    def test_thestuff(self):
+    def test_itemsiter(self):
         foo = ItemsIter([1,2,3])
         self.assertEqual(list(foo), [1,2,3])
 

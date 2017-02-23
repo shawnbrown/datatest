@@ -40,27 +40,10 @@ class ItemsIter(collections.Iterator):
         return next(self._iterator)  # For Python 2 compatibility.
 
 
-class ABCItemsIter(collections.Iterable):
-    """An abstract base class used to test if an iterable is expected
-    to return key-value pairs. Both ItemsIter and collection.ItemsView
-    are registered as subclasses of this type.
-    """
-    pass
-
-ABCItemsIter = abc.ABCMeta(  # Python 2 and 3 compatible way to add
-    ABCItemsIter.__name__,   # ABCMeta as metaclass for ABCItemsIter.
-    ABCItemsIter.__bases__,
-    {'__module__': ABCItemsIter.__module__, '__doc__': None},
-)
-
-ABCItemsIter.register(collections.ItemsView)
-ABCItemsIter.register(ItemsIter)
-
-
 def _is_collection_of_items(obj):
     while hasattr(obj, '__wrapped__'):
         obj = obj.__wrapped__
-    return isinstance(obj, ABCItemsIter)
+    return isinstance(obj, (ItemsIter, collections.ItemsView))
 
 
 class TypedIterator(collections.Iterator):
