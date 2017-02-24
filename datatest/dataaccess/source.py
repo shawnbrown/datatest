@@ -46,14 +46,18 @@ def _is_collection_of_items(obj):
     return isinstance(obj, (ItemsIter, collections.ItemsView))
 
 
-class TypedIterator(collections.Iterator):
-    """An iterator that includes an *intended_type*. The hint
-    should be a type that describes the collection being iterated
-    over.
+class DataIterator(collections.Iterator):
+    """A wrapper for results from DataQuery and DataSource method
+    calls. The given *iterable* should contain data appropriate
+    for constructing an object of the *intended_type*.
 
-    The original underlying iterable is accessible through the
-    __wrapped__ attribute. This is useful for introspection and
-    for rewrapping the iterable with a different wrapper class.
+    The primary purpose of this wrapper is to facilitate the lazy
+    evaluation of data objects (where possible) when asserting
+    data validity.
+
+    The underlying iterator is accessible through the __wrapped__
+    attribute. This is useful when introspecting or rewrapping
+    the iterator.
     """
     def __init__(self, iterable, intended_type):
         if not isinstance(intended_type, type):
@@ -67,7 +71,7 @@ class TypedIterator(collections.Iterator):
                 and not _is_collection_of_items(iterable)):
             cls_name = iterable.__class__.__name__
             raise TypeError('when intended_type is a mapping, '
-                            'iterator must be ItemsIterator, '
+                            'iterator must be ItemsIter or ItemsView, '
                             'found {0} instead'.format(cls_name))
 
         self.__wrapped__ = iter(iterable)
@@ -91,10 +95,10 @@ class TypedIterator(collections.Iterator):
 
 
 def _get_intended_type(obj):
-    """Return object's intended_type property. If object does not
-    have an intended_type, return the object's type if it is a
-    supported container. If obj is not a supported container type
-    but is an iterable, None is returned.
+    """Return object's intended_type property. If the object does not
+    have an intended_type property and is a mapping, sequence, or set,
+    then return the type of the object itself. If the object is an
+    iterable, return None. Raises a Type error for any other object.
     """
     if hasattr(obj, 'intended_type'):
         return obj.intended_type  # <- EXIT!
@@ -108,27 +112,28 @@ def _get_intended_type(obj):
         return None  # <- EXIT!
 
     cls_name = obj.__class__.__name__
-    raise TypeError('unable to determine intended_type for {0!r}'.format(cls_name))
+    err_msg = 'unable to determine intended type for {0!r} instance'
+    raise TypeError(err_msg.format(cls_name))
 
 
 def _map_data(function, iterable):
     intended_type = _get_intended_type(iterable)
     if _is_collection_of_items(iterable):
-        map_func = lambda v: TypedIterator(map(function, v), list)
+        map_func = lambda v: DataIterator(map(function, v), list)
         result = ((k, map_func(v)) for k, v in iterable)
     else:
         result = map(function, iterable)
-    return TypedIterator(result, intended_type)
+    return DataIterator(result, intended_type)
 
 
 def _filter_data(function, iterable):
     intended_type = _get_intended_type(iterable)
     if _is_collection_of_items(iterable):
-        filter_func = lambda v: TypedIterator(filter(function, v), list)
+        filter_func = lambda v: DataIterator(filter(function, v), list)
         result = ((k, filter_func(v)) for k, v in iterable)
     else:
         result = filter(function, iterable)
-    return TypedIterator(result, intended_type)
+    return DataIterator(result, intended_type)
 
 
 def _reduce_data(function, iterable):
@@ -136,7 +141,7 @@ def _reduce_data(function, iterable):
     if _is_collection_of_items(iterable):
         reduce_func = lambda v: functools.reduce(function, v)
         result = ((k, reduce_func(v)) for k, v in iterable)
-        return TypedIterator(result, intended_type)  # <- EXIT!
+        return DataIterator(result, intended_type)  # <- EXIT!
     return functools.reduce(function, iterable)
 
 
@@ -188,9 +193,9 @@ class DataQuery2(object):
             keywords = dict((k, replace_token(v)) for k, v in keywords.items())
             result = function(*args, **keywords)
 
-        if isinstance(result, TypedIterator) and not lazy:
+        if isinstance(result, DataIterator) and not lazy:
             def evaluate(obj):
-                if isinstance(obj, TypedIterator):
+                if isinstance(obj, DataIterator):
                     return obj.intended_type(obj)
                 return obj
 
@@ -481,17 +486,17 @@ class DataSource(object):
         """
         if isinstance(selection, str):
             result = (row[0] for row in cursor)
-            return TypedIterator(result, intended_type=list) # <- EXIT!
+            return DataIterator(result, intended_type=list) # <- EXIT!
 
         if isinstance(selection, collections.Sequence):
             result_type = type(selection)
             result = (result_type(x) for x  in cursor)
-            return TypedIterator(result, intended_type=list) # <- EXIT!
+            return DataIterator(result, intended_type=list) # <- EXIT!
 
         if isinstance(selection, collections.Set):
             result_type = type(selection)
             result = (result_type(x) for x  in cursor)
-            return TypedIterator(result, intended_type=set) # <- EXIT!
+            return DataIterator(result, intended_type=set) # <- EXIT!
 
         if isinstance(selection, collections.Mapping):
             result_type = type(selection)
@@ -514,7 +519,7 @@ class DataSource(object):
                     group = (row[slice_index:] for row in group)
                     return list(value_type(row) for row in group)
             result =  ItemsIter((k, valuefunc(g)) for k, g in grouped)
-            return TypedIterator(result, intended_type=result_type) # <- EXIT!
+            return DataIterator(result, intended_type=result_type) # <- EXIT!
 
         raise TypeError('type {0!r} not supported'.format(type(selection)))
 

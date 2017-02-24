@@ -6,26 +6,26 @@ from datatest.dataaccess.source import DataSource
 from datatest.dataaccess.source import DataQuery
 from datatest.dataaccess.source import DataQuery2
 from datatest.dataaccess.source import RESULT_TOKEN
-from datatest.dataaccess.source import TypedIterator
+from datatest.dataaccess.source import DataIterator
 from datatest.dataaccess.source import _map_data
 from datatest.dataaccess.source import ItemsIter
 from datatest.dataaccess.query import BaseQuery
 from datatest.dataaccess.result import DataResult
 
 
-class TestTypedIterator(unittest.TestCase):
+class TestDataIterator(unittest.TestCase):
     def test_init(self):
         untyped = iter([1, 2, 3, 4])
 
-        typed = TypedIterator(untyped, list)
+        typed = DataIterator(untyped, list)
         self.assertEqual(typed.intended_type, list)
 
-        typed = TypedIterator(iterable=untyped, intended_type=list)
+        typed = DataIterator(iterable=untyped, intended_type=list)
         self.assertEqual(typed.intended_type, list)
 
         regex = 'intended_type must be a type, found instance of list'
         with self.assertRaisesRegex(TypeError, regex):
-            typed = TypedIterator(untyped, [1, 2])
+            typed = DataIterator(untyped, [1, 2])
 
 
 class TestItemsIter(unittest.TestCase):
@@ -37,7 +37,7 @@ class TestItemsIter(unittest.TestCase):
 class Test_map_data(unittest.TestCase):
     def test_foo(self):
         function = lambda x: x * 2
-        #iterable = TypedIterator([1, 2, 3], list)
+        #iterable = DataIterator([1, 2, 3], list)
         iterable = [1, 2, 3]
 
         result = _map_data(function, iterable)
