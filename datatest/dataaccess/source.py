@@ -30,8 +30,8 @@ class ItemsIter(collections.Iterator):
     def __init__(self, iterable):
         self._iterator = iter(iterable)  # <- Here, we use _iterator
                                          #    instead of __wrapped__
-    def __iter__(self):                  #    because this  iterable
-        return self                      #    should  not be
+    def __iter__(self):                  #    because this iterable
+        return self                      #    should not be
                                          #    automatically unwrapped.
     def __next__(self):
         return next(self._iterator)
@@ -90,7 +90,7 @@ class TypedIterator(collections.Iterator):
         return next(self.__wrapped__)  # For Python 2 compatibility.
 
 
-def _get_indented_type(obj):
+def _get_intended_type(obj):
     """Return object's intended_type property. If object does not
     have an intended_type, return the object's type if it is a
     supported container. If obj is not a supported container type
@@ -112,7 +112,7 @@ def _get_indented_type(obj):
 
 
 def _map_data(function, iterable):
-    intended_type = _get_indented_type(iterable)
+    intended_type = _get_intended_type(iterable)
     if _is_collection_of_items(iterable):
         map_func = lambda v: TypedIterator(map(function, v), list)
         result = ((k, map_func(v)) for k, v in iterable)
@@ -122,7 +122,7 @@ def _map_data(function, iterable):
 
 
 def _filter_data(function, iterable):
-    intended_type = _get_indented_type(iterable)
+    intended_type = _get_intended_type(iterable)
     if _is_collection_of_items(iterable):
         filter_func = lambda v: TypedIterator(filter(function, v), list)
         result = ((k, filter_func(v)) for k, v in iterable)
@@ -132,7 +132,7 @@ def _filter_data(function, iterable):
 
 
 def _reduce_data(function, iterable):
-    intended_type = _get_indented_type(iterable)
+    intended_type = _get_intended_type(iterable)
     if _is_collection_of_items(iterable):
         reduce_func = lambda v: functools.reduce(function, v)
         result = ((k, reduce_func(v)) for k, v in iterable)
