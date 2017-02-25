@@ -35,23 +35,55 @@ class TestItemsIter(unittest.TestCase):
 
 
 class Test_map_data(unittest.TestCase):
-    def test_foo(self):
+    def test_wrapped_list(self):
         function = lambda x: x * 2
-        #iterable = DataIterator([1, 2, 3], list)
-        iterable = [1, 2, 3]
-
+        iterable = DataIterator([1, 2, 3], list)  # <- Wrapped in DataIterator.
         result = _map_data(function, iterable)
-        expected = [2, 4, 6]
-        self.assertEqual(list(result), expected)
+        self.assertIsInstance(result, DataIterator)
+        self.assertEqual(result.intended_type, list)
+        self.assertEqual(result.evaluate(), [2, 4, 6])
 
-        #query1 = DataQuery2('col2')
-        #query2 = query1.map(int)
-        #self.assertIsNot(query1, query2, 'should return new object')
+    def test_unwrapped_list(self):
+        function = lambda x: x * 2
+        iterable = [1, 2, 3]
+        result = _map_data(function, iterable)
+        self.assertIsInstance(result, DataIterator)
+        self.assertEqual(result.intended_type, list)
+        self.assertEqual(result.evaluate(), [2, 4, 6])
 
-        #source = DataSource([('a', '2'), ('b', '2')], columns=['col1', 'col2'])
-        #result = query2.execute(source)
-        #self.assertEqual(result, [2, 2])
+    def test_wrapped_set(self):
+        function = lambda x: x * 2
+        iterable = DataIterator([1, 2, 3], set)  # <- Wrapped in DataIterator.
+        result = _map_data(function, iterable)
+        self.assertIsInstance(result, DataIterator)
+        self.assertEqual(result.intended_type, set)
+        self.assertEqual(result.evaluate(), set([2, 4, 6]))
 
+    def test_unwrapped_set(self):
+        function = lambda x: x * 2
+        iterable = set([1, 2, 3])
+        result = _map_data(function, iterable)
+        self.assertIsInstance(result, DataIterator)
+        self.assertEqual(result.intended_type, set)
+        self.assertEqual(result.evaluate(), set([2, 4, 6]))
+
+    def test_wrapped_dict_of_lists(self):
+        function = lambda x: x * 2
+        data = ItemsIter([('a', [1, 2]), ('b', [3, 4])])
+        iterable = DataIterator(data, dict)  # <- Wrapped in DataIterator.
+        result = _map_data(function, iterable)
+        self.assertIsInstance(result, DataIterator)
+        self.assertEqual(result.intended_type, dict)
+        self.assertEqual(result.evaluate(), {'a': [2, 4], 'b': [6, 8]})
+
+    def test_wrapped_dict_of_tuples(self):
+        function = lambda x: x * 2
+        data = ItemsIter([('a', (1, 2)), ('b', (3, 4))])
+        iterable = DataIterator(data, dict)  # <- Wrapped in DataIterator.
+        result = _map_data(function, iterable)
+        self.assertIsInstance(result, DataIterator)
+        self.assertEqual(result.intended_type, dict)
+        self.assertEqual(result.evaluate(), {'a': (2, 4), 'b': (6, 8)})
 
 
 class TestDataQuery2(unittest.TestCase):

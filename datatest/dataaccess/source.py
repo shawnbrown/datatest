@@ -93,6 +93,18 @@ class DataIterator(collections.Iterator):
     def next(self):
         return next(self.__wrapped__)  # For Python 2 compatibility.
 
+    def evaluate(self):
+        intended_type = self.intended_type
+        if issubclass(intended_type, collections.Mapping):
+            def func(obj):
+                if hasattr(obj, 'intended_type'):
+                    return obj.intended_type(obj)
+                return obj
+
+            return intended_type((k, func(v)) for k, v in self)
+
+        return intended_type(self)
+
 
 def _get_intended_type(obj):
     """Return object's intended_type property. If the object does not
@@ -116,33 +128,32 @@ def _get_intended_type(obj):
     raise TypeError(err_msg.format(cls_name))
 
 
-def _map_data(function, iterable):
-    intended_type = _get_intended_type(iterable)
+def _apply_function(function, iterable):
     if _is_collection_of_items(iterable):
-        map_func = lambda v: DataIterator(map(function, v), list)
-        result = ((k, map_func(v)) for k, v in iterable)
-    else:
-        result = map(function, iterable)
-    return DataIterator(result, intended_type)
+        intended_type = _get_intended_type(iterable)
+        result = ItemsIter((k, function(v)) for k, v in iterable)
+        return DataIterator(result, intended_type)
+    return function(iterable)
+
+
+def _map_data(function, iterable):
+    def map_data(itrbl):
+        result = map(function, itrbl)
+        return DataIterator(result, _get_intended_type(itrbl))
+    return _apply_function(map_data, iterable)
 
 
 def _filter_data(function, iterable):
-    intended_type = _get_intended_type(iterable)
-    if _is_collection_of_items(iterable):
-        filter_func = lambda v: DataIterator(filter(function, v), list)
-        result = ((k, filter_func(v)) for k, v in iterable)
-    else:
-        result = filter(function, iterable)
-    return DataIterator(result, intended_type)
+    def filter_data(itrbl):
+        result = filter(function, itrbl)
+        return DataIterator(result, _get_intended_type(itrbl))
+    return _apply_function(filter_data, iterable)
 
 
 def _reduce_data(function, iterable):
-    intended_type = _get_intended_type(iterable)
-    if _is_collection_of_items(iterable):
-        reduce_func = lambda v: functools.reduce(function, v)
-        result = ((k, reduce_func(v)) for k, v in iterable)
-        return DataIterator(result, intended_type)  # <- EXIT!
-    return functools.reduce(function, iterable)
+    def reduce_data(itrbl):
+        return functools.reduce(function, itrbl)
+    return _apply_function(reduce_data, iterable)
 
 
 class DataQuery2(object):
@@ -165,9 +176,9 @@ class DataQuery2(object):
         """
         execute(initializer=None, *, lazy=False, optimize=True)
 
-        Evaluate query and return its result.
+        Execute query and return its result.
 
-        Use ``lazy=True`` to evaluate the query but leave the result
+        Use ``lazy=True`` to execute the query but leave the result
         in its raw, iterator form. By default, results are eagerly
         evaluated and loaded into memory.
 
@@ -194,15 +205,7 @@ class DataQuery2(object):
             result = function(*args, **keywords)
 
         if isinstance(result, DataIterator) and not lazy:
-            def evaluate(obj):
-                if isinstance(obj, DataIterator):
-                    return obj.intended_type(obj)
-                return obj
-
-            if issubclass(result.intended_type, collections.Mapping):
-                result = dict((k, evaluate(v)) for k, v in result)
-            else:
-                result = evaluate(result)
+            result = result.evaluate()
 
         return result
 
