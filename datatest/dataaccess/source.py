@@ -394,72 +394,12 @@ class DataQuery2(object):
         self._initializer = None
 
     @staticmethod
-    def _optimize(query_steps):
-        return query_steps
-
-    def explain(self):
-        """Return string of current query steps."""
-        unoptimized_steps = self._query_steps
-        steps = [_get_step_repr(step) for step in unoptimized_steps]
-        steps = '\n'.join('  {0}'.format(step) for step in steps)
-        output = 'Steps:\n{0}'.format(steps)
-
-        optimized_steps = self._optimize(unoptimized_steps)
-        if optimized_steps != unoptimized_steps:
-            steps = [_get_step_repr(step) for step in unoptimized_steps]
-            steps = '\n'.join('  {0}'.format(step) for step in steps)
-            output += '\n\nOptimized steps:\n{0}'.format(steps)
-
-        return output
-
-    @staticmethod
     def _validate_initializer(initializer):
         if not isinstance(initializer, DataSource):
             raise TypeError('expected {0!r}, got {1!r}'.format(
                 DataSource.__name__,
                 initializer.__class__.__name__,
             ))
-
-    def execute(self, initializer=None, **kwds):
-        """
-        execute(initializer=None, *, lazy=False, optimize=True)
-
-        Execute query and return its result.
-
-        Use ``lazy=True`` to execute the query but leave the result
-        in its raw, iterator form. By default, results are eagerly
-        evaluated and loaded into memory.
-
-        Use ``optimize=False`` to turn-off query optimization.
-        """
-        result = initializer or self._initializer
-        if result is None:
-            raise ValueError('must provide initializer, None found')
-        self._validate_initializer(result)
-
-        lazy = kwds.pop('lazy', False)         # Emulate keyword-only
-        optimize = kwds.pop('optimize', True)  # behavior for 2.7 and
-        if kwds:                               # 2.6 compatibility.
-            key, _ = kwds.popitem()
-            raise TypeError('got an unexpected keyword '
-                            'argument {0!r}'.format(key))
-
-        query_steps = self._query_steps
-        if optimize:
-            query_steps = self._optimize(query_steps)
-
-        replace_token = lambda x: result if x is RESULT_TOKEN else x
-        for step in query_steps:
-            function, args, keywords = step  # Unpack 3-tuple.
-            function = replace_token(function)
-            args = tuple(replace_token(x) for x in args)
-            keywords = dict((k, replace_token(v)) for k, v in keywords.items())
-            result = function(*args, **keywords)
-
-        if isinstance(result, DataIterator) and not lazy:
-            result = result.evaluate()
-
-        return result
 
     #@staticmethod
     #def _validate_steps(steps):
@@ -524,6 +464,66 @@ class DataQuery2(object):
     def set(self):
         step = (_set_data, (RESULT_TOKEN,), {})
         return self._append_new(step)
+
+    @staticmethod
+    def _optimize(query_steps):
+        return query_steps
+
+    def execute(self, initializer=None, **kwds):
+        """
+        execute(initializer=None, *, lazy=False, optimize=True)
+
+        Execute query and return its result.
+
+        Use ``lazy=True`` to execute the query but leave the result
+        in its raw, iterator form. By default, results are eagerly
+        evaluated and loaded into memory.
+
+        Use ``optimize=False`` to turn-off query optimization.
+        """
+        result = initializer or self._initializer
+        if result is None:
+            raise ValueError('must provide initializer, None found')
+        self._validate_initializer(result)
+
+        lazy = kwds.pop('lazy', False)         # Emulate keyword-only
+        optimize = kwds.pop('optimize', True)  # behavior for 2.7 and
+        if kwds:                               # 2.6 compatibility.
+            key, _ = kwds.popitem()
+            raise TypeError('got an unexpected keyword '
+                            'argument {0!r}'.format(key))
+
+        query_steps = self._query_steps
+        if optimize:
+            query_steps = self._optimize(query_steps)
+
+        replace_token = lambda x: result if x is RESULT_TOKEN else x
+        for step in query_steps:
+            function, args, keywords = step  # Unpack 3-tuple.
+            function = replace_token(function)
+            args = tuple(replace_token(x) for x in args)
+            keywords = dict((k, replace_token(v)) for k, v in keywords.items())
+            result = function(*args, **keywords)
+
+        if isinstance(result, DataIterator) and not lazy:
+            result = result.evaluate()
+
+        return result
+
+    def explain(self):
+        """Return string of current query steps."""
+        unoptimized_steps = self._query_steps
+        steps = [_get_step_repr(step) for step in unoptimized_steps]
+        steps = '\n'.join('  {0}'.format(step) for step in steps)
+        output = 'Steps:\n{0}'.format(steps)
+
+        optimized_steps = self._optimize(unoptimized_steps)
+        if optimized_steps != unoptimized_steps:
+            steps = [_get_step_repr(step) for step in unoptimized_steps]
+            steps = '\n'.join('  {0}'.format(step) for step in steps)
+            output += '\n\nOptimized steps:\n{0}'.format(steps)
+
+        return output
 
 
 class DataQuery(_DataQuery):
