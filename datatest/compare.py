@@ -9,7 +9,7 @@ from .utils import functools
 from .utils import itertools
 
 from .utils.misc import _expects_multiple_params
-from .utils.misc import _is_nscontainer
+from .utils.misc import _is_nsiterable
 from .utils.misc import _unique_everseen
 from .differences import Extra
 from .differences import Missing
@@ -197,7 +197,7 @@ class CompareSet(BaseCompare, set):
         except StopIteration:
             first_value = None
 
-        if _is_nscontainer(first_value) and len(first_value) == 1:
+        if _is_nsiterable(first_value) and len(first_value) == 1:
             data = (x[0] for x in data)  # Unpack single-item tuple.
 
         set.__init__(self, data)
@@ -208,11 +208,11 @@ class CompareSet(BaseCompare, set):
         keys.
         """
         single_value = next(iter(self))
-        if _is_nscontainer(single_value):
+        if _is_nsiterable(single_value):
             assert len(names) == len(single_value), "length of 'names' must match data items"
             iterable = iter(dict(zip(names, values)) for values in self)
         else:
-            if _is_nscontainer(names):
+            if _is_nsiterable(names):
                 assert len(names) == 1, "length of 'names' must match data items"
                 names = names[0]  # Unwrap names value.
             iterable = iter({names: value} for value in self)
@@ -303,7 +303,7 @@ class CompareDict(BaseCompare, dict):
         try:
             iterable = iter(data.items())
             first_key, first_value = next(iterable)
-            if _is_nscontainer(first_key) and len(first_key) == 1:
+            if _is_nsiterable(first_key) and len(first_key) == 1:
                 iterable = itertools.chain([(first_key, first_value)], iterable)
                 iterable = ((k[0], v) for k, v in iterable)
                 data = dict(iterable)
@@ -315,7 +315,7 @@ class CompareDict(BaseCompare, dict):
         if key_names == None:  # If missing, make keys (_0, _1, ...).
             key_names = range(len(first_key))
             key_names = tuple('_' + str(x) for x in key_names)
-        elif not _is_nscontainer(key_names):
+        elif not _is_nsiterable(key_names):
             key_names = (key_names,)
 
         self.key_names = key_names
@@ -323,7 +323,7 @@ class CompareDict(BaseCompare, dict):
     def __repr__(self):
         cls_name = self.__class__.__name__
         key_names = self.key_names
-        if _is_nscontainer(key_names) and len(key_names) == 1:
+        if _is_nsiterable(key_names) and len(key_names) == 1:
             key_names = key_names[0]
         dict_repr = dict.__repr__(self)
         return '{0}({1}, key_names={2!r})'.format(cls_name, dict_repr, key_names)
@@ -333,7 +333,7 @@ class CompareDict(BaseCompare, dict):
         :mod:`csv.DictReader`) using *names* to construct dictionary
         keys.
         """
-        if not _is_nscontainer(names):
+        if not _is_nsiterable(names):
             names = (names,)
 
         key_names = self.key_names
@@ -345,10 +345,10 @@ class CompareDict(BaseCompare, dict):
 
         single_key, single_value = next(iter(self.items()))
         iterable = self.items()
-        if not _is_nscontainer(single_key):
+        if not _is_nsiterable(single_key):
             iterable = (((k,), v) for k, v in iterable)
             single_key = (single_key,)
-        if not _is_nscontainer(single_value):
+        if not _is_nsiterable(single_value):
             iterable = ((k, (v,)) for k, v in iterable)
             single_value = (single_value,)
 
@@ -380,7 +380,7 @@ class CompareDict(BaseCompare, dict):
             for key in keys:
                 value = self[key]
                 if not other(value):
-                    if not _is_nscontainer(key):
+                    if not _is_nsiterable(key):
                         key = (key,)
                     kwds = dict(zip(self.key_names, key))
                     differences.append(Invalid(value, **kwds))
@@ -395,7 +395,7 @@ class CompareDict(BaseCompare, dict):
                 self_val = self.get(key)
                 other_val = other.get(key)
 
-                if not _is_nscontainer(key):
+                if not _is_nsiterable(key):
                     key = (key,)
                 kwds = dict(zip(self.key_names, key))
 

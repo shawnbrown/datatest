@@ -8,6 +8,8 @@ from datatest.dataaccess.source import DataQuery2
 from datatest.dataaccess.source import RESULT_TOKEN
 from datatest.dataaccess.source import DataIterator
 from datatest.dataaccess.source import _map_data
+from datatest.dataaccess.source import _filter_data
+from datatest.dataaccess.source import _reduce_data
 from datatest.dataaccess.source import ItemsIter
 from datatest.dataaccess.query import BaseQuery
 from datatest.dataaccess.result import DataResult
@@ -34,56 +36,116 @@ class TestItemsIter(unittest.TestCase):
         self.assertEqual(list(foo), [1,2,3])
 
 
-class Test_map_data(unittest.TestCase):
-    def test_wrapped_list(self):
+class TestMapData(unittest.TestCase):
+    def test_dataiter_list(self):
+        iterable = DataIterator([1, 2, 3], list)
+
         function = lambda x: x * 2
-        iterable = DataIterator([1, 2, 3], list)  # <- Wrapped in DataIterator.
         result = _map_data(function, iterable)
+
         self.assertIsInstance(result, DataIterator)
         self.assertEqual(result.intended_type, list)
         self.assertEqual(result.evaluate(), [2, 4, 6])
 
-    def test_unwrapped_list(self):
+    def test_single_int(self):
         function = lambda x: x * 2
-        iterable = [1, 2, 3]
-        result = _map_data(function, iterable)
-        self.assertIsInstance(result, DataIterator)
-        self.assertEqual(result.intended_type, list)
-        self.assertEqual(result.evaluate(), [2, 4, 6])
+        result = _map_data(function, 3)
+        self.assertEqual(result, 6)
 
-    def test_wrapped_set(self):
-        function = lambda x: x * 2
-        iterable = DataIterator([1, 2, 3], set)  # <- Wrapped in DataIterator.
-        result = _map_data(function, iterable)
-        self.assertIsInstance(result, DataIterator)
-        self.assertEqual(result.intended_type, set)
-        self.assertEqual(result.evaluate(), set([2, 4, 6]))
+    def test_dataiter_dict_of_containers(self):
+        iterable = DataIterator({'a': [1, 2], 'b': (3, 4)}, dict)
 
-    def test_unwrapped_set(self):
         function = lambda x: x * 2
-        iterable = set([1, 2, 3])
         result = _map_data(function, iterable)
-        self.assertIsInstance(result, DataIterator)
-        self.assertEqual(result.intended_type, set)
-        self.assertEqual(result.evaluate(), set([2, 4, 6]))
 
-    def test_wrapped_dict_of_lists(self):
-        function = lambda x: x * 2
-        data = ItemsIter([('a', [1, 2]), ('b', [3, 4])])
-        iterable = DataIterator(data, dict)  # <- Wrapped in DataIterator.
-        result = _map_data(function, iterable)
         self.assertIsInstance(result, DataIterator)
         self.assertEqual(result.intended_type, dict)
-        self.assertEqual(result.evaluate(), {'a': [2, 4], 'b': [6, 8]})
+        self.assertEqual(result.evaluate(), {'a': [2, 4], 'b': (6, 8)})
 
-    def test_wrapped_dict_of_tuples(self):
+    def test_dataiter_dict_of_ints(self):
+        iterable = DataIterator({'a': 2, 'b': 3}, dict)
+
         function = lambda x: x * 2
-        data = ItemsIter([('a', (1, 2)), ('b', (3, 4))])
-        iterable = DataIterator(data, dict)  # <- Wrapped in DataIterator.
         result = _map_data(function, iterable)
+
         self.assertIsInstance(result, DataIterator)
         self.assertEqual(result.intended_type, dict)
-        self.assertEqual(result.evaluate(), {'a': (2, 4), 'b': (6, 8)})
+        self.assertEqual(result.evaluate(), {'a': 4, 'b': 6})
+
+
+class TestFilterData(unittest.TestCase):
+    def test_list_iter(self):
+        iterable = DataIterator([-4, -1, 2, 3], list)
+
+        function = lambda x: x > 0
+        result = _filter_data(function, iterable)
+        self.assertEqual(result.evaluate(), [2, 3])
+
+    def test_bad_iterable_type(self):
+        function = lambda x: x > 0
+        with self.assertRaises(TypeError):
+            _filter_data(function, 3)  # <- int
+
+        function = lambda x: x == 'a'
+        with self.assertRaises(TypeError):
+            _filter_data(function, 'b')  # <- str
+
+    def test_dict_iter_of_lists(self):
+        iterable = DataIterator({'a': [1, 2, 3], 'b': [4, 5, 6]}, dict)
+
+        iseven = lambda x: x % 2 == 0
+        result = _filter_data(iseven, iterable)
+
+        self.assertIsInstance(result, DataIterator)
+        self.assertEqual(result.intended_type, dict)
+        self.assertEqual(result.evaluate(), {'a': [2], 'b': [4, 6]})
+
+    def test_dict_iter_of_integers(self):
+        iterable = DataIterator({'a': 2, 'b': 3}, dict)
+
+        iseven = lambda x: x % 2 == 0
+        result = _filter_data(iseven, iterable)
+        with self.assertRaises(TypeError):
+            result.evaluate()
+
+
+class TestReduceData(unittest.TestCase):
+    def test_list_iter(self):
+        iterable = DataIterator([1, 2, 3], list)
+
+        function = lambda x, y: x + y
+        result = _reduce_data(function, iterable)
+        self.assertEqual(result, 6)
+
+    def test_single_integer(self):
+        function = lambda x, y: x + y
+        result = _reduce_data(function, 3)
+        self.assertEqual(result, 3)
+
+    def test_single_string(self):
+        function = lambda x, y: x + y
+        result = _reduce_data(function, 'abc')
+        self.assertEqual(result, 'abc')
+
+    def test_dict_iter_of_lists(self):
+        iterable = DataIterator({'a': [1, 2], 'b': [3, 4]}, dict)
+
+        function = lambda x, y: x + y
+        result = _reduce_data(function, iterable)
+
+        self.assertIsInstance(result, DataIterator)
+        self.assertEqual(result.intended_type, dict)
+        self.assertEqual(result.evaluate(), {'a': 3, 'b': 7})
+
+    def test_dict_iter_of_integers(self):
+        iterable = DataIterator({'a': 2, 'b': 3}, dict)
+
+        function = lambda x, y: x + y
+        result = _reduce_data(function, iterable)
+
+        self.assertIsInstance(result, DataIterator)
+        self.assertEqual(result.intended_type, dict)
+        self.assertEqual(result.evaluate(), {'a': 2, 'b': 3})
 
 
 class TestDataQuery2(unittest.TestCase):

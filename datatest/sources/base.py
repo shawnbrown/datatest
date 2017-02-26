@@ -6,7 +6,7 @@ from ..utils import functools
 
 from ..compare import CompareDict
 from ..compare import CompareSet
-from ..utils.misc import _is_nscontainer
+from ..utils.misc import _is_nsiterable
 
 
 class BaseSource(object):
@@ -60,7 +60,7 @@ class BaseSource(object):
         tuples of values if given multiple *columns* (unoptimized, uses
         :meth:`__iter__`).
         """
-        if not _is_nscontainer(columns):
+        if not _is_nsiterable(columns):
             columns = (columns,)
         self._assert_columns_exist(columns)
         iterable = self.filter_rows(**kwds_filter)  # Filtered rows only.
@@ -122,7 +122,7 @@ class BaseSource(object):
             mapped_values = (mapper(value) for value in filtered_values)
             return functools.reduce(reducer, mapped_values)  # <- EXIT!
 
-        if not _is_nscontainer(keys):
+        if not _is_nsiterable(keys):
             keys = (keys,)
         self._assert_columns_exist(keys)
 
@@ -142,7 +142,7 @@ class BaseSource(object):
         """Asserts that given columns are present in data source,
         raises LookupError if columns are missing.
         """
-        if not _is_nscontainer(columns):
+        if not _is_nsiterable(columns):
             columns = (columns,)
         self_cols = self.columns()
         is_missing = lambda col: col not in self_cols

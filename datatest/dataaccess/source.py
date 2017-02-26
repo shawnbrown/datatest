@@ -6,7 +6,7 @@ import functools
 import itertools
 import os
 
-from ..utils.misc import _is_nscontainer
+from ..utils.misc import _is_nsiterable
 from ..utils.misc import _get_calling_filename
 from .sqltemp import TemporarySqliteTable
 from .sqltemp import _from_csv
@@ -67,6 +67,9 @@ class DataIterator(collections.Iterator):
         while hasattr(iterable, '__wrapped__'):
             iterable = iterable.__wrapped__
 
+        if isinstance(iterable, collections.Mapping):
+            iterable = ItemsIter(iterable.items())
+
         if (issubclass(intended_type, collections.Mapping)
                 and not _is_collection_of_items(iterable)):
             cls_name = iterable.__class__.__name__
@@ -115,6 +118,9 @@ def _get_intended_type(obj):
     if hasattr(obj, 'intended_type'):
         return obj.intended_type  # <- EXIT!
 
+    #if _is_collection_of_items(obj):
+    #    return dict
+
     if isinstance(obj, (collections.Mapping,
                         collections.Sequence,
                         collections.Set)):
@@ -128,32 +134,52 @@ def _get_intended_type(obj):
     raise TypeError(err_msg.format(cls_name))
 
 
-def _apply_function(function, iterable):
-    if _is_collection_of_items(iterable):
-        intended_type = _get_intended_type(iterable)
-        result = ItemsIter((k, function(v)) for k, v in iterable)
-        return DataIterator(result, intended_type)
-    return function(iterable)
+def _apply_function(outer_func, inner_func, obj):
+    """The *outer_func* should be a higher-order function of two
+    arugments--where the first argument is the *inner_func*, and
+    the second argument is an iterable.
+
+    The *inner_func* should accept the arguments passed to it from
+    the *outer_func*.
+    """
+    def wrapper(x):
+        if _is_nsiterable(x):
+            return outer_func(inner_func, x)
+        return inner_func(x)
+
+    if _is_collection_of_items(obj):
+        result = ItemsIter((k, wrapper(v)) for k, v in obj)
+        return DataIterator(result, _get_intended_type(obj))
+    return wrapper(obj)
 
 
 def _map_data(function, iterable):
-    def map_data(itrbl):
-        result = map(function, itrbl)
-        return DataIterator(result, _get_intended_type(itrbl))
-    return _apply_function(map_data, iterable)
-
-
-def _filter_data(function, iterable):
-    def filter_data(itrbl):
-        result = filter(function, itrbl)
-        return DataIterator(result, _get_intended_type(itrbl))
-    return _apply_function(filter_data, iterable)
+    def domap(func, itr):
+        return DataIterator(map(func, itr), _get_intended_type(itr))
+    return _apply_function(domap, function, iterable)
 
 
 def _reduce_data(function, iterable):
-    def reduce_data(itrbl):
-        return functools.reduce(function, itrbl)
-    return _apply_function(reduce_data, iterable)
+    def dofunc(*args):
+        try:
+            first, second = args  # Unpack arguments.
+        except ValueError:
+            return args[0]
+        return function(first, second)
+    return _apply_function(functools.reduce, dofunc, iterable)
+
+
+def _filter_data(function, iterable):
+    def dofilter(func, itr):
+        if not _is_nsiterable(itr):
+            msg= 'filter expects a non-string iterable, found {0}'
+            raise TypeError(msg.format(itr.__class__.__name__))
+        return DataIterator(filter(func, itr), _get_intended_type(itr))
+
+    if _is_collection_of_items(iterable):
+        result = ItemsIter((k, dofilter(function, v)) for k, v in iterable)
+        return DataIterator(result, _get_intended_type(iterable))
+    return dofilter(function, iterable)
 
 
 class DataQuery2(object):
@@ -306,7 +332,7 @@ class DataSource(object):
 
             source = datatest.DataSource.from_csv('mydata.csv')
         """
-        if not _is_nscontainer(file):
+        if not _is_nsiterable(file):
             file = [file]
 
         if relative_to is None:
@@ -392,7 +418,7 @@ class DataSource(object):
         """Asserts that given columns are present in data source,
         raises LookupError if columns are missing.
         """
-        if not _is_nscontainer(columns):
+        if not _is_nsiterable(columns):
             columns = (columns,)
         self_cols = self.columns()
         is_missing = lambda col: col not in self_cols
@@ -412,7 +438,7 @@ class DataSource(object):
 
     def _prepare_column_groups(self, *columns):
         """Returns tuple of columns split into key and value groups."""
-        if _is_nscontainer(columns[0]):
+        if _is_nsiterable(columns[0]):
             if len(columns) != 1:
                 raise ValueError('cannot mix container and variable args')
             if isinstance(columns[0], dict):
@@ -732,7 +758,7 @@ class DataSource(object):
         items = kwds_filter.items()
         items = sorted(items, key=lambda x: x[0])  # Ordered by key.
         for key, val in items:
-            if _is_nscontainer(val):
+            if _is_nsiterable(val):
                 clause.append(key + ' IN (%s)' % (', '.join('?' * len(val))))
                 for x in val:
                     params.append(x)

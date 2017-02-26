@@ -4,7 +4,7 @@ from __future__ import absolute_import
 import itertools
 import sqlite3
 from .csvreader import UnicodeCsvReader
-from ..utils.misc import _is_nscontainer
+from ..utils.misc import _is_nsiterable
 
 
 # Default connection shared by TemporarySqliteTable instances.
@@ -239,7 +239,7 @@ class TemporarySqliteTableForCsv(TemporarySqliteTable):
 
 def _from_csv(file, encoding=None, **fmtparams):
     """ """
-    if not _is_nscontainer(file):
+    if not _is_nsiterable(file):
         file = [file]
     first_file = file[0]
     other_files = file[1:]

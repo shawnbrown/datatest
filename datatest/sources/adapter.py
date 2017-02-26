@@ -4,7 +4,7 @@ from ..utils import collections
 
 from ..compare import CompareDict
 from ..compare import CompareSet
-from ..utils.misc import _is_nscontainer
+from ..utils.misc import _is_nsiterable
 
 from .base import BaseSource
 
@@ -290,7 +290,7 @@ class AdapterSource(BaseSource):
             def rebuild_values(v, missing):
                 if isinstance(columns, str):
                     return v
-                if not _is_nscontainer(v):
+                if not _is_nsiterable(v):
                     v = (v,)
                 value_dict = dict(zip(rewrapped_columns, v))
                 return tuple(value_dict.get(v, missing) for v in columns)
