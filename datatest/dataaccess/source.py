@@ -8,6 +8,7 @@ import os
 from numbers import Number
 from sqlite3 import Binary
 
+from ..utils.builtins import callable
 from ..utils.builtins import min
 from ..utils.builtins import max
 from ..utils.misc import _is_nsiterable
@@ -361,6 +362,29 @@ def _cast_as_set(iterable):
     return docast(iterable)
 
 
+def _get_step_repr(step):
+    """Helper function returns repr for a single query step."""
+    func, args, kwds = step
+
+    def _callable_name_or_repr(x):  # <- Helper function for
+        if callable(x):             #    the helper function!
+            try:
+                return x.__name__
+            except NameError:
+                pass
+        return repr(x)
+
+    func_repr = _callable_name_or_repr(func)
+
+    args_repr = ', '.join(_callable_name_or_repr(x) for x in args)
+
+    kwds_repr = kwds.items()
+    kwds_repr = [(k, _callable_name_or_repr(v)) for k, v in kwds_repr]
+    kwds_repr = ['{0}={1}'.format(k, v) for k, v in kwds_repr]
+    kwds_repr = ', '.join(kwds_repr)
+    return '{0}, ({1}), {{{2}}}'.format(func_repr, args_repr, kwds_repr)
+
+
 class DataQuery2(object):
     def __init__(self, selection, **where):
         self._query_steps = tuple([
@@ -368,6 +392,25 @@ class DataQuery2(object):
             (RESULT_TOKEN, (selection,), where),
         ])
         self._initializer = None
+
+    @staticmethod
+    def _optimize(query_steps):
+        return query_steps
+
+    def explain(self):
+        """Return string of current query steps."""
+        unoptimized_steps = self._query_steps
+        steps = [_get_step_repr(step) for step in unoptimized_steps]
+        steps = '\n'.join('  {0}'.format(step) for step in steps)
+        output = 'Steps:\n{0}'.format(steps)
+
+        optimized_steps = self._optimize(unoptimized_steps)
+        if optimized_steps != unoptimized_steps:
+            steps = [_get_step_repr(step) for step in unoptimized_steps]
+            steps = '\n'.join('  {0}'.format(step) for step in steps)
+            output += '\n\nOptimized steps:\n{0}'.format(steps)
+
+        return output
 
     @staticmethod
     def _validate_initializer(initializer):
@@ -401,8 +444,12 @@ class DataQuery2(object):
             raise TypeError('got an unexpected keyword '
                             'argument {0!r}'.format(key))
 
+        query_steps = self._query_steps
+        if optimize:
+            query_steps = self._optimize(query_steps)
+
         replace_token = lambda x: result if x is RESULT_TOKEN else x
-        for step in self._query_steps:
+        for step in query_steps:
             function, args, keywords = step  # Unpack 3-tuple.
             function = replace_token(function)
             args = tuple(replace_token(x) for x in args)

@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
+import textwrap
+
 from . import _unittest as unittest
 from datatest.utils import collections
 from datatest.dataaccess.source import DataSource
@@ -438,6 +440,18 @@ class TestDataQuery2(unittest.TestCase):
         source = DataSource([('a', '2'), ('b', '2')], columns=['col1', 'col2'])
         result = query2.execute(source)
         self.assertEqual(result, 'ab')
+
+    def test_explain(self):
+        query = DataQuery2('col1')
+        expected = """
+            Steps:
+              getattr, (<result>, '_select2'), {}
+              <result>, ('col1'), {}
+        """
+        expected = textwrap.dedent(expected).strip()
+        self.assertEqual(query.explain(), expected)
+
+        # TODO: Add assert for query that can be optimized.
 
 
 class TestDataQuery(unittest.TestCase):
