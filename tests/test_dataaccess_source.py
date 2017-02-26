@@ -15,6 +15,8 @@ from datatest.dataaccess.source import _count_data
 from datatest.dataaccess.source import _avg_data
 from datatest.dataaccess.source import _min_data
 from datatest.dataaccess.source import _max_data
+from datatest.dataaccess.source import _distinct_data
+from datatest.dataaccess.source import _set_data
 from datatest.dataaccess.source import ItemsIter
 from datatest.dataaccess.query import BaseQuery
 from datatest.dataaccess.result import DataResult
@@ -317,6 +319,60 @@ class TestMaxData(unittest.TestCase):
         self.assertIsInstance(result, DataIterator)
         self.assertEqual(result.intended_type, dict)
         self.assertEqual(result.evaluate(), {'a': 2, 'b': 3, 'c': None})
+
+
+class TestDistinctData(unittest.TestCase):
+    def test_list_iter(self):
+        iterable = DataIterator([1, 2, 1, 2, 3], list)
+        result = _distinct_data(iterable)
+        self.assertEqual(result.evaluate(), [1, 2, 3])
+
+    def test_single_int(self):
+        result = _distinct_data(3)
+        self.assertEqual(result, 3)
+
+    def test_dataiter_dict_of_containers(self):
+        iterable = DataIterator({'a': [1, 2, 1, 2], 'b': (3, 4, 3)}, dict)
+        result = _distinct_data(iterable)
+
+        self.assertIsInstance(result, DataIterator)
+        self.assertEqual(result.intended_type, dict)
+        self.assertEqual(result.evaluate(), {'a': [1, 2], 'b': (3, 4)})
+
+    def test_dataiter_dict_of_ints(self):
+        iterable = DataIterator({'a': 2, 'b': 3}, dict)
+        result = _distinct_data(iterable)
+
+        self.assertIsInstance(result, DataIterator)
+        self.assertEqual(result.intended_type, dict)
+        self.assertEqual(result.evaluate(), {'a': 2, 'b': 3})
+
+
+class TestSetData(unittest.TestCase):
+    def test_list_iter(self):
+        iterable = DataIterator([1, 2, 1, 2, 3], list)
+        result = _set_data(iterable)
+        self.assertEqual(result.evaluate(), set([1, 2, 3]))
+
+    def test_single_int(self):
+        result = _set_data(3)
+        self.assertEqual(result.evaluate(), set([3]))
+
+    def test_dataiter_dict_of_containers(self):
+        iterable = DataIterator({'a': [1, 2, 1, 2], 'b': (3, 4, 3)}, dict)
+        result = _set_data(iterable)
+
+        self.assertIsInstance(result, DataIterator)
+        self.assertEqual(result.intended_type, dict)
+        self.assertEqual(result.evaluate(), {'a': set([1, 2]), 'b': set([3, 4])})
+
+    def test_dataiter_dict_of_ints(self):
+        iterable = DataIterator({'a': 2, 'b': 3}, dict)
+        result = _set_data(iterable)
+
+        self.assertIsInstance(result, DataIterator)
+        self.assertEqual(result.intended_type, dict)
+        self.assertEqual(result.evaluate(), {'a': set([2]), 'b': set([3])})
 
 
 class TestDataQuery2(unittest.TestCase):

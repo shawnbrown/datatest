@@ -13,6 +13,7 @@ from ..utils.builtins import max
 from ..utils.misc import _is_nsiterable
 from ..utils.misc import _get_calling_filename
 from ..utils.misc import _is_sortable
+from ..utils.misc import _unique_everseen
 from .sqltemp import TemporarySqliteTable
 from .sqltemp import _from_csv
 from .result import DataResult
@@ -317,6 +318,49 @@ def _max_data(iterable):
     return domax(iterable)
 
 
+def _distinct_data(iterable):
+    """Filter iterable to unique values, while maintaining
+    intended_type.
+    """
+    def dodistinct(itr):
+        if not _is_nsiterable(itr):
+            return itr
+        return DataIterator(_unique_everseen(itr), _get_intended_type(itr))
+
+    if _is_collection_of_items(iterable):
+        result = ItemsIter((k, dodistinct(v)) for k, v in iterable)
+        return DataIterator(result, _get_intended_type(iterable))
+    return dodistinct(iterable)
+
+
+def _set_data(iterable):
+    """Filter iterable to unique values and change intended_type to
+    set.
+    """
+    def domakeset(itr):
+        if not _is_nsiterable(itr):
+            itr = [itr]
+        return DataIterator(_unique_everseen(itr), intended_type=set)
+
+    if _is_collection_of_items(iterable):
+        result = ItemsIter((k, domakeset(v)) for k, v in iterable)
+        return DataIterator(result, _get_intended_type(iterable))
+    return domakeset(iterable)
+
+
+def _cast_as_set(iterable):
+    """Change intended_type to set."""
+    def docast(itr):
+        if not _is_nsiterable(itr):
+            itr = [itr]
+        return DataIterator(itr, intended_type=set)
+
+    if _is_collection_of_items(iterable):
+        result = ItemsIter((k, docast(v)) for k, v in iterable)
+        return DataIterator(result, _get_intended_type(iterable))
+    return docast(iterable)
+
+
 class DataQuery2(object):
     def __init__(self, selection, **where):
         self._query_steps = tuple([
@@ -424,6 +468,14 @@ class DataQuery2(object):
 
     def max(self):
         step = (_max_data, (RESULT_TOKEN,), {})
+        return self._append_new(step)
+
+    def distinct(self):
+        step = (_distinct_data, (RESULT_TOKEN,), {})
+        return self._append_new(step)
+
+    def set(self):
+        step = (_set_data, (RESULT_TOKEN,), {})
         return self._append_new(step)
 
 
