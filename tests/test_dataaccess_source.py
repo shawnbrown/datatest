@@ -10,6 +10,11 @@ from datatest.dataaccess.source import DataIterator
 from datatest.dataaccess.source import _map_data
 from datatest.dataaccess.source import _filter_data
 from datatest.dataaccess.source import _reduce_data
+from datatest.dataaccess.source import _sum_data
+from datatest.dataaccess.source import _count_data
+from datatest.dataaccess.source import _avg_data
+from datatest.dataaccess.source import _min_data
+from datatest.dataaccess.source import _max_data
 from datatest.dataaccess.source import ItemsIter
 from datatest.dataaccess.query import BaseQuery
 from datatest.dataaccess.result import DataResult
@@ -146,6 +151,172 @@ class TestReduceData(unittest.TestCase):
         self.assertIsInstance(result, DataIterator)
         self.assertEqual(result.intended_type, dict)
         self.assertEqual(result.evaluate(), {'a': 2, 'b': 3})
+
+
+class TestSumData(unittest.TestCase):
+    def test_list_iter(self):
+        iterable = DataIterator([1, 2, 3], list)
+        result = _sum_data(iterable)
+        self.assertEqual(result, 6)
+
+    def test_single_integer(self):
+        result = _sum_data(3)
+        self.assertEqual(result, 3)
+
+    def test_single_string(self):
+        result = _sum_data('abc')
+        self.assertEqual(result, 0.0)
+
+    def test_dict_iter_of_lists(self):
+        iterable = DataIterator({'a': [1, 2], 'b': [3, 4]}, dict)
+        result = _sum_data(iterable)
+
+        self.assertIsInstance(result, DataIterator)
+        self.assertEqual(result.intended_type, dict)
+        self.assertEqual(result.evaluate(), {'a': 3, 'b': 7})
+
+    def test_dict_iter_of_integers(self):
+        iterable = DataIterator({'a': 2, 'b': 3}, dict)
+        result = _sum_data(iterable)
+
+        self.assertIsInstance(result, DataIterator)
+        self.assertEqual(result.intended_type, dict)
+        self.assertEqual(result.evaluate(), {'a': 2, 'b': 3})
+
+
+class TestCountData(unittest.TestCase):
+    def test_list_iter(self):
+        iterable = DataIterator(['a', None, 3], list)
+        result = _count_data(iterable)
+        self.assertEqual(result, 2)
+
+    def test_single_value(self):
+        result = _count_data(3)
+        self.assertEqual(result, 1)
+
+        result = _count_data('abc')
+        self.assertEqual(result, 1)
+
+        result = _count_data(None)
+        self.assertEqual(result, 0)
+
+    def test_dict_iter_of_lists(self):
+        iterable = DataIterator({'a': [1, None], 'b': ['x', None, 0]}, dict)
+        result = _count_data(iterable)
+
+        self.assertIsInstance(result, DataIterator)
+        self.assertEqual(result.intended_type, dict)
+        self.assertEqual(result.evaluate(), {'a': 1, 'b': 2})
+
+    def test_dict_iter_of_integers(self):
+        iterable = DataIterator({'a': -5, 'b': None, 'c': 'xyz'}, dict)
+        result = _count_data(iterable)
+
+        self.assertIsInstance(result, DataIterator)
+        self.assertEqual(result.intended_type, dict)
+        self.assertEqual(result.evaluate(), {'a': 1, 'b': 0, 'c': 1})
+
+
+class TestAvgData(unittest.TestCase):
+    def test_list_iter(self):
+        iterable = DataIterator([1, 2, 3, 4], list)
+        result = _avg_data(iterable)
+        self.assertEqual(result, 2.5)
+
+    def test_single_integer(self):
+        result = _avg_data(3)
+        self.assertEqual(result, 3)
+
+    def test_single_string(self):
+        result = _avg_data('abc')
+        self.assertEqual(result, 0.0)
+
+    def test_dict_iter_of_lists(self):
+        iterable = DataIterator({
+            'a': [1, 2, None],
+            'b': ['xx', 1, 2, 3, None],
+            'c': [None, None, None]}, dict)
+        result = _avg_data(iterable)
+
+        self.assertIsInstance(result, DataIterator)
+        self.assertEqual(result.intended_type, dict)
+        self.assertEqual(result.evaluate(), {'a': 1.5, 'b': 1.5, 'c': None})
+
+    def test_dict_iter_of_integers(self):
+        iterable = DataIterator({'a': 2, 'b': 3, 'c': None}, dict)
+        result = _avg_data(iterable)
+
+        self.assertIsInstance(result, DataIterator)
+        self.assertEqual(result.intended_type, dict)
+        self.assertEqual(result.evaluate(), {'a': 2, 'b': 3, 'c': None})
+
+
+class TestMinData(unittest.TestCase):
+    def test_list_iter(self):
+        iterable = DataIterator([1, 2, 3, 4], list)
+        result = _min_data(iterable)
+        self.assertEqual(result, 1)
+
+    def test_single_integer(self):
+        result = _min_data(3)
+        self.assertEqual(result, 3)
+
+    def test_single_string(self):
+        result = _min_data('abc')
+        self.assertEqual(result, 'abc')
+
+    def test_dict_iter_of_lists(self):
+        iterable = DataIterator({
+            'a': [1, 2, 3],
+            'b': [None, 1, 2, 3, 'xx'],
+            'c': [None, None]}, dict)
+        result = _min_data(iterable)
+
+        self.assertIsInstance(result, DataIterator)
+        self.assertEqual(result.intended_type, dict)
+        self.assertEqual(result.evaluate(), {'a': 1, 'b': 1, 'c': None})
+
+    def test_dict_iter_of_integers(self):
+        iterable = DataIterator({'a': 2, 'b': 3, 'c': None}, dict)
+        result = _min_data(iterable)
+
+        self.assertIsInstance(result, DataIterator)
+        self.assertEqual(result.intended_type, dict)
+        self.assertEqual(result.evaluate(), {'a': 2, 'b': 3, 'c': None})
+
+
+class TestMaxData(unittest.TestCase):
+    def test_list_iter(self):
+        iterable = DataIterator([1, 2, 3, 4], list)
+        result = _max_data(iterable)
+        self.assertEqual(result, 4)
+
+    def test_single_integer(self):
+        result = _max_data(3)
+        self.assertEqual(result, 3)
+
+    def test_single_string(self):
+        result = _max_data('abc')
+        self.assertEqual(result, 'abc')
+
+    def test_dict_iter_of_lists(self):
+        iterable = DataIterator({
+            'a': [1, 2, 3],
+            'b': [None, 1, 2, 3, 'xx'],
+            'c': [None, None]}, dict)
+        result = _max_data(iterable)
+
+        self.assertIsInstance(result, DataIterator)
+        self.assertEqual(result.intended_type, dict)
+        self.assertEqual(result.evaluate(), {'a': 3, 'b': 'xx', 'c': None})
+
+    def test_dict_iter_of_integers(self):
+        iterable = DataIterator({'a': 2, 'b': 3, 'c': None}, dict)
+        result = _max_data(iterable)
+
+        self.assertIsInstance(result, DataIterator)
+        self.assertEqual(result.intended_type, dict)
+        self.assertEqual(result.evaluate(), {'a': 2, 'b': 3, 'c': None})
 
 
 class TestDataQuery2(unittest.TestCase):
