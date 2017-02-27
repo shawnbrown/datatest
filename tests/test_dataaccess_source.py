@@ -12,6 +12,7 @@ from datatest.dataaccess.source import DataIterator
 from datatest.dataaccess.source import _map_data
 from datatest.dataaccess.source import _filter_data
 from datatest.dataaccess.source import _reduce_data
+from datatest.dataaccess.source import _aggregate_data
 from datatest.dataaccess.source import _sum_data
 from datatest.dataaccess.source import _count_data
 from datatest.dataaccess.source import _avg_data
@@ -174,7 +175,7 @@ class TestSumData(unittest.TestCase):
 
     def test_dict_iter_of_lists(self):
         iterable = DataIterator({'a': [1, 2], 'b': [3, 4]}, dict)
-        result = _sum_data(iterable)
+        result = _aggregate_data(_sum_data, iterable)
 
         self.assertIsInstance(result, DataIterator)
         self.assertEqual(result.intended_type, dict)
@@ -182,7 +183,7 @@ class TestSumData(unittest.TestCase):
 
     def test_dict_iter_of_integers(self):
         iterable = DataIterator({'a': 2, 'b': 3}, dict)
-        result = _sum_data(iterable)
+        result = _aggregate_data(_sum_data, iterable)
 
         self.assertIsInstance(result, DataIterator)
         self.assertEqual(result.intended_type, dict)
@@ -207,7 +208,7 @@ class TestCountData(unittest.TestCase):
 
     def test_dict_iter_of_lists(self):
         iterable = DataIterator({'a': [1, None], 'b': ['x', None, 0]}, dict)
-        result = _count_data(iterable)
+        result = _aggregate_data(_count_data, iterable)
 
         self.assertIsInstance(result, DataIterator)
         self.assertEqual(result.intended_type, dict)
@@ -215,7 +216,7 @@ class TestCountData(unittest.TestCase):
 
     def test_dict_iter_of_integers(self):
         iterable = DataIterator({'a': -5, 'b': None, 'c': 'xyz'}, dict)
-        result = _count_data(iterable)
+        result = _aggregate_data(_count_data, iterable)
 
         self.assertIsInstance(result, DataIterator)
         self.assertEqual(result.intended_type, dict)
@@ -241,7 +242,7 @@ class TestAvgData(unittest.TestCase):
             'a': [1, 2, None],
             'b': ['xx', 1, 2, 3, None],
             'c': [None, None, None]}, dict)
-        result = _avg_data(iterable)
+        result = _aggregate_data(_avg_data, iterable)
 
         self.assertIsInstance(result, DataIterator)
         self.assertEqual(result.intended_type, dict)
@@ -249,7 +250,7 @@ class TestAvgData(unittest.TestCase):
 
     def test_dict_iter_of_integers(self):
         iterable = DataIterator({'a': 2, 'b': 3, 'c': None}, dict)
-        result = _avg_data(iterable)
+        result = _aggregate_data(_avg_data, iterable)
 
         self.assertIsInstance(result, DataIterator)
         self.assertEqual(result.intended_type, dict)
@@ -275,7 +276,7 @@ class TestMinData(unittest.TestCase):
             'a': [1, 2, 3],
             'b': [None, 1, 2, 3, 'xx'],
             'c': [None, None]}, dict)
-        result = _min_data(iterable)
+        result = _aggregate_data(_min_data, iterable)
 
         self.assertIsInstance(result, DataIterator)
         self.assertEqual(result.intended_type, dict)
@@ -283,7 +284,7 @@ class TestMinData(unittest.TestCase):
 
     def test_dict_iter_of_integers(self):
         iterable = DataIterator({'a': 2, 'b': 3, 'c': None}, dict)
-        result = _min_data(iterable)
+        result = _aggregate_data(_min_data, iterable)
 
         self.assertIsInstance(result, DataIterator)
         self.assertEqual(result.intended_type, dict)
@@ -309,7 +310,7 @@ class TestMaxData(unittest.TestCase):
             'a': [1, 2, 3],
             'b': [None, 1, 2, 3, 'xx'],
             'c': [None, None]}, dict)
-        result = _max_data(iterable)
+        result = _aggregate_data(_max_data, iterable)
 
         self.assertIsInstance(result, DataIterator)
         self.assertEqual(result.intended_type, dict)
@@ -317,7 +318,7 @@ class TestMaxData(unittest.TestCase):
 
     def test_dict_iter_of_integers(self):
         iterable = DataIterator({'a': 2, 'b': 3, 'c': None}, dict)
-        result = _max_data(iterable)
+        result = _aggregate_data(_max_data, iterable)
 
         self.assertIsInstance(result, DataIterator)
         self.assertEqual(result.intended_type, dict)

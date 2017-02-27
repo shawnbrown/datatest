@@ -202,37 +202,32 @@ def _cast_as_real(value):
         return 0.0
 
 
+def _aggregate_data(function, iterable):
+    if _is_collection_of_items(iterable):
+        result = ItemsIter((k, function(v)) for k, v in iterable)
+        return DataIterator(result, _get_intended_type(iterable))
+    return function(iterable)
+
+
 def _sum_data(iterable):
     """Sum the elements and return the total (should match SQLite
     behavior).
     """
-    def dosum(itr):
-        if not _is_nsiterable(itr):
-            itr = [itr]
-        itr = (_cast_as_real(x) for x in itr if x != None)
-        try:
-            start_value = next(itr)
-        except StopIteration:  # From SQLite docs: "If there are no non-NULL
-            return None        # input rows then sum() returns NULL..."
-        return sum(itr, start_value)
-
-    if _is_collection_of_items(iterable):
-        result = ItemsIter((k, dosum(v)) for k, v in iterable)
-        return DataIterator(result, _get_intended_type(iterable))
-    return dosum(iterable)
+    if not _is_nsiterable(iterable):
+        iterable = [iterable]
+    iterable = (_cast_as_real(x) for x in iterable if x != None)
+    try:
+        start_value = next(iterable)
+    except StopIteration:  # From SQLite docs: "If there are no non-NULL
+        return None        # input rows then sum() returns NULL..."
+    return sum(iterable, start_value)
 
 
 def _count_data(iterable):
     """Returns the number non-NULL (!= None) elements in iterable."""
-    def docount(itr):
-        if not _is_nsiterable(itr):
-            itr = [itr]
-        return sum(1 for x in itr if x != None)
-
-    if _is_collection_of_items(iterable):
-        result = ItemsIter((k, docount(v)) for k, v in iterable)
-        return DataIterator(result, _get_intended_type(iterable))
-    return docount(iterable)
+    if not _is_nsiterable(iterable):
+        iterable = [iterable]
+    return sum(1 for x in iterable if x != None)
 
 
 # The SQLite BLOB/Binary type in sortable Python 2 but unsortable in Python 3.
@@ -271,52 +266,34 @@ def _avg_data(iterable):
     """Return the average of elements in iterable. Returns None if all
     elements are None.
     """
-    def doavg(itr):
-        if not _is_nsiterable(itr):
-            itr = [itr]
-        itr = (x for x in itr if x != None)
-        total = 0.0
-        count = 0
-        for x in itr:
-            total = total + _cast_as_real(x)
-            count += 1
-        return total / count if count else None
-
-    if _is_collection_of_items(iterable):
-        result = ItemsIter((k, doavg(v)) for k, v in iterable)
-        return DataIterator(result, _get_intended_type(iterable))
-    return doavg(iterable)
+    if not _is_nsiterable(iterable):
+        iterable = [iterable]
+    iterable = (x for x in iterable if x != None)
+    total = 0.0
+    count = 0
+    for x in iterable:
+        total = total + _cast_as_real(x)
+        count += 1
+    return total / count if count else None
 
 
 def _min_data(iterable):
     """Return the minimum non-None value of all values. Returns
     None only if all values are None.
     """
-    def domin(itr):
-        if not _is_nsiterable(itr):
-            itr = [itr]
-        itr = (x for x in itr if x != None)
-        return min(itr, default=None, key=_sqlite_sortkey)
-
-    if _is_collection_of_items(iterable):
-        result = ItemsIter((k, domin(v)) for k, v in iterable)
-        return DataIterator(result, _get_intended_type(iterable))
-    return domin(iterable)
+    if not _is_nsiterable(iterable):
+        return iterable  # <- EXIT!
+    iterable = (x for x in iterable if x != None)
+    return min(iterable, default=None, key=_sqlite_sortkey)
 
 
 def _max_data(iterable):
     """Return the maximum value of all values. Returns None if all
     values are None.
     """
-    def domax(itr):
-        if not _is_nsiterable(itr):
-            itr = [itr]
-        return max(itr, default=None, key=_sqlite_sortkey)
-
-    if _is_collection_of_items(iterable):
-        result = ItemsIter((k, domax(v)) for k, v in iterable)
-        return DataIterator(result, _get_intended_type(iterable))
-    return domax(iterable)
+    if not _is_nsiterable(iterable):
+        return iterable  # <- EXIT!
+    return max(iterable, default=None, key=_sqlite_sortkey)
 
 
 def _distinct_data(iterable):
@@ -438,23 +415,23 @@ class DataQuery2(object):
         return self._append_new(step)
 
     def sum(self):
-        step = (_sum_data, (RESULT_TOKEN,), {})
+        step = (_aggregate_data, (_sum_data, RESULT_TOKEN,), {})
         return self._append_new(step)
 
     def count(self):
-        step = (_count_data, (RESULT_TOKEN,), {})
+        step = (_aggregate_data, (_count_data, RESULT_TOKEN,), {})
         return self._append_new(step)
 
     def avg(self):
-        step = (_avg_data, (RESULT_TOKEN,), {})
+        step = (_aggregate_data, (_avg_data, RESULT_TOKEN,), {})
         return self._append_new(step)
 
     def min(self):
-        step = (_min_data, (RESULT_TOKEN,), {})
+        step = (_aggregate_data, (_min_data, RESULT_TOKEN,), {})
         return self._append_new(step)
 
     def max(self):
-        step = (_max_data, (RESULT_TOKEN,), {})
+        step = (_aggregate_data, (_max_data, RESULT_TOKEN,), {})
         return self._append_new(step)
 
     def distinct(self):
