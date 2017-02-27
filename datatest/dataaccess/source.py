@@ -455,14 +455,24 @@ class DataQuery2(object):
         if step_0 != (getattr, (RESULT_TOKEN, '_select2'), {}):
             return query_steps  # <- EXIT!
 
-        if step_2 == (_sum_data, (RESULT_TOKEN,), {}):
-            func_1, args_1, kwds_1 = step_1
-            args_1 = ('SUM',) + args_1  # <- Add SQL function as 1st arg.
-            optimized_steps = (
-                (getattr, (RESULT_TOKEN, '_select2_aggregate'), {}),
-                (func_1, args_1, kwds_1),
-            )
-            return optimized_steps + remaining_steps  # <- EXIT!
+        if step_2[0] == _aggregate_data:
+            func_dict = {
+                _sum_data: 'SUM',
+                _count_data: 'COUNT',
+                _avg_data: 'AVG',
+                _min_data: 'MIN',
+                _max_data: 'MAX',
+            }
+            py_function = step_2[1][0]
+            sqlite_function = func_dict.get(py_function, None)
+            if sqlite_function:
+                func_1, args_1, kwds_1 = step_1
+                args_1 = (sqlite_function,) + args_1  # <- Add SQL function
+                optimized_steps = (                   #    as 1st arg.
+                    (getattr, (RESULT_TOKEN, '_select2_aggregate'), {}),
+                    (func_1, args_1, kwds_1),
+                )
+                return optimized_steps + remaining_steps  # <- EXIT!
 
         if step_2 == (_distinct_data, (RESULT_TOKEN,), {}):
             optimized_steps = (

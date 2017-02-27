@@ -454,7 +454,7 @@ class TestDataQuery2(unittest.TestCase):
         unoptimized = (
             (getattr, (RESULT_TOKEN, '_select2'), {}),
             (RESULT_TOKEN, ({'col1': 'values'},), {'col2': 'xyz'}),
-            (_sum_data, (RESULT_TOKEN,), {}),
+            (_aggregate_data, (_sum_data, RESULT_TOKEN,), {}),
         )
         optimized = DataQuery2._optimize(unoptimized)
 
