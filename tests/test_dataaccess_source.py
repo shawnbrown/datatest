@@ -441,6 +441,27 @@ class TestDataQuery2(unittest.TestCase):
         result = query2.execute(source)
         self.assertEqual(result, 'ab')
 
+    def test_optimize(self):
+        """
+        Unoptimized:
+            DataQuery2._select2({'col1': 'values'}, col2='xyz').sum()
+
+        Optimized:
+            DataQuery2._select2_aggregate('SUM', {'col1': 'values'}, col2='xyz')
+        """
+        unoptimized = (
+            (getattr, (RESULT_TOKEN, '_select2'), {}),
+            (RESULT_TOKEN, ({'col1': 'values'},), {'col2': 'xyz'}),
+            (_sum_data, (RESULT_TOKEN,), {}),
+        )
+        optimized = DataQuery2._optimize(unoptimized)
+
+        expected = (
+            (getattr, (RESULT_TOKEN, '_select2_aggregate'), {}),
+            (RESULT_TOKEN, ('SUM', {'col1': 'values'},), {'col2': 'xyz'}),
+        )
+        self.assertEqual(optimized, expected)
+
     def test_explain(self):
         query = DataQuery2('col1')
         expected = """

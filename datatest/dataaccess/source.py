@@ -467,6 +467,27 @@ class DataQuery2(object):
 
     @staticmethod
     def _optimize(query_steps):
+        try:
+            step_0 = query_steps[0]
+            step_1 = query_steps[1]
+            step_2 = query_steps[2]
+            remaining_steps = query_steps[3:]
+        except IndexError:
+            return query_steps  # <- EXIT!
+
+        if step_0 != (getattr, (RESULT_TOKEN, '_select2'), {}):
+            return query_steps  # <- EXIT!
+
+        if step_2 == (_sum_data, (RESULT_TOKEN,), {}):
+            step_0 = (getattr, (RESULT_TOKEN, '_select2_aggregate'), {})
+            func_1, args_1, kwds_1 = step_1
+            args_1 = ('SUM',) + args_1  # <- Add SQL function as 1st arg.
+            optimized_steps = (
+                (getattr, (RESULT_TOKEN, '_select2_aggregate'), {}),
+                (func_1, args_1, kwds_1),
+            )
+            return optimized_steps + remaining_steps  # <- EXIT!
+
         return query_steps
 
     def execute(self, initializer=None, **kwds):
