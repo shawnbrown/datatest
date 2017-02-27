@@ -479,12 +479,26 @@ class DataQuery2(object):
             return query_steps  # <- EXIT!
 
         if step_2 == (_sum_data, (RESULT_TOKEN,), {}):
-            step_0 = (getattr, (RESULT_TOKEN, '_select2_aggregate'), {})
             func_1, args_1, kwds_1 = step_1
             args_1 = ('SUM',) + args_1  # <- Add SQL function as 1st arg.
             optimized_steps = (
                 (getattr, (RESULT_TOKEN, '_select2_aggregate'), {}),
                 (func_1, args_1, kwds_1),
+            )
+            return optimized_steps + remaining_steps  # <- EXIT!
+
+        if step_2 == (_distinct_data, (RESULT_TOKEN,), {}):
+            optimized_steps = (
+                (getattr, (RESULT_TOKEN, '_select2_distinct'), {}),
+                step_1,
+            )
+            return optimized_steps + remaining_steps  # <- EXIT!
+
+        if step_2 == (_set_data, (RESULT_TOKEN,), {}):
+            optimized_steps = (
+                (getattr, (RESULT_TOKEN, '_select2_distinct'), {}),
+                step_1,
+                (_cast_as_set, (RESULT_TOKEN,), {}),
             )
             return optimized_steps + remaining_steps  # <- EXIT!
 
@@ -540,7 +554,7 @@ class DataQuery2(object):
 
         optimized_steps = self._optimize(unoptimized_steps)
         if optimized_steps != unoptimized_steps:
-            steps = [_get_step_repr(step) for step in unoptimized_steps]
+            steps = [_get_step_repr(step) for step in optimized_steps]
             steps = '\n'.join('  {0}'.format(step) for step in steps)
             output += '\n\nOptimized steps:\n{0}'.format(steps)
 

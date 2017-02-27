@@ -19,6 +19,7 @@ from datatest.dataaccess.source import _min_data
 from datatest.dataaccess.source import _max_data
 from datatest.dataaccess.source import _distinct_data
 from datatest.dataaccess.source import _set_data
+from datatest.dataaccess.source import _cast_as_set
 from datatest.dataaccess.source import ItemsIter
 from datatest.dataaccess.query import BaseQuery
 from datatest.dataaccess.result import DataResult
@@ -441,7 +442,7 @@ class TestDataQuery2(unittest.TestCase):
         result = query2.execute(source)
         self.assertEqual(result, 'ab')
 
-    def test_optimize(self):
+    def test_optimize_sum(self):
         """
         Unoptimized:
             DataQuery2._select2({'col1': 'values'}, col2='xyz').sum()
@@ -459,6 +460,49 @@ class TestDataQuery2(unittest.TestCase):
         expected = (
             (getattr, (RESULT_TOKEN, '_select2_aggregate'), {}),
             (RESULT_TOKEN, ('SUM', {'col1': 'values'},), {'col2': 'xyz'}),
+        )
+        self.assertEqual(optimized, expected)
+
+    def test_optimize_distinct(self):
+        """
+        Unoptimized:
+            DataQuery2._select2({'col1': 'values'}, col2='xyz').distinct()
+
+        Optimized:
+            DataQuery2._select2_distinct({'col1': 'values'}, col2='xyz')
+        """
+        unoptimized = (
+            (getattr, (RESULT_TOKEN, '_select2'), {}),
+            (RESULT_TOKEN, ({'col1': 'values'},), {'col2': 'xyz'}),
+            (_distinct_data, (RESULT_TOKEN,), {}),
+        )
+        optimized = DataQuery2._optimize(unoptimized)
+
+        expected = (
+            (getattr, (RESULT_TOKEN, '_select2_distinct'), {}),
+            (RESULT_TOKEN, ({'col1': 'values'},), {'col2': 'xyz'}),
+        )
+        self.assertEqual(optimized, expected)
+
+    def test_optimize_set(self):
+        """
+        Unoptimized:
+            DataQuery2._select2({'col1': 'values'}, col2='xyz').set()
+
+        Optimized:
+            DataQuery2._select2_distinct({'col1': 'values'}, col2='xyz')._cast_as_set()
+        """
+        unoptimized = (
+            (getattr, (RESULT_TOKEN, '_select2'), {}),
+            (RESULT_TOKEN, ({'col1': 'values'},), {'col2': 'xyz'}),
+            (_set_data, (RESULT_TOKEN,), {}),
+        )
+        optimized = DataQuery2._optimize(unoptimized)
+
+        expected = (
+            (getattr, (RESULT_TOKEN, '_select2_distinct'), {}),
+            (RESULT_TOKEN, ({'col1': 'values'},), {'col2': 'xyz'}),
+            (_cast_as_set, (RESULT_TOKEN,), {}),
         )
         self.assertEqual(optimized, expected)
 
