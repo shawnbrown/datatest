@@ -4,6 +4,7 @@ import textwrap
 
 from . import _unittest as unittest
 from datatest.utils import collections
+from datatest.utils.misc import _is_nsiterable
 from datatest.dataaccess.source import DataSource
 from datatest.dataaccess.source import DataQuery
 from datatest.dataaccess.source import DataQuery2
@@ -24,6 +25,23 @@ from datatest.dataaccess.source import _cast_as_set
 from datatest.dataaccess.source import ItemsIter
 from datatest.dataaccess.query import BaseQuery
 from datatest.dataaccess.result import DataResult
+
+
+def convert_iter_to_type(iterable, target_type):
+    """Helper function to convert lists-of-lists into tuple-of-tuples."""
+    if isinstance(iterable, collections.Mapping):
+        dic = {}
+        for k, v in iterable.items():
+            dic[k] = convert_iter_to_type(v, target_type)
+        output = dic
+    else:
+        lst = []
+        for obj in iterable:
+            if _is_nsiterable(obj):
+                obj = convert_iter_to_type(obj, target_type)
+            lst.append(obj)
+        output = target_type(lst)
+    return output
 
 
 class TestDataIterator(unittest.TestCase):
@@ -655,15 +673,36 @@ class TestDataSourceBasics(unittest.TestCase):
         expected = ['a', 'b']
         self.assertEqual(list(result), expected)
 
+    def assertContainsType(self, iterable, required_type):
+        """Assert that itereable contains elements of the
+        *required_type* only.
+        """
+        for element in iterable:
+            if not isinstance(element, required_type):
+                cls_name = element.__class__.__name__
+                msg = 'expected {0}, found {1!r}'
+                self.fail(msg.format(required_type, cls_name))
+
     def test_select2_distinct_column_as_list(self):
         result = self.source._select2_distinct(['label1'])
-        expected = [['a'], ['b']]
-        self.assertEqual(list(result), expected)
+        self.assertIsInstance(result, DataIterator)
 
+        result = result.evaluate()
+        self.assertIsInstance(result, list)
+        self.assertContainsType(result, list)
+
+        expected = [['a'], ['b']]
+        result_set = convert_iter_to_type(result, frozenset)
+        expected_set = convert_iter_to_type(expected, frozenset)
+        self.assertEqual(result_set, expected_set)
+
+        # Same but more complex elements.
         result = self.source._select2_distinct(['label1', 'label2'])
         expected = [['a', 'x'], ['a', 'y'], ['a', 'z'],
                     ['b', 'z'], ['b', 'y'], ['b', 'x']]
-        self.assertEqual(list(result), expected)
+        result_set = convert_iter_to_type(result, frozenset)
+        expected_set = convert_iter_to_type(expected, frozenset)
+        self.assertEqual(result_set, expected_set)
 
     def test_select2_distinct_column_as_tuple(self):
         result = self.source._select2_distinct(('label1',))
@@ -677,6 +716,7 @@ class TestDataSourceBasics(unittest.TestCase):
 
     def test_select2_distinct_dict(self):
         result = self.source._select2_distinct({('label1', 'label2'): 'value'})
+        result = result.evaluate()
         expected = {
             ('a', 'x'): ['17', '13'],
             ('a', 'y'): ['20'],
@@ -685,10 +725,13 @@ class TestDataSourceBasics(unittest.TestCase):
             ('b', 'y'): ['40'],
             ('b', 'z'): ['5'],
         }
-        self.assertEqual(dict(result), expected)
+        result_set = convert_iter_to_type(result, frozenset)
+        expected_set = convert_iter_to_type(expected, frozenset)
+        self.assertEqual(result_set, expected_set)
 
     def test_select2_distinct_dict_with_values_container(self):
         result = self.source._select2_distinct({('label1', 'label2'): ['value']})
+        result = result.evaluate()
         expected = {
             ('a', 'x'): [['17'], ['13']],
             ('a', 'y'): [['20']],
@@ -697,30 +740,41 @@ class TestDataSourceBasics(unittest.TestCase):
             ('b', 'y'): [['40']],
             ('b', 'z'): [['5']],
         }
-        self.assertEqual(dict(result), expected)
+        result_set = convert_iter_to_type(result, frozenset)
+        expected_set = convert_iter_to_type(expected, frozenset)
+        self.assertEqual(result_set, expected_set)
 
     def test_select2_distinct_dict_frozenset_key(self):
         result = self.source._select2_distinct({frozenset(['label1']): 'label2'})
+        result = result.evaluate()
         expected = {
             frozenset(['a']): ['x', 'y', 'z'],
             frozenset(['b']): ['z', 'y', 'x'],
         }
-        self.assertEqual(dict(result), expected)
+        result_set = convert_iter_to_type(result, frozenset)
+        expected_set = convert_iter_to_type(expected, frozenset)
+        self.assertEqual(result_set, expected_set)
 
     def test_select2_distinct_dict_with_values_container2(self):
         result = self.source._select2_distinct({'label1': ['label2', 'label2']})
+        result = result.evaluate()
         expected = {
             'a': [['x', 'x'], ['y', 'y'], ['z', 'z']],
-            'b': [['z', 'z'], ['y', 'y'], ['x', 'x']]
+            'b': [['z', 'z'], ['y', 'y'], ['x', 'x']],
         }
-        self.assertEqual(dict(result), expected)
+        result_set = convert_iter_to_type(result, frozenset)
+        expected_set = convert_iter_to_type(expected, frozenset)
+        self.assertEqual(result_set, expected_set)
 
         result = self.source._select2_distinct({'label1': set(['label2', 'label2'])})
+        result = result.evaluate()
         expected = {
             'a': [set(['x']), set(['y']), set(['z'])],
             'b': [set(['z']), set(['y']), set(['x'])],
         }
-        self.assertEqual(dict(result), expected)
+        result_set = convert_iter_to_type(result, frozenset)
+        expected_set = convert_iter_to_type(expected, frozenset)
+        self.assertEqual(result_set, expected_set)
 
     def test_select2_aggregate(self):
         # Not grouped, single result.
