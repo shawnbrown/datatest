@@ -8,9 +8,7 @@ import os
 from numbers import Number
 from sqlite3 import Binary
 
-from ..utils.builtins import callable
-from ..utils.builtins import min
-from ..utils.builtins import max
+from ..utils.builtins import *
 from ..utils.misc import _is_nsiterable
 from ..utils.misc import _get_calling_filename
 from ..utils.misc import _is_sortable
@@ -134,55 +132,47 @@ def _get_intended_type(obj):
     raise TypeError(err_msg.format(cls_name))
 
 
-def _apply_function(outer_func, inner_func, obj):
-    """The *outer_func* should be a higher-order function of two
-    arugments--where the first argument is the *inner_func*, and
-    the second argument is an iterable.
-
-    The *inner_func* should accept the arguments passed to it from
-    the *outer_func*.
+def _apply_to_data(function, data_iterator):
+    """Applies a *function* of one argument to the to the given
+    DataIterator *data_iterator*.
     """
-    def wrapper(x):
-        if _is_nsiterable(x):
-            return outer_func(inner_func, x)
-        return inner_func(x)
-
-    if _is_collection_of_items(obj):
-        result = ItemsIter((k, wrapper(v)) for k, v in obj)
-        return DataIterator(result, _get_intended_type(obj))
-    return wrapper(obj)
+    if _is_collection_of_items(data_iterator):
+        result = ItemsIter((k, function(v)) for k, v in data_iterator)
+        return DataIterator(result, _get_intended_type(data_iterator))
+    return function(data_iterator)
 
 
 def _map_data(function, iterable):
-    def domap(func, itr):
-        return DataIterator(map(func, itr), _get_intended_type(itr))
-    return _apply_function(domap, function, iterable)
+    def wrapper(iterable):
+        if _is_nsiterable(iterable):
+            intended_type = _get_intended_type(iterable)
+            return DataIterator(map(function, iterable), intended_type)
+        return function(iterable)
+
+    return _apply_to_data(wrapper, iterable)
 
 
 def _reduce_data(function, iterable):
-    def dofunc(*args):
-        try:
-            first, second = args  # Unpack arguments.
-        except ValueError:
-            return args[0]
-        return function(first, second)
-    return _apply_function(functools.reduce, dofunc, iterable)
+    def wrapper(iterable):
+        if not _is_nsiterable(iterable):
+            return iterable  # <- Not iterable, return object.
+        return functools.reduce(function, iterable)
+
+    return _apply_to_data(wrapper, iterable)
 
 
 def _filter_data(function, iterable):
-    def dofilter(func, itr):
-        if not _is_nsiterable(itr):
+    def wrapper(iterable):
+        if not _is_nsiterable(iterable):
             msg= 'filter expects a non-string iterable, found {0}'
-            raise TypeError(msg.format(itr.__class__.__name__))
-        return DataIterator(filter(func, itr), _get_intended_type(itr))
+            raise TypeError(msg.format(iterable.__class__.__name__))
+        filtered_data = filter(function, iterable)
+        return DataIterator(filtered_data, _get_intended_type(iterable))
 
-    if _is_collection_of_items(iterable):
-        result = ItemsIter((k, dofilter(function, v)) for k, v in iterable)
-        return DataIterator(result, _get_intended_type(iterable))
-    return dofilter(function, iterable)
+    return _apply_to_data(wrapper, iterable)
 
 
-def _cast_as_real(value):
+def _sqlite_cast_as_real(value):
     """Convert value to REAL (float) or default to 0.0 to match SQLite
     behavior. See the "Conversion Processing" table in the "CAST
     expressions" section for details:
@@ -195,20 +185,13 @@ def _cast_as_real(value):
         return 0.0
 
 
-def _aggregate_data(function, iterable):
-    if _is_collection_of_items(iterable):
-        result = ItemsIter((k, function(v)) for k, v in iterable)
-        return DataIterator(result, _get_intended_type(iterable))
-    return function(iterable)
-
-
-def _sum_data(iterable):
+def _sqlite_sum(iterable):
     """Sum the elements and return the total (should match SQLite
     behavior).
     """
     if not _is_nsiterable(iterable):
         iterable = [iterable]
-    iterable = (_cast_as_real(x) for x in iterable if x != None)
+    iterable = (_sqlite_cast_as_real(x) for x in iterable if x != None)
     try:
         start_value = next(iterable)
     except StopIteration:  # From SQLite docs: "If there are no non-NULL
@@ -216,7 +199,7 @@ def _sum_data(iterable):
     return sum(iterable, start_value)
 
 
-def _count_data(iterable):
+def _sqlite_count(iterable):
     """Returns the number non-NULL (!= None) elements in iterable."""
     if not _is_nsiterable(iterable):
         iterable = [iterable]
@@ -255,7 +238,7 @@ def _sqlite_sortkey(value):
     return (4, value)  # unsupported type (sort group 4)
 
 
-def _avg_data(iterable):
+def _sqlite_avg(iterable):
     """Return the average of elements in iterable. Returns None if all
     elements are None.
     """
@@ -265,12 +248,12 @@ def _avg_data(iterable):
     total = 0.0
     count = 0
     for x in iterable:
-        total = total + _cast_as_real(x)
+        total = total + _sqlite_cast_as_real(x)
         count += 1
     return total / count if count else None
 
 
-def _min_data(iterable):
+def _sqlite_min(iterable):
     """Return the minimum non-None value of all values. Returns
     None only if all values are None.
     """
@@ -280,7 +263,7 @@ def _min_data(iterable):
     return min(iterable, default=None, key=_sqlite_sortkey)
 
 
-def _max_data(iterable):
+def _sqlite_max(iterable):
     """Return the maximum value of all values. Returns None if all
     values are None.
     """
@@ -289,7 +272,7 @@ def _max_data(iterable):
     return max(iterable, default=None, key=_sqlite_sortkey)
 
 
-def _distinct_data(iterable):
+def _sqlite_distinct(iterable):
     """Filter iterable to unique values, while maintaining
     intended_type.
     """
@@ -304,32 +287,24 @@ def _distinct_data(iterable):
     return dodistinct(iterable)
 
 
-def _set_data(iterable):
-    """Filter iterable to unique values and change intended_type to
-    set.
-    """
-    def domakeset(itr):
-        if not _is_nsiterable(itr):
-            itr = [itr]
-        return DataIterator(_unique_everseen(itr), intended_type=set)
-
-    if _is_collection_of_items(iterable):
-        result = ItemsIter((k, domakeset(v)) for k, v in iterable)
-        return DataIterator(result, _get_intended_type(iterable))
-    return domakeset(iterable)
-
-
 def _cast_as_set(iterable):
     """Change intended_type to set."""
-    def docast(itr):
+    def makeset(itr):
         if not _is_nsiterable(itr):
             itr = [itr]
         return DataIterator(itr, intended_type=set)
 
     if _is_collection_of_items(iterable):
-        result = ItemsIter((k, docast(v)) for k, v in iterable)
+        result = ItemsIter((k, makeset(v)) for k, v in iterable)
         return DataIterator(result, _get_intended_type(iterable))
-    return docast(iterable)
+    return makeset(iterable)
+
+
+def _set_data(iterable):
+    """Filter iterable to unique values and change intended_type to
+    set.
+    """
+    return _cast_as_set(_sqlite_distinct(iterable))
 
 
 def _get_step_repr(step):
@@ -415,27 +390,27 @@ class DataQuery2(object):
         return self._append_new(step)
 
     def sum(self):
-        step = (_aggregate_data, (_sum_data, RESULT_TOKEN,), {})
+        step = (_apply_to_data, (_sqlite_sum, RESULT_TOKEN,), {})
         return self._append_new(step)
 
     def count(self):
-        step = (_aggregate_data, (_count_data, RESULT_TOKEN,), {})
+        step = (_apply_to_data, (_sqlite_count, RESULT_TOKEN,), {})
         return self._append_new(step)
 
     def avg(self):
-        step = (_aggregate_data, (_avg_data, RESULT_TOKEN,), {})
+        step = (_apply_to_data, (_sqlite_avg, RESULT_TOKEN,), {})
         return self._append_new(step)
 
     def min(self):
-        step = (_aggregate_data, (_min_data, RESULT_TOKEN,), {})
+        step = (_apply_to_data, (_sqlite_min, RESULT_TOKEN,), {})
         return self._append_new(step)
 
     def max(self):
-        step = (_aggregate_data, (_max_data, RESULT_TOKEN,), {})
+        step = (_apply_to_data, (_sqlite_max, RESULT_TOKEN,), {})
         return self._append_new(step)
 
     def distinct(self):
-        step = (_distinct_data, (RESULT_TOKEN,), {})
+        step = (_sqlite_distinct, (RESULT_TOKEN,), {})
         return self._append_new(step)
 
     def set(self):
@@ -455,13 +430,13 @@ class DataQuery2(object):
         if step_0 != (getattr, (RESULT_TOKEN, '_select2'), {}):
             return query_steps  # <- EXIT!
 
-        if step_2[0] == _aggregate_data:
+        if step_2[0] == _apply_to_data:
             func_dict = {
-                _sum_data: 'SUM',
-                _count_data: 'COUNT',
-                _avg_data: 'AVG',
-                _min_data: 'MIN',
-                _max_data: 'MAX',
+                _sqlite_sum: 'SUM',
+                _sqlite_count: 'COUNT',
+                _sqlite_avg: 'AVG',
+                _sqlite_min: 'MIN',
+                _sqlite_max: 'MAX',
             }
             py_function = step_2[1][0]
             sqlite_function = func_dict.get(py_function, None)
@@ -472,7 +447,9 @@ class DataQuery2(object):
                     (getattr, (RESULT_TOKEN, '_select2_aggregate'), {}),
                     (func_1, args_1, kwds_1),
                 )
-        elif step_2 == (_distinct_data, (RESULT_TOKEN,), {}):
+            else:
+                optimized_steps = ()
+        elif step_2 == (_sqlite_distinct, (RESULT_TOKEN,), {}):
             optimized_steps = (
                 (getattr, (RESULT_TOKEN, '_select2_distinct'), {}),
                 step_1,

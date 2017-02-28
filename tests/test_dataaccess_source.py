@@ -13,13 +13,13 @@ from datatest.dataaccess.source import DataIterator
 from datatest.dataaccess.source import _map_data
 from datatest.dataaccess.source import _filter_data
 from datatest.dataaccess.source import _reduce_data
-from datatest.dataaccess.source import _aggregate_data
-from datatest.dataaccess.source import _sum_data
-from datatest.dataaccess.source import _count_data
-from datatest.dataaccess.source import _avg_data
-from datatest.dataaccess.source import _min_data
-from datatest.dataaccess.source import _max_data
-from datatest.dataaccess.source import _distinct_data
+from datatest.dataaccess.source import _apply_to_data
+from datatest.dataaccess.source import _sqlite_sum
+from datatest.dataaccess.source import _sqlite_count
+from datatest.dataaccess.source import _sqlite_avg
+from datatest.dataaccess.source import _sqlite_min
+from datatest.dataaccess.source import _sqlite_max
+from datatest.dataaccess.source import _sqlite_distinct
 from datatest.dataaccess.source import _set_data
 from datatest.dataaccess.source import _cast_as_set
 from datatest.dataaccess.source import ItemsIter
@@ -180,20 +180,20 @@ class TestReduceData(unittest.TestCase):
 class TestSumData(unittest.TestCase):
     def test_list_iter(self):
         iterable = DataIterator([1, 2, 3], list)
-        result = _sum_data(iterable)
+        result = _sqlite_sum(iterable)
         self.assertEqual(result, 6)
 
     def test_single_integer(self):
-        result = _sum_data(3)
+        result = _sqlite_sum(3)
         self.assertEqual(result, 3)
 
     def test_single_string(self):
-        result = _sum_data('abc')
+        result = _sqlite_sum('abc')
         self.assertEqual(result, 0.0)
 
     def test_dict_iter_of_lists(self):
         iterable = DataIterator({'a': [1, 2], 'b': [3, 4]}, dict)
-        result = _aggregate_data(_sum_data, iterable)
+        result = _apply_to_data(_sqlite_sum, iterable)
 
         self.assertIsInstance(result, DataIterator)
         self.assertEqual(result.intended_type, dict)
@@ -201,7 +201,7 @@ class TestSumData(unittest.TestCase):
 
     def test_dict_iter_of_integers(self):
         iterable = DataIterator({'a': 2, 'b': 3}, dict)
-        result = _aggregate_data(_sum_data, iterable)
+        result = _apply_to_data(_sqlite_sum, iterable)
 
         self.assertIsInstance(result, DataIterator)
         self.assertEqual(result.intended_type, dict)
@@ -211,22 +211,22 @@ class TestSumData(unittest.TestCase):
 class TestCountData(unittest.TestCase):
     def test_list_iter(self):
         iterable = DataIterator(['a', None, 3], list)
-        result = _count_data(iterable)
+        result = _sqlite_count(iterable)
         self.assertEqual(result, 2)
 
     def test_single_value(self):
-        result = _count_data(3)
+        result = _sqlite_count(3)
         self.assertEqual(result, 1)
 
-        result = _count_data('abc')
+        result = _sqlite_count('abc')
         self.assertEqual(result, 1)
 
-        result = _count_data(None)
+        result = _sqlite_count(None)
         self.assertEqual(result, 0)
 
     def test_dict_iter_of_lists(self):
         iterable = DataIterator({'a': [1, None], 'b': ['x', None, 0]}, dict)
-        result = _aggregate_data(_count_data, iterable)
+        result = _apply_to_data(_sqlite_count, iterable)
 
         self.assertIsInstance(result, DataIterator)
         self.assertEqual(result.intended_type, dict)
@@ -234,7 +234,7 @@ class TestCountData(unittest.TestCase):
 
     def test_dict_iter_of_integers(self):
         iterable = DataIterator({'a': -5, 'b': None, 'c': 'xyz'}, dict)
-        result = _aggregate_data(_count_data, iterable)
+        result = _apply_to_data(_sqlite_count, iterable)
 
         self.assertIsInstance(result, DataIterator)
         self.assertEqual(result.intended_type, dict)
@@ -244,15 +244,15 @@ class TestCountData(unittest.TestCase):
 class TestAvgData(unittest.TestCase):
     def test_list_iter(self):
         iterable = DataIterator([1, 2, 3, 4], list)
-        result = _avg_data(iterable)
+        result = _sqlite_avg(iterable)
         self.assertEqual(result, 2.5)
 
     def test_single_integer(self):
-        result = _avg_data(3)
+        result = _sqlite_avg(3)
         self.assertEqual(result, 3)
 
     def test_single_string(self):
-        result = _avg_data('abc')
+        result = _sqlite_avg('abc')
         self.assertEqual(result, 0.0)
 
     def test_dict_iter_of_lists(self):
@@ -260,7 +260,7 @@ class TestAvgData(unittest.TestCase):
             'a': [1, 2, None],
             'b': ['xx', 1, 2, 3, None],
             'c': [None, None, None]}, dict)
-        result = _aggregate_data(_avg_data, iterable)
+        result = _apply_to_data(_sqlite_avg, iterable)
 
         self.assertIsInstance(result, DataIterator)
         self.assertEqual(result.intended_type, dict)
@@ -268,7 +268,7 @@ class TestAvgData(unittest.TestCase):
 
     def test_dict_iter_of_integers(self):
         iterable = DataIterator({'a': 2, 'b': 3, 'c': None}, dict)
-        result = _aggregate_data(_avg_data, iterable)
+        result = _apply_to_data(_sqlite_avg, iterable)
 
         self.assertIsInstance(result, DataIterator)
         self.assertEqual(result.intended_type, dict)
@@ -278,15 +278,15 @@ class TestAvgData(unittest.TestCase):
 class TestMinData(unittest.TestCase):
     def test_list_iter(self):
         iterable = DataIterator([1, 2, 3, 4], list)
-        result = _min_data(iterable)
+        result = _sqlite_min(iterable)
         self.assertEqual(result, 1)
 
     def test_single_integer(self):
-        result = _min_data(3)
+        result = _sqlite_min(3)
         self.assertEqual(result, 3)
 
     def test_single_string(self):
-        result = _min_data('abc')
+        result = _sqlite_min('abc')
         self.assertEqual(result, 'abc')
 
     def test_dict_iter_of_lists(self):
@@ -294,7 +294,7 @@ class TestMinData(unittest.TestCase):
             'a': [1, 2, 3],
             'b': [None, 1, 2, 3, 'xx'],
             'c': [None, None]}, dict)
-        result = _aggregate_data(_min_data, iterable)
+        result = _apply_to_data(_sqlite_min, iterable)
 
         self.assertIsInstance(result, DataIterator)
         self.assertEqual(result.intended_type, dict)
@@ -302,7 +302,7 @@ class TestMinData(unittest.TestCase):
 
     def test_dict_iter_of_integers(self):
         iterable = DataIterator({'a': 2, 'b': 3, 'c': None}, dict)
-        result = _aggregate_data(_min_data, iterable)
+        result = _apply_to_data(_sqlite_min, iterable)
 
         self.assertIsInstance(result, DataIterator)
         self.assertEqual(result.intended_type, dict)
@@ -312,15 +312,15 @@ class TestMinData(unittest.TestCase):
 class TestMaxData(unittest.TestCase):
     def test_list_iter(self):
         iterable = DataIterator([1, 2, 3, 4], list)
-        result = _max_data(iterable)
+        result = _sqlite_max(iterable)
         self.assertEqual(result, 4)
 
     def test_single_integer(self):
-        result = _max_data(3)
+        result = _sqlite_max(3)
         self.assertEqual(result, 3)
 
     def test_single_string(self):
-        result = _max_data('abc')
+        result = _sqlite_max('abc')
         self.assertEqual(result, 'abc')
 
     def test_dict_iter_of_lists(self):
@@ -328,7 +328,7 @@ class TestMaxData(unittest.TestCase):
             'a': [1, 2, 3],
             'b': [None, 1, 2, 3, 'xx'],
             'c': [None, None]}, dict)
-        result = _aggregate_data(_max_data, iterable)
+        result = _apply_to_data(_sqlite_max, iterable)
 
         self.assertIsInstance(result, DataIterator)
         self.assertEqual(result.intended_type, dict)
@@ -336,7 +336,7 @@ class TestMaxData(unittest.TestCase):
 
     def test_dict_iter_of_integers(self):
         iterable = DataIterator({'a': 2, 'b': 3, 'c': None}, dict)
-        result = _aggregate_data(_max_data, iterable)
+        result = _apply_to_data(_sqlite_max, iterable)
 
         self.assertIsInstance(result, DataIterator)
         self.assertEqual(result.intended_type, dict)
@@ -346,16 +346,16 @@ class TestMaxData(unittest.TestCase):
 class TestDistinctData(unittest.TestCase):
     def test_list_iter(self):
         iterable = DataIterator([1, 2, 1, 2, 3], list)
-        result = _distinct_data(iterable)
+        result = _sqlite_distinct(iterable)
         self.assertEqual(result.evaluate(), [1, 2, 3])
 
     def test_single_int(self):
-        result = _distinct_data(3)
+        result = _sqlite_distinct(3)
         self.assertEqual(result, 3)
 
     def test_dataiter_dict_of_containers(self):
         iterable = DataIterator({'a': [1, 2, 1, 2], 'b': (3, 4, 3)}, dict)
-        result = _distinct_data(iterable)
+        result = _sqlite_distinct(iterable)
 
         self.assertIsInstance(result, DataIterator)
         self.assertEqual(result.intended_type, dict)
@@ -363,7 +363,7 @@ class TestDistinctData(unittest.TestCase):
 
     def test_dataiter_dict_of_ints(self):
         iterable = DataIterator({'a': 2, 'b': 3}, dict)
-        result = _distinct_data(iterable)
+        result = _sqlite_distinct(iterable)
 
         self.assertIsInstance(result, DataIterator)
         self.assertEqual(result.intended_type, dict)
@@ -472,7 +472,7 @@ class TestDataQuery2(unittest.TestCase):
         unoptimized = (
             (getattr, (RESULT_TOKEN, '_select2'), {}),
             (RESULT_TOKEN, ({'col1': 'values'},), {'col2': 'xyz'}),
-            (_aggregate_data, (_sum_data, RESULT_TOKEN,), {}),
+            (_apply_to_data, (_sqlite_sum, RESULT_TOKEN,), {}),
         )
         optimized = DataQuery2._optimize(unoptimized)
 
@@ -493,7 +493,7 @@ class TestDataQuery2(unittest.TestCase):
         unoptimized = (
             (getattr, (RESULT_TOKEN, '_select2'), {}),
             (RESULT_TOKEN, ({'col1': 'values'},), {'col2': 'xyz'}),
-            (_distinct_data, (RESULT_TOKEN,), {}),
+            (_sqlite_distinct, (RESULT_TOKEN,), {}),
         )
         optimized = DataQuery2._optimize(unoptimized)
 
