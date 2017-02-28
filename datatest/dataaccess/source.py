@@ -472,23 +472,22 @@ class DataQuery2(object):
                     (getattr, (RESULT_TOKEN, '_select2_aggregate'), {}),
                     (func_1, args_1, kwds_1),
                 )
-                return optimized_steps + remaining_steps  # <- EXIT!
-
-        if step_2 == (_distinct_data, (RESULT_TOKEN,), {}):
+        elif step_2 == (_distinct_data, (RESULT_TOKEN,), {}):
             optimized_steps = (
                 (getattr, (RESULT_TOKEN, '_select2_distinct'), {}),
                 step_1,
             )
-            return optimized_steps + remaining_steps  # <- EXIT!
-
-        if step_2 == (_set_data, (RESULT_TOKEN,), {}):
+        elif step_2 == (_set_data, (RESULT_TOKEN,), {}):
             optimized_steps = (
                 (getattr, (RESULT_TOKEN, '_select2_distinct'), {}),
                 step_1,
                 (_cast_as_set, (RESULT_TOKEN,), {}),
             )
-            return optimized_steps + remaining_steps  # <- EXIT!
+        else:
+            optimized_steps = ()
 
+        if optimized_steps:
+            return optimized_steps + remaining_steps
         return query_steps
 
     def execute(self, initializer=None, **kwds):
