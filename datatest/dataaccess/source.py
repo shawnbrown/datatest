@@ -21,13 +21,6 @@ from .result import DataResult
 from .query import _DataQuery
 
 
-class _RESULT_TOKEN(object):
-    def __repr__(self):
-        return '<result>'
-RESULT_TOKEN = _RESULT_TOKEN()
-del _RESULT_TOKEN
-
-
 class ItemsIter(collections.Iterator):
     """A simple wrapper used to identify iterators that should
     return a 2-tuple of key-value pairs. The underlying iterable
@@ -360,6 +353,13 @@ def _get_step_repr(step):
     kwds_repr = ['{0}={1}'.format(k, v) for k, v in kwds_repr]
     kwds_repr = ', '.join(kwds_repr)
     return '{0}, ({1}), {{{2}}}'.format(func_repr, args_repr, kwds_repr)
+
+
+class _RESULT_TOKEN(object):
+    def __repr__(self):
+        return '<result>'
+RESULT_TOKEN = _RESULT_TOKEN()
+del _RESULT_TOKEN
 
 
 class DataQuery2(object):
