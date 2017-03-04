@@ -631,7 +631,7 @@ class TestDataSourceBasics(unittest.TestCase):
             ('b', 'y'): ['40'],
             ('b', 'z'): ['5'],
         }
-        self.assertEqual(dict(result), expected)
+        self.assertEqual(result.evaluate(), expected)
 
     def test_select2_dict_with_values_container(self):
         result = self.source._select2({('label1', 'label2'): ['value']})
@@ -643,7 +643,7 @@ class TestDataSourceBasics(unittest.TestCase):
             ('b', 'y'): [['40']],
             ('b', 'z'): [['5']],
         }
-        self.assertEqual(dict(result), expected)
+        self.assertEqual(result.evaluate(), expected)
 
     def test_select2_dict_frozenset_key(self):
         result = self.source._select2({frozenset(['label1']): 'label2'})
@@ -651,7 +651,7 @@ class TestDataSourceBasics(unittest.TestCase):
             frozenset(['a']): ['x', 'x', 'y', 'z'],
             frozenset(['b']): ['z', 'y', 'x'],
         }
-        self.assertEqual(dict(result), expected)
+        self.assertEqual(result.evaluate(), expected)
 
     def test_select2_dict_with_values_container2(self):
         result = self.source._select2({'label1': ['label2', 'label2']})
@@ -659,14 +659,14 @@ class TestDataSourceBasics(unittest.TestCase):
             'a': [['x', 'x'], ['x', 'x'], ['y', 'y'], ['z', 'z']],
             'b': [['z', 'z'], ['y', 'y'], ['x', 'x']]
         }
-        self.assertEqual(dict(result), expected)
+        self.assertEqual(result.evaluate(), expected)
 
         result = self.source._select2({'label1': set(['label2', 'label2'])})
         expected = {
             'a': [set(['x']), set(['x']), set(['y']), set(['z'])],
             'b': [set(['z']), set(['y']), set(['x'])],
         }
-        self.assertEqual(dict(result), expected)
+        self.assertEqual(result.evaluate(), expected)
 
     def test_select2_distinct_column_no_container(self):
         result = self.source._select2_distinct('label1')
@@ -787,11 +787,13 @@ class TestDataSourceBasics(unittest.TestCase):
 
         # Simple group by (grouped by keys).
         result = self.source._select2_aggregate('SUM', {'label1': 'value'})
+        self.assertIsInstance(result, DataIterator)
+
         expected = {
             'a': 65,
             'b': 70,
         }
-        self.assertEqual(dict(result), expected)
+        self.assertEqual(result.evaluate(), expected)
 
         # Composite value.
         result = self.source._select2_aggregate('SUM', {'label1': ['value', 'value']})

@@ -771,12 +771,12 @@ class DataSource(object):
 
         if isinstance(selection, collections.Sequence):
             result_type = type(selection)
-            result = (result_type(x) for x  in cursor)
+            result = (result_type(x) for x in cursor)
             return DataIterator(result, intended_type=list) # <- EXIT!
 
         if isinstance(selection, collections.Set):
             result_type = type(selection)
-            result = (result_type(x) for x  in cursor)
+            result = (result_type(x) for x in cursor)
             return DataIterator(result, intended_type=set) # <- EXIT!
 
         if isinstance(selection, collections.Mapping):
@@ -794,11 +794,14 @@ class DataSource(object):
 
             if issubclass(value_type, str):
                 def valuefunc(group):
-                    return list(row[-1] for row in group)
+                    result = (row[-1] for row in group)
+                    return DataIterator(result, intended_type=list)
             else:
                 def valuefunc(group):
                     group = (row[slice_index:] for row in group)
-                    return list(value_type(row) for row in group)
+                    result = (value_type(row) for row in group)
+                    return DataIterator(result, intended_type=list)
+
             result =  ItemsIter((k, valuefunc(g)) for k, g in grouped)
             return DataIterator(result, intended_type=result_type) # <- EXIT!
 
@@ -828,16 +831,8 @@ class DataSource(object):
     def _select2_aggregate(self, sqlfunc, selection, **where):
         """."""
         sqlfunc = sqlfunc.upper()
-        if isinstance(selection, str):
-            normalized = self._normalize_column(selection)
-            select = '{0}({1})'.format(sqlfunc, normalized)
-            group_by = None
-        elif isinstance(selection, (collections.Sequence, collections.Set)):
-            normalized = [self._normalize_column(x) for x in selection]
-            formatted = ['{0}({1})'.format(sqlfunc, x) for x in normalized]
-            select = ', '.join(formatted)
-            group_by = None
-        elif isinstance(selection, collections.Mapping):
+
+        if isinstance(selection, collections.Mapping):
             value_cols = tuple(selection.values())[0]
             if isinstance(value_cols, str):
                 normalized = self._normalize_column(value_cols)
@@ -849,14 +844,27 @@ class DataSource(object):
             key_cols = self._sql_group_order_cols(selection)
             select = '{0}, {1}'.format(key_cols, formatted)
             group_by = 'GROUP BY {0}'.format(key_cols)
+        else:
+            if isinstance(selection, str):
+                normalized = self._normalize_column(selection)
+                select = '{0}({1})'.format(sqlfunc, normalized)
+                group_by = None
+            elif isinstance(selection, (collections.Sequence, collections.Set)):
+                normalized = [self._normalize_column(x) for x in selection]
+                formatted = ['{0}({1})'.format(sqlfunc, x) for x in normalized]
+                select = ', '.join(formatted)
+                group_by = None
+            else:
+                raise TypeError('type {0!r} not supported'.format(type(selection)))
 
         cursor = self._execute_query(select, group_by, **where)
         results = self._format_results(selection, cursor)
 
-        if not isinstance(selection, collections.Mapping):
-            return next(results)  # <- EXIT!
-        results = ((k, v[0]) for k, v in results)
-        return results
+        if isinstance(selection, collections.Mapping):
+            results = ItemsIter((k, next(v)) for k, v in results)
+            return DataIterator(results, intended_type=dict)
+        return next(results)
+
 
     def _select(self, *columns, **kwds_filter):
         key_columns, value_columns = self._prepare_column_groups(*columns)
