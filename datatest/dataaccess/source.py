@@ -686,12 +686,11 @@ class DataSource(object):
             raise LookupError(msg)
 
     def __call__(self, *columns, **kwds_filter):
-        return DataQuery._from_parts(['_select', (columns, kwds_filter)], self)
-        #steps = [
-        #    (getattr, (RESULT_TOKEN, '_select2',), {}),
-        #    (RESULT_TOKEN, columns, kwds_filter),
-        #]
-        #return DataQuery2._from_parts(steps, initializer=self)
+        steps = [
+            (getattr, (RESULT_TOKEN, '_select2',), {}),
+            (RESULT_TOKEN, columns, kwds_filter),
+        ]
+        return DataQuery2._from_parts(steps, initializer=self)
 
     def _prepare_column_groups(self, *columns):
         """Returns tuple of columns split into key and value groups."""

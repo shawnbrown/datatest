@@ -915,22 +915,15 @@ class TestDataSourceBasics(unittest.TestCase):
             self.source._select({'label1': {'label2': 'value'}})
 
     def test_call(self):
-        result = self.source('label1')
-        self.assertIsInstance(result, DataQuery)
-
-        result = list(result.eval())
+        query = self.source('label1')
         expected = ['a', 'a', 'a', 'a', 'b', 'b', 'b']
-        self.assertEqual(result, expected)
+        self.assertIsInstance(query, DataQuery2)
+        self.assertEqual(query.execute(), expected)
 
-        result = self.source({'label1': 'label2'})
-        self.assertIsInstance(result, DataQuery)
-
-        result = dict(result.eval())
-        expected = {
-            'a': ['x', 'x', 'y', 'z'],
-            'b': ['z', 'y', 'x'],
-        }
-        self.assertEqual(result, expected)
+        query = self.source({'label1': 'label2'})
+        expected = {'a': ['x', 'x', 'y', 'z'], 'b': ['z', 'y', 'x']}
+        self.assertIsInstance(query, DataQuery2)
+        self.assertEqual(query.execute(), expected)
 
 
 class TestDataSourceOptimizations(unittest.TestCase):
