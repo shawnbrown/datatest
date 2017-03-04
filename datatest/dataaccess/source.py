@@ -26,22 +26,26 @@ class ItemsIter(collections.Iterator):
     for constructing a dictionary or other mapping.
     """
     def __init__(self, iterable):
-        self._iterator = iter(iterable)  # <- Here, we use _iterator
-                                         #    instead of __wrapped__
-    def __iter__(self):                  #    because this iterable
-        return self                      #    should not be
-                                         #    automatically unwrapped.
+        while hasattr(iterable, '__wrapped__'):
+            iterable = iterable.__wrapped__
+        self.__wrapped__ = iter(iterable)
+
+    def __iter__(self):
+        return self
+
     def __next__(self):
-        return next(self._iterator)
+        return next(self.__wrapped__)
 
     def next(self):
-        return next(self._iterator)  # For Python 2 compatibility.
+        return next(self.__wrapped__)  # For Python 2 compatibility.
 
 
 def _is_collection_of_items(obj):
     while hasattr(obj, '__wrapped__'):
+        if isinstance(obj, ItemsIter):
+            return True
         obj = obj.__wrapped__
-    return isinstance(obj, (ItemsIter, collections.ItemsView))
+    return isinstance(obj, collections.ItemsView)
 
 
 class DataIterator(collections.Iterator):
@@ -62,7 +66,8 @@ class DataIterator(collections.Iterator):
             msg = 'intended_type must be a type, found instance of {0}'
             raise TypeError(msg.format(intended_type.__class__.__name__))
 
-        while hasattr(iterable, '__wrapped__'):
+        while (hasattr(iterable, '__wrapped__')
+                   and not isinstance(iterable, ItemsIter)):
             iterable = iterable.__wrapped__
 
         if isinstance(iterable, collections.Mapping):
@@ -864,7 +869,6 @@ class DataSource(object):
             results = ItemsIter((k, next(v)) for k, v in results)
             return DataIterator(results, intended_type=dict)
         return next(results)
-
 
     def _select(self, *columns, **kwds_filter):
         key_columns, value_columns = self._prepare_column_groups(*columns)
