@@ -42,8 +42,8 @@ from .main import DataTestProgram
 from .main import main
 
 from .dataaccess.source import DataSource
-from .dataaccess.source import DataQuery
-from .dataaccess.result import DataResult
+from .dataaccess.source import DataQuery2
+from .dataaccess.source import DataIterator
 
 
 __version__ = '0.8.0.dev3'
@@ -97,8 +97,8 @@ __all__ = [
 
     # From Data Access sub-package.
     'DataSource',
-    'DataQuery',
-    'DataResult',
+    'DataQuery2',
+    'DataIterator',
 ]
 
 # Temporary alias for old "required" decorator.

@@ -15,8 +15,6 @@ from ..utils.misc import _is_sortable
 from ..utils.misc import _unique_everseen
 from .sqltemp import TemporarySqliteTable
 from .sqltemp import _from_csv
-from .result import DataResult
-from .query import _DataQuery
 
 
 class ItemsIter(collections.Iterator):
@@ -373,6 +371,7 @@ class DataQuery2(object):
 
     @classmethod
     def _from_parts(cls, query_steps=None, initializer=None):
+        # TODO: Make query_steps mandatory (should not allow None).
         if initializer:
             cls._validate_initializer(initializer)
 
@@ -588,27 +587,6 @@ class DataQuery2(object):
         return output
 
 
-class DataQuery(_DataQuery):
-    @staticmethod
-    def _validate_initializer(initializer):
-        if not isinstance(initializer, DataSource):
-            raise TypeError('expected {0!r}, got {1!r}'.format(
-                DataSource.__name__,
-                initializer.__class__.__name__,
-            ))
-
-    @classmethod
-    def _from_parts(cls, query_steps=None, initializer=None):
-        if initializer:
-            cls._validate_initializer(initializer)
-        return super(DataQuery, cls)._from_parts(query_steps, initializer)
-
-    def eval(self, initializer=None, **kwds):
-        initializer = initializer or self._initializer
-        self._validate_initializer(initializer)
-        return super(DataQuery, self).eval(initializer, **kwds)
-
-
 class DataSource(object):
     """A basic data source to quickly load and query data::
 
@@ -747,28 +725,6 @@ class DataSource(object):
     def __call__(self, *columns, **kwds_filter):
         steps = (_query_step('select', columns, kwds_filter),)
         return DataQuery2._from_parts(steps, initializer=self)
-
-    def _prepare_column_groups(self, *columns):
-        """Returns tuple of columns split into key and value groups."""
-        if _is_nsiterable(columns[0]):
-            if len(columns) != 1:
-                raise ValueError('cannot mix container and variable args')
-            if isinstance(columns[0], dict):
-                key_columns, value_columns = tuple(columns[0].items())[0]
-                if isinstance(key_columns, str):
-                    key_columns = tuple([key_columns])
-                if isinstance(value_columns, (str, collections.Mapping)):
-                    value_columns = tuple([value_columns])
-            else:
-                key_columns = tuple()
-                value_columns = tuple(columns[0])
-        else:
-            key_columns = tuple()
-            value_columns = columns
-        self._assert_columns_exist(key_columns + value_columns)
-        key_columns = tuple(self._normalize_column(x) for x in key_columns)
-        value_columns = tuple(self._normalize_column(x) for x in value_columns)
-        return key_columns, value_columns
 
     def _sql_select_cols(self, selection):
         """Returns a string of normalized columns to use with a
@@ -924,116 +880,6 @@ class DataSource(object):
             results = ItemsIter((k, next(v)) for k, v in results)
             return DataIterator(results, intended_type=dict)
         return next(results)
-
-    def _select(self, *columns, **kwds_filter):
-        key_columns, value_columns = self._prepare_column_groups(*columns)
-        select_clause = ', '.join(key_columns + value_columns)
-
-        if not key_columns:
-            cursor = self._execute_query(
-                select_clause,
-                **kwds_filter
-            )
-            if len(value_columns) == 1:
-                return DataResult((row[0] for row in cursor), list)  # <- EXIT!
-            return DataResult(cursor, list)  # <- EXIT!
-
-        trailing_clause = 'ORDER BY {0}'.format(', '.join(key_columns))
-        cursor = self._execute_query(
-            select_clause,
-            trailing_clause,
-            **kwds_filter
-        )
-        # If one key column, get single key value, else get key tuples.
-        slice_index = len(key_columns)
-        if slice_index == 1:
-            keyfunc = lambda row: row[0]
-        else:
-            keyfunc = lambda row: row[:slice_index]
-
-        # If one value column, get iterable of single values, else get
-        # an iterable of row tuples.
-        if len(value_columns) == 1:
-            valuefunc = lambda group: (row[-1] for row in group)
-        else:
-            valuefunc = lambda group: (row[slice_index:] for row in group)
-
-        # Parse rows.
-        grouped = itertools.groupby(cursor, keyfunc)
-        grouped = ((k, valuefunc(g)) for k, g in grouped)
-        grouped = ((k, DataResult(g, evaluates_to=list)) for k, g in grouped)
-        return DataResult(grouped, evaluates_to=dict)
-
-    def _select_distinct(self, *columns, **kwds_filter):
-        key_columns, value_columns = self._prepare_column_groups(*columns)
-        select_clause = ', '.join(key_columns + value_columns)
-        select_clause = 'DISTINCT ' + select_clause
-
-        if not key_columns:
-            cursor = self._execute_query(
-                select_clause,
-                **kwds_filter
-            )
-            if len(value_columns) == 1:
-                return DataResult((row[0] for row in cursor), list)  # <- EXIT!
-            return DataResult(cursor, list)  # <- EXIT!
-
-        trailing_clause = 'ORDER BY {0}'.format(', '.join(key_columns))
-        cursor = self._execute_query(
-            select_clause,
-            trailing_clause,
-            **kwds_filter
-        )
-        # If one key column, get single key value, else get key tuples.
-        slice_index = len(key_columns)
-        if slice_index == 1:
-            keyfunc = lambda row: row[0]
-        else:
-            keyfunc = lambda row: row[:slice_index]
-
-        # If one value column, get iterable of single values, else get
-        # an iterable of row tuples.
-        if len(value_columns) == 1:
-            valuefunc = lambda group: (row[-1] for row in group)
-        else:
-            valuefunc = lambda group: (row[slice_index:] for row in group)
-
-        # Parse rows.
-        grouped = itertools.groupby(cursor, keyfunc)
-        grouped = ((k, valuefunc(g)) for k, g in grouped)
-        grouped = ((k, DataResult(g, evaluates_to=list)) for k, g in grouped)
-        return DataResult(grouped, evaluates_to=dict)
-
-    def _select_aggregate(self, sqlfunc, *columns, **kwds_filter):
-        key_columns, value_columns = self._prepare_column_groups(*columns)
-        if len(value_columns) != 1:
-            raise ValueError('expects single value column')
-        sql_function = '{0}({1})'.format(sqlfunc, value_columns[0])
-
-        if not key_columns:
-            cursor = self._execute_query(sql_function, **kwds_filter)
-            result = cursor.fetchone()
-            return result[0]  # <- EXIT!
-
-        group_by = ', '.join(key_columns)
-        select_clause = '{0}, {1}'.format(group_by, sql_function)
-        trailing_clause = 'GROUP BY ' + group_by
-
-        cursor = self._execute_query(
-            select_clause,
-            trailing_clause,
-            **kwds_filter
-        )
-        # If one key column, get single key value, else get key tuples.
-        slice_index = len(key_columns)
-        if slice_index == 1:
-            keyfunc = lambda row: row[0]
-        else:
-            keyfunc = lambda row: row[:slice_index]
-
-        # Parse rows.
-        iterable = ((keyfunc(x), x[-1]) for x in cursor)
-        return DataResult(iterable, evaluates_to=dict)
 
     def __repr__(self):
         """Return a string representation of the data source."""
