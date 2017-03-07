@@ -335,6 +335,16 @@ def _get_step_repr(step):
     return '{0}, ({1}), {{{2}}}'.format(func_repr, args_repr, kwds_repr)
 
 
+_query_step = collections.namedtuple(
+    typename='query_step',
+    field_names=('name', 'args', 'kwds')
+)
+_execution_step = collections.namedtuple(
+    typename='execution_step',
+    field_names=('function', 'args', 'kwds')
+)
+
+
 class _RESULT_TOKEN(object):
     def __repr__(self):
         return '<result>'
@@ -345,8 +355,7 @@ del _RESULT_TOKEN
 class DataQuery2(object):
     def __init__(self, selection, **where):
         self._query_steps = tuple([
-            (getattr, (RESULT_TOKEN, '_select2'), {}),
-            (RESULT_TOKEN, (selection,), where),
+            _query_step('select', (selection,), where),
         ])
         self._initializer = None
 
@@ -377,63 +386,113 @@ class DataQuery2(object):
         new_cls._initializer = initializer
         return new_cls
 
-    def _append_new(self, step):
-        steps = self._query_steps + (step,)
+    def _add_step(self, name, *args, **kwds):
+        steps = self._query_steps + (_query_step(name, args, kwds),)
         new_query = self.__class__._from_parts(steps, self._initializer)
         return new_query
 
     def map(self, function):
-        step = (_map_data, (function, RESULT_TOKEN), {})
-        return self._append_new(step)
+        return self._add_step('map', function)
 
     def filter(self, function):
-        step = (_filter_data, (function, RESULT_TOKEN), {})
-        return self._append_new(step)
+        return self._add_step('filter', function)
 
     def reduce(self, function):
-        step = (_reduce_data, (function, RESULT_TOKEN), {})
-        return self._append_new(step)
+        return self._add_step('reduce', function)
 
     def sum(self):
-        step = (_apply_to_data, (_sqlite_sum, RESULT_TOKEN,), {})
-        return self._append_new(step)
+        return self._add_step('sum')
 
     def count(self):
-        step = (_apply_to_data, (_sqlite_count, RESULT_TOKEN,), {})
-        return self._append_new(step)
+        return self._add_step('count')
 
     def avg(self):
-        step = (_apply_to_data, (_sqlite_avg, RESULT_TOKEN,), {})
-        return self._append_new(step)
+        return self._add_step('avg')
 
     def min(self):
-        step = (_apply_to_data, (_sqlite_min, RESULT_TOKEN,), {})
-        return self._append_new(step)
+        return self._add_step('min')
 
     def max(self):
-        step = (_apply_to_data, (_sqlite_max, RESULT_TOKEN,), {})
-        return self._append_new(step)
+        return self._add_step('max')
 
     def distinct(self):
-        step = (_sqlite_distinct, (RESULT_TOKEN,), {})
-        return self._append_new(step)
+        return self._add_step('distinct')
 
     def set(self):
-        step = (_set_data, (RESULT_TOKEN,), {})
-        return self._append_new(step)
+        return self._add_step('set')
 
     @staticmethod
-    def _optimize(query_steps):
+    def _translate_step(query_step):
+        """Accepts a query step and returns a corresponding execution
+        step.
+        """
+        name, query_args, query_kwds = query_step
+
+        if name == 'map':
+            function = _map_data
+            args = (query_args[0], RESULT_TOKEN,)
+        elif name == 'filter':
+            function = _filter_data
+            args = (query_args[0], RESULT_TOKEN,)
+        elif name == 'reduce':
+            function = _reduce_data
+            args = (query_args[0], RESULT_TOKEN,)
+        elif name == 'sum':
+            function = _apply_to_data
+            args = (_sqlite_sum, RESULT_TOKEN)
+        elif name == 'count':
+            function = _apply_to_data
+            args = (_sqlite_count, RESULT_TOKEN)
+        elif name == 'avg':
+            function = _apply_to_data
+            args = (_sqlite_avg, RESULT_TOKEN)
+        elif name == 'min':
+            function = _apply_to_data
+            args = (_sqlite_min, RESULT_TOKEN)
+        elif name == 'max':
+            function = _apply_to_data
+            args = (_sqlite_max, RESULT_TOKEN)
+        elif name == 'distinct':
+            function = _sqlite_distinct
+            args = (RESULT_TOKEN,)
+        elif name == 'set':
+            function = _set_data
+            args = (RESULT_TOKEN,)
+        elif name == 'select':
+            raise ValueError("this method does not handle 'select' step")
+        else:
+            raise ValueError('unrecognized query function {0!r}'.format(name))
+
+        return _execution_step(function, args, {})
+
+    @classmethod
+    def _get_execution_plan(cls, query_steps):
+        if not query_steps:
+            return ()
+        query_steps = iter(query_steps)
+        first_name, first_args, first_kwds = next(query_steps)
+        assert first_name == 'select', "first query step must be a 'select'"
+        execution_plan = [
+            _execution_step(getattr, (RESULT_TOKEN, '_select2'), {}),
+            _execution_step(RESULT_TOKEN, first_args, first_kwds),
+        ]
+        for query_step in query_steps:
+            execution_step = cls._translate_step(query_step)
+            execution_plan.append(execution_step)
+        return tuple(execution_plan)
+
+    @staticmethod
+    def _optimize(execution_plan):
         try:
-            step_0 = query_steps[0]
-            step_1 = query_steps[1]
-            step_2 = query_steps[2]
-            remaining_steps = query_steps[3:]
+            step_0 = execution_plan[0]
+            step_1 = execution_plan[1]
+            step_2 = execution_plan[2]
+            remaining_steps = execution_plan[3:]
         except IndexError:
-            return query_steps  # <- EXIT!
+            return None  # <- EXIT!
 
         if step_0 != (getattr, (RESULT_TOKEN, '_select2'), {}):
-            return query_steps  # <- EXIT!
+            return None  # <- EXIT!
 
         if step_2[0] == _apply_to_data:
             func_dict = {
@@ -470,7 +529,7 @@ class DataQuery2(object):
 
         if optimized_steps:
             return optimized_steps + remaining_steps
-        return query_steps
+        return None
 
     def execute(self, initializer=None, **kwds):
         """
@@ -496,12 +555,12 @@ class DataQuery2(object):
             raise TypeError('got an unexpected keyword '
                             'argument {0!r}'.format(key))
 
-        query_steps = self._query_steps
+        execution_plan = self._get_execution_plan(self._query_steps)
         if optimize:
-            query_steps = self._optimize(query_steps)
+            execution_plan = self._optimize(execution_plan) or execution_plan
 
         replace_token = lambda x: result if x is RESULT_TOKEN else x
-        for step in query_steps:
+        for step in execution_plan:
             function, args, keywords = step  # Unpack 3-tuple.
             function = replace_token(function)
             args = tuple(replace_token(x) for x in args)
@@ -686,10 +745,7 @@ class DataSource(object):
             raise LookupError(msg)
 
     def __call__(self, *columns, **kwds_filter):
-        steps = [
-            (getattr, (RESULT_TOKEN, '_select2',), {}),
-            (RESULT_TOKEN, columns, kwds_filter),
-        ]
+        steps = (_query_step('select', columns, kwds_filter),)
         return DataQuery2._from_parts(steps, initializer=self)
 
     def _prepare_column_groups(self, *columns):
