@@ -46,7 +46,7 @@ def _is_collection_of_items(obj):
     return isinstance(obj, collections.ItemsView)
 
 
-class DataIterator(collections.Iterator):
+class DataResult(collections.Iterator):
     """A wrapper for results from DataQuery and DataSource method
     calls. The given *iterable* should contain data appropriate
     for constructing an object of the *intended_type*.
@@ -137,11 +137,11 @@ def _get_intended_type(obj):
 
 def _apply_to_data(function, data_iterator):
     """Applies a *function* of one argument to the to the given
-    DataIterator *data_iterator*.
+    iterator *data_iterator*.
     """
     if _is_collection_of_items(data_iterator):
         result = ItemsIter((k, function(v)) for k, v in data_iterator)
-        return DataIterator(result, _get_intended_type(data_iterator))
+        return DataResult(result, _get_intended_type(data_iterator))
     return function(data_iterator)
 
 
@@ -149,7 +149,7 @@ def _map_data(function, iterable):
     def wrapper(iterable):
         if _is_nsiterable(iterable):
             intended_type = _get_intended_type(iterable)
-            return DataIterator(map(function, iterable), intended_type)
+            return DataResult(map(function, iterable), intended_type)
         return function(iterable)
 
     return _apply_to_data(wrapper, iterable)
@@ -170,7 +170,7 @@ def _filter_data(function, iterable):
             msg= 'filter expects a non-string iterable, found {0}'
             raise TypeError(msg.format(iterable.__class__.__name__))
         filtered_data = filter(function, iterable)
-        return DataIterator(filtered_data, _get_intended_type(iterable))
+        return DataResult(filtered_data, _get_intended_type(iterable))
 
     return _apply_to_data(wrapper, iterable)
 
@@ -282,11 +282,11 @@ def _sqlite_distinct(iterable):
     def dodistinct(itr):
         if not _is_nsiterable(itr):
             return itr
-        return DataIterator(_unique_everseen(itr), _get_intended_type(itr))
+        return DataResult(_unique_everseen(itr), _get_intended_type(itr))
 
     if _is_collection_of_items(iterable):
         result = ItemsIter((k, dodistinct(v)) for k, v in iterable)
-        return DataIterator(result, _get_intended_type(iterable))
+        return DataResult(result, _get_intended_type(iterable))
     return dodistinct(iterable)
 
 
@@ -295,11 +295,11 @@ def _cast_as_set(iterable):
     def makeset(itr):
         if not _is_nsiterable(itr):
             itr = [itr]
-        return DataIterator(itr, intended_type=set)
+        return DataResult(itr, intended_type=set)
 
     if _is_collection_of_items(iterable):
         result = ItemsIter((k, makeset(v)) for k, v in iterable)
-        return DataIterator(result, _get_intended_type(iterable))
+        return DataResult(result, _get_intended_type(iterable))
     return makeset(iterable)
 
 
@@ -350,7 +350,7 @@ RESULT_TOKEN = _RESULT_TOKEN()
 del _RESULT_TOKEN
 
 
-class DataQuery2(object):
+class DataQuery(object):
     def __init__(self, selection, **where):
         self._query_steps = tuple([
             _query_step('select', (selection,), where),
@@ -472,7 +472,7 @@ class DataQuery2(object):
         first_name, first_args, first_kwds = next(query_steps)
         assert first_name == 'select', "first query step must be a 'select'"
         execution_plan = [
-            _execution_step(getattr, (RESULT_TOKEN, '_select2'), {}),
+            _execution_step(getattr, (RESULT_TOKEN, '_select'), {}),
             _execution_step(RESULT_TOKEN, first_args, first_kwds),
         ]
         for query_step in query_steps:
@@ -490,7 +490,7 @@ class DataQuery2(object):
         except IndexError:
             return None  # <- EXIT!
 
-        if step_0 != (getattr, (RESULT_TOKEN, '_select2'), {}):
+        if step_0 != (getattr, (RESULT_TOKEN, '_select'), {}):
             return None  # <- EXIT!
 
         if step_2[0] == _apply_to_data:
@@ -507,19 +507,19 @@ class DataQuery2(object):
                 func_1, args_1, kwds_1 = step_1
                 args_1 = (sqlite_function,) + args_1  # <- Add SQL function
                 optimized_steps = (                   #    as 1st arg.
-                    (getattr, (RESULT_TOKEN, '_select2_aggregate'), {}),
+                    (getattr, (RESULT_TOKEN, '_select_aggregate'), {}),
                     (func_1, args_1, kwds_1),
                 )
             else:
                 optimized_steps = ()
         elif step_2 == (_sqlite_distinct, (RESULT_TOKEN,), {}):
             optimized_steps = (
-                (getattr, (RESULT_TOKEN, '_select2_distinct'), {}),
+                (getattr, (RESULT_TOKEN, '_select_distinct'), {}),
                 step_1,
             )
         elif step_2 == (_set_data, (RESULT_TOKEN,), {}):
             optimized_steps = (
-                (getattr, (RESULT_TOKEN, '_select2_distinct'), {}),
+                (getattr, (RESULT_TOKEN, '_select_distinct'), {}),
                 step_1,
                 (_cast_as_set, (RESULT_TOKEN,), {}),
             )
@@ -566,7 +566,7 @@ class DataQuery2(object):
             keywords = dict((k, replace_token(v)) for k, v in keywords.items())
             result = function(*args, **keywords)
 
-        if isinstance(result, DataIterator) and not lazy:
+        if isinstance(result, DataResult) and not lazy:
             result = result.evaluate()
 
         return result
@@ -724,7 +724,7 @@ class DataSource(object):
 
     def __call__(self, *columns, **kwds_filter):
         steps = (_query_step('select', columns, kwds_filter),)
-        return DataQuery2._from_parts(steps, initializer=self)
+        return DataQuery._from_parts(steps, initializer=self)
 
     def _sql_select_cols(self, selection):
         """Returns a string of normalized columns to use with a
@@ -756,7 +756,7 @@ class DataSource(object):
         for use with a GROUP BY or ORDER BY clause.
 
         The *selection* can be a string, sequence, set or mapping--see
-        the _select2() method for details.
+        the _select() method for details.
         """
         if isinstance(selection, str):
             return self._normalize_column(selection)  # <- EXIT!
@@ -779,21 +779,21 @@ class DataSource(object):
         from DBAPI2-compliant *cursor*.
 
         The *selection* can be a string, sequence, set or mapping--see
-        the _select2() method for details.
+        the _select() method for details.
         """
         if isinstance(selection, str):
             result = (row[0] for row in cursor)
-            return DataIterator(result, intended_type=list) # <- EXIT!
+            return DataResult(result, intended_type=list) # <- EXIT!
 
         if isinstance(selection, collections.Sequence):
             result_type = type(selection)
             result = (result_type(x) for x in cursor)
-            return DataIterator(result, intended_type=list) # <- EXIT!
+            return DataResult(result, intended_type=list) # <- EXIT!
 
         if isinstance(selection, collections.Set):
             result_type = type(selection)
             result = (result_type(x) for x in cursor)
-            return DataIterator(result, intended_type=set) # <- EXIT!
+            return DataResult(result, intended_type=set) # <- EXIT!
 
         if isinstance(selection, collections.Mapping):
             result_type = type(selection)
@@ -811,19 +811,19 @@ class DataSource(object):
             if issubclass(value_type, str):
                 def valuefunc(group):
                     result = (row[-1] for row in group)
-                    return DataIterator(result, intended_type=list)
+                    return DataResult(result, intended_type=list)
             else:
                 def valuefunc(group):
                     group = (row[slice_index:] for row in group)
                     result = (value_type(row) for row in group)
-                    return DataIterator(result, intended_type=list)
+                    return DataResult(result, intended_type=list)
 
             result =  ItemsIter((k, valuefunc(g)) for k, g in grouped)
-            return DataIterator(result, intended_type=result_type) # <- EXIT!
+            return DataResult(result, intended_type=result_type) # <- EXIT!
 
         raise TypeError('type {0!r} not supported'.format(type(selection)))
 
-    def _select2(self, selection, **where):
+    def _select(self, selection, **where):
         select = self._sql_select_cols(selection)
         if isinstance(selection, collections.Mapping):
             order_cols = self._sql_group_order_cols(selection)
@@ -833,7 +833,7 @@ class DataSource(object):
         cursor = self._execute_query(select, order_by, **where)
         return self._format_results(selection, cursor)
 
-    def _select2_distinct(self, selection, **where):
+    def _select_distinct(self, selection, **where):
         select_cols = self._sql_select_cols(selection)
         select = 'DISTINCT {0}'.format(select_cols)
         if isinstance(selection, collections.Mapping):
@@ -844,7 +844,7 @@ class DataSource(object):
         cursor = self._execute_query(select, order_by, **where)
         return self._format_results(selection, cursor)
 
-    def _select2_aggregate(self, sqlfunc, selection, **where):
+    def _select_aggregate(self, sqlfunc, selection, **where):
         """."""
         sqlfunc = sqlfunc.upper()
 
@@ -878,7 +878,7 @@ class DataSource(object):
 
         if isinstance(selection, collections.Mapping):
             results = ItemsIter((k, next(v)) for k, v in results)
-            return DataIterator(results, intended_type=dict)
+            return DataResult(results, intended_type=dict)
         return next(results)
 
     def __repr__(self):

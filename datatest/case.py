@@ -6,8 +6,8 @@ from unittest import TestCase
 from .utils.builtins import *
 from .utils import collections
 
-from .dataaccess.source import DataQuery2
-from .dataaccess.source import DataIterator
+from .dataaccess.source import DataQuery
+from .dataaccess.source import DataResult
 
 from .compare import _compare_mapping
 from .compare import _compare_sequence
@@ -186,14 +186,14 @@ class DataTestCase(TestCase):
         #       "On failure, an :py:class:`AssertionError` is raised"
 
         # Evaluate query and result objects.
-        if isinstance(data, DataQuery2):
+        if isinstance(data, DataQuery):
             data = data.execute()
-        elif isinstance(data, DataIterator):
+        elif isinstance(data, DataResult):
             data = data.evaluate()
 
-        if isinstance(requirement, DataQuery2):
+        if isinstance(requirement, DataQuery):
             requirement = requirement.execute()
-        elif isinstance(requirement, DataIterator):
+        elif isinstance(requirement, DataResult):
             requirement = requirement.evaluate()
 
         # If using *function* signature, normalize arguments and get data.
