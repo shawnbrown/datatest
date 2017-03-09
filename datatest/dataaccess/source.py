@@ -5,6 +5,7 @@ import collections
 import functools
 import itertools
 import os
+import sys
 from numbers import Number
 from sqlite3 import Binary
 
@@ -345,12 +346,14 @@ _execution_step = collections.namedtuple(
 
 class _RESULT_TOKEN(object):
     def __repr__(self):
-        return '<result>'
+        return '<RESULT>'
 RESULT_TOKEN = _RESULT_TOKEN()
 del _RESULT_TOKEN
 
 
 class DataQuery(object):
+    """A class to query
+    """
     def __init__(self, selection, **where):
         self._query_steps = tuple([
             _query_step('select', (selection,), where),
@@ -571,21 +574,34 @@ class DataQuery(object):
 
         return result
 
-    def explain(self):
-        """Return string of current query steps."""
-        unoptimized_steps = self._query_steps
-        steps = [_get_step_repr(step) for step in unoptimized_steps]
+    def _explain(self, optimize=True, file=sys.stdout):
+        """A convenience method primarily intended to help when
+        debugging and developing execution plan optimizations.
+
+        Prints execution plan to the text stream *file* (defaults
+        to stdout). If *optimize* is True, an optimized plan will
+        be printed if one can be constructed.
+
+        If *file* is set to None, returns execution plan as a string.
+        """
+        execution_plan = self._get_execution_plan(self._query_steps)
+
+        optimized_text = ''
+        if optimize:
+            optimized_plan = self._optimize(execution_plan)
+            if optimized_plan:
+                execution_plan = optimized_plan
+                optimized_text = ' (optimized)'
+
+        steps = [_get_step_repr(step) for step in execution_plan]
         steps = '\n'.join('  {0}'.format(step) for step in steps)
-        output = 'Steps:\n{0}'.format(steps)
+        formatted = 'Execution Plan{0}:\n{1}'.format(optimized_text, steps)
 
-        optimized_steps = self._optimize(unoptimized_steps)
-        if optimized_steps != unoptimized_steps:
-            steps = [_get_step_repr(step) for step in optimized_steps]
-            steps = '\n'.join('  {0}'.format(step) for step in steps)
-            output += '\n\nOptimized steps:\n{0}'.format(steps)
-
-        return output
-
+        if file:
+            file.write(formatted)
+            file.write('\n')
+        else:
+            return formatted
 
 class DataSource(object):
     """A basic data source to quickly load and query data::

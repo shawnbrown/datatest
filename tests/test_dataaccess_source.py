@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 import textwrap
+from . import _io as io
 
 from . import _unittest as unittest
 from datatest.utils import collections
@@ -820,3 +821,25 @@ class TestDataSourceBasics(unittest.TestCase):
         expected = {'a': ['x', 'x', 'y', 'z'], 'b': ['z', 'y', 'x']}
         self.assertIsInstance(query, DataQuery)
         self.assertEqual(query.execute(), expected)
+
+    def test_explain(self):
+        query = DataQuery('label1')
+
+        expected = """
+            Execution Plan:
+              getattr, (<RESULT>, '_select'), {}
+              <RESULT>, ('label1'), {}
+        """
+        expected = textwrap.dedent(expected).strip()
+
+        # Defaults to stdout (redirected to StringIO for testing).
+        string_io = io.StringIO()
+        returned_value = query._explain(file=string_io)
+        self.assertIsNone(returned_value)
+
+        printed_value = string_io.getvalue().strip()
+        self.assertEqual(printed_value, expected)
+
+        # Get result as string.
+        returned_value = query._explain(file=None)
+        self.assertEqual(returned_value, expected)
