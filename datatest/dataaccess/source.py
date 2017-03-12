@@ -48,22 +48,26 @@ def _is_collection_of_items(obj):
 
 
 class DataResult(collections.Iterator):
-    """A wrapper for results from DataQuery and DataSource method
-    calls. The given *iterable* should contain data appropriate
-    for constructing an object of the *intended_type*.
+    """An iterator of results from a :class:`DataQuery` object.
+    While they are usually constructed inernally when executing
+    a query, it's possible to create them directly::
+
+        iterable = iter([...])
+        data = DataResult(iterable, evaluation_type=list)
+
+    The *iterable* is expected to return data appropriate for
+    constructing an object of the given *evaluation_type*. When
+    the *evaluation_type* is a :py:class:`dict` or other mapping,
+    the *iterable* should contain suitable key-value pairs.
 
     The primary purpose of this wrapper is to facilitate the lazy
     evaluation of data objects (where possible) when asserting
     data validity.
-
-    The underlying iterator is accessible through the __wrapped__
-    attribute. This is useful when introspecting or rewrapping
-    the iterator.
     """
-    def __init__(self, iterable, intended_type):
-        if not isinstance(intended_type, type):
-            msg = 'intended_type must be a type, found instance of {0}'
-            raise TypeError(msg.format(intended_type.__class__.__name__))
+    def __init__(self, iterable, evaluation_type):
+        if not isinstance(evaluation_type, type):
+            msg = 'evaluation_type must be a type, found instance of {0}'
+            raise TypeError(msg.format(evaluation_type.__class__.__name__))
 
         while (hasattr(iterable, '__wrapped__')
                    and not isinstance(iterable, ItemsIter)):
@@ -72,25 +76,30 @@ class DataResult(collections.Iterator):
         if isinstance(iterable, collections.Mapping):
             iterable = ItemsIter(iterable.items())
 
-        if (issubclass(intended_type, collections.Mapping)
+        if (issubclass(evaluation_type, collections.Mapping)
                 and not _is_collection_of_items(iterable)):
             cls_name = iterable.__class__.__name__
-            raise TypeError('when intended_type is a mapping, '
+            raise TypeError('when evaluation_type is a mapping, '
                             'iterator must be ItemsIter or ItemsView, '
                             'found {0} instead'.format(cls_name))
 
+        #: The underlying iterator---useful when introspecting
+        #: or rewrapping.
         self.__wrapped__ = iter(iterable)
-        self.intended_type = intended_type
+
+        #: The type of instance returned by the
+        #: :meth:`evaluate <DataResult.evaluate>` method.
+        self.evaluation_type = evaluation_type
 
     def __iter__(self):
         return self
 
     def __repr__(self):
         cls_name = self.__class__.__name__
-        rtn_name = self.intended_type.__name__
+        eval_name = self.evaluation_type.__name__
         hex_id = hex(id(self))
-        template = '<{0} intended_type={1} at {2}>'
-        return template.format(cls_name, rtn_name, hex_id)
+        template = '<{0} object (evaluation_type={1}) at {2}>'
+        return template.format(cls_name, eval_name, hex_id)
 
     def __next__(self):
         return next(self.__wrapped__)
@@ -99,26 +108,37 @@ class DataResult(collections.Iterator):
         return next(self.__wrapped__)  # For Python 2 compatibility.
 
     def evaluate(self):
-        intended_type = self.intended_type
-        if issubclass(intended_type, collections.Mapping):
+        """Evaluate the entire iterator and return its result::
+
+            iterable = iter([...])
+            data = DataResult(iterable, evaluation_type=list)
+            data_list = data.evaluate()  # <- Returns a list of values.
+
+        When evaluating the keys and values of a :py:class:`dict`
+        or other mapping, any values that are, themselves,
+        :class:`DataResult` objects will also be evaluated.
+        """
+        evaluation_type = self.evaluation_type
+        if issubclass(evaluation_type, collections.Mapping):
             def func(obj):
-                if hasattr(obj, 'intended_type'):
-                    return obj.intended_type(obj)
+                if hasattr(obj, 'evaluation_type'):
+                    return obj.evaluation_type(obj)
                 return obj
 
-            return intended_type((k, func(v)) for k, v in self)
+            return evaluation_type((k, func(v)) for k, v in self)
 
-        return intended_type(self)
+        return evaluation_type(self)
 
 
-def _get_intended_type(obj):
-    """Return object's intended_type property. If the object does not
-    have an intended_type property and is a mapping, sequence, or set,
-    then return the type of the object itself. If the object is an
-    iterable, return None. Raises a Type error for any other object.
+def _get_evaluation_type(obj):
+    """Return object's evaluation_type property. If the object does
+    not have an evaluation_type property and is a mapping, sequence,
+    or set, then return the type of the object itself. If the object
+    is an iterable, return None. Raises a Type error for any other
+    object.
     """
-    if hasattr(obj, 'intended_type'):
-        return obj.intended_type  # <- EXIT!
+    if hasattr(obj, 'evaluation_type'):
+        return obj.evaluation_type  # <- EXIT!
 
     #if _is_collection_of_items(obj):
     #    return dict
@@ -137,20 +157,20 @@ def _get_intended_type(obj):
 
 
 def _apply_to_data(function, data_iterator):
-    """Applies a *function* of one argument to the to the given
+    """Apply a *function* of one argument to the to the given
     iterator *data_iterator*.
     """
     if _is_collection_of_items(data_iterator):
         result = ItemsIter((k, function(v)) for k, v in data_iterator)
-        return DataResult(result, _get_intended_type(data_iterator))
+        return DataResult(result, _get_evaluation_type(data_iterator))
     return function(data_iterator)
 
 
 def _map_data(function, iterable):
     def wrapper(iterable):
         if _is_nsiterable(iterable):
-            intended_type = _get_intended_type(iterable)
-            return DataResult(map(function, iterable), intended_type)
+            evaluation_type = _get_evaluation_type(iterable)
+            return DataResult(map(function, iterable), evaluation_type)
         return function(iterable)
 
     return _apply_to_data(wrapper, iterable)
@@ -171,7 +191,7 @@ def _filter_data(function, iterable):
             msg= 'filter expects a non-string iterable, found {0}'
             raise TypeError(msg.format(iterable.__class__.__name__))
         filtered_data = filter(function, iterable)
-        return DataResult(filtered_data, _get_intended_type(iterable))
+        return DataResult(filtered_data, _get_evaluation_type(iterable))
 
     return _apply_to_data(wrapper, iterable)
 
@@ -183,6 +203,7 @@ def _sqlite_cast_as_real(value):
 
         https://www.sqlite.org/lang_expr.html#castexpr
     """
+    # TODO: Implement behavioral parity with SQLite and add tests.
     try:
         return float(value)
     except ValueError:
@@ -204,7 +225,7 @@ def _sqlite_sum(iterable):
 
 
 def _sqlite_count(iterable):
-    """Returns the number non-NULL (!= None) elements in iterable."""
+    """Return the number non-NULL (!= None) elements in iterable."""
     if not _is_nsiterable(iterable):
         iterable = [iterable]
     return sum(1 for x in iterable if x != None)
@@ -278,41 +299,42 @@ def _sqlite_max(iterable):
 
 def _sqlite_distinct(iterable):
     """Filter iterable to unique values, while maintaining
-    intended_type.
+    evaluation_type.
     """
     def dodistinct(itr):
         if not _is_nsiterable(itr):
             return itr
-        return DataResult(_unique_everseen(itr), _get_intended_type(itr))
+        return DataResult(_unique_everseen(itr), _get_evaluation_type(itr))
 
     if _is_collection_of_items(iterable):
         result = ItemsIter((k, dodistinct(v)) for k, v in iterable)
-        return DataResult(result, _get_intended_type(iterable))
+        return DataResult(result, _get_evaluation_type(iterable))
     return dodistinct(iterable)
 
 
 def _cast_as_set(iterable):
-    """Change intended_type to set."""
+    """Change evaluation_type to set."""
     def makeset(itr):
         if not _is_nsiterable(itr):
             itr = [itr]
-        return DataResult(itr, intended_type=set)
+        return DataResult(itr, evaluation_type=set)
 
     if _is_collection_of_items(iterable):
         result = ItemsIter((k, makeset(v)) for k, v in iterable)
-        return DataResult(result, _get_intended_type(iterable))
+        return DataResult(result, _get_evaluation_type(iterable))
+        # TODO: Check above line looks like it's eagerly evaluating.
     return makeset(iterable)
 
 
 def _set_data(iterable):
-    """Filter iterable to unique values and change intended_type to
+    """Filter iterable to unique values and change evaluation_type to
     set.
     """
     return _cast_as_set(_sqlite_distinct(iterable))
 
 
 def _get_step_repr(step):
-    """Helper function returns repr for a single query step."""
+    """Helper function to return repr for a single query step."""
     func, args, kwds = step
 
     def _callable_name_or_repr(x):  # <- Helper function for
@@ -352,20 +374,24 @@ del _RESULT_TOKEN
 
 
 class DataQuery(object):
-    """A class to query
+    """A class to query data from a :class:`DataSource` object.
+
+    A DataQuery can be created and passed around without actually
+    computing the result. No data computation occurs until the
+    :meth:`execute` method is called.
     """
     def __init__(self, selection, **where):
         self._query_steps = tuple([
             _query_step('select', (selection,), where),
         ])
-        self._initializer = None
+        self._source = None
 
     @staticmethod
-    def _validate_initializer(initializer):
-        if not isinstance(initializer, DataSource):
+    def _validate_source(source):
+        if not isinstance(source, DataSource):
             raise TypeError('expected {0!r}, got {1!r}'.format(
                 DataSource.__name__,
-                initializer.__class__.__name__,
+                source.__class__.__name__,
             ))
 
     #@staticmethod
@@ -373,10 +399,10 @@ class DataQuery(object):
     #    pass
 
     @classmethod
-    def _from_parts(cls, query_steps=None, initializer=None):
+    def _from_parts(cls, query_steps=None, source=None):
         # TODO: Make query_steps mandatory (should not allow None).
-        if initializer:
-            cls._validate_initializer(initializer)
+        if source:
+            cls._validate_source(source)
 
         if query_steps:
             query_steps = tuple(query_steps)
@@ -385,47 +411,65 @@ class DataQuery(object):
 
         new_cls = cls.__new__(cls)
         new_cls._query_steps = query_steps
-        new_cls._initializer = initializer
+        new_cls._source = source
         return new_cls
 
     def _add_step(self, name, *args, **kwds):
         steps = self._query_steps + (_query_step(name, args, kwds),)
-        new_query = self.__class__._from_parts(steps, self._initializer)
+        new_query = self.__class__._from_parts(steps, self._source)
         return new_query
 
     def map(self, function):
+        """Apply *function* to each value keeping the resulting data."""
         return self._add_step('map', function)
 
     def filter(self, function):
+        """Filter data, keeping only those values for which *function*
+        returns true. If *function* is None, this method keeps all
+        values for which :py:class:`bool` returns true.
+        """
         return self._add_step('filter', function)
 
     def reduce(self, function):
+        """Reduce data to a single value by applying a *function* of
+        two arguments cumulatively to all values from left to right.
+        """
         return self._add_step('reduce', function)
 
     def sum(self):
+        """Sum all non-None values in the group to prooduce a total."""
         return self._add_step('sum')
 
     def count(self):
+        """Count the number of all non-None values in the group."""
         return self._add_step('count')
 
     def avg(self):
+        """Get the average value of all non-None values. String and
+        other objects that do not look like numbers are interpreted
+        as 0.
+        """
         return self._add_step('avg')
 
     def min(self):
+        """Get the minimum value of all values."""
         return self._add_step('min')
 
     def max(self):
+        """Get the maximum value of all values."""
         return self._add_step('max')
 
     def distinct(self):
+        """Filter data, removing duplicate values."""
         return self._add_step('distinct')
 
     def set(self):
+        """Change result's evaluation type to :py:class:`set`."""
         return self._add_step('set')
 
     @staticmethod
     def _translate_step(query_step):
-        """Accepts a query step and returns a corresponding execution
+        """Accept a query step and return a corresponding execution
         step.
         """
         name, query_args, query_kwds = query_step
@@ -533,24 +577,27 @@ class DataQuery(object):
             return optimized_steps + remaining_steps
         return None
 
-    def execute(self, initializer=None, **kwds):
+    def execute(self, source=None, **kwds):
         """
-        execute(initializer=None, *, lazy=False, optimize=True)
+        execute(source=None, *, evaluate=True, optimize=True)
 
-        Execute query and return its result.
+        Execute the query and return its result. A *source* is
+        unnecessary if the query was created by a :class:`DataSource`
+        call. But a *source* must be provied if the query was created
+        directly.
 
-        Use ``lazy=True`` to execute the query but leave the result
-        in its raw, iterator form. By default, results are eagerly
-        evaluated and loaded into memory.
+        By default, results are eagerly evaluated and loaded into
+        memory. For lazy evaluation, set *evaluate* to False to
+        return a :class:`DataResult` iterator instead.
 
-        Use ``optimize=False`` to turn-off query optimization.
+        Set *optimize* to False to turn-off query optimization.
         """
-        result = initializer or self._initializer
+        result = source or self._source
         if result is None:
-            raise ValueError('must provide initializer, None found')
-        self._validate_initializer(result)
+            raise ValueError('must provide source, None found')
+        self._validate_source(result)
 
-        lazy = kwds.pop('lazy', False)         # Emulate keyword-only
+        evaluate = kwds.pop('evaluate', True)  # Emulate keyword-only
         optimize = kwds.pop('optimize', True)  # behavior for 2.7 and
         if kwds:                               # 2.6 compatibility.
             key, _ = kwds.popitem()
@@ -569,7 +616,7 @@ class DataQuery(object):
             keywords = dict((k, replace_token(v)) for k, v in keywords.items())
             result = function(*args, **keywords)
 
-        if isinstance(result, DataResult) and not lazy:
+        if isinstance(result, DataResult) and evaluate:
             result = result.evaluate()
 
         return result
@@ -603,17 +650,21 @@ class DataQuery(object):
         else:
             return formatted
 
+
 class DataSource(object):
-    """A basic data source to quickly load and query data::
+    """A basic data source to quickly load and query data.
+
+    The given *data* should be an iterable of rows. The rows
+    themselves can be lists (as below), dictionaries, or other
+    sequences or mappings. *columns* must be a sequence of strings
+    to use when referencing data by column name::
 
         data = [
-            ['a', 'x', 100],
-            ['b', 'y', 100],
-            ['c', 'x', 100],
-            ['d', 'x', 100],
-            ['e', 'y', 100],
+            ['x', 100],
+            ['y', 200],
+            ['z', 300],
         ]
-        columns = ['col1', 'col2', 'col3']
+        columns = ['A', 'B']
         source = datatest.DataSource(data, columns)
 
     If *data* is an iterable of :py:class:`dict` or
@@ -621,11 +672,9 @@ class DataSource(object):
     then *columns* can be omitted::
 
         data = [
-            {'col1': 'a', 'col2': 'x', 'col3': 100},
-            {'col1': 'b', 'col2': 'y', 'col3': 100},
-            {'col1': 'c', 'col2': 'x', 'col3': 100},
-            {'col1': 'd', 'col2': 'x', 'col3': 100},
-            {'col1': 'e', 'col2': 'y', 'col3': 100},
+            {'A': 'x', 'B': 100},
+            {'A': 'y', 'B': 200},
+            {'A': 'z', 'B': 300},
         ]
         source = datatest.DataSource(data)
     """
@@ -637,8 +686,8 @@ class DataSource(object):
 
     @classmethod
     def from_csv(cls, file, encoding=None, relative_to=None, **fmtparams):
-        """Initialize :class:`DataSource` using CSV data from *file*
-        (a path or file-like object)::
+        """Create a DataSource from a CSV *file* (a path or file-like
+        object)::
 
             source = datatest.DataSource.from_csv('mydata.csv')
         """
@@ -663,20 +712,20 @@ class DataSource(object):
 
     @classmethod
     def from_excel(cls, path, worksheet=0):
-        """Initialize :class:`DataSource` using worksheet data from
-        an XLSX or XLS file *path*.
+        """Create a DataSource from an Excel worksheet. The *path*
+        must specify to an XLSX or XLS file and the *worksheet* must
+        specify the index or name of the worksheet to load (defaults
+        to the first worksheet). This constructor requires the optional,
+        third-party library `xlrd <https://pypi.python.org/pypi/xlrd>`_.
 
         Load first worksheet::
 
             source = datatest.DataSource.from_excel('mydata.xlsx')
 
-        Specific worksheets can be loaded by name or index::
+        Specific worksheets can be loaded by name (a string) or
+        index (an integer)::
 
             source = datatest.DataSource.from_excel('mydata.xlsx', 'Sheet 2')
-
-        .. note::
-            This constructor requires the optional, third-party
-            library `xlrd <https://pypi.python.org/pypi/xlrd>`_.
         """
         try:
             import xlrd
@@ -684,7 +733,7 @@ class DataSource(object):
             raise ImportError(
                 "No module named 'xlrd'\n"
                 "\n"
-                "This is an optional data source that requires the "
+                "This is an optional constructor that requires the "
                 "third-party library 'xlrd'."
             )
 
@@ -704,7 +753,7 @@ class DataSource(object):
         return new_instance
 
     def columns(self):
-        """Return list of column names.
+        """Return a list of column names.
 
         .. code-block:: python
 
@@ -725,7 +774,7 @@ class DataSource(object):
         return (dict_row(row) for row in cursor.fetchall())
 
     def _assert_columns_exist(self, columns):
-        """Asserts that given columns are present in data source,
+        """Assert that given columns are present in data source,
         raises LookupError if columns are missing.
         """
         if not _is_nsiterable(columns):
@@ -740,10 +789,10 @@ class DataSource(object):
 
     def __call__(self, *columns, **kwds_filter):
         steps = (_query_step('select', columns, kwds_filter),)
-        return DataQuery._from_parts(steps, initializer=self)
+        return DataQuery._from_parts(steps, source=self)
 
     def _sql_select_cols(self, selection):
-        """Returns a string of normalized columns to use with a
+        """Return a string of normalized columns to use with a
         SELECT clause.
         """
         if isinstance(selection, str):
@@ -768,7 +817,7 @@ class DataSource(object):
         raise TypeError('type {0!r} not supported'.format(type(selection)))
 
     def _sql_group_order_cols(self, selection):
-        """Returns a string of normalized column names appropriate
+        """Return a string of normalized column names appropriate
         for use with a GROUP BY or ORDER BY clause.
 
         The *selection* can be a string, sequence, set or mapping--see
@@ -791,25 +840,25 @@ class DataSource(object):
         raise TypeError('type {0!r} not supported'.format(type(selection)))
 
     def _format_results(self, selection, cursor):
-        """Returns iterator of results formatted by *selection* types
-        from DBAPI2-compliant *cursor*.
+        """Return an iterator of results formatted by *selection*
+        types from DBAPI2-compliant *cursor*.
 
         The *selection* can be a string, sequence, set or mapping--see
         the _select() method for details.
         """
         if isinstance(selection, str):
             result = (row[0] for row in cursor)
-            return DataResult(result, intended_type=list) # <- EXIT!
+            return DataResult(result, evaluation_type=list) # <- EXIT!
 
         if isinstance(selection, collections.Sequence):
             result_type = type(selection)
             result = (result_type(x) for x in cursor)
-            return DataResult(result, intended_type=list) # <- EXIT!
+            return DataResult(result, evaluation_type=list) # <- EXIT!
 
         if isinstance(selection, collections.Set):
             result_type = type(selection)
             result = (result_type(x) for x in cursor)
-            return DataResult(result, intended_type=set) # <- EXIT!
+            return DataResult(result, evaluation_type=set) # <- EXIT!
 
         if isinstance(selection, collections.Mapping):
             result_type = type(selection)
@@ -827,15 +876,15 @@ class DataSource(object):
             if issubclass(value_type, str):
                 def valuefunc(group):
                     result = (row[-1] for row in group)
-                    return DataResult(result, intended_type=list)
+                    return DataResult(result, evaluation_type=list)
             else:
                 def valuefunc(group):
                     group = (row[slice_index:] for row in group)
                     result = (value_type(row) for row in group)
-                    return DataResult(result, intended_type=list)
+                    return DataResult(result, evaluation_type=list)
 
             result =  ItemsIter((k, valuefunc(g)) for k, g in grouped)
-            return DataResult(result, intended_type=result_type) # <- EXIT!
+            return DataResult(result, evaluation_type=result_type) # <- EXIT!
 
         raise TypeError('type {0!r} not supported'.format(type(selection)))
 
@@ -894,7 +943,7 @@ class DataSource(object):
 
         if isinstance(selection, collections.Mapping):
             results = ItemsIter((k, next(v)) for k, v in results)
-            return DataResult(results, intended_type=dict)
+            return DataResult(results, evaluation_type=dict)
         return next(results)
 
     def __repr__(self):
