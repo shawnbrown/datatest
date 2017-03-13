@@ -437,7 +437,7 @@ class DataQuery(object):
         return self._add_step('reduce', function)
 
     def sum(self):
-        """Sum all non-None values in the group to prooduce a total."""
+        """Sum all non-None values in the group to produce a total."""
         return self._add_step('sum')
 
     def count(self):

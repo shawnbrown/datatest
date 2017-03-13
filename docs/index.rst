@@ -72,6 +72,7 @@ Contents
     intro
     dataprep
     unittest_style_api
+    data_sources
     api
 
 * :ref:`genindex`

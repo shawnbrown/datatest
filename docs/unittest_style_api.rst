@@ -22,17 +22,24 @@ Basic Example
     class TestMyData(datatest.DataTestCase):
         @classmethod
         def setUpClass(cls):
-            cls.is_active = ['Y', 'Y', 'Y', 'N', 'N', 'N']
-            cls.member_id = [105, 104, 103, 102, 101, 100]
+            data = [
+                {'is_active': 'Y', 'member_id': 105},
+                {'is_active': 'Y', 'member_id': 104},
+                {'is_active': 'Y', 'member_id': 103},
+                {'is_active': 'N', 'member_id': 102},
+                {'is_active': 'N', 'member_id': 101},
+                {'is_active': 'N', 'member_id': 100},
+            ]
+            cls.source = datatest.DataSource(data)
 
         def test_is_active(self):
             allowed_values = {'Y', 'N'}
-            self.assertValid(self.is_active, allowed_values)
+            self.assertValid(self.source('is_active'), allowed_values)
 
         def test_member_id(self):
             def positive_integer(x):  # <- Helper function.
-                return isinstance(x, int) and x >= 0
-            self.assertValid(self.member_id, positive_integer)
+                return isinstance(x, int) and x > 0
+            self.assertValid(self.source('member_id'), positive_integer)
 
     if __name__ == '__main__':
         datatest.main()
