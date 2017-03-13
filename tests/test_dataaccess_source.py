@@ -430,6 +430,11 @@ class TestDataQuery(unittest.TestCase):
         result = query.execute()
         self.assertEqual(result, 8)
 
+        query = DataQuery('A')
+        regex = "expected 'DataSource', got 'list'"
+        with self.assertRaisesRegex(TypeError, regex):
+            query.execute(['hello', 'world'])  # <- Expects None or DataQuery, not list!
+
     def test_map(self):
         query1 = DataQuery('col2')
         query2 = query1.map(int)
@@ -521,37 +526,17 @@ class TestDataQuery(unittest.TestCase):
         )
         self.assertEqual(optimized, expected)
 
-    @unittest.skip('waiting to finish query_step adjustments')
     def test_explain(self):
         query = DataQuery('col1')
         expected = """
-            Steps:
-              getattr, (<result>, '_select'), {}
-              <result>, ('col1'), {}
+            Execution Plan:
+              getattr, (<RESULT>, '_select'), {}
+              <RESULT>, ('col1'), {}
         """
         expected = textwrap.dedent(expected).strip()
-        self.assertEqual(query.explain(), expected)
+        self.assertEqual(query._explain(file=None), expected)
 
         # TODO: Add assert for query that can be optimized.
-
-
-class TestDataQuery(unittest.TestCase):
-    # TODO" Check for duplication elsewhere.
-    def test_from_parts(self):
-        source = DataSource([(1, 2), (1, 2)], columns=['A', 'B'])
-        query = DataQuery._from_parts(source=source)
-        self.assertIsInstance(query, DataQuery)
-
-        regex = "expected 'DataSource', got 'list'"
-        with self.assertRaisesRegex(TypeError, regex):
-            wrong_type = ['hello', 'world']
-            query = DataQuery._from_parts(source=wrong_type)
-
-    def test_eval(self):
-        query = DataQuery('A')
-        regex = "expected 'DataSource', got 'list'"
-        with self.assertRaisesRegex(TypeError, regex):
-            query.execute(['hello', 'world'])  # <- Expects None or DataQuery, not list!
 
 
 class TestDataSourceBasics(unittest.TestCase):
