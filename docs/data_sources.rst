@@ -94,7 +94,9 @@ Selecting Data
 Calling our source like a function returns a :class:`DataQuery`
 for the specified column or columns. The :meth:`execute()
 <DataQuery.execute>` method runs the query and returns the
-results::
+results.
+
+Select values from column **one**::
 
     >>> source('one').execute()
     ['a', 'a', 'b', 'b', 'c', 'c']
@@ -110,10 +112,13 @@ Select values from columns **one** and **two** using a
      ['c', 'y'],
      ['c', 'y']]
 
-The type used to select the data determines the types returned
-in the result. Above, we selected a list of columns and got
-a result of lists. We can also select a :py:class:`tuple` of
-columns to get a result of tuples::
+The container type used in the selection determines the types
+returned in the result. Above, we selected two columns using a
+list and got a result of lists. By changing the selection type,
+we can change the types we get from the result.
+
+Select values from columns **one** and **two** using a
+:py:class:`tuple`::
 
     >>> source(('one', 'two')).execute()  # Returns a result of tuples.
     [('a', 'x'),
