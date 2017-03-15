@@ -858,15 +858,10 @@ class DataSource(object):
             result = (row[0] for row in cursor)
             return DataResult(result, evaluation_type=list) # <- EXIT!
 
-        if isinstance(selection, collections.Sequence):
+        if isinstance(selection, (collections.Sequence, collections.Set)):
             result_type = type(selection)
             result = (result_type(x) for x in cursor)
             return DataResult(result, evaluation_type=list) # <- EXIT!
-
-        if isinstance(selection, collections.Set):
-            result_type = type(selection)
-            result = (result_type(x) for x in cursor)
-            return DataResult(result, evaluation_type=set) # <- EXIT!
 
         if isinstance(selection, collections.Mapping):
             result_type = type(selection)

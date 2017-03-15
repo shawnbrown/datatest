@@ -875,6 +875,23 @@ class TestDataSourceBasics(unittest.TestCase):
         self.assertIsInstance(query, DataQuery)
         self.assertEqual(query.execute(), expected)
 
+        query = self.source(('label1', 'label2'))
+        expected = [('a', 'x'), ('a', 'x'), ('a', 'y'), ('a', 'z'),
+                    ('b', 'z'), ('b', 'y'), ('b', 'x')]
+        self.assertIsInstance(query, DataQuery)
+        self.assertEqual(query.execute(), expected)
+
+        query = self.source(set(['label1', 'label2']))
+        expected = [set(['a', 'x']),
+                    set(['a', 'x']),
+                    set(['a', 'y']),
+                    set(['a', 'z']),
+                    set(['b', 'z']),
+                    set(['b', 'y']),
+                    set(['b', 'x'])]
+        self.assertIsInstance(query, DataQuery)
+        self.assertEqual(query.execute(), expected)
+
         query = self.source({'label1': 'label2'})
         expected = {'a': ['x', 'x', 'y', 'z'], 'b': ['z', 'y', 'x']}
         self.assertIsInstance(query, DataQuery)
