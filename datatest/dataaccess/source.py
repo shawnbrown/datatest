@@ -785,7 +785,8 @@ class DataSource(object):
         """Assert that given columns are present in data source,
         raises LookupError if columns are missing.
         """
-        if not _is_nsiterable(columns):
+        if (not _is_nsiterable(columns)
+                or isinstance(columns, collections.Mapping)):
             columns = (columns,)
         self_cols = self.columns()
         is_missing = lambda col: col not in self_cols
@@ -804,9 +805,11 @@ class DataSource(object):
         SELECT clause.
         """
         if isinstance(selection, str):
+            self._assert_columns_exist(selection)
             return self._normalize_column(selection)  # <- EXIT!
 
         if isinstance(selection, (collections.Sequence, collections.Set)):
+            self._assert_columns_exist(selection)
             row_type = type(selection)
             select_clause = (self._normalize_column(x) for x in selection)
             return ', '.join(select_clause)  # <- EXIT!
@@ -818,6 +821,8 @@ class DataSource(object):
                 key = (key,)
             if isinstance(value, str):
                 value = (value,)
+            self._assert_columns_exist(key)
+            self._assert_columns_exist(value)
             key_tuple = tuple(self._normalize_column(x) for x in key)
             value_tuple = tuple(self._normalize_column(x) for x in value)
             return ', '.join(key_tuple + value_tuple)  # <- EXIT!
@@ -918,6 +923,7 @@ class DataSource(object):
 
         if isinstance(selection, collections.Mapping):
             value_cols = tuple(selection.values())[0]
+            self._assert_columns_exist(value_cols)
             if isinstance(value_cols, str):
                 normalized = self._normalize_column(value_cols)
                 formatted = '{0}({1})'.format(sqlfunc, normalized)

@@ -647,6 +647,10 @@ class TestDataSourceBasics(unittest.TestCase):
         expected = ['a', 'a', 'a', 'a', 'b', 'b', 'b']
         self.assertEqual(list(result), expected)
 
+    def test_select_column_not_found(self):
+        with self.assertRaises(LookupError):
+            result = self.source._select('bad_column_name')
+
     def test_select_column_as_list(self):
         result = self.source._select(['label1'])
         expected = [['a'], ['a'], ['a'], ['a'], ['b'], ['b'], ['b']]
@@ -858,7 +862,6 @@ class TestDataSourceBasics(unittest.TestCase):
         }
         self.assertEqual(dict(result), expected)
 
-    @unittest.skip('need to implement this with new select method')
     def test_select_nested_dicts(self):
         """Support for nested dictionaries was removed (for now).
         It's likely that arbitrary nesting would complicate the ability
