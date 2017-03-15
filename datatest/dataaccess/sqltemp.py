@@ -238,19 +238,71 @@ class TemporarySqliteTableForCsv(TemporarySqliteTable):
 
 
 def _from_csv(file, encoding=None, **fmtparams):
-    """ """
+    """Loads one or more CSV files as a temporary SQLite table."""
+    # TODO: Need to refactor!!! Encoding fallback is included twice
+    # (copied from old CsvSource class).
+
     if not _is_nsiterable(file):
         file = [file]
-    first_file = file[0]
-    other_files = file[1:]
+    files = iter(file)
 
-    with UnicodeCsvReader(first_file, encoding='utf-8', **fmtparams) as reader:
-        columns = next(reader)  # Header row.
-        temptable = TemporarySqliteTableForCsv(reader, columns)
+    first_file = next(files)
 
-    for f in other_files:
-        with UnicodeCsvReader(f, encoding='utf-8', **fmtparams) as reader:
+    #with UnicodeCsvReader(first_file, encoding, **fmtparams) as reader:
+    #    columns = next(reader)  # Header row.
+    #    temptable = TemporarySqliteTableForCsv(reader, columns)
+    if encoding:
+        with UnicodeCsvReader(first_file, encoding=encoding, **fmtparams) as reader:
             columns = next(reader)  # Header row.
-            temptable._concatenate_data(reader, columns)
+            temptable = TemporarySqliteTableForCsv(reader, columns)
+    else:
+        try:
+            with UnicodeCsvReader(first_file, encoding='utf-8', **fmtparams) as reader:
+                columns = next(reader)  # Header row.
+                temptable = TemporarySqliteTableForCsv(reader, columns)
+
+        except UnicodeDecodeError:
+            with UnicodeCsvReader(first_file, encoding='iso8859-1', **fmtparams) as reader:
+                columns = next(reader)  # Header row.
+                temptable = TemporarySqliteTableForCsv(reader, columns)
+
+            # Prepare message and raise as warning.
+            try:
+                filename = os.path.basename(first_file)
+            except AttributeError:
+                filename = repr(first_file)
+            msg = ('\nData in file {0!r} does not appear to be encoded '
+                   'as UTF-8 (used ISO-8859-1 as fallback). To assure '
+                   'correct operation, please specify a text encoding.')
+            warnings.warn(msg.format(filename))
+
+    for f in files:
+        #with UnicodeCsvReader(f, encoding, **fmtparams) as reader:
+        #    columns = next(reader)  # Header row.
+        #    temptable._concatenate_data(reader, columns)
+        if encoding:
+            with UnicodeCsvReader(f, encoding=encoding, **fmtparams) as reader:
+                columns = next(reader)  # Header row.
+                temptable._concatenate_data(reader, columns)
+        else:
+            try:
+                with UnicodeCsvReader(f, encoding='utf-8', **fmtparams) as reader:
+                    columns = next(reader)  # Header row.
+                    temptable._concatenate_data(reader, columns)
+
+            except UnicodeDecodeError:
+                with UnicodeCsvReader(f, encoding='iso8859-1', **fmtparams) as reader:
+                    columns = next(reader)  # Header row.
+                    temptable._concatenate_data(reader, columns)
+
+                # Prepare message and raise as warning.
+                try:
+                    filename = os.path.basename(f)
+                except AttributeError:
+                    filename = repr(f)
+                msg = ('\nData in file {0!r} does not appear to be encoded '
+                       'as UTF-8 (used ISO-8859-1 as fallback). To assure '
+                       'correct operation, please specify a text encoding.')
+                warnings.warn(msg.format(filename))
 
     return temptable

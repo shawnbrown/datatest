@@ -48,8 +48,9 @@ class UnicodeCsvReader:
         return self
 
     @staticmethod
-    def _get_file_object(csvfile, encoding):
+    def _get_file_object(csvfile, encoding=None):
         if isinstance(csvfile, str):
+            assert encoding, 'encoding required for file path'
             return open(csvfile, 'rt', encoding=encoding, newline='')  # <- EXIT!
 
         if hasattr(csvfile, 'mode'):

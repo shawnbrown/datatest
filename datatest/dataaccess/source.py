@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import abc
 import collections
 import functools
+import io
 import itertools
 import os
 import sys
@@ -690,8 +691,14 @@ class DataSource(object):
         object)::
 
             source = datatest.DataSource.from_csv('mydata.csv')
+
+        If *file* is an iterable of files, data will be loaded and
+        aligned by column name::
+
+            files = ['mydata1.csv', 'mydata2.csv']
+            source = datatest.DataSource.from_csv(files)
         """
-        if not _is_nsiterable(file):
+        if not _is_nsiterable(file) or isinstance(file, io.IOBase):
             file = [file]
 
         if relative_to is None:
@@ -701,7 +708,8 @@ class DataSource(object):
         def get_path(f):
             if isinstance(f, str) and not os.path.isabs(f):
                 f = os.path.join(dirname, f)
-            return os.path.normpath(f)
+                return os.path.normpath(f)
+            return f
         file = [get_path(f) for f in file]
 
         new_cls = cls.__new__(cls)
