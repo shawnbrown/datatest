@@ -6,23 +6,23 @@ from . import _io as io
 from . import _unittest as unittest
 from datatest.utils import collections
 from datatest.utils.misc import _is_nsiterable
-from datatest.dataaccess.source import DataSource
-from datatest.dataaccess.source import DataQuery
-from datatest.dataaccess.source import RESULT_TOKEN
-from datatest.dataaccess.source import DataResult
-from datatest.dataaccess.source import _map_data
-from datatest.dataaccess.source import _filter_data
-from datatest.dataaccess.source import _reduce_data
-from datatest.dataaccess.source import _apply_to_data
-from datatest.dataaccess.source import _sqlite_sum
-from datatest.dataaccess.source import _sqlite_count
-from datatest.dataaccess.source import _sqlite_avg
-from datatest.dataaccess.source import _sqlite_min
-from datatest.dataaccess.source import _sqlite_max
-from datatest.dataaccess.source import _sqlite_distinct
-from datatest.dataaccess.source import _set_data
-from datatest.dataaccess.source import _cast_as_set
-from datatest.dataaccess.source import ItemsIter
+from datatest.load.source import DataSource
+from datatest.load.source import DataQuery
+from datatest.load.source import RESULT_TOKEN
+from datatest.load.source import DataResult
+from datatest.load.source import _map_data
+from datatest.load.source import _filter_data
+from datatest.load.source import _reduce_data
+from datatest.load.source import _apply_to_data
+from datatest.load.source import _sqlite_sum
+from datatest.load.source import _sqlite_count
+from datatest.load.source import _sqlite_avg
+from datatest.load.source import _sqlite_min
+from datatest.load.source import _sqlite_max
+from datatest.load.source import _sqlite_distinct
+from datatest.load.source import _set_data
+from datatest.load.source import _cast_as_set
+from datatest.load.source import ItemsIter
 
 
 def convert_iter_to_type(iterable, target_type):

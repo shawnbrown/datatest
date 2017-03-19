@@ -41,9 +41,9 @@ from .runner import DataTestRunner
 from .main import DataTestProgram
 from .main import main
 
-from .dataaccess.source import DataSource
-from .dataaccess.source import DataQuery
-from .dataaccess.source import DataResult
+from .load.source import DataSource
+from .load.source import DataQuery
+from .load.source import DataResult
 
 
 __version__ = '0.8.0.dev3'

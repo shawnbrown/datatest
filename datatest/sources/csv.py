@@ -5,8 +5,8 @@ import sys
 import warnings
 
 from ..utils.builtins import *
-from ..dataaccess.csvreader import UnicodeCsvReader
-from ..dataaccess.sqltemp import TemporarySqliteTable
+from ..load.csvreader import UnicodeCsvReader
+from ..load.sqltemp import TemporarySqliteTable
 
 from .sqlite import SqliteBase
 
