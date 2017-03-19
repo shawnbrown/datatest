@@ -10,13 +10,13 @@ import sys
 from numbers import Number
 from sqlite3 import Binary
 
-from ..utils.builtins import *
-from ..utils.misc import _is_nsiterable
-from ..utils.misc import _get_calling_filename
-from ..utils.misc import _is_sortable
-from ..utils.misc import _unique_everseen
-from .sqltemp import TemporarySqliteTable
-from .sqltemp import _from_csv
+from .utils.builtins import *
+from .utils.misc import _is_nsiterable
+from .utils.misc import _get_calling_filename
+from .utils.misc import _is_sortable
+from .utils.misc import _unique_everseen
+from .load.sqltemp import TemporarySqliteTable
+from .load.sqltemp import _from_csv
 
 
 class ItemsIter(collections.Iterator):

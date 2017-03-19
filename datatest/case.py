@@ -6,8 +6,8 @@ from unittest import TestCase
 from .utils.builtins import *
 from .utils import collections
 
-from .load.source import DataQuery
-from .load.source import DataResult
+from .dataaccess import DataQuery
+from .dataaccess import DataResult
 
 from .compare import _compare_mapping
 from .compare import _compare_sequence
