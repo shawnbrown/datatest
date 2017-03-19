@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
+import os
+import tempfile
 import textwrap
 from . import _io as io
 
@@ -23,6 +25,35 @@ from datatest.dataaccess import _sqlite_distinct
 from datatest.dataaccess import _set_data
 from datatest.dataaccess import _cast_as_set
 from datatest.dataaccess import ItemsIter
+from datatest.dataaccess import working_directory
+
+
+class TestWorkingDirectory(unittest.TestCase):
+    def setUp(self):
+        self.original_dir = os.getcwd()
+        self.temporary_dir =  tempfile.mkdtemp()
+
+    def tearDown(self):
+        os.chdir(self.original_dir)
+        os.rmdir(self.temporary_dir)
+
+    def test_as_context_manager(self):
+        original_dir = os.getcwd()
+
+        with working_directory(self.temporary_dir):  # <- Context manager usage.
+            self.assertEqual(os.getcwd(), self.temporary_dir)
+
+        self.assertEqual(os.getcwd(), original_dir)
+
+    def test_as_decorator(self):
+        original_dir = os.getcwd()
+
+        @working_directory(self.temporary_dir)  # <- Decorator usage.
+        def myfunction():
+            self.assertEqual(os.getcwd(), self.temporary_dir)
+        myfunction()  # <- Actually run the function.
+
+        self.assertEqual(os.getcwd(), original_dir)
 
 
 def convert_iter_to_type(iterable, target_type):

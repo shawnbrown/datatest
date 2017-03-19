@@ -44,6 +44,7 @@ from .main import main
 from .dataaccess import DataSource
 from .dataaccess import DataQuery
 from .dataaccess import DataResult
+from .dataaccess import working_directory
 
 
 __version__ = '0.8.0.dev3'
@@ -99,6 +100,7 @@ __all__ = [
     'DataSource',
     'DataQuery',
     'DataResult',
+    'working_directory',
 ]
 
 # Temporary alias for old "required" decorator.

@@ -1,22 +1,43 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 import abc
-import collections
-import functools
 import io
-import itertools
 import os
 import sys
 from numbers import Number
 from sqlite3 import Binary
 
 from .utils.builtins import *
+from .utils import collections
+from .utils import contextlib
+from .utils import functools
+from .utils import itertools
 from .utils.misc import _is_nsiterable
-from .utils.misc import _get_calling_filename
 from .utils.misc import _is_sortable
 from .utils.misc import _unique_everseen
 from .load.sqltemp import TemporarySqliteTable
 from .load.sqltemp import _from_csv
+
+
+class working_directory(contextlib.ContextDecorator):
+    """A helper class to manage the working directory. It can be
+    used as a decorator or as a context manager. The current working
+    directory will be changed to the given directory *path* while the
+    context is in scope.
+
+    If *path* specifies a file, this file's directory is used instead.
+    """
+    def __init__(self, path):
+        if os.path.isfile(path):
+            path = os.path.dirname(path)
+        self._working_dir = path
+
+    def __enter__(self):
+        self._original_dir = os.getcwd()
+        os.chdir(self._working_dir)
+
+    def __exit__(self, etype, value, traceback):
+        os.chdir(self._original_dir)
 
 
 class ItemsIter(collections.Iterator):
@@ -694,7 +715,7 @@ class DataSource(object):
         self._table = temptable.name
 
     @classmethod
-    def from_csv(cls, file, encoding=None, relative_to=None, **fmtparams):
+    def from_csv(cls, file, encoding=None, **fmtparams):
         """Create a DataSource from a CSV *file* (a path or file-like
         object)::
 
@@ -708,10 +729,6 @@ class DataSource(object):
         """
         if not _is_nsiterable(file) or isinstance(file, io.IOBase):
             file = [file]
-
-        if relative_to is None:
-            relative_to = _get_calling_filename(frame_index=2)
-        dirname = os.path.dirname(relative_to)
 
         def get_path(f):
             if isinstance(f, str) and not os.path.isabs(f):

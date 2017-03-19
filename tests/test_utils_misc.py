@@ -11,30 +11,6 @@ _PYPY2 = (platform.python_implementation() == 'PyPy'
           and platform.python_version_tuple()[0] == '2')
 
 
-class TestGetCallingFilename(unittest.TestCase):
-    def test_one_frame_up_the_stack(self):
-        this_file = os.path.abspath(__file__)
-
-        result = misc._get_calling_filename(frame_index=1)
-        self.assertEqual(result, this_file)
-
-        result = misc._get_calling_filename(frame_index=2)  # Too far.
-        self.assertNotEqual(result, this_file)
-
-    def test_two_frames_up_the_stack(self):
-        this_file = os.path.abspath(__file__)
-
-        def userfunc():
-            return misc._get_calling_filename(frame_index=2)
-        result = userfunc()
-        self.assertEqual(result, this_file)
-
-        def userfunc():
-            return misc._get_calling_filename(frame_index=3)  # Too far.
-        result = userfunc()
-        self.assertNotEqual(result, this_file)
-
-
 class TestGetArgLengths(unittest.TestCase):
     def test_positional(self):
         def userfunc(a, b, c):

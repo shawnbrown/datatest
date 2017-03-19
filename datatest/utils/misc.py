@@ -54,16 +54,6 @@ def _make_decimal(d):
     return d.normalize()
 
 
-def _get_calling_filename(frame_index=1):
-    """Get the file name of calling frame (defaults to one frame up
-    the stack).
-    """
-    frame_list = inspect.stack()
-    record_tuple = frame_list[frame_index]
-    filename = record_tuple[1]
-    return os.path.abspath(filename)
-
-
 def _get_arg_lengths(func):
     """Returns a two-tuple containing the number of positional arguments
     as the first item and the number of variable positional arguments as
