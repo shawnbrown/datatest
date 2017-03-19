@@ -10,13 +10,13 @@ from .itertools import filterfalse
 
 
 try:
-    basestring  # For _is_nsiterable(), below.
+    _basestring = basestring  # For _is_nsiterable(), below.
 except NameError:
-    basestring = str
+    _basestring = str
 
 def _is_nsiterable(x):
     """Returns True if *x* is a non-string iterable object."""
-    return not isinstance(x, basestring) and isinstance(x, collections.Iterable)
+    return not isinstance(x, _basestring) and isinstance(x, collections.Iterable)
 
 
 def _is_sortable(obj):
