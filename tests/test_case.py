@@ -87,6 +87,14 @@ class TestAssertValid(DataTestCase):
         differences = cm.exception.differences
         self.assertEqual(set(differences), set([Extra(3), Missing(4)]))
 
+        with self.assertRaises(DataError) as cm:
+            required = set([1, 2])
+            data = {'a': set([1, 2]), 'b': set([1]), 'c': set([1, 2, 3])}
+            self.assertValid(data, required)
+
+        differences = cm.exception.differences
+        self.assertEqual(differences, {'b': [Missing(2)], 'c': [Extra(3)]})
+
     def test_required_mapping(self):
         """When *required* is a mapping, _compare_mapping() should be
         called."""

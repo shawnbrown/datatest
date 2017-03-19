@@ -190,6 +190,9 @@ class DataTestCase(TestCase):
             data = data.execute()
         elif isinstance(data, DataResult):
             data = data.evaluate()
+        # TODO: Handle using lazy evaluation.
+        #if isinstance(data, DataQuery):
+        #    data = data.execute(evaluate=False)
 
         if isinstance(requirement, DataQuery):
             requirement = requirement.execute()
@@ -221,7 +224,16 @@ class DataTestCase(TestCase):
             default_msg = 'data does not satisfy object requirement'
 
         # Apply comparison function and fail if there are any differences.
-        differences = compare(data, requirement)
+        if isinstance(data, collections.Mapping) \
+                and not isinstance(requirement, collections.Mapping):
+            differences = {}
+            for key, value in data.items():
+                value_diffs = compare(value, requirement)
+                if value_diffs:
+                    differences[key] = value_diffs
+        else:
+            differences = compare(data, requirement)
+
         if differences:
             self.fail(msg or default_msg, differences)
 
