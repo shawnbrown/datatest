@@ -622,6 +622,14 @@ class DataQuery(object):
 
         return result
 
+    def __call__(self, source=None, **kwds):
+        """
+        __call__(source=None, *, evaluate=True, optimize=True)
+
+        alias of :meth:`execute`
+        """
+        return self.execute(self, source, **kwds)
+
     def _explain(self, optimize=True, file=sys.stdout):
         """A convenience method primarily intended to help when
         debugging and developing execution plan optimizations.

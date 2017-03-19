@@ -294,6 +294,8 @@ DataQuery
 
     .. automethod:: execute
 
+    .. automethod:: __call__
+
 
 **********
 DataResult
