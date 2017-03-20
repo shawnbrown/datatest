@@ -649,7 +649,7 @@ class DataQuery(object):
 
         alias of :meth:`execute`
         """
-        return self.execute(self, source, **kwds)
+        return self.execute(source, **kwds)
 
     def _explain(self, optimize=True, file=sys.stdout):
         """A convenience method primarily intended to help when
@@ -729,13 +729,6 @@ class DataSource(object):
         """
         if not _is_nsiterable(file) or isinstance(file, io.IOBase):
             file = [file]
-
-        def get_path(f):
-            if isinstance(f, str) and not os.path.isabs(f):
-                f = os.path.join(dirname, f)
-                return os.path.normpath(f)
-            return f
-        file = [get_path(f) for f in file]
 
         new_cls = cls.__new__(cls)
         temptable = _from_csv(file, encoding, **fmtparams)
