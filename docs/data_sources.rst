@@ -112,11 +112,6 @@ Select values from columns **one** and **two** using a
      ['c', 'y'],
      ['c', 'y']]
 
-The container type used in the selection determines the types
-returned in the result. Above, we selected two columns using a
-list and got a result of lists. By changing the selection type,
-we can change the types we get from the result.
-
 Select values from columns **one** and **two** using a
 :py:class:`tuple`::
 
@@ -127,6 +122,15 @@ Select values from columns **one** and **two** using a
      ('b', 'y'),
      ('c', 'y'),
      ('c', 'y')]
+
+The previous two examples demonstrate how the type used to select the
+data determines the types returned in the result. Selecting two columns
+as a list gives us a result of lists. Selecting the same two columns as
+a tuple gives us a result of tuples.
+
+
+Selecting Groups of Data
+========================
 
 Group and select column values using a :py:class:`dict`::
 
@@ -143,6 +147,12 @@ Group and select column values using a :py:class:`dict` with a
      ('b', 'x'): ['100'],
      ('b', 'y'): ['100'],
      ('c', 'y'): ['100', '100']}
+
+When selecting groups of data, you must provide a dictionary with
+a single key-value pair. As before, the selection types determine the
+result types but keep in mind that dictionary keys must be `immutable
+<http://docs.python.org/3/glossary.html#term-immutable>`_
+(:py:class:`str`, :py:class:`tuple`, :py:class:`frozenset`, etc.).
 
 
 Narrowing a Selection
