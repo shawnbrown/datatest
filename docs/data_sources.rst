@@ -314,3 +314,10 @@ DataResult
 
         The underlying iterator---useful when introspecting
         or rewrapping.
+
+
+*****************
+working_directory
+*****************
+
+.. autoclass:: working_directory
