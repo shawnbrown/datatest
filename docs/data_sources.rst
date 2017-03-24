@@ -14,8 +14,7 @@ It's important to have a convinient and expressive way to load
 and query data. Datatest provides a :class:`DataSource` class
 that should cover many common use cases. But users already familiar
 with other tools (Pandas, SQLAlchemy, etc.) should feel free to
-use them instead. The best data source to use is the one you can
-wield most effectively.
+use them instead.
 
 ..  To help use third-party data sources, datatest includes a number of
     helper functions to quickly load data into a variety of ORMs and DALs.
@@ -50,39 +49,12 @@ Load our data from a CSV file (:download:`example.csv
     import datatest
     source = datatest.DataSource.from_csv('example.csv')
 
-Load our data from a list of sequences::
-
-    import datatest
-    data = [
-        ['a', 'x', '100'],
-        ['a', 'x', '100'],
-        ['b', 'x', '100'],
-        ['b', 'y', '100'],
-        ['c', 'y', '100'],
-        ['c', 'y', '100'],
-    ]
-    columns = ['one', 'two', 'three']
-    source = datatest.DataSource(data, columns)
-
-Load our data from a list of dictionaries::
-
-    import datatest
-    data = [
-        {'one': 'a', 'two': 'x', 'three': '100'},
-        {'one': 'a', 'two': 'x', 'three': '100'},
-        {'one': 'b', 'two': 'x', 'three': '100'},
-        {'one': 'b', 'two': 'y', 'three': '100'},
-        {'one': 'c', 'two': 'y', 'three': '100'},
-        {'one': 'c', 'two': 'y', 'three': '100'},
-    ]
-    source = datatest.DataSource(data)
-
 
 Column Names
 ============
 
-You can get a list of column names from an existing source with
-the :meth:`columns() <DataSource.columns>` method::
+You can get a list of column names from source with the
+:meth:`columns() <DataSource.columns>` method::
 
     >>> source.columns()
     ['one', 'two', 'three']

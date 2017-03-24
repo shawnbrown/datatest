@@ -116,7 +116,7 @@ class DataTestCase(TestCase):
 
         The given *data* can be a set, sequence, iterable, mapping,
         or other object. The *requirement* type determines how the
-        data is validated.
+        data is validated (see below).
 
         **Set membership:** When *requirement* is a set, elements
         in *data* are checked for membership in this set. On failure,
@@ -128,18 +128,18 @@ class DataTestCase(TestCase):
                 self.assertValid(data, requirement)
 
         **Regular expression match:** When *requirement* is a regular
-        expression, elements in *data* are checked to see if they match
-        the given pattern. On failure, :class:`Invalid` errors are
-        raised::
+        expression object, elements in *data* are checked to see if
+        they match the given pattern. On failure, :class:`Invalid`
+        errors are raised::
 
             def test_mydata(self):
                 data = ...
-                requirement = re.compile(r'^[ ]+|[ ]$')  # <- regex
+                requirement = re.compile(r'^\S.*\S$|^\S?$')  # <- regex
                 self.assertValid(data, requirement)
 
         **Sequence order:** When *requirement* is a list or other
-        sequence, elements in *data* are checked for matching order and
-        value::
+        sequence, elements in *data* are checked for matching order
+        and value::
 
             def test_mydata(self):
                 data = ...
