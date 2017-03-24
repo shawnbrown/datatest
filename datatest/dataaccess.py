@@ -652,13 +652,19 @@ class DataQuery(object):
 
         return result
 
-    def __call__(self, source=None, **kwds):
-        """
-        __call__(source=None, *, evaluate=True, optimize=True)
+    def __call__(self, source=None):
+        """As a convenient short-hand, a DataQuery can be
+        executed by calling it like a function. This returns a
+        :class:`DataResult` appropriate for lazy evaluation::
 
-        alias of :meth:`execute`
+            source = DataSource(...)
+            query = DataQuery('A').distinct()
+            result = query(source)  # <- Returns DataResult
+
+        For explicit control of execution behavior, use
+        :meth:`execute` instead.
         """
-        return self.execute(source, **kwds)
+        return self.execute(source, evaluate=False)
 
     def _explain(self, optimize=True, file=sys.stdout):
         """A convenience method primarily intended to help when
