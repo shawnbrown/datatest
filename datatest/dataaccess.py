@@ -653,16 +653,15 @@ class DataQuery(object):
         return result
 
     def __call__(self, source=None):
-        """As a convenient short-hand, a DataQuery can be
-        executed by calling it like a function. This returns a
-        :class:`DataResult` appropriate for lazy evaluation::
+        """A DataQuery can be called like a function to execute
+        it and return a :class:`DataResult` appropriate for lazy
+        evaluation::
 
-            source = DataSource(...)
-            query = DataQuery('A').distinct()
-            result = query(source)  # <- Returns DataResult
+            query = source(('A', 'B'))
+            result = query()  # <- Returns DataResult
 
-        For explicit control of execution behavior, use
-        :meth:`execute` instead.
+        This is a shorthand for calling the :meth:`execute` method
+        with *evaluate* set to False.
         """
         return self.execute(source, evaluate=False)
 
