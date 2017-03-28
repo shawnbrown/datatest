@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 from math import isnan
+from numbers import Number
+
 from .utils.misc import _is_nsiterable
 
 
@@ -96,3 +98,63 @@ class Deviation(DataError):
             diff_repr = repr(self.args[0])
         remaining_repr = ', '.join(repr(arg) for arg in self.args[1:])
         return '{0}({1}, {2})'.format(cls_name, diff_repr, remaining_repr)
+
+
+class _NOTFOUND_TOKEN(object):
+    """Token for handling values that are not available for comparison."""
+    def __repr__(self):
+        return '<NOTFOUND>'
+NOTFOUND = _NOTFOUND_TOKEN()
+del _NOTFOUND_TOKEN
+
+
+def _get_error(actual, expected, omit_expected=False):
+    """Returns an appropriate error for *actual* and *expected*
+    values that are known to be unequal.
+
+    Setting *omit_expected* to True, signals that the *expected*
+    argument should be omitted when creating an Invalid error (this
+    is useful for reducing duplication when validating data against
+    a single function or object).
+    """
+    # Prepare for numeric comparisons.
+    _isnum = lambda x: isinstance(x, Number) and not isnan(x)
+    first_isnum = _isnum(actual)
+    second_isnum = _isnum(expected)
+
+    # Numeric vs numeric.
+    if first_isnum and second_isnum:
+        diff = actual - expected
+        return Deviation(diff, expected)
+
+    # Numeric vs empty (or not found).
+    if first_isnum and (not expected or expected is NOTFOUND):
+        if expected is NOTFOUND:
+            expected = None
+
+        diff = actual - 0
+        return Deviation(diff, expected)
+
+    # Empty (or not found) vs numeric.
+    if (not actual or actual is NOTFOUND) and second_isnum:
+        if actual is NOTFOUND:
+            actual = None
+
+        if expected == 0:
+            diff = actual
+        else:
+            diff = 0 - expected
+        return Deviation(diff, expected)
+
+    # Object vs NOTFOUND.
+    if expected is NOTFOUND:
+        return Extra(actual)
+
+    # NOTFOUND vs object.
+    if actual is NOTFOUND:
+        return Missing(expected)
+
+    # All other pairs of objects.
+    if omit_expected:
+        return Invalid(actual)
+    return Invalid(actual, expected)

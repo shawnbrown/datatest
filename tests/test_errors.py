@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import re
 from . import _unittest as unittest
 
 from datatest.errors import ValidationErrors
@@ -7,6 +8,8 @@ from datatest.errors import Missing
 from datatest.errors import Extra
 from datatest.errors import Invalid
 from datatest.errors import Deviation
+from datatest.errors import _get_error
+from datatest.errors import NOTFOUND
 
 
 class MinimalDataError(DataError):
@@ -128,3 +131,85 @@ class TestDeviation(unittest.TestCase):
 
         diff = Deviation(-1, 100)
         self.assertEqual(diff, eval(repr(diff)))
+
+
+class Test_get_error(unittest.TestCase):
+    def test_numeric_vs_numeric(self):
+        diff = _get_error(5, 6)
+        self.assertEqual(diff, Deviation(-1, 6))
+
+    def test_numeric_vs_none(self):
+        diff = _get_error(5, None)
+        self.assertEqual(diff, Deviation(+5, None))
+
+        diff = _get_error(0, None)
+        self.assertEqual(diff, Deviation(+0, None))
+
+    def test_none_vs_numeric(self):
+        diff = _get_error(None, 6)                # For None vs non-zero,
+        self.assertEqual(diff, Deviation(-6, 6))  # difference is calculated
+                                                  # as 0 - other.
+
+        diff = _get_error(None, 0)                  # For None vs zero,
+        self.assertEqual(diff, Deviation(None, 0))  # difference remains None.
+
+    def test_object_vs_object(self):
+        """Non-numeric comparisons return Invalid type."""
+        diff = _get_error('a', 'b')
+        self.assertEqual(diff, Invalid('a', 'b'))
+
+        diff = _get_error(5, 'b')
+        self.assertEqual(diff, Invalid(5, 'b'))
+
+        diff = _get_error('a', 6)
+        self.assertEqual(diff, Invalid('a', 6))
+
+        fn = lambda x: True
+        diff = _get_error('a', fn)
+        self.assertEqual(diff, Invalid('a', fn))
+
+        regex = re.compile('^test$')
+        diff = _get_error('a', regex)
+        self.assertEqual(diff, Invalid('a', re.compile('^test$')))
+
+    def test_notfound_comparisons(self):
+        diff = _get_error('a', NOTFOUND)
+        self.assertEqual(diff, Extra('a'))
+
+        diff = _get_error(NOTFOUND, 'b')
+        self.assertEqual(diff, Missing('b'))
+
+        # For numeric comparisons, NOTFOUND behaves like None.
+        diff = _get_error(5, NOTFOUND)
+        self.assertEqual(diff, Deviation(+5, None))
+
+        diff = _get_error(0, NOTFOUND)
+        self.assertEqual(diff, Deviation(0, None))
+
+        diff = _get_error(NOTFOUND, 6)
+        self.assertEqual(diff, Deviation(-6, 6))  # <- Assymetric behavior
+                                                  #    (see None vs numeric)!
+
+        diff = _get_error(NOTFOUND, 0)
+        self.assertEqual(diff, Deviation(None, 0))
+
+    def test_omit_expected(self):
+        """If requirement is common it should be omitted from Invalid
+        difference (but not from Deviation differences).
+        """
+        diff = _get_error('a', 6, omit_expected=True)
+        self.assertEqual(diff, Invalid('a'))
+
+        diff = _get_error(NOTFOUND, 6, omit_expected=True)
+        self.assertEqual(diff, Deviation(-6, 6))
+
+    def test_same(self):
+        """The _get_error() function returns differences for objects
+        that are KNOWN TO BE DIFFERENT--it does not test for differences
+        itself.
+        """
+        diff = _get_error('a', 'a')
+        self.assertEqual(diff, Invalid('a', 'a'))
+
+        diff = _get_error(None, None)
+        self.assertEqual(diff, Invalid(None, None))
