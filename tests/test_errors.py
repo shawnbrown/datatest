@@ -70,9 +70,15 @@ class TestDataError(unittest.TestCase):
         error = MinimalDataError('A', None)
         self.assertEqual(repr(error), "MinimalDataError('A', None)")
 
-    def test_equal(self):
+    def test_string_equal(self):
         first = MinimalDataError('A')
         second = MinimalDataError('A')
+        self.assertEqual(first, second)
+
+    def test_nan_equal(self):
+        """NaN values should test as equal when part of a data error."""
+        first = MinimalDataError(float('nan'))
+        second = MinimalDataError(float('nan'))
         self.assertEqual(first, second)
 
 
@@ -163,6 +169,12 @@ class Test_get_error(unittest.TestCase):
 
         diff = _get_error('a', 6)
         self.assertEqual(diff, Invalid('a', 6))
+
+        diff = _get_error(float('nan'), 6)
+        self.assertEqual(diff, Invalid(float('nan'), 6))
+
+        diff = _get_error(5, float('nan'))
+        self.assertEqual(diff, Invalid(5, float('nan')))
 
         fn = lambda x: True
         diff = _get_error('a', fn)

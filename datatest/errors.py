@@ -16,6 +16,23 @@ class ValidationErrors(AssertionError):
         return iter(self.args[1])
 
 
+class _NANVALUE_TOKEN(object):
+    """Token for comparing errors that contain not-a-number values."""
+    def __repr__(self):
+        return '<NAN>'
+NANVALUE = _NANVALUE_TOKEN()
+del _NANVALUE_TOKEN
+
+
+def _nan_to_token(x):
+    try:
+        if isnan(x):
+            return NANVALUE
+    except TypeError:
+        pass
+    return x
+
+
 class DataError(AssertionError):
     """
     DataError(arg[, arg [, ...]])
@@ -40,7 +57,9 @@ class DataError(AssertionError):
         return self._args
 
     def __eq__(self, other):
-        return self.__class__ == other.__class__ and self.args == other.args
+        self_args = [_nan_to_token(x) for x in self.args]
+        other_args = [_nan_to_token(x) for x in other.args]
+        return self.__class__ == other.__class__ and self_args == other_args
 
     def __repr__(self):
         cls_name = self.__class__.__name__
