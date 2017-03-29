@@ -15,6 +15,7 @@ from .utils import itertools
 from .utils.misc import _is_nsiterable
 from .utils.misc import _is_sortable
 from .utils.misc import _unique_everseen
+from .utils.misc import _make_token
 from .load.sqltemp import TemporarySqliteTable
 from .load.sqltemp import _from_csv
 
@@ -391,18 +392,16 @@ _query_step = collections.namedtuple(
     typename='query_step',
     field_names=('name', 'args', 'kwds')
 )
+
 _execution_step = collections.namedtuple(
     typename='execution_step',
     field_names=('function', 'args', 'kwds')
 )
 
-
-class _RESULT_TOKEN(object):
-    def __repr__(self):
-        return '<RESULT>'
-RESULT_TOKEN = _RESULT_TOKEN()
-del _RESULT_TOKEN
-
+RESULT_TOKEN = _make_token(
+    'RESULT',
+    'Token for representing a data result when optimizing execution plan.',
+)
 
 class DataQuery(object):
     """A class to query data from a :class:`DataSource` object.

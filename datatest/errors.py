@@ -3,6 +3,7 @@ from math import isnan
 from numbers import Number
 
 from .utils.misc import _is_nsiterable
+from .utils.misc import _make_token
 
 
 class ValidationErrors(AssertionError):
@@ -16,18 +17,15 @@ class ValidationErrors(AssertionError):
         return iter(self.args[1])
 
 
-class _NANVALUE_TOKEN(object):
-    """Token for comparing errors that contain not-a-number values."""
-    def __repr__(self):
-        return '<NAN>'
-NANVALUE = _NANVALUE_TOKEN()
-del _NANVALUE_TOKEN
-
+NANTOKEN = _make_token(
+    'NANTOKEN',
+    'Token for comparing errors that contain not-a-number values.'
+)
 
 def _nan_to_token(x):
     try:
         if isnan(x):
-            return NANVALUE
+            return NANTOKEN
     except TypeError:
         pass
     return x
@@ -119,12 +117,10 @@ class Deviation(DataError):
         return '{0}({1}, {2})'.format(cls_name, diff_repr, remaining_repr)
 
 
-class _NOTFOUND_TOKEN(object):
-    """Token for handling values that are not available for comparison."""
-    def __repr__(self):
-        return '<NOTFOUND>'
-NOTFOUND = _NOTFOUND_TOKEN()
-del _NOTFOUND_TOKEN
+NOTFOUND = _make_token(
+    'NOTFOUND',
+    'Token for handling values that are not available for comparison.'
+)
 
 
 def _get_error(actual, expected, omit_expected=False):

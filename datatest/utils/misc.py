@@ -54,6 +54,26 @@ def _make_decimal(d):
     return d.normalize()
 
 
+def _make_token(name, description=None):
+    """Return a new object instance to use as a symbol for representing
+    an entity that cannot be used directly because of some logical
+    reason or implementation detail.
+
+    * DataQuery uses a token for the result data when optimizing
+      queries because the result does not exist until the query is
+      actually executed.
+    * _get_error() uses a token to build an appropriate error when
+      objects normally required for processing are not found.
+    * DataError uses a token to compare float('nan') objects because
+      they are not considered to be equal when directly compared.
+    """
+    class TOKEN(object):
+        def __repr__(self):
+            return '<{0}>'.format(name)
+    TOKEN.description = description
+    return TOKEN()
+
+
 def _get_arg_lengths(func):
     """Returns a two-tuple containing the number of positional arguments
     as the first item and the number of variable positional arguments as
