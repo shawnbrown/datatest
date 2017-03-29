@@ -58,6 +58,8 @@ class DataError(AssertionError):
         self_args = [_nan_to_token(x) for x in self.args]
         other_args = [_nan_to_token(x) for x in other.args]
         return self.__class__ == other.__class__ and self_args == other_args
+        # POINT OF DISCUSSION: Should data error subclasses with equal
+        # args test as equal the same way tuples and nameduples do?
 
     def __repr__(self):
         cls_name = self.__class__.__name__

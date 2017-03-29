@@ -110,7 +110,7 @@ class DataTestCase(TestCase):
                 return frame.f_globals[name]  # <- EXIT!
         raise NameError('cannot find {0!r}'.format(name))
 
-    def assertValid(self, data, requirement=None, msg=None):
+    def assertValid(self, data, requirement, msg=None):
         """Fail if the *data* under test does not satisfy the
         *requirement*.
 
@@ -198,14 +198,6 @@ class DataTestCase(TestCase):
             requirement = requirement.execute()
         elif isinstance(requirement, DataResult):
             requirement = requirement.evaluate()
-
-        # If using *function* signature, normalize arguments and get data.
-        if callable(data) and (not requirement or isinstance(requirement, str)):
-            function, data = data, None         # Shuffle arguments
-            if not msg:                         # to fit *function*
-                msg, requirement = requirement, None  # signature.
-            data = function(self.subject)
-            requirement = function(self.reference)
 
         # Get appropriate comparison function (as determined by
         # *requirement*).
@@ -355,13 +347,6 @@ class DataTestCase(TestCase):
 
 # Prettify default signature of methods that accept multiple signatures.
 try:
-    # For DataTestCase.assertValid(), remove default parameter.
-    _sig = inspect.signature(DataTestCase.assertValid)
-    _self, _data, _required, _msg = _sig.parameters.values()
-    _required = _required.replace(default=inspect.Parameter.empty)
-    _sig = _sig.replace(parameters=[_self, _data, _required, _msg])
-    DataTestCase.assertValid.__signature__ = _sig
-
     # For DataTestCase.allowDeviation(), build "tolerance" signature.
     _sig = inspect.signature(DataTestCase.allowDeviation)
     _self, _lower, _upper, _msg, _kwds_filter = _sig.parameters.values()
