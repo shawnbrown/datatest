@@ -1,5 +1,4 @@
 """Comparison objects returned by data source queries."""
-import inspect
 import re
 from numbers import Number
 
