@@ -2,21 +2,20 @@
 """Miscellaneous helper functions."""
 from __future__ import absolute_import
 import inspect
-import os
 from sys import version_info as _version_info
-from . import collections
-from . import decimal
+from .collections import Iterable
+from .decimal import Decimal
 from .itertools import filterfalse
 
 
 try:
-    _basestring = basestring  # For _is_nsiterable(), below.
+    basestring  # Removed in 3.x
+    def _is_nsiterable(x):
+        return not isinstance(x, basestring) and isinstance(x, Iterable)
 except NameError:
-    _basestring = str
-
-def _is_nsiterable(x):
-    """Returns True if *x* is a non-string iterable object."""
-    return not isinstance(x, _basestring) and isinstance(x, collections.Iterable)
+    def _is_nsiterable(x):
+        return not isinstance(x, str) and isinstance(x, Iterable)
+_is_nsiterable.__doc__ = 'Returns True if *x* is a non-string iterable object.'
 
 
 def _is_sortable(obj):
@@ -44,13 +43,13 @@ def _unique_everseen(iterable):  # Adapted from itertools recipes.
 
 
 def _make_decimal(d):
-    """Converts number into normalized decimal.Decimal object."""
+    """Converts number into normalized Decimal object."""
     if isinstance(d, float):
         d = str(d)
-    d = decimal.Decimal(d)
+    d = Decimal(d)
 
-    if d == d.to_integral():                   # Remove_exponent (from official
-        return d.quantize(decimal.Decimal(1))  # docs: 9.4.10. Decimal FAQ).
+    if d == d.to_integral():           # Remove_exponent (from official
+        return d.quantize(Decimal(1))  # docs: 9.4.10. Decimal FAQ).
     return d.normalize()
 
 
