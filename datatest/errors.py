@@ -57,11 +57,13 @@ class DataError(AssertionError):
         return self._args
 
     def __eq__(self, other):
+        if self.__class__ != other.__class__:
+            return False
+            # POINT OF DISCUSSION: Should subclasses test equal
+            # if args all match (like tuples and nameduples do)?
         self_args = [_nan_to_token(x) for x in self.args]
         other_args = [_nan_to_token(x) for x in other.args]
-        return self.__class__ == other.__class__ and self_args == other_args
-        # POINT OF DISCUSSION: Should data error subclasses with equal
-        # args test as equal the same way tuples and nameduples do?
+        return self_args == other_args
 
     def __hash__(self):
         return hash((self.__class__, self.args))

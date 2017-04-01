@@ -81,6 +81,13 @@ class TestDataError(unittest.TestCase):
         second = MinimalDataError(float('nan'))
         self.assertEqual(first, second)
 
+    def test_comparing_different_types(self):
+        error = MinimalDataError('X')
+        self.assertNotEqual(error, Exception('X'))
+        self.assertNotEqual(error, None)
+        self.assertNotEqual(error, True)
+        self.assertNotEqual(error, False)
+
 
 class TestSubclassRelationship(unittest.TestCase):
     def test_subclass(self):
