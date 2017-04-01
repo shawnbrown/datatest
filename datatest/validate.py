@@ -2,6 +2,7 @@
 from .utils import itertools
 from .utils import collections
 from .utils.misc import _is_nsiterable
+from .errors import DataError
 from .errors import Extra
 from .errors import Missing
 from .errors import Invalid
@@ -104,3 +105,28 @@ def _compare_set(data, requirement):
     missing = (Missing(x) for x in missing_elements)
     extra = (Extra(x) for x in extra_elements)
     return itertools.chain(missing, extra)
+
+
+def _compare_callable(data, requirement):
+    for element in data:
+        try:
+            if _is_nsiterable(element):
+                returned_value = requirement(*element)
+            else:
+                returned_value = requirement(element)
+        except Exception:
+            returned_value = False  # Raised errors count as False.
+
+        if returned_value is True:
+            continue
+        if returned_value is False:
+            yield Invalid(element)
+            continue
+        if isinstance(returned_value, DataError):
+            yield returned_value  # Returned data errors are used as-is.
+            continue
+
+        callable_name = requirement.__name__
+        message = \
+            '{0!r} returned {1!r}, should return True, False or DataError'
+        raise TypeError(message.format(callable_name, returned_value))

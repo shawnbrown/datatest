@@ -179,9 +179,6 @@ class DataTestCase(TestCase):
                 requirement = 'FOO'
                 self.assertValid(data, requirement)
         """
-        # TODO: "If the function raises or returns an error derived
-        #        from :class:`DataError`, this error is used instead"
-
         # TODO: Sequence order:
         #       "On failure, an :py:class:`AssertionError` is raised"
 

@@ -9,6 +9,7 @@ from datatest.errors import Deviation
 
 from datatest.validate import _compare_sequence
 from datatest.validate import _compare_set
+from datatest.validate import _compare_callable
 
 
 class TestCompareSequence(unittest.TestCase):
@@ -88,7 +89,7 @@ class TestCompareSet(unittest.TestCase):
         result = _compare_set(data, self.requirement)
         self.assertEqual(list(result), [Extra('x')])
 
-    def test_multiple_extras(self):
+    def test_duplicate_extras(self):
         """Should return only one error for each distinct extra value."""
         data = iter(['a', 'b', 'c', 'x', 'x', 'x'])  # <- Multiple x's.
         result = _compare_set(data, self.requirement)
@@ -103,3 +104,51 @@ class TestCompareSet(unittest.TestCase):
         data = 'a'
         result = _compare_set(data, self.requirement)
         self.assertEqual(set(result), set([Missing('b'), Missing('c')]))
+
+
+class TestCompareCallable(unittest.TestCase):
+    def setUp(self):
+        self.isdigit = lambda x: x.isdigit()
+
+    def test_all_true(self):
+        data = ['10', '20', '30']
+        result = _compare_callable(data, self.isdigit)
+        self.assertEqual(list(result), [])
+
+    def test_some_false(self):
+        """Elements that evaluate to False are returned as Invalid() errors."""
+        data = ['10', '20', 'XX']
+        result = _compare_callable(data, self.isdigit)
+        self.assertEqual(list(result), [Invalid('XX')])
+
+    def test_duplicate_false(self):
+        """Should return an error for every false result (incl. duplicates)."""
+        data = ['10', '20', 'XX', 'XX', 'XX']  # <- Multiple XX's.
+        result = _compare_callable(data, self.isdigit)
+        self.assertEqual(list(result), [Invalid('XX'), Invalid('XX'), Invalid('XX')])
+
+    def test_raised_error(self):
+        """When an Exception is raised, it counts as False."""
+        data = ['10', '20', 30]  # <- Fails on 30 (int has no 'isdigit' method).
+        result = _compare_callable(data, self.isdigit)
+        self.assertEqual(list(result), [Invalid(30)])
+
+    def test_returned_error(self):
+        """When a DataError is returned, it is used in place of Invalid."""
+        def func(x):
+            if x == 'c':
+                return Invalid("Letter 'c' is no good!")
+            return True
+
+        data = ['a', 'b', 'c']
+        result = _compare_callable(data, func)
+        self.assertEqual(list(result), [Invalid("Letter 'c' is no good!")])
+
+    def test_bad_return_type(self):
+        """If callable returns an unexpected type, raise a TypeError."""
+        def func(x):
+            return Exception('my error')  # <- Not True, False or DataError!
+
+        with self.assertRaises(TypeError):
+            result = _compare_callable(['a', 'b', 'c'], func)
+            list(result)  # Evaluate generator.
