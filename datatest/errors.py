@@ -2,6 +2,7 @@
 from math import isnan
 from numbers import Number
 
+from .utils import collections
 from .utils.misc import _is_nsiterable
 from .utils.misc import _make_token
 
@@ -47,6 +48,7 @@ class DataError(AssertionError):
         if not args:
             msg = '{0} requires at least 1 argument, got 0'
             raise TypeError(msg.format(self.__class__.__name__))
+        assert all(isinstance(x, collections.Hashable) for x in args)
         self._args = args
 
     @property
@@ -60,6 +62,9 @@ class DataError(AssertionError):
         return self.__class__ == other.__class__ and self_args == other_args
         # POINT OF DISCUSSION: Should data error subclasses with equal
         # args test as equal the same way tuples and nameduples do?
+
+    def __hash__(self):
+        return hash((self.__class__, self.args))
 
     def __repr__(self):
         cls_name = self.__class__.__name__
