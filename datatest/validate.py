@@ -11,11 +11,10 @@ from .errors import _get_error
 from .errors import NOTFOUND
 
 
-def _compare_sequence(data, requirement):
-    """Compare *data* against sequence of *requirement* values.
-    Returns AssertionError if differences are found, else returns
-    None. The given *requirement* is trusted to be an ordered
-    sequence.
+def _compare_sequence(data, sequence):
+    """Compare *data* against a *sequence* values. Stops at the
+    first difference found and returns an AssertionError. If no
+    differences are found, returns None.
     """
     if isinstance(data, str):
         raise ValueError("uncomparable types: 'str' and sequence type")
@@ -27,7 +26,7 @@ def _compare_sequence(data, requirement):
 
     message_prefix = None
     previous_element = NOTFOUND
-    zipped = itertools.zip_longest(data, requirement, fillvalue=NOTFOUND)
+    zipped = itertools.zip_longest(data, sequence, fillvalue=NOTFOUND)
     for index, (actual, expected) in enumerate(zipped):
         if actual == expected:
             previous_element = actual
@@ -87,33 +86,33 @@ def _compare_sequence(data, requirement):
     return AssertionError(message)
 
 
-def _compare_set(data, requirement):
-    """Compare *data* against a set of *requirement* values."""
+def _compare_set(data, requirement_set):
+    """Compare *data* against a *requirement_set* of values."""
     if not _is_nsiterable(data):
         data = [data]
 
     matching_elements = set()
     extra_elements = set()
     for element in data:
-        if element in requirement:
+        if element in requirement_set:
             matching_elements.add(element)
         else:
             extra_elements.add(element)
 
-    missing_elements = requirement.difference(matching_elements)
+    missing_elements = requirement_set.difference(matching_elements)
 
     missing = (Missing(x) for x in missing_elements)
     extra = (Extra(x) for x in extra_elements)
     return itertools.chain(missing, extra)
 
 
-def _compare_callable(data, requirement):
+def _compare_callable(data, function):
     for element in data:
         try:
             if _is_nsiterable(element):
-                returned_value = requirement(*element)
+                returned_value = function(*element)
             else:
-                returned_value = requirement(element)
+                returned_value = function(element)
         except Exception:
             returned_value = False  # Raised errors count as False.
 
@@ -126,7 +125,7 @@ def _compare_callable(data, requirement):
             yield returned_value  # Returned data errors are used as-is.
             continue
 
-        callable_name = requirement.__name__
+        callable_name = function.__name__
         message = \
             '{0!r} returned {1!r}, should return True, False or DataError'
         raise TypeError(message.format(callable_name, returned_value))
