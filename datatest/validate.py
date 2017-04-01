@@ -130,3 +130,13 @@ def _compare_callable(data, requirement):
         message = \
             '{0!r} returned {1!r}, should return True, False or DataError'
         raise TypeError(message.format(callable_name, returned_value))
+
+
+def _compare_regex(data, regex):
+    search = regex.search
+    for element in data:
+        try:
+            if search(element) is None:
+                yield Invalid(element)
+        except TypeError:
+            yield Invalid(element)

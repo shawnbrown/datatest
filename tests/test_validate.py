@@ -1,4 +1,5 @@
 """Tests for validation and comparison functions."""
+import re
 import textwrap
 from . import _unittest as unittest
 
@@ -10,6 +11,7 @@ from datatest.errors import Deviation
 from datatest.validate import _compare_sequence
 from datatest.validate import _compare_set
 from datatest.validate import _compare_callable
+from datatest.validate import _compare_regex
 
 
 class TestCompareSequence(unittest.TestCase):
@@ -152,3 +154,30 @@ class TestCompareCallable(unittest.TestCase):
         with self.assertRaises(TypeError):
             result = _compare_callable(['a', 'b', 'c'], func)
             list(result)  # Evaluate generator.
+
+
+class TestCompareRegex(unittest.TestCase):
+    def setUp(self):
+        self.regex = re.compile('[a-z][0-9]+')
+
+    def test_all_true(self):
+        data = iter(['a1', 'b2', 'c3'])
+        result = _compare_regex(data, self.regex)
+        self.assertEqual(list(result), [])
+
+    def test_some_false(self):
+        data = iter(['a1', 'b2', 'XX'])
+        result = _compare_regex(data, self.regex)
+        self.assertEqual(list(result), [Invalid('XX')])
+
+    def test_duplicate_false(self):
+        """Should return an error for every non-match (incl. duplicates)."""
+        data = iter(['a1', 'b2', 'XX', 'XX', 'XX'])  # <- Multiple XX's.
+        result = _compare_regex(data, self.regex)
+        self.assertEqual(list(result), [Invalid('XX'), Invalid('XX'), Invalid('XX')])
+
+    def test_raised_error(self):
+        """When an Exception is raised, it counts as False."""
+        data = ['a1', 'b2', 30]  # <- Fails on 30 (re.search() expects a string).
+        result = _compare_regex(data, self.regex)
+        self.assertEqual(list(result), [Invalid(30)])
