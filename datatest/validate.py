@@ -1,6 +1,7 @@
 """Validation and comparison handling."""
 from .utils import itertools
 from .utils import collections
+from .utils.misc import _is_nsiterable
 from .errors import Extra
 from .errors import Missing
 from .errors import Invalid
@@ -83,3 +84,23 @@ def _compare_sequence(data, requirement):
                                                     caret_underline,
                                                     message_suffix)
     return AssertionError(message)
+
+
+def _compare_set(data, requirement):
+    """Compare *data* against a set of *requirement* values."""
+    if not _is_nsiterable(data):
+        data = [data]
+
+    matching_elements = set()
+    extra_elements = set()
+    for element in data:
+        if element in requirement:
+            matching_elements.add(element)
+        else:
+            extra_elements.add(element)
+
+    missing_elements = requirement.difference(matching_elements)
+
+    missing = (Missing(x) for x in missing_elements)
+    extra = (Extra(x) for x in extra_elements)
+    return itertools.chain(missing, extra)

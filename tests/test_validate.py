@@ -2,10 +2,16 @@
 import textwrap
 from . import _unittest as unittest
 
+from datatest.errors import Extra
+from datatest.errors import Missing
+from datatest.errors import Invalid
+from datatest.errors import Deviation
+
 from datatest.validate import _compare_sequence
+from datatest.validate import _compare_set
 
 
-class TestSequence(unittest.TestCase):
+class TestCompareSequence(unittest.TestCase):
     def test_return_object(self):
         first = ['aaa', 'bbb', 'ccc']
         second = ['aaa', 'bbb', 'ccc']
@@ -61,3 +67,39 @@ class TestSequence(unittest.TestCase):
         """
         message = textwrap.dedent(message).strip()
         self.assertEqual(str(error), message)
+
+
+class TestCompareSet(unittest.TestCase):
+    def setUp(self):
+        self.requirement = set(['a', 'b', 'c'])
+
+    def test_no_difference(self):
+        data = iter(['a', 'b', 'c'])
+        result = _compare_set(data, self.requirement)
+        self.assertEqual(list(result), [])
+
+    def test_missing(self):
+        data = iter(['a', 'b'])
+        result = _compare_set(data, self.requirement)
+        self.assertEqual(list(result), [Missing('c')])
+
+    def test_extra(self):
+        data = iter(['a', 'b', 'c', 'x'])
+        result = _compare_set(data, self.requirement)
+        self.assertEqual(list(result), [Extra('x')])
+
+    def test_multiple_extras(self):
+        """Should return only one error for each distinct extra value."""
+        data = iter(['a', 'b', 'c', 'x', 'x', 'x'])  # <- Multiple x's.
+        result = _compare_set(data, self.requirement)
+        self.assertEqual(list(result), [Extra('x')])
+
+    def test_missing_and_extra(self):
+        data = iter(['a', 'c', 'x'])
+        result = _compare_set(data, self.requirement)
+        self.assertEqual(set(result), set([Missing('b'), Extra('x')]))
+
+    def test_string_or_noniterable(self):
+        data = 'a'
+        result = _compare_set(data, self.requirement)
+        self.assertEqual(set(result), set([Missing('b'), Missing('c')]))
