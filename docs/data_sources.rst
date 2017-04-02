@@ -46,8 +46,8 @@ Loading Data
 Load our data from a CSV file (:download:`example.csv
 <_static/example.csv>`)::
 
-    import datatest
-    source = datatest.DataSource.from_csv('example.csv')
+    >>> import datatest
+    >>> source = datatest.DataSource.from_csv('example.csv')
 
 
 Column Names
