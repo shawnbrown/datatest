@@ -139,3 +139,15 @@ def _compare_regex(data, regex):
                 yield Invalid(element)
         except TypeError:
             yield Invalid(element)
+
+
+def _compare_other(data, other):
+    """Compare *data* against *other* object--one that does not match
+    another supported comparison type.
+    """
+    for element in data:
+        try:
+            if element != other:
+                yield _get_error(element, other, omit_expected=True)
+        except Exception:
+            yield _get_error(element, other, omit_expected=True)

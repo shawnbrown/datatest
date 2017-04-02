@@ -12,6 +12,7 @@ from datatest.validate import _compare_sequence
 from datatest.validate import _compare_set
 from datatest.validate import _compare_callable
 from datatest.validate import _compare_regex
+from datatest.validate import _compare_other
 
 
 class TestCompareSequence(unittest.TestCase):
@@ -181,3 +182,45 @@ class TestCompareRegex(unittest.TestCase):
         data = ['a1', 'b2', 30]  # <- Fails on 30 (re.search() expects a string).
         result = _compare_regex(data, self.regex)
         self.assertEqual(list(result), [Invalid(30)])
+
+
+class TestCompareOther(unittest.TestCase):
+    def test_all_true(self):
+        data = iter(['A', 'A', 'A'])
+        result = _compare_other(data, 'A')
+        self.assertEqual(list(result), [])
+
+    def test_some_invalid(self):
+        data = iter(['A', 'A', 'XX'])
+        result = _compare_other(data, 'A')
+        self.assertEqual(list(result), [Invalid('XX')])
+
+    def test_some_deviation(self):
+        data = iter([10, 10, 11])
+        result = _compare_other(data, 10)
+        self.assertEqual(list(result), [Deviation(+1, 10)])
+
+    def test_invalid_and_deviation(self):
+        data = iter([10, 'XX', 11])
+        result = _compare_other(data, 10)
+        self.assertEqual(set(result), set([Invalid('XX'), Deviation(+1, 10)]))
+
+    @unittest.skip('Need to add DataError hashing for dict args.')
+    def test_dict_comparison(self):
+        data = iter([{'a': 1, 'b': 3}, {'a': 1, 'b': 2}])
+        result = _compare_other(data, {'a': 1, 'b': 2})
+        self.assertEqual(list(result), [Invalid({'a': 1, 'b': 3})])
+
+    def test_broken_comparison(self):
+        class BadClass(object):
+            def __eq__(self, other):
+                raise Exception("I have betrayed you!")
+
+            def __hash__(self):
+                return hash((self.__class__, 101))
+
+        bad_instance = BadClass()
+
+        data = iter([10, bad_instance, 10])
+        result = _compare_other(data, 10)
+        self.assertEqual(set(result), set([Invalid(bad_instance)]))
