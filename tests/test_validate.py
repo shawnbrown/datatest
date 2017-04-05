@@ -2,6 +2,7 @@
 import re
 import textwrap
 from . import _unittest as unittest
+from datatest.utils.misc import _is_consumable
 
 from datatest.errors import Extra
 from datatest.errors import Missing
@@ -13,6 +14,7 @@ from datatest.validate import _compare_set
 from datatest.validate import _compare_callable
 from datatest.validate import _compare_regex
 from datatest.validate import _compare_other
+from datatest.validate import _do_comparison
 
 
 class TestCompareSequence(unittest.TestCase):
@@ -224,3 +226,81 @@ class TestCompareOther(unittest.TestCase):
         data = iter([10, bad_instance, 10])
         result = _compare_other(data, 10)
         self.assertEqual(set(result), set([Invalid(bad_instance)]))
+
+
+class TestDoComparison(unittest.TestCase):
+    """Calling _do_comparison() should run the appropriate comparison
+    function (internally) and return the result.
+    """
+    def setUp(self):
+        self.multiple = ['A', 'B', 'A']
+        self.single = 'B'
+
+    def test_sequence(self):
+        result = _do_comparison(self.multiple, ['A', 'B', 'A'])
+        self.assertIsNone(result)
+
+        result = _do_comparison(self.multiple, ['A', 'A', 'B'])
+        self.assertIsInstance(result, AssertionError)
+
+        with self.assertRaises(ValueError):
+            _do_comparison(self.single, ['A', 'A', 'B'])
+
+    def test_set(self):
+        result = _do_comparison(self.multiple, set(['A', 'B']))
+        self.assertIsNone(result)
+
+        result = _do_comparison(self.multiple, set(['A', 'B', 'C']))
+        self.assertTrue(_is_consumable(result))
+        self.assertEqual(list(result), [Missing('C')])
+
+        result = _do_comparison(self.single, set(['A', 'B']))
+        self.assertEqual(list(result), [Missing('A')])  # <- Iterable of errors.
+
+    def test_callable(self):
+        result = _do_comparison(self.multiple, lambda x: x in ('A', 'B'))
+        self.assertIsNone(result)
+
+        result = _do_comparison(self.multiple, lambda x: x == 'A')
+        self.assertTrue(_is_consumable(result))
+        self.assertEqual(list(result), [Invalid('B')])
+
+        result = _do_comparison(self.single, lambda x: x == 'A')
+        self.assertEqual(result, Invalid('B'))  # <- Error.
+
+    def test_regex(self):
+        result = _do_comparison(self.multiple, re.compile('[AB]'))
+        self.assertIsNone(result)
+
+        result = _do_comparison(self.multiple, re.compile('[A]'))
+        self.assertTrue(_is_consumable(result))
+        self.assertEqual(list(result), [Invalid('B')])
+
+        result = _do_comparison(self.single, re.compile('[A]'))
+        self.assertEqual(result, Invalid('B'))  # <- Error.
+
+    def test_other_string(self):
+        data = ['A', 'A', 'A']
+        result = _do_comparison(data, 'A')
+        self.assertIsNone(result)
+
+        result = _do_comparison(self.multiple, 'A')
+        self.assertTrue(_is_consumable(result))
+        self.assertEqual(list(result), [Invalid('B')])
+
+        result = _do_comparison(self.single, 'A')
+        self.assertEqual(result, Invalid('B'))  # <- Error.
+
+    def test_other_mapping(self):
+        data = [{'a': 1}, {'b': 2}]
+        result = _do_comparison(data, [{'a': 1}, {'b': 2}])
+        self.assertIsNone(result)
+
+        #data = [{'b': 2}]
+        #result = _do_comparison(self.multiple, {'a': 1})
+        #self.assertTrue(_is_consumable(result))
+        #self.assertEqual(list(result), [Invalid({'b': 2}]))
+
+        #data = {'b': 2}
+        #result = _do_comparison(data, {'a': 1})
+        #self.assertEqual(result, Invalid({'b': 2}))  # <- Error.

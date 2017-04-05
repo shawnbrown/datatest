@@ -1,6 +1,8 @@
 """Validation and comparison handling."""
+import re
 from .utils import itertools
 from .utils import collections
+from .utils.builtins import callable
 from .utils.misc import _is_nsiterable
 from .errors import DataError
 from .errors import Extra
@@ -9,6 +11,8 @@ from .errors import Invalid
 from .errors import Deviation
 from .errors import _get_error
 from .errors import NOTFOUND
+
+_regex_type = type(re.compile(''))
 
 
 def _compare_sequence(data, sequence):
@@ -151,3 +155,41 @@ def _compare_other(data, other):
                 yield _get_error(element, other, omit_expected=True)
         except Exception:
             yield _get_error(element, other, omit_expected=True)
+
+
+def _do_comparison(data, requirement):
+    """Compare *data* against *requirement* using appropriate
+    comparison function (as determined by *requirement* type).
+
+    Returns an iterable of errors, a single error, or None.
+    """
+    if not isinstance(requirement, str) and \
+               isinstance(requirement, collections.Sequence):
+        result = _compare_sequence(data, requirement)
+        return result  # <- EXIT!
+
+    if isinstance(requirement, collections.Set):
+        result =  _compare_set(data, requirement)
+        first_element = next(result, None)
+        if first_element:
+            return itertools.chain([first_element], result)  # <- EXIT!
+        return None  # <- EXIT!
+
+    is_single_element = (not _is_nsiterable(data)) or \
+                                isinstance(data, collections.Mapping)
+    if is_single_element:
+        data = [data]
+
+    if callable(requirement):
+        result = _compare_callable(data, requirement)
+    elif isinstance(requirement, _regex_type):
+        result = _compare_regex(data, requirement)
+    else:
+        result = _compare_other(data, requirement)
+
+    first_element = next(result, None)
+    if first_element:
+        if is_single_element:
+            return first_element  # <- EXIT!
+        return itertools.chain([first_element], result)  # <- EXIT!
+    return None
