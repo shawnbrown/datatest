@@ -48,7 +48,6 @@ class DataError(AssertionError):
         if not args:
             msg = '{0} requires at least 1 argument, got 0'
             raise TypeError(msg.format(self.__class__.__name__))
-        assert all(isinstance(x, collections.Hashable) for x in args)
         self._args = args
 
     @property
@@ -64,9 +63,6 @@ class DataError(AssertionError):
         self_args = [_nan_to_token(x) for x in self.args]
         other_args = [_nan_to_token(x) for x in other.args]
         return self_args == other_args
-
-    def __hash__(self):
-        return hash((self.__class__, self.args))
 
     def __repr__(self):
         cls_name = self.__class__.__name__

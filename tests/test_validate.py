@@ -103,12 +103,20 @@ class TestCompareSet(unittest.TestCase):
     def test_missing_and_extra(self):
         data = iter(['a', 'c', 'x'])
         result = _compare_set(data, self.requirement)
-        self.assertEqual(set(result), set([Missing('b'), Extra('x')]))
+
+        result = list(result)
+        self.assertEqual(len(result), 2)
+        self.assertIn(Missing('b'), result)
+        self.assertIn(Extra('x'), result)
 
     def test_string_or_noniterable(self):
         data = 'a'
         result = _compare_set(data, self.requirement)
-        self.assertEqual(set(result), set([Missing('b'), Missing('c')]))
+
+        result = list(result)
+        self.assertEqual(len(result), 2)
+        self.assertIn(Missing('b'), result)
+        self.assertIn(Missing('c'), result)
 
 
 class TestCompareCallable(unittest.TestCase):
@@ -205,9 +213,12 @@ class TestCompareOther(unittest.TestCase):
     def test_invalid_and_deviation(self):
         data = iter([10, 'XX', 11])
         result = _compare_other(data, 10)
-        self.assertEqual(set(result), set([Invalid('XX'), Deviation(+1, 10)]))
 
-    @unittest.skip('Need to add DataError hashing for dict args.')
+        result = list(result)
+        self.assertEqual(len(result), 2)
+        self.assertIn(Invalid('XX'), result)
+        self.assertIn(Deviation(+1, 10), result)
+
     def test_dict_comparison(self):
         data = iter([{'a': 1, 'b': 3}, {'a': 1, 'b': 2}])
         result = _compare_other(data, {'a': 1, 'b': 2})
@@ -225,7 +236,7 @@ class TestCompareOther(unittest.TestCase):
 
         data = iter([10, bad_instance, 10])
         result = _compare_other(data, 10)
-        self.assertEqual(set(result), set([Invalid(bad_instance)]))
+        self.assertEqual(list(result), [Invalid(bad_instance)])
 
 
 class TestDoComparison(unittest.TestCase):
@@ -265,8 +276,10 @@ class TestDoComparison(unittest.TestCase):
         self.assertTrue(_is_consumable(result))
         self.assertEqual(list(result), [Invalid('B')])
 
+        #func = lambda x: x == 'A'
         result = _do_comparison(self.single, lambda x: x == 'A')
         self.assertEqual(result, Invalid('B'))  # <- Error.
+        #self.assertEqual(result, Invalid('B', expected=func)  # <- Error.
 
     def test_regex(self):
         result = _do_comparison(self.multiple, re.compile('[AB]'))
@@ -278,6 +291,7 @@ class TestDoComparison(unittest.TestCase):
 
         result = _do_comparison(self.single, re.compile('[A]'))
         self.assertEqual(result, Invalid('B'))  # <- Error.
+        #self.assertEqual(result, Invalid('B', expected=re.compile('[A]')))  # <- Error.
 
     def test_other_string(self):
         data = ['A', 'A', 'A']
@@ -290,17 +304,19 @@ class TestDoComparison(unittest.TestCase):
 
         result = _do_comparison(self.single, 'A')
         self.assertEqual(result, Invalid('B'))  # <- Error.
+        #self.assertEqual(result, Invalid('B', expected='A'))  # <- Error.
 
     def test_other_mapping(self):
         data = [{'a': 1}, {'b': 2}]
         result = _do_comparison(data, [{'a': 1}, {'b': 2}])
         self.assertIsNone(result)
 
-        #data = [{'b': 2}]
-        #result = _do_comparison(self.multiple, {'a': 1})
-        #self.assertTrue(_is_consumable(result))
-        #self.assertEqual(list(result), [Invalid({'b': 2}]))
+        data = [{'b': 2}]
+        result = _do_comparison(data, {'a': 1})
+        self.assertTrue(_is_consumable(result))
+        self.assertEqual(list(result), [Invalid({'b': 2})])
 
-        #data = {'b': 2}
-        #result = _do_comparison(data, {'a': 1})
-        #self.assertEqual(result, Invalid({'b': 2}))  # <- Error.
+        data = {'b': 2}
+        result = _do_comparison(data, {'a': 1})
+        self.assertEqual(result, Invalid({'b': 2}))  # <- Error.
+        #self.assertEqual(result, Invalid({'b': 2}, expected={'a': 1}))  # <- Error.
