@@ -92,7 +92,9 @@ def _compare_sequence(data, sequence):
 
 def _compare_set(data, requirement_set):
     """Compare *data* against a *requirement_set* of values."""
-    if not _is_nsiterable(data):
+    if data is NOTFOUND:
+        data = []
+    elif not _is_nsiterable(data):
         data = [data]
 
     matching_elements = set()
@@ -111,6 +113,11 @@ def _compare_set(data, requirement_set):
 
 
 def _compare_callable(data, function):
+    if data is NOTFOUND:
+        data = [None]
+    elif not _is_nsiterable(data):
+        data = [data]
+
     for element in data:
         try:
             if _is_nsiterable(element):
@@ -136,6 +143,11 @@ def _compare_callable(data, function):
 
 
 def _compare_regex(data, regex):
+    if data is NOTFOUND:
+        data = [None]
+    elif not _is_nsiterable(data):
+        data = [data]
+
     search = regex.search
     for element in data:
         try:
@@ -193,3 +205,32 @@ def _do_comparison(data, requirement):
             return first_element  # <- EXIT!
         return itertools.chain([first_element], result)  # <- EXIT!
     return None
+
+
+def _compare_mapping(data, mapping):
+    if isinstance(data, collections.Mapping):
+        data_items = getattr(data, 'iteritems', data.items)()
+    elif _is_collection_of_items(data):
+        data_items = data
+    else:
+        raise TypeError('data must be mapping or iterable of key-value items')
+
+    data_keys = set()
+    for key, actual in data_items:
+        data_keys.add(key)
+        expected = mapping.get(key, NOTFOUND)
+        result = _do_comparison(actual, expected)
+        if result:
+            if _is_nsiterable(result) and \
+                       not isinstance(result, collections.Mapping):
+                result = list(result)
+            yield key, result
+
+    mapping_items = getattr(mapping, 'iteritems', mapping.items)()
+    for key, expected in mapping_items:
+        if key not in data_keys:
+            result = _do_comparison(NOTFOUND, expected)
+            if _is_nsiterable(result) and \
+                       not isinstance(result, collections.Mapping):
+                result = list(result)
+            yield key, result
