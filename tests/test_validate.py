@@ -17,6 +17,7 @@ from datatest.validate import _compare_regex
 from datatest.validate import _compare_other
 from datatest.validate import _do_comparison
 from datatest.validate import _compare_mapping
+from datatest.validate import _do_mapping_comparison
 
 
 class TestCompareSequence(unittest.TestCase):
@@ -409,3 +410,16 @@ class TestCompareMapping(unittest.TestCase):
         with self.assertRaises(ValueError):
             result = _compare_mapping(nonsequence, {'a': ['x', 'y']})
             dict(result)  # Evaluate iterator.
+
+
+class TestDoMappingComparison(unittest.TestCase):
+    def test_no_differences(self):
+        data = {'a': 'x', 'b': 'y'}
+        result = _do_mapping_comparison(data, {'a': 'x', 'b': 'y'})
+        self.assertIsNone(result)
+
+    def test_some_differences(self):
+        data = {'a': 'x', 'b': 'y'}
+        result = _do_mapping_comparison(data, {'a': 'x', 'b': 'z'})
+        self.assertTrue(_is_consumable(result))
+        self.assertEqual(dict(result), {'b': Invalid('y')})

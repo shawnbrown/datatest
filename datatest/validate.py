@@ -173,7 +173,10 @@ def _do_comparison(data, requirement):
     """Compare *data* against *requirement* using appropriate
     comparison function (as determined by *requirement* type).
 
-    Returns an iterable of errors, a single error, or None.
+    Returns one of three types:
+     * an iterable of errors,
+     * a single error,
+     * or None
     """
     if not isinstance(requirement, str) and \
                isinstance(requirement, collections.Sequence):
@@ -234,3 +237,18 @@ def _compare_mapping(data, mapping):
                        not isinstance(result, collections.Mapping):
                 result = list(result)
             yield key, result
+
+
+def _do_mapping_comparison(data, mapping):
+    """Compare *data* against *mapping* of required values.
+
+    Returns either:
+     * an iterable of error items
+     * or None
+    """
+    result = _compare_mapping(data, mapping)
+
+    first_element = next(result, None)
+    if first_element:
+        return itertools.chain([first_element], result)  # <- EXIT!
+    return None
