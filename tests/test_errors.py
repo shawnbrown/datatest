@@ -212,14 +212,17 @@ class Test_get_error(unittest.TestCase):
         diff = _get_error(NOTFOUND, 0)
         self.assertEqual(diff, Deviation(None, 0))
 
-    def test_omit_expected(self):
+    def test_show_expected(self):
         """If requirement is common it should be omitted from Invalid
         difference (but not from Deviation differences).
         """
-        diff = _get_error('a', 6, omit_expected=True)
+        diff = _get_error('a', 6, show_expected=True)
+        self.assertEqual(diff, Invalid('a', expected=6))
+
+        diff = _get_error('a', 6, show_expected=False)
         self.assertEqual(diff, Invalid('a'))
 
-        diff = _get_error(NOTFOUND, 6, omit_expected=True)
+        diff = _get_error(NOTFOUND, 6, show_expected=False)
         self.assertEqual(diff, Deviation(-6, 6))
 
     def test_same(self):

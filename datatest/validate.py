@@ -157,16 +157,16 @@ def _compare_regex(data, regex):
             yield Invalid(element)
 
 
-def _compare_other(data, other):
+def _compare_other(data, other, show_expected=True):
     """Compare *data* against *other* object--one that does not match
     another supported comparison type.
     """
     for element in data:
         try:
             if element != other:
-                yield _get_error(element, other, omit_expected=True)
+                yield _get_error(element, other, show_expected)
         except Exception:
-            yield _get_error(element, other, omit_expected=True)
+            yield _get_error(element, other, show_expected)
 
 
 def _do_comparison(data, requirement):
@@ -176,7 +176,7 @@ def _do_comparison(data, requirement):
     Returns one of three types:
      * an iterable of errors,
      * a single error,
-     * or None
+     * or None.
     """
     if not isinstance(requirement, str) and \
                isinstance(requirement, collections.Sequence):
@@ -200,7 +200,8 @@ def _do_comparison(data, requirement):
     elif isinstance(requirement, _regex_type):
         result = _compare_regex(data, requirement)
     else:
-        result = _compare_other(data, requirement)
+        result = _compare_other(data, requirement,
+                                show_expected=is_single_element)
 
     first_element = next(result, None)
     if first_element:
@@ -244,7 +245,7 @@ def _do_mapping_comparison(data, mapping):
 
     Returns either:
      * an iterable of error items
-     * or None
+     * or None.
     """
     result = _compare_mapping(data, mapping)
 

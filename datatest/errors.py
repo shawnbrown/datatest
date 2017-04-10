@@ -128,11 +128,11 @@ NOTFOUND = _make_token(
 )
 
 
-def _get_error(actual, expected, omit_expected=False):
+def _get_error(actual, expected, show_expected=True):
     """Returns an appropriate error for *actual* and *expected*
     values that are known to be unequal.
 
-    Setting *omit_expected* to True, signals that the *expected*
+    Setting *show_expected* to False, signals that the *expected*
     argument should be omitted when creating an Invalid error (this
     is useful for reducing duplication when validating data against
     a single function or object).
@@ -175,6 +175,6 @@ def _get_error(actual, expected, omit_expected=False):
         return Missing(expected)
 
     # All other pairs of objects.
-    if omit_expected:
-        return Invalid(actual)
-    return Invalid(actual, expected)
+    if show_expected:
+        return Invalid(actual, expected)
+    return Invalid(actual)

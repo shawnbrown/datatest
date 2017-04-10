@@ -224,7 +224,7 @@ class TestCompareOther(unittest.TestCase):
     def test_some_invalid(self):
         data = iter(['A', 'A', 'XX'])
         result = _compare_other(data, 'A')
-        self.assertEqual(list(result), [Invalid('XX')])
+        self.assertEqual(list(result), [Invalid('XX', expected='A')])
 
     def test_some_deviation(self):
         data = iter([10, 10, 11])
@@ -237,13 +237,13 @@ class TestCompareOther(unittest.TestCase):
 
         result = list(result)
         self.assertEqual(len(result), 2)
-        self.assertIn(Invalid('XX'), result)
+        self.assertIn(Invalid('XX', expected=10), result)
         self.assertIn(Deviation(+1, 10), result)
 
     def test_dict_comparison(self):
-        data = iter([{'a': 1, 'b': 3}, {'a': 1, 'b': 2}])
-        result = _compare_other(data, {'a': 1, 'b': 2})
-        self.assertEqual(list(result), [Invalid({'a': 1, 'b': 3})])
+        data = iter([{'a': 1}, {'b': 2}])
+        result = _compare_other(data, {'a': 1})
+        self.assertEqual(list(result), [Invalid({'b': 2}, expected={'a': 1})])
 
     def test_broken_comparison(self):
         class BadClass(object):
@@ -257,7 +257,7 @@ class TestCompareOther(unittest.TestCase):
 
         data = iter([10, bad_instance, 10])
         result = _compare_other(data, 10)
-        self.assertEqual(list(result), [Invalid(bad_instance)])
+        self.assertEqual(list(result), [Invalid(bad_instance, 10)])
 
 
 class TestDoComparison(unittest.TestCase):
@@ -324,8 +324,7 @@ class TestDoComparison(unittest.TestCase):
         self.assertEqual(list(result), [Invalid('B')])
 
         result = _do_comparison(self.single, 'A')
-        self.assertEqual(result, Invalid('B'))  # <- Error.
-        #self.assertEqual(result, Invalid('B', expected='A'))  # <- Error.
+        self.assertEqual(result, Invalid('B', expected='A'))  # <- Error.
 
     def test_other_mapping(self):
         data = [{'a': 1}, {'b': 2}]
@@ -339,7 +338,7 @@ class TestDoComparison(unittest.TestCase):
 
         data = {'b': 2}
         result = _do_comparison(data, {'a': 1})
-        self.assertEqual(result, Invalid({'b': 2}))  # <- Error.
+        self.assertEqual(result, Invalid({'b': 2}, expected={'a': 1}))  # <- Error.
 
 
 class TestCompareMapping(unittest.TestCase):
@@ -381,7 +380,7 @@ class TestCompareMapping(unittest.TestCase):
         # Equality of single values.
         data = {'a': 'x', 'b': 10}
         result = _compare_mapping(data, {'a': 'j', 'b': 9})
-        expected = {'a': Invalid('x'), 'b': Deviation(+1, 9)}
+        expected = {'a': Invalid('x', expected='j'), 'b': Deviation(+1, 9)}
         self.assertEqual(dict(result), expected)
 
         # Equality of multiple values.
@@ -422,4 +421,4 @@ class TestDoMappingComparison(unittest.TestCase):
         data = {'a': 'x', 'b': 'y'}
         result = _do_mapping_comparison(data, {'a': 'x', 'b': 'z'})
         self.assertTrue(_is_consumable(result))
-        self.assertEqual(dict(result), {'b': Invalid('y')})
+        self.assertEqual(dict(result), {'b': Invalid('y', expected='z')})
