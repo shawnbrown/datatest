@@ -15,8 +15,8 @@ from .errors import NOTFOUND
 _regex_type = type(re.compile(''))
 
 
-def _compare_sequence(data, sequence):
-    """Compare *data* against a *sequence* values. Stops at the
+def _require_sequence(data, sequence):
+    """Compare *data* against a *sequence* of values. Stops at the
     first difference found and returns an AssertionError. If no
     differences are found, returns None.
     """
@@ -90,7 +90,7 @@ def _compare_sequence(data, sequence):
     return AssertionError(message)
 
 
-def _compare_set(data, requirement_set):
+def _require_set(data, requirement_set):
     """Compare *data* against a *requirement_set* of values."""
     if data is NOTFOUND:
         data = []
@@ -112,7 +112,7 @@ def _compare_set(data, requirement_set):
     return itertools.chain(missing, extra)
 
 
-def _compare_callable(data, function):
+def _require_callable(data, function):
     if data is NOTFOUND:
         data = [None]
     elif not _is_nsiterable(data):
@@ -142,7 +142,7 @@ def _compare_callable(data, function):
         raise TypeError(message.format(callable_name, returned_value))
 
 
-def _compare_regex(data, regex):
+def _require_regex(data, regex):
     if data is NOTFOUND:
         data = [None]
     elif not _is_nsiterable(data):
@@ -157,7 +157,7 @@ def _compare_regex(data, regex):
             yield Invalid(element)
 
 
-def _compare_other(data, other, show_expected=True):
+def _require_other(data, other, show_expected=True):
     """Compare *data* against *other* object--one that does not match
     another supported comparison type.
     """
@@ -169,7 +169,7 @@ def _compare_other(data, other, show_expected=True):
             yield _get_error(element, other, show_expected)
 
 
-def _do_comparison(data, requirement):
+def _apply_requirement(data, requirement):
     """Compare *data* against *requirement* using appropriate
     comparison function (as determined by *requirement* type).
 
@@ -180,11 +180,11 @@ def _do_comparison(data, requirement):
     """
     if not isinstance(requirement, str) and \
                isinstance(requirement, collections.Sequence):
-        result = _compare_sequence(data, requirement)
+        result = _require_sequence(data, requirement)
         return result  # <- EXIT!
 
     if isinstance(requirement, collections.Set):
-        result =  _compare_set(data, requirement)
+        result =  _require_set(data, requirement)
         first_element = next(result, None)
         if first_element:
             return itertools.chain([first_element], result)  # <- EXIT!
@@ -196,11 +196,11 @@ def _do_comparison(data, requirement):
         data = [data]
 
     if callable(requirement):
-        result = _compare_callable(data, requirement)
+        result = _require_callable(data, requirement)
     elif isinstance(requirement, _regex_type):
-        result = _compare_regex(data, requirement)
+        result = _require_regex(data, requirement)
     else:
-        result = _compare_other(data, requirement,
+        result = _require_other(data, requirement,
                                 show_expected=is_single_element)
 
     first_element = next(result, None)
@@ -211,7 +211,7 @@ def _do_comparison(data, requirement):
     return None
 
 
-def _compare_mapping(data, mapping):
+def _require_mapping(data, mapping):
     if isinstance(data, collections.Mapping):
         data_items = getattr(data, 'iteritems', data.items)()
     elif _is_collection_of_items(data):
@@ -223,7 +223,7 @@ def _compare_mapping(data, mapping):
     for key, actual in data_items:
         data_keys.add(key)
         expected = mapping.get(key, NOTFOUND)
-        result = _do_comparison(actual, expected)
+        result = _apply_requirement(actual, expected)
         if result:
             if _is_nsiterable(result) and \
                        not isinstance(result, collections.Mapping):
@@ -233,21 +233,21 @@ def _compare_mapping(data, mapping):
     mapping_items = getattr(mapping, 'iteritems', mapping.items)()
     for key, expected in mapping_items:
         if key not in data_keys:
-            result = _do_comparison(NOTFOUND, expected)
+            result = _apply_requirement(NOTFOUND, expected)
             if _is_nsiterable(result) and \
                        not isinstance(result, collections.Mapping):
                 result = list(result)
             yield key, result
 
 
-def _do_mapping_comparison(data, mapping):
-    """Compare *data* against *mapping* of required values.
+def _apply_mapping_requirement(data, mapping):
+    """Compare *data* against a required *mapping*.
 
     Returns either:
      * an iterable of error items
      * or None.
     """
-    result = _compare_mapping(data, mapping)
+    result = _require_mapping(data, mapping)
 
     first_element = next(result, None)
     if first_element:
