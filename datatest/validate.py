@@ -4,6 +4,8 @@ from .utils import itertools
 from .utils import collections
 from .utils.builtins import callable
 from .utils.misc import _is_nsiterable
+from .dataaccess import ItemsIter
+from .dataaccess import _is_collection_of_items
 from .errors import DataError
 from .errors import Extra
 from .errors import Missing
@@ -211,7 +213,7 @@ def _apply_requirement(data, requirement):
     return None
 
 
-def _require_mapping(data, mapping):
+def _apply_mapping_requirement(data, mapping):
     if isinstance(data, collections.Mapping):
         data_items = getattr(data, 'iteritems', data.items)()
     elif _is_collection_of_items(data):
@@ -240,16 +242,30 @@ def _require_mapping(data, mapping):
             yield key, result
 
 
-def _apply_mapping_requirement(data, mapping):
-    """Compare *data* against a required *mapping*.
-
-    Returns either:
-     * an iterable of error items
-     * or None.
+def _normalize_mapping_result(result):
+    """Accepts an iterator of dictionary items and returns an ItemsIter
+    object or None.
     """
-    result = _require_mapping(data, mapping)
-
     first_element = next(result, None)
     if first_element:
-        return itertools.chain([first_element], result)  # <- EXIT!
+        assert len(first_element) == 2, 'expects tuples of key-value pairs'
+        return ItemsIter(itertools.chain([first_element], result))  # <- EXIT!
     return None
+
+
+def _get_differences(data, requirement):
+    """Return iterable of data errors or None."""
+    if isinstance(requirement, collections.Mapping):
+        result = _apply_mapping_requirement(data, requirement)
+        result = _normalize_mapping_result(result)
+    elif isinstance(data, collections.Mapping):
+        items = getattr(data, 'iteritems', data.items)()
+        result = ((k, _apply_requirement(v, requirement)) for k, v in items)
+        iter_to_list = lambda x: list(x) if _is_nsiterable(x) else x
+        result = ((k, iter_to_list(v)) for k, v in result if v)
+        result = _normalize_mapping_result(result)
+    else:
+        result = _apply_requirement(data, requirement)
+        if isinstance(result, Exception):
+            result = [result]
+    return result

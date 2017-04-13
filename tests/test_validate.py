@@ -16,8 +16,8 @@ from datatest.validate import _require_callable
 from datatest.validate import _require_regex
 from datatest.validate import _require_other
 from datatest.validate import _apply_requirement
-from datatest.validate import _require_mapping
 from datatest.validate import _apply_mapping_requirement
+from datatest.validate import _get_differences
 
 
 class TestRequireSequence(unittest.TestCase):
@@ -341,63 +341,63 @@ class TestApplyRequirement(unittest.TestCase):
         self.assertEqual(result, Invalid({'b': 2}, expected={'a': 1}))  # <- Error.
 
 
-class TestRequireMapping(unittest.TestCase):
-    """Calling _require_mapping() should run the appropriate
+class TestApplyMappingRequirement(unittest.TestCase):
+    """Calling _apply_mapping_requirement() should run the appropriate
     comparison function (internally) for each value-group and
     return the results as an iterable of key-value items.
     """
     def test_no_differences(self):
         # Sequence order.
         data = {'a': ['x', 'y']}
-        result = _require_mapping(data, {'a': ['x', 'y']})
+        result = _apply_mapping_requirement(data, {'a': ['x', 'y']})
         self.assertEqual(dict(result), {})
 
         # Set membership.
         data = {'a': ['x', 'y']}
-        result = _require_mapping(data, {'a': set(['x', 'y'])})
+        result = _apply_mapping_requirement(data, {'a': set(['x', 'y'])})
         self.assertEqual(dict(result), {})
 
         # Equality of single values.
         data = {'a': 'x', 'b': 'y'}
-        result = _require_mapping(data, {'a': 'x', 'b': 'y'})
+        result = _apply_mapping_requirement(data, {'a': 'x', 'b': 'y'})
         self.assertEqual(dict(result), {})
 
     def test_some_differences(self):
         # Sequence order.
         data = {'a': ['x', 'y']}
-        result = _require_mapping(data, {'a': ['x', 'z']})
+        result = _apply_mapping_requirement(data, {'a': ['x', 'z']})
         result = dict(result)
         self.assertTrue(len(result) == 1)
         self.assertIsInstance(result['a'], AssertionError)
 
         # Set membership.
         data = {'a': ['x', 'x'], 'b': ['x', 'y', 'z']}
-        result = _require_mapping(data, {'a': set(['x', 'y']),
-                                         'b': set(['x', 'y'])})
+        result = _apply_mapping_requirement(data, {'a': set(['x', 'y']),
+                                                   'b': set(['x', 'y'])})
         expected = {'a': [Missing('y')], 'b': [Extra('z')]}
         self.assertEqual(dict(result), expected)
 
         # Equality of single values.
         data = {'a': 'x', 'b': 10}
-        result = _require_mapping(data, {'a': 'j', 'b': 9})
+        result = _apply_mapping_requirement(data, {'a': 'j', 'b': 9})
         expected = {'a': Invalid('x', expected='j'), 'b': Deviation(+1, 9)}
         self.assertEqual(dict(result), expected)
 
         # Equality of multiple values.
         data = {'a': ['x', 'j'], 'b': [10, 9]}
-        result = _require_mapping(data, {'a': 'j', 'b': 9})
+        result = _apply_mapping_requirement(data, {'a': 'j', 'b': 9})
         expected = {'a': [Invalid('x')], 'b': [Deviation(+1, 9)]}
         self.assertEqual(dict(result), expected)
 
         # Equality of multiple values, missing key with single item.
         data = {'a': ['x', 'j'], 'b': [10, 9]}
-        result = _require_mapping(data, {'a': 'j', 'b': 9, 'c': 'z'})
+        result = _apply_mapping_requirement(data, {'a': 'j', 'b': 9, 'c': 'z'})
         expected = {'a': [Invalid('x')], 'b': [Deviation(+1, 9)], 'c': Missing('z')}
         self.assertEqual(dict(result), expected)
 
         # Missing key, set membership.
         data = {'a': 'x'}
-        result = _require_mapping(data, {'a': 'x', 'b': set(['z'])})
+        result = _apply_mapping_requirement(data, {'a': 'x', 'b': set(['z'])})
         expected = {'b': [Missing('z')]}
         self.assertEqual(dict(result), expected)
 
@@ -407,18 +407,50 @@ class TestRequireMapping(unittest.TestCase):
                                   # so comparing  it against the list
                                   # ['x', 'y'] should raise an error.
         with self.assertRaises(ValueError):
-            result = _require_mapping(nonsequence, {'a': ['x', 'y']})
+            result = _apply_mapping_requirement(nonsequence, {'a': ['x', 'y']})
             dict(result)  # Evaluate iterator.
 
 
-class TestDoMappingComparison(unittest.TestCase):
-    def test_no_differences(self):
-        data = {'a': 'x', 'b': 'y'}
-        result = _apply_mapping_requirement(data, {'a': 'x', 'b': 'y'})
+class TestGetDifferences(unittest.TestCase):
+    def test_mapping_requirement(self):
+        """When *requirement* is a mapping, then *data* should also
+        be a mapping. If *data* is not a mapping, an error should be
+        raised.
+        """
+        mapping1 = {'a': 'x', 'b': 'y'}
+        mapping2 = {'a': 'x', 'b': 'z'}
+
+        result = _get_differences(mapping1, mapping1)
         self.assertIsNone(result)
 
-    def test_some_differences(self):
-        data = {'a': 'x', 'b': 'y'}
-        result = _apply_mapping_requirement(data, {'a': 'x', 'b': 'z'})
+        result = _get_differences(mapping1, mapping2)
         self.assertTrue(_is_consumable(result))
         self.assertEqual(dict(result), {'b': Invalid('y', expected='z')})
+
+        with self.assertRaises(TypeError):
+            _get_differences(set(['x', 'y']), mapping2)
+
+    def test_mapping_data(self):
+        """"When *data* is a mapping but *requirement* is a non-mapping."""
+        mapping = {'a': 'x', 'b': 'y'}
+
+        x_or_y = lambda value: value == 'x' or value == 'y'
+        result = _get_differences(mapping, x_or_y)
+        self.assertIsNone(result)
+
+        result = _get_differences(mapping, 'x')  # <- string
+        self.assertTrue(_is_consumable(result))
+        self.assertEqual(dict(result), {'b': Invalid('y', expected='x')})
+
+        result = _get_differences(mapping, set('x'))  # <- set
+        self.assertTrue(_is_consumable(result))
+        self.assertEqual(dict(result), {'b': [Missing('x'), Extra('y')]})
+
+    def test_nonmapping(self):
+        """When neither *data* or *requirement* are mappings."""
+        result = _get_differences(set(['x', 'y']), set(['x', 'y']))
+        self.assertIsNone(result)
+
+        result = _get_differences(set(['x']), set(['x', 'y']))
+        self.assertTrue(_is_consumable(result))
+        self.assertEqual(list(result), [Missing('y')])
