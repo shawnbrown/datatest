@@ -1,21 +1,54 @@
 # -*- coding: utf-8 -*-
 from math import isnan
+from pprint import pformat
 from numbers import Number
 
 from .utils import collections
 from .utils.misc import _is_nsiterable
+from .utils.misc import _is_consumable
 from .utils.misc import _make_token
+from .dataaccess import _is_collection_of_items
 
 
 class ValidationErrors(AssertionError):
     """Iterable container of errors."""
     def __init__(self, message, errors):
-        if not _is_nsiterable(errors):
-            errors = [errors]
-        super(ValidationErrors, self).__init__(message, errors)
+        if not _is_nsiterable(errors) or isinstance(errors, Exception):
+            # Above condition checks for Exception because
+            # exceptions are iterable in Python 2.7 and 2.6.
+            msg = 'expected iterable of errors, got {0!r}'
+            raise TypeError(msg.format(errors.__class__.__name__))
 
-    def __iter__(self):
-        return iter(self.args[1])
+        if _is_collection_of_items(errors):
+            errors = dict(errors)
+        elif _is_consumable(errors):
+            errors = list(errors)
+
+        if not errors:
+            raise ValueError('errors must not be empty')
+
+        self._message = message
+        self._errors = errors
+
+    @property
+    def args(self):
+        """The tuple of arguments given to the exception constructor."""
+        return (self._message, self._errors)
+
+    @property
+    def errors(self):
+        """The errors given to the exception constructor."""
+        return self._errors
+
+    def __str__(self):
+        errors = pformat(self._errors, width=1)
+        if any([errors.startswith('[') and errors.endswith(']'),
+                errors.startswith('{') and errors.endswith('}'),
+                errors.startswith('(') and errors.endswith(')')]):
+            errors = errors[1:-1]
+
+        output = '{0} ({1} errors):\n {2}'
+        return output.format(self._message, len(self._errors), errors)
 
 
 NANTOKEN = _make_token(

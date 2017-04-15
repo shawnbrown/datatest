@@ -20,21 +20,36 @@ class MinimalDataError(DataError):
 
 
 class TestValidationErrors(unittest.TestCase):
-    def test_instantiation(self):
-        list_of_errors = [MinimalDataError('A'), MinimalDataError('B')]
-        ValidationErrors('invalid data', list_of_errors)  # Pass without error.
+    def test_error_list(self):
+        error_list = [MinimalDataError('A'), MinimalDataError('B')]
 
-        single_error = MinimalDataError('A')
-        ValidationErrors('invalid data', single_error)  # Pass without error.
+        err = ValidationErrors('invalid data', error_list)
+        self.assertEqual(err.errors, error_list)
 
-    def test_iteration(self):
-        list_of_errors = [MinimalDataError('A'), MinimalDataError('B')]
-        errors = ValidationErrors('invalid data', list_of_errors)
-        self.assertEqual(list(errors), list_of_errors)
+    def test_error_iter(self):
+        error_list = [MinimalDataError('A'), MinimalDataError('B')]
+        error_iter = iter(error_list)
 
-        single_error = MinimalDataError('A')
-        errors = ValidationErrors('invalid data', single_error)
-        self.assertEqual(list(errors), [single_error])
+        err = ValidationErrors('invalid data', error_iter)
+        self.assertEqual(err.errors, error_list, 'iterable should be converted to list')
+
+    def test_error_dict(self):
+        error_dict = {'a': MinimalDataError('A'), 'b': MinimalDataError('B')}
+
+        err = ValidationErrors('invalid data', error_dict)
+        self.assertEqual(err.errors, error_dict)
+
+    def test_error_iteritems(self):
+        error_dict = {'a': MinimalDataError('A'), 'b': MinimalDataError('B')}
+        error_iteritems = getattr(error_dict, 'iteritems', error_dict.items)()
+
+        err = ValidationErrors('invalid data', error_iteritems)
+        self.assertEqual(err.errors, error_dict)
+
+    def test_bad_args(self):
+        with self.assertRaises(TypeError, msg='must be iterable'):
+            single_error = MinimalDataError('A')
+            ValidationErrors('invalid data', single_error)
 
 
 class TestDataError(unittest.TestCase):
