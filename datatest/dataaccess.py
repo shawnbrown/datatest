@@ -71,12 +71,18 @@ class ItemsIter(collections.Iterator):
         return next(self.__wrapped__)  # For Python 2 compatibility.
 
 
+_iteritem_types = (
+    collections.ItemsView,
+    ItemsIter,
+    type(getattr(dict(), 'iteritems', dict().items)()),  # For Python 2 compatibility.
+)
+
 def _is_collection_of_items(obj):
     while hasattr(obj, '__wrapped__'):
         if isinstance(obj, ItemsIter):
             return True
         obj = obj.__wrapped__
-    return isinstance(obj, collections.ItemsView)
+    return isinstance(obj, _iteritem_types)
 
 
 class DataResult(collections.Iterator):

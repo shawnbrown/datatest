@@ -25,6 +25,7 @@ from datatest.dataaccess import _sqlite_distinct
 from datatest.dataaccess import _set_data
 from datatest.dataaccess import _cast_as_set
 from datatest.dataaccess import ItemsIter
+from datatest.dataaccess import _is_collection_of_items
 from datatest.dataaccess import working_directory
 
 
@@ -90,8 +91,19 @@ class TestDataResult(unittest.TestCase):
 
 class TestItemsIter(unittest.TestCase):
     def test_itemsiter(self):
-        foo = ItemsIter([1,2,3])
-        self.assertEqual(list(foo), [1,2,3])
+        foo = ItemsIter([('a', 1), ('b', 2)])
+        self.assertEqual(list(foo), [('a', 1), ('b', 2)])
+
+
+class TestIsCollectionOfItems(unittest.TestCase):
+    def test_ItemsIter(self):
+        items_iter = ItemsIter([('a', 1), ('b', 2)])
+        self.assertTrue(_is_collection_of_items(items_iter))
+
+    def test_dict_items(self):
+        dict_src = {'a': 1, 'b': 2}
+        dict_items = getattr(dict_src, 'iteritems', dict_src.items)()
+        self.assertTrue(_is_collection_of_items(dict_items))
 
 
 class TestMapData(unittest.TestCase):
