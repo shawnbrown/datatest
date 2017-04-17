@@ -266,6 +266,6 @@ def _get_differences(data, requirement):
         result = _normalize_mapping_result(result)
     else:
         result = _apply_requirement(data, requirement)
-        if isinstance(result, Exception):
+        if isinstance(result, DataError):
             result = [result]
     return result

@@ -14,7 +14,8 @@ from .compare import _compare_sequence
 from .compare import _compare_set
 from .compare import _compare_other
 
-from .error import DataError
+from .validate import _get_differences
+from .errors import ValidationErrors
 
 __datatest = True  # Used to detect in-module stack frames (which are
                    # omitted from output).
@@ -139,7 +140,8 @@ class DataTestCase(TestCase):
 
         **Sequence order:** When *requirement* is a list or other
         sequence, elements in *data* are checked for matching order
-        and value::
+        and value. On failure, an :py:class:`AssertionError` is
+        raised::
 
             def test_mydata(self):
                 data = ...
@@ -179,52 +181,39 @@ class DataTestCase(TestCase):
                 requirement = 'FOO'
                 self.assertValid(data, requirement)
         """
-        # TODO: Sequence order:
-        #       "On failure, an :py:class:`AssertionError` is raised"
-
         # Evaluate query and result objects.
-        if isinstance(data, DataQuery):
-            data = data.execute()
-        elif isinstance(data, DataResult):
-            data = data.evaluate()
+        #if isinstance(data, DataQuery):
+        #    data = data.execute()
+        #elif isinstance(data, DataResult):
+        #    data = data.evaluate()
         # TODO: Handle using lazy evaluation.
         #if isinstance(data, DataQuery):
         #    data = data.execute(evaluate=False)
 
-        if isinstance(requirement, DataQuery):
-            requirement = requirement.execute()
-        elif isinstance(requirement, DataResult):
-            requirement = requirement.evaluate()
+        errors = _get_differences(data, requirement)
 
-        # Get appropriate comparison function (as determined by
-        # *requirement*).
-        if isinstance(requirement, collections.Mapping):
-            compare = _compare_mapping
-            default_msg = 'data does not match mapping requirement'
-        elif (isinstance(requirement, collections.Sequence)
-                and not isinstance(requirement, str)):
-            compare = _compare_sequence
-            default_msg = 'order and values do not match sequence requirement'
-        elif isinstance(requirement, collections.Set):
-            compare = _compare_set
-            default_msg = 'data does not match set requirement'
+        if not msg and not isinstance(errors, Exception):
+            name = getattr(requirement, '__name__',
+                           requirement.__class__.__name__)
+            msg = 'data does not satisfy {0!r} requirement'.format(name)
+
+        self.fail(msg, errors)
+
+    def fail(self, msg, errors=None):
+        if isinstance(errors, Exception):
+            if msg:
+                args = errors.args
+                if isinstance(args[0], str):
+                    first_arg = '{0}\n{1}'.format(msg, args[0])
+                    args = args[1:]
+                else:
+                    first_arg = msg
+                errors.args = (first_arg,) + args
+            raise errors
+        elif errors:
+            raise ValidationErrors(msg, errors)
         else:
-            compare = _compare_other
-            default_msg = 'data does not satisfy object requirement'
-
-        # Apply comparison function and fail if there are any differences.
-        if isinstance(data, collections.Mapping) \
-                and not isinstance(requirement, collections.Mapping):
-            differences = {}
-            for key, value in data.items():
-                value_diffs = compare(value, requirement)
-                if value_diffs:
-                    differences[key] = value_diffs
-        else:
-            differences = compare(data, requirement)
-
-        if differences:
-            self.fail(msg or default_msg, differences)
+            raise self.failureException(msg)
 
     #def assertUnique(self, data, msg=None):
     #    pass
@@ -297,8 +286,8 @@ class DataTestCase(TestCase):
                 self.assertValid(data, requirement)
 
         If the count of differences exceeds the given *number*, the test
-        will fail with a :class:`DataError` containing all observed
-        differences.
+        will fail with a :class:`ValidationErrors` containing all
+        observed differences.
         """
         return allow_limit(number, **kwds_func)
         #return allow_limit(number, msg, **kwds_func)
@@ -322,24 +311,6 @@ class DataTestCase(TestCase):
         """
         return allow_percent_deviation(lower, upper, **kwds_func)
         #return allow_percent_deviation(lower, upper, msg, **kwds_func)
-
-    def fail(self, msg, differences=None):
-        """Signals a test failure unconditionally, with *msg* for the
-        error message.  If *differences* is provided, a
-        :class:`DataError` is raised instead of an AssertionError.
-        """
-        if differences:
-            try:
-                subject = self.subject
-            except NameError:
-                subject = None
-            try:
-                required = self.reference
-            except NameError:
-                required = None
-            raise DataError(msg, differences, subject, required)
-        else:
-            raise self.failureException(msg)
 
 
 # Prettify default signature of methods that accept multiple signatures.

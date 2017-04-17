@@ -196,6 +196,22 @@ def assertSubjectUnique(self, columns, msg=None, **kwds_filter):
 DataTestCase.assertSubjectUnique = assertSubjectUnique
 
 
+def fail(self, msg, differences=None):
+    if differences:
+        try:
+            subject = self.subject
+        except NameError:
+            subject = None
+        try:
+            required = self.reference
+        except NameError:
+            required = None
+        raise DataError(msg, differences, subject, required)
+    else:
+        raise self.failureException(msg)
+DataTestCase.fail = fail
+
+
 class allow_iter(object):
     """Context manager to allow differences without triggering a test
     failure.  The *function* should accept an iterable of differences
