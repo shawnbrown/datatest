@@ -7,6 +7,10 @@ from .utils import collections
 from .utils import functools
 from .utils import itertools
 
+from .dataaccess import _is_collection_of_items
+from .dataaccess import ItemsIter
+from .errors import ValidationErrors
+
 from .utils.misc import _is_consumable
 from .utils.misc import _get_arg_lengths
 from .utils.misc import _expects_multiple_params
@@ -20,6 +24,76 @@ from .error import DataError
 
 __datatest = True  # Used to detect in-module stack frames (which are
                    # omitted from output).
+
+
+def _is_mapping_type(obj):
+    return isinstance(obj, collections.Mapping) or \
+                _is_collection_of_items(obj)
+
+
+class allow_iter2(object):
+    """Context manager to allow differences without triggering a test
+    failure. The *function* should accept an iterable or mapping of
+    data errors and return an iterable or mapping of only those errors
+    which are **not** allowed.
+
+    .. admonition:: Fun Fact
+        :class: note
+
+        :class:`allow_iter` is the base context manager on which all
+        other allowances are implemented.
+    """
+    def __init__(self, function):
+        if not callable(function):
+            raise TypeError("'function' must be a function or other callable")
+        self.function = function
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, tb):
+        # Apply function or reraise non-validation error.
+        if issubclass(exc_type, ValidationErrors):
+            errors = self.function(exc_value.errors)
+        elif exc_type is None:
+            errors = self.function([])
+        else:
+            raise exc_value
+
+        # Check container types.
+        mappable_in = _is_mapping_type(exc_value.errors)
+        mappable_out = _is_mapping_type(errors)
+
+        # Check if any errors were returned.
+        try:
+            first_item = next(iter(errors))
+            if _is_consumable(errors):  # Rebuild if consumable.
+                errors = itertools.chain([first_item], errors)
+        except StopIteration:
+            return True  # <- EXIT!
+
+        # Handle mapping input with iterable-of-items output.
+        if (mappable_in and not mappable_out
+                and isinstance(first_item, collections.Sized)
+                and len(first_item) == 2):
+            errors = ItemsIter(errors)
+            mappable_out = True
+
+        # Verify type compatibility.
+        if mappable_in != mappable_out:
+            message = ('function received {0!r} collection but '
+                       'returned incompatible {1!r} collection')
+            output_cls = errors.__class__.__name__
+            input_cls = exc_value.errors.__class__.__name__
+            raise TypeError(message.format(input_cls, output_cls))
+
+        # Re-raise ValidationErrors() with remaining errors.
+        message = getattr(exc_value, 'message')
+        exc = ValidationErrors(message, errors)
+        exc.__cause__ = None  # <- Suppress context using verbose
+        raise exc             #    alternative to support older Python
+                              #    versions--see PEP 415 (same as
+                              #    effect as "raise ... from None").
 
 
 class allow_iter(object):

@@ -12,10 +12,9 @@ from datatest.errors import _get_error
 from datatest.errors import NOTFOUND
 
 
+# FOR TESTING: A minimal subclass of DataError. DataError itself
+# is a base class that should not be instantiated directly.
 class MinimalDataError(DataError):
-    """FOR TESTING: A minimal subclass of DataError. DataError itself
-    is a base class that should not be instantiated directly.
-    """
     pass
 
 

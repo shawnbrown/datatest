@@ -36,6 +36,11 @@ class ValidationErrors(AssertionError):
         return (self._message, self._errors)
 
     @property
+    def message(self):
+        """The message given to the exception constructor."""
+        return self._message
+
+    @property
     def errors(self):
         """The errors given to the exception constructor."""
         return self._errors

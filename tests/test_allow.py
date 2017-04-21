@@ -2,6 +2,7 @@
 import inspect
 from . import _unittest as unittest
 from datatest.utils import collections
+from datatest.dataaccess import ItemsIter
 
 from datatest import DataError
 from datatest import Missing
@@ -15,6 +16,73 @@ from datatest.allow import allow_deviation
 from datatest.allow import allow_percent_deviation
 from datatest.allow import allow_limit
 from datatest.allow import allow_only
+
+from datatest.allow import allow_iter2
+from datatest.errors import ValidationErrors
+from datatest.errors import DataError as DataError2
+from datatest.errors import Missing as Missing2
+from datatest.errors import Extra as Extra2
+from datatest.errors import Deviation as Deviation2
+
+
+# FOR TESTING: A minimal subclass of DataError. DataError itself
+# is a base class that should not be instantiated directly.
+class MinimalDataError(DataError):
+    pass
+
+
+class TestAllowIter2(unittest.TestCase):
+    def test_iterable_all_good(self):
+        function = lambda iterable: list()  # <- empty list
+        with allow_iter2(function):  # <- Should pass without error.
+            raise ValidationErrors('example error', [Missing2('x')])
+
+        function = lambda iterable: iter([])  # <- empty iterator
+        with allow_iter2(function):  # <- Should pass pass without error.
+            raise ValidationErrors('example error', [Missing2('x')])
+
+    def test_iterable_some_bad(self):
+        function = lambda iterable: [Missing2('foo')]
+        in_diffs = [Missing2('foo'), Missing2('bar')]
+
+        with self.assertRaises(ValidationErrors) as cm:
+            with allow_iter2(function):
+                raise ValidationErrors('example error', in_diffs)
+
+        errors = cm.exception.errors
+        self.assertEqual(list(errors), [Missing2('foo')])
+
+    def test_mismatched_types(self):
+        """When given a non-mapping container, a non-mapping container
+        should be returned for any remaining errors. Likewise, when
+        given a mapping, a mapping should be returned for any remaining
+        errors. If the intput and output types are mismatched, a
+        TypeError should be raised.
+        """
+        # List input and dict output.
+        errors_list =  [Missing2('foo'), Missing2('foo')]
+        function = lambda iterable: {'a': Missing2('foo')}  # <- dict type
+        with self.assertRaises(TypeError):
+            with allow_iter2(function):
+                raise ValidationErrors('example error', errors_list)
+
+        # Dict input and list output.
+        errors_dict =  {'a': Missing2('foo'), 'b': Missing2('bar')}
+        function = lambda iterable: [Missing2('foo')]  # <- list type
+        with self.assertRaises(TypeError):
+            with allow_iter2(function):
+                raise ValidationErrors('example error', errors_dict)
+
+        # Dict input and list-item output.
+        errors_dict =  {'a': Missing2('foo'), 'b': Missing2('bar')}
+        function = lambda iterable: [('a', Missing2('foo'))]  # <- list of items
+        with self.assertRaises(ValidationErrors) as cm:
+            with allow_iter2(function):
+                raise ValidationErrors('example error', errors_dict)
+
+        errors = cm.exception.errors
+        #self.assertIsInstance(errors, ItemsIter)
+        self.assertEqual(dict(errors), {'a': Missing2('foo')})
 
 
 class TestAllowIter(unittest.TestCase):
