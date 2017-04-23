@@ -18,6 +18,7 @@ from datatest.allow import allow_limit
 from datatest.allow import allow_only
 
 from datatest.allow import allow_iter2
+from datatest.allow import allow_any2
 from datatest.errors import ValidationErrors
 from datatest.errors import DataError as DataError2
 from datatest.errors import Missing as Missing2
@@ -60,7 +61,7 @@ class TestAllowIter2(unittest.TestCase):
         TypeError should be raised.
         """
         # List input and dict output.
-        errors_list =  [Missing2('foo'), Missing2('foo')]
+        errors_list =  [Missing2('foo'), Missing2('bar')]
         function = lambda iterable: {'a': Missing2('foo')}  # <- dict type
         with self.assertRaises(TypeError):
             with allow_iter2(function):
@@ -83,6 +84,59 @@ class TestAllowIter2(unittest.TestCase):
         errors = cm.exception.errors
         #self.assertIsInstance(errors, ItemsIter)
         self.assertEqual(dict(errors), {'a': Missing2('foo')})
+
+
+class TestAllowAny2(unittest.TestCase):
+    def test_list_of_errors(self):
+        errors =  [Missing2('X'), Missing2('Y')]
+        func1 = lambda *x: True
+        func2 = lambda *x: False
+
+        with allow_any2(func1):
+            raise ValidationErrors('one True', errors)
+
+        with allow_any2(func1, func2):
+            raise ValidationErrors('one True, one False', errors)
+
+        with self.assertRaises(ValidationErrors) as cm:
+            with allow_any2(func2, func2):
+                raise ValidationErrors('none True', errors)
+        remaining_errors = cm.exception.errors
+        self.assertEqual(list(remaining_errors), errors)
+
+    def test_dict_of_errors(self):
+        errors =  {'a': Missing2('X'), 'b': Missing2('Y')}  # <- Each value
+        func1 = lambda *x: True                             #    is a single
+        func2 = lambda *x: False                            #    error.
+
+        with allow_any2(func1):
+            raise ValidationErrors('one True', errors)
+
+        with allow_any2(func1, func2):
+            raise ValidationErrors('one True, one False', errors)
+
+        with self.assertRaises(ValidationErrors) as cm:
+            with allow_any2(func2, func2):
+                raise ValidationErrors('none True', errors)
+        remaining_errors = cm.exception.errors
+        self.assertEqual(dict(remaining_errors), errors)
+
+    def test_dict_of_lists(self):
+        errors =  {'a': [Missing2('X'), Missing2('Y')]}  # <- Value is a list
+        func1 = lambda *x: True                          #    of errors.
+        func2 = lambda *x: False
+
+        with allow_any2(func1):
+            raise ValidationErrors('one True', errors)
+
+        with allow_any2(func1, func2):
+            raise ValidationErrors('one True, one False', errors)
+
+        with self.assertRaises(ValidationErrors) as cm:
+            with allow_any2(func2, func2):
+                raise ValidationErrors('none True', errors)
+        remaining_errors = cm.exception.errors
+        self.assertEqual(dict(remaining_errors), errors)
 
 
 class TestAllowIter(unittest.TestCase):

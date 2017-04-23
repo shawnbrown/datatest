@@ -12,6 +12,7 @@ from .dataaccess import ItemsIter
 from .errors import ValidationErrors
 
 from .utils.misc import _is_consumable
+from .utils.misc import _is_nsiterable
 from .utils.misc import _get_arg_lengths
 from .utils.misc import _expects_multiple_params
 from .utils.misc import _make_decimal
@@ -94,6 +95,49 @@ class allow_iter2(object):
         raise exc             #    alternative to support older Python
                               #    versions--see PEP 415 (same as
                               #    effect as "raise ... from None").
+
+
+class allow_any2(allow_iter2):
+    """Allows errors for which any of the *functions* returns True
+    without triggering a test failure.
+    """
+    def __init__(self, *functions, **kwds):
+        """
+        __init__(self, *functions, msg=None)
+        """
+        msg = kwds.pop('msg', None)
+        if kwds:                                  # Emulate keyword-only
+            cls_name = self.__class__.__name__    # behavior for Python
+            bad_arg =  next(iter(kwds.values()))  # versions 2.7 and 2.6.
+            message = '{0}() got an unexpected keyword argument {1!r}'
+            raise TypeError(message.format(cls_name, bad_arg))
+
+        if not functions:
+            dotest = lambda *x: any(x)
+        elif len(functions) == 1:
+            dotest = functions[0]
+        else:
+            dotest = lambda *x: any(func(*x) for func in functions)
+
+        def filterfalse(iterable):
+            if isinstance(iterable, collections.Mapping):
+                iterable = getattr(iterable, 'iteritems', iterable.items)()
+
+            if _is_collection_of_items(iterable):
+                def wrapper(value):
+                    if (not _is_nsiterable(value)
+                            or isinstance(value, Exception)
+                            or isinstance(value, collections.Mapping)):
+                        return value if not dotest(value) else None
+                    return list(x for x in value if not dotest(x))
+                iterable = ((k, wrapper(v)) for k, v in iterable)
+                remaining = ((k, v) for k, v in iterable if v)
+            else:
+                remaining = (x for x in iterable if not dotest(x))
+
+            return remaining
+
+        super(allow_any2, self).__init__(filterfalse)
 
 
 class allow_iter(object):
