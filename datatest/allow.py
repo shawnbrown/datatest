@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import inspect
+from functools import wraps
 from math import isnan
 from numbers import Number
 from .utils.builtins import *
@@ -97,14 +98,52 @@ class allow_iter2(object):
                               #    effect as "raise ... from None").
 
 
+def getvalue(function):
+    def adapted(key, value):  # <- key not used.
+        return function(value)
+    adapted.__name__ = 'adapted_' + function.__name__
+    adapted._decorator = getvalue
+    return adapted
+
+
+def getargs(function):
+    def adapted(key, value):  # <- key not used.
+        return function(*value.args)
+    adapted.__name__ = 'adapted_' + function.__name__
+    adapted._decorator = getargs
+    return adapted
+
+
+def getkey(function):
+    def adapted(key, value):  # <- value not used.
+        if _is_nsiterable(key):
+            return function(*key)
+        return function(key)
+    adapted.__name__ = 'adapted_' + function.__name__
+    adapted._decorator = getkey
+    return adapted
+
+
+def getpair(function):
+    def adapted(key, value):
+        return function(key, value)
+    adapted.__name__ = 'adapted_' + function.__name__
+    adapted._decorator = getpair
+    return adapted
+
+
 class allow_any2(allow_iter2):
     """Allows errors for which any of the *functions* returns True
     without triggering a test failure.
     """
     def __init__(self, *functions, **kwds):
         """
-        __init__(self, *functions, msg=None)
+        __init__(*functions, msg=None)
+        __init__(function1, function2[, ...], msg=None)
         """
+        if not functions:
+            raise TypeError('must provide 1 or more functions')
+
         msg = kwds.pop('msg', None)
         if kwds:                                  # Emulate keyword-only
             cls_name = self.__class__.__name__    # behavior for Python
@@ -112,28 +151,38 @@ class allow_any2(allow_iter2):
             message = '{0}() got an unexpected keyword argument {1!r}'
             raise TypeError(message.format(cls_name, bad_arg))
 
-        if not functions:
-            dotest = lambda *x: any(x)
-        elif len(functions) == 1:
+        def normalize_decorator(f):
+            if not getattr(f, '_decorator', None):  # If not decorated,
+                return getvalue(f)                  # apply getvalue().
+            return f
+        functions = tuple(normalize_decorator(f) for f in functions)
+
+        if len(functions) == 1:
             dotest = functions[0]
         else:
-            dotest = lambda *x: any(func(*x) for func in functions)
+            dotest = lambda k, v: any(func(k, v) for func in functions)
 
         def filterfalse(iterable):
             if isinstance(iterable, collections.Mapping):
                 iterable = getattr(iterable, 'iteritems', iterable.items)()
 
             if _is_collection_of_items(iterable):
-                def wrapper(value):
+                def wrapper(key, value):
                     if (not _is_nsiterable(value)
                             or isinstance(value, Exception)
                             or isinstance(value, collections.Mapping)):
-                        return value if not dotest(value) else None
-                    return list(x for x in value if not dotest(x))
-                iterable = ((k, wrapper(v)) for k, v in iterable)
+                        return value if not dotest(key, value) else None
+                    return list(x for x in value if not dotest(key, x))
+                iterable = ((k, wrapper(k, v)) for k, v in iterable)
                 remaining = ((k, v) for k, v in iterable if v)
             else:
-                remaining = (x for x in iterable if not dotest(x))
+                for func in functions:
+                    if func._decorator != getvalue:
+                        deco_name = func._decorator.__name__
+                        type_name = type(iterable).__name__
+                        message = '{0!r} decorator requires mapping, found {1!r}'
+                        raise TypeError(message.format(deco_name, type_name))
+                remaining = (v for v in iterable if not dotest(None, v))
 
             return remaining
 

@@ -19,6 +19,8 @@ from datatest.allow import allow_only
 
 from datatest.allow import allow_iter2
 from datatest.allow import allow_any2
+from datatest.allow import getvalue
+from datatest.allow import getkey
 from datatest.errors import ValidationErrors
 from datatest.errors import DataError as DataError2
 from datatest.errors import Missing as Missing2
@@ -137,6 +139,44 @@ class TestAllowAny2(unittest.TestCase):
                 raise ValidationErrors('none True', errors)
         remaining_errors = cm.exception.errors
         self.assertEqual(dict(remaining_errors), errors)
+
+
+class TestGetKeyDecorator(unittest.TestCase):
+    def test_key_strings(self):
+        @getkey  # <- Apply decorator!
+        def func(key):
+            return key == 'aa'
+
+        with self.assertRaises(ValidationErrors) as cm:
+            errors =  {'aa': Missing2('X'), 'bb': Missing2('Y')}
+            with allow_any2(func):
+                raise ValidationErrors('error message', errors)
+
+        remaining_errors = cm.exception.errors
+        self.assertEqual(dict(remaining_errors), {'bb': Missing2('Y')})
+
+    def test_key_tuples(self):
+        """Keys of non-string containers are unpacked before passing
+        to function.
+        """
+        @getkey  # <- Apply decorator!
+        def func(letter, number):  # <- Non-string iterable keys are unpacked.
+            return letter == 'aa'
+
+        errors =  {('aa', 1): [Missing2('X'), Missing2('Y')]}
+        with allow_any2(func):
+            raise ValidationErrors('error message', errors)
+
+        errors =  {('aa', 1): Missing2('X'), ('aa', 2): Missing2('Y')}
+        with allow_any2(func):
+            raise ValidationErrors('error message', errors)
+
+        errors =  {('aa', 1): Missing2('X'), ('bb', 2): Missing2('Y')}
+        with self.assertRaises(ValidationErrors) as cm:
+            with allow_any2(func):
+                raise ValidationErrors('error message', errors)
+        remaining_errors = cm.exception.errors
+        self.assertEqual(dict(remaining_errors), {('bb', 2): Missing2('Y')})
 
 
 class TestAllowIter(unittest.TestCase):
