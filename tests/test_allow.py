@@ -21,6 +21,8 @@ from datatest.allow import allow_iter2
 from datatest.allow import _allow_element
 from datatest.allow import allow_any2
 from datatest.allow import allow_all2
+from datatest.allow import allow_missing2
+from datatest.allow import allow_extra2
 from datatest.allow import getvalue
 from datatest.allow import getkey
 from datatest.errors import ValidationErrors
@@ -165,6 +167,40 @@ class TestAllowAny_and_AllowAll(unittest.TestCase):
                 raise ValidationErrors('some message', errors)
         remaining_errors = cm.exception.errors
         self.assertEqual(list(remaining_errors), [Missing2('Y'), Extra2('Z')])
+
+
+class TestAllowMissing_and_AllowExtra(unittest.TestCase):
+    def test_allow_missing(self):
+        errors =  [Missing2('X'), Missing2('Y'), Extra2('X')]
+
+        with self.assertRaises(ValidationErrors) as cm:
+            with allow_missing2():  # <- Apply allowance!
+                raise ValidationErrors('some message', errors)
+        remaining_errors = cm.exception.errors
+        self.assertEqual(list(remaining_errors), [Extra2('X')])
+
+        with self.assertRaises(ValidationErrors) as cm:
+            func = lambda x: x.args[0] == 'X'
+            with allow_missing2(func):  # <- Apply allowance!
+                raise ValidationErrors('some message', errors)
+        remaining_errors = cm.exception.errors
+        self.assertEqual(list(remaining_errors), [Missing2('Y'), Extra2('X')])
+
+    def test_allow_extra(self):
+        errors =  [Extra2('X'), Extra2('Y'), Missing2('X')]
+
+        with self.assertRaises(ValidationErrors) as cm:
+            with allow_extra2():  # <- Apply allowance!
+                raise ValidationErrors('some message', errors)
+        remaining_errors = cm.exception.errors
+        self.assertEqual(list(remaining_errors), [Missing2('X')])
+
+        with self.assertRaises(ValidationErrors) as cm:
+            func = lambda x: x.args[0] == 'X'
+            with allow_extra2(func):  # <- Apply allowance!
+                raise ValidationErrors('some message', errors)
+        remaining_errors = cm.exception.errors
+        self.assertEqual(list(remaining_errors), [Extra2('Y'), Missing2('X')])
 
 
 class TestGetKeyDecorator(unittest.TestCase):

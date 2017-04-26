@@ -21,6 +21,9 @@ from .differences import BaseDifference
 from .differences import Missing
 from .differences import Extra
 from .differences import Deviation
+from .errors import Missing as Missing2
+from .errors import Extra as Extra2
+
 
 from .error import DataError
 
@@ -181,6 +184,20 @@ class allow_all2(_allow_element):
     def __init__(self, function, *funcs, **kwds):
         functions = (function,) + funcs
         super(allow_all2, self).__init__(all, functions, **kwds)
+
+
+class allow_missing2(allow_all2):
+    def __init__(self, *funcs, **kwds):
+        def is_missing(x):
+            return isinstance(x, Missing2)
+        super(allow_missing2, self).__init__(is_missing, *funcs, **kwds)
+
+
+class allow_extra2(allow_all2):
+    def __init__(self, *funcs, **kwds):
+        def is_extra(x):
+            return isinstance(x, Extra2)
+        super(allow_extra2, self).__init__(is_extra, *funcs, **kwds)
 
 
 class allow_iter(object):
