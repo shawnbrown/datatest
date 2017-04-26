@@ -91,13 +91,13 @@ class TestAllowIter2(unittest.TestCase):
 class TestAllowAny2(unittest.TestCase):
     def test_list_of_errors(self):
         errors =  [Missing2('X'), Missing2('Y')]
-        func1 = lambda *x: True
-        func2 = lambda *x: False
+        func1 = lambda x: True
+        func2 = lambda x: False
 
         with allow_any2(func1):
             raise ValidationErrors('one True', errors)
 
-        with allow_any2(func1, func2):
+        with allow_any2(func2, func1):
             raise ValidationErrors('one True, one False', errors)
 
         with self.assertRaises(ValidationErrors) as cm:
@@ -108,13 +108,13 @@ class TestAllowAny2(unittest.TestCase):
 
     def test_dict_of_errors(self):
         errors =  {'a': Missing2('X'), 'b': Missing2('Y')}  # <- Each value
-        func1 = lambda *x: True                             #    is a single
-        func2 = lambda *x: False                            #    error.
+        func1 = lambda x: True                             #    is a single
+        func2 = lambda x: False                            #    error.
 
         with allow_any2(func1):
             raise ValidationErrors('one True', errors)
 
-        with allow_any2(func1, func2):
+        with allow_any2(func2, func1):
             raise ValidationErrors('one True, one False', errors)
 
         with self.assertRaises(ValidationErrors) as cm:
@@ -125,13 +125,13 @@ class TestAllowAny2(unittest.TestCase):
 
     def test_dict_of_lists(self):
         errors =  {'a': [Missing2('X'), Missing2('Y')]}  # <- Value is a list
-        func1 = lambda *x: True                          #    of errors.
-        func2 = lambda *x: False
+        func1 = lambda x: True                          #    of errors.
+        func2 = lambda x: False
 
         with allow_any2(func1):
             raise ValidationErrors('one True', errors)
 
-        with allow_any2(func1, func2):
+        with allow_any2(func2, func1):
             raise ValidationErrors('one True, one False', errors)
 
         with self.assertRaises(ValidationErrors) as cm:
@@ -147,13 +147,8 @@ class TestGetKeyDecorator(unittest.TestCase):
         def func(key):
             return key == 'aa'
 
-        with self.assertRaises(ValidationErrors) as cm:
-            errors =  {'aa': Missing2('X'), 'bb': Missing2('Y')}
-            with allow_any2(func):
-                raise ValidationErrors('error message', errors)
-
-        remaining_errors = cm.exception.errors
-        self.assertEqual(dict(remaining_errors), {'bb': Missing2('Y')})
+        self.assertTrue(func('aa', None))
+        self.assertFalse(func('bb', None))
 
     def test_key_tuples(self):
         """Keys of non-string containers are unpacked before passing
@@ -163,20 +158,8 @@ class TestGetKeyDecorator(unittest.TestCase):
         def func(letter, number):  # <- Non-string iterable keys are unpacked.
             return letter == 'aa'
 
-        errors =  {('aa', 1): [Missing2('X'), Missing2('Y')]}
-        with allow_any2(func):
-            raise ValidationErrors('error message', errors)
-
-        errors =  {('aa', 1): Missing2('X'), ('aa', 2): Missing2('Y')}
-        with allow_any2(func):
-            raise ValidationErrors('error message', errors)
-
-        errors =  {('aa', 1): Missing2('X'), ('bb', 2): Missing2('Y')}
-        with self.assertRaises(ValidationErrors) as cm:
-            with allow_any2(func):
-                raise ValidationErrors('error message', errors)
-        remaining_errors = cm.exception.errors
-        self.assertEqual(dict(remaining_errors), {('bb', 2): Missing2('Y')})
+        self.assertTrue(func(('aa', 1), None))
+        self.assertFalse(func(('bb', 2), None))
 
 
 class TestAllowIter(unittest.TestCase):

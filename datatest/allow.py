@@ -132,18 +132,8 @@ def getpair(function):
     return adapted
 
 
-class allow_any2(allow_iter2):
-    """Allows errors for which any of the *functions* returns True
-    without triggering a test failure.
-    """
-    def __init__(self, *functions, **kwds):
-        """
-        __init__(*functions, msg=None)
-        __init__(function1, function2[, ...], msg=None)
-        """
-        if not functions:
-            raise TypeError('must provide 1 or more functions')
-
+class _allow_element(allow_iter2):
+    def __init__(self, condition, functions, **kwds):
         msg = kwds.pop('msg', None)
         if kwds:                                  # Emulate keyword-only
             cls_name = self.__class__.__name__    # behavior for Python
@@ -151,42 +141,40 @@ class allow_any2(allow_iter2):
             message = '{0}() got an unexpected keyword argument {1!r}'
             raise TypeError(message.format(cls_name, bad_arg))
 
-        def normalize_decorator(f):
-            if not getattr(f, '_decorator', None):  # If not decorated,
-                return getvalue(f)                  # apply getvalue().
-            return f
-        functions = tuple(normalize_decorator(f) for f in functions)
-
-        if len(functions) == 1:
-            dotest = functions[0]
-        else:
-            dotest = lambda k, v: any(func(k, v) for func in functions)
-
         def filterfalse(iterable):
             if isinstance(iterable, collections.Mapping):
                 iterable = getattr(iterable, 'iteritems', iterable.items)()
 
             if _is_collection_of_items(iterable):
-                def wrapper(key, value):
+                normalize = lambda f: f if hasattr(f, '_decorator') else getvalue(f)
+                normfunc = tuple(normalize(f) for f in functions)
+                wrapfunc = lambda k, v: condition(f(k, v) for f in normfunc)
+                for key, value in iterable:
                     if (not _is_nsiterable(value)
                             or isinstance(value, Exception)
                             or isinstance(value, collections.Mapping)):
-                        return value if not dotest(key, value) else None
-                    return list(x for x in value if not dotest(key, x))
-                iterable = ((k, wrapper(k, v)) for k, v in iterable)
-                remaining = ((k, v) for k, v in iterable if v)
+                        if not wrapfunc(key, value):
+                            yield key, value
+                    else:
+                        values = list(v for v in value if not wrapfunc(key, value))
+                        if values:
+                            yield key, values
             else:
-                for func in functions:
-                    if func._decorator != getvalue:
-                        deco_name = func._decorator.__name__
-                        type_name = type(iterable).__name__
-                        message = '{0!r} decorator requires mapping, found {1!r}'
-                        raise TypeError(message.format(deco_name, type_name))
-                remaining = (v for v in iterable if not dotest(None, v))
+                for value in iterable:
+                    if not condition(f(value) for f in functions):
+                        yield value
 
-            return remaining
+        super(_allow_element, self).__init__(filterfalse)
 
-        super(allow_any2, self).__init__(filterfalse)
+
+class allow_any2(_allow_element):
+    """
+    allow_any2(function, *[, msg])
+    allow_any2(func1, func2[, ...][, msg])
+    """
+    def __init__(self, function, *funcs, **kwds):
+        functions = (function,) + funcs
+        super(allow_any2, self).__init__(any, functions, **kwds)
 
 
 class allow_iter(object):
