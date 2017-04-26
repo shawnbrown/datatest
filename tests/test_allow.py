@@ -18,6 +18,7 @@ from datatest.allow import allow_limit
 from datatest.allow import allow_only
 
 from datatest.allow import allow_iter2
+from datatest.allow import _allow_element
 from datatest.allow import allow_any2
 from datatest.allow import allow_all2
 from datatest.allow import getvalue
@@ -89,20 +90,20 @@ class TestAllowIter2(unittest.TestCase):
         self.assertEqual(dict(errors), {'a': Missing2('foo')})
 
 
-class TestAllowAny2(unittest.TestCase):
+class TestAllowElement(unittest.TestCase):
     def test_list_of_errors(self):
         errors =  [Missing2('X'), Missing2('Y')]
         func1 = lambda x: True
         func2 = lambda x: False
 
-        with allow_any2(func1):
+        with _allow_element(any, (func1,)):
             raise ValidationErrors('one True', errors)
 
-        with allow_any2(func2, func1):
+        with _allow_element(any, (func1, func2)):
             raise ValidationErrors('one True, one False', errors)
 
         with self.assertRaises(ValidationErrors) as cm:
-            with allow_any2(func2, func2):
+            with _allow_element(any, (func2, func2)):
                 raise ValidationErrors('none True', errors)
         remaining_errors = cm.exception.errors
         self.assertEqual(list(remaining_errors), errors)
@@ -112,14 +113,14 @@ class TestAllowAny2(unittest.TestCase):
         func1 = lambda x: True                              #    is a single
         func2 = lambda x: False                             #    error.
 
-        with allow_any2(func1):
+        with _allow_element(any, (func1,)):
             raise ValidationErrors('one True', errors)
 
-        with allow_any2(func2, func1):
+        with _allow_element(any, (func1, func2)):
             raise ValidationErrors('one True, one False', errors)
 
         with self.assertRaises(ValidationErrors) as cm:
-            with allow_any2(func2, func2):
+            with _allow_element(any, (func2, func2)):
                 raise ValidationErrors('none True', errors)
         remaining_errors = cm.exception.errors
         self.assertEqual(dict(remaining_errors), errors)
@@ -129,33 +130,41 @@ class TestAllowAny2(unittest.TestCase):
         func1 = lambda x: True                           #    of errors.
         func2 = lambda x: False
 
-        with allow_any2(func1):
+        with _allow_element(any, (func1,)):
             raise ValidationErrors('one True', errors)
 
-        with allow_any2(func2, func1):
+        with _allow_element(any, (func1, func2)):
             raise ValidationErrors('one True, one False', errors)
 
         with self.assertRaises(ValidationErrors) as cm:
-            with allow_any2(func2, func2):
+            with _allow_element(any, (func2, func2)):
                 raise ValidationErrors('none True', errors)
         remaining_errors = cm.exception.errors
         self.assertEqual(dict(remaining_errors), errors)
 
 
-class TestAllowAll2(unittest.TestCase):
-    def test_allow_all(self):
-        errors =  [Missing2('X'), Missing2('Y')]
-        func1 = lambda x: True
-        func2 = lambda x: False
-
-        with allow_all2(func1, func1):
-            raise ValidationErrors('both True', errors)
+class TestAllowAny_and_AllowAll(unittest.TestCase):
+    def test_allow_any(self):
+        errors =  [Missing2('X'), Missing2('Y'), Extra2('Z')]
+        func1 = lambda x: isinstance(x, Missing2)
+        func2 = lambda x: x.args[0] == 'X'
 
         with self.assertRaises(ValidationErrors) as cm:
-            with allow_all2(func1, func2):
-                raise ValidationErrors('one True', errors)
+            with allow_any2(func1, func2):  # <- Apply allowance!
+                raise ValidationErrors('some message', errors)
         remaining_errors = cm.exception.errors
-        self.assertEqual(list(remaining_errors), errors)
+        self.assertEqual(list(remaining_errors), [Extra2('Z')])
+
+    def test_allow_all(self):
+        errors =  [Missing2('X'), Missing2('Y'), Extra2('Z')]
+        func1 = lambda x: isinstance(x, Missing2)
+        func2 = lambda x: x.args[0] == 'X'
+
+        with self.assertRaises(ValidationErrors) as cm:
+            with allow_all2(func1, func2):  # <- Apply allowance!
+                raise ValidationErrors('some message', errors)
+        remaining_errors = cm.exception.errors
+        self.assertEqual(list(remaining_errors), [Missing2('Y'), Extra2('Z')])
 
 
 class TestGetKeyDecorator(unittest.TestCase):
