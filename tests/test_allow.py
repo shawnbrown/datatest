@@ -19,6 +19,7 @@ from datatest.allow import allow_only
 
 from datatest.allow import allow_iter2
 from datatest.allow import allow_any2
+from datatest.allow import allow_all2
 from datatest.allow import getvalue
 from datatest.allow import getkey
 from datatest.errors import ValidationErrors
@@ -108,8 +109,8 @@ class TestAllowAny2(unittest.TestCase):
 
     def test_dict_of_errors(self):
         errors =  {'a': Missing2('X'), 'b': Missing2('Y')}  # <- Each value
-        func1 = lambda x: True                             #    is a single
-        func2 = lambda x: False                            #    error.
+        func1 = lambda x: True                              #    is a single
+        func2 = lambda x: False                             #    error.
 
         with allow_any2(func1):
             raise ValidationErrors('one True', errors)
@@ -125,7 +126,7 @@ class TestAllowAny2(unittest.TestCase):
 
     def test_dict_of_lists(self):
         errors =  {'a': [Missing2('X'), Missing2('Y')]}  # <- Value is a list
-        func1 = lambda x: True                          #    of errors.
+        func1 = lambda x: True                           #    of errors.
         func2 = lambda x: False
 
         with allow_any2(func1):
@@ -139,6 +140,22 @@ class TestAllowAny2(unittest.TestCase):
                 raise ValidationErrors('none True', errors)
         remaining_errors = cm.exception.errors
         self.assertEqual(dict(remaining_errors), errors)
+
+
+class TestAllowAll2(unittest.TestCase):
+    def test_allow_all(self):
+        errors =  [Missing2('X'), Missing2('Y')]
+        func1 = lambda x: True
+        func2 = lambda x: False
+
+        with allow_all2(func1, func1):
+            raise ValidationErrors('both True', errors)
+
+        with self.assertRaises(ValidationErrors) as cm:
+            with allow_all2(func1, func2):
+                raise ValidationErrors('one True', errors)
+        remaining_errors = cm.exception.errors
+        self.assertEqual(list(remaining_errors), errors)
 
 
 class TestGetKeyDecorator(unittest.TestCase):

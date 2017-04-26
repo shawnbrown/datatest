@@ -177,6 +177,12 @@ class allow_any2(_allow_element):
         super(allow_any2, self).__init__(any, functions, **kwds)
 
 
+class allow_all2(_allow_element):
+    def __init__(self, function, *funcs, **kwds):
+        functions = (function,) + funcs
+        super(allow_all2, self).__init__(all, functions, **kwds)
+
+
 class allow_iter(object):
     """Context manager to allow differences without triggering a test
     failure.  The *function* should accept an iterable of differences
