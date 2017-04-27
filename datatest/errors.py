@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
+#from decimal import Decimal
 from math import isnan
-from pprint import pformat
 from numbers import Number
+from pprint import pformat
 
 from .utils import collections
+from .utils.decimal import Decimal
 from .utils.misc import _is_nsiterable
 from .utils.misc import _is_consumable
 from .utils.misc import _make_token
@@ -146,9 +148,26 @@ class Deviation(DataError):
         return self.args[0]
 
     @property
+    def expected(self):
+        return self.args[1]
+
+    @property
     def percent_deviation(self):
-        deviation, expected = self.args[:2]
-        return deviation / expected if expected else 0  # % error calc.
+        expected = self.expected
+        if isinstance(expected, float):
+            expected = Decimal.from_float(expected)
+        else:
+            expected = Decimal(expected if expected else 0)
+
+        deviation = self.deviation
+        if isinstance(deviation, float):
+            deviation = Decimal.from_float(deviation)
+        else:
+            deviation = Decimal(deviation if deviation else 0)
+
+        if isnan(expected) or isnan(deviation):
+            return Decimal('NaN')
+        return deviation / expected if expected else Decimal(0)  # % error calc.
 
     def __repr__(self):
         cls_name = self.__class__.__name__
