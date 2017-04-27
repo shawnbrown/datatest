@@ -23,6 +23,7 @@ from .differences import Extra
 from .differences import Deviation
 from .errors import Missing as Missing2
 from .errors import Extra as Extra2
+from .errors import Deviation as Deviation2
 
 
 from .error import DataError
@@ -198,6 +199,82 @@ class allow_extra2(allow_all2):
         def is_extra(x):
             return isinstance(x, Extra2)
         super(allow_extra2, self).__init__(is_extra, *funcs, **kwds)
+
+
+def _prettify_devsig(method):
+    """Prettify signature of deviation __init__ classes by patching
+    its signature to make the "tolerance" syntax the default option
+    when introspected (with an IDE, REPL, or other user interface).
+    This helper function is intended for internal use.
+    """
+    assert method.__name__ == '__init__'
+    try:
+        signature = inspect.signature(method)
+    except AttributeError:  # Not supported in Python 3.2 or older.
+        return  # <- EXIT!
+
+    parameters = [
+        inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY),
+        inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),
+        inspect.Parameter('kwds_func', inspect.Parameter.VAR_KEYWORD),
+    ]
+    method.__signature__ = signature.replace(parameters=parameters)
+
+
+def _normalize_devargs(lower, upper, funcs):
+    """Normalize deviation allowance arguments to support both
+    "tolerance" and "lower, upper" signatures. This helper function
+    is intended for internal use.
+    """
+    if callable(upper):
+        funcs = (upper,) + funcs
+        upper = None
+
+    if upper == None:
+        tolerance = lower
+        assert tolerance >= 0, ('tolerance should not be negative, '
+                                'for full control of lower and upper '
+                                'bounds, use "lower, upper" syntax')
+        lower, upper = -tolerance, tolerance
+    lower = _make_decimal(lower)
+    upper = _make_decimal(upper)
+    assert lower <= upper
+    return (lower, upper, funcs)
+
+
+class allow_deviation2(allow_all2):
+    """
+    allow_deviation(tolerance, /, *funcs, msg=None)
+    allow_deviation(lower, upper, *funcs, msg=None)
+
+    Context manager that allows Deviations within a given tolerance
+    without triggering a test failure.
+
+    See documentation for full details.
+    """
+    def __init__(self, lower, upper=None, *funcs, **kwds):
+        lower, upper, funcs = _normalize_devargs(lower, upper, funcs)
+        def function(error):  # Intentionally closes over *lower* and *upper*.
+            deviation = error.deviation or 0.0
+            if isnan(deviation) or isnan(error.expected or 0.0):
+                return False
+            return lower <= deviation <= upper
+        function.__name__ = self.__class__.__name__
+        super(allow_deviation2, self).__init__(function, *funcs, **kwds)
+_prettify_devsig(allow_deviation2.__init__)
+
+
+class allow_percent_deviation2(allow_all2):
+    def __init__(self, lower, upper=None, *funcs, **kwds):
+        lower, upper, funcs = _normalize_devargs(lower, upper, funcs)
+        def function(error):  # Intentionally closes over *lower* and *upper*.
+            percent_deviation = error.percent_deviation
+            if isnan(percent_deviation) or isnan(error.expected or 0):
+                return False
+            return lower <= percent_deviation <= upper
+        function.__name__ = self.__class__.__name__
+        super(allow_percent_deviation2, self).__init__(function, *funcs, **kwds)
+_prettify_devsig(allow_percent_deviation2.__init__)
 
 
 class allow_iter(object):
