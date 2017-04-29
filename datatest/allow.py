@@ -254,26 +254,24 @@ class allow_deviation2(allow_all2):
     """
     def __init__(self, lower, upper=None, *funcs, **kwds):
         lower, upper, funcs = _normalize_devargs(lower, upper, funcs)
-        def function(error):  # Intentionally closes over *lower* and *upper*.
+        def tolerance(error):  # <- Closes over lower & upper.
             deviation = error.deviation or 0.0
             if isnan(deviation) or isnan(error.expected or 0.0):
                 return False
             return lower <= deviation <= upper
-        function.__name__ = self.__class__.__name__
-        super(allow_deviation2, self).__init__(function, *funcs, **kwds)
+        super(allow_deviation2, self).__init__(tolerance, *funcs, **kwds)
 _prettify_devsig(allow_deviation2.__init__)
 
 
 class allow_percent_deviation2(allow_all2):
     def __init__(self, lower, upper=None, *funcs, **kwds):
         lower, upper, funcs = _normalize_devargs(lower, upper, funcs)
-        def function(error):  # Intentionally closes over *lower* and *upper*.
+        def percent_tolerance(error):  # <- Closes over lower & upper.
             percent_deviation = error.percent_deviation
             if isnan(percent_deviation) or isnan(error.expected or 0):
                 return False
             return lower <= percent_deviation <= upper
-        function.__name__ = self.__class__.__name__
-        super(allow_percent_deviation2, self).__init__(function, *funcs, **kwds)
+        super(allow_percent_deviation2, self).__init__(percent_tolerance, *funcs, **kwds)
 _prettify_devsig(allow_percent_deviation2.__init__)
 
 
