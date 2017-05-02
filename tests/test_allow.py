@@ -26,6 +26,7 @@ from datatest.allow import allow_extra2
 from datatest.allow import allow_deviation2
 from datatest.allow import allow_percent_deviation2
 from datatest.allow import allow_specified2
+from datatest.allow import allow_limit2
 from datatest.allow import getvalue
 from datatest.allow import getkey
 from datatest.errors import ValidationErrors
@@ -230,6 +231,77 @@ class TestAllowSpecified2(unittest.TestCase):
             actual['bar'][1].args[0],
             "allowed errors not found: [Extra('xxx'), Missing('yyy')]"
         )
+
+
+class TestAllowLimit2(unittest.TestCase):
+    """Test allow_limit() behavior."""
+    def test_exceeds_limit(self):
+        errors = [Extra2('xxx'), Missing2('yyy')]
+        with self.assertRaises(ValidationErrors) as cm:
+            with allow_limit2(1):  # <- Allows only 1 but there are 2!
+                raise ValidationErrors('example error', errors)
+
+        remaining = list(cm.exception.errors)
+        self.assertEqual(remaining, errors)
+
+    def test_matches_limit(self):
+        errors = [Extra2('xxx'), Missing2('yyy')]
+        with allow_limit2(2):  # <- Allows 2 and there are only 2.
+            raise ValidationErrors('example error', errors)
+
+    def test_under_limit(self):
+        errors = [Extra2('xxx'), Missing2('yyy')]
+        with allow_limit2(3):  # <- Allows 3 and there are only 2.
+            raise ValidationErrors('example error', errors)
+
+    def test_function_exceeds_limit(self):
+        errors = [Extra2('xxx'), Missing2('yyy'), Extra2('zzz')]
+        with self.assertRaises(ValidationErrors) as cm:
+            is_extra = lambda x: isinstance(x, Extra2)
+            with allow_limit2(1, is_extra):  # <- Limit of 1 and is_extra().
+                raise ValidationErrors('example error', errors)
+
+        # Returned errors can be in different order.
+        actual = list(cm.exception.errors)
+        expected = [Missing2('yyy'), Extra2('xxx'), Extra2('zzz')]
+        self.assertEqual(actual, expected)
+
+    def test_function_under_limit(self):
+        errors = [Extra2('xxx'), Missing2('yyy'), Extra2('zzz')]
+        with self.assertRaises(ValidationErrors) as cm:
+            is_extra = lambda x: isinstance(x, Extra2)
+            with allow_limit2(4, is_extra):  # <- Limit of 4 and is_extra().
+                raise ValidationErrors('example error', errors)
+
+        actual = list(cm.exception.errors)
+        self.assertEqual(actual, [Missing2('yyy')])
+
+    def test_dict_of_diffs_exceeds_and_match(self):
+        errors = {
+            'foo': [Extra2('xxx'), Missing2('yyy')],
+            'bar': [Extra2('zzz')],
+        }
+        with self.assertRaises(ValidationErrors) as cm:
+            with allow_limit2(1):  # <- Allows only 1 but there are 2!
+                raise ValidationErrors('example error', errors)
+
+        actual = cm.exception.errors
+        expected = {'foo': [Extra2('xxx'), Missing2('yyy')]}
+        self.assertEqual(dict(actual), expected)
+
+    def test_dict_of_diffs_and_function(self):
+        errors = {
+            'foo': [Extra2('xxx'), Missing2('yyy')],
+            'bar': [Extra2('zzz')],
+        }
+        with self.assertRaises(ValidationErrors) as cm:
+            is_extra = lambda x: isinstance(x, Extra2)
+            with allow_limit2(1, is_extra):
+                raise ValidationErrors('example error', errors)
+
+        actual = cm.exception.errors
+        expected = {'foo': [Missing2('yyy')]}
+        self.assertEqual(dict(actual), expected)
 
 
 class TestAllowElement(unittest.TestCase):

@@ -344,6 +344,60 @@ class allow_percent_deviation2(allow_all2):
 _prettify_devsig(allow_percent_deviation2.__init__)
 
 
+class allow_limit2(allow_iter2):
+    def __init__(self, number, *funcs, **kwds):
+        msg = kwds.pop('msg', None)
+        if kwds:                                  # Emulate keyword-only
+            cls_name = self.__class__.__name__    # behavior for Python
+            bad_arg =  next(iter(kwds.values()))  # versions 2.7 and 2.6.
+            message = '{0}() got an unexpected keyword argument {1!r}'
+            raise TypeError(message.format(cls_name, bad_arg))
+
+        normalize = lambda f: f if hasattr(f, '_decorator') else getvalue(f)
+        funcs = tuple(normalize(f) for f in funcs)
+
+        def grpfltrfalse(key, group):
+            group = iter(group)  # Must be consumable.
+            matching = []
+            for value in group:
+                if all(f(key, value) for f in funcs):  # Closes over 'funcs'.
+                    matching.append(value)
+                    if len(matching) > number:  # Closes over 'number'.
+                        break
+                else:
+                    yield value
+            # If number is exceeded, return all errors.
+            if len(matching) > number:
+                for value in itertools.chain(matching, group):
+                    yield value
+
+        def filterfalse(iterable):
+            if isinstance(iterable, collections.Mapping):
+                iterable = getattr(iterable, 'iteritems', iterable.items)()
+
+            if _is_collection_of_items(iterable):
+                for key, group in iterable:
+                    if (not _is_nsiterable(group)
+                            or isinstance(group, Exception)
+                            or isinstance(group, collections.Mapping)):
+                        group = [group]
+                    value = list(grpfltrfalse(key, group))
+                    if value:
+                        yield key, value
+            else:
+                for f in funcs:  # Closes over 'funcs'.
+                    if f._decorator != getvalue:
+                        message = 'cannot use {0!r} decorator with {1!r} of errors'
+                        dec_name = f._decorator.__name__
+                        itr_type = iterable.__class__.__name__
+                        raise ValueError(message.format(dec_name, itr_type))
+
+                for value in grpfltrfalse(None, iterable):
+                    yield value
+
+        super(allow_limit2, self).__init__(filterfalse)
+
+
 class allow_iter(object):
     """Context manager to allow differences without triggering a test
     failure.  The *function* should accept an iterable of differences
