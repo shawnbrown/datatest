@@ -160,7 +160,7 @@ class _allow_element(allow_iter2):
                         if not wrapfunc(key, value):
                             yield key, value
                     else:
-                        values = list(v for v in value if not wrapfunc(key, value))
+                        values = list(v for v in value if not wrapfunc(key, v))
                         if values:
                             yield key, values
             else:

@@ -341,8 +341,8 @@ class TestAllowElement(unittest.TestCase):
 
     def test_dict_of_lists(self):
         errors =  {'a': [Missing2('X'), Missing2('Y')]}  # <- Value is a list
-        func1 = lambda x: True                           #    of errors.
-        func2 = lambda x: False
+        func1 = lambda x: isinstance(x, DataError2)      #    of errors.
+        func2 = lambda x: x.args[0] == 'Z'
 
         with _allow_element(any, (func1,)):
             raise ValidationErrors('one True', errors)
