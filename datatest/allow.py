@@ -171,6 +171,75 @@ class _allow_element(allow_iter2):
         super(_allow_element, self).__init__(filterfalse)
 
 
+class allow_specified2(allow_iter2):
+    def __init__(self, errors, **kwds):
+        msg = kwds.pop('msg', None)
+        if kwds:                                  # Emulate keyword-only
+            cls_name = self.__class__.__name__    # behavior for Python
+            bad_arg =  next(iter(kwds.values()))  # versions 2.7 and 2.6.
+            message = '{0}() got an unexpected keyword argument {1!r}'
+            raise TypeError(message.format(cls_name, bad_arg))
+
+        if _is_collection_of_items(errors):
+            errors = dict(errors)
+        elif isinstance(errors, Exception):
+            errors = [errors]
+
+        def grpfltrfalse(allowed, iterable):
+            if isinstance(iterable, Exception):
+                iterable = [iterable]
+
+            if isinstance(allowed, Exception):
+                allowed = [allowed]
+            else:
+                allowed = list(allowed)  # Make list or copy existing list.
+
+            for x in iterable:
+                try:
+                    allowed.remove(x)
+                except ValueError:
+                    yield x
+
+            if allowed:  # If there are left-over errors.
+                message = 'allowed errors not found: {0!r}'
+                exc = Exception(message.format(allowed))
+                exc.__cause__ = None
+                yield exc
+
+        def filterfalse(iterable):
+            if isinstance(iterable, collections.Mapping):
+                iterable = getattr(iterable, 'iteritems', iterable.items)()
+
+            if _is_collection_of_items(iterable):
+                if isinstance(errors, collections.Mapping):
+                    for key, group in iterable:
+                        try:
+                            errors_lst = errors[key]
+                            result = list(grpfltrfalse(errors_lst, group))
+                            if result:
+                                yield key, result
+                        except KeyError:
+                            yield key, group
+                else:
+                    errors_lst = list(errors)  # Errors must not be consumable.
+                    for key, group in iterable:
+                        result = list(grpfltrfalse(errors_lst, group))
+                        if result:
+                            yield key, result
+            else:
+                if not _is_mapping_type(errors):
+                    for x in grpfltrfalse(errors, iterable):
+                        yield x
+                else:
+                    message = ('{0!r} of errors cannot be matched using {1!r} '
+                               'of allowances, requires non-mapping type')
+                    message = message.format(iterable.__class__.__name__,
+                                             errors.__class__.__name__)
+                    raise ValueError(message)
+
+        super(allow_specified2, self).__init__(filterfalse)
+
+
 class allow_any2(_allow_element):
     """
     allow_any2(function, *[, msg])

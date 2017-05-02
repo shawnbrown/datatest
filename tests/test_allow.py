@@ -25,6 +25,7 @@ from datatest.allow import allow_missing2
 from datatest.allow import allow_extra2
 from datatest.allow import allow_deviation2
 from datatest.allow import allow_percent_deviation2
+from datatest.allow import allow_specified2
 from datatest.allow import getvalue
 from datatest.allow import getkey
 from datatest.errors import ValidationErrors
@@ -90,8 +91,145 @@ class TestAllowIter2(unittest.TestCase):
                 raise ValidationErrors('example error', errors_dict)
 
         errors = cm.exception.errors
-        #self.assertIsInstance(errors, ItemsIter)
+        #self.assertIsInstance(errors, DictItems)
         self.assertEqual(dict(errors), {'a': Missing2('foo')})
+
+
+class TestAllowSpecified2(unittest.TestCase):
+    def test_some_allowed(self):
+        errors = [Extra2('xxx'), Missing2('yyy')]
+        allowed = [Extra2('xxx')]
+
+        with self.assertRaises(ValidationErrors) as cm:
+            with allow_specified2(allowed):
+                raise ValidationErrors('example error', errors)
+
+        expected = [Missing2('yyy')]
+        actual = list(cm.exception.errors)
+        self.assertEqual(expected, actual)
+
+    def test_single_diff_without_container(self):
+        errors = [Extra2('xxx'), Missing2('yyy')]
+        allowed = Extra2('xxx')  # <- Single diff, not in list.
+
+        with self.assertRaises(ValidationErrors) as cm:
+            with allow_specified2(allowed):
+                raise ValidationErrors('example error', errors)
+
+        expected = [Missing2('yyy')]
+        actual = list(cm.exception.errors)
+        self.assertEqual(expected, actual)
+
+    def test_all_allowed(self):
+        diffs = [Extra2('xxx'), Missing2('yyy')]
+        allowed = [Extra2('xxx'), Missing2('yyy')]
+        with allow_specified2(allowed):
+            raise ValidationErrors('example error', diffs)
+
+    def test_duplicates(self):
+        # Three of the exact-same differences.
+        errors = [Extra2('xxx'), Extra2('xxx'), Extra2('xxx')]
+
+        # Only allow one of them.
+        with self.assertRaises(ValidationErrors) as cm:
+            allowed = [Extra2('xxx')]
+            with allow_specified2(allowed):
+                raise ValidationErrors('example error', errors)
+
+        expected = [Extra2('xxx'), Extra2('xxx')]  # Expect two remaining.
+        actual = list(cm.exception.errors)
+        self.assertEqual(expected, actual)
+
+        # Only allow two of them.
+        with self.assertRaises(ValidationErrors) as cm:
+            allowed = [Extra2('xxx'), Extra2('xxx')]
+            with allow_specified2(allowed):
+                raise ValidationErrors('example error', errors)
+
+        expected = [Extra2('xxx')]  # Expect one remaining.
+        actual = list(cm.exception.errors)
+        self.assertEqual(expected, actual)
+
+        # Allow all three.
+        allowed = [Extra2('xxx'), Extra2('xxx'), Extra2('xxx')]
+        with allow_specified2(allowed):
+            raise ValidationErrors('example error', errors)
+
+    def test_error_mapping_allowance_list(self):
+        differences = {'foo': [Extra2('xxx')], 'bar': [Extra2('xxx'), Missing2('yyy')]}
+        allowed = [Extra2('xxx')]
+
+        with self.assertRaises(ValidationErrors) as cm:
+            with allow_specified2(allowed):
+                raise ValidationErrors('example error', differences)
+
+        expected = {'bar': [Missing2('yyy')]}
+        actual = cm.exception.errors
+        self.assertEqual(expected, actual)
+
+    def test_mapping_some_allowed(self):
+        differences = {'foo': Extra2('xxx'), 'bar': Missing2('yyy')}
+        allowed = {'foo': Extra2('xxx')}
+
+        with self.assertRaises(ValidationErrors) as cm:
+            with allow_specified2(allowed):
+                raise ValidationErrors('example error', differences)
+
+        expected = {'bar': Missing2('yyy')}
+        actual = cm.exception.errors
+        self.assertEqual(expected, actual)
+
+    def test_mapping_none_allowed(self):
+        differences = {'foo': Extra2('xxx'), 'bar': Missing2('yyy')}
+        allowed = {}
+
+        with self.assertRaises(ValidationErrors) as cm:
+            with allow_specified2(allowed):
+                raise ValidationErrors('example error', differences)
+
+        actual = cm.exception.errors
+        self.assertEqual(differences, actual)
+
+    def test_mapping_all_allowed(self):
+        errors = {'foo': Extra2('xxx'), 'bar': Missing2('yyy')}
+        allowed = errors
+
+        with allow_specified2(allowed):  # <- Catches all differences, no error!
+            raise ValidationErrors('example error', errors)
+
+    def test_mapping_mismatched_types(self):
+        error_list = [Extra2('xxx'), Missing2('yyy')]
+        allowed_dict = {'foo': Extra2('xxx'), 'bar': Missing2('yyy')}
+
+        regex = "'list' of errors cannot be matched.*requires non-mapping type"
+        with self.assertRaisesRegex(ValueError, regex):
+            with allow_specified2(allowed_dict):
+                raise ValidationErrors('example error', error_list)
+
+    def test_integration(self):
+        """This is a bit of an integration test."""
+        differences = {'foo': Extra2('xxx'), 'bar': Missing2('zzz')}
+        allowed = [Extra2('xxx'), Missing2('yyy')]
+
+        with self.assertRaises(ValidationErrors) as cm:
+            with allow_specified2(allowed):
+                raise ValidationErrors('example error', differences)
+        actual = cm.exception.errors
+
+        # Item-by-item assertion used to because Exception()
+        # can not be tested for equality.
+        self.assertIsInstance(actual, dict)
+        self.assertEqual(set(actual.keys()), set(['foo', 'bar']))
+        self.assertEqual(len(actual), 2)
+        self.assertEqual(
+            actual['foo'][0].args[0],
+            "allowed errors not found: [Missing('yyy')]"
+        )
+        self.assertEqual(actual['bar'][0], Missing2('zzz'))
+        self.assertEqual(
+            actual['bar'][1].args[0],
+            "allowed errors not found: [Extra('xxx'), Missing('yyy')]"
+        )
 
 
 class TestAllowElement(unittest.TestCase):
