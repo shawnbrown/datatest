@@ -25,6 +25,15 @@ from datatest import allow_percent_deviation
 from datatest import allow_limit
 from datatest import allow_only
 
+from datatest.allow import allow_missing2
+from datatest.allow import allow_extra2
+from datatest.allow import allow_all2
+from datatest.allow import allow_any2
+from datatest.allow import allow_deviation2
+from datatest.allow import allow_percent_deviation2
+from datatest.allow import allow_limit2
+from datatest.allow import allow_specified2
+
 
 class TestHelperCase(unittest.TestCase):
     """Helper class for subsequent cases."""
@@ -149,28 +158,32 @@ class TestAllowanceWrappers(unittest.TestCase):
 
     def test_allowOnly(self):
         cm = self.case.allowOnly([Missing('foo')])
-        self.assertTrue(isinstance(cm, allow_only))
+        self.assertTrue(isinstance(cm, allow_specified2))
 
     def test_allowAny(self):
-        cm = self.case.allowAny(diffs=lambda x: x == 'aaa')
-        self.assertTrue(isinstance(cm, allow_any))
+        cm = self.case.allowAny(lambda x: x == 'aaa')
+        self.assertTrue(isinstance(cm, allow_any2))
+
+    def test_allowAll(self):
+        cm = self.case.allowAll(lambda x: x == 'aaa')
+        self.assertTrue(isinstance(cm, allow_all2))
 
     def test_allowMissing(self):
         cm = self.case.allowMissing()
-        self.assertTrue(isinstance(cm, allow_missing))
+        self.assertTrue(isinstance(cm, allow_missing2))
 
     def test_allowExtra(self):
         cm = self.case.allowExtra()
-        self.assertTrue(isinstance(cm, allow_extra))
+        self.assertTrue(isinstance(cm, allow_extra2))
 
     def test_allowDeviation(self):
         cm = self.case.allowDeviation(5)
-        self.assertTrue(isinstance(cm, allow_deviation))
+        self.assertTrue(isinstance(cm, allow_deviation2))
 
     def test_allowPercentDeviation(self):
         result = self.case.allowPercentDeviation(5)
-        self.assertTrue(isinstance(result, allow_percent_deviation))
+        self.assertTrue(isinstance(result, allow_percent_deviation2))
 
     def test_allowLimit(self):
         cm = self.case.allowLimit(10)
-        self.assertTrue(isinstance(cm, allow_limit))
+        self.assertTrue(isinstance(cm, allow_limit2))

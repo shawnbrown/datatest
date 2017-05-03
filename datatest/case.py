@@ -27,6 +27,14 @@ from .allow import allow_deviation
 from .allow import allow_percent_deviation
 from .allow import allow_limit
 from .allow import allow_only
+from .allow import allow_missing2
+from .allow import allow_extra2
+from .allow import allow_all2
+from .allow import allow_any2
+from .allow import allow_deviation2
+from .allow import allow_percent_deviation2
+from .allow import allow_limit2
+from .allow import allow_specified2
 
 
 class DataTestCase(TestCase):
@@ -218,7 +226,7 @@ class DataTestCase(TestCase):
     #def assertUnique(self, data, msg=None):
     #    pass
 
-    def allowOnly(self, differences, msg=None):
+    def allowOnly(self, errors, **kwds):
         """Context manager to allow specified *differences* without
         triggering a test failure::
 
@@ -234,10 +242,9 @@ class DataTestCase(TestCase):
         The *differences* argument can be a :py:obj:`list` or
         :py:obj:`dict` of differences or a single difference.
         """
-        #return allow_only(differences, msg)
-        return allow_only(differences)
+        return allow_specified2(errors, **kwds)
 
-    def allowAny(self, msg=None, **kwds_func):
+    def allowAny(self, function, *funcs, **kwds):
         """Allows differences that match given keyword functions
         without triggering a test failure::
 
@@ -249,10 +256,12 @@ class DataTestCase(TestCase):
                 required = ...
                 self.assertValid(data, requirement)
         """
-        #return allow_any(msg, **kwds_func)
-        return allow_any(**kwds_func)
+        return allow_any2(function, *funcs, **kwds)
 
-    def allowMissing(self, msg=None, **kwds_func):
+    def allowAll(self, function, *funcs, **kwds):
+        return allow_all2(function, *funcs, **kwds)
+
+    def allowMissing(self, *funcs, **kwds):
         """Allows :class:`Missing` values without triggering a test
         failure::
 
@@ -261,10 +270,9 @@ class DataTestCase(TestCase):
                 requirement = ...
                 self.assertValid(data, requirement)
         """
-        return allow_missing(**kwds_func)
-        #return allow_missing(msg, **kwds_func)
+        return allow_missing2(*funcs, **kwds)
 
-    def allowExtra(self, msg=None, **kwds_func):
+    def allowExtra(self, *funcs, **kwds):
         """Allows :class:`Extra` values without triggering a test
         failure::
 
@@ -273,10 +281,9 @@ class DataTestCase(TestCase):
                 requirement = ...
                 self.assertValid(data, requirement)
         """
-        return allow_extra(**kwds_func)
-        #return allow_extra(msg, **kwds_func)
+        return allow_extra2(*funcs, **kwds)
 
-    def allowLimit(self, number, msg=None, **kwds_func):
+    def allowLimit(self, number, *funcs, **kwds):
         """Context manager to allow a limited *number* of differences
         (of any type) without triggering a test failure::
 
@@ -289,28 +296,25 @@ class DataTestCase(TestCase):
         will fail with a :class:`ValidationErrors` containing all
         observed differences.
         """
-        return allow_limit(number, **kwds_func)
-        #return allow_limit(number, msg, **kwds_func)
+        return allow_limit2(number, *funcs, **kwds)
 
-    def allowDeviation(self, lower, upper=None, msg=None, **kwds_func):
+    def allowDeviation(self, lower, upper=None, *funcs, **kwds):
         """
         allowDeviation(tolerance, /, msg=None, **kwds_func)
         allowDeviation(lower, upper, msg=None, **kwds_func)
 
         See documentation for full details.
         """
-        return allow_deviation(lower, upper, **kwds_func)
-        #return allow_deviation(lower, upper, msg, **kwds_func)
+        return allow_deviation2(lower, upper, *funcs, **kwds)
 
-    def allowPercentDeviation(self, lower, upper=None, msg=None, **kwds_func):
+    def allowPercentDeviation(self, lower, upper=None, *funcs, **kwds):
         """
         allowPercentDeviation(tolerance, /, msg=None, **kwds_func)
         allowPercentDeviation(lower, upper, msg=None, **kwds_func)
 
         See documentation for full details.
         """
-        return allow_percent_deviation(lower, upper, **kwds_func)
-        #return allow_percent_deviation(lower, upper, msg, **kwds_func)
+        return allow_percent_deviation2(lower, upper, *funcs, **kwds)
 
 
 # Prettify default signature of methods that accept multiple signatures.
