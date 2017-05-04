@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Mixin test cases common to all data source classes."""
 
-from datatest import CompareSet
+from datatest.compare import CompareSet
 from datatest import ExcelSource
 
 

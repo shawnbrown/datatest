@@ -14,7 +14,6 @@ from datatest.utils import functools
 from datatest.utils.misc import _make_decimal
 
 from datatest import DataTestCase
-from datatest import CompareSet
 from datatest import BaseDifference
 from datatest import Extra
 from datatest import Deviation

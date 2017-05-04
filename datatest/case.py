@@ -9,11 +9,6 @@ from .utils import collections
 from .dataaccess import DataQuery
 from .dataaccess import DataResult
 
-from .compare import _compare_mapping
-from .compare import _compare_sequence
-from .compare import _compare_set
-from .compare import _compare_other
-
 from .validate import _get_differences
 from .errors import ValidationErrors
 

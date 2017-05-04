@@ -22,7 +22,7 @@ from datatest import Invalid
 from datatest import Deviation
 from datatest import CsvSource
 from datatest import DataTestCase
-from datatest import CompareSet
+from datatest.compare import CompareSet
 from datatest import allow_iter
 from datatest import allow_each
 from datatest import allow_any

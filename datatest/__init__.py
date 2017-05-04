@@ -10,9 +10,6 @@ from .sources.csv import CsvSource
 from .sources.excel import ExcelSource
 from .sources.pandas import PandasSource
 
-from .compare import CompareSet
-from .compare import CompareDict
-
 from .error import DataError
 
 from .differences import BaseDifference
@@ -62,10 +59,6 @@ __all__ = [
     'ExcelSource',
     'PandasSource',
     'SqliteBase',
-
-    # Query results.
-    'CompareSet',
-    'CompareDict',
 
     # Error.
     'DataError',

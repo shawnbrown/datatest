@@ -2,8 +2,8 @@
 from . import _unittest as unittest
 
 # Import related objects.
-from datatest import CompareSet
-from datatest import CompareDict
+from datatest.compare import CompareSet
+from datatest.compare import CompareDict
 
 from .mixins import CountTests
 from .mixins import OtherTests
