@@ -10,7 +10,7 @@ from .mixins import OtherTests
 
 from .common import MinimalSource
 from datatest.sources.adapter import _FilterValueError
-from datatest import AdapterSource
+from datatest.sources.adapter import AdapterSource
 
 
 class TestAdapterSourceBasics(OtherTests, unittest.TestCase):

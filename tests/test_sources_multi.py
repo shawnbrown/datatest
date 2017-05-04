@@ -7,8 +7,8 @@ from .mixins import OtherTests
 from .common import MinimalSource
 from .common import make_csv_file
 
-from datatest import CsvSource
-from datatest import MultiSource
+from datatest.sources.csv import CsvSource
+from datatest.sources.multi import MultiSource
 
 
 class TestMultiSource(OtherTests, unittest.TestCase):

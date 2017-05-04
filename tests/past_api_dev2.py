@@ -20,7 +20,7 @@ from datatest import Missing
 from datatest import Extra
 from datatest import Invalid
 from datatest import Deviation
-from datatest import CsvSource
+from datatest.sources.csv import CsvSource
 from datatest import DataTestCase
 from datatest.compare import CompareSet
 from datatest import allow_iter

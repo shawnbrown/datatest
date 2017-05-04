@@ -17,7 +17,6 @@ from datatest import DataTestCase
 from datatest import BaseDifference
 from datatest import Extra
 from datatest import Deviation
-from datatest import BaseSource
 from datatest import DataError
 
 # Needed for assertEqual() wrapper.
@@ -25,6 +24,9 @@ from datatest.compare import CompareSet
 from datatest.compare import CompareDict
 from datatest.compare import BaseCompare
 
+
+from datatest.sources.base import BaseSource
+datatest.BaseSource = BaseSource  # Move into main namespace.
 
 _re_type = type(re.compile(''))
 

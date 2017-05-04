@@ -3,7 +3,7 @@ from . import _unittest as unittest
 from .mixins import CountTests
 from .mixins import OtherTests
 
-from datatest import PandasSource
+from datatest.sources.pandas import PandasSource
 from datatest.sources.pandas import _version_info
 
 

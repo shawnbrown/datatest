@@ -10,7 +10,7 @@ try:
 except ImportError:
     xlrd = None
 
-from datatest import ExcelSource
+from datatest.sources.excel import ExcelSource
 
 workbook_path = os.path.join(os.path.dirname(__file__), 'test_sources_excel.xlsx')
 

@@ -5,7 +5,7 @@ from . import _unittest as unittest
 from .mixins import CountTests
 from .mixins import OtherTests
 
-from datatest import SqliteSource
+from datatest.sources.sqlite import SqliteSource
 
 
 class TestSqliteSourceCount(CountTests, unittest.TestCase):

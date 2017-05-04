@@ -7,7 +7,7 @@ import tempfile
 from . import _io as io
 from . import _unittest as unittest
 
-from datatest import BaseSource
+from datatest.sources.base import BaseSource
 
 
 class MkdtempTestCase(unittest.TestCase):

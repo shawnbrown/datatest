@@ -11,7 +11,7 @@ from .common import make_csv_file
 from .mixins import CountTests
 from .mixins import OtherTests
 
-from datatest import CsvSource
+from datatest.sources.csv import CsvSource
 
 
 class TestCsvSource(OtherTests, unittest.TestCase):

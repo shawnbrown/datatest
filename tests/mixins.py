@@ -2,7 +2,7 @@
 """Mixin test cases common to all data source classes."""
 
 from datatest.compare import CompareSet
-from datatest import ExcelSource
+from datatest.sources.excel import ExcelSource
 
 
 class CountTests(object):

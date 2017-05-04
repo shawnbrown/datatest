@@ -1,15 +1,6 @@
 # -*- coding: utf-8 -*-
 from .case import DataTestCase
 
-from .sources.base import BaseSource
-from .sources.adapter import AdapterSource
-from .sources.multi import MultiSource
-from .sources.sqlite import SqliteBase
-from .sources.sqlite import SqliteSource
-from .sources.csv import CsvSource
-from .sources.excel import ExcelSource
-from .sources.pandas import PandasSource
-
 from .error import DataError
 
 from .differences import BaseDifference

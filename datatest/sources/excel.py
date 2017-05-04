@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from ..load.sqltemp import TemporarySqliteTable
-from datatest import SqliteBase
+from .sqlite import SqliteBase
 
 
 class ExcelSource(SqliteBase):
