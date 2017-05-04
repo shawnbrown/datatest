@@ -12,7 +12,7 @@ from datatest.__past__ import api_dev0  # <- MONKEY PATCH!!!
 
 from .common import MinimalSource
 DataTestCase = datatest.DataTestCase
-DataError = datatest.DataError
+DataError = datatest.error.DataError
 Extra = datatest.Extra
 
 

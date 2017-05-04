@@ -4,7 +4,7 @@ from . import _unittest as unittest
 from datatest.utils import collections
 from datatest.dataaccess import ItemsIter
 
-from datatest import DataError
+from datatest.error import DataError
 from datatest import Missing
 from datatest import Extra
 from datatest import Deviation

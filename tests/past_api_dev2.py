@@ -15,7 +15,7 @@ from .common import MinimalSource
 import datatest
 from datatest.__past__ import api_dev2  # <- MONKEY PATCH!!!
 
-from datatest import DataError
+from datatest.error import DataError
 from datatest import Missing
 from datatest import Extra
 from datatest import Invalid
@@ -59,11 +59,11 @@ class TestNamesAndAttributes(unittest.TestCase):
             def test_method(_self):
                 first = set([1, 2, 3])
                 second = set([1, 2, 3, 4])
-                with self.assertRaises(datatest.DataError) as cm:
+                with self.assertRaises(DataError) as cm:
                     _self.assertEqual(first, second)  # <- Wrapped method!
 
                 msg = 'In 0.7.0, assertEqual() should raise DataError.'
-                _self.assertTrue(isinstance(cm.exception, datatest.DataError), msg)
+                _self.assertTrue(isinstance(cm.exception, DataError), msg)
 
                 diffs = list(cm.exception.differences)
                 _self.assertEqual(diffs, [datatest.Missing(4)])

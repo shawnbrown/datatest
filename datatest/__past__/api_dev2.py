@@ -17,7 +17,7 @@ from datatest import DataTestCase
 from datatest import BaseDifference
 from datatest import Extra
 from datatest import Deviation
-from datatest import DataError
+from datatest.error import DataError
 
 # Needed for assertEqual() wrapper.
 from datatest.compare import CompareSet

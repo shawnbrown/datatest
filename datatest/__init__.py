@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 from .case import DataTestCase
 
-from .error import DataError
-
 from .differences import BaseDifference
 from .differences import Extra
 from .differences import Missing
@@ -40,19 +38,6 @@ __version__ = '0.8.0.dev3'
 __all__ = [
     # Test case.
     'DataTestCase',
-
-    # Data sources (TODO: remove once "data access" is complete).
-    'BaseSource',
-    'SqliteSource',
-    'CsvSource',
-    'AdapterSource',
-    'MultiSource',
-    'ExcelSource',
-    'PandasSource',
-    'SqliteBase',
-
-    # Error.
-    'DataError',
 
     # Differences.
     'BaseDifference',

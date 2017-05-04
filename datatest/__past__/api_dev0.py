@@ -6,7 +6,7 @@ from datatest.__past__ import api_dev2
 from datatest.__past__ import api_dev1
 from datatest import DataTestCase
 
-datatest.DataAssertionError = datatest.DataError
+datatest.DataAssertionError = datatest.error.DataError
 
 # Allowances.
 DataTestCase.allowSpecified = DataTestCase.allowOnly
@@ -31,7 +31,7 @@ def _assertColumnSubset(self, ref=None, msg=None):
     """
     try:
         self.assertColumnSet(ref, msg)
-    except datatest.DataError:
+    except datatest.error.DataError:
         with self.allowMissing():
             self.assertColumnSet(ref, msg)
 
@@ -45,7 +45,7 @@ def _assertColumnSuperset(self, ref=None, msg=None):
     """
     try:
         self.assertColumnSet(ref, msg)
-    except datatest.DataError:
+    except datatest.error.DataError:
         with self.allowExtra():
             self.assertColumnSet(ref, msg)
 
@@ -59,7 +59,7 @@ def _assertValueSubset(self, column, ref=None, msg=None, **filter_by):
     """
     try:
         self.assertValueSet(column, ref, msg, **filter_by)
-    except datatest.DataError:
+    except datatest.error.DataError:
         with self.allowMissing():
             self.assertValueSet(column, ref, msg, **filter_by)
 
@@ -73,7 +73,7 @@ def _assertValueSuperset(self, column, ref=None, msg=None, **filter_by):
     """
     try:
         self.assertValueSet(column, ref, msg, **filter_by)
-    except datatest.DataError:
+    except datatest.error.DataError:
         with self.allowExtra():
             self.assertValueSet(column, ref, msg, **filter_by)
 
