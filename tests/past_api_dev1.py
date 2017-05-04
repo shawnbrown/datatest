@@ -127,7 +127,7 @@ class TestAssertDataCount(unittest.TestCase):
                 _self.assertDataCount('total_rows', ['label1'], required)  # <- test assert
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = ("DataError: row counts different than 'total_rows' sums:\n"
+        pattern = ("xDataError: row counts different than 'total_rows' sums:\n"
                    " xDeviation\(\+1, 4, label1=u?'a'\),\n"
                    " xDeviation\(-1, 3, label1=u?'b'\)")
         self.assertRegex(failure, pattern)
@@ -148,7 +148,7 @@ class TestAllowAny_Missing_Extra(TestHelperCase):
                         datatest.Missing('bar'),
                         datatest.Invalid('baz'),
                     ]
-                    raise datatest.error.DataError('some differences', differences)
+                    raise datatest.error.xDataError('some differences', differences)
 
             def test_method2(_self):
                 with _self.allowAny(4):  # <- allow four
@@ -157,7 +157,7 @@ class TestAllowAny_Missing_Extra(TestHelperCase):
                         datatest.Missing('bar'),
                         datatest.Invalid('baz'),
                     ]
-                    raise datatest.error.DataError('some differences', differences)
+                    raise datatest.error.xDataError('some differences', differences)
 
             def test_method3(_self):
                 with _self.allowAny():  # <- missing required keyword arg!
@@ -182,10 +182,10 @@ class TestAllowAny_Missing_Extra(TestHelperCase):
                         datatest.Missing('bar'),
                         datatest.Missing('baz'),
                     ]
-                    raise datatest.error.DataError('some differences', differences)
+                    raise datatest.error.xDataError('some differences', differences)
 
         failure = self._run_one_test(_TestClass, 'test_method')
-        pattern = ("DataError: expected at most 2 matching differences: some differences:\n"
+        pattern = ("xDataError: expected at most 2 matching differences: some differences:\n"
                    " xMissing[^\n]+\n"
                    " xMissing[^\n]+\n"
                    " xMissing[^\n]+\n$")
@@ -201,7 +201,7 @@ class TestAllowAny_Missing_Extra(TestHelperCase):
                         datatest.Deviation(+1, 4, label1='a', label2='y'),
                         datatest.Deviation(-2, 5, label1='a', label2='z'),
                     ]
-                    raise datatest.error.DataError('some differences', differences)
+                    raise datatest.error.xDataError('some differences', differences)
 
             def test_fail_with_nonmatched(_self):
                 with _self.allowAny(label1='a'):  # <- allow unlimited where label1 equals 'a'
@@ -210,13 +210,13 @@ class TestAllowAny_Missing_Extra(TestHelperCase):
                         datatest.Deviation(+1, 4, label1='a', label2='y'),
                         datatest.Deviation(-2, 5, label1='b', label2='z'),  # <- label='b'
                     ]
-                    raise datatest.error.DataError('some differences', differences)
+                    raise datatest.error.xDataError('some differences', differences)
 
         failure = self._run_one_test(_TestClass, 'test_passing')
         self.assertIsNone(failure)
 
         failure = self._run_one_test(_TestClass, 'test_fail_with_nonmatched')
-        pattern = ("DataError: some differences:\n"
+        pattern = ("xDataError: some differences:\n"
                    " xDeviation\(-2, 5, label1=u?'b', label2=u?'z'\)$")
         self.assertRegex(failure, pattern)
 
@@ -232,7 +232,7 @@ class TestAllowMissing(TestHelperCase):
                         datatest.Extra('bar'),
                         datatest.Extra('baz'),
                     ]
-                    raise datatest.error.DataError('some differences', differences)
+                    raise datatest.error.xDataError('some differences', differences)
 
             def test_method2(_self):
                 with _self.allowMissing():  # <- Allow unlimited.
@@ -241,16 +241,16 @@ class TestAllowMissing(TestHelperCase):
                         datatest.Extra('bar'),
                         datatest.Extra('baz'),
                     ]
-                    raise datatest.error.DataError('some differences', differences)
+                    raise datatest.error.xDataError('some differences', differences)
 
         failure = self._run_one_test(_TestClass, 'test_method1')
-        pattern = ("DataError: some differences:\n"
+        pattern = ("xDataError: some differences:\n"
                    " xExtra[^\n]+\n"
                    " xExtra[^\n]+\n$")
         self.assertRegex(failure, pattern)
 
         failure = self._run_one_test(_TestClass, 'test_method2')
-        pattern = ("DataError: some differences:\n"
+        pattern = ("xDataError: some differences:\n"
                    " xExtra[^\n]+\n"
                    " xExtra[^\n]+\n$")
         self.assertRegex(failure, pattern)
@@ -267,7 +267,7 @@ class TestAllowExtra(TestHelperCase):
                         datatest.Missing('bar'),
                         datatest.Missing('baz'),
                     ]
-                    raise datatest.error.DataError('some differences', differences)
+                    raise datatest.error.xDataError('some differences', differences)
 
             def test_method2(_self):
                 with _self.allowExtra():  # <- allow unlimited number.
@@ -276,16 +276,16 @@ class TestAllowExtra(TestHelperCase):
                         datatest.Missing('bar'),
                         datatest.Missing('baz'),
                     ]
-                    raise datatest.error.DataError('some differences', differences)
+                    raise datatest.error.xDataError('some differences', differences)
 
         failure = self._run_one_test(_TestClass, 'test_method1')
-        pattern = ("DataError: some differences:\n"
+        pattern = ("xDataError: some differences:\n"
                    " xMissing[^\n]+\n"
                    " xMissing[^\n]+\n$")
         self.assertRegex(failure, pattern)
 
         failure = self._run_one_test(_TestClass, 'test_method2')
-        pattern = ("DataError: some differences:\n"
+        pattern = ("xDataError: some differences:\n"
                    " xMissing[^\n]+\n"
                    " xMissing[^\n]+\n$")
         self.assertRegex(failure, pattern)

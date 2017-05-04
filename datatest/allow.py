@@ -26,7 +26,7 @@ from .errors import Extra as Extra2
 from .errors import Deviation as Deviation2
 
 
-from .error import DataError
+from .error import xDataError
 
 __datatest = True  # Used to detect in-module stack frames (which are
                    # omitted from output).
@@ -424,7 +424,7 @@ class allow_iter(object):
             exc = AssertionError('No differences found: ' + str(msg))
             exc.__cause__ = None
             raise exc
-        elif not issubclass(exc_type, DataError):  # If not DataError, re-raise.
+        elif not issubclass(exc_type, xDataError):  # If not xDataError, re-raise.
             raise exc_value
 
         differences = self.function(exc_value.differences)  # Apply function!
@@ -467,7 +467,7 @@ class allow_iter(object):
                 raise TypeError(msg.format(type_name))
 
         msg = getattr(exc_value, 'msg')
-        exc = DataError(msg, differences)
+        exc = xDataError(msg, differences)
         exc.__cause__ = None  # <- Suppress context using verbose
         raise exc             # alternative to support older Python
                               # versions--see PEP 415 (same as

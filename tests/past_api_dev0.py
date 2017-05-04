@@ -12,8 +12,7 @@ from datatest.__past__ import api_dev0  # <- MONKEY PATCH!!!
 
 from .common import MinimalSource
 DataTestCase = datatest.DataTestCase
-DataError = datatest.error.DataError
-Extra = datatest.differences.xExtra
+from datatest.error import xDataError
 
 
 class TestAttributes(unittest.TestCase):
@@ -56,7 +55,7 @@ class TestColumnSubset(datatest.DataTestCase):
 
     def test_is_superset(self):
         regex = "different column names:\n xExtra\(u?'value'\)"
-        with self.assertRaisesRegex(DataError, regex):
+        with self.assertRaisesRegex(xDataError, regex):
             self.assertColumnSubset(ref=['label1'])
 
 
@@ -73,7 +72,7 @@ class TestColumnSuperset(datatest.DataTestCase):
 
     def test_is_subset(self):
         regex = "different column names:\n xMissing\(u?'label2'\)"
-        with self.assertRaisesRegex(DataError, regex):
+        with self.assertRaisesRegex(xDataError, regex):
             self.assertColumnSuperset(ref=['label1', 'label2', 'value'])
 
 
@@ -90,7 +89,7 @@ class TestValueSubset(DataTestCase):
 
     def test_is_superset(self):
         regex = "different 'label' values:\n xExtra\(u?'c'\)"
-        with self.assertRaisesRegex(DataError, regex):
+        with self.assertRaisesRegex(xDataError, regex):
             self.assertValueSubset('label', ref=['a', 'b'])
 
 
@@ -107,7 +106,7 @@ class TestValueSuperset(DataTestCase):
 
     def test_is_subset(self):
         regex = "different 'label' values:\n xMissing\(u?'d'\)"
-        with self.assertRaisesRegex(DataError, regex):
+        with self.assertRaisesRegex(xDataError, regex):
             self.assertValueSuperset('label', ref=['a', 'b', 'c', 'd'])
 
 

@@ -2,7 +2,7 @@
 import pprint
 
 
-class DataError(AssertionError):
+class xDataError(AssertionError):
     """Raised when :meth:`assertValid` finds differences between *data*
     and *requirement*.
     """

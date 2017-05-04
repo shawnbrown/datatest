@@ -7,7 +7,7 @@ import unittest
 import warnings
 
 from .utils import functools
-from .error import DataError
+from .error import xDataError
 
 try:
     TextTestResult = unittest.TextTestResult
@@ -147,7 +147,7 @@ class DataTestResult(TextTestResult):
         """Called when an error has occurred. 'err' is a tuple of
         values as returned by sys.exc_info().
         """
-        if err[0] == DataError:
+        if err[0] == xDataError:
             exctype, value, tb = err          # Unpack tuple.
             tb = HideInternalStackFrames(tb)  # Hide internal frames.
             value._verbose = self.showAll     # Set verbose flag (True/False).
@@ -181,19 +181,19 @@ class HideInternalStackFrames(object):
           File "datatest/case.py", line 274, in assertValueSet
             self.fail(msg, extra+missing)
           File "datatest/case.py", line 170, in fail
-            raise DataError(msg, diff)
-        datatest.case.DataError: different 'column1' values:
-         ExtraValue('foo'),
-         ExtraValue('bar')
+            raise ValidationError(msg, diff)
+        datatest.case.ValidationError: different 'column1' values:
+         Extra('foo'),
+         Extra('bar')
 
     A wrapped version hides these internal frames:
 
         Traceback (most recent call last):
           File "test_my_data.py", line 43, in test_codes
             self.assertValueSet('column1')
-        datatest.case.DataError: different 'column1' values:
-         ExtraValue('foo'),
-         ExtraValue('bar')
+        datatest.case.ValidationError: different 'column1' values:
+         Extra('foo'),
+         Extra('bar')
     """
     def __init__(self, tb):
         self._tb = tb
