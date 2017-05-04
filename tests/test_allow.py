@@ -5,9 +5,9 @@ from datatest.utils import collections
 from datatest.dataaccess import ItemsIter
 
 from datatest.error import DataError
-from datatest import Missing
-from datatest import Extra
-from datatest import Deviation
+from datatest.differences import xMissing
+from datatest.differences import xExtra
+from datatest.differences import xDeviation
 from datatest.allow import allow_iter
 from datatest.allow import allow_any
 from datatest.allow import allow_missing
@@ -664,7 +664,7 @@ class TestAllowIter(unittest.TestCase):
         items.
         """
         function = lambda iterable: iterable  # <- Rejects everything.
-        in_diffs = [Extra('foo'), Extra('bar')]
+        in_diffs = [xExtra('foo'), xExtra('bar')]
 
         with self.assertRaises(DataError) as cm:
             with allow_iter(function):
@@ -679,7 +679,7 @@ class TestAllowIter(unittest.TestCase):
         iterable.
         """
         function = lambda iterable: list()  # <- Accepts everything.
-        in_diffs =  [Missing('foo'), Missing('bar')]
+        in_diffs =  [xMissing('foo'), xMissing('bar')]
 
         with allow_iter(function):  # <- Passes without error.
             raise DataError('example error', in_diffs)
@@ -689,7 +689,7 @@ class TestAllowIter(unittest.TestCase):
         iterable non-container should work, too.
         """
         function = lambda iterable: (x for x in [])  # <- Empty generator.
-        in_diffs =  [Missing('foo'), Missing('bar')]
+        in_diffs =  [xMissing('foo'), xMissing('bar')]
 
         with allow_iter(function):  # <- Passes without error.
             raise DataError('example error', in_diffs)
@@ -699,22 +699,22 @@ class TestAllowIter(unittest.TestCase):
         items which are invalid and omit those items which are valid.
         """
         function = lambda iterable: (x for x in iterable if x.value != 'bar')
-        in_diffs = [Missing('foo'), Missing('bar')]
+        in_diffs = [xMissing('foo'), xMissing('bar')]
 
         with self.assertRaises(DataError) as cm:
             with allow_iter(function):
                 raise DataError('example error', in_diffs)
 
         out_diffs = cm.exception.differences
-        self.assertEqual(list(out_diffs), [Missing('foo')])
+        self.assertEqual(list(out_diffs), [xMissing('foo')])
 
     def test_mapping_all_bad(self):
         """Given a mapping in which all items are invalid, *function*
         should return a mapping containing all items.
         """
         function = lambda mapping: mapping  # <- Rejects entire mapping.
-        in_diffs = {('AAA', 'xxx'): Missing('foo'),
-                    ('BBB', 'yyy'): Missing('bar')}
+        in_diffs = {('AAA', 'xxx'): xMissing('foo'),
+                    ('BBB', 'yyy'): xMissing('bar')}
 
         with self.assertRaises(DataError) as cm:
             with allow_iter(function):
@@ -728,8 +728,8 @@ class TestAllowIter(unittest.TestCase):
         should omit all items and simply return an empty mapping.
         """
         function = lambda mapping: {}  # <- Accepts everything.
-        in_diffs = {('AAA', 'xxx'): Missing('foo'),
-                    ('BBB', 'yyy'): Missing('bar')}
+        in_diffs = {('AAA', 'xxx'): xMissing('foo'),
+                    ('BBB', 'yyy'): xMissing('bar')}
 
         with allow_iter(function):  # <- Passes without error.
             raise DataError('example error', in_diffs)
@@ -743,15 +743,15 @@ class TestAllowIter(unittest.TestCase):
                 if diff.value == 'bar':
                     yield (key, diff)
 
-        in_diffs = {('AAA', 'xxx'): Missing('foo'),
-                    ('BBB', 'yyy'): Missing('bar')}
+        in_diffs = {('AAA', 'xxx'): xMissing('foo'),
+                    ('BBB', 'yyy'): xMissing('bar')}
 
         with self.assertRaises(DataError) as cm:
             with allow_iter(function):
                 raise DataError('example error', in_diffs)
 
         out_diffs = cm.exception.differences
-        self.assertEqual(out_diffs, {('BBB', 'yyy'): Missing('bar')})
+        self.assertEqual(out_diffs, {('BBB', 'yyy'): xMissing('bar')})
 
     def test_returns_sequence(self):
         """If given a mapping, *function* may return an iterable of
@@ -761,10 +761,10 @@ class TestAllowIter(unittest.TestCase):
         Python's 'dict' behavior).
         """
         # Simple key.
-        in_diffs = {'AAA': Missing('foo'),
-                    'BBB': Missing('bar')}
-        return_val = [['AAA', Missing('foo')],  # <- Two items.
-                      ['BBB', Missing('bar')]]  # <- Two items.
+        in_diffs = {'AAA': xMissing('foo'),
+                    'BBB': xMissing('bar')}
+        return_val = [['AAA', xMissing('foo')],  # <- Two items.
+                      ['BBB', xMissing('bar')]]  # <- Two items.
 
         with self.assertRaises(DataError) as cm:
             with allow_iter(lambda x: return_val):
@@ -774,10 +774,10 @@ class TestAllowIter(unittest.TestCase):
         self.assertEqual(out_diffs, in_diffs)
 
         # Compound key.
-        in_diffs = {('AAA', 'xxx'): Missing('foo'),
-                    ('BBB', 'yyy'): Missing('bar')}
-        return_val = [[('AAA', 'xxx'), Missing('foo')],  # <- Two items.
-                      [('BBB', 'yyy'), Missing('bar')]]  # <- Two items.
+        in_diffs = {('AAA', 'xxx'): xMissing('foo'),
+                    ('BBB', 'yyy'): xMissing('bar')}
+        return_val = [[('AAA', 'xxx'), xMissing('foo')],  # <- Two items.
+                      [('BBB', 'yyy'), xMissing('bar')]]  # <- Two items.
 
         with self.assertRaises(DataError) as cm:
             with allow_iter(lambda x: return_val):
@@ -787,13 +787,13 @@ class TestAllowIter(unittest.TestCase):
         self.assertEqual(out_diffs, in_diffs)
 
         # Duplicate keys--last defined value (bar) appears in mapping.
-        in_diffs = {'AAA': Missing('foo'),
-                    'BBB': Missing('bar')}
-        return_val = [['AAA', Missing('foo')],
-                      ['BBB', Missing('xxx')],  # <- Duplicate key.
-                      ['BBB', Missing('yyy')],  # <- Duplicate key.
-                      ['BBB', Missing('zzz')],  # <- Duplicate key.
-                      ['BBB', Missing('bar')]]  # <- Duplicate key.
+        in_diffs = {'AAA': xMissing('foo'),
+                    'BBB': xMissing('bar')}
+        return_val = [['AAA', xMissing('foo')],
+                      ['BBB', xMissing('xxx')],  # <- Duplicate key.
+                      ['BBB', xMissing('yyy')],  # <- Duplicate key.
+                      ['BBB', xMissing('zzz')],  # <- Duplicate key.
+                      ['BBB', xMissing('bar')]]  # <- Duplicate key.
 
         with self.assertRaises(DataError) as cm:
             with allow_iter(lambda x: return_val):
@@ -807,12 +807,12 @@ class TestAllowIter(unittest.TestCase):
         iterable of two-item sequences but if the sequence contains more
         or less items, a ValueError should be raised.
         """
-        in_diffs = {('AAA', 'xxx'): Missing('foo'),
-                    ('BBB', 'yyy'): Missing('bar')}
+        in_diffs = {('AAA', 'xxx'): xMissing('foo'),
+                    ('BBB', 'yyy'): xMissing('bar')}
 
         # mapping / iterable of 1-item sequences.
-        return_val = [[Missing('foo')],  # <- One item.
-                      [Missing('bar')]]  # <- One item.
+        return_val = [[xMissing('foo')],  # <- One item.
+                      [xMissing('bar')]]  # <- One item.
 
         regex = ('has length 1.*2 is required')
         with self.assertRaisesRegex(ValueError, regex):  # <- ValueError!
@@ -820,8 +820,8 @@ class TestAllowIter(unittest.TestCase):
                 raise DataError('example error', in_diffs)
 
         # mapping / iterable of 3-item sequences.
-        return_val = [[('AAA', 'xxx'), Missing('foo'), None],  # <- Three items.
-                      [('BBB', 'yyy'), Missing('bar'), None]]  # <- Three items.
+        return_val = [[('AAA', 'xxx'), xMissing('foo'), None],  # <- Three items.
+                      [('BBB', 'yyy'), xMissing('bar'), None]]  # <- Three items.
 
         regex = 'has length 3.*2 is required'
         with self.assertRaisesRegex(ValueError, regex):  # <- ValueError!
@@ -832,8 +832,8 @@ class TestAllowIter(unittest.TestCase):
         """The *function* should return the same type it was given or a
         compatible object--if not, a TypeError should be raised.
         """
-        in_diffs = {('AAA', 'xxx'): Missing('foo'),
-                    ('BBB', 'yyy'): Missing('bar')}
+        in_diffs = {('AAA', 'xxx'): xMissing('foo'),
+                    ('BBB', 'yyy'): xMissing('bar')}
 
         # mapping / iterable ot 2-char strings
         return_val = ['Ax', 'By']  # <- Two-character strings.
@@ -844,17 +844,17 @@ class TestAllowIter(unittest.TestCase):
                 raise DataError('example error', in_diffs)
 
         # mapping / iterable of non-sequence items
-        return_val = [Missing('foo'),  # <- Non-sequence item.
-                      Missing('bar')]  # <- Non-sequence item.
+        return_val = [xMissing('foo'),  # <- Non-sequence item.
+                      xMissing('bar')]  # <- Non-sequence item.
 
-        regex = ("must be non-string sequence.*found 'Missing'")
+        regex = ("must be non-string sequence.*found 'xMissing'")
         with self.assertRaisesRegex(TypeError, regex):
             with allow_iter(lambda x: return_val):
                 raise DataError('example error', in_diffs)
 
         # nonmapping / mapping
-        in_diffs = [Missing('foo'), Missing('bar')]  # <- List (non-mapping)!
-        return_val = {'AAA': Missing('foo'), 'BBB': Missing('bar')}  # <- Mapping!
+        in_diffs = [xMissing('foo'), xMissing('bar')]  # <- List (non-mapping)!
+        return_val = {'AAA': xMissing('foo'), 'BBB': xMissing('bar')}  # <- Mapping!
 
         regex = "input was 'list' but function returned a mapping"
         with self.assertRaisesRegex(TypeError, regex):
@@ -877,7 +877,7 @@ class TestAllowAny(unittest.TestCase):
                 pass
 
     def test_diffs_nonmapping(self):
-        in_diffs = [Missing('foo'), Missing('bar')]
+        in_diffs = [xMissing('foo'), xMissing('bar')]
         function = lambda x: x.value == 'foo'
 
         with self.assertRaises(DataError) as cm:
@@ -885,10 +885,10 @@ class TestAllowAny(unittest.TestCase):
                 raise DataError('example error', in_diffs)
 
         rejected = cm.exception.differences
-        self.assertEqual(rejected, [Missing('bar')])
+        self.assertEqual(rejected, [xMissing('bar')])
 
     def test_diffs_mapping(self):
-        in_diffs = {'AAA': Missing('foo'), 'BBB': Missing('bar')}
+        in_diffs = {'AAA': xMissing('foo'), 'BBB': xMissing('bar')}
         function = lambda x: x.value == 'foo'
 
         with self.assertRaises(DataError) as cm:
@@ -896,11 +896,11 @@ class TestAllowAny(unittest.TestCase):
                 raise DataError('example error', in_diffs)
 
         rejected = cm.exception.differences
-        self.assertEqual(rejected, {'BBB': Missing('bar')})
+        self.assertEqual(rejected, {'BBB': xMissing('bar')})
 
     def test_keys_nonmapping(self):
-        # Missing required keyword 'diffs'.
-        in_diffs = [Missing('foo'), Missing('bar')]
+        # xMissing required keyword 'diffs'.
+        in_diffs = [xMissing('foo'), xMissing('bar')]
         function = lambda first, second: first == 'AAA'
 
         regex = "accepts only 'diffs' keyword, found 'keys'"
@@ -909,7 +909,7 @@ class TestAllowAny(unittest.TestCase):
                 raise DataError('example error', in_diffs)
 
         # Disallowed keywords ('keys').
-        in_diffs = [Missing('foo'), Missing('bar')]
+        in_diffs = [xMissing('foo'), xMissing('bar')]
         function = lambda first, second: first == 'AAA'
 
         with self.assertRaisesRegex(ValueError, "found 'keys'"):
@@ -918,7 +918,7 @@ class TestAllowAny(unittest.TestCase):
 
     def test_keys_mapping(self):
         # Function accepts single argument.
-        in_diffs = {'AAA': Missing('foo'), 'BBB': Missing('bar')}
+        in_diffs = {'AAA': xMissing('foo'), 'BBB': xMissing('bar')}
         function = lambda x: x == 'AAA'
 
         with self.assertRaises(DataError) as cm:
@@ -926,11 +926,11 @@ class TestAllowAny(unittest.TestCase):
                 raise DataError('example error', in_diffs)
 
         rejected = cm.exception.differences
-        self.assertEqual(rejected, {'BBB': Missing('bar')})
+        self.assertEqual(rejected, {'BBB': xMissing('bar')})
 
         # Function accepts multiple arguments.
-        in_diffs = {('AAA', 'XXX'): Missing('foo'),
-                    ('BBB', 'YYY'): Missing('bar')}
+        in_diffs = {('AAA', 'XXX'): xMissing('foo'),
+                    ('BBB', 'YYY'): xMissing('bar')}
 
         def function(first, second):  # <- Multiple args.
             return second == 'XXX'
@@ -940,7 +940,7 @@ class TestAllowAny(unittest.TestCase):
                 raise DataError('example error', in_diffs)
 
         rejected = cm.exception.differences
-        self.assertEqual(rejected, {('BBB', 'YYY'): Missing('bar')})
+        self.assertEqual(rejected, {('BBB', 'YYY'): xMissing('bar')})
 
     def test_items_nonmapping(self):
         # TODO: Explore the idea of accepting mapping-compatible
@@ -949,7 +949,7 @@ class TestAllowAny(unittest.TestCase):
 
     def test_items_mapping(self):
         # Function of one argument.
-        in_diffs = {'AAA': Missing('foo'), 'BBB': Missing('bar')}
+        in_diffs = {'AAA': xMissing('foo'), 'BBB': xMissing('bar')}
 
         def function(item):
             key, diff = item  # Unpack item tuple.
@@ -960,10 +960,10 @@ class TestAllowAny(unittest.TestCase):
                 raise DataError('example error', in_diffs)
 
         rejected = cm.exception.differences
-        self.assertEqual(rejected, {'BBB': Missing('bar')})
+        self.assertEqual(rejected, {'BBB': xMissing('bar')})
 
         # Function of two arguments.
-        in_diffs = {'AAA': Missing('foo'), 'BBB': Missing('bar')}
+        in_diffs = {'AAA': xMissing('foo'), 'BBB': xMissing('bar')}
 
         def function(key, diff):
             return key == 'AAA'
@@ -973,11 +973,11 @@ class TestAllowAny(unittest.TestCase):
                 raise DataError('example error', in_diffs)
 
         rejected = cm.exception.differences
-        self.assertEqual(rejected, {'BBB': Missing('bar')})
+        self.assertEqual(rejected, {'BBB': xMissing('bar')})
 
         # Function of three arguments.
-        in_diffs = {('AAA', 'XXX'): Missing('foo'),
-                    ('BBB', 'YYY'): Missing('bar')}
+        in_diffs = {('AAA', 'XXX'): xMissing('foo'),
+                    ('BBB', 'YYY'): xMissing('bar')}
 
         def function(key1, key2, diff):
             return key2 == 'XXX'
@@ -987,13 +987,13 @@ class TestAllowAny(unittest.TestCase):
                 raise DataError('example error', in_diffs)
 
         rejected = cm.exception.differences
-        self.assertEqual(rejected, {('BBB', 'YYY'): Missing('bar')})
+        self.assertEqual(rejected, {('BBB', 'YYY'): xMissing('bar')})
 
     def test_keyword_combinations(self):
-        in_diffs = {('AAA', 'XXX'): Missing('foo'),
-                    ('BBB', 'YYY'): Missing('foo'),
-                    ('CCC', 'XXX'): Extra('bar'),
-                    ('DDD', 'XXX'): Missing('foo')}
+        in_diffs = {('AAA', 'XXX'): xMissing('foo'),
+                    ('BBB', 'YYY'): xMissing('foo'),
+                    ('CCC', 'XXX'): xExtra('bar'),
+                    ('DDD', 'XXX'): xMissing('foo')}
 
         def fn1(key1, key2):
             return key2 == 'XXX'
@@ -1006,31 +1006,31 @@ class TestAllowAny(unittest.TestCase):
                 raise DataError('example error', in_diffs)
 
         rejected = cm.exception.differences
-        self.assertEqual(rejected, {('BBB', 'YYY'): Missing('foo'),
-                                    ('CCC', 'XXX'): Extra('bar')})
+        self.assertEqual(rejected, {('BBB', 'YYY'): xMissing('foo'),
+                                    ('CCC', 'XXX'): xExtra('bar')})
 
 
 class TestAllowMissing(unittest.TestCase):
     """Test allow_missing() behavior."""
     def test_allow_some(self):
-        differences = [Extra('xxx'), Missing('yyy')]
+        differences = [xExtra('xxx'), xMissing('yyy')]
 
         with self.assertRaises(DataError) as cm:
             with allow_missing():
                 raise DataError('example error', differences)
 
         rejected = list(cm.exception.differences)
-        self.assertEqual(rejected, [Extra('xxx')])
+        self.assertEqual(rejected, [xExtra('xxx')])
 
     def test_allow_all(self):
         with allow_missing():
-            raise DataError('example error', [Missing('xxx'), Missing('yyy')])
+            raise DataError('example error', [xMissing('xxx'), xMissing('yyy')])
 
     def test_diffs_keyword(self):
         in_diffs = {
-            'foo': Missing('xxx'),
-            'bar': Missing('yyy'),
-            'baz': Extra('zzz'),
+            'foo': xMissing('xxx'),
+            'bar': xMissing('yyy'),
+            'baz': xExtra('zzz'),
         }
         with self.assertRaises(DataError) as cm:
             def additional_helper(x):
@@ -1040,13 +1040,13 @@ class TestAllowMissing(unittest.TestCase):
                 raise DataError('example error', in_diffs)
 
         rejected = cm.exception.differences
-        self.assertEqual(rejected, {'foo': Missing('xxx'), 'baz': Extra('zzz')})
+        self.assertEqual(rejected, {'foo': xMissing('xxx'), 'baz': xExtra('zzz')})
 
     def test_keys_keyword(self):
         in_diffs = {
-            'foo': Missing('xxx'),
-            'bar': Missing('yyy'),
-            'baz': Extra('zzz'),
+            'foo': xMissing('xxx'),
+            'bar': xMissing('yyy'),
+            'baz': xExtra('zzz'),
         }
         with self.assertRaises(DataError) as cm:
             def additional_helper(x):
@@ -1056,7 +1056,7 @@ class TestAllowMissing(unittest.TestCase):
                 raise DataError('example error', in_diffs)
 
         rejected = cm.exception.differences
-        self.assertEqual(rejected, {'bar': Missing('yyy'), 'baz': Extra('zzz')})
+        self.assertEqual(rejected, {'bar': xMissing('yyy'), 'baz': xExtra('zzz')})
 
     def test_no_exception(self):
         with self.assertRaises(AssertionError) as cm:
@@ -1070,24 +1070,24 @@ class TestAllowMissing(unittest.TestCase):
 class TestAllowExtra(unittest.TestCase):
     """Test allow_extra() behavior."""
     def test_allow_some(self):
-        differences = [Extra('xxx'), Missing('yyy')]
+        differences = [xExtra('xxx'), xMissing('yyy')]
 
         with self.assertRaises(DataError) as cm:
             with allow_extra():
                 raise DataError('example error', differences)
 
         rejected = list(cm.exception.differences)
-        self.assertEqual(rejected, [Missing('yyy')])
+        self.assertEqual(rejected, [xMissing('yyy')])
 
     def test_allow_all(self):
         with allow_extra():
-            raise DataError('example error', [Extra('xxx'), Extra('yyy')])
+            raise DataError('example error', [xExtra('xxx'), xExtra('yyy')])
 
     def test_diffs_keyword(self):
         in_diffs = {
-            'foo': Extra('xxx'),
-            'bar': Extra('yyy'),
-            'baz': Missing('zzz'),
+            'foo': xExtra('xxx'),
+            'bar': xExtra('yyy'),
+            'baz': xMissing('zzz'),
         }
         with self.assertRaises(DataError) as cm:
             def additional_helper(x):
@@ -1097,13 +1097,13 @@ class TestAllowExtra(unittest.TestCase):
                 raise DataError('example error', in_diffs)
 
         rejected = cm.exception.differences
-        self.assertEqual(rejected, {'foo': Extra('xxx'), 'baz': Missing('zzz')})
+        self.assertEqual(rejected, {'foo': xExtra('xxx'), 'baz': xMissing('zzz')})
 
     def test_keys_keyword(self):
         in_diffs = {
-            'foo': Extra('xxx'),
-            'bar': Extra('yyy'),
-            'baz': Missing('zzz'),
+            'foo': xExtra('xxx'),
+            'bar': xExtra('yyy'),
+            'baz': xMissing('zzz'),
         }
         with self.assertRaises(DataError) as cm:
             def additional_helper(x):
@@ -1113,7 +1113,7 @@ class TestAllowExtra(unittest.TestCase):
                 raise DataError('example error', in_diffs)
 
         rejected = cm.exception.differences
-        self.assertEqual(rejected, {'bar': Extra('yyy'), 'baz': Missing('zzz')})
+        self.assertEqual(rejected, {'bar': xExtra('yyy'), 'baz': xMissing('zzz')})
 
     def test_no_exception(self):
         with self.assertRaises(AssertionError) as cm:
@@ -1137,8 +1137,8 @@ class TestAllowDeviation(unittest.TestCase):
 
     def test_tolerance_syntax(self):
         differences = {
-            'aaa': Deviation(-1, 10),
-            'bbb': Deviation(+3, 10),  # <- Not in allowed range.
+            'aaa': xDeviation(-1, 10),
+            'bbb': xDeviation(+3, 10),  # <- Not in allowed range.
         }
         with self.assertRaises(DataError) as cm:
             with allow_deviation(2):  # <- Allows +/- 2.
@@ -1148,12 +1148,12 @@ class TestAllowDeviation(unittest.TestCase):
         #self.assertTrue(result_string.startswith('example allowance: example error'))
 
         result_diffs = cm.exception.differences
-        self.assertEqual({'bbb': Deviation(+3, 10)}, result_diffs)
+        self.assertEqual({'bbb': xDeviation(+3, 10)}, result_diffs)
 
     def test_lowerupper_syntax(self):
         differences = {
-            'aaa': Deviation(-1, 10),  # <- Not in allowed range.
-            'bbb': Deviation(+3, 10),
+            'aaa': xDeviation(-1, 10),  # <- Not in allowed range.
+            'bbb': xDeviation(+3, 10),
         }
         with self.assertRaises(DataError) as cm:
             with allow_deviation(0, 3):  # <- Allows from 0 to 3.
@@ -1163,14 +1163,14 @@ class TestAllowDeviation(unittest.TestCase):
         #self.assertTrue(result_string.startswith('example allowance: example error'))
 
         result_diffs = cm.exception.differences
-        self.assertEqual({'aaa': Deviation(-1, 10)}, result_diffs)
+        self.assertEqual({'aaa': xDeviation(-1, 10)}, result_diffs)
 
     def test_single_value_allowance(self):
         differences = [
-            Deviation(+2.9, 10),  # <- Not allowed.
-            Deviation(+3.0, 10),
-            Deviation(+3.0, 5),
-            Deviation(+3.1, 10),  # <- Not allowed.
+            xDeviation(+2.9, 10),  # <- Not allowed.
+            xDeviation(+3.0, 10),
+            xDeviation(+3.0, 5),
+            xDeviation(+3.1, 10),  # <- Not allowed.
         ]
         with self.assertRaises(DataError) as cm:
             with allow_deviation(3, 3):  # <- Allows +3 only.
@@ -1178,18 +1178,18 @@ class TestAllowDeviation(unittest.TestCase):
 
         result_diffs = set(cm.exception.differences)
         expected_diffs = set([
-            Deviation(+2.9, 10),
-            Deviation(+3.1, 10),
+            xDeviation(+2.9, 10),
+            xDeviation(+3.1, 10),
         ])
         self.assertEqual(expected_diffs, result_diffs)
 
     def test_keys_keyword(self):
         with self.assertRaises(DataError) as cm:
             differences = {
-                'aaa': Deviation(-1, 10),
-                'bbb': Deviation(+2, 10),
-                'ccc': Deviation(+2, 10),
-                'ddd': Deviation(+3, 10),
+                'aaa': xDeviation(-1, 10),
+                'bbb': xDeviation(+2, 10),
+                'ccc': xDeviation(+2, 10),
+                'ddd': xDeviation(+3, 10),
             }
             fn = lambda key: key in ('aaa', 'bbb', 'ddd')
             with allow_deviation(2, keys=fn):  # <- Allows +/- 2.
@@ -1197,8 +1197,8 @@ class TestAllowDeviation(unittest.TestCase):
 
         actual = cm.exception.differences
         expected = {
-            'ccc': Deviation(+2, 10),  # <- Keyword value not allowed.
-            'ddd': Deviation(+3, 10),  # <- Not in allowed range.
+            'ccc': xDeviation(+2, 10),  # <- Keyword value not allowed.
+            'ddd': xDeviation(+3, 10),  # <- Not in allowed range.
         }
         self.assertEqual(expected, actual)
 
@@ -1212,26 +1212,26 @@ class TestAllowDeviation(unittest.TestCase):
     def test_empty_value_handling(self):
         # Test NoneType.
         with allow_deviation(0):  # <- Pass without failure.
-            raise DataError('example error', [Deviation(None, 0)])
+            raise DataError('example error', [xDeviation(None, 0)])
 
         with allow_deviation(0):  # <- Pass without failure.
-            raise DataError('example error', [Deviation(0, None)])
+            raise DataError('example error', [xDeviation(0, None)])
 
         # Test empty string.
         with allow_deviation(0):  # <- Pass without failure.
-            raise DataError('example error', [Deviation('', 0)])
+            raise DataError('example error', [xDeviation('', 0)])
 
         with allow_deviation(0):  # <- Pass without failure.
-            raise DataError('example error', [Deviation(0, '')])
+            raise DataError('example error', [xDeviation(0, '')])
 
         # Test NaN (not a number) values.
         with self.assertRaises(DataError):  # <- NaN values should not be caught!
             with allow_deviation(0):
-                raise DataError('example error', [Deviation(float('nan'), 0)])
+                raise DataError('example error', [xDeviation(float('nan'), 0)])
 
         with self.assertRaises(DataError):  # <- NaN values should not be caught!
             with allow_deviation(0):
-                raise DataError('example error', [Deviation(0, float('nan'))])
+                raise DataError('example error', [xDeviation(0, float('nan'))])
 
     # AN OPEN QUESTION: Should deviation allowances raise an error if
     # the maximum oberved deviation is _less_ than the given tolerance?
@@ -1250,8 +1250,8 @@ class TestAllowPercentDeviation(unittest.TestCase):
 
     def test_tolerance_syntax(self):
         differences = [
-            Deviation(-1, 10),
-            Deviation(+3, 10),  # <- Not in allowed range.
+            xDeviation(-1, 10),
+            xDeviation(+3, 10),  # <- Not in allowed range.
         ]
         with self.assertRaises(DataError) as cm:
             with allow_percent_deviation(0.2):  # <- Allows +/- 20%.
@@ -1261,12 +1261,12 @@ class TestAllowPercentDeviation(unittest.TestCase):
         self.assertTrue(result_string.startswith('example error'))
 
         result_diffs = list(cm.exception.differences)
-        self.assertEqual([Deviation(+3, 10)], result_diffs)
+        self.assertEqual([xDeviation(+3, 10)], result_diffs)
 
     def test_lowerupper_syntax(self):
         differences = {
-            'aaa': Deviation(-1, 10),  # <- Not in allowed range.
-            'bbb': Deviation(+3, 10),
+            'aaa': xDeviation(-1, 10),  # <- Not in allowed range.
+            'bbb': xDeviation(+3, 10),
         }
         with self.assertRaises(DataError) as cm:
             with allow_percent_deviation(0.0, 0.3):  # <- Allows from 0 to 30%.
@@ -1276,14 +1276,14 @@ class TestAllowPercentDeviation(unittest.TestCase):
         self.assertTrue(result_string.startswith('example error'))
 
         result_diffs = cm.exception.differences
-        self.assertEqual({'aaa': Deviation(-1, 10)}, result_diffs)
+        self.assertEqual({'aaa': xDeviation(-1, 10)}, result_diffs)
 
     def test_single_value_allowance(self):
         differences = [
-            Deviation(+2.9, 10, label='aaa'),  # <- Not allowed.
-            Deviation(+3.0, 10, label='bbb'),
-            Deviation(+6.0, 20, label='ccc'),
-            Deviation(+3.1, 10, label='ddd'),  # <- Not allowed.
+            xDeviation(+2.9, 10, label='aaa'),  # <- Not allowed.
+            xDeviation(+3.0, 10, label='bbb'),
+            xDeviation(+6.0, 20, label='ccc'),
+            xDeviation(+3.1, 10, label='ddd'),  # <- Not allowed.
         ]
         with self.assertRaises(DataError) as cm:
             with allow_percent_deviation(0.3, 0.3):  # <- Allows +30% only.
@@ -1291,17 +1291,17 @@ class TestAllowPercentDeviation(unittest.TestCase):
 
         result_diffs = set(cm.exception.differences)
         expected_diffs = set([
-            Deviation(+2.9, 10, label='aaa'),
-            Deviation(+3.1, 10, label='ddd'),
+            xDeviation(+2.9, 10, label='aaa'),
+            xDeviation(+3.1, 10, label='ddd'),
         ])
         self.assertEqual(expected_diffs, result_diffs)
 
     def test_kwds_handling(self):
         differences = {
-            'aaa': Deviation(-1, 10),
-            'bbb': Deviation(+2, 10),
-            'ccc': Deviation(+2, 10),
-            'ddd': Deviation(+3, 10),
+            'aaa': xDeviation(-1, 10),
+            'bbb': xDeviation(+2, 10),
+            'ccc': xDeviation(+2, 10),
+            'ddd': xDeviation(+3, 10),
         }
         with self.assertRaises(DataError) as cm:
             fn = lambda x: x in ('aaa', 'bbb', 'ddd')
@@ -1310,8 +1310,8 @@ class TestAllowPercentDeviation(unittest.TestCase):
 
         result_set = cm.exception.differences
         expected_set = {
-            'ccc': Deviation(+2, 10),  # <- Key value not 'aaa'.
-            'ddd': Deviation(+3, 10),  # <- Not in allowed range.
+            'ccc': xDeviation(+2, 10),  # <- Key value not 'aaa'.
+            'ddd': xDeviation(+3, 10),  # <- Not in allowed range.
         }
         self.assertEqual(expected_set, result_set)
 
@@ -1325,32 +1325,32 @@ class TestAllowPercentDeviation(unittest.TestCase):
     def test_empty_value_handling(self):
         # Test NoneType.
         with allow_percent_deviation(0):  # <- Pass without failure.
-            raise DataError('example error', [Deviation(None, 0)])
+            raise DataError('example error', [xDeviation(None, 0)])
 
         with allow_percent_deviation(0):  # <- Pass without failure.
-            raise DataError('example error', [Deviation(0, None)])
+            raise DataError('example error', [xDeviation(0, None)])
 
         # Test empty string.
         with allow_percent_deviation(0):  # <- Pass without failure.
-            raise DataError('example error', [Deviation('', 0)])
+            raise DataError('example error', [xDeviation('', 0)])
 
         with allow_percent_deviation(0):  # <- Pass without failure.
-            raise DataError('example error', [Deviation(0, '')])
+            raise DataError('example error', [xDeviation(0, '')])
 
         # Test NaN (not a number) values.
         with self.assertRaises(DataError):  # <- NaN values should not be caught!
             with allow_percent_deviation(0):
-                raise DataError('example error', [Deviation(float('nan'), 0)])
+                raise DataError('example error', [xDeviation(float('nan'), 0)])
 
         with self.assertRaises(DataError):  # <- NaN values should not be caught!
             with allow_percent_deviation(0):
-                raise DataError('example error', [Deviation(0, float('nan'))])
+                raise DataError('example error', [xDeviation(0, float('nan'))])
 
 
 class TestAllowLimit(unittest.TestCase):
     """Test allow_limit() behavior."""
     def test_exceeds_limit(self):
-        differences = [Extra('xxx'), Missing('yyy')]
+        differences = [xExtra('xxx'), xMissing('yyy')]
 
         with self.assertRaises(DataError) as cm:
             with allow_limit(1):  # <- Allows only 1 but there are 2!
@@ -1361,17 +1361,17 @@ class TestAllowLimit(unittest.TestCase):
 
     def test_matches_limit(self):
         with allow_limit(2):  # <- Allows 2 and there are only 2.
-            raise DataError('example error', [Missing('xxx'), Missing('yyy')])
+            raise DataError('example error', [xMissing('xxx'), xMissing('yyy')])
 
     def test_under_limit(self):
         with allow_limit(3):  # <- Allows 3 and there are only 2.
-            raise DataError('example error', [Missing('xxx'), Missing('yyy')])
+            raise DataError('example error', [xMissing('xxx'), xMissing('yyy')])
 
     def test_kwds_exceeds_limit(self):
-        differences = [Extra('xxx'), Missing('yyy'), Extra('zzz')]
+        differences = [xExtra('xxx'), xMissing('yyy'), xExtra('zzz')]
 
         with self.assertRaises(DataError) as cm:
-            is_extra = lambda x: isinstance(x, Extra)
+            is_extra = lambda x: isinstance(x, xExtra)
             with allow_limit(1, diffs=is_extra):  # <- Limit of 1 and is_extra().
                 raise DataError('example error', differences)
 
@@ -1379,29 +1379,29 @@ class TestAllowLimit(unittest.TestCase):
         self.assertEqual(differences, rejected)
 
     def test_kwds_matches_limit(self):
-        differences = [Extra('xxx'), Missing('yyy'), Extra('zzz')]
+        differences = [xExtra('xxx'), xMissing('yyy'), xExtra('zzz')]
 
         with self.assertRaises(DataError) as cm:
-            is_extra = lambda x: isinstance(x, Extra)
+            is_extra = lambda x: isinstance(x, xExtra)
             with allow_limit(2, diffs=is_extra):  # <- Limit of 2 and is_extra().
                 raise DataError('example error', differences)
 
         rejected = list(cm.exception.differences)
-        self.assertEqual([Missing('yyy')], rejected)
+        self.assertEqual([xMissing('yyy')], rejected)
 
     def test_kwds_under_limit(self):
-        differences = [Extra('xxx'), Missing('yyy'), Extra('zzz')]
+        differences = [xExtra('xxx'), xMissing('yyy'), xExtra('zzz')]
 
         with self.assertRaises(DataError) as cm:
-            is_extra = lambda x: isinstance(x, Extra)
+            is_extra = lambda x: isinstance(x, xExtra)
             with allow_limit(4, diffs=is_extra):  # <- Limit of 4 and is_extra().
                 raise DataError('example error', differences)
 
         rejected = list(cm.exception.differences)
-        self.assertEqual([Missing('yyy')], rejected)
+        self.assertEqual([xMissing('yyy')], rejected)
 
     def test_dict_of_diffs_exceeds(self):
-        differences = {'foo': Extra('xxx'), 'bar': Missing('yyy')}
+        differences = {'foo': xExtra('xxx'), 'bar': xMissing('yyy')}
 
         with self.assertRaises(DataError) as cm:
             with allow_limit(1):  # <- Allows only 1 but there are 2!
@@ -1411,92 +1411,92 @@ class TestAllowLimit(unittest.TestCase):
         self.assertEqual(differences, rejected)
 
     def test_dict_of_diffs_kwds_func_under_limit(self):
-        differences = {'foo': Extra('xxx'), 'bar': Missing('yyy')}
+        differences = {'foo': xExtra('xxx'), 'bar': xMissing('yyy')}
 
         with self.assertRaises(DataError) as cm:
-            is_extra = lambda x: isinstance(x, Extra)
+            is_extra = lambda x: isinstance(x, xExtra)
             with allow_limit(2, diffs=is_extra):
                 raise DataError('example error', differences)
 
         rejected = cm.exception.differences
-        self.assertEqual({'bar': Missing('yyy')}, rejected)
+        self.assertEqual({'bar': xMissing('yyy')}, rejected)
 
 
 class TestAllowOnly(unittest.TestCase):
     """Test allow_only() behavior."""
     def test_some_allowed(self):
-        differences = [Extra('xxx'), Missing('yyy')]
-        allowed = [Extra('xxx')]
+        differences = [xExtra('xxx'), xMissing('yyy')]
+        allowed = [xExtra('xxx')]
 
         with self.assertRaises(DataError) as cm:
             with allow_only(allowed):
                 raise DataError('example error', differences)
 
-        expected = [Missing('yyy')]
+        expected = [xMissing('yyy')]
         actual = list(cm.exception.differences)
         self.assertEqual(expected, actual)
 
     def test_single_diff_without_container(self):
-        differences = [Extra('xxx'), Missing('yyy')]
-        allowed = Extra('xxx')  # <- Single diff, not in list.
+        differences = [xExtra('xxx'), xMissing('yyy')]
+        allowed = xExtra('xxx')  # <- Single diff, not in list.
 
         with self.assertRaises(DataError) as cm:
             with allow_only(allowed):
                 raise DataError('example error', differences)
 
-        expected = [Missing('yyy')]
+        expected = [xMissing('yyy')]
         actual = list(cm.exception.differences)
         self.assertEqual(expected, actual)
 
     def test_all_allowed(self):
-        diffs = [Extra('xxx'), Missing('yyy')]
-        allowed = [Extra('xxx'), Missing('yyy')]
+        diffs = [xExtra('xxx'), xMissing('yyy')]
+        allowed = [xExtra('xxx'), xMissing('yyy')]
         with allow_only(allowed):
             raise DataError('example error', diffs)
 
     def test_duplicates(self):
         # Three of the exact-same differences.
-        differences = [Extra('xxx'), Extra('xxx'), Extra('xxx')]
+        differences = [xExtra('xxx'), xExtra('xxx'), xExtra('xxx')]
 
         # Only allow one of them.
         with self.assertRaises(DataError) as cm:
-            allowed = [Extra('xxx')]
+            allowed = [xExtra('xxx')]
             with allow_only(allowed):
                 raise DataError('example error', differences)
 
-        expected = [Extra('xxx'), Extra('xxx')]  # Expect two remaining.
+        expected = [xExtra('xxx'), xExtra('xxx')]  # Expect two remaining.
         actual = list(cm.exception.differences)
         self.assertEqual(expected, actual)
 
         # Only allow two of them.
         with self.assertRaises(DataError) as cm:
-            allowed = [Extra('xxx'), Extra('xxx')]
+            allowed = [xExtra('xxx'), xExtra('xxx')]
             with allow_only(allowed):
                 raise DataError('example error', differences)
 
-        expected = [Extra('xxx')]  # Expect one remaining.
+        expected = [xExtra('xxx')]  # Expect one remaining.
         actual = list(cm.exception.differences)
         self.assertEqual(expected, actual)
 
         # Allow all three.
-        allowed = [Extra('xxx'), Extra('xxx'), Extra('xxx')]
+        allowed = [xExtra('xxx'), xExtra('xxx'), xExtra('xxx')]
         with allow_only(allowed):
             raise DataError('example error', differences)
 
     def test_mapping_some_allowed(self):
-        differences = {'foo': Extra('xxx'), 'bar': Missing('yyy')}
-        allowed = {'foo': Extra('xxx')}
+        differences = {'foo': xExtra('xxx'), 'bar': xMissing('yyy')}
+        allowed = {'foo': xExtra('xxx')}
 
         with self.assertRaises(DataError) as cm:
             with allow_only(allowed):
                 raise DataError('example error', differences)
 
-        expected = {'bar': Missing('yyy')}
+        expected = {'bar': xMissing('yyy')}
         actual = cm.exception.differences
         self.assertEqual(expected, actual)
 
     def test_mapping_none_allowed(self):
-        differences = {'foo': Extra('xxx'), 'bar': Missing('yyy')}
+        differences = {'foo': xExtra('xxx'), 'bar': xMissing('yyy')}
         allowed = {}
 
         with self.assertRaises(DataError) as cm:
@@ -1507,7 +1507,7 @@ class TestAllowOnly(unittest.TestCase):
         self.assertEqual(differences, actual)
 
     def test_mapping_all_allowed(self):
-        differences = {'foo': Extra('xxx'), 'bar': Missing('yyy')}
+        differences = {'foo': xExtra('xxx'), 'bar': xMissing('yyy')}
         allowed = differences
 
         with allow_only(allowed):  # <- Catches all differences, no error!
@@ -1515,8 +1515,8 @@ class TestAllowOnly(unittest.TestCase):
 
     def test_mapping_mismatched_types(self):
         # Dict of diffs vs list of allowed.
-        differences = {'foo': Extra('xxx'), 'bar': Missing('yyy')}
-        allowed = [Extra('xxx'), Missing('yyy')]
+        differences = {'foo': xExtra('xxx'), 'bar': xMissing('yyy')}
+        allowed = [xExtra('xxx'), xMissing('yyy')]
 
         regex = ("expects non-mapping differences but found 'dict' of "
                  "differences")
@@ -1525,8 +1525,8 @@ class TestAllowOnly(unittest.TestCase):
                 raise DataError('example error', differences)
 
         # List of diffs vs dict of allowed.
-        differences = [Extra('xxx'), Missing('yyy')]
-        allowed = {'foo': Extra('xxx'), 'bar': Missing('yyy')}
+        differences = [xExtra('xxx'), xMissing('yyy')]
+        allowed = {'foo': xExtra('xxx'), 'bar': xMissing('yyy')}
 
         regex = ("expects mapping of differences but found 'list' of "
                  "differences")

@@ -19,6 +19,7 @@ DataTestCase.assertDataRegex = DataTestCase.assertSubjectRegex
 DataTestCase.assertDataNotRegex = DataTestCase.assertSubjectNotRegex
 datatest.DataAssertionError = datatest.error.DataError
 
+
 _wrapped_find_data_source = DataTestCase._find_data_source
 @staticmethod
 def _find_data_source(name):

@@ -17,10 +17,10 @@ from .utils.misc import _is_nsiterable
 from .utils.misc import _get_arg_lengths
 from .utils.misc import _expects_multiple_params
 from .utils.misc import _make_decimal
-from .differences import BaseDifference
-from .differences import Missing
-from .differences import Extra
-from .differences import Deviation
+from .differences import xBaseDifference
+from .differences import xMissing
+from .differences import xExtra
+from .differences import xDeviation
 from .errors import Missing as Missing2
 from .errors import Extra as Extra2
 from .errors import Deviation as Deviation2
@@ -447,10 +447,10 @@ class allow_iter(object):
                     raise TypeError(msg.format(type_name))
                 else:
                     if len(first_item) == 2:
-                        if not isinstance(first_item[1], BaseDifference):
+                        if not isinstance(first_item[1], xBaseDifference):
                             msg = ("mapping update sequence elements should "
                                    "contain values which are subclasses of "
-                                   "BaseDifference; found '{0}' instead")
+                                   "xBaseDifference; found '{0}' instead")
                             type_name = type(first_item[1]).__name__
                             raise TypeError(msg.format(type_name))
                     else:
@@ -569,7 +569,7 @@ class allow_any(allow_iter):
 
 
 class allow_missing(allow_any):
-    """Allows :class:`Missing` values without triggering a test
+    """Allows :class:`xMissing` values without triggering a test
     failure::
 
         with datatest.allow_missing():
@@ -578,17 +578,17 @@ class allow_missing(allow_any):
     def __init__(self, **kwds_func):
         if 'diffs' in kwds_func:
             diffs_orig = kwds_func.pop('diffs')
-            diffs_fn = lambda diff: diffs_orig(diff) and isinstance(diff, Missing)
+            diffs_fn = lambda diff: diffs_orig(diff) and isinstance(diff, xMissing)
             diffs_fn.__name__ = diffs_orig.__name__
         else:
-            diffs_fn = lambda diff: isinstance(diff, Missing)
+            diffs_fn = lambda diff: isinstance(diff, xMissing)
             diffs_fn.__name__ = self.__class__.__name__
         kwds_func['diffs'] = diffs_fn
         super(allow_missing, self).__init__(**kwds_func)
 
 
 class allow_extra(allow_any):
-    """Allows :class:`Extra` values without triggering a test
+    """Allows :class:`xExtra` values without triggering a test
     failure::
 
         with datatest.allow_extra():
@@ -597,10 +597,10 @@ class allow_extra(allow_any):
     def __init__(self, **kwds_func):
         if 'diffs' in kwds_func:
             diffs_orig = kwds_func.pop('diffs')
-            diffs_fn = lambda diff: diffs_orig(diff) and isinstance(diff, Extra)
+            diffs_fn = lambda diff: diffs_orig(diff) and isinstance(diff, xExtra)
             diffs_fn.__name__ = diffs_orig.__name__
         else:
-            diffs_fn = lambda diff: isinstance(diff, Extra)
+            diffs_fn = lambda diff: isinstance(diff, xExtra)
             diffs_fn.__name__ = self.__class__.__name__
         kwds_func['diffs'] = diffs_fn
         super(allow_extra, self).__init__(**kwds_func)
@@ -657,7 +657,7 @@ class allow_deviation(allow_any):
         lower, upper = _normalize_lower_upper(lower, upper)
         normalize_numbers = lambda x: x if x else 0
         def function(diff):                      # Function closes over
-            if not isinstance(diff, Deviation):  # lower, upper, and
+            if not isinstance(diff, xDeviation): # lower, upper, and
                 return False                     # normalize_numbers().
             value = normalize_numbers(diff.value)
             required = normalize_numbers(diff.required)
@@ -692,7 +692,7 @@ class allow_percent_deviation(allow_any):
         lower, upper = _normalize_lower_upper(lower, upper)
         normalize_numbers = lambda x: x if x else 0
         def function(diff):                      # Function closes over
-            if not isinstance(diff, Deviation):  # lower, upper, and
+            if not isinstance(diff, xDeviation): # lower, upper, and
                 return False                     # normalize_numbers().
             value = normalize_numbers(diff.value)
             required = normalize_numbers(diff.required)

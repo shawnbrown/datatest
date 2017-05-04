@@ -19,7 +19,7 @@ from datatest.error import DataError
 from datatest import Missing
 from datatest import Extra
 from datatest import Invalid
-from datatest import Deviation
+from datatest.differences import xDeviation
 from datatest.sources.csv import CsvSource
 from datatest import DataTestCase
 from datatest.compare import CompareSet
@@ -66,7 +66,7 @@ class TestNamesAndAttributes(unittest.TestCase):
                 _self.assertTrue(isinstance(cm.exception, DataError), msg)
 
                 diffs = list(cm.exception.differences)
-                _self.assertEqual(diffs, [datatest.Missing(4)])
+                _self.assertEqual(diffs, [Missing(4)])
 
         error, failure = self._run_wrapped_test(_TestWrapper, 'test_method')
         self.assertIsNone(error)
@@ -132,7 +132,7 @@ class TestAssertEqual(datatest.DataTestCase):
             self.assertEqual(first, second)
 
         differences = cm.exception.differences
-        super(DataTestCase, self).assertEqual(differences, [Deviation(-1, 3, _0='baz')])
+        super(DataTestCase, self).assertEqual(differences, [xDeviation(-1, 3, _0='baz')])
 
     def test_int_v_set_fail(self):
         with self.assertRaises(DataError) as cm:
@@ -425,8 +425,8 @@ class TestSubjectSum(datatest.DataTestCase):
             self.assertSubjectSum('value', ['label1'], required)
 
         differences = cm.exception.differences
-        expected = [Deviation(+1, 65, label1='a'),
-                    Deviation(-1, 70, label1='b')]
+        expected = [xDeviation(+1, 65, label1='a'),
+                    xDeviation(-1, 70, label1='b')]
         super(DataTestCase, self).assertEqual(set(differences), set(expected))
 
     def test_failing_explicit_callable(self):
@@ -451,8 +451,8 @@ class TestSubjectSum(datatest.DataTestCase):
             self.assertSubjectSum('value', ['label1'])
 
         differences = cm.exception.differences
-        expected = [Deviation(+1, 65, label1='a'),
-                    Deviation(-1, 70, label1='b')]
+        expected = [xDeviation(+1, 65, label1='a'),
+                    xDeviation(-1, 70, label1='b')]
         super(DataTestCase, self).assertEqual(set(differences), set(expected))
 
 
@@ -490,8 +490,8 @@ class TestAssertSubjectSumGroupsAndFilters(datatest.DataTestCase):
             self.assertSubjectSum('value', ['label1'], label2='y')
 
         differences = cm.exception.differences
-        expected = [Deviation(+1, 20, label1='a'),
-                    Deviation(-1, 40, label1='b')]
+        expected = [xDeviation(+1, 20, label1='a'),
+                    xDeviation(-1, 40, label1='b')]
         super(DataTestCase, self).assertEqual(set(differences), set(expected))
 
 
@@ -656,7 +656,7 @@ class TestAllowOnly(unittest.TestCase):
                 raise DataError('example error', [Extra('xxx'), Missing('yyy')])
 
         result_str = str(cm.exception)
-        self.assertEqual("example allowance: example error:\n Missing('yyy')", result_str)
+        self.assertEqual("example allowance: example error:\n xMissing('yyy')", result_str)
 
         result_diffs = list(cm.exception.differences)
         self.assertEqual([Missing('yyy')], result_diffs)
@@ -688,7 +688,7 @@ class TestAllowOnly(unittest.TestCase):
                 raise DataError('example error', [Extra('xxx'), Extra('xxx')])
 
         result_string = str(cm.exception)
-        self.assertEqual("example error:\n Extra('xxx')", result_string)
+        self.assertEqual("example error:\n xExtra('xxx')", result_string)
 
     def test_allow_duplicate_but_find_only_one(self):
         with self.assertRaises(DataError) as cm:
@@ -696,7 +696,7 @@ class TestAllowOnly(unittest.TestCase):
                 raise DataError('example error', [Extra('xxx')])
 
         result_string = str(cm.exception)
-        self.assertEqual("Allowed difference not found:\n Extra('xxx')", result_string)
+        self.assertEqual("Allowed difference not found:\n xExtra('xxx')", result_string)
 
     def test_no_exception(self):
         with self.assertRaises(AssertionError) as cm:
@@ -935,8 +935,8 @@ class TestAllowDeviation(unittest.TestCase):
     """Test allow_deviation() behavior."""
     def test_tolerance_syntax(self):
         differences = [
-            Deviation(-1, 10, label='aaa'),
-            Deviation(+3, 10, label='bbb'),  # <- Not in allowed range.
+            xDeviation(-1, 10, label='aaa'),
+            xDeviation(+3, 10, label='bbb'),  # <- Not in allowed range.
         ]
         with self.assertRaises(DataError) as cm:
             with allow_deviation(2, 'example allowance'):  # <- Allows +/- 2.
@@ -946,12 +946,12 @@ class TestAllowDeviation(unittest.TestCase):
         self.assertTrue(result_string.startswith('example allowance: example error'))
 
         result_diffs = list(cm.exception.differences)
-        self.assertEqual([Deviation(+3, 10, label='bbb')], result_diffs)
+        self.assertEqual([xDeviation(+3, 10, label='bbb')], result_diffs)
 
     def test_lowerupper_syntax(self):
         differences = [
-            Deviation(-1, 10, label='aaa'),  # <- Not in allowed range.
-            Deviation(+3, 10, label='bbb'),
+            xDeviation(-1, 10, label='aaa'),  # <- Not in allowed range.
+            xDeviation(+3, 10, label='bbb'),
         ]
         with self.assertRaises(DataError) as cm:
             with allow_deviation(0, 3, 'example allowance'):  # <- Allows from 0 to 3.
@@ -961,14 +961,14 @@ class TestAllowDeviation(unittest.TestCase):
         self.assertTrue(result_string.startswith('example allowance: example error'))
 
         result_diffs = list(cm.exception.differences)
-        self.assertEqual([Deviation(-1, 10, label='aaa')], result_diffs)
+        self.assertEqual([xDeviation(-1, 10, label='aaa')], result_diffs)
 
     def test_single_value_allowance(self):
         differences = [
-            Deviation(+2.9, 10, label='aaa'),  # <- Not allowed.
-            Deviation(+3.0, 10, label='bbb'),
-            Deviation(+3.0, 5, label='ccc'),
-            Deviation(+3.1, 10, label='ddd'),  # <- Not allowed.
+            xDeviation(+2.9, 10, label='aaa'),  # <- Not allowed.
+            xDeviation(+3.0, 10, label='bbb'),
+            xDeviation(+3.0, 5, label='ccc'),
+            xDeviation(+3.1, 10, label='ddd'),  # <- Not allowed.
         ]
         with self.assertRaises(DataError) as cm:
             with allow_deviation(3, 3):  # <- Allows +3 only.
@@ -976,17 +976,17 @@ class TestAllowDeviation(unittest.TestCase):
 
         result_diffs = set(cm.exception.differences)
         expected_diffs = set([
-            Deviation(+2.9, 10, label='aaa'),
-            Deviation(+3.1, 10, label='ddd'),
+            xDeviation(+2.9, 10, label='aaa'),
+            xDeviation(+3.1, 10, label='ddd'),
         ])
         self.assertEqual(expected_diffs, result_diffs)
 
     def test_kwds_handling(self):
         differences = [
-            Deviation(-1, 10, label='aaa'),
-            Deviation(+2, 10, label='aaa'),
-            Deviation(+2, 10, label='bbb'),
-            Deviation(+3, 10, label='aaa'),
+            xDeviation(-1, 10, label='aaa'),
+            xDeviation(+2, 10, label='aaa'),
+            xDeviation(+2, 10, label='bbb'),
+            xDeviation(+3, 10, label='aaa'),
         ]
         with self.assertRaises(DataError) as cm:
             with allow_deviation(2, 'example allowance', label='aaa'):  # <- Allows +/- 2.
@@ -994,8 +994,8 @@ class TestAllowDeviation(unittest.TestCase):
 
         result_set = set(cm.exception.differences)
         expected_set = set([
-            Deviation(+2, 10, label='bbb'),  # <- Keyword value not 'aaa'.
-            Deviation(+3, 10, label='aaa'),  # <- Not in allowed range.
+            xDeviation(+2, 10, label='bbb'),  # <- Keyword value not 'aaa'.
+            xDeviation(+3, 10, label='aaa'),  # <- Not in allowed range.
         ])
         self.assertEqual(expected_set, result_set)
 
@@ -1009,34 +1009,34 @@ class TestAllowDeviation(unittest.TestCase):
     def test_empty_value_handling(self):
         # Test NoneType.
         with allow_deviation(0):  # <- Pass without failure.
-            raise DataError('example error', [Deviation(None, 0)])
+            raise DataError('example error', [xDeviation(None, 0)])
 
         with allow_deviation(0):  # <- Pass without failure.
-            raise DataError('example error', [Deviation(0, None)])
+            raise DataError('example error', [xDeviation(0, None)])
 
         # Test empty string.
         with allow_deviation(0):  # <- Pass without failure.
-            raise DataError('example error', [Deviation('', 0)])
+            raise DataError('example error', [xDeviation('', 0)])
 
         with allow_deviation(0):  # <- Pass without failure.
-            raise DataError('example error', [Deviation(0, '')])
+            raise DataError('example error', [xDeviation(0, '')])
 
         # Test NaN (not a number) values.
         with self.assertRaises(DataError):  # <- NaN values should not be caught!
             with allow_deviation(0):
-                raise DataError('example error', [Deviation(float('nan'), 0)])
+                raise DataError('example error', [xDeviation(float('nan'), 0)])
 
         with self.assertRaises(DataError):  # <- NaN values should not be caught!
             with allow_deviation(0):
-                raise DataError('example error', [Deviation(0, float('nan'))])
+                raise DataError('example error', [xDeviation(0, float('nan'))])
 
 
 class TestAllowPercentDeviation(unittest.TestCase):
     """Test allow_percent_deviation() behavior."""
     def test_tolerance_syntax(self):
         differences = [
-            Deviation(-1, 10, label='aaa'),
-            Deviation(+3, 10, label='bbb'),  # <- Not in allowed range.
+            xDeviation(-1, 10, label='aaa'),
+            xDeviation(+3, 10, label='bbb'),  # <- Not in allowed range.
         ]
         with self.assertRaises(DataError) as cm:
             with allow_percent_deviation(0.2, 'example allowance'):  # <- Allows +/- 20%.
@@ -1046,12 +1046,12 @@ class TestAllowPercentDeviation(unittest.TestCase):
         self.assertTrue(result_string.startswith('example allowance: example error'))
 
         result_diffs = list(cm.exception.differences)
-        self.assertEqual([Deviation(+3, 10, label='bbb')], result_diffs)
+        self.assertEqual([xDeviation(+3, 10, label='bbb')], result_diffs)
 
     def test_lowerupper_syntax(self):
         differences = [
-            Deviation(-1, 10, label='aaa'),  # <- Not in allowed range.
-            Deviation(+3, 10, label='bbb'),
+            xDeviation(-1, 10, label='aaa'),  # <- Not in allowed range.
+            xDeviation(+3, 10, label='bbb'),
         ]
         with self.assertRaises(DataError) as cm:
             with allow_percent_deviation(0.0, 0.3, 'example allowance'):  # <- Allows from 0 to 30%.
@@ -1061,14 +1061,14 @@ class TestAllowPercentDeviation(unittest.TestCase):
         self.assertTrue(result_string.startswith('example allowance: example error'))
 
         result_diffs = list(cm.exception.differences)
-        self.assertEqual([Deviation(-1, 10, label='aaa')], result_diffs)
+        self.assertEqual([xDeviation(-1, 10, label='aaa')], result_diffs)
 
     def test_single_value_allowance(self):
         differences = [
-            Deviation(+2.9, 10, label='aaa'),  # <- Not allowed.
-            Deviation(+3.0, 10, label='bbb'),
-            Deviation(+6.0, 20, label='ccc'),
-            Deviation(+3.1, 10, label='ddd'),  # <- Not allowed.
+            xDeviation(+2.9, 10, label='aaa'),  # <- Not allowed.
+            xDeviation(+3.0, 10, label='bbb'),
+            xDeviation(+6.0, 20, label='ccc'),
+            xDeviation(+3.1, 10, label='ddd'),  # <- Not allowed.
         ]
         with self.assertRaises(DataError) as cm:
             with allow_percent_deviation(0.3, 0.3):  # <- Allows +30% only.
@@ -1076,17 +1076,17 @@ class TestAllowPercentDeviation(unittest.TestCase):
 
         result_diffs = set(cm.exception.differences)
         expected_diffs = set([
-            Deviation(+2.9, 10, label='aaa'),
-            Deviation(+3.1, 10, label='ddd'),
+            xDeviation(+2.9, 10, label='aaa'),
+            xDeviation(+3.1, 10, label='ddd'),
         ])
         self.assertEqual(expected_diffs, result_diffs)
 
     def test_kwds_handling(self):
         differences = [
-            Deviation(-1, 10, label='aaa'),
-            Deviation(+2, 10, label='aaa'),
-            Deviation(+2, 10, label='bbb'),
-            Deviation(+3, 10, label='aaa'),
+            xDeviation(-1, 10, label='aaa'),
+            xDeviation(+2, 10, label='aaa'),
+            xDeviation(+2, 10, label='bbb'),
+            xDeviation(+3, 10, label='aaa'),
         ]
         with self.assertRaises(DataError) as cm:
             with allow_percent_deviation(0.2, 'example allowance', label='aaa'):  # <- Allows +/- 20%.
@@ -1094,8 +1094,8 @@ class TestAllowPercentDeviation(unittest.TestCase):
 
         result_set = set(cm.exception.differences)
         expected_set = set([
-            Deviation(+2, 10, label='bbb'),  # <- Keyword value not 'aaa'.
-            Deviation(+3, 10, label='aaa'),  # <- Not in allowed range.
+            xDeviation(+2, 10, label='bbb'),  # <- Keyword value not 'aaa'.
+            xDeviation(+3, 10, label='aaa'),  # <- Not in allowed range.
         ])
         self.assertEqual(expected_set, result_set)
 
@@ -1109,26 +1109,26 @@ class TestAllowPercentDeviation(unittest.TestCase):
     def test_empty_value_handling(self):
         # Test NoneType.
         with allow_percent_deviation(0):  # <- Pass without failure.
-            raise DataError('example error', [Deviation(None, 0)])
+            raise DataError('example error', [xDeviation(None, 0)])
 
         with allow_percent_deviation(0):  # <- Pass without failure.
-            raise DataError('example error', [Deviation(0, None)])
+            raise DataError('example error', [xDeviation(0, None)])
 
         # Test empty string.
         with allow_percent_deviation(0):  # <- Pass without failure.
-            raise DataError('example error', [Deviation('', 0)])
+            raise DataError('example error', [xDeviation('', 0)])
 
         with allow_percent_deviation(0):  # <- Pass without failure.
-            raise DataError('example error', [Deviation(0, '')])
+            raise DataError('example error', [xDeviation(0, '')])
 
         # Test NaN (not a number) values.
         with self.assertRaises(DataError):  # <- NaN values should not be caught!
             with allow_percent_deviation(0):
-                raise DataError('example error', [Deviation(float('nan'), 0)])
+                raise DataError('example error', [xDeviation(float('nan'), 0)])
 
         with self.assertRaises(DataError):  # <- NaN values should not be caught!
             with allow_percent_deviation(0):
-                raise DataError('example error', [Deviation(0, float('nan'))])
+                raise DataError('example error', [xDeviation(0, float('nan'))])
 
 
 class TestAllowAny(unittest.TestCase):
@@ -1219,13 +1219,13 @@ class TestNestedAllowances(unittest.TestCase):
         """A quick integration test to make sure allowances nest as
         required.
         """
-        with allow_only(Deviation(-4,  70, label1='b')):  # <- specified diff only
+        with allow_only(xDeviation(-4,  70, label1='b')):  # <- specified diff only
             with allow_deviation(3):                      # <- tolerance of +/- 3
                 with allow_percent_deviation(0.02):       # <- tolerance of +/- 2%
                     differences = [
-                        Deviation(+3,  65, label1='a'),
-                        Deviation(-4,  70, label1='b'),
-                        Deviation(+5, 250, label1='c'),
+                        xDeviation(+3,  65, label1='a'),
+                        xDeviation(-4,  70, label1='b'),
+                        xDeviation(+5, 250, label1='c'),
                     ]
                     raise DataError('example error', differences)
 

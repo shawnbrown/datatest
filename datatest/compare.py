@@ -10,15 +10,15 @@ from .utils import itertools
 from .utils.misc import _expects_multiple_params
 from .utils.misc import _is_nsiterable
 from .utils.misc import _unique_everseen
-from .differences import Extra
-from .differences import Missing
-from .differences import Invalid
-from .differences import Deviation
-from .differences import NotProperSubset
-from .differences import NotProperSuperset
+from .differences import xExtra
+from .differences import xMissing
+from .differences import xInvalid
+from .differences import xDeviation
+from .differences import xNotProperSubset
+from .differences import xNotProperSuperset
 
-from .differences import _getdiff
-from .differences import _NOTFOUND
+from .differences import _xgetdiff
+from .differences import _xNOTFOUND
 
 _regex_type = type(re.compile(''))
 
@@ -36,10 +36,10 @@ def _compare_sequence(data, required):
         raise ValueError(msg)
 
     differences = dict()
-    zipped = itertools.zip_longest(data, required, fillvalue=_NOTFOUND)
+    zipped = itertools.zip_longest(data, required, fillvalue=_xNOTFOUND)
     for index, (data_val, required_val) in enumerate(zipped):
         if data_val != required_val:
-            differences[index] = _getdiff(data_val, required_val)
+            differences[index] = _xgetdiff(data_val, required_val)
     return differences
 
 
@@ -54,10 +54,10 @@ def _compare_mapping(data, required):
     differences = dict()
     all_keys = itertools.chain(required.keys(), data.keys())
     for key in _unique_everseen(all_keys):
-        data_val = data.get(key, _NOTFOUND)
-        required_val = required.get(key, _NOTFOUND)
+        data_val = data.get(key, _xNOTFOUND)
+        required_val = required.get(key, _xNOTFOUND)
         if data_val != required_val:
-            differences[key] = _getdiff(data_val, required_val)
+            differences[key] = _xgetdiff(data_val, required_val)
     return differences
 
 
@@ -79,8 +79,8 @@ def _compare_set(data, required):
             msg = "uncomparable types: '{0}' and 'set'".format(type_name)
             raise TypeError(msg)
 
-    missing = (Missing(x) for x in required.difference(data))
-    extra = (Extra(x) for x in data.difference(required))
+    missing = (xMissing(x) for x in required.difference(data))
+    extra = (xExtra(x) for x in data.difference(required))
     return list(itertools.chain(missing, extra))
 
 
@@ -124,7 +124,7 @@ def _compare_other(data, required):
         diffs = dict()
         for key, val in data.items():
             if not wrapper(val):
-                diffs[key] = _getdiff(val, required, is_common=True)
+                diffs[key] = _xgetdiff(val, required, is_common=True)
         return diffs  # <- EXIT!
 
     is_not_str = not isinstance(data, str)
@@ -133,17 +133,17 @@ def _compare_other(data, required):
         diffs = dict()
         for index, val in enumerate(data):
             if not wrapper(val):
-                diffs[index] = _getdiff(val, required, is_common=True)
+                diffs[index] = _xgetdiff(val, required, is_common=True)
         return diffs  # <- EXIT!
 
     # For Sets and other Iterables.
     if isinstance(data, collections.Iterable) and is_not_str:
-        diffs = [_getdiff(x, required, is_common=True) for x in data if not wrapper(x)]
+        diffs = [_xgetdiff(x, required, is_common=True) for x in data if not wrapper(x)]
         return diffs  # <- EXIT!
 
     # For string or non-iterable.
     if not wrapper(data):
-        return [_getdiff(data, required, is_common=True)]
+        return [_xgetdiff(data, required, is_common=True)]
 
     return []  # If no differences, return empty list.
 
@@ -240,17 +240,17 @@ class CompareSet(BaseCompare, set):
 
     def compare(self, other, op='=='):
         """Compare *self* to *other* and return a list of difference
-        objects.  If *other* is callable, constructs a list of Invalid
+        objects.  If *other* is callable, constructs a list of xInvalid
         objects for values where *other* returns False.  If *other* is
         a CompareSet or other collection, differences are compiled as a
-        list of Extra and Missing objects.
+        list of xExtra and xMissing objects.
         """
         if callable(other):
             if _expects_multiple_params(other):
                 wrapped = other
                 other = lambda x: wrapped(*x)
 
-            differences = [Invalid(x) for x in self if not other(x)]
+            differences = [xInvalid(x) for x in self if not other(x)]
 
         else:
             if not isinstance(other, CompareSet):
@@ -259,18 +259,18 @@ class CompareSet(BaseCompare, set):
             if op in ('==', '<=', '<'):
                 extra = self.difference(other)
                 if op == '<' and not (extra or other.difference(self)):
-                    extra = [NotProperSubset()]
+                    extra = [xNotProperSubset()]
                 else:
-                    extra = (Extra(x) for x in extra)
+                    extra = (xExtra(x) for x in extra)
             else:
                 extra = []
 
             if op in ('==', '>=', '>'):
                 missing = other.difference(self)
                 if op == '>' and not (missing or self.difference(other)):
-                    missing = [NotProperSuperset()]
+                    missing = [xNotProperSuperset()]
                 else:
-                    missing = (Missing(x) for x in missing)
+                    missing = (xMissing(x) for x in missing)
             else:
                 missing = []
 
@@ -362,10 +362,10 @@ class CompareDict(BaseCompare, dict):
 
     def compare(self, other):
         """Compare *self* to *other* and return a list of difference
-        objects.  If *other* is callable, constructs a list of Invalid
+        objects.  If *other* is callable, constructs a list of xInvalid
         objects for values where *other* returns False.  If *other* is
         a CompareDict or other mapping object (like a dict),
-        differences are compiled as a list of Deviation and Invalid
+        differences are compiled as a list of xDeviation and xInvalid
         objects.
         """
         # Evaluate self._data with function.
@@ -382,7 +382,7 @@ class CompareDict(BaseCompare, dict):
                     if not _is_nsiterable(key):
                         key = (key,)
                     kwds = dict(zip(self.key_names, key))
-                    differences.append(Invalid(value, **kwds))
+                    differences.append(xInvalid(value, **kwds))
         # Compare self to other.
         else:
             if not isinstance(other, CompareDict):
@@ -402,28 +402,28 @@ class CompareDict(BaseCompare, dict):
                 if isinstance(self_val, Number) and isinstance(other_val, Number):
                     diff = self_val - other_val
                     if diff:
-                        differences.append(Deviation(diff, other_val, **kwds))
+                        differences.append(xDeviation(diff, other_val, **kwds))
                 # Numeric vs empty.
                 elif isinstance(self_val, Number) and not other_val:
                     diff = self_val - 0
-                    differences.append(Deviation(diff, other_val, **kwds))
+                    differences.append(xDeviation(diff, other_val, **kwds))
                 # Empty vs numeric.
                 elif not self_val and isinstance(other_val, Number):
                     if other_val == 0:
                         diff = self_val
                     else:
                         diff = 0 - other_val
-                    differences.append(Deviation(diff, other_val, **kwds))
+                    differences.append(xDeviation(diff, other_val, **kwds))
                 # Object vs empty.
                 elif self_val and not other_val:
                     differences.append(Extra(self_val, **kwds))
                 # Empty vs object.
                 elif not self_val and other_val:
-                    differences.append(Missing(other_val, **kwds))
+                    differences.append(xMissing(other_val, **kwds))
                 # Object vs object.
                 else:
                     if self_val != other_val:
-                        differences.append(Invalid(self_val, other_val, **kwds))
+                        differences.append(xInvalid(self_val, other_val, **kwds))
 
         return differences
 

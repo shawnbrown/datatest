@@ -4,13 +4,13 @@ from numbers import Number
 from .utils.misc import _make_decimal
 
 
-class BaseDifference(object):
+class xBaseDifference(object):
     """The base class from which all differences must inherit."""
     def __new__(cls, *args, **kwds):
-        if cls is BaseDifference:
-            msg = 'cannot instantiate BaseDifference directly - make a subclass'
+        if cls is xBaseDifference:
+            msg = 'cannot instantiate xBaseDifference directly - make a subclass'
             raise NotImplementedError(msg)
-        return super(BaseDifference, cls).__new__(cls)
+        return super(xBaseDifference, cls).__new__(cls)
 
     def __init__(self, value, required=None, **kwds):
         self._value = value
@@ -60,19 +60,19 @@ class BaseDifference(object):
         return ', ' + kwds
 
 
-class Missing(BaseDifference):
+class xMissing(xBaseDifference):
     """A value **not found in data** that is in *requirement*."""
     def __init__(self, value, **kwds):
-        super(Missing, self).__init__(value, **kwds)
+        super(xMissing, self).__init__(value, **kwds)
 
 
-class Extra(BaseDifference):
+class xExtra(xBaseDifference):
     """A value found in *data* that is **not in requirement**."""
     def __init__(self, value, **kwds):
-        super(Extra, self).__init__(value, **kwds)
+        super(xExtra, self).__init__(value, **kwds)
 
 
-class Invalid(BaseDifference):
+class xInvalid(xBaseDifference):
     """A value in *data* that does not satisfy a function or regular
     expression *requirement*.
     """
@@ -86,7 +86,7 @@ class Invalid(BaseDifference):
         return '{0}({1!r}{2}{3})'.format(clsname, self.value, required, kwds)
 
 
-class Deviation(BaseDifference):
+class xDeviation(xBaseDifference):
     """The difference between a numeric value in *data* and a matching
     numeric value in *requirement*.
     """
@@ -101,7 +101,7 @@ class Deviation(BaseDifference):
         if required or required is 0:
             required = _make_decimal(required)
 
-        super(Deviation, self).__init__(value, required, **kwds)
+        super(xDeviation, self).__init__(value, required, **kwds)
 
     def __repr__(self):
         clsname = self.__class__.__name__
@@ -115,16 +115,16 @@ class Deviation(BaseDifference):
         return '{0}({1}, {2}{3})'.format(clsname, value, self.required, kwds)
 
 
-class NonStrictRelation(BaseDifference):
+class xNonStrictRelation(xBaseDifference):
     """Base class for non-strict subset or superset relationships."""
     def __new__(cls, *args, **kwds):
-        if cls is NonStrictRelation:
-            msg = 'cannot instantiate NonStrictRelation directly - make a subclass'
+        if cls is xNonStrictRelation:
+            msg = 'cannot instantiate xNonStrictRelation directly - make a subclass'
             raise NotImplementedError(msg)
-        return super(NonStrictRelation, cls).__new__(cls)
+        return super(xNonStrictRelation, cls).__new__(cls)
 
     def __init__(self, **kwds):
-        super(NonStrictRelation, self).__init__(None, None, **kwds)
+        super(xNonStrictRelation, self).__init__(None, None, **kwds)
 
     def __repr__(self):
         clsname = self.__class__.__name__
@@ -132,12 +132,12 @@ class NonStrictRelation(BaseDifference):
         return '{0}({1})'.format(clsname, kwds)
 
 
-class NotProperSubset(NonStrictRelation):
+class xNotProperSubset(xNonStrictRelation):
     """Not a proper subset of a required set."""
     pass
 
 
-class NotProperSuperset(NonStrictRelation):
+class xNotProperSuperset(xNonStrictRelation):
     """Not a proper superset of a required set."""
     pass
 
@@ -146,15 +146,15 @@ class _NotFoundSentinel(object):
     """Sentinel for handling membership in collections."""
     def __repr__(self):
         return '<not found>'
-_NOTFOUND = _NotFoundSentinel()
+_xNOTFOUND = _NotFoundSentinel()
 del _NotFoundSentinel
 
 
-# TODO: Investigate possibility of removing **kwds from _getdiff().
-def _getdiff(first, second, is_common=False, **kwds):
+# TODO: Investigate possibility of removing **kwds from _xgetdiff().
+def _xgetdiff(first, second, is_common=False, **kwds):
     """Returns difference object for two objects known to be unequal.
     The *is_common* flag, when True, signals that the *second* argument
-    should be omitted when creating an "Invalid" difference.
+    should be omitted when creating an "xInvalid" difference.
     """
     # Prepare for numeric comparisons.
     _isnum = lambda x: isinstance(x, Number) and not isnan(x)
@@ -164,36 +164,36 @@ def _getdiff(first, second, is_common=False, **kwds):
     # Numeric vs numeric.
     if first_isnum and second_isnum:
         difference = first - second
-        return Deviation(difference, second, **kwds)
+        return xDeviation(difference, second, **kwds)
 
     # Numeric vs empty (or not found).
-    if first_isnum and (not second or second is _NOTFOUND):
-        if second is _NOTFOUND:
+    if first_isnum and (not second or second is _xNOTFOUND):
+        if second is _xNOTFOUND:
             second = None
 
         difference = first - 0
-        return Deviation(difference, second, **kwds)
+        return xDeviation(difference, second, **kwds)
 
     # Empty (or not found) vs numeric.
-    if (not first or first is _NOTFOUND) and second_isnum:
-        if first is _NOTFOUND:
+    if (not first or first is _xNOTFOUND) and second_isnum:
+        if first is _xNOTFOUND:
             first = None
 
         if second == 0:
             difference = first
         else:
             difference = 0 - second
-        return Deviation(difference, second, **kwds)
+        return xDeviation(difference, second, **kwds)
 
-    # Object vs _NOTFOUND.
-    if second is _NOTFOUND:
-        return Extra(first, **kwds)
+    # Object vs _xNOTFOUND.
+    if second is _xNOTFOUND:
+        return xExtra(first, **kwds)
 
-    # _NOTFOUND vs object.
-    if first is _NOTFOUND:
-        return Missing(second, **kwds)
+    # _xNOTFOUND vs object.
+    if first is _xNOTFOUND:
+        return xMissing(second, **kwds)
 
     # All other pairs of objects.
     if is_common:
-        return Invalid(first, **kwds)
-    return Invalid(first, second, **kwds)
+        return xInvalid(first, **kwds)
+    return xInvalid(first, second, **kwds)

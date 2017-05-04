@@ -1,14 +1,6 @@
 # -*- coding: utf-8 -*-
 from .case import DataTestCase
 
-from .differences import BaseDifference
-from .differences import Extra
-from .differences import Missing
-from .differences import Invalid
-from .differences import Deviation
-from .differences import NotProperSubset
-from .differences import NotProperSuperset
-
 from .allow import allow_iter
 from .allow import allow_any
 from .allow import allow_missing
@@ -38,13 +30,6 @@ __version__ = '0.8.0.dev3'
 __all__ = [
     # Test case.
     'DataTestCase',
-
-    # Differences.
-    'BaseDifference',
-    'Extra',
-    'Missing',
-    'Invalid',
-    'Deviation',
 
     # Allowance context mangers.
     'allow_iter',

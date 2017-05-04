@@ -14,10 +14,16 @@ from datatest.utils import functools
 from datatest.utils.misc import _make_decimal
 
 from datatest import DataTestCase
-from datatest import BaseDifference
-from datatest import Extra
-from datatest import Deviation
+from datatest.differences import xBaseDifference as BaseDifference
+from datatest.differences import xMissing as Missing
+from datatest.differences import xExtra as Extra
+from datatest.differences import xDeviation
+from datatest.differences import xInvalid as Invalid
 from datatest.error import DataError
+datatest.Missing = Missing
+datatest.Extra = Extra
+datatest.Invalid = Invalid
+datatest.Deviation = xDeviation
 
 # Needed for assertEqual() wrapper.
 from datatest.compare import CompareSet
@@ -421,7 +427,7 @@ class allow_missing(allow_each):
             ...
     """
     def __init__(self, msg=None, **kwds):
-        function = lambda diff: isinstance(diff, datatest.Missing)
+        function = lambda diff: isinstance(diff, Missing)
         function.__name__ = self.__class__.__name__
         super(allow_missing, self).__init__(function, msg, **kwds)
 datatest.allow_missing = allow_missing
@@ -440,7 +446,7 @@ class allow_extra(allow_each):
             ...
     """
     def __init__(self, msg=None, **kwds):
-        function = lambda diff: isinstance(diff, datatest.Extra)
+        function = lambda diff: isinstance(diff, Extra)
         function.__name__ = self.__class__.__name__
         super(allow_extra, self).__init__(function, msg, **kwds)
 datatest.allow_extra = allow_extra
@@ -502,7 +508,7 @@ class allow_deviation(allow_each):
         lower, upper, msg = _normalize_deviation_args(lower, upper, msg)
         normalize_numbers = lambda x: x if x else 0
         def function(diff):
-            if not isinstance(diff, Deviation):
+            if not isinstance(diff, xDeviation):
                 return False
             value = normalize_numbers(diff.value)  # Closes over normalize_numbers().
             required = normalize_numbers(diff.required)
@@ -548,7 +554,7 @@ class allow_percent_deviation(allow_each):
         lower, upper, msg = _normalize_deviation_args(lower, upper, msg)
         normalize_numbers = lambda x: x if x else 0
         def function(diff):
-            if not isinstance(diff, Deviation):
+            if not isinstance(diff, xDeviation):
                 return False
             value = normalize_numbers(diff.value)  # Closes over normalize_numbers().
             required = normalize_numbers(diff.required)

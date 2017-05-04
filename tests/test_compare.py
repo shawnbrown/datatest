@@ -10,12 +10,12 @@ from datatest.compare import _compare_set
 from datatest.compare import _compare_mapping
 from datatest.compare import _compare_sequence
 
-from datatest import Extra
-from datatest import Missing
-from datatest import Invalid
-from datatest import Deviation
-from datatest import NotProperSubset
-from datatest import NotProperSuperset
+from datatest.differences import xExtra
+from datatest.differences import xMissing
+from datatest.differences import xInvalid
+from datatest.differences import xDeviation
+from datatest.differences import xNotProperSubset
+from datatest.differences import xNotProperSuperset
 
 
 class Test_compare_sequence(unittest.TestCase):
@@ -35,15 +35,15 @@ class Test_compare_sequence(unittest.TestCase):
 
         data = ['a', 'b', 'c', 'd']
         result = _compare_sequence(data, required)
-        self.assertEqual(result, {3: Extra('d')})
+        self.assertEqual(result, {3: xExtra('d')})
 
         data = ['a', 'b']
         result = _compare_sequence(data, required)
-        self.assertEqual(result, {2: Missing('c')})
+        self.assertEqual(result, {2: xMissing('c')})
 
         data = ['a', 'x', 'c', 'y']
         result = _compare_sequence(data, required)
-        self.assertEqual(result, {1: Invalid('x', 'b'), 3: Extra('y')})
+        self.assertEqual(result, {1: xInvalid('x', 'b'), 3: xExtra('y')})
 
     def test_other(self):
         required = ['a', 'b', 'c']
@@ -86,11 +86,11 @@ class Test_compare_mapping(unittest.TestCase):
 
         data = {'AAA': 'a', 'BBB': 'b', 'CCC': 'c', 'DDD': '3'}
         result = _compare_mapping(data, required)
-        self.assertEqual(result, {'DDD': Extra('3')})
+        self.assertEqual(result, {'DDD': xExtra('3')})
 
         data = {'AAA': 'a', 'CCC': 'c', 'DDD': '3'}
         result = _compare_mapping(data, required)
-        self.assertEqual(result, {'BBB': Missing('b'), 'DDD': Extra('3')})
+        self.assertEqual(result, {'BBB': xMissing('b'), 'DDD': xExtra('3')})
 
     def test_other(self):
         required = {'AAA': 'a', 'BBB': 'b', 'CCC': 'c'}
@@ -122,12 +122,12 @@ class Test_compare_set(unittest.TestCase):
 
         data = set(['a', 'b', 'c', '3'])
         result = _compare_set(data, required)
-        self.assertEqual(result, [Extra('3')])
+        self.assertEqual(result, [xExtra('3')])
 
         data = set(['a', 'c', '3'])
         result = _compare_set(data, required)
         result = set(result)
-        self.assertEqual(result, set([Missing('b'), Extra('3')]))
+        self.assertEqual(result, set([xMissing('b'), xExtra('3')]))
 
     def test_mapping(self):
         required = set(['a', 'b', 'c'])
@@ -138,12 +138,12 @@ class Test_compare_set(unittest.TestCase):
 
         data = {'AAA': 'a', 'BBB': 'b', 'CCC': 'c', 'DDD': '3'}
         result = _compare_set(data, required)
-        self.assertEqual(result, [Extra('3')])
+        self.assertEqual(result, [xExtra('3')])
 
         data = {'AAA': 'a', 'CCC': 'c', 'DDD': '3'}
         result = _compare_set(data, required)
         result = set(result)
-        self.assertEqual(result, set([Missing('b'), Extra('3')]))
+        self.assertEqual(result, set([xMissing('b'), xExtra('3')]))
 
     def test_sequence(self):
         required = set(['a', 'b', 'c'])
@@ -154,12 +154,12 @@ class Test_compare_set(unittest.TestCase):
 
         data = ['a', 'b', 'c', '3']
         result = _compare_set(data, required)
-        self.assertEqual(result, [Extra('3')])
+        self.assertEqual(result, [xExtra('3')])
 
         data = ['a', 'c', '3']
         result = _compare_set(data, required)
         result = set(result)
-        self.assertEqual(result, set([Missing('b'), Extra('3')]))
+        self.assertEqual(result, set([xMissing('b'), xExtra('3')]))
 
     def test_iterable(self):
         required = set(['a', 'b', 'c'])
@@ -170,12 +170,12 @@ class Test_compare_set(unittest.TestCase):
 
         data = iter(['a', 'b', 'c', '3'])
         result = _compare_set(data, required)
-        self.assertEqual(result, [Extra('3')])
+        self.assertEqual(result, [xExtra('3')])
 
         data = iter(['a', 'c', '3'])
         result = _compare_set(data, required)
         result = set(result)
-        self.assertEqual(result, set([Missing('b'), Extra('3')]))
+        self.assertEqual(result, set([xMissing('b'), xExtra('3')]))
 
     def test_str_other(self):
         required = set(['a', 'b', 'c'])
@@ -210,7 +210,7 @@ class Test_compare_other(unittest.TestCase):
 
         data = set(['a', 'b', 'c', '3'])
         result = _compare_other(data, isalpha)
-        self.assertEqual(result, [Invalid('3')])
+        self.assertEqual(result, [xInvalid('3')])
 
     def test_mapping(self):
         isalpha = lambda x: x.isalpha()
@@ -221,7 +221,7 @@ class Test_compare_other(unittest.TestCase):
 
         data = {'AAA': 'a', 'BBB': 'b', 'CCC': 'c', 'DDD': '3'}
         result = _compare_other(data, isalpha)
-        self.assertEqual(result, {'DDD': Invalid('3')})
+        self.assertEqual(result, {'DDD': xInvalid('3')})
 
     def test_sequence(self):
         isalpha = lambda x: x.isalpha()
@@ -232,7 +232,7 @@ class Test_compare_other(unittest.TestCase):
 
         data = ['a', 'b', 'c', '9']
         result = _compare_other(data, isalpha)
-        self.assertEqual(result, {3: Invalid('9')})
+        self.assertEqual(result, {3: xInvalid('9')})
 
     def test_iterable(self):
         isalpha = lambda x: x.isalpha()
@@ -243,7 +243,7 @@ class Test_compare_other(unittest.TestCase):
 
         data = iter(['a', 'b', 'c', '9'])
         result = _compare_other(data, isalpha)
-        self.assertEqual(result, [Invalid('9')])
+        self.assertEqual(result, [xInvalid('9')])
 
     def test_str_or_noniterable(self):
         isalpha = lambda x: x.isalpha()
@@ -254,12 +254,12 @@ class Test_compare_other(unittest.TestCase):
 
         data = '!@#$'
         result = _compare_other(data, isalpha)
-        self.assertEqual(result, [Invalid('!@#$')])
+        self.assertEqual(result, [xInvalid('!@#$')])
 
         data = 5
         required = lambda x: 10 < x
         result = _compare_other(data, required)
-        self.assertEqual(result, [Invalid(5)])
+        self.assertEqual(result, [xInvalid(5)])
 
     def test_multiargument_callable(self):
         """Should unpack arguments if callable expects multiple
@@ -269,15 +269,15 @@ class Test_compare_other(unittest.TestCase):
 
         required = lambda x, y: x > y  # <- Multiple positional parameters.
         result = _compare_other(data, required)
-        self.assertEqual(result, [Invalid((1, 4))])
+        self.assertEqual(result, [xInvalid((1, 4))])
 
         required = lambda *z: z[0] > z[1]  # <- Variable parameters.
         result = _compare_other(data, required)
-        self.assertEqual(result, [Invalid((1, 4))])
+        self.assertEqual(result, [xInvalid((1, 4))])
 
         required = lambda a: a[0] > a[1]  # <- Single parameter.
         result = _compare_other(data, required)
-        self.assertEqual(result, [Invalid((1, 4))])
+        self.assertEqual(result, [xInvalid((1, 4))])
 
         data = [[], [], []]
         required = lambda x, y: x > y  # <- Multiple positional params.
@@ -304,35 +304,35 @@ class Test_compare_other(unittest.TestCase):
 
         data = set(['a', 'b', 3, '4'])  # <- Value 3 raises an error.
         result = _compare_other(data, isalpha)
-        expected = [Invalid(3), Invalid('4')]
+        expected = [xInvalid(3), xInvalid('4')]
         self.assertEqual(set(result), set(expected))
 
         data = 10
         result = _compare_other(data, isalpha)
-        self.assertEqual(result, [Invalid(data)])
+        self.assertEqual(result, [xInvalid(data)])
 
     def test_required_regex(self):
         data = set(['a1', 'b2', 'c3', 'd', 'e5'])
         regex = re.compile('[a-z][0-9]+')
         result = _compare_other(data, regex)
-        self.assertEqual(result, [Invalid('d')])
+        self.assertEqual(result, [xInvalid('d')])
 
     def test_required_string(self):
         data = set(['AAA', 'BBB'])
         string_val = 'AAA'
         result = _compare_other(data, string_val)
-        self.assertEqual(result, [Invalid('BBB')])
+        self.assertEqual(result, [xInvalid('BBB')])
 
     def test_required_integer(self):
         data = set([11, 8])
         integer_val = 11
         result = _compare_other(data, integer_val)
-        self.assertEqual(result, [Deviation(-3, integer_val)])
+        self.assertEqual(result, [xDeviation(-3, integer_val)])
 
         data = {'foo': 11, 'bar': 8}
         integer_val = 11
         result = _compare_other(data, integer_val)
-        self.assertEqual(result, {'bar': Deviation(-3, integer_val)})
+        self.assertEqual(result, {'bar': xDeviation(-3, integer_val)})
 
 
 class TestMethodDecorator(unittest.TestCase):
@@ -454,7 +454,7 @@ class TestCompareSet(unittest.TestCase):
     def test_compare(self):
         a = CompareSet(['aaa','bbb','ddd'])
         b = CompareSet(['aaa','bbb','ccc'])
-        expected = [Extra('ddd'), Missing('ccc')]
+        expected = [xExtra('ddd'), xMissing('ccc')]
         self.assertEqual(expected, a.compare(b))
 
         a = CompareSet(['aaa','bbb','ccc'])
@@ -469,7 +469,7 @@ class TestCompareSet(unittest.TestCase):
 
         # Test callable other (some False).
         result = a.compare(lambda x: x.startswith('b'))
-        expected = set([Invalid('aaa'), Invalid('ccc')])
+        expected = set([xInvalid('aaa'), xInvalid('ccc')])
         self.assertEqual(expected, set(result))
 
         # Test callable other, multiple arguments (all True).
@@ -485,13 +485,13 @@ class TestCompareSet(unittest.TestCase):
         # Test callable other, multiple arguments (some False).
         a = CompareSet([(1, 1), (1, 2), (2, 1), (2, 2)])
         result = a.compare(lambda x, y: x != y)
-        expected = set([Invalid((1, 1)), Invalid((2, 2))])
+        expected = set([xInvalid((1, 1)), xInvalid((2, 2))])
         self.assertEqual(expected, set(result))
 
         # Test subset (less-than-or-equal).
         a = CompareSet(['aaa','bbb','ddd'])
         b = CompareSet(['aaa','bbb','ccc'])
-        expected = [Extra('ddd')]
+        expected = [xExtra('ddd')]
         self.assertEqual(expected, a.compare(b, op='<='))
 
         # Test strict subset (less-than).
@@ -502,12 +502,12 @@ class TestCompareSet(unittest.TestCase):
         # Test strict subset (less-than) assertion violation.
         a = CompareSet(['aaa','bbb','ccc'])
         b = CompareSet(['aaa','bbb','ccc'])
-        self.assertEqual([NotProperSubset()], a.compare(b, op='<'))
+        self.assertEqual([xNotProperSubset()], a.compare(b, op='<'))
 
         # Test superset (greater-than-or-equal).
         a = CompareSet(['aaa','bbb','ccc'])
         b = CompareSet(['aaa','bbb','ddd'])
-        expected = [Missing('ddd')]
+        expected = [xMissing('ddd')]
         self.assertEqual(expected, a.compare(b, op='>='))
 
         # Test superset subset (greater-than).
@@ -518,7 +518,7 @@ class TestCompareSet(unittest.TestCase):
         # Test superset subset (greater-than) assertion violation.
         a = CompareSet(['aaa','bbb','ccc'])
         b = CompareSet(['aaa','bbb','ccc'])
-        self.assertEqual([NotProperSuperset()], a.compare(b, op='>'))
+        self.assertEqual([xNotProperSuperset()], a.compare(b, op='>'))
 
     def test_all_fn(self):
         obj = CompareSet(['aaa','bbb','ddd'])
@@ -677,57 +677,57 @@ class TestCompareDict(unittest.TestCase):
 
         a = CompareDict({'aaa': 1, 'bbb': 2, 'ccc': 3, 'ddd': 4}, 'foo')
         b = CompareDict({'aaa': 1, 'bbb': 2.5, 'ccc': 3, 'ddd': 4}, 'foo')
-        expected = [Deviation(-0.5, 2.5, foo='bbb')]
+        expected = [xDeviation(-0.5, 2.5, foo='bbb')]
         self.assertEqual(expected, a.compare(b))
 
         # 'b' is zero in self/subject.
         a = CompareDict({'aaa': 1, 'bbb':   0, 'ccc': 3, 'ddd': 4}, 'foo')
         b = CompareDict({'aaa': 1, 'bbb': 2.5, 'ccc': 3, 'ddd': 4}, 'foo')
-        expected = [Deviation(-2.5, 2.5, foo='bbb')]
+        expected = [xDeviation(-2.5, 2.5, foo='bbb')]
         self.assertEqual(expected, a.compare(b))
 
         # 'bbb' is zero in other/reference.
         a = CompareDict({'aaa': 1, 'bbb': 2, 'ccc': 3, 'ddd': 4}, 'foo')
         b = CompareDict({'aaa': 1, 'bbb': 0, 'ccc': 3, 'ddd': 4}, 'foo')
-        expected = [Deviation(+2, 0, foo='bbb')]
+        expected = [xDeviation(+2, 0, foo='bbb')]
         self.assertEqual(expected, a.compare(b))
 
         # 'bbb' is missing from self/subject.
         a = CompareDict({'aaa': 1,             'ccc': 3, 'ddd': 4}, 'foo')
         b = CompareDict({'aaa': 1, 'bbb': 2.5, 'ccc': 3, 'ddd': 4}, 'foo')
-        expected = [Deviation(-2.5, 2.5, foo='bbb')]  # <- QUESTION: This
-        self.assertEqual(expected, a.compare(b))      #    deviation looks the
-                                                      #    same as 0 vs 2.5.
-                                                      #    Is this OK?
+        expected = [xDeviation(-2.5, 2.5, foo='bbb')]  # <- QUESTION: This
+        self.assertEqual(expected, a.compare(b))       #    deviation looks the
+                                                       #    same as 0 vs 2.5.
+                                                       #    Is this OK?
 
         # 'bbb' is missing from a/subject.
         a = CompareDict({'aaa': 1,           'ccc': 3, 'ddd': 4}, 'foo')
         b = CompareDict({'aaa': 1, 'bbb': 0, 'ccc': 3, 'ddd': 4}, 'foo')
-        expected = [Deviation(None, 0, foo='bbb')]
+        expected = [xDeviation(None, 0, foo='bbb')]
         self.assertEqual(expected, a.compare(b))
 
         # 'bbb' is empty string in a/subject.
         a = CompareDict({'aaa': 1, 'bbb': '', 'ccc': 3, 'ddd': 4}, 'foo')
         b = CompareDict({'aaa': 1, 'bbb':  0, 'ccc': 3, 'ddd': 4}, 'foo')
-        expected = [Deviation('', 0, foo='bbb')]
+        expected = [xDeviation('', 0, foo='bbb')]
         self.assertEqual(expected, a.compare(b))
 
         # 'bbb' is missing from b/reference.
         a = CompareDict({'aaa': 1, 'bbb': 0, 'ccc': 3, 'ddd': 4}, 'foo')
         b = CompareDict({'aaa': 1,           'ccc': 3, 'ddd': 4}, 'foo')
-        expected = [Deviation(0, None, foo='bbb')]
+        expected = [xDeviation(0, None, foo='bbb')]
         self.assertEqual(expected, a.compare(b))
 
         # Test coersion of *other*.
         a = CompareDict({'aaa': 1, 'bbb': 2, 'ccc': 3, 'ddd': 4}, 'foo')
         b = {'aaa': 1, 'bbb': 2.5, 'ccc': 3, 'ddd': 4}
-        expected = [Deviation(-0.5, 2.5, foo='bbb')]
+        expected = [xDeviation(-0.5, 2.5, foo='bbb')]
         self.assertEqual(expected, a.compare(b))
 
     def test_compare_strings(self):
         a = CompareDict({'aaa': 'x', 'bbb': 'y', 'ccc': 'z'}, 'foo')
         b = CompareDict({'aaa': 'x', 'bbb': 'z', 'ccc': 'z'}, 'foo')
-        expected = [Invalid('y', 'z', foo='bbb')]
+        expected = [xInvalid('y', 'z', foo='bbb')]
         self.assertEqual(expected, a.compare(b))
 
     def test_compare_function(self):
@@ -739,7 +739,7 @@ class TestCompareDict(unittest.TestCase):
 
         # Some False.
         result = a.compare(lambda a: a in ('x', 'y'))
-        expected = [Invalid('z', foo='ccc')]
+        expected = [xInvalid('z', foo='ccc')]
         self.assertEqual(expected, result)
 
         # All True, multiple args.
@@ -750,16 +750,16 @@ class TestCompareDict(unittest.TestCase):
         # Some False, multiple args.
         a = CompareDict({'aaa': (1, 0), 'bbb': (1, 3), 'ccc': (3, 2)}, 'foo')
         result = a.compare(lambda x, y: x < y)
-        expected = [Invalid((1, 0), foo='aaa'), Invalid((3, 2), foo='ccc')]
+        expected = [xInvalid((1, 0), foo='aaa'), xInvalid((3, 2), foo='ccc')]
         self.assertEqual(expected, result)
 
     def test_compare_mixed_types(self):
         a = CompareDict({'aaa':  2,  'bbb': 3,   'ccc': 'z'}, 'foo')
         b = CompareDict({'aaa': 'y', 'bbb': 4.0, 'ccc':  5 }, 'foo')
         expected = set([
-            Invalid(2, 'y', foo='aaa'),
-            Deviation(-1, 4, foo='bbb'),
-            Invalid('z', 5, foo='ccc'),
+            xInvalid(2, 'y', foo='aaa'),
+            xDeviation(-1, 4, foo='bbb'),
+            xInvalid('z', 5, foo='ccc'),
         ])
         self.assertEqual(expected, set(a.compare(b)))
 
