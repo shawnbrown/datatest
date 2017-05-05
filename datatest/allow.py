@@ -21,12 +21,11 @@ from .differences import xBaseDifference
 from .differences import xMissing
 from .differences import xExtra
 from .differences import xDeviation
-from .errors import Missing as Missing2
-from .errors import Extra as Extra2
-from .errors import Deviation as Deviation2
-
-
 from .error import xDataError
+from .errors import Missing
+from .errors import Extra
+from .errors import Deviation
+
 
 __datatest = True  # Used to detect in-module stack frames (which are
                    # omitted from output).
@@ -259,14 +258,14 @@ class allow_all2(_allow_element):
 class allow_missing2(allow_all2):
     def __init__(self, *funcs, **kwds):
         def is_missing(x):
-            return isinstance(x, Missing2)
+            return isinstance(x, Missing)
         super(allow_missing2, self).__init__(is_missing, *funcs, **kwds)
 
 
 class allow_extra2(allow_all2):
     def __init__(self, *funcs, **kwds):
         def is_extra(x):
-            return isinstance(x, Extra2)
+            return isinstance(x, Extra)
         super(allow_extra2, self).__init__(is_extra, *funcs, **kwds)
 
 

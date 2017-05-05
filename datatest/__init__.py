@@ -1,6 +1,13 @@
 # -*- coding: utf-8 -*-
 from .case import DataTestCase
 
+from .errors import ValidationErrors
+from .errors import DataError
+from .errors import Missing
+from .errors import Extra
+from .errors import Invalid
+from .errors import Deviation
+
 from .allow import allow_iter
 from .allow import allow_any
 from .allow import allow_missing
@@ -30,6 +37,14 @@ __version__ = '0.8.0.dev3'
 __all__ = [
     # Test case.
     'DataTestCase',
+
+    # Error classes.
+    'ValidationErrors',
+    'DataError',
+    'Missing',
+    'Extra',
+    'Invalid',
+    'Deviation',
 
     # Allowance context mangers.
     'allow_iter',
