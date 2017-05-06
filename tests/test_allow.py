@@ -4,16 +4,16 @@ from . import _unittest as unittest
 from datatest.utils import collections
 from datatest.dataaccess import ItemsIter
 
-from datatest.allow import allow_iter2
+from datatest.allow import allow_iter
 from datatest.allow import _allow_element
-from datatest.allow import allow_any2
-from datatest.allow import allow_all2
-from datatest.allow import allow_missing2
-from datatest.allow import allow_extra2
-from datatest.allow import allow_deviation2
-from datatest.allow import allow_percent_deviation2
-from datatest.allow import allow_specified2
-from datatest.allow import allow_limit2
+from datatest.allow import allow_any
+from datatest.allow import allow_all
+from datatest.allow import allow_missing
+from datatest.allow import allow_extra
+from datatest.allow import allow_deviation
+from datatest.allow import allow_percent_deviation
+from datatest.allow import allow_specified
+from datatest.allow import allow_limit
 from datatest.allow import getvalue
 from datatest.allow import getkey
 from datatest.errors import ValidationErrors
@@ -26,11 +26,11 @@ from datatest.errors import Deviation
 class TestAllowIter2(unittest.TestCase):
     def test_iterable_all_good(self):
         function = lambda iterable: list()  # <- empty list
-        with allow_iter2(function):  # <- Should pass without error.
+        with allow_iter(function):  # <- Should pass without error.
             raise ValidationErrors('example error', [Missing('x')])
 
         function = lambda iterable: iter([])  # <- empty iterator
-        with allow_iter2(function):  # <- Should pass pass without error.
+        with allow_iter(function):  # <- Should pass pass without error.
             raise ValidationErrors('example error', [Missing('x')])
 
     def test_iterable_some_bad(self):
@@ -38,7 +38,7 @@ class TestAllowIter2(unittest.TestCase):
         in_diffs = [Missing('foo'), Missing('bar')]
 
         with self.assertRaises(ValidationErrors) as cm:
-            with allow_iter2(function):
+            with allow_iter(function):
                 raise ValidationErrors('example error', in_diffs)
 
         errors = cm.exception.errors
@@ -55,21 +55,21 @@ class TestAllowIter2(unittest.TestCase):
         errors_list =  [Missing('foo'), Missing('bar')]
         function = lambda iterable: {'a': Missing('foo')}  # <- dict type
         with self.assertRaises(TypeError):
-            with allow_iter2(function):
+            with allow_iter(function):
                 raise ValidationErrors('example error', errors_list)
 
         # Dict input and list output.
         errors_dict =  {'a': Missing('foo'), 'b': Missing('bar')}
         function = lambda iterable: [Missing('foo')]  # <- list type
         with self.assertRaises(TypeError):
-            with allow_iter2(function):
+            with allow_iter(function):
                 raise ValidationErrors('example error', errors_dict)
 
         # Dict input and list-item output.
         errors_dict =  {'a': Missing('foo'), 'b': Missing('bar')}
         function = lambda iterable: [('a', Missing('foo'))]  # <- list of items
         with self.assertRaises(ValidationErrors) as cm:
-            with allow_iter2(function):
+            with allow_iter(function):
                 raise ValidationErrors('example error', errors_dict)
 
         errors = cm.exception.errors
@@ -77,13 +77,13 @@ class TestAllowIter2(unittest.TestCase):
         self.assertEqual(dict(errors), {'a': Missing('foo')})
 
 
-class TestAllowSpecified2(unittest.TestCase):
+class TestAllowSpecified(unittest.TestCase):
     def test_some_allowed(self):
         errors = [Extra('xxx'), Missing('yyy')]
         allowed = [Extra('xxx')]
 
         with self.assertRaises(ValidationErrors) as cm:
-            with allow_specified2(allowed):
+            with allow_specified(allowed):
                 raise ValidationErrors('example error', errors)
 
         expected = [Missing('yyy')]
@@ -95,7 +95,7 @@ class TestAllowSpecified2(unittest.TestCase):
         allowed = Extra('xxx')  # <- Single diff, not in list.
 
         with self.assertRaises(ValidationErrors) as cm:
-            with allow_specified2(allowed):
+            with allow_specified(allowed):
                 raise ValidationErrors('example error', errors)
 
         expected = [Missing('yyy')]
@@ -105,7 +105,7 @@ class TestAllowSpecified2(unittest.TestCase):
     def test_all_allowed(self):
         diffs = [Extra('xxx'), Missing('yyy')]
         allowed = [Extra('xxx'), Missing('yyy')]
-        with allow_specified2(allowed):
+        with allow_specified(allowed):
             raise ValidationErrors('example error', diffs)
 
     def test_duplicates(self):
@@ -115,7 +115,7 @@ class TestAllowSpecified2(unittest.TestCase):
         # Only allow one of them.
         with self.assertRaises(ValidationErrors) as cm:
             allowed = [Extra('xxx')]
-            with allow_specified2(allowed):
+            with allow_specified(allowed):
                 raise ValidationErrors('example error', errors)
 
         expected = [Extra('xxx'), Extra('xxx')]  # Expect two remaining.
@@ -125,7 +125,7 @@ class TestAllowSpecified2(unittest.TestCase):
         # Only allow two of them.
         with self.assertRaises(ValidationErrors) as cm:
             allowed = [Extra('xxx'), Extra('xxx')]
-            with allow_specified2(allowed):
+            with allow_specified(allowed):
                 raise ValidationErrors('example error', errors)
 
         expected = [Extra('xxx')]  # Expect one remaining.
@@ -134,7 +134,7 @@ class TestAllowSpecified2(unittest.TestCase):
 
         # Allow all three.
         allowed = [Extra('xxx'), Extra('xxx'), Extra('xxx')]
-        with allow_specified2(allowed):
+        with allow_specified(allowed):
             raise ValidationErrors('example error', errors)
 
     def test_error_mapping_allowance_list(self):
@@ -142,7 +142,7 @@ class TestAllowSpecified2(unittest.TestCase):
         allowed = [Extra('xxx')]
 
         with self.assertRaises(ValidationErrors) as cm:
-            with allow_specified2(allowed):
+            with allow_specified(allowed):
                 raise ValidationErrors('example error', differences)
 
         expected = {'bar': [Missing('yyy')]}
@@ -154,7 +154,7 @@ class TestAllowSpecified2(unittest.TestCase):
         allowed = {'foo': Extra('xxx')}
 
         with self.assertRaises(ValidationErrors) as cm:
-            with allow_specified2(allowed):
+            with allow_specified(allowed):
                 raise ValidationErrors('example error', differences)
 
         expected = {'bar': Missing('yyy')}
@@ -166,7 +166,7 @@ class TestAllowSpecified2(unittest.TestCase):
         allowed = {}
 
         with self.assertRaises(ValidationErrors) as cm:
-            with allow_specified2(allowed):
+            with allow_specified(allowed):
                 raise ValidationErrors('example error', differences)
 
         actual = cm.exception.errors
@@ -176,7 +176,7 @@ class TestAllowSpecified2(unittest.TestCase):
         errors = {'foo': Extra('xxx'), 'bar': Missing('yyy')}
         allowed = errors
 
-        with allow_specified2(allowed):  # <- Catches all differences, no error!
+        with allow_specified(allowed):  # <- Catches all differences, no error!
             raise ValidationErrors('example error', errors)
 
     def test_mapping_mismatched_types(self):
@@ -185,7 +185,7 @@ class TestAllowSpecified2(unittest.TestCase):
 
         regex = "'list' of errors cannot be matched.*requires non-mapping type"
         with self.assertRaisesRegex(ValueError, regex):
-            with allow_specified2(allowed_dict):
+            with allow_specified(allowed_dict):
                 raise ValidationErrors('example error', error_list)
 
     def test_integration(self):
@@ -194,7 +194,7 @@ class TestAllowSpecified2(unittest.TestCase):
         allowed = [Extra('xxx'), Missing('yyy')]
 
         with self.assertRaises(ValidationErrors) as cm:
-            with allow_specified2(allowed):
+            with allow_specified(allowed):
                 raise ValidationErrors('example error', differences)
         actual = cm.exception.errors
 
@@ -219,7 +219,7 @@ class TestAllowLimit2(unittest.TestCase):
     def test_exceeds_limit(self):
         errors = [Extra('xxx'), Missing('yyy')]
         with self.assertRaises(ValidationErrors) as cm:
-            with allow_limit2(1):  # <- Allows only 1 but there are 2!
+            with allow_limit(1):  # <- Allows only 1 but there are 2!
                 raise ValidationErrors('example error', errors)
 
         remaining = list(cm.exception.errors)
@@ -227,19 +227,19 @@ class TestAllowLimit2(unittest.TestCase):
 
     def test_matches_limit(self):
         errors = [Extra('xxx'), Missing('yyy')]
-        with allow_limit2(2):  # <- Allows 2 and there are only 2.
+        with allow_limit(2):  # <- Allows 2 and there are only 2.
             raise ValidationErrors('example error', errors)
 
     def test_under_limit(self):
         errors = [Extra('xxx'), Missing('yyy')]
-        with allow_limit2(3):  # <- Allows 3 and there are only 2.
+        with allow_limit(3):  # <- Allows 3 and there are only 2.
             raise ValidationErrors('example error', errors)
 
     def test_function_exceeds_limit(self):
         errors = [Extra('xxx'), Missing('yyy'), Extra('zzz')]
         with self.assertRaises(ValidationErrors) as cm:
             is_extra = lambda x: isinstance(x, Extra)
-            with allow_limit2(1, is_extra):  # <- Limit of 1 and is_extra().
+            with allow_limit(1, is_extra):  # <- Limit of 1 and is_extra().
                 raise ValidationErrors('example error', errors)
 
         # Returned errors can be in different order.
@@ -251,7 +251,7 @@ class TestAllowLimit2(unittest.TestCase):
         errors = [Extra('xxx'), Missing('yyy'), Extra('zzz')]
         with self.assertRaises(ValidationErrors) as cm:
             is_extra = lambda x: isinstance(x, Extra)
-            with allow_limit2(4, is_extra):  # <- Limit of 4 and is_extra().
+            with allow_limit(4, is_extra):  # <- Limit of 4 and is_extra().
                 raise ValidationErrors('example error', errors)
 
         actual = list(cm.exception.errors)
@@ -263,7 +263,7 @@ class TestAllowLimit2(unittest.TestCase):
             'bar': [Extra('zzz')],
         }
         with self.assertRaises(ValidationErrors) as cm:
-            with allow_limit2(1):  # <- Allows only 1 but there are 2!
+            with allow_limit(1):  # <- Allows only 1 but there are 2!
                 raise ValidationErrors('example error', errors)
 
         actual = cm.exception.errors
@@ -277,7 +277,7 @@ class TestAllowLimit2(unittest.TestCase):
         }
         with self.assertRaises(ValidationErrors) as cm:
             is_extra = lambda x: isinstance(x, Extra)
-            with allow_limit2(1, is_extra):
+            with allow_limit(1, is_extra):
                 raise ValidationErrors('example error', errors)
 
         actual = cm.exception.errors
@@ -345,7 +345,7 @@ class TestAllowAny_and_AllowAll(unittest.TestCase):
         func2 = lambda x: x.args[0] == 'X'
 
         with self.assertRaises(ValidationErrors) as cm:
-            with allow_any2(func1, func2):  # <- Apply allowance!
+            with allow_any(func1, func2):  # <- Apply allowance!
                 raise ValidationErrors('some message', errors)
         remaining_errors = cm.exception.errors
         self.assertEqual(list(remaining_errors), [Extra('Z')])
@@ -356,7 +356,7 @@ class TestAllowAny_and_AllowAll(unittest.TestCase):
         func2 = lambda x: x.args[0] == 'X'
 
         with self.assertRaises(ValidationErrors) as cm:
-            with allow_all2(func1, func2):  # <- Apply allowance!
+            with allow_all(func1, func2):  # <- Apply allowance!
                 raise ValidationErrors('some message', errors)
         remaining_errors = cm.exception.errors
         self.assertEqual(list(remaining_errors), [Missing('Y'), Extra('Z')])
@@ -367,14 +367,14 @@ class TestAllowMissing_and_AllowExtra(unittest.TestCase):
         errors =  [Missing('X'), Missing('Y'), Extra('X')]
 
         with self.assertRaises(ValidationErrors) as cm:
-            with allow_missing2():  # <- Apply allowance!
+            with allow_missing():  # <- Apply allowance!
                 raise ValidationErrors('some message', errors)
         remaining_errors = cm.exception.errors
         self.assertEqual(list(remaining_errors), [Extra('X')])
 
         with self.assertRaises(ValidationErrors) as cm:
             func = lambda x: x.args[0] == 'X'
-            with allow_missing2(func):  # <- Apply allowance!
+            with allow_missing(func):  # <- Apply allowance!
                 raise ValidationErrors('some message', errors)
         remaining_errors = cm.exception.errors
         self.assertEqual(list(remaining_errors), [Missing('Y'), Extra('X')])
@@ -383,14 +383,14 @@ class TestAllowMissing_and_AllowExtra(unittest.TestCase):
         errors =  [Extra('X'), Extra('Y'), Missing('X')]
 
         with self.assertRaises(ValidationErrors) as cm:
-            with allow_extra2():  # <- Apply allowance!
+            with allow_extra():  # <- Apply allowance!
                 raise ValidationErrors('some message', errors)
         remaining_errors = cm.exception.errors
         self.assertEqual(list(remaining_errors), [Missing('X')])
 
         with self.assertRaises(ValidationErrors) as cm:
             func = lambda x: x.args[0] == 'X'
-            with allow_extra2(func):  # <- Apply allowance!
+            with allow_extra(func):  # <- Apply allowance!
                 raise ValidationErrors('some message', errors)
         remaining_errors = cm.exception.errors
         self.assertEqual(list(remaining_errors), [Extra('Y'), Missing('X')])
@@ -401,7 +401,7 @@ class TestAllowDeviation2(unittest.TestCase):
     def test_method_signature(self):
         """Check for prettified default signature in Python 3.3 and later."""
         try:
-            sig = inspect.signature(allow_deviation2)
+            sig = inspect.signature(allow_deviation)
             parameters = list(sig.parameters)
             self.assertEqual(parameters, ['tolerance', 'kwds_func'])
         except AttributeError:
@@ -413,7 +413,7 @@ class TestAllowDeviation2(unittest.TestCase):
             'bbb': Deviation(+3, 10),  # <- Not in allowed range.
         }
         with self.assertRaises(ValidationErrors) as cm:
-            with allow_deviation2(2):  # <- Allows +/- 2.
+            with allow_deviation(2):  # <- Allows +/- 2.
                 raise ValidationErrors('example error', differences)
 
         remaining_errors = cm.exception.errors
@@ -425,7 +425,7 @@ class TestAllowDeviation2(unittest.TestCase):
             'bbb': Deviation(+3, 10),
         }
         with self.assertRaises(ValidationErrors) as cm:
-            with allow_deviation2(0, 3):  # <- Allows from 0 to 3.
+            with allow_deviation(0, 3):  # <- Allows from 0 to 3.
                 raise ValidationErrors('example error', differences)
 
         result_diffs = cm.exception.errors
@@ -439,7 +439,7 @@ class TestAllowDeviation2(unittest.TestCase):
             Deviation(+3.1, 10),  # <- Not allowed.
         ]
         with self.assertRaises(ValidationErrors) as cm:
-            with allow_deviation2(3, 3):  # <- Allows +3 only.
+            with allow_deviation(3, 3):  # <- Allows +3 only.
                 raise ValidationErrors('example error', differences)
 
         result_diffs = list(cm.exception.errors)
@@ -460,7 +460,7 @@ class TestAllowDeviation2(unittest.TestCase):
             @getkey
             def fn(key):
                 return key in ('aaa', 'bbb', 'ddd')
-            with allow_deviation2(2, fn):  # <- Allows +/- 2.
+            with allow_deviation(2, fn):  # <- Allows +/- 2.
                 raise ValidationErrors('example error', differences)
 
         actual = cm.exception.errors
@@ -472,33 +472,33 @@ class TestAllowDeviation2(unittest.TestCase):
 
     def test_invalid_tolerance(self):
         with self.assertRaises(AssertionError) as cm:
-            with allow_deviation2(-5):  # <- invalid
+            with allow_deviation(-5):  # <- invalid
                 pass
         exc = str(cm.exception)
         self.assertTrue(exc.startswith('tolerance should not be negative'))
 
     def test_empty_value_handling(self):
         # Test NoneType.
-        with allow_deviation2(0):  # <- Pass without failure.
+        with allow_deviation(0):  # <- Pass without failure.
             raise ValidationErrors('example error', [Deviation(None, 0)])
 
-        with allow_deviation2(0):  # <- Pass without failure.
+        with allow_deviation(0):  # <- Pass without failure.
             raise ValidationErrors('example error', [Deviation(0, None)])
 
         # Test empty string.
-        with allow_deviation2(0):  # <- Pass without failure.
+        with allow_deviation(0):  # <- Pass without failure.
             raise ValidationErrors('example error', [Deviation('', 0)])
 
-        with allow_deviation2(0):  # <- Pass without failure.
+        with allow_deviation(0):  # <- Pass without failure.
             raise ValidationErrors('example error', [Deviation(0, '')])
 
         # Test NaN (not a number) values.
         with self.assertRaises(ValidationErrors):  # <- NaN values should not be caught!
-            with allow_deviation2(0):
+            with allow_deviation(0):
                 raise ValidationErrors('example error', [Deviation(float('nan'), 0)])
 
         with self.assertRaises(ValidationErrors):  # <- NaN values should not be caught!
-            with allow_deviation2(0):
+            with allow_deviation(0):
                 raise ValidationErrors('example error', [Deviation(0, float('nan'))])
 
     # AN OPEN QUESTION: Should deviation allowances raise an error if
@@ -510,7 +510,7 @@ class TestAllowPercentDeviation2(unittest.TestCase):
     def test_method_signature(self):
         """Check for prettified default signature in Python 3.3 and later."""
         try:
-            sig = inspect.signature(allow_percent_deviation2)
+            sig = inspect.signature(allow_percent_deviation)
             parameters = list(sig.parameters)
             self.assertEqual(parameters, ['tolerance', 'kwds_func'])
         except AttributeError:
@@ -522,7 +522,7 @@ class TestAllowPercentDeviation2(unittest.TestCase):
             Deviation(+3, 10),  # <- Not in allowed range.
         ]
         with self.assertRaises(ValidationErrors) as cm:
-            with allow_percent_deviation2(0.2):  # <- Allows +/- 20%.
+            with allow_percent_deviation(0.2):  # <- Allows +/- 20%.
                 raise ValidationErrors('example error', differences)
 
         result_string = str(cm.exception)
@@ -537,7 +537,7 @@ class TestAllowPercentDeviation2(unittest.TestCase):
             'bbb': Deviation(+3, 10),
         }
         with self.assertRaises(ValidationErrors) as cm:
-            with allow_percent_deviation2(0.0, 0.3):  # <- Allows from 0 to 30%.
+            with allow_percent_deviation(0.0, 0.3):  # <- Allows from 0 to 30%.
                 raise ValidationErrors('example error', differences)
 
         result_string = str(cm.exception)
@@ -555,7 +555,7 @@ class TestAllowPercentDeviation2(unittest.TestCase):
             Deviation(+3.1, 10),  # <- Not allowed.
         ]
         with self.assertRaises(ValidationErrors) as cm:
-            with allow_percent_deviation2(0.3, 0.3):  # <- Allows +30% only.
+            with allow_percent_deviation(0.3, 0.3):  # <- Allows +30% only.
                 raise ValidationErrors('example error', differences)
 
         result_diffs = list(cm.exception.errors)
@@ -575,7 +575,7 @@ class TestAllowPercentDeviation2(unittest.TestCase):
         with self.assertRaises(ValidationErrors) as cm:
             fn = lambda x: x in ('aaa', 'bbb', 'ddd')
             fn = getkey(fn)
-            with allow_percent_deviation2(0.2, fn):  # <- Allows +/- 20%.
+            with allow_percent_deviation(0.2, fn):  # <- Allows +/- 20%.
                 raise ValidationErrors('example error', differences)
 
         result_set = cm.exception.errors
@@ -587,33 +587,33 @@ class TestAllowPercentDeviation2(unittest.TestCase):
 
     def test_invalid_tolerance(self):
         with self.assertRaises(AssertionError) as cm:
-            with allow_percent_deviation2(-0.5):  # <- invalid
+            with allow_percent_deviation(-0.5):  # <- invalid
                 pass
         exc = str(cm.exception)
         self.assertTrue(exc.startswith('tolerance should not be negative'))
 
     def test_empty_value_handling(self):
         # Test NoneType.
-        with allow_percent_deviation2(0):  # <- Pass without failure.
+        with allow_percent_deviation(0):  # <- Pass without failure.
             raise ValidationErrors('example error', [Deviation(None, 0)])
 
-        with allow_percent_deviation2(0):  # <- Pass without failure.
+        with allow_percent_deviation(0):  # <- Pass without failure.
             raise ValidationErrors('example error', [Deviation(0, None)])
 
         # Test empty string.
-        with allow_percent_deviation2(0):  # <- Pass without failure.
+        with allow_percent_deviation(0):  # <- Pass without failure.
             raise ValidationErrors('example error', [Deviation('', 0)])
 
-        with allow_percent_deviation2(0):  # <- Pass without failure.
+        with allow_percent_deviation(0):  # <- Pass without failure.
             raise ValidationErrors('example error', [Deviation(0, '')])
 
         # Test NaN (not a number) values.
         with self.assertRaises(ValidationErrors):  # <- NaN values should not be caught!
-            with allow_percent_deviation2(0):
+            with allow_percent_deviation(0):
                 raise ValidationErrors('example error', [Deviation(float('nan'), 0)])
 
         with self.assertRaises(ValidationErrors):  # <- NaN values should not be caught!
-            with allow_percent_deviation2(0):
+            with allow_percent_deviation(0):
                 raise ValidationErrors('example error', [Deviation(0, float('nan'))])
 
 

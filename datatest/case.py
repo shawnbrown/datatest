@@ -15,14 +15,14 @@ from .errors import ValidationErrors
 __datatest = True  # Used to detect in-module stack frames (which are
                    # omitted from output).
 
-from .allow import allow_missing2
-from .allow import allow_extra2
-from .allow import allow_all2
-from .allow import allow_any2
-from .allow import allow_deviation2
-from .allow import allow_percent_deviation2
-from .allow import allow_limit2
-from .allow import allow_specified2
+from .allow import allow_missing
+from .allow import allow_extra
+from .allow import allow_all
+from .allow import allow_any
+from .allow import allow_deviation
+from .allow import allow_percent_deviation
+from .allow import allow_limit
+from .allow import allow_specified
 
 
 class DataTestCase(TestCase):
@@ -214,23 +214,23 @@ class DataTestCase(TestCase):
     #def assertUnique(self, data, msg=None):
     #    pass
 
-    def allowOnly(self, errors, **kwds):
-        """Context manager to allow specified *differences* without
+    def allowSpecified(self, errors, **kwds):
+        """Context manager to allow specified *errors* without
         triggering a test failure::
 
-            differences = [
+            errors = [
                 Extra('X'),
                 Missing('Y')
             ]
-            with self.allowOnly(differences):
+            with self.allowSpecified(errors):
                 data = ...
                 requirement = ...
                 self.assertValid(data, requirement)
 
-        The *differences* argument can be a :py:obj:`list` or
-        :py:obj:`dict` of differences or a single difference.
+        The *errors* argument can be a :py:obj:`list` or :py:obj:`dict`
+        of errors or a single :class:`DataError`.
         """
-        return allow_specified2(errors, **kwds)
+        return allow_specified(errors, **kwds)
 
     def allowAny(self, function, *funcs, **kwds):
         """Allows differences that match given keyword functions
@@ -244,10 +244,10 @@ class DataTestCase(TestCase):
                 required = ...
                 self.assertValid(data, requirement)
         """
-        return allow_any2(function, *funcs, **kwds)
+        return allow_any(function, *funcs, **kwds)
 
     def allowAll(self, function, *funcs, **kwds):
-        return allow_all2(function, *funcs, **kwds)
+        return allow_all(function, *funcs, **kwds)
 
     def allowMissing(self, *funcs, **kwds):
         """Allows :class:`Missing` values without triggering a test
@@ -258,7 +258,7 @@ class DataTestCase(TestCase):
                 requirement = ...
                 self.assertValid(data, requirement)
         """
-        return allow_missing2(*funcs, **kwds)
+        return allow_missing(*funcs, **kwds)
 
     def allowExtra(self, *funcs, **kwds):
         """Allows :class:`Extra` values without triggering a test
@@ -269,7 +269,7 @@ class DataTestCase(TestCase):
                 requirement = ...
                 self.assertValid(data, requirement)
         """
-        return allow_extra2(*funcs, **kwds)
+        return allow_extra(*funcs, **kwds)
 
     def allowLimit(self, number, *funcs, **kwds):
         """Context manager to allow a limited *number* of differences
@@ -284,7 +284,7 @@ class DataTestCase(TestCase):
         will fail with a :class:`ValidationErrors` containing all
         observed differences.
         """
-        return allow_limit2(number, *funcs, **kwds)
+        return allow_limit(number, *funcs, **kwds)
 
     def allowDeviation(self, lower, upper=None, *funcs, **kwds):
         """
@@ -293,7 +293,7 @@ class DataTestCase(TestCase):
 
         See documentation for full details.
         """
-        return allow_deviation2(lower, upper, *funcs, **kwds)
+        return allow_deviation(lower, upper, *funcs, **kwds)
 
     def allowPercentDeviation(self, lower, upper=None, *funcs, **kwds):
         """
@@ -302,7 +302,7 @@ class DataTestCase(TestCase):
 
         See documentation for full details.
         """
-        return allow_percent_deviation2(lower, upper, *funcs, **kwds)
+        return allow_percent_deviation(lower, upper, *funcs, **kwds)
 
 
 # Prettify default signature of methods that accept multiple signatures.

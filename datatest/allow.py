@@ -31,7 +31,7 @@ def _is_mapping_type(obj):
                 _is_collection_of_items(obj)
 
 
-class allow_iter2(object):
+class allow_iter(object):
     """Context manager to allow differences without triggering a test
     failure. The *function* should accept an iterable or mapping of
     data errors and return an iterable or mapping of only those errors
@@ -130,7 +130,7 @@ def getpair(function):
     return adapted
 
 
-class _allow_element(allow_iter2):
+class _allow_element(allow_iter):
     def __init__(self, condition, functions, **kwds):
         msg = kwds.pop('msg', None)
         if kwds:                                  # Emulate keyword-only
@@ -165,7 +165,7 @@ class _allow_element(allow_iter2):
         super(_allow_element, self).__init__(filterfalse)
 
 
-class allow_specified2(allow_iter2):
+class allow_specified(allow_iter):
     def __init__(self, errors, **kwds):
         msg = kwds.pop('msg', None)
         if kwds:                                  # Emulate keyword-only
@@ -231,37 +231,37 @@ class allow_specified2(allow_iter2):
                                              errors.__class__.__name__)
                     raise ValueError(message)
 
-        super(allow_specified2, self).__init__(filterfalse)
+        super(allow_specified, self).__init__(filterfalse)
 
 
-class allow_any2(_allow_element):
+class allow_any(_allow_element):
     """
-    allow_any2(function, *[, msg])
-    allow_any2(func1, func2[, ...][, msg])
+    allow_any(function, *[, msg])
+    allow_any(func1, func2[, ...][, msg])
     """
     def __init__(self, function, *funcs, **kwds):
         functions = (function,) + funcs
-        super(allow_any2, self).__init__(any, functions, **kwds)
+        super(allow_any, self).__init__(any, functions, **kwds)
 
 
-class allow_all2(_allow_element):
+class allow_all(_allow_element):
     def __init__(self, function, *funcs, **kwds):
         functions = (function,) + funcs
-        super(allow_all2, self).__init__(all, functions, **kwds)
+        super(allow_all, self).__init__(all, functions, **kwds)
 
 
-class allow_missing2(allow_all2):
+class allow_missing(allow_all):
     def __init__(self, *funcs, **kwds):
         def is_missing(x):
             return isinstance(x, Missing)
-        super(allow_missing2, self).__init__(is_missing, *funcs, **kwds)
+        super(allow_missing, self).__init__(is_missing, *funcs, **kwds)
 
 
-class allow_extra2(allow_all2):
+class allow_extra(allow_all):
     def __init__(self, *funcs, **kwds):
         def is_extra(x):
             return isinstance(x, Extra)
-        super(allow_extra2, self).__init__(is_extra, *funcs, **kwds)
+        super(allow_extra, self).__init__(is_extra, *funcs, **kwds)
 
 
 def _prettify_devsig(method):
@@ -305,7 +305,7 @@ def _normalize_devargs(lower, upper, funcs):
     return (lower, upper, funcs)
 
 
-class allow_deviation2(allow_all2):
+class allow_deviation(allow_all):
     """
     allow_deviation(tolerance, /, *funcs, msg=None)
     allow_deviation(lower, upper, *funcs, msg=None)
@@ -322,11 +322,11 @@ class allow_deviation2(allow_all2):
             if isnan(deviation) or isnan(error.expected or 0.0):
                 return False
             return lower <= deviation <= upper
-        super(allow_deviation2, self).__init__(tolerance, *funcs, **kwds)
-_prettify_devsig(allow_deviation2.__init__)
+        super(allow_deviation, self).__init__(tolerance, *funcs, **kwds)
+_prettify_devsig(allow_deviation.__init__)
 
 
-class allow_percent_deviation2(allow_all2):
+class allow_percent_deviation(allow_all):
     def __init__(self, lower, upper=None, *funcs, **kwds):
         lower, upper, funcs = _normalize_devargs(lower, upper, funcs)
         def percent_tolerance(error):  # <- Closes over lower & upper.
@@ -334,11 +334,11 @@ class allow_percent_deviation2(allow_all2):
             if isnan(percent_deviation) or isnan(error.expected or 0):
                 return False
             return lower <= percent_deviation <= upper
-        super(allow_percent_deviation2, self).__init__(percent_tolerance, *funcs, **kwds)
-_prettify_devsig(allow_percent_deviation2.__init__)
+        super(allow_percent_deviation, self).__init__(percent_tolerance, *funcs, **kwds)
+_prettify_devsig(allow_percent_deviation.__init__)
 
 
-class allow_limit2(allow_iter2):
+class allow_limit(allow_iter):
     def __init__(self, number, *funcs, **kwds):
         msg = kwds.pop('msg', None)
         if kwds:                                  # Emulate keyword-only
@@ -389,4 +389,4 @@ class allow_limit2(allow_iter2):
                 for value in grpfltrfalse(None, iterable):
                     yield value
 
-        super(allow_limit2, self).__init__(filterfalse)
+        super(allow_limit, self).__init__(filterfalse)
