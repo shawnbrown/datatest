@@ -17,14 +17,6 @@ from datatest.errors import Missing
 from datatest.errors import Invalid
 from datatest.errors import Deviation
 
-from datatest import allow_any
-from datatest import allow_missing
-from datatest import allow_extra
-from datatest import allow_deviation
-from datatest import allow_percent_deviation
-from datatest import allow_limit
-from datatest import allow_only
-
 from datatest.allow import allow_missing2
 from datatest.allow import allow_extra2
 from datatest.allow import allow_all2

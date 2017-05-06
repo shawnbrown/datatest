@@ -8,15 +8,6 @@ from .errors import Extra
 from .errors import Invalid
 from .errors import Deviation
 
-from .allow import allow_iter
-from .allow import allow_any
-from .allow import allow_missing
-from .allow import allow_extra
-from .allow import allow_deviation
-from .allow import allow_percent_deviation
-from .allow import allow_limit
-from .allow import allow_only
-
 from .runner import mandatory
 from .runner import skip
 from .runner import skipIf
@@ -47,14 +38,6 @@ __all__ = [
     'Deviation',
 
     # Allowance context mangers.
-    'allow_iter',
-    'allow_any',
-    'allow_missing',
-    'allow_extra',
-    'allow_deviation',
-    'allow_percent_deviation',
-    'allow_limit',
-    'allow_only',
 
     # Test runner and command-line program.
     'mandatory',

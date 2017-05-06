@@ -15,13 +15,6 @@ from .errors import ValidationErrors
 __datatest = True  # Used to detect in-module stack frames (which are
                    # omitted from output).
 
-from .allow import allow_any
-from .allow import allow_missing
-from .allow import allow_extra
-from .allow import allow_deviation
-from .allow import allow_percent_deviation
-from .allow import allow_limit
-from .allow import allow_only
 from .allow import allow_missing2
 from .allow import allow_extra2
 from .allow import allow_all2
