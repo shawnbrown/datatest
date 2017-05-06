@@ -187,6 +187,8 @@ class DataTestCase(TestCase):
         #    data = data.execute(evaluate=False)
 
         errors = _get_differences(data, requirement)
+        if not errors:
+            return None  # <- EXIT!
 
         if not msg and not isinstance(errors, Exception):
             name = getattr(requirement, '__name__',
