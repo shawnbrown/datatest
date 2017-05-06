@@ -2,6 +2,7 @@
 """Backwards compatibility for version 0.6.0.dev0 API."""
 from __future__ import absolute_import
 import datatest
+from datatest.__past__ import api08
 from datatest.__past__ import api07
 from datatest.__past__ import api06
 from datatest import DataTestCase

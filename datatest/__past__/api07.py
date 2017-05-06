@@ -6,6 +6,8 @@ from math import isnan
 from numbers import Number
 
 import datatest
+from datatest.__past__ import api08
+
 from datatest.utils.builtins import *
 from datatest.utils import collections
 from datatest.utils import itertools
