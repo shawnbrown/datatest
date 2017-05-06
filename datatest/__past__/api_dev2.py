@@ -14,15 +14,19 @@ from datatest.utils import functools
 from datatest.utils.misc import _make_decimal
 
 from datatest import DataTestCase
-from datatest.differences import xBaseDifference as BaseDifference
-from datatest.differences import xMissing as Missing
-from datatest.differences import xExtra as Extra
-from datatest.differences import xDeviation
-from datatest.differences import xInvalid as Invalid
+
+# Put error and differences into main namespace.
 from datatest.error import xDataError
-datatest.Missing = Missing
-datatest.Extra = Extra
-datatest.Invalid = Invalid
+from datatest.differences import xBaseDifference
+from datatest.differences import xMissing
+from datatest.differences import xExtra
+from datatest.differences import xInvalid
+from datatest.differences import xDeviation
+datatest.DataError = xDataError
+datatest.BaseDifference = xBaseDifference
+datatest.Missing = xMissing
+datatest.Extra = xExtra
+datatest.Invalid = xInvalid
 datatest.Deviation = xDeviation
 
 # Needed for assertEqual() wrapper.
@@ -30,9 +34,24 @@ from datatest.compare import CompareSet
 from datatest.compare import CompareDict
 from datatest.compare import BaseCompare
 
-
+# Put old data source classes into main namespace.
+from datatest.sources.adapter import AdapterSource
 from datatest.sources.base import BaseSource
-datatest.BaseSource = BaseSource  # Move into main namespace.
+from datatest.sources.csv import CsvSource
+from datatest.sources.excel import ExcelSource
+from datatest.sources.multi import MultiSource
+from datatest.sources.pandas import PandasSource
+from datatest.sources.sqlite import SqliteBase
+from datatest.sources.sqlite import SqliteSource
+datatest.AdapterSource = AdapterSource
+datatest.BaseSource = BaseSource
+datatest.CsvSource = CsvSource
+datatest.ExcelSource = ExcelSource
+datatest.MultiSource = MultiSource
+datatest.PandasSource = PandasSource
+datatest.SqliteBase = SqliteBase
+datatest.SqliteSource = SqliteSource
+
 
 _re_type = type(re.compile(''))
 
@@ -45,7 +64,7 @@ def _normalize_required(self, required, method, *args, **kwds):
     if required == None:
         required = self.reference
 
-    if isinstance(required, BaseSource):
+    if isinstance(required, datatest.BaseSource):
         fn = getattr(required, method)
         required = fn(*args, **kwds)
 
@@ -197,7 +216,7 @@ def assertSubjectUnique(self, columns, msg=None, **kwds_filter):
             seen_before.add(values)
 
     if extras:
-        differences = sorted([Extra(x) for x in extras])
+        differences = sorted([xExtra(x) for x in extras])
         default_msg = 'values in {0!r} are not unique'.format(columns)
         self.fail(msg or default_msg, differences)
 DataTestCase.assertSubjectUnique = assertSubjectUnique
@@ -326,7 +345,7 @@ class allow_only(allow_iter):
         """Iterate over difference or collection of differences."""
         if isinstance(diff, dict):
             diff = diff.values()
-        elif isinstance(diff, BaseDifference):
+        elif isinstance(diff, xBaseDifference):
             diff = (diff,)
 
         for item in diff:
@@ -334,8 +353,8 @@ class allow_only(allow_iter):
                 for elt2 in cls._walk_diff(item):
                     yield elt2
             else:
-                if not isinstance(item, BaseDifference):
-                    raise TypeError('Object {0!r} is not derived from BaseDifference.'.format(item))
+                if not isinstance(item, xBaseDifference):
+                    raise TypeError('Object {0!r} is not derived from xBaseDifference.'.format(item))
                 yield item
 datatest.allow_only = allow_only
 
@@ -427,7 +446,7 @@ class allow_missing(allow_each):
             ...
     """
     def __init__(self, msg=None, **kwds):
-        function = lambda diff: isinstance(diff, Missing)
+        function = lambda diff: isinstance(diff, xMissing)
         function.__name__ = self.__class__.__name__
         super(allow_missing, self).__init__(function, msg, **kwds)
 datatest.allow_missing = allow_missing
@@ -446,7 +465,7 @@ class allow_extra(allow_each):
             ...
     """
     def __init__(self, msg=None, **kwds):
-        function = lambda diff: isinstance(diff, Extra)
+        function = lambda diff: isinstance(diff, xExtra)
         function.__name__ = self.__class__.__name__
         super(allow_extra, self).__init__(function, msg, **kwds)
 datatest.allow_extra = allow_extra
