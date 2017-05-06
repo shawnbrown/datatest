@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Test __past__.api_dev1 to assure backwards compatibility with first
+"""Test __past__.api06 to assure backwards compatibility with first
 development-release API.
 
 .. note:: Because this sub-module works by monkey-patching the global
@@ -11,7 +11,7 @@ from . import _unittest as unittest
 from .common import MinimalSource
 
 import datatest
-from datatest.__past__ import api_dev1  # <- MONKEY PATCH!!!
+from datatest.__past__ import api06  # <- MONKEY PATCH!!!
 
 
 class TestApiDev1(unittest.TestCase):

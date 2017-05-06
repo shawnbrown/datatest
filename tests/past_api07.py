@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Test __past__.api_dev2 to assure backwards compatibility with first
+"""Test __past__.api07 to assure backwards compatibility with first
 development-release API.
 
 .. note:: Because this sub-module works by monkey-patching the global
@@ -13,7 +13,7 @@ from datatest.utils.decimal import Decimal
 
 from .common import MinimalSource
 import datatest
-from datatest.__past__ import api_dev2  # <- MONKEY PATCH!!!
+from datatest.__past__ import api07  # <- MONKEY PATCH!!!
 
 from datatest.error import xDataError
 from datatest import Missing

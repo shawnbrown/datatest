@@ -8,7 +8,7 @@
 from . import _unittest as unittest
 
 import datatest
-from datatest.__past__ import api_dev0  # <- MONKEY PATCH!!!
+from datatest.__past__ import api00  # <- MONKEY PATCH!!!
 
 from .common import MinimalSource
 DataTestCase = datatest.DataTestCase

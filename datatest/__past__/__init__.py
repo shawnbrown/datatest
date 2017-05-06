@@ -4,10 +4,8 @@
 To use a feature that is no longer supported in the current version of
 datatest, use the following:
 
-    from datatest.__past__ import <feature-name>_<major-version>
+    from datatest.__past__ import api<version-number>
 
-For example, importing 'assertions_alpha' would provide backwards
-compatibility for the assertion methods that were implemented in the
-alpha/pre-release version of datatest.
-
+For example, importing 'api07' would provide backwards compatibility
+for the API as implemented in the 0.7 version of datatest.
 """

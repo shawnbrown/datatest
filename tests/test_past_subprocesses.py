@@ -33,17 +33,17 @@ class TestBackwardsCompatibility(unittest.TestCase):
             ])
             self.fail(msg)
 
-    def test_api_dev0(self):
-        """Test compatibility with API of pre-release version."""
-        self.assertSubprocess('tests.past_api_dev0')
+    def test_api00(self):
+        """Test compatibility with pre-release alpha API."""
+        self.assertSubprocess('tests.past_api00')
 
-    def test_api_dev1(self):
-        """Test compatibility with API of first development-release."""
-        self.assertSubprocess('tests.past_api_dev1')
+    def test_api06(self):
+        """Test compatibility with first development-release API."""
+        self.assertSubprocess('tests.past_api06')
 
-    def test_api_dev2(self):
-        """Test compatibility with API of second development-release."""
-        self.assertSubprocess('tests.past_api_dev2')
+    def test_api07(self):
+        """Test compatibility with second development-release API."""
+        self.assertSubprocess('tests.past_api07')
 
 
 if __name__ == '__main__':
