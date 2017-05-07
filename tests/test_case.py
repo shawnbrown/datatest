@@ -16,7 +16,7 @@ from datatest.dataaccess import DataSource
 from datatest.dataaccess import DataQuery
 from datatest.dataaccess import DataResult
 
-from datatest.errors import ValidationErrors
+from datatest.errors import ValidationError
 from datatest.errors import Extra
 from datatest.errors import Missing
 from datatest.errors import Invalid
@@ -74,7 +74,7 @@ class TestAssertValid(DataTestCase):
     +--------------+-------+---------+--------------+------------+
     """
     def test_nonmapping(self):
-        with self.assertRaises(ValidationErrors) as cm:
+        with self.assertRaises(ValidationError) as cm:
             data = set([1, 2, 3])
             required = set([1, 2, 4])
             self.assertValid(data, required)
@@ -83,7 +83,7 @@ class TestAssertValid(DataTestCase):
         self.assertEqual(errors, [Missing(4), Extra(3)])
 
     def test_data_mapping(self):
-        with self.assertRaises(ValidationErrors) as cm:
+        with self.assertRaises(ValidationError) as cm:
             data = {'a': set([1, 2]), 'b': set([1]), 'c': set([1, 2, 3])}
             required = set([1, 2])
             self.assertValid(data, required)
@@ -92,7 +92,7 @@ class TestAssertValid(DataTestCase):
         self.assertEqual(errors, {'b': [Missing(2)], 'c': [Extra(3)]})
 
     def test_required_mapping(self):
-        with self.assertRaises(ValidationErrors) as cm:
+        with self.assertRaises(ValidationError) as cm:
             data = {'AAA': 'a', 'BBB': 'x'}
             required = {'AAA': 'a', 'BBB': 'b', 'CCC': 'c'}
             self.assertValid(data, required)
@@ -120,7 +120,7 @@ class TestAssertValid(DataTestCase):
         """When *required* is a string or other object, _compare_other()
         should be called.
         """
-        with self.assertRaises(ValidationErrors) as cm:
+        with self.assertRaises(ValidationError) as cm:
             required = lambda x: x.isupper()
             data = ['AAA', 'BBB', 'ccc', 'DDD']
             self.assertValid(data, required)

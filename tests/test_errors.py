@@ -2,7 +2,7 @@
 import re
 from . import _unittest as unittest
 
-from datatest.errors import ValidationErrors
+from datatest.errors import ValidationError
 from datatest.errors import DataError
 from datatest.errors import Missing
 from datatest.errors import Extra
@@ -18,37 +18,37 @@ class MinimalDataError(DataError):
     pass
 
 
-class TestValidationErrors(unittest.TestCase):
+class TestValidationError(unittest.TestCase):
     def test_error_list(self):
         error_list = [MinimalDataError('A'), MinimalDataError('B')]
 
-        err = ValidationErrors('invalid data', error_list)
+        err = ValidationError('invalid data', error_list)
         self.assertEqual(err.errors, error_list)
 
     def test_error_iter(self):
         error_list = [MinimalDataError('A'), MinimalDataError('B')]
         error_iter = iter(error_list)
 
-        err = ValidationErrors('invalid data', error_iter)
+        err = ValidationError('invalid data', error_iter)
         self.assertEqual(err.errors, error_list, 'iterable should be converted to list')
 
     def test_error_dict(self):
         error_dict = {'a': MinimalDataError('A'), 'b': MinimalDataError('B')}
 
-        err = ValidationErrors('invalid data', error_dict)
+        err = ValidationError('invalid data', error_dict)
         self.assertEqual(err.errors, error_dict)
 
     def test_error_iteritems(self):
         error_dict = {'a': MinimalDataError('A'), 'b': MinimalDataError('B')}
         error_iteritems = getattr(error_dict, 'iteritems', error_dict.items)()
 
-        err = ValidationErrors('invalid data', error_iteritems)
+        err = ValidationError('invalid data', error_iteritems)
         self.assertEqual(err.errors, error_dict)
 
     def test_bad_args(self):
         with self.assertRaises(TypeError, msg='must be iterable'):
             single_error = MinimalDataError('A')
-            ValidationErrors('invalid data', single_error)
+            ValidationError('invalid data', single_error)
 
 
 class TestDataError(unittest.TestCase):

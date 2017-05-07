@@ -10,7 +10,7 @@ from .dataaccess import DataQuery
 from .dataaccess import DataResult
 
 from .validate import _get_differences
-from .errors import ValidationErrors
+from .errors import ValidationError
 
 __datatest = True  # Used to detect in-module stack frames (which are
                    # omitted from output).
@@ -208,7 +208,7 @@ class DataTestCase(TestCase):
                 errors.args = (first_arg,) + args
             raise errors
         elif errors:
-            raise ValidationErrors(msg, errors)
+            raise ValidationError(msg, errors)
         else:
             raise self.failureException(msg)
 
@@ -282,7 +282,7 @@ class DataTestCase(TestCase):
                 self.assertValid(data, requirement)
 
         If the count of differences exceeds the given *number*, the test
-        will fail with a :class:`ValidationErrors` containing all
+        will fail with a :class:`ValidationError` containing all
         observed differences.
         """
         return allow_limit(number, *funcs, **kwds)

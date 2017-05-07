@@ -10,7 +10,7 @@ from .utils import itertools
 
 from .dataaccess import _is_collection_of_items
 from .dataaccess import DictItems
-from .errors import ValidationErrors
+from .errors import ValidationError
 
 from .utils.misc import _is_consumable
 from .utils.misc import _is_nsiterable
@@ -53,7 +53,7 @@ class allow_iter(object):
 
     def __exit__(self, exc_type, exc_value, tb):
         # Apply function or reraise non-validation error.
-        if issubclass(exc_type, ValidationErrors):
+        if issubclass(exc_type, ValidationError):
             errors = self.function(exc_value.errors)
         elif exc_type is None:
             errors = self.function([])
@@ -87,9 +87,9 @@ class allow_iter(object):
             input_cls = exc_value.errors.__class__.__name__
             raise TypeError(message.format(input_cls, output_cls))
 
-        # Re-raise ValidationErrors() with remaining errors.
+        # Re-raise ValidationError() with remaining errors.
         message = getattr(exc_value, 'message')
-        exc = ValidationErrors(message, errors)
+        exc = ValidationError(message, errors)
         exc.__cause__ = None  # <- Suppress context using verbose
         raise exc             #    alternative to support older Python
                               #    versions--see PEP 415 (same as

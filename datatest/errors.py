@@ -12,7 +12,7 @@ from .utils.misc import _make_token
 from .dataaccess import _is_collection_of_items
 
 
-class ValidationErrors(AssertionError):
+class ValidationError(AssertionError):
     """Iterable container of errors."""
     def __init__(self, message, errors):
         if not _is_nsiterable(errors) or isinstance(errors, Exception):

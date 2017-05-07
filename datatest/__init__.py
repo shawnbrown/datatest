@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from .case import DataTestCase
 
-from .errors import ValidationErrors
+from .errors import ValidationError
 from .errors import DataError
 from .errors import Missing
 from .errors import Extra
@@ -40,7 +40,7 @@ __all__ = [
     'DataTestCase',
 
     # Error classes.
-    'ValidationErrors',
+    'ValidationError',
     'DataError',
     'Missing',
     'Extra',
