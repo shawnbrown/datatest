@@ -21,16 +21,14 @@ from .load.sqltemp import _from_csv
 
 
 class working_directory(contextlib.ContextDecorator):
-    """A context manager to temporarily change the working directory
-    to *path*. When exiting the with-block, the working directory is
-    automatically changed back to its previous location::
+    """A context manager to temporarily set the working directory
+    to a given *path*. If *path* specifies a file, the file's
+    directory is used. When exiting the with-block, the working
+    directory is automatically changed back to its previous
+    location::
 
-        with datatest.working_directory('/opt/staging/'):
-            source = datatest.DataSource.from_csv('myfile.csv')
-
-    If *path* specifies a file, the file's directory is used as the
-    working directory. Use the global ``__file__`` variable to load
-    data relative to the test file itself::
+    Use the global ``__file__`` variable to load data relative to
+    the test file itself::
 
         with datatest.working_directory(__file__):
             source = datatest.DataSource.from_csv('myfile.csv')

@@ -38,18 +38,18 @@ class TestWorkingDirectory(unittest.TestCase):
         os.chdir(self.original_dir)
         os.rmdir(self.temporary_dir)
 
-    def test_as_context_manager(self):
+    def test_context_manager(self):
         original_dir = os.getcwd()
 
-        with working_directory(self.temporary_dir):  # <- Context manager usage.
+        with working_directory(self.temporary_dir):
             self.assertEqual(os.getcwd(), self.temporary_dir)
 
         self.assertEqual(os.getcwd(), original_dir)
 
-    def test_as_decorator(self):
+    def test_decorator(self):
         original_dir = os.getcwd()
 
-        @working_directory(self.temporary_dir)  # <- Decorator usage.
+        @working_directory(self.temporary_dir)
         def myfunction():
             self.assertEqual(os.getcwd(), self.temporary_dir)
         myfunction()  # <- Actually run the function.
