@@ -25,8 +25,9 @@ def _require_sequence(data, sequence):
     if isinstance(data, str):
         raise ValueError("uncomparable types: 'str' and sequence type")
 
-    if not isinstance(data, collections.Sequence):
-        type_name = type(data).__name__
+    data_type = getattr(data, 'evaluation_type', data.__class__)
+    if not issubclass(data_type, collections.Sequence):
+        type_name = data_type.__name__
         msg = "expected sequence type, but got " + repr(type_name)
         raise ValueError(msg)
 
