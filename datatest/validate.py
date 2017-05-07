@@ -4,7 +4,7 @@ from .utils import itertools
 from .utils import collections
 from .utils.builtins import callable
 from .utils.misc import _is_nsiterable
-from .dataaccess import ItemsIter
+from .dataaccess import DictItems
 from .dataaccess import _is_collection_of_items
 from .errors import DataError
 from .errors import Extra
@@ -244,13 +244,13 @@ def _apply_mapping_requirement(data, mapping):
 
 
 def _normalize_mapping_result(result):
-    """Accepts an iterator of dictionary items and returns an ItemsIter
+    """Accepts an iterator of dictionary items and returns a DictItems
     object or None.
     """
     first_element = next(result, None)
     if first_element:
         assert len(first_element) == 2, 'expects tuples of key-value pairs'
-        return ItemsIter(itertools.chain([first_element], result))  # <- EXIT!
+        return DictItems(itertools.chain([first_element], result))  # <- EXIT!
     return None
 
 

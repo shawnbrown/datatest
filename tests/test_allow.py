@@ -2,7 +2,6 @@
 import inspect
 from . import _unittest as unittest
 from datatest.utils import collections
-from datatest.dataaccess import ItemsIter
 
 from datatest.allow import allow_iter
 from datatest.allow import _allow_element

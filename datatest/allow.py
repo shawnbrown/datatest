@@ -9,7 +9,7 @@ from .utils import functools
 from .utils import itertools
 
 from .dataaccess import _is_collection_of_items
-from .dataaccess import ItemsIter
+from .dataaccess import DictItems
 from .errors import ValidationErrors
 
 from .utils.misc import _is_consumable
@@ -76,7 +76,7 @@ class allow_iter(object):
         if (mappable_in and not mappable_out
                 and isinstance(first_item, collections.Sized)
                 and len(first_item) == 2):
-            errors = ItemsIter(errors)
+            errors = DictItems(errors)
             mappable_out = True
 
         # Verify type compatibility.

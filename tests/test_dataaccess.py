@@ -24,7 +24,7 @@ from datatest.dataaccess import _sqlite_max
 from datatest.dataaccess import _sqlite_distinct
 from datatest.dataaccess import _set_data
 from datatest.dataaccess import _cast_as_set
-from datatest.dataaccess import ItemsIter
+from datatest.dataaccess import DictItems
 from datatest.dataaccess import _is_collection_of_items
 from datatest.dataaccess import working_directory
 
@@ -89,15 +89,15 @@ class TestDataResult(unittest.TestCase):
             typed = DataResult(untyped, [1, 2])
 
 
-class TestItemsIter(unittest.TestCase):
-    def test_itemsiter(self):
-        foo = ItemsIter([('a', 1), ('b', 2)])
+class TestDictItems(unittest.TestCase):
+    def test_dictitems(self):
+        foo = DictItems([('a', 1), ('b', 2)])
         self.assertEqual(list(foo), [('a', 1), ('b', 2)])
 
 
 class TestIsCollectionOfItems(unittest.TestCase):
-    def test_ItemsIter(self):
-        items_iter = ItemsIter([('a', 1), ('b', 2)])
+    def test_dictitems(self):
+        items_iter = DictItems([('a', 1), ('b', 2)])
         self.assertTrue(_is_collection_of_items(items_iter))
 
     def test_dict_items(self):

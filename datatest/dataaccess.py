@@ -50,7 +50,7 @@ class working_directory(contextlib.ContextDecorator):
         os.chdir(self._original_dir)
 
 
-class ItemsIter(collections.Iterator):
+class DictItems(collections.Iterator):
     """A simple wrapper used to identify iterators that should
     return a 2-tuple of key-value pairs. The underlying iterable
     should not contain duplicate keys and it should be appropriate
@@ -73,13 +73,13 @@ class ItemsIter(collections.Iterator):
 
 _iteritem_types = (
     collections.ItemsView,
-    ItemsIter,
+    DictItems,
     type(getattr(dict(), 'iteritems', dict().items)()),  # For Python 2 compatibility.
 )
 
 def _is_collection_of_items(obj):
     while hasattr(obj, '__wrapped__'):
-        if isinstance(obj, ItemsIter):
+        if isinstance(obj, DictItems):
             return True
         obj = obj.__wrapped__
     return isinstance(obj, _iteritem_types)
@@ -108,17 +108,17 @@ class DataResult(collections.Iterator):
             raise TypeError(msg.format(evaluation_type.__class__.__name__))
 
         while (hasattr(iterable, '__wrapped__')
-                   and not isinstance(iterable, ItemsIter)):
+                   and not isinstance(iterable, DictItems)):
             iterable = iterable.__wrapped__
 
         if isinstance(iterable, collections.Mapping):
-            iterable = ItemsIter(iterable.items())
+            iterable = DictItems(iterable.items())
 
         if (issubclass(evaluation_type, collections.Mapping)
                 and not _is_collection_of_items(iterable)):
             cls_name = iterable.__class__.__name__
             raise TypeError('when evaluation_type is a mapping, '
-                            'iterator must be ItemsIter or ItemsView, '
+                            'iterator must be DictItems or ItemsView, '
                             'found {0} instead'.format(cls_name))
 
         #: The underlying iterator---useful when introspecting
@@ -199,7 +199,7 @@ def _apply_to_data(function, data_iterator):
     iterator *data_iterator*.
     """
     if _is_collection_of_items(data_iterator):
-        result = ItemsIter((k, function(v)) for k, v in data_iterator)
+        result = DictItems((k, function(v)) for k, v in data_iterator)
         return DataResult(result, _get_evaluation_type(data_iterator))
     return function(data_iterator)
 
@@ -345,7 +345,7 @@ def _sqlite_distinct(iterable):
         return DataResult(_unique_everseen(itr), _get_evaluation_type(itr))
 
     if _is_collection_of_items(iterable):
-        result = ItemsIter((k, dodistinct(v)) for k, v in iterable)
+        result = DictItems((k, dodistinct(v)) for k, v in iterable)
         return DataResult(result, _get_evaluation_type(iterable))
     return dodistinct(iterable)
 
@@ -358,7 +358,7 @@ def _cast_as_set(iterable):
         return DataResult(itr, evaluation_type=set)
 
     if _is_collection_of_items(iterable):
-        result = ItemsIter((k, makeset(v)) for k, v in iterable)
+        result = DictItems((k, makeset(v)) for k, v in iterable)
         return DataResult(result, _get_evaluation_type(iterable))
         # TODO: Check above line looks like it's eagerly evaluating.
     return makeset(iterable)
@@ -928,7 +928,7 @@ class DataSource(object):
                     result = (value_type(row) for row in group)
                     return DataResult(result, evaluation_type=list)
 
-            result =  ItemsIter((k, valuefunc(g)) for k, g in grouped)
+            result =  DictItems((k, valuefunc(g)) for k, g in grouped)
             return DataResult(result, evaluation_type=result_type) # <- EXIT!
 
         raise TypeError('type {0!r} not supported'.format(type(selection)))
@@ -988,7 +988,7 @@ class DataSource(object):
         results = self._format_results(selection, cursor)
 
         if isinstance(selection, collections.Mapping):
-            results = ItemsIter((k, next(v)) for k, v in results)
+            results = DictItems((k, next(v)) for k, v in results)
             return DataResult(results, evaluation_type=dict)
         return next(results)
 
