@@ -177,14 +177,13 @@ class DataTestCase(TestCase):
                 requirement = 'FOO'
                 self.assertValid(data, requirement)
         """
-        # Evaluate query and result objects.
-        #if isinstance(data, DataQuery):
-        #    data = data.execute()
-        #elif isinstance(data, DataResult):
-        #    data = data.evaluate()
-        # TODO: Handle using lazy evaluation.
-        #if isinstance(data, DataQuery):
-        #    data = data.execute(evaluate=False)
+        if isinstance(data, DataQuery):          # If data is a DataQuery,
+            data = data.execute(evaluate=False)  # lazily evaluate it.
+
+        if isinstance(requirement, DataQuery):     # If requirement is
+            requirement = requirement.execute()    # a DataQuery or
+        elif isinstance(requirement, DataResult):  # DataResult, we must
+            requirement = requirement.evaluate()   # eagerly evaluate it.
 
         errors = _get_differences(data, requirement)
         if not errors:

@@ -11,6 +11,11 @@ from . import _unittest as unittest
 
 # Import code to test.
 from datatest.case import DataTestCase
+
+from datatest.dataaccess import DataSource
+from datatest.dataaccess import DataQuery
+from datatest.dataaccess import DataResult
+
 from datatest.errors import ValidationErrors
 from datatest.errors import Extra
 from datatest.errors import Missing
@@ -123,6 +128,17 @@ class TestAssertValid(DataTestCase):
 
         self.assertEqual = super(DataTestCase, self).assertEqual
         self.assertEqual(errors, [Invalid('ccc')])
+
+    def test_query_objects(self):
+        source = DataSource([('1', '2'), ('1', '2')], columns=['A', 'B'])
+        query_obj1 = source('B')
+        query_obj2 = source('B')
+        self.assertValid(query_obj1, query_obj2)
+
+    def test_result_objects(self):
+        result_obj1 = DataResult(['2', '2'], evaluation_type=list)
+        result_obj2 = DataResult(['2', '2'], evaluation_type=list)
+        self.assertValid(result_obj1, result_obj2)
 
 
 class TestAssertEqual(unittest.TestCase):
