@@ -821,186 +821,9 @@ class DataSource(object):
         dict_row = lambda x: dict(zip(column_names, x))
         return (dict_row(row) for row in cursor.fetchall())
 
-    def _assert_columns_exist(self, columns):
-        """Assert that given columns are present in data source,
-        raises LookupError if columns are missing.
-        """
-        if (not _is_nsiterable(columns)
-                or isinstance(columns, collections.Mapping)):
-            columns = (columns,)
-        self_cols = self.columns()
-        is_missing = lambda col: col not in self_cols
-        missing = [c for c in columns if is_missing(c)]
-        if missing:
-            missing = ', '.join(repr(x) for x in missing)
-            msg = '{0} not in {1}'.format(missing, self.__repr__())
-            raise LookupError(msg)
-
     def __call__(self, *columns, **kwds_filter):
         steps = (_query_step('select', columns, kwds_filter),)
         return DataQuery._from_parts(steps, source=self)
-
-    def _sql_select_cols(self, selection):
-        """Return a string of normalized columns to use with a
-        SELECT clause.
-        """
-        if isinstance(selection, str):
-            self._assert_columns_exist(selection)
-            return self._normalize_column(selection)  # <- EXIT!
-
-        if isinstance(selection, (collections.Sequence, collections.Set)):
-            self._assert_columns_exist(selection)
-            row_type = type(selection)
-            select_clause = (self._normalize_column(x) for x in selection)
-            return ', '.join(select_clause)  # <- EXIT!
-
-        if isinstance(selection, collections.Mapping):
-            assert len(selection) == 1
-            key, value = tuple(selection.items())[0]
-            if isinstance(key, str):
-                key = (key,)
-            if isinstance(value, str):
-                value = (value,)
-            self._assert_columns_exist(key)
-            self._assert_columns_exist(value)
-            key_tuple = tuple(self._normalize_column(x) for x in key)
-            value_tuple = tuple(self._normalize_column(x) for x in value)
-            return ', '.join(key_tuple + value_tuple)  # <- EXIT!
-
-        raise TypeError('type {0!r} not supported'.format(type(selection)))
-
-    def _sql_group_order_cols(self, selection):
-        """Return a string of normalized column names appropriate
-        for use with a GROUP BY or ORDER BY clause.
-
-        The *selection* can be a string, sequence, set or mapping--see
-        the _select() method for details.
-        """
-        if isinstance(selection, str):
-            return self._normalize_column(selection)  # <- EXIT!
-
-        if isinstance(selection, (collections.Sequence, collections.Set)):
-            columns = tuple(self._normalize_column(x) for x in selection)
-            return ', '.join(columns)  # <- EXIT!
-
-        if isinstance(selection, collections.Mapping):
-            key = tuple(selection.keys())[0]
-            if isinstance(key, str):
-                return self._normalize_column(key)  # <- EXIT
-            key_tuple = tuple(self._normalize_column(x) for x in key)
-            return ', '.join(key_tuple)  # <- EXIT!
-
-        raise TypeError('type {0!r} not supported'.format(type(selection)))
-
-    def _format_results(self, selection, cursor):
-        """Return an iterator of results formatted by *selection*
-        types from DBAPI2-compliant *cursor*.
-
-        The *selection* can be a string, sequence, set or mapping--see
-        the _select() method for details.
-        """
-        if isinstance(selection, str):
-            result = (row[0] for row in cursor)
-            return DataResult(result, evaluation_type=list) # <- EXIT!
-
-        if isinstance(selection, (collections.Sequence, collections.Set)):
-            result_type = type(selection)
-            result = (result_type(x) for x in cursor)
-            return DataResult(result, evaluation_type=list) # <- EXIT!
-
-        if isinstance(selection, collections.Mapping):
-            result_type = type(selection)
-            key, value = tuple(selection.items())[0]
-            key_type = type(key)
-            value_type = type(value)
-            slice_index = 1 if issubclass(key_type, str) else len(key)
-
-            if issubclass(key_type, str):
-                keyfunc = lambda row: row[0]
-            else:
-                keyfunc = lambda row: key_type(row[:slice_index])
-            grouped = itertools.groupby(cursor, keyfunc)
-
-            if issubclass(value_type, str):
-                def valuefunc(group):
-                    result = (row[-1] for row in group)
-                    return DataResult(result, evaluation_type=list)
-            else:
-                def valuefunc(group):
-                    group = (row[slice_index:] for row in group)
-                    result = (value_type(row) for row in group)
-                    return DataResult(result, evaluation_type=list)
-
-            result =  DictItems((k, valuefunc(g)) for k, g in grouped)
-            return DataResult(result, evaluation_type=result_type) # <- EXIT!
-
-        raise TypeError('type {0!r} not supported'.format(type(selection)))
-
-    def _select(self, selection, **where):
-        select = self._sql_select_cols(selection)
-        if isinstance(selection, collections.Mapping):
-            order_cols = self._sql_group_order_cols(selection)
-            order_by = 'ORDER BY {0}'.format(order_cols)
-        else:
-            order_by = None
-        cursor = self._execute_query(select, order_by, **where)
-        return self._format_results(selection, cursor)
-
-    def _select_distinct(self, selection, **where):
-        select_cols = self._sql_select_cols(selection)
-        select = 'DISTINCT {0}'.format(select_cols)
-        if isinstance(selection, collections.Mapping):
-            order_cols = self._sql_group_order_cols(selection)
-            order_by = 'ORDER BY {0}'.format(order_cols)
-        else:
-            order_by = None
-        cursor = self._execute_query(select, order_by, **where)
-        return self._format_results(selection, cursor)
-
-    def _select_aggregate(self, sqlfunc, selection, **where):
-        """."""
-        sqlfunc = sqlfunc.upper()
-
-        if isinstance(selection, collections.Mapping):
-            value_cols = tuple(selection.values())[0]
-            self._assert_columns_exist(value_cols)
-            if isinstance(value_cols, str):
-                normalized = self._normalize_column(value_cols)
-                formatted = '{0}({1})'.format(sqlfunc, normalized)
-            else:
-                normalized = [self._normalize_column(x) for x in value_cols]
-                formatted = ['{0}({1})'.format(sqlfunc, x) for x in normalized]
-                formatted = ', '.join(formatted)
-            key_cols = self._sql_group_order_cols(selection)
-            select = '{0}, {1}'.format(key_cols, formatted)
-            group_by = 'GROUP BY {0}'.format(key_cols)
-        else:
-            if isinstance(selection, str):
-                normalized = self._normalize_column(selection)
-                select = '{0}({1})'.format(sqlfunc, normalized)
-                group_by = None
-            elif isinstance(selection, (collections.Sequence, collections.Set)):
-                normalized = [self._normalize_column(x) for x in selection]
-                formatted = ['{0}({1})'.format(sqlfunc, x) for x in normalized]
-                select = ', '.join(formatted)
-                group_by = None
-            else:
-                raise TypeError('type {0!r} not supported'.format(type(selection)))
-
-        cursor = self._execute_query(select, group_by, **where)
-        results = self._format_results(selection, cursor)
-
-        if isinstance(selection, collections.Mapping):
-            results = DictItems((k, next(v)) for k, v in results)
-            return DataResult(results, evaluation_type=dict)
-        return next(results)
-
-    def __repr__(self):
-        """Return a string representation of the data source."""
-        cls_name = self.__class__.__name__
-        conn_name = str(self._connection)
-        tbl_name = self._table
-        return '{0}({1}, table={2!r})'.format(cls_name, conn_name, tbl_name)
 
     def _execute_query(self, select_clause, trailing_clause=None, **kwds_filter):
         """Execute query and return cursor object."""
@@ -1009,7 +832,6 @@ class DataSource(object):
             if trailing_clause:
                 stmnt += '\n' + trailing_clause
             cursor = self._connection.cursor()
-            cursor.execute('PRAGMA synchronous=OFF')
             #print(stmnt, params)
             cursor.execute(stmnt, params)
         except Exception as e:
@@ -1028,13 +850,13 @@ class DataSource(object):
         return query, params
 
     @staticmethod
-    def _build_where_clause(**kwds_filter):
-        """Return 'WHERE' clause that implements *kwds_filter*
+    def _build_where_clause(**kwds):
+        """Return 'WHERE' clause that implements *kwds*
         constraints.
         """
         clause = []
         params = []
-        items = kwds_filter.items()
+        items = kwds.items()
         items = sorted(items, key=lambda x: x[0])  # Ordered by key.
         for key, val in items:
             if _is_nsiterable(val):
@@ -1047,6 +869,148 @@ class DataSource(object):
 
         clause = ' AND '.join(clause) if clause else ''
         return clause, params
+
+    def _format_result_group(self, selection, cursor):
+        outer_type = type(selection)
+        inner_type = type(next(iter(selection)))
+        if issubclass(inner_type, str):
+            result = (row[0] for row in cursor)
+        else:
+            result = (inner_type(x) for x in cursor)
+        return DataResult(result, evaluation_type=outer_type) # <- EXIT!
+
+    def _format_results(self, selection, cursor):
+        """Return an iterator of results formatted by *selection*
+        types from DBAPI2-compliant *cursor*.
+
+        The *selection* can be a string, sequence, set or mapping--see
+        the _select() method for details.
+        """
+        if isinstance(selection, (collections.Sequence, collections.Set)):
+            return self._format_result_group(selection, cursor)
+
+        if isinstance(selection, collections.Mapping):
+            result_type = type(selection)
+            key, value = tuple(selection.items())[0]
+            key_type = type(key)
+            slice_index = 1 if issubclass(key_type, str) else len(key)
+
+            if issubclass(key_type, str):
+                keyfunc = lambda row: row[0]
+            else:
+                keyfunc = lambda row: key_type(row[:slice_index])
+            grouped = itertools.groupby(cursor, keyfunc)
+
+            inner = next(iter(value))
+            index = 1 if isinstance(inner, str) else len(inner)
+            sliced = ((k, (x[-index:] for x in g)) for k, g in grouped)
+            formatted = ((k, self._format_result_group(value, g)) for k, g in sliced)
+            dictitems =  DictItems(formatted)
+            return DataResult(dictitems, evaluation_type=result_type) # <- EXIT!
+
+        raise TypeError('type {0!r} not supported'.format(type(selection)))
+
+    def _assert_columns_exist(self, columns):
+        """Assert that given columns are present in data source,
+        raises LookupError if columns are missing.
+        """
+        #assert _is_nsiterable(columns)
+        #assert not isinstance(columns, collections.Mapping)
+        available = self.columns()
+        for column in columns:
+            if column not in available:
+                msg = '{0!r} not in {1!r}'.format(column, self)
+                raise LookupError(msg)
+
+    def _validate_container(self, container):
+        assert isinstance(container, collections.Sized)
+        if isinstance(container, str):
+            raise ValueError("expected container type " \
+                             "(list, tuple, etc.), got 'str'")
+        if len(container) != 1:
+            raise AssertionError('expects a container of 1 item')
+
+    def _parse_selection(self, selection):
+        self._validate_container(selection)
+        if isinstance(selection, collections.Mapping):
+            key, value = tuple(selection.items())[0]
+            if isinstance(value, collections.Mapping):
+                message = 'mappings can not be nested, got {0!r}'
+                raise ValueError(message.format(selection))
+            self._validate_container(value)
+        else:
+            key = tuple()
+            value = selection
+        return key, value
+
+    def _escape_column(self, column):
+        column = column.replace('"', '""')  # Escape for SQLite.
+        return '"{0}"'.format(column)
+
+    def _parse_key_value(self, key, value):
+        key_columns = (key,) if isinstance(key, str) else tuple(key)
+        value = tuple(value)[0]
+        value_columns = (value,) if isinstance(value, str) else  tuple(value)
+        self._assert_columns_exist(key_columns)
+        self._assert_columns_exist(value_columns)
+        key_columns = tuple(self._escape_column(x) for x in key_columns)
+        value_columns = tuple(self._escape_column(x) for x in value_columns)
+
+        return key_columns, value_columns
+
+    def _select(self, selection, **where):
+        key, value = self._parse_selection(selection)
+        key_columns, value_columns = self._parse_key_value(key, value)
+
+        select = ', '.join(key_columns + value_columns)
+        if isinstance(value, collections.Set):
+            select = 'DISTINCT ' + select
+
+        if key:
+            order_by = 'ORDER BY {0}'.format(', '.join(key_columns))
+        else:
+            order_by = None
+        cursor = self._execute_query(select, order_by, **where)
+        return self._format_results(selection, cursor)
+
+    def _select_distinct(self, selection, **where):
+        key, value = self._parse_selection(selection)
+        key_columns, value_columns = self._parse_key_value(key, value)
+
+        columns = ', '.join(key_columns + value_columns)
+        select = 'DISTINCT {0}'.format(columns)
+        if key:
+            order_by = 'ORDER BY {0}'.format(', '.join(key_columns))
+        else:
+            order_by = None
+        cursor = self._execute_query(select, order_by, **where)
+        return self._format_results(selection, cursor)
+
+    def _select_aggregate(self, sqlfunc, selection, **where):
+        key, value = self._parse_selection(selection)
+        key_columns, value_columns = self._parse_key_value(key, value)
+
+        sqlfunc = sqlfunc.upper()
+        value_columns = tuple('{0}({1})'.format(sqlfunc, x) for x in value_columns)
+        select = ', '.join(key_columns + value_columns)
+        if key:
+            group_by = 'GROUP BY {0}'.format(', '.join(key_columns))
+        else:
+            group_by = None
+        cursor = self._execute_query(select, group_by, **where)
+        results =  self._format_results(selection, cursor)
+
+        if isinstance(selection, collections.Mapping):
+            results = DictItems((k, next(v)) for k, v in results)
+            return DataResult(results, evaluation_type=dict)
+        return next(results)
+
+    def __repr__(self):
+        """Return a string representation of the data source."""
+        cls_name = self.__class__.__name__
+        conn_name = str(self._connection)
+        tbl_name = self._table
+        return '{0}({1}, table={2!r})'.format(cls_name, conn_name, tbl_name)
 
     def create_index(self, *columns):
         """Create an index for specified columns---can speed up
@@ -1081,26 +1045,13 @@ class DataSource(object):
         idx_name = 'idx_{0}_{1}'.format(self._table, idx_name)
 
         # Build column names.
-        col_names = [self._normalize_column(x) for x in columns]
-        col_names = ', '.join(col_names)
+        columns = tuple(self._escape_column(x) for x in columns)
 
         # Prepare statement.
         statement = 'CREATE INDEX IF NOT EXISTS {0} ON {1} ({2})'
-        statement = statement.format(idx_name, self._table, col_names)
+        statement = statement.format(idx_name, self._table, ', '.join(columns))
 
         # Create index.
         cursor = self._connection.cursor()
         cursor.execute('PRAGMA synchronous=OFF')
         cursor.execute(statement)
-
-    @staticmethod
-    def _normalize_column(column):
-        """Normalize value for use as SQLite column name."""
-        if not isinstance(column, str):
-            msg = "expected column of type 'str', got {0!r} instead"
-            raise TypeError(msg.format(column.__class__.__name__))
-        column = column.strip()
-        column = column.replace('"', '""')  # Escape quotes.
-        if column == '':
-            column = '_empty_'
-        return '"' + column + '"'
