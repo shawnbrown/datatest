@@ -22,8 +22,6 @@ from datatest.dataaccess import _sqlite_avg
 from datatest.dataaccess import _sqlite_min
 from datatest.dataaccess import _sqlite_max
 from datatest.dataaccess import _sqlite_distinct
-from datatest.dataaccess import _set_data
-from datatest.dataaccess import _cast_as_set
 from datatest.dataaccess import DictItems
 from datatest.dataaccess import _is_collection_of_items
 from datatest.dataaccess import working_directory
@@ -411,33 +409,6 @@ class TestDistinctData(unittest.TestCase):
         self.assertEqual(result.evaluate(), {'a': 2, 'b': 3})
 
 
-class TestSetData(unittest.TestCase):
-    def test_list_iter(self):
-        iterable = DataResult([1, 2, 1, 2, 3], list)
-        result = _set_data(iterable)
-        self.assertEqual(result.evaluate(), set([1, 2, 3]))
-
-    def test_single_int(self):
-        result = _set_data(3)
-        self.assertEqual(result.evaluate(), set([3]))
-
-    def test_dataiter_dict_of_containers(self):
-        iterable = DataResult({'a': [1, 2, 1, 2], 'b': (3, 4, 3)}, dict)
-        result = _set_data(iterable)
-
-        self.assertIsInstance(result, DataResult)
-        self.assertEqual(result.evaluation_type, dict)
-        self.assertEqual(result.evaluate(), {'a': set([1, 2]), 'b': set([3, 4])})
-
-    def test_dataiter_dict_of_ints(self):
-        iterable = DataResult({'a': 2, 'b': 3}, dict)
-        result = _set_data(iterable)
-
-        self.assertIsInstance(result, DataResult)
-        self.assertEqual(result.evaluation_type, dict)
-        self.assertEqual(result.evaluate(), {'a': set([2]), 'b': set([3])})
-
-
 class TestDataQuery(unittest.TestCase):
     def test_init(self):
         query = DataQuery(['foo'], bar='baz')
@@ -505,70 +476,45 @@ class TestDataQuery(unittest.TestCase):
         result = query2.execute(source)
         self.assertEqual(result, 'ab')
 
-    @unittest.skip('Rewrite to use new format.')
-    def test_optimize_sum(self):
+    def test_optimize_aggregation(self):
         """
         Unoptimized:
-            DataQuery._select({'col1': 'values'}, col2='xyz').sum()
+            DataQuery._select({'col1': ['values']}, col2='xyz').sum()
 
         Optimized:
-            DataQuery._select_aggregate('SUM', {'col1': 'values'}, col2='xyz')
+            DataQuery._select_aggregate('SUM', {'col1': ['values']}, col2='xyz')
         """
         unoptimized = (
             (getattr, (RESULT_TOKEN, '_select'), {}),
-            (RESULT_TOKEN, ({'col1': 'values'},), {'col2': 'xyz'}),
+            (RESULT_TOKEN, ({'col1': ['values']},), {'col2': 'xyz'}),
             (_apply_to_data, (_sqlite_sum, RESULT_TOKEN,), {}),
         )
         optimized = DataQuery._optimize(unoptimized)
 
         expected = (
             (getattr, (RESULT_TOKEN, '_select_aggregate'), {}),
-            (RESULT_TOKEN, ('SUM', {'col1': 'values'},), {'col2': 'xyz'}),
+            (RESULT_TOKEN, ('SUM', {'col1': ['values']},), {'col2': 'xyz'}),
         )
         self.assertEqual(optimized, expected)
 
-    @unittest.skip('Rewrite to use new format.')
     def test_optimize_distinct(self):
         """
         Unoptimized:
-            DataQuery._select({'col1': 'values'}, col2='xyz').distinct()
+            DataQuery._select({'col1': ['values']}, col2='xyz').distinct()
 
         Optimized:
-            DataQuery._select_distinct({'col1': 'values'}, col2='xyz')
+            DataQuery._select_distinct({'col1': ['values']}, col2='xyz')
         """
         unoptimized = (
             (getattr, (RESULT_TOKEN, '_select'), {}),
-            (RESULT_TOKEN, ({'col1': 'values'},), {'col2': 'xyz'}),
+            (RESULT_TOKEN, ({'col1': ['values']},), {'col2': 'xyz'}),
             (_sqlite_distinct, (RESULT_TOKEN,), {}),
         )
         optimized = DataQuery._optimize(unoptimized)
 
         expected = (
             (getattr, (RESULT_TOKEN, '_select_distinct'), {}),
-            (RESULT_TOKEN, ({'col1': 'values'},), {'col2': 'xyz'}),
-        )
-        self.assertEqual(optimized, expected)
-
-    @unittest.skip('Rewrite to use new format.')
-    def test_optimize_set(self):
-        """
-        Unoptimized:
-            DataQuery._select({'col1': 'values'}, col2='xyz').set()
-
-        Optimized:
-            DataQuery._select_distinct({'col1': 'values'}, col2='xyz')._cast_as_set()
-        """
-        unoptimized = (
-            (getattr, (RESULT_TOKEN, '_select'), {}),
-            (RESULT_TOKEN, ({'col1': 'values'},), {'col2': 'xyz'}),
-            (_set_data, (RESULT_TOKEN,), {}),
-        )
-        optimized = DataQuery._optimize(unoptimized)
-
-        expected = (
-            (getattr, (RESULT_TOKEN, '_select_distinct'), {}),
-            (RESULT_TOKEN, ({'col1': 'values'},), {'col2': 'xyz'}),
-            (_cast_as_set, (RESULT_TOKEN,), {}),
+            (RESULT_TOKEN, ({'col1': ['values']},), {'col2': 'xyz'}),
         )
         self.assertEqual(optimized, expected)
 

@@ -348,27 +348,6 @@ def _sqlite_distinct(iterable):
     return dodistinct(iterable)
 
 
-def _cast_as_set(iterable):
-    """Change evaluation_type to set."""
-    def makeset(itr):
-        if not _is_nsiterable(itr):
-            itr = [itr]
-        return DataResult(itr, evaluation_type=set)
-
-    if _is_collection_of_items(iterable):
-        result = DictItems((k, makeset(v)) for k, v in iterable)
-        return DataResult(result, _get_evaluation_type(iterable))
-        # TODO: Check above line looks like it's eagerly evaluating.
-    return makeset(iterable)
-
-
-def _set_data(iterable):
-    """Filter iterable to unique values and change evaluation_type to
-    set.
-    """
-    return _cast_as_set(_sqlite_distinct(iterable))
-
-
 def _get_step_repr(step):
     """Helper function to return repr for a single query step."""
     func, args, kwds = step
@@ -497,10 +476,6 @@ class DataQuery(object):
         """Filter data, removing duplicate values."""
         return self._add_step('distinct')
 
-    def set(self):
-        """Change result's evaluation type to :py:class:`set`."""
-        return self._add_step('set')
-
     @staticmethod
     def _translate_step(query_step):
         """Accept a query step and return a corresponding execution
@@ -534,9 +509,6 @@ class DataQuery(object):
             args = (_sqlite_max, RESULT_TOKEN)
         elif name == 'distinct':
             function = _sqlite_distinct
-            args = (RESULT_TOKEN,)
-        elif name == 'set':
-            function = _set_data
             args = (RESULT_TOKEN,)
         elif name == 'select':
             raise ValueError("this method does not handle 'select' step")
@@ -597,12 +569,6 @@ class DataQuery(object):
             optimized_steps = (
                 (getattr, (RESULT_TOKEN, '_select_distinct'), {}),
                 step_1,
-            )
-        elif step_2 == (_set_data, (RESULT_TOKEN,), {}):
-            optimized_steps = (
-                (getattr, (RESULT_TOKEN, '_select_distinct'), {}),
-                step_1,
-                (_cast_as_set, (RESULT_TOKEN,), {}),
             )
         else:
             optimized_steps = ()
