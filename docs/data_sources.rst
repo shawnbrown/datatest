@@ -68,26 +68,31 @@ for the specified column or columns. The :meth:`execute()
 <DataQuery.execute>` method runs the query and returns the
 results.
 
-Select values from column **one**::
+Select elements from column **one** as a :py:class:`list`::
 
-    >>> source('one').execute()
+    >>> source(['one']).execute()
     ['a', 'a', 'b', 'b', 'c', 'c']
 
-Select values from columns **one** and **two** using a
-:py:class:`list`::
+Select elements from column **one** as a :py:class:`set`::
 
-    >>> source(['one', 'two']).execute()  # Returns a result of lists.
-    [['a', 'x'],
-     ['a', 'x'],
-     ['b', 'x'],
-     ['b', 'y'],
-     ['c', 'y'],
-     ['c', 'y']]
+    >>> source({'one'}).execute()
+    {'a', 'b', 'c'}
 
-Select values from columns **one** and **two** using a
-:py:class:`tuple`::
+The container type used in the selection determines the container type
+returned in the result. Selecting a column as a list will return a
+list of elements. Selecting the same column as a set will return a set
+of elements. Because :py:class:`set` objects can not contain duplicates,
+the second result has only one element for each unique value in the
+source.
 
-    >>> source(('one', 'two')).execute()  # Returns a result of tuples.
+
+Multiple Columns
+----------------
+
+Select elements from columns **one** and **two** using a list of
+:py:class:`tuple` values::
+
+    >>> source([('one', 'two')]).execute()  # Returns a list of tuples.
     [('a', 'x'),
      ('a', 'x'),
      ('b', 'x'),
@@ -95,32 +100,36 @@ Select values from columns **one** and **two** using a
      ('c', 'y'),
      ('c', 'y')]
 
-The previous two examples demonstrate how the type used to select the
-data determines the types returned in the result. Selecting two columns
-as a list gives us a result of lists. Selecting the same two columns as
-a tuple gives us a result of tuples.
+Select elements from columns **one** and **two** using a set of tuple
+values::
+
+    >>> source({('one', 'two')}).execute()  # Returns a set of tuples.
+    {('a', 'x'),
+     ('b', 'x'),
+     ('b', 'y'),
+     ('c', 'y')}
 
 
-Selecting Groups of Data
-========================
+Groups of Columns
+-----------------
 
-Group and select column values using a :py:class:`dict`::
+Group and select column elements using a :py:class:`dict`::
 
-    >>> source({'one': 'three'}).execute()  # Grouped by key.
+    >>> source({'one': ['three']}).execute()  # Grouped by key.
     {'a': ['100', '100'],
      'b': ['100', '100'],
      'c': ['100', '100']}
 
-Group and select column values using a :py:class:`dict` with a
+Group and select column elements using a :py:class:`dict` with a
 :py:class:`tuple` of keys::
 
-    >>> source({('one', 'two'): 'three'}).execute()
+    >>> source({('one', 'two'): ['three']}).execute()
     {('a', 'x'): ['100', '100'],
      ('b', 'x'): ['100'],
      ('b', 'y'): ['100'],
      ('c', 'y'): ['100', '100']}
 
-When selecting groups of data, you must provide a dictionary with
+When selecting groups of elements, you must provide a dictionary with
 a single key-value pair. As before, the selection types determine the
 result types but keep in mind that dictionary keys must be `immutable
 <http://docs.python.org/3/glossary.html#term-immutable>`_
@@ -128,28 +137,28 @@ result types but keep in mind that dictionary keys must be `immutable
 
 
 Narrowing a Selection
-=====================
+---------------------
 
 Selections can be narrowed to rows that satisfy given keyword
 arguments.
 
 Narrow a selection to rows where column **two** equals "x"::
 
-    >>> source(('one', 'two'), two='x').execute()
+    >>> source([('one', 'two')], two='x').execute()
     [('a', 'x'),
      ('a', 'x'),
      ('b', 'x')]
 
 The keyword column does not have to be in the selected result::
 
-    >>> source('one', two='x').execute()
+    >>> source(['one'], two='x').execute()
     ['a',
      'a',
      'b']
 
 Narrow a selection to rows where column **one** equals "a" *or* "b"::
 
-    >>> source(('one', 'two'), one=['a', 'b']).execute()
+    >>> source([('one', 'two')], one=['a', 'b']).execute()
     [('a', 'x'),
      ('a', 'x'),
      ('b', 'x'),
@@ -158,7 +167,7 @@ Narrow a selection to rows where column **one** equals "a" *or* "b"::
 Narrow a selection to rows where column **one** equals "b" *and*
 column **two** equals "y"::
 
-    >>> source(('one', 'two'), one='b', two='y').execute()
+    >>> source([('one', 'two')], one='b', two='y').execute()
     [('b', 'y')]  # Only 1 row matches these keyword conditions.
 
 
@@ -167,13 +176,13 @@ Query Operations
 
 :meth:`Sum <DataQuery.sum>` the values from column **three**::
 
-    >>> source('three').sum().execute()
+    >>> source(['three']).sum().execute()
     600
 
 Group by column **one** and sum the values from column **three** (for
 each group)::
 
-    >>> source({'one': 'three'}).sum().execute()
+    >>> source({'one': ['three']}).sum().execute()
     {'a': 200,
      'b': 200,
      'c': 200}
@@ -181,7 +190,7 @@ each group)::
 Group by columns **one** and **two** and sum the values from column
 **three**::
 
-    >>> source({('one', 'two'): 'three'}).sum().execute()
+    >>> source({('one', 'two'): ['three']}).sum().execute()
     {('a', 'x'): 200,
      ('b', 'x'): 100,
      ('b', 'y'): 100,
@@ -189,20 +198,15 @@ Group by columns **one** and **two** and sum the values from column
 
 Select :meth:`distinct <DataQuery.distinct>` values::
 
-    >>> source('one').distinct().execute()
+    >>> source(['one']).distinct().execute()
     ['a', 'b', 'c']
-
-Select a :meth:`set <DataQuery.set>` of values::
-
-    >>> source('one').set().execute()
-    {'a', 'b', 'c'}
 
 :meth:`Map <DataQuery.map>` values with a function::
 
     >>> def uppercase(x):
     ...     return str(x).upper()
     ...
-    >>> source('one').map(uppercase).execute()
+    >>> source(['one']).map(uppercase).execute()
     ['A', 'A', 'B', 'B', 'C', 'C']
 
 :meth:`Reduce <DataQuery.reduce>` values with a function::
@@ -210,7 +214,7 @@ Select a :meth:`set <DataQuery.set>` of values::
     >>> def concatenate(x, y):
     ...     return '{0}{1}'.format(x, y)
     ...
-    >>> source('one').reduce(concatenate).execute()
+    >>> source(['one']).reduce(concatenate).execute()
     'aabbcc'
 
 :meth:`Filter <DataQuery.filter>` values with a function::
@@ -218,7 +222,7 @@ Select a :meth:`set <DataQuery.set>` of values::
     >>> def not_c(x):
     ...     return x != 'c'
     ...
-    >>> source('one').filter(not_c).execute()
+    >>> source(['one']).filter(not_c).execute()
     ['a', 'a', 'b', 'b']
 
 Multiple methods can be chained together:
@@ -229,7 +233,7 @@ Multiple methods can be chained together:
     >>> def concatenate(x, y):
     ...     return '{0}{1}'.format(x, y)
     ...
-    >>> source('one').map(uppercase).reduce(concatenate).execute()
+    >>> source(['one']).map(uppercase).reduce(concatenate).execute()
     'AABBCC'
 
 
@@ -265,8 +269,6 @@ DataQuery
     .. automethod:: max
 
     .. automethod:: distinct
-
-    .. automethod:: set
 
     .. automethod:: map
 
