@@ -393,9 +393,9 @@ class DataQuery(object):
     computing the result. No data computation occurs until the
     :meth:`execute` method is called.
     """
-    def __init__(self, selection, **where):
+    def __init__(self, select, **where):
         self._query_steps = tuple([
-            _query_step('select', (selection,), where),
+            _query_step('select', (select,), where),
         ])
         self._source = None
 
@@ -787,8 +787,8 @@ class DataSource(object):
         dict_row = lambda x: dict(zip(column_names, x))
         return (dict_row(row) for row in cursor.fetchall())
 
-    def __call__(self, *columns, **kwds_filter):
-        steps = (_query_step('select', columns, kwds_filter),)
+    def __call__(self, select, **where):
+        steps = (_query_step('select', (select,), where),)
         return DataQuery._from_parts(steps, source=self)
 
     def _execute_query(self, select_clause, trailing_clause=None, **kwds_filter):
@@ -816,13 +816,13 @@ class DataSource(object):
         return query, params
 
     @staticmethod
-    def _build_where_clause(**kwds):
-        """Return 'WHERE' clause that implements *kwds*
+    def _build_where_clause(**where):
+        """Return 'WHERE' clause that implements *where* keyword
         constraints.
         """
         clause = []
         params = []
-        items = kwds.items()
+        items = where.items()
         items = sorted(items, key=lambda x: x[0])  # Ordered by key.
         for key, val in items:
             if _is_nsiterable(val):
@@ -836,28 +836,28 @@ class DataSource(object):
         clause = ' AND '.join(clause) if clause else ''
         return clause, params
 
-    def _format_result_group(self, selection, cursor):
-        outer_type = type(selection)
-        inner_type = type(next(iter(selection)))
+    def _format_result_group(self, select, cursor):
+        outer_type = type(select)
+        inner_type = type(next(iter(select)))
         if issubclass(inner_type, str):
             result = (row[0] for row in cursor)
         else:
             result = (inner_type(x) for x in cursor)
         return DataResult(result, evaluation_type=outer_type) # <- EXIT!
 
-    def _format_results(self, selection, cursor):
-        """Return an iterator of results formatted by *selection*
+    def _format_results(self, select, cursor):
+        """Return an iterator of results formatted by *select*
         types from DBAPI2-compliant *cursor*.
 
-        The *selection* can be a string, sequence, set or mapping--see
+        The *select* can be a string, sequence, set or mapping--see
         the _select() method for details.
         """
-        if isinstance(selection, (collections.Sequence, collections.Set)):
-            return self._format_result_group(selection, cursor)
+        if isinstance(select, (collections.Sequence, collections.Set)):
+            return self._format_result_group(select, cursor)
 
-        if isinstance(selection, collections.Mapping):
-            result_type = type(selection)
-            key, value = tuple(selection.items())[0]
+        if isinstance(select, collections.Mapping):
+            result_type = type(select)
+            key, value = tuple(select.items())[0]
             key_type = type(key)
             slice_index = 1 if issubclass(key_type, str) else len(key)
 
@@ -874,7 +874,7 @@ class DataSource(object):
             dictitems =  DictItems(formatted)
             return DataResult(dictitems, evaluation_type=result_type) # <- EXIT!
 
-        raise TypeError('type {0!r} not supported'.format(type(selection)))
+        raise TypeError('type {0!r} not supported'.format(type(select)))
 
     def _assert_columns_exist(self, columns):
         """Assert that given columns are present in data source,
@@ -896,17 +896,17 @@ class DataSource(object):
         if len(container) != 1:
             raise AssertionError('expects a container of 1 item')
 
-    def _parse_selection(self, selection):
-        self._validate_container(selection)
-        if isinstance(selection, collections.Mapping):
-            key, value = tuple(selection.items())[0]
+    def _parse_selection(self, select):
+        self._validate_container(select)
+        if isinstance(select, collections.Mapping):
+            key, value = tuple(select.items())[0]
             if isinstance(value, collections.Mapping):
                 message = 'mappings can not be nested, got {0!r}'
-                raise ValueError(message.format(selection))
+                raise ValueError(message.format(select))
             self._validate_container(value)
         else:
             key = tuple()
-            value = selection
+            value = select
         return key, value
 
     def _escape_column(self, column):
@@ -924,49 +924,49 @@ class DataSource(object):
 
         return key_columns, value_columns
 
-    def _select(self, selection, **where):
-        key, value = self._parse_selection(selection)
+    def _select(self, select, **where):
+        key, value = self._parse_selection(select)
         key_columns, value_columns = self._parse_key_value(key, value)
 
-        select = ', '.join(key_columns + value_columns)
+        select_clause = ', '.join(key_columns + value_columns)
         if isinstance(value, collections.Set):
-            select = 'DISTINCT ' + select
+            select_clause = 'DISTINCT ' + select_clause
 
         if key:
             order_by = 'ORDER BY {0}'.format(', '.join(key_columns))
         else:
             order_by = None
-        cursor = self._execute_query(select, order_by, **where)
-        return self._format_results(selection, cursor)
+        cursor = self._execute_query(select_clause, order_by, **where)
+        return self._format_results(select, cursor)
 
-    def _select_distinct(self, selection, **where):
-        key, value = self._parse_selection(selection)
+    def _select_distinct(self, select, **where):
+        key, value = self._parse_selection(select)
         key_columns, value_columns = self._parse_key_value(key, value)
 
         columns = ', '.join(key_columns + value_columns)
-        select = 'DISTINCT {0}'.format(columns)
+        select_clause = 'DISTINCT {0}'.format(columns)
         if key:
             order_by = 'ORDER BY {0}'.format(', '.join(key_columns))
         else:
             order_by = None
-        cursor = self._execute_query(select, order_by, **where)
-        return self._format_results(selection, cursor)
+        cursor = self._execute_query(select_clause, order_by, **where)
+        return self._format_results(select, cursor)
 
-    def _select_aggregate(self, sqlfunc, selection, **where):
-        key, value = self._parse_selection(selection)
+    def _select_aggregate(self, sqlfunc, select, **where):
+        key, value = self._parse_selection(select)
         key_columns, value_columns = self._parse_key_value(key, value)
 
         sqlfunc = sqlfunc.upper()
         value_columns = tuple('{0}({1})'.format(sqlfunc, x) for x in value_columns)
-        select = ', '.join(key_columns + value_columns)
+        select_clause = ', '.join(key_columns + value_columns)
         if key:
             group_by = 'GROUP BY {0}'.format(', '.join(key_columns))
         else:
             group_by = None
-        cursor = self._execute_query(select, group_by, **where)
-        results =  self._format_results(selection, cursor)
+        cursor = self._execute_query(select_clause, group_by, **where)
+        results =  self._format_results(select, cursor)
 
-        if isinstance(selection, collections.Mapping):
+        if isinstance(select, collections.Mapping):
             results = DictItems((k, next(v)) for k, v in results)
             return DataResult(results, evaluation_type=dict)
         return next(results)
