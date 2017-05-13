@@ -84,21 +84,22 @@ def _is_collection_of_items(obj):
 
 
 class DataResult(collections.Iterator):
-    """An iterator of results from a :class:`DataQuery` object.
-    While they are usually constructed inernally when executing
-    a query, it's possible to create them directly::
+    """A simple iterator that wraps the results of :class:`DataQuery`
+    execution. This iterator is used to facilitate the lazy evaluation
+    of data objects (where possible) when asserting data validity.
+
+    Although DataResult objects are usually constructed automatically,
+    it's possible to create them directly::
 
         iterable = iter([...])
-        data = DataResult(iterable, evaluation_type=list)
+        result = DataResult(iterable, evaluation_type=list)
 
-    The *iterable* is expected to return data appropriate for
-    constructing an object of the given *evaluation_type*. When
-    the *evaluation_type* is a :py:class:`dict` or other mapping,
-    the *iterable* should contain suitable key-value pairs.
-
-    The primary purpose of this wrapper is to facilitate the lazy
-    evaluation of data objects (where possible) when asserting
-    data validity.
+    When iterated over, the *iterable* must yield only those values
+    necessary for constructing an object of the given *evaluation_type*
+    an no more. When the *evaluation_type* is a set, the *iterable*
+    must not contain duplicate values. When the *evaluation_type* is
+    a :py:class:`dict` or other mapping, the *iterable* must contain
+    suitable key-value pairs or a mapping.
     """
     def __init__(self, iterable, evaluation_type):
         if not isinstance(evaluation_type, type):
@@ -146,9 +147,8 @@ class DataResult(collections.Iterator):
     def evaluate(self):
         """Evaluate the entire iterator and return its result::
 
-            iterable = iter([...])
-            data = DataResult(iterable, evaluation_type=list)
-            data_list = data.evaluate()  # <- Returns a list of values.
+            result = DataResult(iter([...]), evaluation_type=set)
+            result_set = result.evaluate()  # <- Returns a set of values.
 
         When evaluating the keys and values of a :py:class:`dict`
         or other mapping, any values that are, themselves,
