@@ -433,47 +433,47 @@ class DataQuery(object):
         return new_query
 
     def map(self, function):
-        """Apply *function* to each value keeping the resulting data."""
+        """Apply *function* to each element keeping the resulting data."""
         return self._add_step('map', function)
 
-    def filter(self, function):
-        """Filter data, keeping only those values for which *function*
-        returns true. If *function* is None, this method keeps all
-        values for which :py:class:`bool` returns true.
+    def filter(self, function=None):
+        """Filter elements, keeping only those values for which
+        *function* returns True. If *function* is None, this method
+        keeps all elements for which :py:class:`bool` returns True.
         """
         return self._add_step('filter', function)
 
     def reduce(self, function):
-        """Reduce data to a single value by applying a *function* of
-        two arguments cumulatively to all values from left to right.
+        """Reduce elements to a single value by applying a *function*
+        of two arguments cumulatively to all elements from left to
+        right.
         """
         return self._add_step('reduce', function)
 
     def sum(self):
-        """Sum all non-None values in the group to produce a total."""
+        """Get the sum of non-None elements."""
         return self._add_step('sum')
 
     def count(self):
-        """Count the number of all non-None values in the group."""
+        """Get the count of non-None elements."""
         return self._add_step('count')
 
     def avg(self):
-        """Get the average value of all non-None values. String and
-        other objects that do not look like numbers are interpreted
-        as 0.
+        """Get the average of non-None elements. Strings and other
+        objects that do not look like numbers are interpreted as 0.
         """
         return self._add_step('avg')
 
     def min(self):
-        """Get the minimum value of all values."""
+        """Get the minimum value from elements."""
         return self._add_step('min')
 
     def max(self):
-        """Get the maximum value of all values."""
+        """Get the maximum value from elements."""
         return self._add_step('max')
 
     def distinct(self):
-        """Filter data, removing duplicate values."""
+        """Filter elements, removing duplicate values."""
         return self._add_step('distinct')
 
     @staticmethod

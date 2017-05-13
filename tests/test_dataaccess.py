@@ -467,6 +467,12 @@ class TestDataQuery(unittest.TestCase):
         result = query2.execute(source)
         self.assertEqual(result, ['a'])
 
+        # No filter arg should default to bool()
+        source = DataSource([(1,), (2,), (0,), (3,)], columns=['col1'])
+        query = DataQuery(set(['col1'])).filter()  # <- No arg!
+        result = query.execute(source)
+        self.assertEqual(result, set([1, 2, 3]))
+
     def test_reduce(self):
         query1 = DataQuery(['col1'])
         query2 = query1.reduce(lambda x, y: x + y)
