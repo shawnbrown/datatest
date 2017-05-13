@@ -416,7 +416,7 @@ class TestDataQuery(unittest.TestCase):
             ('select', (['foo'],), {'bar': 'baz'}),
         )
         self.assertEqual(query._query_steps, expected)
-        self.assertEqual(query._source, None)
+        self.assertEqual(query.default_source, None)
 
         with self.assertRaises(TypeError, msg='should require select args'):
             DataQuery()
@@ -425,7 +425,7 @@ class TestDataQuery(unittest.TestCase):
         source = DataSource([(1, 2), (1, 2)], columns=['A', 'B'])
         query = DataQuery._from_parts(source=source)
         self.assertEqual(query._query_steps, tuple())
-        self.assertIs(query._source, source)
+        self.assertIs(query.default_source, source)
 
         regex = "expected 'DataSource', got 'list'"
         with self.assertRaisesRegex(TypeError, regex):

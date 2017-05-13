@@ -388,16 +388,16 @@ RESULT_TOKEN = _make_token(
 
 class DataQuery(object):
     """A class to query data from a :class:`DataSource` object.
-
-    A DataQuery can be created and passed around without actually
-    computing the result. No data computation occurs until the
-    :meth:`execute` method is called.
+    DataQueries can be created, modified and passed around without
+    actually computing the result. No data computation occurs until
+    the :meth:`execute` method is called.
     """
     def __init__(self, select, **where):
         self._query_steps = tuple([
             _query_step('select', (select,), where),
         ])
-        self._source = None
+        self.default_source = None  # Optional default DataSource.
+                                    # See docs for full details.
 
     @staticmethod
     def _validate_source(source):
@@ -424,12 +424,12 @@ class DataQuery(object):
 
         new_cls = cls.__new__(cls)
         new_cls._query_steps = query_steps
-        new_cls._source = source
+        new_cls.default_source = source
         return new_cls
 
     def _add_step(self, name, *args, **kwds):
         steps = self._query_steps + (_query_step(name, args, kwds),)
-        new_query = self.__class__._from_parts(steps, self._source)
+        new_query = self.__class__._from_parts(steps, self.default_source)
         return new_query
 
     def map(self, function):
@@ -581,10 +581,9 @@ class DataQuery(object):
         """
         execute(source=None, *, evaluate=True, optimize=True)
 
-        Execute the query and return its result. A *source* is
-        unnecessary if the query was created by a :class:`DataSource`
-        call. But a *source* must be provied if the query was created
-        directly.
+        Execute the query and return its result. The *source* should
+        be a :class:`DataSource` on which the query will operate.
+        If *source* is omitted, the :attr:`default_source` is used.
 
         By default, results are eagerly evaluated and loaded into
         memory. For lazy evaluation, set *evaluate* to False to
@@ -592,9 +591,9 @@ class DataQuery(object):
 
         Set *optimize* to False to turn-off query optimization.
         """
-        result = source or self._source
-        if result is None:
-            raise ValueError('must provide source, None found')
+        result = source or self.default_source
+        if not result:
+            raise ValueError('must provide source, none found')
         self._validate_source(result)
 
         evaluate = kwds.pop('evaluate', True)  # Emulate keyword-only

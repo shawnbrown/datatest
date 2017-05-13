@@ -258,6 +258,16 @@ DataQuery
 
 .. autoclass:: DataQuery
 
+    .. attribute:: default_source
+
+        A property for setting a predetermined :class:`DataSource`
+        to use when :meth:`execute` is called without a *source*
+        argument.
+
+        When a query is created from a DataSource call, this property
+        is assigned automatically. When a query is created directly,
+        the value defaults to None (and setting it is optional).
+
     .. automethod:: sum
 
     .. automethod:: count
