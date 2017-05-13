@@ -625,7 +625,7 @@ class DataQuery(object):
         it and return a :class:`DataResult` appropriate for lazy
         evaluation::
 
-            query = source(('A', 'B'))
+            query = source(['A'])
             result = query()  # <- Returns DataResult
 
         This is a shorthand for calling the :meth:`execute` method
