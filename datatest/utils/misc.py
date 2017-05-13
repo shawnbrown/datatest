@@ -9,13 +9,14 @@ from .itertools import filterfalse
 
 
 try:
-    basestring  # Removed in 3.x
-    def _is_nsiterable(x):
-        return not isinstance(x, basestring) and isinstance(x, Iterable)
+    string_types = basestring  # Removed in Python 3.0
 except NameError:
-    def _is_nsiterable(x):
-        return not isinstance(x, str) and isinstance(x, Iterable)
-_is_nsiterable.__doc__ = 'Returns True if *x* is a non-string iterable object.'
+    string_types = str
+
+
+def _is_nsiterable(x):
+    """Returns True if *x* is a non-string iterable object."""
+    return not isinstance(x, string_types) and isinstance(x, Iterable)
 
 
 def _is_sortable(obj):
