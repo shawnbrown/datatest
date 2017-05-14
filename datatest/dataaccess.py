@@ -96,7 +96,7 @@ class DataResult(collections.Iterator):
 
     When iterated over, the *iterable* must yield only those values
     necessary for constructing an object of the given *evaluation_type*
-    an no more. When the *evaluation_type* is a set, the *iterable*
+    and no more. When the *evaluation_type* is a set, the *iterable*
     must not contain duplicate values. When the *evaluation_type* is
     a :py:class:`dict` or other mapping, the *iterable* must contain
     suitable key-value pairs or a mapping.
@@ -150,9 +150,9 @@ class DataResult(collections.Iterator):
             result = DataResult(iter([...]), evaluation_type=set)
             result_set = result.evaluate()  # <- Returns a set of values.
 
-        When evaluating the keys and values of a :py:class:`dict`
-        or other mapping, any values that are, themselves,
-        :class:`DataResult` objects will also be evaluated.
+        When evaluating a :py:class:`dict` or other mapping type, any
+        values that are, themselves, :class:`DataResult` objects will
+        also be evaluated.
         """
         evaluation_type = self.evaluation_type
         if issubclass(evaluation_type, collections.Mapping):
@@ -388,6 +388,12 @@ RESULT_TOKEN = _make_token(
 
 class DataQuery(object):
     """A class to query data from a :class:`DataSource` object.
+    The *select* argument must be a container of one column name
+    or of one inner-container holding multiple column names (see
+    `Selecting Data`_ for examples). The optional *where* keywords
+    can narrow a selection to rows where columns match specified
+    values (see `Narrowing a Selection`_ for examples).
+
     DataQueries can be created, modified and passed around without
     actually computing the result. No data computation occurs until
     the :meth:`execute` method is called.
@@ -787,6 +793,19 @@ class DataSource(object):
         return (dict_row(row) for row in cursor.fetchall())
 
     def __call__(self, select, **where):
+        """Calling a DataSource like a function returns a new
+        query object (see :class:`DataQuery` for *select* and
+        *where* syntax). The new query's :attr:`default_source
+        <DataQuery.default_source>` is automatically set to the
+        originating source object::
+
+            query = source(['A'])
+
+        This is a shorthand for::
+
+            query = DataQuery(['A'])
+            query.default_source = source
+        """
         steps = (_query_step('select', (select,), where),)
         return DataQuery._from_parts(steps, source=self)
 

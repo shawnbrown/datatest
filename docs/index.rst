@@ -71,8 +71,8 @@ Contents
 
     intro
     dataprep
-    unittest_style_api
-    data_sources
+    unittest_style
+    data_handling
     api
 
 * :ref:`genindex`

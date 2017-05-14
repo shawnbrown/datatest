@@ -2,31 +2,34 @@
 .. module:: datatest
 
 .. meta::
-    :description: working with data sources
-    :keywords: datatest, DataSource, DataQuery, DataResult
+    :description: Use datatest's DataSource, DataQuery, and DataResult
+                  classes to handle the data under test.
+    :keywords: datatest, DataSource, DataQuery, DataResult, working_directory
 
 
-################
-Data Sources API
-################
+#############
+Data Handling
+#############
 
-It's important to have a convinient and expressive way to load
-and query data. Datatest provides a :class:`DataSource` class
-that should cover many common use cases. But users already familiar
-with other tools (Pandas, SQLAlchemy, etc.) should feel free to
-use them instead.
+Datatest provides built-in classes for loading, querying, and
+iterating over the data under test. Although users familiar with
+other tools (Pandas, SQLAlchemy, etc.) should feel encouraged
+to use whatever they find to be most productive.
 
-..  To help use third-party data sources, datatest includes a number of
-    helper functions to quickly load data into a variety of ORMs and DALs.
+..  To help use third-party data sources, datatest includes
+    a number of helper functions to quickly load data into
+    a variety of ORMs and DALs.
 
 
-***********************
-Load and Query Examples
-***********************
+********
+Examples
+********
 
-The following code samples demonstrate ways to load and query
-data using a :class:`DataSource`. In these examples, we will
-use the data below:
+The following examples demonstrate datatest's :class:`DataSource`,
+:class:`DataQuery`, and :class:`DataResult` classes. Users can
+follow along and type the commands themselves at Python's
+interactive prompt (``>>>``). For these examples, we will use
+the following data:
 
     ===  ===  =====
     one  two  three
@@ -43,18 +46,18 @@ use the data below:
 Loading Data
 ============
 
-Load our data from a CSV file (:download:`example.csv
-<_static/example.csv>`)::
+You can load the data from a CSV file (:download:`example.csv
+<_static/example.csv>`) with :meth:`DataSource.from_csv`::
 
     >>> import datatest
     >>> source = datatest.DataSource.from_csv('example.csv')
 
 
-Column Names
-============
+Getting Column Names
+====================
 
-You can get a list of column names from source with the
-:meth:`columns() <DataSource.columns>` method::
+You can get a list of column names with :meth:`columns()
+<DataSource.columns>`::
 
     >>> source.columns()
     ['one', 'two', 'three']
@@ -64,9 +67,7 @@ Selecting Data
 ==============
 
 Calling our source like a function returns a :class:`DataQuery`
-for the specified column or columns. The :meth:`execute()
-<DataQuery.execute>` method runs the query and returns the
-results.
+for the specified column or columns.
 
 Select elements from column **one** as a :py:class:`list`::
 
@@ -78,18 +79,30 @@ Select elements from column **one** as a :py:class:`set`::
     >>> source({'one'}).execute()
     {'a', 'b', 'c'}
 
-The container type used in the selection determines the container type
-returned in the result. Selecting a column as a list will return a
-list of elements. Selecting the same column as a set will return a set
-of elements. Because :py:class:`set` objects can not contain duplicates,
-the second result has only one element for each unique value in the
-source.
+The container type used in the selection determines the container
+type returned in the result. You can think of the selection as a
+template that describes the values and data types returned by
+the query.
+
+Selecting column **one** as a :py:class:`list` returns a list of
+the elements contained in column **one**. Selecting column **one**
+as a :py:class:`set` returns a set of the elements contained in
+column **one**. Because set objects can not contain duplicates,
+the second example, above, has only one element for each unique
+value in the column.
+
+.. note::
+    In these examples, we also call :meth:`execute() <DataQuery.execute>`
+    to eagerly evaluate the queries and display their results. But in
+    daily use, it's more efficient to leave off the "``.execute()``"
+    part and, instead, validate the *un-executed* queries (which takes
+    advantage of lazy evaluation).
 
 
 Multiple Columns
 ----------------
 
-Select elements from columns **one** and **two** using a list of
+Select elements from columns **one** and **two** as a list of
 :py:class:`tuple` values::
 
     >>> source([('one', 'two')]).execute()  # Returns a list of tuples.
@@ -100,7 +113,7 @@ Select elements from columns **one** and **two** using a list of
      ('c', 'y'),
      ('c', 'y')]
 
-Select elements from columns **one** and **two** using a set of tuple
+Select elements from columns **one** and **two** as a set of tuple
 values::
 
     >>> source({('one', 'two')}).execute()  # Returns a set of tuples.
@@ -108,6 +121,16 @@ values::
      ('b', 'x'),
      ('b', 'y'),
      ('c', 'y')}
+
+Compatible sequence and set types can be selected as inner and
+outer containers as needed. A selection's outer container must
+always hold a single element (a string or inner container).
+
+In addition to lists, tuples and sets, users can also select
+:py:class:`frozensets <frozenset>`, :py:func:`namedtuples
+<collections.namedtuple>`, etc. It should be noted however, that
+normal object limitations still apply---for example, sets can not
+contain mutable objects like lists or other sets.
 
 
 Groups of Columns
@@ -237,6 +260,13 @@ Multiple methods can be chained together:
     'AABBCC'
 
 
+*****************
+working_directory
+*****************
+
+.. autoclass:: working_directory
+
+
 **********
 DataSource
 **********
@@ -308,10 +338,3 @@ DataResult
 
         The underlying iterator---useful when introspecting
         or rewrapping.
-
-
-*****************
-working_directory
-*****************
-
-.. autoclass:: working_directory
