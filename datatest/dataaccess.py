@@ -806,8 +806,9 @@ class DataSource(object):
             query = DataQuery(['A'])
             query.default_source = source
         """
-        steps = (_query_step('select', (select,), where),)
-        return DataQuery._from_parts(steps, source=self)
+        query = DataQuery(select, **where)
+        query.default_source = self
+        return query
 
     def _execute_query(self, select_clause, trailing_clause=None, **kwds_filter):
         """Execute query and return cursor object."""
