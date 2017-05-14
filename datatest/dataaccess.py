@@ -16,6 +16,7 @@ from .utils.misc import _is_nsiterable
 from .utils.misc import _is_sortable
 from .utils.misc import _unique_everseen
 from .utils.misc import _make_token
+from .utils.misc import string_types
 from .load.sqltemp import TemporarySqliteTable
 from .load.sqltemp import _from_csv
 
@@ -286,13 +287,13 @@ def _sqlite_sortkey(value):
     For more details see "Datatypes In SQLite Version 3" section
     "4.1. Sort Order" <https://www.sqlite.org/datatype3.html>.
     """
-    if value is None:              # NULL (sort group 0)
+    if value is None:                    # NULL (sort group 0)
         return (0, 0)
-    if isinstance(value, Number):  # INTEGER and REAL (sort group 1)
+    if isinstance(value, Number):        # INTEGER and REAL (sort group 1)
         return (1, value)
-    if isinstance(value, str):     # TEXT (sort group 2)
+    if isinstance(value, string_types):  # TEXT (sort group 2)
         return (2, value)
-    if isinstance(value, Binary):  # BLOB (sort group 3)
+    if isinstance(value, Binary):        # BLOB (sort group 3)
         if _unsortable_blob_type:
             value = bytes(value)
         return (3, value)
