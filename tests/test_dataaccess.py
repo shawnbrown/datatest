@@ -697,6 +697,18 @@ class TestDataSourceBasics(unittest.TestCase):
         expected = [('a',), ('a',), ('a',), ('a',), ('b',), ('b',), ('b',)]
         self.assertEqual(result.evaluate(), expected)
 
+    def test_select_list_of_namedtuples(self):
+        namedtup = collections.namedtuple('namedtup', ['label1', 'label2'])
+        result = self.source._select([namedtup('label1', 'label2')])
+        expected = [namedtup(label1='a', label2='x'),
+                    namedtup(label1='a', label2='x'),
+                    namedtup(label1='a', label2='y'),
+                    namedtup(label1='a', label2='z'),
+                    namedtup(label1='b', label2='z'),
+                    namedtup(label1='b', label2='y'),
+                    namedtup(label1='b', label2='x')]
+        self.assertEqual(result.evaluate(), expected)
+
     def test_select_set_of_frozensets(self):
         result = self.source._select(set([frozenset(['label1'])]))
         expected = set([frozenset(['a']), frozenset(['a']),
@@ -734,6 +746,19 @@ class TestDataSourceBasics(unittest.TestCase):
             ('b', 'x'): [['25']],
             ('b', 'y'): [['40']],
             ('b', 'z'): [['5']],
+        }
+        self.assertEqual(result.evaluate(), expected)
+
+    def test_select_dict_with_namedtuple_keys(self):
+        namedtup = collections.namedtuple('namedtup', ['x', 'y'])
+        result = self.source._select({namedtup('label1', 'label2'): ['value']})
+        expected = {
+            namedtup(x='a', y='x'): ['17', '13'],
+            namedtup(x='a', y='y'): ['20'],
+            namedtup(x='a', y='z'): ['15'],
+            namedtup(x='b', y='x'): ['25'],
+            namedtup(x='b', y='y'): ['40'],
+            namedtup(x='b', y='z'): ['5'],
         }
         self.assertEqual(result.evaluate(), expected)
 

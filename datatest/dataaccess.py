@@ -840,6 +840,8 @@ class DataSource(object):
         inner_type = type(next(iter(select)))
         if issubclass(inner_type, str):
             result = (row[0] for row in cursor)
+        elif issubclass(inner_type, tuple) and hasattr(inner_type, '_fields'):
+            result = (inner_type(*x) for x in cursor)  # If namedtuple.
         else:
             result = (inner_type(x) for x in cursor)
         return DataResult(result, evaluation_type=outer_type) # <- EXIT!
@@ -862,6 +864,8 @@ class DataSource(object):
 
             if issubclass(key_type, str):
                 keyfunc = lambda row: row[0]
+            elif issubclass(key_type, tuple) and hasattr(key_type, '_fields'):
+                keyfunc = lambda row: key_type(*row[:slice_index])  # If namedtuple.
             else:
                 keyfunc = lambda row: key_type(row[:slice_index])
             grouped = itertools.groupby(cursor, keyfunc)
