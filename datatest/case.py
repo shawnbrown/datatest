@@ -9,7 +9,7 @@ from .utils import collections
 from .dataaccess import DataQuery
 from .dataaccess import DataResult
 
-from .validate import _get_differences
+from .require import _get_differences
 from .errors import ValidationError
 
 __datatest = True  # Used to detect in-module stack frames (which are

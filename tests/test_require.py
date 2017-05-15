@@ -10,14 +10,14 @@ from datatest.errors import Invalid
 from datatest.errors import Deviation
 from datatest.errors import NOTFOUND
 
-from datatest.validate import _require_sequence
-from datatest.validate import _require_set
-from datatest.validate import _require_callable
-from datatest.validate import _require_regex
-from datatest.validate import _require_other
-from datatest.validate import _apply_requirement
-from datatest.validate import _apply_mapping_requirement
-from datatest.validate import _get_differences
+from datatest.require import _require_sequence
+from datatest.require import _require_set
+from datatest.require import _require_callable
+from datatest.require import _require_regex
+from datatest.require import _require_other
+from datatest.require import _apply_requirement
+from datatest.require import _apply_mapping_requirement
+from datatest.require import _get_differences
 
 
 class TestRequireSequence(unittest.TestCase):
