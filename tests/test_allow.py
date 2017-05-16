@@ -22,7 +22,7 @@ from datatest.errors import Extra
 from datatest.errors import Deviation
 
 
-class TestAllowIter2(unittest.TestCase):
+class TestAllowIter(unittest.TestCase):
     def test_iterable_all_good(self):
         function = lambda iterable: list()  # <- empty list
         with allow_iter(function):  # <- Should pass without error.
@@ -74,6 +74,30 @@ class TestAllowIter2(unittest.TestCase):
         errors = cm.exception.errors
         #self.assertIsInstance(errors, DictItems)
         self.assertEqual(dict(errors), {'a': Missing('foo')})
+
+    def test_error_message(self):
+        function = lambda iterable: iterable
+        error = ValidationError('original message', [Missing('foo')])
+
+        # No message.
+        with self.assertRaises(ValidationError) as cm:
+            with allow_iter(function):  # <- No 'msg' keyword!
+                raise error
+        message = cm.exception.message
+        self.assertEqual(message, 'original message')
+
+        # Test allowance message.
+        with self.assertRaises(ValidationError) as cm:
+            with allow_iter(function, msg='allowance message'):  # <- Uses 'msg'.
+                raise error
+        message = cm.exception.message
+        self.assertEqual(message, 'allowance message: original message')
+
+        # Bad keyword.
+        regex = r"allow_iter\(\) got an unexpected keyword argument 'bad'"
+        with self.assertRaisesRegex(TypeError, regex):
+            with allow_iter(function, msg='foo', bad='bar'):
+                raise error
 
 
 class TestAllowSpecified(unittest.TestCase):
@@ -213,7 +237,7 @@ class TestAllowSpecified(unittest.TestCase):
         )
 
 
-class TestAllowLimit2(unittest.TestCase):
+class TestAllowLimit(unittest.TestCase):
     """Test allow_limit() behavior."""
     def test_exceeds_limit(self):
         errors = [Extra('xxx'), Missing('yyy')]
@@ -395,7 +419,7 @@ class TestAllowMissing_and_AllowExtra(unittest.TestCase):
         self.assertEqual(list(remaining_errors), [Extra('Y'), Missing('X')])
 
 
-class TestAllowDeviation2(unittest.TestCase):
+class TestAllowDeviation(unittest.TestCase):
     """Test allow_deviation() behavior."""
     def test_method_signature(self):
         """Check for prettified default signature in Python 3.3 and later."""
@@ -504,7 +528,7 @@ class TestAllowDeviation2(unittest.TestCase):
     # the maximum oberved deviation is _less_ than the given tolerance?
 
 
-class TestAllowPercentDeviation2(unittest.TestCase):
+class TestAllowPercentDeviation(unittest.TestCase):
     """Test allow_percent_deviation() behavior."""
     def test_method_signature(self):
         """Check for prettified default signature in Python 3.3 and later."""
@@ -614,6 +638,27 @@ class TestAllowPercentDeviation2(unittest.TestCase):
         with self.assertRaises(ValidationError):  # <- NaN values should not be caught!
             with allow_percent_deviation(0):
                 raise ValidationError('example error', [Deviation(0, float('nan'))])
+
+
+class TestMsgIntegration(unittest.TestCase):
+    """The 'msg' keyword is passed to to each parent class and
+    eventually handled in the allow_iter base class. These tests
+    do some sanity checking to make sure that 'msg' values are
+    passed through the inheritance chain.
+    """
+    def test_allow_missing(self):
+        # Check for modified message.
+        with self.assertRaises(ValidationError) as cm:
+            with allow_missing(msg='modified'):  # <- No msg!
+                raise ValidationError('original', [Extra('X')])
+        message = cm.exception.message
+        self.assertEqual(message, 'modified: original')
+
+        # Check for keyword-only handling.
+        regex = r"allow_missing\(\) got an unexpected keyword argument 'bad'"
+        with self.assertRaisesRegex(TypeError, regex):
+            with allow_missing(bad='modified'):
+                raise ValidationError('original', [Extra('X')])
 
 
 class TestGetKeyDecorator(unittest.TestCase):

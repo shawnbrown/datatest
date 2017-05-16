@@ -32,7 +32,9 @@ def _is_mapping_type(obj):
 
 
 class allow_iter(object):
-    """Context manager to allow differences without triggering a test
+    """allow_iter(function, *, msg=None)
+
+    Context manager to allow differences without triggering a test
     failure. The *function* should accept an iterable or mapping of
     data errors and return an iterable or mapping of only those errors
     which are **not** allowed.
@@ -43,10 +45,23 @@ class allow_iter(object):
         :class:`allow_iter` is the base context manager on which all
         other allowances are implemented.
     """
-    def __init__(self, function):
+    def __init__(self, function, **kwds):
+        """__init__(function, *, msg=None)
+
+        Initialize object values.
+        """
         if not callable(function):
             raise TypeError("'function' must be a function or other callable")
+
+        msg = kwds.pop('msg', None)
+        if kwds:                                # Emulate keyword-only
+            cls_name = self.__class__.__name__  # behavior for Python
+            bad_arg =  next(iter(kwds.keys()))  # versions 2.7 and 2.6.
+            message = '{0}() got an unexpected keyword argument {1!r}'
+            raise TypeError(message.format(cls_name, bad_arg))
+
         self.function = function
+        self.msg = msg
 
     def __enter__(self):
         return self
@@ -88,7 +103,9 @@ class allow_iter(object):
             raise TypeError(message.format(input_cls, output_cls))
 
         # Re-raise ValidationError() with remaining errors.
-        message = getattr(exc_value, 'message')
+        message = getattr(exc_value, 'message', '')
+        if self.msg:
+            message = '{0}: {1}'.format(self.msg, message)
         exc = ValidationError(message, errors)
         exc.__cause__ = None  # <- Suppress context using verbose
         raise exc             #    alternative to support older Python
@@ -132,13 +149,6 @@ def getpair(function):
 
 class _allow_element(allow_iter):
     def __init__(self, condition, functions, **kwds):
-        msg = kwds.pop('msg', None)
-        if kwds:                                  # Emulate keyword-only
-            cls_name = self.__class__.__name__    # behavior for Python
-            bad_arg =  next(iter(kwds.values()))  # versions 2.7 and 2.6.
-            message = '{0}() got an unexpected keyword argument {1!r}'
-            raise TypeError(message.format(cls_name, bad_arg))
-
         def filterfalse(iterable):
             if isinstance(iterable, collections.Mapping):
                 iterable = getattr(iterable, 'iteritems', iterable.items)()
@@ -162,18 +172,11 @@ class _allow_element(allow_iter):
                     if not condition(f(value) for f in functions):
                         yield value
 
-        super(_allow_element, self).__init__(filterfalse)
+        super(_allow_element, self).__init__(filterfalse, **kwds)
 
 
 class allow_specified(allow_iter):
     def __init__(self, errors, **kwds):
-        msg = kwds.pop('msg', None)
-        if kwds:                                  # Emulate keyword-only
-            cls_name = self.__class__.__name__    # behavior for Python
-            bad_arg =  next(iter(kwds.values()))  # versions 2.7 and 2.6.
-            message = '{0}() got an unexpected keyword argument {1!r}'
-            raise TypeError(message.format(cls_name, bad_arg))
-
         if _is_collection_of_items(errors):
             errors = dict(errors)
         elif isinstance(errors, Exception):
@@ -231,13 +234,13 @@ class allow_specified(allow_iter):
                                              errors.__class__.__name__)
                     raise ValueError(message)
 
-        super(allow_specified, self).__init__(filterfalse)
+        super(allow_specified, self).__init__(filterfalse, **kwds)
 
 
 class allow_any(_allow_element):
     """
-    allow_any(function, *[, msg])
-    allow_any(func1, func2[, ...][, msg])
+    allow_any(function, *, msg=None)
+    allow_any(func1, func2[, ...], msg=None)
     """
     def __init__(self, function, *funcs, **kwds):
         functions = (function,) + funcs
@@ -340,13 +343,6 @@ _prettify_devsig(allow_percent_deviation.__init__)
 
 class allow_limit(allow_iter):
     def __init__(self, number, *funcs, **kwds):
-        msg = kwds.pop('msg', None)
-        if kwds:                                  # Emulate keyword-only
-            cls_name = self.__class__.__name__    # behavior for Python
-            bad_arg =  next(iter(kwds.values()))  # versions 2.7 and 2.6.
-            message = '{0}() got an unexpected keyword argument {1!r}'
-            raise TypeError(message.format(cls_name, bad_arg))
-
         normalize = lambda f: f if hasattr(f, '_decorator') else getvalue(f)
         funcs = tuple(normalize(f) for f in funcs)
 
@@ -389,4 +385,4 @@ class allow_limit(allow_iter):
                 for value in grpfltrfalse(None, iterable):
                     yield value
 
-        super(allow_limit, self).__init__(filterfalse)
+        super(allow_limit, self).__init__(filterfalse, **kwds)
