@@ -139,7 +139,7 @@ def getpair(function):
 
 
 class _allow_element(allow_iter):
-    def __init__(self, function, **kwds):
+    def __init__(self, function, msg=None):
         def filterfalse(predicate, iterable):
             if isinstance(iterable, collections.Mapping):
                 iterable = getattr(iterable, 'iteritems', iterable.items)()
@@ -165,11 +165,11 @@ class _allow_element(allow_iter):
                     if not predicate(value):
                         yield value
 
-        super(_allow_element, self).__init__(filterfalse, function, **kwds)
+        super(_allow_element, self).__init__(filterfalse, function, msg)
 
 
 class allow_specified(allow_iter):
-    def __init__(self, errors, **kwds):
+    def __init__(self, errors, msg=None):
         if _is_collection_of_items(errors):
             errors = dict(errors)
         elif isinstance(errors, Exception):
@@ -227,21 +227,21 @@ class allow_specified(allow_iter):
                                              errors.__class__.__name__)
                     raise ValueError(message)
 
-        super(allow_specified, self).__init__(filterfalse, None, **kwds)
+        super(allow_specified, self).__init__(filterfalse, None, msg)
 
 
 class allow_missing(_allow_element):
-    def __init__(self, **kwds):
+    def __init__(self, msg=None):
         def is_missing(x):
             return isinstance(x, Missing)
-        super(allow_missing, self).__init__(is_missing, **kwds)
+        super(allow_missing, self).__init__(is_missing, msg)
 
 
 class allow_extra(_allow_element):
-    def __init__(self, **kwds):
+    def __init__(self, msg=None):
         def is_extra(x):
             return isinstance(x, Extra)
-        super(allow_extra, self).__init__(is_extra, **kwds)
+        super(allow_extra, self).__init__(is_extra, msg)
 
 
 def _prettify_devsig(method):
@@ -295,7 +295,7 @@ class allow_deviation(_allow_element):
 
     See documentation for full details.
     """
-    def __init__(self, lower, upper=None, **kwds):
+    def __init__(self, lower, upper=None, msg=None):
         funcs = ()
         lower, upper, funcs = _normalize_devargs(lower, upper, funcs)
         def tolerance(error):  # <- Closes over lower & upper.
@@ -303,12 +303,12 @@ class allow_deviation(_allow_element):
             if isnan(deviation) or isnan(error.expected or 0.0):
                 return False
             return lower <= deviation <= upper
-        super(allow_deviation, self).__init__(tolerance, **kwds)
+        super(allow_deviation, self).__init__(tolerance, msg)
 _prettify_devsig(allow_deviation.__init__)
 
 
 class allow_percent_deviation(_allow_element):
-    def __init__(self, lower, upper=None, **kwds):
+    def __init__(self, lower, upper=None, msg=None):
         funcs = ()
         lower, upper, funcs = _normalize_devargs(lower, upper, funcs)
         def percent_tolerance(error):  # <- Closes over lower & upper.
@@ -316,7 +316,7 @@ class allow_percent_deviation(_allow_element):
             if isnan(percent_deviation) or isnan(error.expected or 0):
                 return False
             return lower <= percent_deviation <= upper
-        super(allow_percent_deviation, self).__init__(percent_tolerance, **kwds)
+        super(allow_percent_deviation, self).__init__(percent_tolerance, msg)
 _prettify_devsig(allow_percent_deviation.__init__)
 
 
