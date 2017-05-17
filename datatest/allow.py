@@ -168,68 +168,6 @@ class _allow_element(allow_iter):
         super(_allow_element, self).__init__(filterfalse, function, msg)
 
 
-class allow_specified(allow_iter):
-    def __init__(self, errors, msg=None):
-        if _is_collection_of_items(errors):
-            errors = dict(errors)
-        elif isinstance(errors, Exception):
-            errors = [errors]
-
-        def grpfltrfalse(allowed, iterable):
-            if isinstance(iterable, Exception):
-                iterable = [iterable]
-
-            if isinstance(allowed, Exception):
-                allowed = [allowed]
-            else:
-                allowed = list(allowed)  # Make list or copy existing list.
-
-            for x in iterable:
-                try:
-                    allowed.remove(x)
-                except ValueError:
-                    yield x
-
-            if allowed:  # If there are left-over errors.
-                message = 'allowed errors not found: {0!r}'
-                exc = Exception(message.format(allowed))
-                exc.__cause__ = None
-                yield exc
-
-        def filterfalse(_, iterable):
-            if isinstance(iterable, collections.Mapping):
-                iterable = getattr(iterable, 'iteritems', iterable.items)()
-
-            if _is_collection_of_items(iterable):
-                if isinstance(errors, collections.Mapping):
-                    for key, group in iterable:
-                        try:
-                            errors_lst = errors[key]
-                            result = list(grpfltrfalse(errors_lst, group))
-                            if result:
-                                yield key, result
-                        except KeyError:
-                            yield key, group
-                else:
-                    errors_lst = list(errors)  # Errors must not be consumable.
-                    for key, group in iterable:
-                        result = list(grpfltrfalse(errors_lst, group))
-                        if result:
-                            yield key, result
-            else:
-                if not _is_mapping_type(errors):
-                    for x in grpfltrfalse(errors, iterable):
-                        yield x
-                else:
-                    message = ('{0!r} of errors cannot be matched using {1!r} '
-                               'of allowances, requires non-mapping type')
-                    message = message.format(iterable.__class__.__name__,
-                                             errors.__class__.__name__)
-                    raise ValueError(message)
-
-        super(allow_specified, self).__init__(filterfalse, None, msg)
-
-
 class allow_missing(_allow_element):
     def __init__(self, msg=None):
         def is_missing(x):
@@ -318,6 +256,68 @@ class allow_percent_deviation(_allow_element):
             return lower <= percent_deviation <= upper
         super(allow_percent_deviation, self).__init__(percent_tolerance, msg)
 _prettify_devsig(allow_percent_deviation.__init__)
+
+
+class allow_specified(allow_iter):
+    def __init__(self, errors, msg=None):
+        if _is_collection_of_items(errors):
+            errors = dict(errors)
+        elif isinstance(errors, Exception):
+            errors = [errors]
+
+        def grpfltrfalse(allowed, iterable):
+            if isinstance(iterable, Exception):
+                iterable = [iterable]
+
+            if isinstance(allowed, Exception):
+                allowed = [allowed]
+            else:
+                allowed = list(allowed)  # Make list or copy existing list.
+
+            for x in iterable:
+                try:
+                    allowed.remove(x)
+                except ValueError:
+                    yield x
+
+            if allowed:  # If there are left-over errors.
+                message = 'allowed errors not found: {0!r}'
+                exc = Exception(message.format(allowed))
+                exc.__cause__ = None
+                yield exc
+
+        def filterfalse(_, iterable):
+            if isinstance(iterable, collections.Mapping):
+                iterable = getattr(iterable, 'iteritems', iterable.items)()
+
+            if _is_collection_of_items(iterable):
+                if isinstance(errors, collections.Mapping):
+                    for key, group in iterable:
+                        try:
+                            errors_lst = errors[key]
+                            result = list(grpfltrfalse(errors_lst, group))
+                            if result:
+                                yield key, result
+                        except KeyError:
+                            yield key, group
+                else:
+                    errors_lst = list(errors)  # Errors must not be consumable.
+                    for key, group in iterable:
+                        result = list(grpfltrfalse(errors_lst, group))
+                        if result:
+                            yield key, result
+            else:
+                if not _is_mapping_type(errors):
+                    for x in grpfltrfalse(errors, iterable):
+                        yield x
+                else:
+                    message = ('{0!r} of errors cannot be matched using {1!r} '
+                               'of allowances, requires non-mapping type')
+                    message = message.format(iterable.__class__.__name__,
+                                             errors.__class__.__name__)
+                    raise ValueError(message)
+
+        super(allow_specified, self).__init__(filterfalse, None, msg)
 
 
 class allow_limit(allow_iter):
