@@ -3,8 +3,8 @@ import inspect
 from . import _unittest as unittest
 from datatest.utils import collections
 
-from datatest.allow import allow_iter
-from datatest.allow import _allow_element
+from datatest.allow import BaseAllowance
+from datatest.allow import ElementAllowance
 from datatest.allow import allow_missing
 from datatest.allow import allow_extra
 from datatest.allow import allow_deviation
@@ -20,14 +20,14 @@ from datatest.errors import Extra
 from datatest.errors import Deviation
 
 
-class TestAllowIter(unittest.TestCase):
+class TestBaseAllowance(unittest.TestCase):
     def test_iterable_all_good(self):
         function = lambda predicate, iterable: list()  # <- empty list
-        with allow_iter(function, None):  # <- Should pass without error.
+        with BaseAllowance(function, None):  # <- Should pass without error.
             raise ValidationError('example error', [Missing('x')])
 
         function = lambda predicate, iterable: iter([])  # <- empty iterator
-        with allow_iter(function, None):  # <- Should pass pass without error.
+        with BaseAllowance(function, None):  # <- Should pass pass without error.
             raise ValidationError('example error', [Missing('x')])
 
     def test_iterable_some_bad(self):
@@ -35,7 +35,7 @@ class TestAllowIter(unittest.TestCase):
         in_diffs = [Missing('foo'), Missing('bar')]
 
         with self.assertRaises(ValidationError) as cm:
-            with allow_iter(function, None):
+            with BaseAllowance(function, None):
                 raise ValidationError('example error', in_diffs)
 
         errors = cm.exception.errors
@@ -52,21 +52,21 @@ class TestAllowIter(unittest.TestCase):
         errors_list =  [Missing('foo'), Missing('bar')]
         function = lambda predicate, iterable: {'a': Missing('foo')}  # <- dict type
         with self.assertRaises(TypeError):
-            with allow_iter(function, None):
+            with BaseAllowance(function, None):
                 raise ValidationError('example error', errors_list)
 
         # Dict input and list output.
         errors_dict =  {'a': Missing('foo'), 'b': Missing('bar')}
         function = lambda predicate, iterable: [Missing('foo')]  # <- list type
         with self.assertRaises(TypeError):
-            with allow_iter(function, None):
+            with BaseAllowance(function, None):
                 raise ValidationError('example error', errors_dict)
 
         # Dict input and list-item output.
         errors_dict =  {'a': Missing('foo'), 'b': Missing('bar')}
         function = lambda predicate, iterable: [('a', Missing('foo'))]  # <- list of items
         with self.assertRaises(ValidationError) as cm:
-            with allow_iter(function, None):
+            with BaseAllowance(function, None):
                 raise ValidationError('example error', errors_dict)
 
         errors = cm.exception.errors
@@ -79,14 +79,14 @@ class TestAllowIter(unittest.TestCase):
 
         # No message.
         with self.assertRaises(ValidationError) as cm:
-            with allow_iter(function, None):  # <- No 'msg' keyword!
+            with BaseAllowance(function, None):  # <- No 'msg' keyword!
                 raise error
         message = cm.exception.message
         self.assertEqual(message, 'original message')
 
         # Test allowance message.
         with self.assertRaises(ValidationError) as cm:
-            with allow_iter(function, None, msg='allowance message'):  # <- Uses 'msg'.
+            with BaseAllowance(function, None, msg='allowance message'):  # <- Uses 'msg'.
                 raise error
         message = cm.exception.message
         self.assertEqual(message, 'allowance message: original message')
@@ -300,17 +300,17 @@ class TestAllowLimit(unittest.TestCase):
         self.assertEqual(dict(actual), expected)
 
 
-class TestAllowElement(unittest.TestCase):
+class TestElementAllowance(unittest.TestCase):
     def test_list_of_errors(self):
         errors =  [Missing('X'), Missing('Y')]
         func1 = lambda x: True
         func2 = lambda x: False
 
-        with _allow_element(func1):
+        with ElementAllowance(func1):
             raise ValidationError('one True', errors)
 
         with self.assertRaises(ValidationError) as cm:
-            with _allow_element(func2):
+            with ElementAllowance(func2):
                 raise ValidationError('none True', errors)
         remaining_errors = cm.exception.errors
         self.assertEqual(list(remaining_errors), errors)
@@ -320,11 +320,11 @@ class TestAllowElement(unittest.TestCase):
         func1 = lambda x: True                            #    is a single
         func2 = lambda x: False                           #    error.
 
-        with _allow_element(func1):
+        with ElementAllowance(func1):
             raise ValidationError('one True', errors)
 
         with self.assertRaises(ValidationError) as cm:
-            with _allow_element(func2):
+            with ElementAllowance(func2):
                 raise ValidationError('none True', errors)
         remaining_errors = cm.exception.errors
         self.assertEqual(dict(remaining_errors), errors)
@@ -334,11 +334,11 @@ class TestAllowElement(unittest.TestCase):
         func1 = lambda x: isinstance(x, DataError)     #    of errors.
         func2 = lambda x: x.args[0] == 'Z'
 
-        with _allow_element(func1):
+        with ElementAllowance(func1):
             raise ValidationError('one True', errors)
 
         with self.assertRaises(ValidationError) as cm:
-            with _allow_element(func2):
+            with ElementAllowance(func2):
                 raise ValidationError('none True', errors)
         remaining_errors = cm.exception.errors
         self.assertEqual(dict(remaining_errors), errors)

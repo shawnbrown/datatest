@@ -31,17 +31,11 @@ def _is_mapping_type(obj):
                 _is_collection_of_items(obj)
 
 
-class allow_iter(object):
+class BaseAllowance(object):
     """Context manager to allow differences without triggering a
     test failure. *filterfalse* should accept a predicate and an
     iterable of data errors and return an iterable of only those
     errors which are **not** allowed.
-
-    .. admonition:: Fun Fact
-        :class: note
-
-        :class:`allow_iter` is the base context manager on which all
-        other allowances are implemented.
     """
     def __init__(self, filterfalse, predicate, msg=None):
         """Initialize object values."""
@@ -138,7 +132,7 @@ def getpair(function):
     return adapted
 
 
-class _allow_element(allow_iter):
+class ElementAllowance(BaseAllowance):
     def __init__(self, function, msg=None):
         def filterfalse(predicate, iterable):
             if isinstance(iterable, collections.Mapping):
@@ -165,17 +159,17 @@ class _allow_element(allow_iter):
                     if not predicate(value):
                         yield value
 
-        super(_allow_element, self).__init__(filterfalse, function, msg)
+        super(ElementAllowance, self).__init__(filterfalse, function, msg)
 
 
-class allow_missing(_allow_element):
+class allow_missing(ElementAllowance):
     def __init__(self, msg=None):
         def is_missing(x):
             return isinstance(x, Missing)
         super(allow_missing, self).__init__(is_missing, msg)
 
 
-class allow_extra(_allow_element):
+class allow_extra(ElementAllowance):
     def __init__(self, msg=None):
         def is_extra(x):
             return isinstance(x, Extra)
@@ -223,7 +217,7 @@ def _normalize_devargs(lower, upper, funcs):
     return (lower, upper, funcs)
 
 
-class allow_deviation(_allow_element):
+class allow_deviation(ElementAllowance):
     """
     allow_deviation(tolerance, /, *funcs, msg=None)
     allow_deviation(lower, upper, *funcs, msg=None)
@@ -245,7 +239,7 @@ class allow_deviation(_allow_element):
 _prettify_devsig(allow_deviation.__init__)
 
 
-class allow_percent_deviation(_allow_element):
+class allow_percent_deviation(ElementAllowance):
     def __init__(self, lower, upper=None, msg=None):
         funcs = ()
         lower, upper, funcs = _normalize_devargs(lower, upper, funcs)
@@ -258,7 +252,7 @@ class allow_percent_deviation(_allow_element):
 _prettify_devsig(allow_percent_deviation.__init__)
 
 
-class allow_specified(allow_iter):
+class allow_specified(BaseAllowance):
     def __init__(self, errors, msg=None):
         if _is_collection_of_items(errors):
             errors = dict(errors)
@@ -320,7 +314,7 @@ class allow_specified(allow_iter):
         super(allow_specified, self).__init__(filterfalse, None, msg)
 
 
-class allow_limit(allow_iter):
+class allow_limit(BaseAllowance):
     def __init__(self, number, *funcs, **kwds):
         normalize = lambda f: f if hasattr(f, '_decorator') else getvalue(f)
         funcs = tuple(normalize(f) for f in funcs)

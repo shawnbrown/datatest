@@ -22,7 +22,7 @@ from datatest.errors import Missing
 from datatest.errors import Invalid
 from datatest.errors import Deviation
 
-from datatest.allow import _allow_element
+from datatest.allow import ElementAllowance
 from datatest.allow import allow_missing
 from datatest.allow import allow_extra
 from datatest.allow import allow_deviation
@@ -169,7 +169,7 @@ class TestAllowanceWrappers(unittest.TestCase):
 
     def test_allowAll(self):
         cm = self.case.allowAll(lambda x: x == 'aaa')
-        self.assertTrue(isinstance(cm, _allow_element))
+        self.assertTrue(isinstance(cm, ElementAllowance))
 
     def test_allowMissing(self):
         cm = self.case.allowMissing()
