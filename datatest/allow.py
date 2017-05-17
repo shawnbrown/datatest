@@ -140,15 +140,15 @@ def getpair(function):
 
 class _allow_element(allow_iter):
     def __init__(self, function, **kwds):
-        def filterfalse(_, iterable):
+        def filterfalse(predicate, iterable):
             if isinstance(iterable, collections.Mapping):
                 iterable = getattr(iterable, 'iteritems', iterable.items)()
 
             if _is_collection_of_items(iterable):
-                if not hasattr(function, '_decorator'):
-                    wrapfunc = getvalue(function)
+                if not hasattr(predicate, '_decorator'):
+                    wrapfunc = getvalue(predicate)
                 else:
-                    wrapfunc = function
+                    wrapfunc = predicate
 
                 for key, value in iterable:
                     if (not _is_nsiterable(value)
@@ -162,10 +162,10 @@ class _allow_element(allow_iter):
                             yield key, values
             else:
                 for value in iterable:
-                    if not function(value):
+                    if not predicate(value):
                         yield value
 
-        super(_allow_element, self).__init__(filterfalse, None, **kwds)
+        super(_allow_element, self).__init__(filterfalse, function, **kwds)
 
 
 class allow_specified(allow_iter):
