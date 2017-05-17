@@ -22,10 +22,9 @@ from datatest.errors import Missing
 from datatest.errors import Invalid
 from datatest.errors import Deviation
 
+from datatest.allow import _allow_element
 from datatest.allow import allow_missing
 from datatest.allow import allow_extra
-from datatest.allow import allow_all
-from datatest.allow import allow_any
 from datatest.allow import allow_deviation
 from datatest.allow import allow_percent_deviation
 from datatest.allow import allow_limit
@@ -168,13 +167,9 @@ class TestAllowanceWrappers(unittest.TestCase):
         cm = self.case.allowSpecified([Missing('foo')])
         self.assertTrue(isinstance(cm, allow_specified))
 
-    def test_allowAny(self):
-        cm = self.case.allowAny(lambda x: x == 'aaa')
-        self.assertTrue(isinstance(cm, allow_any))
-
     def test_allowAll(self):
         cm = self.case.allowAll(lambda x: x == 'aaa')
-        self.assertTrue(isinstance(cm, allow_all))
+        self.assertTrue(isinstance(cm, _allow_element))
 
     def test_allowMissing(self):
         cm = self.case.allowMissing()

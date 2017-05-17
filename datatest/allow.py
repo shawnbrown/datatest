@@ -139,15 +139,17 @@ def getpair(function):
 
 
 class _allow_element(allow_iter):
-    def __init__(self, condition, functions, **kwds):
+    def __init__(self, function, **kwds):
         def filterfalse(_, iterable):
             if isinstance(iterable, collections.Mapping):
                 iterable = getattr(iterable, 'iteritems', iterable.items)()
 
             if _is_collection_of_items(iterable):
-                normalize = lambda f: f if hasattr(f, '_decorator') else getvalue(f)
-                normfunc = tuple(normalize(f) for f in functions)
-                wrapfunc = lambda k, v: condition(f(k, v) for f in normfunc)
+                if not hasattr(function, '_decorator'):
+                    wrapfunc = getvalue(function)
+                else:
+                    wrapfunc = function
+
                 for key, value in iterable:
                     if (not _is_nsiterable(value)
                             or isinstance(value, Exception)
@@ -160,7 +162,7 @@ class _allow_element(allow_iter):
                             yield key, values
             else:
                 for value in iterable:
-                    if not condition(f(value) for f in functions):
+                    if not function(value):
                         yield value
 
         super(_allow_element, self).__init__(filterfalse, None, **kwds)
@@ -228,34 +230,18 @@ class allow_specified(allow_iter):
         super(allow_specified, self).__init__(filterfalse, None, **kwds)
 
 
-class allow_any(_allow_element):
-    """
-    allow_any(function, *, msg=None)
-    allow_any(func1, func2[, ...], msg=None)
-    """
-    def __init__(self, function, *funcs, **kwds):
-        functions = (function,) + funcs
-        super(allow_any, self).__init__(any, functions, **kwds)
-
-
-class allow_all(_allow_element):
-    def __init__(self, function, *funcs, **kwds):
-        functions = (function,) + funcs
-        super(allow_all, self).__init__(all, functions, **kwds)
-
-
-class allow_missing(allow_all):
-    def __init__(self, *funcs, **kwds):
+class allow_missing(_allow_element):
+    def __init__(self, **kwds):
         def is_missing(x):
             return isinstance(x, Missing)
-        super(allow_missing, self).__init__(is_missing, *funcs, **kwds)
+        super(allow_missing, self).__init__(is_missing, **kwds)
 
 
-class allow_extra(allow_all):
-    def __init__(self, *funcs, **kwds):
+class allow_extra(_allow_element):
+    def __init__(self, **kwds):
         def is_extra(x):
             return isinstance(x, Extra)
-        super(allow_extra, self).__init__(is_extra, *funcs, **kwds)
+        super(allow_extra, self).__init__(is_extra, **kwds)
 
 
 def _prettify_devsig(method):
@@ -299,7 +285,7 @@ def _normalize_devargs(lower, upper, funcs):
     return (lower, upper, funcs)
 
 
-class allow_deviation(allow_all):
+class allow_deviation(_allow_element):
     """
     allow_deviation(tolerance, /, *funcs, msg=None)
     allow_deviation(lower, upper, *funcs, msg=None)
@@ -309,26 +295,28 @@ class allow_deviation(allow_all):
 
     See documentation for full details.
     """
-    def __init__(self, lower, upper=None, *funcs, **kwds):
+    def __init__(self, lower, upper=None, **kwds):
+        funcs = ()
         lower, upper, funcs = _normalize_devargs(lower, upper, funcs)
         def tolerance(error):  # <- Closes over lower & upper.
             deviation = error.deviation or 0.0
             if isnan(deviation) or isnan(error.expected or 0.0):
                 return False
             return lower <= deviation <= upper
-        super(allow_deviation, self).__init__(tolerance, *funcs, **kwds)
+        super(allow_deviation, self).__init__(tolerance, **kwds)
 _prettify_devsig(allow_deviation.__init__)
 
 
-class allow_percent_deviation(allow_all):
-    def __init__(self, lower, upper=None, *funcs, **kwds):
+class allow_percent_deviation(_allow_element):
+    def __init__(self, lower, upper=None, **kwds):
+        funcs = ()
         lower, upper, funcs = _normalize_devargs(lower, upper, funcs)
         def percent_tolerance(error):  # <- Closes over lower & upper.
             percent_deviation = error.percent_deviation
             if isnan(percent_deviation) or isnan(error.expected or 0):
                 return False
             return lower <= percent_deviation <= upper
-        super(allow_percent_deviation, self).__init__(percent_tolerance, *funcs, **kwds)
+        super(allow_percent_deviation, self).__init__(percent_tolerance, **kwds)
 _prettify_devsig(allow_percent_deviation.__init__)
 
 

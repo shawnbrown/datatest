@@ -5,8 +5,6 @@ from datatest.utils import collections
 
 from datatest.allow import allow_iter
 from datatest.allow import _allow_element
-from datatest.allow import allow_any
-from datatest.allow import allow_all
 from datatest.allow import allow_missing
 from datatest.allow import allow_extra
 from datatest.allow import allow_deviation
@@ -308,14 +306,11 @@ class TestAllowElement(unittest.TestCase):
         func1 = lambda x: True
         func2 = lambda x: False
 
-        with _allow_element(any, (func1,)):
+        with _allow_element(func1):
             raise ValidationError('one True', errors)
 
-        with _allow_element(any, (func1, func2)):
-            raise ValidationError('one True, one False', errors)
-
         with self.assertRaises(ValidationError) as cm:
-            with _allow_element(any, (func2, func2)):
+            with _allow_element(func2):
                 raise ValidationError('none True', errors)
         remaining_errors = cm.exception.errors
         self.assertEqual(list(remaining_errors), errors)
@@ -325,14 +320,11 @@ class TestAllowElement(unittest.TestCase):
         func1 = lambda x: True                            #    is a single
         func2 = lambda x: False                           #    error.
 
-        with _allow_element(any, (func1,)):
+        with _allow_element(func1):
             raise ValidationError('one True', errors)
 
-        with _allow_element(any, (func1, func2)):
-            raise ValidationError('one True, one False', errors)
-
         with self.assertRaises(ValidationError) as cm:
-            with _allow_element(any, (func2, func2)):
+            with _allow_element(func2):
                 raise ValidationError('none True', errors)
         remaining_errors = cm.exception.errors
         self.assertEqual(dict(remaining_errors), errors)
@@ -342,41 +334,14 @@ class TestAllowElement(unittest.TestCase):
         func1 = lambda x: isinstance(x, DataError)     #    of errors.
         func2 = lambda x: x.args[0] == 'Z'
 
-        with _allow_element(any, (func1,)):
+        with _allow_element(func1):
             raise ValidationError('one True', errors)
 
-        with _allow_element(any, (func1, func2)):
-            raise ValidationError('one True, one False', errors)
-
         with self.assertRaises(ValidationError) as cm:
-            with _allow_element(any, (func2, func2)):
+            with _allow_element(func2):
                 raise ValidationError('none True', errors)
         remaining_errors = cm.exception.errors
         self.assertEqual(dict(remaining_errors), errors)
-
-
-class TestAllowAny_and_AllowAll(unittest.TestCase):
-    def test_allow_any(self):
-        errors =  [Missing('X'), Missing('Y'), Extra('Z')]
-        func1 = lambda x: isinstance(x, Missing)
-        func2 = lambda x: x.args[0] == 'X'
-
-        with self.assertRaises(ValidationError) as cm:
-            with allow_any(func1, func2):  # <- Apply allowance!
-                raise ValidationError('some message', errors)
-        remaining_errors = cm.exception.errors
-        self.assertEqual(list(remaining_errors), [Extra('Z')])
-
-    def test_allow_all(self):
-        errors =  [Missing('X'), Missing('Y'), Extra('Z')]
-        func1 = lambda x: isinstance(x, Missing)
-        func2 = lambda x: x.args[0] == 'X'
-
-        with self.assertRaises(ValidationError) as cm:
-            with allow_all(func1, func2):  # <- Apply allowance!
-                raise ValidationError('some message', errors)
-        remaining_errors = cm.exception.errors
-        self.assertEqual(list(remaining_errors), [Missing('Y'), Extra('Z')])
 
 
 class TestAllowMissing_and_AllowExtra(unittest.TestCase):
@@ -389,13 +354,6 @@ class TestAllowMissing_and_AllowExtra(unittest.TestCase):
         remaining_errors = cm.exception.errors
         self.assertEqual(list(remaining_errors), [Extra('X')])
 
-        with self.assertRaises(ValidationError) as cm:
-            func = lambda x: x.args[0] == 'X'
-            with allow_missing(func):  # <- Apply allowance!
-                raise ValidationError('some message', errors)
-        remaining_errors = cm.exception.errors
-        self.assertEqual(list(remaining_errors), [Missing('Y'), Extra('X')])
-
     def test_allow_extra(self):
         errors =  [Extra('X'), Extra('Y'), Missing('X')]
 
@@ -404,13 +362,6 @@ class TestAllowMissing_and_AllowExtra(unittest.TestCase):
                 raise ValidationError('some message', errors)
         remaining_errors = cm.exception.errors
         self.assertEqual(list(remaining_errors), [Missing('X')])
-
-        with self.assertRaises(ValidationError) as cm:
-            func = lambda x: x.args[0] == 'X'
-            with allow_extra(func):  # <- Apply allowance!
-                raise ValidationError('some message', errors)
-        remaining_errors = cm.exception.errors
-        self.assertEqual(list(remaining_errors), [Extra('Y'), Missing('X')])
 
 
 class TestAllowDeviation(unittest.TestCase):
@@ -466,6 +417,7 @@ class TestAllowDeviation(unittest.TestCase):
         ]
         self.assertEqual(expected_diffs, result_diffs)
 
+    @unittest.skip('reimplement using Boolean composition')
     def test_getkey_decorator(self):
         with self.assertRaises(ValidationError) as cm:
             differences = {
@@ -582,6 +534,7 @@ class TestAllowPercentDeviation(unittest.TestCase):
         ]
         self.assertEqual(expected_diffs, result_diffs)
 
+    @unittest.skip('reimplement using Boolean composition')
     def test_kwds_handling(self):
         differences = {
             'aaa': Deviation(-1, 10),

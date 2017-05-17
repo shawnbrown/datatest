@@ -8,8 +8,6 @@ from .errors import Extra
 from .errors import Invalid
 from .errors import Deviation
 
-from datatest.allow import allow_any
-from datatest.allow import allow_all
 from datatest.allow import allow_specified
 from datatest.allow import allow_missing
 from datatest.allow import allow_extra
