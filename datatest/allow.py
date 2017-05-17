@@ -32,12 +32,10 @@ def _is_mapping_type(obj):
 
 
 class allow_iter(object):
-    """allow_iter(function, *, msg=None)
-
-    Context manager to allow differences without triggering a test
-    failure. The *function* should accept an iterable or mapping of
-    data errors and return an iterable or mapping of only those errors
-    which are **not** allowed.
+    """Context manager to allow differences without triggering a
+    test failure. *filterfalse* should accept a predicate and an
+    iterable of data errors and return an iterable of only those
+    errors which are **not** allowed.
 
     .. admonition:: Fun Fact
         :class: note
@@ -45,33 +43,24 @@ class allow_iter(object):
         :class:`allow_iter` is the base context manager on which all
         other allowances are implemented.
     """
-    def __init__(self, function, **kwds):
-        """__init__(function, *, msg=None)
+    def __init__(self, filterfalse, predicate, msg=None):
+        """Initialize object values."""
+        assert callable(filterfalse)
+        assert callable(predicate) or predicate is None
 
-        Initialize object values.
-        """
-        if not callable(function):
-            raise TypeError("'function' must be a function or other callable")
-
-        msg = kwds.pop('msg', None)
-        if kwds:                                # Emulate keyword-only
-            cls_name = self.__class__.__name__  # behavior for Python
-            bad_arg =  next(iter(kwds.keys()))  # versions 2.7 and 2.6.
-            message = '{0}() got an unexpected keyword argument {1!r}'
-            raise TypeError(message.format(cls_name, bad_arg))
-
-        self.function = function
+        self.filterfalse = filterfalse
+        self.predicate = predicate
         self.msg = msg
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_value, tb):
-        # Apply function or reraise non-validation error.
+        # Apply filterfalse or reraise non-validation error.
         if issubclass(exc_type, ValidationError):
-            errors = self.function(exc_value.errors)
+            errors = self.filterfalse(self.predicate, exc_value.errors)
         elif exc_type is None:
-            errors = self.function([])
+            errors = self.filterfalse(self.predicate, [])
         else:
             raise exc_value
 
@@ -96,11 +85,13 @@ class allow_iter(object):
 
         # Verify type compatibility.
         if mappable_in != mappable_out:
-            message = ('function received {0!r} collection but '
-                       'returned incompatible {1!r} collection')
+            message = ('{0} received {1!r} collection but '
+                       'returned incompatible {2!r} collection')
+            filter_name = getattr(self.filterfalse, '__name__',
+                                  repr(self.filterfalse))
             output_cls = errors.__class__.__name__
             input_cls = exc_value.errors.__class__.__name__
-            raise TypeError(message.format(input_cls, output_cls))
+            raise TypeError(message.format(filter_name, input_cls, output_cls))
 
         # Re-raise ValidationError() with remaining errors.
         message = getattr(exc_value, 'message', '')
@@ -149,7 +140,7 @@ def getpair(function):
 
 class _allow_element(allow_iter):
     def __init__(self, condition, functions, **kwds):
-        def filterfalse(iterable):
+        def filterfalse(_, iterable):
             if isinstance(iterable, collections.Mapping):
                 iterable = getattr(iterable, 'iteritems', iterable.items)()
 
@@ -172,7 +163,7 @@ class _allow_element(allow_iter):
                     if not condition(f(value) for f in functions):
                         yield value
 
-        super(_allow_element, self).__init__(filterfalse, **kwds)
+        super(_allow_element, self).__init__(filterfalse, None, **kwds)
 
 
 class allow_specified(allow_iter):
@@ -203,7 +194,7 @@ class allow_specified(allow_iter):
                 exc.__cause__ = None
                 yield exc
 
-        def filterfalse(iterable):
+        def filterfalse(_, iterable):
             if isinstance(iterable, collections.Mapping):
                 iterable = getattr(iterable, 'iteritems', iterable.items)()
 
@@ -234,7 +225,7 @@ class allow_specified(allow_iter):
                                              errors.__class__.__name__)
                     raise ValueError(message)
 
-        super(allow_specified, self).__init__(filterfalse, **kwds)
+        super(allow_specified, self).__init__(filterfalse, None, **kwds)
 
 
 class allow_any(_allow_element):
@@ -361,7 +352,7 @@ class allow_limit(allow_iter):
                 for value in itertools.chain(matching, group):
                     yield value
 
-        def filterfalse(iterable):
+        def filterfalse(_, iterable):
             if isinstance(iterable, collections.Mapping):
                 iterable = getattr(iterable, 'iteritems', iterable.items)()
 
@@ -385,4 +376,4 @@ class allow_limit(allow_iter):
                 for value in grpfltrfalse(None, iterable):
                     yield value
 
-        super(allow_limit, self).__init__(filterfalse, **kwds)
+        super(allow_limit, self).__init__(filterfalse, None, **kwds)

@@ -24,20 +24,20 @@ from datatest.errors import Deviation
 
 class TestAllowIter(unittest.TestCase):
     def test_iterable_all_good(self):
-        function = lambda iterable: list()  # <- empty list
-        with allow_iter(function):  # <- Should pass without error.
+        function = lambda predicate, iterable: list()  # <- empty list
+        with allow_iter(function, None):  # <- Should pass without error.
             raise ValidationError('example error', [Missing('x')])
 
-        function = lambda iterable: iter([])  # <- empty iterator
-        with allow_iter(function):  # <- Should pass pass without error.
+        function = lambda predicate, iterable: iter([])  # <- empty iterator
+        with allow_iter(function, None):  # <- Should pass pass without error.
             raise ValidationError('example error', [Missing('x')])
 
     def test_iterable_some_bad(self):
-        function = lambda iterable: [Missing('foo')]
+        function = lambda predicate, iterable: [Missing('foo')]
         in_diffs = [Missing('foo'), Missing('bar')]
 
         with self.assertRaises(ValidationError) as cm:
-            with allow_iter(function):
+            with allow_iter(function, None):
                 raise ValidationError('example error', in_diffs)
 
         errors = cm.exception.errors
@@ -52,23 +52,23 @@ class TestAllowIter(unittest.TestCase):
         """
         # List input and dict output.
         errors_list =  [Missing('foo'), Missing('bar')]
-        function = lambda iterable: {'a': Missing('foo')}  # <- dict type
+        function = lambda predicate, iterable: {'a': Missing('foo')}  # <- dict type
         with self.assertRaises(TypeError):
-            with allow_iter(function):
+            with allow_iter(function, None):
                 raise ValidationError('example error', errors_list)
 
         # Dict input and list output.
         errors_dict =  {'a': Missing('foo'), 'b': Missing('bar')}
-        function = lambda iterable: [Missing('foo')]  # <- list type
+        function = lambda predicate, iterable: [Missing('foo')]  # <- list type
         with self.assertRaises(TypeError):
-            with allow_iter(function):
+            with allow_iter(function, None):
                 raise ValidationError('example error', errors_dict)
 
         # Dict input and list-item output.
         errors_dict =  {'a': Missing('foo'), 'b': Missing('bar')}
-        function = lambda iterable: [('a', Missing('foo'))]  # <- list of items
+        function = lambda predicate, iterable: [('a', Missing('foo'))]  # <- list of items
         with self.assertRaises(ValidationError) as cm:
-            with allow_iter(function):
+            with allow_iter(function, None):
                 raise ValidationError('example error', errors_dict)
 
         errors = cm.exception.errors
@@ -76,28 +76,22 @@ class TestAllowIter(unittest.TestCase):
         self.assertEqual(dict(errors), {'a': Missing('foo')})
 
     def test_error_message(self):
-        function = lambda iterable: iterable
+        function = lambda predicate, iterable: iterable
         error = ValidationError('original message', [Missing('foo')])
 
         # No message.
         with self.assertRaises(ValidationError) as cm:
-            with allow_iter(function):  # <- No 'msg' keyword!
+            with allow_iter(function, None):  # <- No 'msg' keyword!
                 raise error
         message = cm.exception.message
         self.assertEqual(message, 'original message')
 
         # Test allowance message.
         with self.assertRaises(ValidationError) as cm:
-            with allow_iter(function, msg='allowance message'):  # <- Uses 'msg'.
+            with allow_iter(function, None, msg='allowance message'):  # <- Uses 'msg'.
                 raise error
         message = cm.exception.message
         self.assertEqual(message, 'allowance message: original message')
-
-        # Bad keyword.
-        regex = r"allow_iter\(\) got an unexpected keyword argument 'bad'"
-        with self.assertRaisesRegex(TypeError, regex):
-            with allow_iter(function, msg='foo', bad='bar'):
-                raise error
 
 
 class TestAllowSpecified(unittest.TestCase):
@@ -653,12 +647,6 @@ class TestMsgIntegration(unittest.TestCase):
                 raise ValidationError('original', [Extra('X')])
         message = cm.exception.message
         self.assertEqual(message, 'modified: original')
-
-        # Check for keyword-only handling.
-        regex = r"allow_missing\(\) got an unexpected keyword argument 'bad'"
-        with self.assertRaisesRegex(TypeError, regex):
-            with allow_missing(bad='modified'):
-                raise ValidationError('original', [Extra('X')])
 
 
 class TestGetKeyDecorator(unittest.TestCase):
