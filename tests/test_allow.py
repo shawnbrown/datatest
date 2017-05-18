@@ -164,8 +164,23 @@ class TestPairwiseAllowances(unittest.TestCase):
         remaining_errors = cm.exception.errors
         self.assertEqual(list(remaining_errors), [Extra('X')])
 
+    def test_allow_missing(self):
+        errors =  [Missing('X'), Missing('Y'), Extra('X')]
 
+        with self.assertRaises(ValidationError) as cm:
+            with allow_missing():  # <- Apply allowance!
+                raise ValidationError('some message', errors)
+        remaining_errors = cm.exception.errors
+        self.assertEqual(list(remaining_errors), [Extra('X')])
 
+    def test_allow_extra(self):
+        errors =  [Extra('X'), Extra('Y'), Missing('X')]
+
+        with self.assertRaises(ValidationError) as cm:
+            with allow_extra():  # <- Apply allowance!
+                raise ValidationError('some message', errors)
+        remaining_errors = cm.exception.errors
+        self.assertEqual(list(remaining_errors), [Missing('X')])
 
 
 class TestAllowSpecified(unittest.TestCase):
@@ -376,26 +391,6 @@ class TestAllowLimit(unittest.TestCase):
         self.assertEqual(dict(actual), expected)
 
 
-class TestAllowMissing_and_AllowExtra(unittest.TestCase):
-    def test_allow_missing(self):
-        errors =  [Missing('X'), Missing('Y'), Extra('X')]
-
-        with self.assertRaises(ValidationError) as cm:
-            with allow_missing():  # <- Apply allowance!
-                raise ValidationError('some message', errors)
-        remaining_errors = cm.exception.errors
-        self.assertEqual(list(remaining_errors), [Extra('X')])
-
-    def test_allow_extra(self):
-        errors =  [Extra('X'), Extra('Y'), Missing('X')]
-
-        with self.assertRaises(ValidationError) as cm:
-            with allow_extra():  # <- Apply allowance!
-                raise ValidationError('some message', errors)
-        remaining_errors = cm.exception.errors
-        self.assertEqual(list(remaining_errors), [Missing('X')])
-
-
 class TestAllowDeviation(unittest.TestCase):
     """Test allow_deviation() behavior."""
     def test_method_signature(self):
@@ -548,7 +543,6 @@ class TestAllowPercentDeviation(unittest.TestCase):
         self.assertEqual({'aaa': Deviation(-1, 10)}, result_diffs)
 
     def test_single_value_allowance(self):
-        from decimal import Decimal
         differences = [
             Deviation(+2.9, 10),  # <- Not allowed.
             Deviation(+3.0, 10),
