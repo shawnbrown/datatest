@@ -8,6 +8,7 @@ from datatest.allow import pairwise_filterfalse
 from datatest.allow import allow_pair
 from datatest.allow import allow_key
 from datatest.allow import allow_error
+from datatest.allow import allow_args
 from datatest.allow import allow_missing
 from datatest.allow import allow_extra
 from datatest.allow import allow_deviation
@@ -229,6 +230,31 @@ class TestPairwiseAllowances(unittest.TestCase):
 
         remaining_errors = cm.exception.errors
         self.assertEqual(list(remaining_errors), [Extra('X')])
+
+    def test_allow_args(self):
+        # Single argument.
+        errors =  [Missing('aaa'), Missing('bbb'), Extra('bbb')]
+        def function(arg):
+            return arg == 'bbb'
+
+        with self.assertRaises(ValidationError) as cm:
+            with allow_args(function):  # <- Apply allowance!
+                raise ValidationError('some message', errors)
+
+        remaining_errors = cm.exception.errors
+        self.assertEqual(list(remaining_errors), [Missing('aaa')])
+
+        # Multiple arguments.
+        errors =  [Deviation(1, 5), Deviation(2, 5)]
+        def function(diff, expected):
+            return diff < 2 and expected == 5
+
+        with self.assertRaises(ValidationError) as cm:
+            with allow_args(function):  # <- Apply allowance!
+                raise ValidationError('some message', errors)
+
+        remaining_errors = cm.exception.errors
+        self.assertEqual(list(remaining_errors), [Deviation(2, 5)])
 
     def test_allow_missing(self):
         errors =  [Missing('X'), Missing('Y'), Extra('X')]

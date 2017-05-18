@@ -187,6 +187,22 @@ class allow_error(BaseAllowance):
         super(allow_error, self).__init__(pairwise_filterfalse, wrapped, msg)
 
 
+class allow_args(BaseAllowance):
+    """The given *function* should accept a number of arguments equal
+    the given elements in the 'args' attribute. If args is a single
+    value (string or otherwise), *function* should accept one argument.
+    If args is a three-tuple, *function* should accept three arguments.
+    """
+    def __init__(self, function, msg=None):
+        @wraps(function)
+        def wrapped(_, error):
+            args = error.args
+            if _is_nsiterable(args):
+                return function(*args)
+            return function(args)
+        super(allow_args, self).__init__(pairwise_filterfalse, wrapped, msg)
+
+
 class allow_missing(allow_error):
     def __init__(self, msg=None):
         def is_missing(value):
