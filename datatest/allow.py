@@ -106,14 +106,6 @@ def getvalue(function):
     return adapted
 
 
-def getargs(function):
-    def adapted(key, value):  # <- key not used.
-        return function(*value.args)
-    adapted.__name__ = 'adapted_' + function.__name__
-    adapted._decorator = getargs
-    return adapted
-
-
 def getkey(function):
     def adapted(key, value):  # <- value not used.
         if _is_nsiterable(key):
@@ -121,14 +113,6 @@ def getkey(function):
         return function(key)
     adapted.__name__ = 'adapted_' + function.__name__
     adapted._decorator = getkey
-    return adapted
-
-
-def getpair(function):
-    def adapted(key, value):
-        return function(key, value)
-    adapted.__name__ = 'adapted_' + function.__name__
-    adapted._decorator = getpair
     return adapted
 
 
