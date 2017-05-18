@@ -275,6 +275,25 @@ class TestPairwiseAllowances(unittest.TestCase):
         self.assertEqual(list(remaining_errors), [Missing('X')])
 
 
+class TestComposabilityOfAllowances(unittest.TestCase):
+    def test_or_operator(self):
+        errors =  [Extra('X'), Missing('Y'), Invalid('Z')]
+        with self.assertRaises(ValidationError) as cm:
+            with allow_extra() | allow_missing():  # <- Compose with "|"!
+                raise ValidationError('some message', errors)
+        remaining_errors = cm.exception.errors
+        self.assertEqual(list(remaining_errors), [Invalid('Z')])
+
+    def test_and_operator(self):
+        errors =  [Missing('X'), Extra('Y'), Missing('Z')]
+        with self.assertRaises(ValidationError) as cm:
+            is_x = lambda arg: arg == 'X'
+            with allow_missing() & allow_args(is_x):  # <- Compose with "&"!
+                raise ValidationError('some message', errors)
+        remaining_errors = cm.exception.errors
+        self.assertEqual(list(remaining_errors), [Extra('Y'), Missing('Z')])
+
+
 class TestAllowSpecified(unittest.TestCase):
     def test_some_allowed(self):
         errors = [Extra('xxx'), Missing('yyy')]

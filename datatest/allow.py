@@ -46,6 +46,31 @@ class BaseAllowance(object):
         self.predicate = predicate
         self.msg = msg
 
+    def _is_composable(self, other):
+        if not isinstance(other, BaseAllowance):
+            return False
+        return self.filterfalse is other.filterfalse
+
+    def __or__(self, other):
+        if not self._is_composable(other):
+            return False
+
+        pred1 = self.predicate
+        pred2 = other.predicate
+        def predicate(*args, **kwds):
+            return pred1(*args, **kwds) or pred2(*args, **kwds)
+        return BaseAllowance(self.filterfalse, predicate)
+
+    def __and__(self, other):
+        if not self._is_composable(other):
+            return False
+
+        pred1 = self.predicate
+        pred2 = other.predicate
+        def predicate(*args, **kwds):
+            return pred1(*args, **kwds) and pred2(*args, **kwds)
+        return BaseAllowance(self.filterfalse, predicate)
+
     def __enter__(self):
         return self
 
