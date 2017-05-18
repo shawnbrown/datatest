@@ -162,6 +162,31 @@ class ElementAllowance(BaseAllowance):
         super(ElementAllowance, self).__init__(filterfalse, function, msg)
 
 
+def pairwise_filterfalse(predicate, iterable):
+    """Make an iterator that filters elements from *iterable*
+    returning only those for which the *predicate* is False. The
+    *predicate* must be a function of two arguments (key and value).
+    """
+    if isinstance(iterable, collections.Mapping):
+        iterable = getattr(iterable, 'iteritems', iterable.items)()
+
+    if _is_collection_of_items(iterable):
+        for key, value in iterable:
+            if (not _is_nsiterable(value)
+                    or isinstance(value, Exception)
+                    or isinstance(value, collections.Mapping)):
+                if not predicate(key, value):
+                    yield key, value
+            else:
+                values = list(v for v in value if not predicate(key, v))
+                if values:
+                    yield key, values
+    else:
+        for value in iterable:
+            if not predicate(None, value):
+                yield value
+
+
 class allow_missing(ElementAllowance):
     def __init__(self, msg=None):
         def is_missing(x):

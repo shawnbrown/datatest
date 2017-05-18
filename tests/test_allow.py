@@ -5,6 +5,7 @@ from datatest.utils import collections
 
 from datatest.allow import BaseAllowance
 from datatest.allow import ElementAllowance
+from datatest.allow import pairwise_filterfalse
 from datatest.allow import allow_missing
 from datatest.allow import allow_extra
 from datatest.allow import allow_deviation
@@ -17,6 +18,7 @@ from datatest.errors import ValidationError
 from datatest.errors import DataError
 from datatest.errors import Missing
 from datatest.errors import Extra
+from datatest.errors import Invalid
 from datatest.errors import Deviation
 
 
@@ -90,6 +92,63 @@ class TestBaseAllowance(unittest.TestCase):
                 raise error
         message = cm.exception.message
         self.assertEqual(message, 'allowance message: original message')
+
+
+class TestPairwiseFilterfalse(unittest.TestCase):
+    def test_mapping_of_nongroups(self):
+        iterable = {
+            'a': Missing(1),
+            'b': Extra(2),
+            'c': Invalid(3),
+        }
+        def predicate(key, value):
+            return (key == 'b') or isinstance(value, Invalid)
+
+        result = pairwise_filterfalse(predicate, iterable)
+        self.assertEqual(dict(result), {'a':  Missing(1)})
+
+    def test_mapping_of_groups(self):
+        """Key/value pairs should be passed to predicate for
+        every element of an iterable group.
+        """
+        iterable = {
+            'x': [
+                Missing(1),
+                Invalid(2),  # <- Matches predicate.
+                Missing(3),
+                Extra(4),    # <- Matches predicate.
+            ],
+            'y': [
+                Missing(5),
+                Extra(6),    # <- Matches predicate.
+                Invalid(7),
+            ],
+            'z': [
+                Extra(8),    # <- Matches predicate.
+            ],
+        }
+
+        def predicate(key, value):
+            if key == 'x' and isinstance(value, Invalid):
+                return True
+            if isinstance(value, Extra):
+                return True
+            return False
+
+        result = pairwise_filterfalse(predicate, iterable)
+        expected = {'x': [Missing(1), Missing(3)],
+                    'y': [Missing(5), Invalid(7)]}
+        self.assertEqual(dict(result), expected)
+
+    def test_nonmapping(self):
+        iterable = [Extra(1), Missing(2), Invalid(3)]
+
+        def predicate(key, value):
+            assert key is None  # <- For non-mapping, key is always None.
+            return isinstance(value, Missing)
+
+        result = pairwise_filterfalse(predicate, iterable)
+        self.assertEqual(list(result), [Extra(1), Invalid(3)])
 
 
 class TestAllowSpecified(unittest.TestCase):
