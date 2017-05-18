@@ -157,6 +157,12 @@ def pairwise_filterfalse(predicate, iterable):
                 yield value
 
 
+class allow_pair(BaseAllowance):
+    """Accepts a *function* of two arguments (key and error)."""
+    def __init__(self, function, msg=None):
+        super(allow_pair, self).__init__(pairwise_filterfalse, function, msg)
+
+
 class allow_error(BaseAllowance):
     """Accepts a *function* of one argument."""
     def __init__(self, function, msg=None):

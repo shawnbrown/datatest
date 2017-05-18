@@ -5,6 +5,7 @@ from datatest.utils import collections
 
 from datatest.allow import BaseAllowance
 from datatest.allow import pairwise_filterfalse
+from datatest.allow import allow_pair
 from datatest.allow import allow_error
 from datatest.allow import allow_missing
 from datatest.allow import allow_extra
@@ -152,6 +153,32 @@ class TestPairwiseFilterfalse(unittest.TestCase):
 
 
 class TestPairwiseAllowances(unittest.TestCase):
+    def test_allow_pair(self):
+        # Test mapping of errors.
+        errors = {'a': Missing(1), 'b': Missing(2)}
+        def function(key, error):
+            return key == 'b' and isinstance(error, Missing)
+
+        with self.assertRaises(ValidationError) as cm:
+            with allow_pair(function):  # <- Apply allowance!
+                raise ValidationError('some message', errors)
+
+        remaining_errors = cm.exception.errors
+        self.assertEqual(dict(remaining_errors), {'a': Missing(1)})
+
+        # Test non-mapping container of errors.
+        errors = [Missing(1), Extra(2)]
+        def function(key, error):
+            assert key is None  # None when errors are non-mapping.
+            return isinstance(error, Missing)
+
+        with self.assertRaises(ValidationError) as cm:
+            with allow_pair(function):  # <- Apply allowance!
+                raise ValidationError('some message', errors)
+
+        remaining_errors = cm.exception.errors
+        self.assertEqual(list(remaining_errors), [Extra(2)])
+
     def test_allow_error(self):
         errors =  [Missing('X'), Missing('Y'), Extra('X')]
         def function(error):
