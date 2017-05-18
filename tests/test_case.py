@@ -167,8 +167,8 @@ class TestAllowanceWrappers(unittest.TestCase):
         cm = self.case.allowSpecified([Missing('foo')])
         self.assertTrue(isinstance(cm, allow_specified))
 
-    def test_allowAll(self):
-        cm = self.case.allowAll(lambda x: x == 'aaa')
+    def test_allowError(self):
+        cm = self.case.allowError(lambda x: x == 'aaa')
         self.assertTrue(isinstance(cm, allow_error))
 
     def test_allowMissing(self):

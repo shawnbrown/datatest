@@ -509,7 +509,7 @@ class TestAllowDeviation(unittest.TestCase):
         try:
             sig = inspect.signature(allow_deviation)
             parameters = list(sig.parameters)
-            self.assertEqual(parameters, ['tolerance', 'kwds_func'])
+            self.assertEqual(parameters, ['tolerance', 'msg'])
         except AttributeError:
             pass  # Python 3.2 and older use ugly signature as default.
 
@@ -619,7 +619,7 @@ class TestAllowPercentDeviation(unittest.TestCase):
         try:
             sig = inspect.signature(allow_percent_deviation)
             parameters = list(sig.parameters)
-            self.assertEqual(parameters, ['tolerance', 'kwds_func'])
+            self.assertEqual(parameters, ['tolerance', 'msg'])
         except AttributeError:
             pass  # Python 3.2 and older use ugly signature as default.
 

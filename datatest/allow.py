@@ -241,19 +241,18 @@ def _prettify_devsig(method):
     parameters = [
         inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY),
         inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),
-        inspect.Parameter('kwds_func', inspect.Parameter.VAR_KEYWORD),
+        inspect.Parameter('msg', inspect.Parameter.POSITIONAL_OR_KEYWORD),
     ]
     method.__signature__ = signature.replace(parameters=parameters)
 
 
-def _normalize_devargs(lower, upper, funcs):
+def _normalize_devargs(lower, upper, msg):
     """Normalize deviation allowance arguments to support both
     "tolerance" and "lower, upper" signatures. This helper function
     is intended for internal use.
     """
-    if callable(upper):
-        funcs = (upper,) + funcs
-        upper = None
+    if isinstance(upper, str) and msg is None:
+        upper, msg = None, msg  # Shift values if using "tolerance" syntax.
 
     if upper == None:
         tolerance = lower
@@ -264,12 +263,11 @@ def _normalize_devargs(lower, upper, funcs):
     lower = _make_decimal(lower)
     upper = _make_decimal(upper)
     assert lower <= upper
-    return (lower, upper, funcs)
+    return (lower, upper, msg)
 
 
 class allow_deviation(allow_error):
-    """
-    allow_deviation(tolerance, /, msg=None)
+    """allow_deviation(tolerance, /, msg=None)
     allow_deviation(lower, upper, msg=None)
 
     Context manager that allows Deviations within a given tolerance
@@ -278,7 +276,7 @@ class allow_deviation(allow_error):
     See documentation for full details.
     """
     def __init__(self, lower, upper=None, msg=None):
-        lower, upper, funcs = _normalize_devargs(lower, upper, ())
+        lower, upper, msg = _normalize_devargs(lower, upper, msg)
         def tolerance(error):  # <- Closes over lower & upper.
             deviation = error.deviation or 0.0
             if isnan(deviation) or isnan(error.expected or 0.0):
@@ -290,7 +288,7 @@ _prettify_devsig(allow_deviation.__init__)
 
 class allow_percent_deviation(allow_error):
     def __init__(self, lower, upper=None, msg=None):
-        lower, upper, funcs = _normalize_devargs(lower, upper, ())
+        lower, upper, msg = _normalize_devargs(lower, upper, msg)
         def percent_tolerance(error):  # <- Closes over lower & upper.
             percent_deviation = error.percent_deviation
             if isnan(percent_deviation) or isnan(error.expected or 0):
