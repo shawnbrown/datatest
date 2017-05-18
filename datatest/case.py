@@ -15,7 +15,7 @@ from .errors import ValidationError
 __datatest = True  # Used to detect in-module stack frames (which are
                    # omitted from output).
 
-from .allow import ElementAllowance
+from .allow import allow_error
 from .allow import allow_missing
 from .allow import allow_extra
 from .allow import allow_deviation
@@ -233,7 +233,7 @@ class DataTestCase(TestCase):
         return allow_specified(errors, **kwds)
 
     def allowAll(self, function, *funcs, **kwds):
-        return ElementAllowance(function, *funcs, **kwds)
+        return allow_error(function, **kwds)
 
     def allowMissing(self, *funcs, **kwds):
         """Allows :class:`Missing` values without triggering a test

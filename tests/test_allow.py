@@ -4,7 +4,6 @@ from . import _unittest as unittest
 from datatest.utils import collections
 
 from datatest.allow import BaseAllowance
-from datatest.allow import ElementAllowance
 from datatest.allow import pairwise_filterfalse
 from datatest.allow import allow_error
 from datatest.allow import allow_missing
@@ -164,6 +163,9 @@ class TestPairwiseAllowances(unittest.TestCase):
 
         remaining_errors = cm.exception.errors
         self.assertEqual(list(remaining_errors), [Extra('X')])
+
+
+
 
 
 class TestAllowSpecified(unittest.TestCase):
@@ -372,50 +374,6 @@ class TestAllowLimit(unittest.TestCase):
         actual = cm.exception.errors
         expected = {'foo': [Missing('yyy')]}
         self.assertEqual(dict(actual), expected)
-
-
-class TestElementAllowance(unittest.TestCase):
-    def test_list_of_errors(self):
-        errors =  [Missing('X'), Missing('Y')]
-        func1 = lambda x: True
-        func2 = lambda x: False
-
-        with ElementAllowance(func1):
-            raise ValidationError('one True', errors)
-
-        with self.assertRaises(ValidationError) as cm:
-            with ElementAllowance(func2):
-                raise ValidationError('none True', errors)
-        remaining_errors = cm.exception.errors
-        self.assertEqual(list(remaining_errors), errors)
-
-    def test_dict_of_errors(self):
-        errors =  {'a': Missing('X'), 'b': Missing('Y')}  # <- Each value
-        func1 = lambda x: True                            #    is a single
-        func2 = lambda x: False                           #    error.
-
-        with ElementAllowance(func1):
-            raise ValidationError('one True', errors)
-
-        with self.assertRaises(ValidationError) as cm:
-            with ElementAllowance(func2):
-                raise ValidationError('none True', errors)
-        remaining_errors = cm.exception.errors
-        self.assertEqual(dict(remaining_errors), errors)
-
-    def test_dict_of_lists(self):
-        errors =  {'a': [Missing('X'), Missing('Y')]}  # <- Value is a list
-        func1 = lambda x: isinstance(x, DataError)     #    of errors.
-        func2 = lambda x: x.args[0] == 'Z'
-
-        with ElementAllowance(func1):
-            raise ValidationError('one True', errors)
-
-        with self.assertRaises(ValidationError) as cm:
-            with ElementAllowance(func2):
-                raise ValidationError('none True', errors)
-        remaining_errors = cm.exception.errors
-        self.assertEqual(dict(remaining_errors), errors)
 
 
 class TestAllowMissing_and_AllowExtra(unittest.TestCase):

@@ -132,36 +132,6 @@ def getpair(function):
     return adapted
 
 
-class ElementAllowance(BaseAllowance):
-    def __init__(self, function, msg=None):
-        def filterfalse(predicate, iterable):
-            if isinstance(iterable, collections.Mapping):
-                iterable = getattr(iterable, 'iteritems', iterable.items)()
-
-            if _is_collection_of_items(iterable):
-                if not hasattr(predicate, '_decorator'):
-                    wrapfunc = getvalue(predicate)
-                else:
-                    wrapfunc = predicate
-
-                for key, value in iterable:
-                    if (not _is_nsiterable(value)
-                            or isinstance(value, Exception)
-                            or isinstance(value, collections.Mapping)):
-                        if not wrapfunc(key, value):
-                            yield key, value
-                    else:
-                        values = list(v for v in value if not wrapfunc(key, v))
-                        if values:
-                            yield key, values
-            else:
-                for value in iterable:
-                    if not predicate(value):
-                        yield value
-
-        super(ElementAllowance, self).__init__(filterfalse, function, msg)
-
-
 def pairwise_filterfalse(predicate, iterable):
     """Make an iterator that filters elements from *iterable*
     returning only those for which the *predicate* is False. The
