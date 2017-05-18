@@ -6,6 +6,7 @@ from datatest.utils import collections
 from datatest.allow import BaseAllowance
 from datatest.allow import pairwise_filterfalse
 from datatest.allow import allow_pair
+from datatest.allow import allow_key
 from datatest.allow import allow_error
 from datatest.allow import allow_missing
 from datatest.allow import allow_extra
@@ -178,6 +179,44 @@ class TestPairwiseAllowances(unittest.TestCase):
 
         remaining_errors = cm.exception.errors
         self.assertEqual(list(remaining_errors), [Extra(2)])
+
+    def test_allow_key(self):
+        # Test mapping of errors.
+        errors = {'aaa': Missing(1), 'bbb': Missing(2)}
+        def function(key):
+            return key == 'aaa'
+
+        with self.assertRaises(ValidationError) as cm:
+            with allow_key(function):  # <- Apply allowance!
+                raise ValidationError('some message', errors)
+
+        remaining_errors = cm.exception.errors
+        self.assertEqual(dict(remaining_errors), {'bbb': Missing(2)})
+
+        # Test mapping of errors with composite keys.
+        errors = {('a', 7): Missing(1), ('b', 7): Missing(2)}
+        def function(letter, number):
+            return letter == 'a' and number == 7
+
+        with self.assertRaises(ValidationError) as cm:
+            with allow_key(function):  # <- Apply allowance!
+                raise ValidationError('some message', errors)
+
+        remaining_errors = cm.exception.errors
+        self.assertEqual(dict(remaining_errors), {('b', 7): Missing(2)})
+
+        # Test non-mapping container of errors.
+        errors = [Missing(1), Extra(2)]
+        def function(key):
+            assert key is None  # <- Always Non for non-mapping errors.
+            return False  # < Don't match any errors.
+
+        with self.assertRaises(ValidationError) as cm:
+            with allow_key(function):  # <- Apply allowance!
+                raise ValidationError('some message', errors)
+
+        remaining_errors = cm.exception.errors
+        self.assertEqual(list(remaining_errors), [Missing(1), Extra(2)])
 
     def test_allow_error(self):
         errors =  [Missing('X'), Missing('Y'), Extra('X')]

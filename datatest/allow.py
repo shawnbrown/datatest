@@ -163,6 +163,21 @@ class allow_pair(BaseAllowance):
         super(allow_pair, self).__init__(pairwise_filterfalse, function, msg)
 
 
+class allow_key(BaseAllowance):
+    """The given *function* should accept a number of arguments equal
+    the given key elements. If key is a single value (string or
+    otherwise), *function* should accept one argument. If key is a
+    three-tuple, *function* should accept three arguments.
+    """
+    def __init__(self, function, msg=None):
+        @wraps(function)
+        def wrapped(key, _):
+            if _is_nsiterable(key):
+                return function(*key)
+            return function(key)
+        super(allow_key, self).__init__(pairwise_filterfalse, wrapped, msg)
+
+
 class allow_error(BaseAllowance):
     """Accepts a *function* of one argument."""
     def __init__(self, function, msg=None):
