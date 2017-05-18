@@ -555,8 +555,7 @@ class TestAllowDeviation(unittest.TestCase):
         ]
         self.assertEqual(expected_diffs, result_diffs)
 
-    @unittest.skip('reimplement using Boolean composition')
-    def test_getkey_decorator(self):
+    def test_allowance_composition(self):
         with self.assertRaises(ValidationError) as cm:
             differences = {
                 'aaa': Deviation(-1, 10),
@@ -564,10 +563,11 @@ class TestAllowDeviation(unittest.TestCase):
                 'ccc': Deviation(+2, 10),
                 'ddd': Deviation(+3, 10),
             }
-            @getkey
+
             def fn(key):
                 return key in ('aaa', 'bbb', 'ddd')
-            with allow_deviation(2, fn):  # <- Allows +/- 2.
+
+            with allow_deviation(2) & allow_key(fn):  # <- composed with "&"!
                 raise ValidationError('example error', differences)
 
         actual = cm.exception.errors
@@ -671,8 +671,7 @@ class TestAllowPercentDeviation(unittest.TestCase):
         ]
         self.assertEqual(expected_diffs, result_diffs)
 
-    @unittest.skip('reimplement using Boolean composition')
-    def test_kwds_handling(self):
+    def test_allowance_composition(self):
         differences = {
             'aaa': Deviation(-1, 10),
             'bbb': Deviation(+2, 10),
@@ -680,9 +679,10 @@ class TestAllowPercentDeviation(unittest.TestCase):
             'ddd': Deviation(+3, 10),
         }
         with self.assertRaises(ValidationError) as cm:
-            fn = lambda x: x in ('aaa', 'bbb', 'ddd')
-            fn = getkey(fn)
-            with allow_percent_deviation(0.2, fn):  # <- Allows +/- 20%.
+            def keyfn(key):
+                return key in ('aaa', 'bbb', 'ddd')
+
+            with allow_percent_deviation(0.2) & allow_key(keyfn):  # <- Allows +/- 20%.
                 raise ValidationError('example error', differences)
 
         result_set = cm.exception.errors
