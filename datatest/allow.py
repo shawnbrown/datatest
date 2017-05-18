@@ -196,17 +196,17 @@ class allow_error(BaseAllowance):
         super(allow_error, self).__init__(pairwise_filterfalse, wrapped, msg)
 
 
-class allow_missing(ElementAllowance):
+class allow_missing(allow_error):
     def __init__(self, msg=None):
-        def is_missing(x):
-            return isinstance(x, Missing)
+        def is_missing(value):
+            return isinstance(value, Missing)
         super(allow_missing, self).__init__(is_missing, msg)
 
 
-class allow_extra(ElementAllowance):
+class allow_extra(allow_error):
     def __init__(self, msg=None):
-        def is_extra(x):
-            return isinstance(x, Extra)
+        def is_extra(value):
+            return isinstance(value, Extra)
         super(allow_extra, self).__init__(is_extra, msg)
 
 
@@ -251,10 +251,10 @@ def _normalize_devargs(lower, upper, funcs):
     return (lower, upper, funcs)
 
 
-class allow_deviation(ElementAllowance):
+class allow_deviation(allow_error):
     """
-    allow_deviation(tolerance, /, *funcs, msg=None)
-    allow_deviation(lower, upper, *funcs, msg=None)
+    allow_deviation(tolerance, /, msg=None)
+    allow_deviation(lower, upper, msg=None)
 
     Context manager that allows Deviations within a given tolerance
     without triggering a test failure.
@@ -262,8 +262,7 @@ class allow_deviation(ElementAllowance):
     See documentation for full details.
     """
     def __init__(self, lower, upper=None, msg=None):
-        funcs = ()
-        lower, upper, funcs = _normalize_devargs(lower, upper, funcs)
+        lower, upper, funcs = _normalize_devargs(lower, upper, ())
         def tolerance(error):  # <- Closes over lower & upper.
             deviation = error.deviation or 0.0
             if isnan(deviation) or isnan(error.expected or 0.0):
@@ -273,10 +272,9 @@ class allow_deviation(ElementAllowance):
 _prettify_devsig(allow_deviation.__init__)
 
 
-class allow_percent_deviation(ElementAllowance):
+class allow_percent_deviation(allow_error):
     def __init__(self, lower, upper=None, msg=None):
-        funcs = ()
-        lower, upper, funcs = _normalize_devargs(lower, upper, funcs)
+        lower, upper, funcs = _normalize_devargs(lower, upper, ())
         def percent_tolerance(error):  # <- Closes over lower & upper.
             percent_deviation = error.percent_deviation
             if isnan(percent_deviation) or isnan(error.expected or 0):
