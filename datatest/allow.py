@@ -187,6 +187,15 @@ def pairwise_filterfalse(predicate, iterable):
                 yield value
 
 
+class allow_error(BaseAllowance):
+    """Accepts a *function* of one argument."""
+    def __init__(self, function, msg=None):
+        @wraps(function)
+        def wrapped(_, value):
+            return function(value)
+        super(allow_error, self).__init__(pairwise_filterfalse, wrapped, msg)
+
+
 class allow_missing(ElementAllowance):
     def __init__(self, msg=None):
         def is_missing(x):

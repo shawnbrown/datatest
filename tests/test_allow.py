@@ -6,6 +6,7 @@ from datatest.utils import collections
 from datatest.allow import BaseAllowance
 from datatest.allow import ElementAllowance
 from datatest.allow import pairwise_filterfalse
+from datatest.allow import allow_error
 from datatest.allow import allow_missing
 from datatest.allow import allow_extra
 from datatest.allow import allow_deviation
@@ -149,6 +150,20 @@ class TestPairwiseFilterfalse(unittest.TestCase):
 
         result = pairwise_filterfalse(predicate, iterable)
         self.assertEqual(list(result), [Extra(1), Invalid(3)])
+
+
+class TestPairwiseAllowances(unittest.TestCase):
+    def test_allow_error(self):
+        errors =  [Missing('X'), Missing('Y'), Extra('X')]
+        def function(error):
+            return isinstance(error, Missing)
+
+        with self.assertRaises(ValidationError) as cm:
+            with allow_error(function):  # <- Apply allowance!
+                raise ValidationError('some message', errors)
+
+        remaining_errors = cm.exception.errors
+        self.assertEqual(list(remaining_errors), [Extra('X')])
 
 
 class TestAllowSpecified(unittest.TestCase):
