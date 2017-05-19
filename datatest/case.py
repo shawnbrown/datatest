@@ -236,19 +236,31 @@ class DataTestCase(TestCase):
         return allow_specified(errors, msg)
 
     def allowError(self, function, msg=None):
-        """."""
+        """Allows errors where *function* returns True. For each
+        error, *function* must accept a single argument (the error
+        itself).
+        """
         return allow_error(function, msg)
 
     def allowArgs(self, function, msg=None):
-        """."""
+        """Allows errors where *function* returns True. For the 'args'
+        attribute of each error (a tuple), *function* must accept the
+        number of arguments unpacked from 'args'.
+        """
         return allow_args(function, msg)
 
     def allowPair(self, function, msg=None):
-        """."""
+        """Allow errors in a mapping where *function* returns True.
+        For each error, *function* will receive two arguments---the
+        **key** and **error**.
+        """
         return allow_pair(function, msg)
 
     def allowKey(self, function, msg=None):
-        """."""
+        """Allow errors in a mapping where *function* returns True.
+        For each error, *function* will receive the associated
+        mapping **key** unpacked into one or more arguments.
+        """
         return allow_key(function, msg)
 
     def allowMissing(self, msg=None):

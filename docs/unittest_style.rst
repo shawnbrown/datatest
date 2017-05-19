@@ -84,7 +84,13 @@ DataTestCase
 
     .. automethod:: allowOnly
 
-    .. automethod:: allowAny
+    .. automethod:: allowError
+
+    .. automethod:: allowArgs
+
+    .. automethod:: allowKey
+
+    .. automethod:: allowPair
 
     .. automethod:: allowMissing
 
@@ -92,8 +98,8 @@ DataTestCase
 
     .. automethod:: allowLimit
 
-    .. method:: allowDeviation(tolerance, /, msg=None, **kwds_func)
-                allowDeviation(lower, upper, msg=None, **kwds_func)
+    .. method:: allowDeviation(tolerance, /, msg=None)
+                allowDeviation(lower, upper, msg=None)
 
         Context manager that allows :class:`Deviations <datatest.Deviation>`
         within a given *tolerance* without triggering a test failure::
@@ -116,8 +122,8 @@ DataTestCase
         Empty values (None, empty string, etc.) are treated as zeros when
         performing comparisons.
 
-    .. method:: allowPercentDeviation(tolerance, /, msg=None, **kwds_func)
-                allowPercentDeviation(lower, upper, msg=None, **kwds_func)
+    .. method:: allowPercentDeviation(tolerance, /, msg=None)
+                allowPercentDeviation(lower, upper, msg=None)
 
         Context manager that allows :class:`Deviations <datatest.Deviation>`
         within a given percentage of error without triggering a test
