@@ -172,7 +172,7 @@ class allow_pair(BaseAllowance):
         super(allow_pair, self).__init__(pairwise_filterfalse, function, msg)
 
 
-class allow_key(BaseAllowance):
+class allow_key(allow_pair):
     """The given *function* should accept a number of arguments equal
     the given key elements. If key is a single value (string or
     otherwise), *function* should accept one argument. If key is a
@@ -184,19 +184,19 @@ class allow_key(BaseAllowance):
             if _is_nsiterable(key):
                 return function(*key)
             return function(key)
-        super(allow_key, self).__init__(pairwise_filterfalse, wrapped, msg)
+        super(allow_key, self).__init__(wrapped, msg)
 
 
-class allow_error(BaseAllowance):
+class allow_error(allow_pair):
     """Accepts a *function* of one argument."""
     def __init__(self, function, msg=None):
         @wraps(function)
         def wrapped(_, value):
             return function(value)
-        super(allow_error, self).__init__(pairwise_filterfalse, wrapped, msg)
+        super(allow_error, self).__init__(wrapped, msg)
 
 
-class allow_args(BaseAllowance):
+class allow_args(allow_error):
     """The given *function* should accept a number of arguments equal
     the given elements in the 'args' attribute. If args is a single
     value (string or otherwise), *function* should accept one argument.
@@ -204,12 +204,12 @@ class allow_args(BaseAllowance):
     """
     def __init__(self, function, msg=None):
         @wraps(function)
-        def wrapped(_, error):
+        def wrapped(error):
             args = error.args
             if _is_nsiterable(args):
                 return function(*args)
             return function(args)
-        super(allow_args, self).__init__(pairwise_filterfalse, wrapped, msg)
+        super(allow_args, self).__init__(wrapped, msg)
 
 
 class allow_missing(allow_error):
