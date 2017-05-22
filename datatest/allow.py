@@ -46,30 +46,11 @@ class BaseAllowance(object):
         self.predicate = predicate
         self.msg = msg
 
-    def _is_composable(self, other):
-        if not isinstance(other, BaseAllowance):
-            return False
-        return self.filterfalse is other.filterfalse
-
     def __or__(self, other):
-        if not self._is_composable(other):
-            return False
-
-        pred1 = self.predicate
-        pred2 = other.predicate
-        def predicate(*args, **kwds):
-            return pred1(*args, **kwds) or pred2(*args, **kwds)
-        return BaseAllowance(self.filterfalse, predicate)
+        return NotImplemented
 
     def __and__(self, other):
-        if not self._is_composable(other):
-            return False
-
-        pred1 = self.predicate
-        pred2 = other.predicate
-        def predicate(*args, **kwds):
-            return pred1(*args, **kwds) and pred2(*args, **kwds)
-        return BaseAllowance(self.filterfalse, predicate)
+        return NotImplemented
 
     def __enter__(self):
         return self
@@ -141,38 +122,61 @@ def getkey(function):
     return adapted
 
 
-def pairwise_filterfalse(predicate, iterable):
-    """Make an iterator that filters elements from *iterable*
-    returning only those for which the *predicate* is False. The
-    *predicate* must be a function of two arguments (key and value).
+class PairwiseAllowance(BaseAllowance):
+    """Allow errors in a mapping where *function* returns True.
+    For each error, *function* will receive two arguments---the
+    **key** and **error**.
     """
-    if isinstance(iterable, collections.Mapping):
-        iterable = getattr(iterable, 'iteritems', iterable.items)()
-
-    if _is_collection_of_items(iterable):
-        for key, value in iterable:
-            if (not _is_nsiterable(value)
-                    or isinstance(value, Exception)
-                    or isinstance(value, collections.Mapping)):
-                if not predicate(key, value):
-                    yield key, value
-            else:
-                values = list(v for v in value if not predicate(key, v))
-                if values:
-                    yield key, values
-    else:
-        for value in iterable:
-            if not predicate(None, value):
-                yield value
-
-
-class allow_pair(BaseAllowance):
-    """Accepts a *function* of two arguments (key and error)."""
     def __init__(self, function, msg=None):
-        super(allow_pair, self).__init__(pairwise_filterfalse, function, msg)
+        super(PairwiseAllowance, self).__init__(self.filterfalse, function, msg)
+
+    @staticmethod
+    def filterfalse(predicate, iterable):
+        """Make an iterator that filters elements from *iterable*
+        returning only those for which the *predicate* is False. The
+        *predicate* must be a function of two arguments (key and value).
+        """
+        if isinstance(iterable, collections.Mapping):
+            iterable = getattr(iterable, 'iteritems', iterable.items)()
+
+        if _is_collection_of_items(iterable):
+            for key, value in iterable:
+                if (not _is_nsiterable(value)
+                        or isinstance(value, Exception)
+                        or isinstance(value, collections.Mapping)):
+                    if not predicate(key, value):
+                        yield key, value
+                else:
+                    values = list(v for v in value if not predicate(key, v))
+                    if values:
+                        yield key, values
+        else:
+            for value in iterable:
+                if not predicate(None, value):
+                    yield value
+
+    def __or__(self, other):
+        if not isinstance(other, PairwiseAllowance):
+            return NotImplemented
+
+        pred1 = self.predicate
+        pred2 = other.predicate
+        def predicate(*args, **kwds):
+            return pred1(*args, **kwds) or pred2(*args, **kwds)
+        return PairwiseAllowance(predicate)
+
+    def __and__(self, other):
+        if not isinstance(other, PairwiseAllowance):
+            return NotImplemented
+
+        pred1 = self.predicate
+        pred2 = other.predicate
+        def predicate(*args, **kwds):
+            return pred1(*args, **kwds) and pred2(*args, **kwds)
+        return PairwiseAllowance(predicate)
 
 
-class allow_key(allow_pair):
+class allow_key(PairwiseAllowance):
     """The given *function* should accept a number of arguments equal
     the given key elements. If key is a single value (string or
     otherwise), *function* should accept one argument. If key is a
@@ -187,7 +191,7 @@ class allow_key(allow_pair):
         super(allow_key, self).__init__(wrapped, msg)
 
 
-class allow_error(allow_pair):
+class allow_error(PairwiseAllowance):
     """Accepts a *function* of one argument."""
     def __init__(self, function, msg=None):
         @wraps(function)

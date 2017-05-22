@@ -17,7 +17,6 @@ __datatest = True  # Used to detect in-module stack frames (which are
 
 from .allow import allow_error
 from .allow import allow_args
-from .allow import allow_pair
 from .allow import allow_key
 from .allow import allow_missing
 from .allow import allow_extra
@@ -248,13 +247,6 @@ class DataTestCase(TestCase):
         number of arguments unpacked from 'args'.
         """
         return allow_args(function, msg)
-
-    def allowPair(self, function, msg=None):
-        """Allow errors in a mapping where *function* returns True.
-        For each error, *function* will receive two arguments---the
-        **key** and **error**.
-        """
-        return allow_pair(function, msg)
 
     def allowKey(self, function, msg=None):
         """Allow errors in a mapping where *function* returns True.
