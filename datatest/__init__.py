@@ -8,12 +8,15 @@ from .errors import Extra
 from .errors import Invalid
 from .errors import Deviation
 
-from datatest.allow import allow_specified
+from datatest.allow import allow_key
+from datatest.allow import allow_error
+from datatest.allow import allow_args
 from datatest.allow import allow_missing
 from datatest.allow import allow_extra
 from datatest.allow import allow_deviation
 from datatest.allow import allow_percent_deviation
 from datatest.allow import allow_limit
+from datatest.allow import allow_specified
 
 from .runner import mandatory
 from .runner import skip
@@ -45,12 +48,15 @@ __all__ = [
     'Deviation',
 
     # Allowance context mangers.
-    'allow_specified',
+    'allow_key',
+    'allow_error',
+    'allow_args',
     'allow_missing',
     'allow_extra',
     'allow_deviation',
     'allow_percent_deviation',
     'allow_limit',
+    'allow_specified',
 
     # Test runner and command-line program.
     'mandatory',
