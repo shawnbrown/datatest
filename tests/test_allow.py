@@ -26,20 +26,20 @@ from datatest.errors import Deviation
 
 class TestBaseAllowance(unittest.TestCase):
     def test_iterable_all_good(self):
-        function = lambda predicate, iterable: list()  # <- empty list
-        with BaseAllowance(function, None):  # <- Should pass without error.
+        filterfalse = lambda iterable: list()  # <- empty list
+        with BaseAllowance(filterfalse, None):  # <- Should pass without error.
             raise ValidationError('example error', [Missing('x')])
 
-        function = lambda predicate, iterable: iter([])  # <- empty iterator
-        with BaseAllowance(function, None):  # <- Should pass pass without error.
+        filterfalse = lambda iterable: iter([])  # <- empty iterator
+        with BaseAllowance(filterfalse, None):  # <- Should pass pass without error.
             raise ValidationError('example error', [Missing('x')])
 
     def test_iterable_some_bad(self):
-        function = lambda predicate, iterable: [Missing('foo')]
+        filterfalse = lambda iterable: [Missing('foo')]
         in_diffs = [Missing('foo'), Missing('bar')]
 
         with self.assertRaises(ValidationError) as cm:
-            with BaseAllowance(function, None):
+            with BaseAllowance(filterfalse, None):
                 raise ValidationError('example error', in_diffs)
 
         errors = cm.exception.errors
@@ -54,21 +54,21 @@ class TestBaseAllowance(unittest.TestCase):
         """
         # List input and dict output.
         errors_list =  [Missing('foo'), Missing('bar')]
-        function = lambda predicate, iterable: {'a': Missing('foo')}  # <- dict type
+        function = lambda iterable: {'a': Missing('foo')}  # <- dict type
         with self.assertRaises(TypeError):
             with BaseAllowance(function, None):
                 raise ValidationError('example error', errors_list)
 
         # Dict input and list output.
         errors_dict =  {'a': Missing('foo'), 'b': Missing('bar')}
-        function = lambda predicate, iterable: [Missing('foo')]  # <- list type
+        function = lambda iterable: [Missing('foo')]  # <- list type
         with self.assertRaises(TypeError):
             with BaseAllowance(function, None):
                 raise ValidationError('example error', errors_dict)
 
         # Dict input and list-item output.
         errors_dict =  {'a': Missing('foo'), 'b': Missing('bar')}
-        function = lambda predicate, iterable: [('a', Missing('foo'))]  # <- list of items
+        function = lambda iterable: [('a', Missing('foo'))]  # <- list of items
         with self.assertRaises(ValidationError) as cm:
             with BaseAllowance(function, None):
                 raise ValidationError('example error', errors_dict)
@@ -78,19 +78,19 @@ class TestBaseAllowance(unittest.TestCase):
         self.assertEqual(dict(errors), {'a': Missing('foo')})
 
     def test_error_message(self):
-        function = lambda predicate, iterable: iterable
+        function = lambda iterable: iterable
         error = ValidationError('original message', [Missing('foo')])
 
         # No message.
         with self.assertRaises(ValidationError) as cm:
-            with BaseAllowance(function, None):  # <- No 'msg' keyword!
+            with BaseAllowance(function):  # <- No 'msg' keyword!
                 raise error
         message = cm.exception.message
         self.assertEqual(message, 'original message')
 
         # Test allowance message.
         with self.assertRaises(ValidationError) as cm:
-            with BaseAllowance(function, None, msg='allowance message'):  # <- Uses 'msg'.
+            with BaseAllowance(function, msg='allowance message'):  # <- Uses 'msg'.
                 raise error
         message = cm.exception.message
         self.assertEqual(message, 'allowance message: original message')
@@ -106,7 +106,8 @@ class TestPairwiseAllowanceFilterFalse(unittest.TestCase):
         def predicate(key, value):
             return (key == 'b') or isinstance(value, Invalid)
 
-        result = PairwiseAllowance.filterfalse(predicate, iterable)
+        pairwise = PairwiseAllowance(predicate)
+        result = pairwise.filterfalse(iterable)
         self.assertEqual(dict(result), {'a':  Missing(1)})
 
     def test_mapping_of_groups(self):
@@ -137,7 +138,8 @@ class TestPairwiseAllowanceFilterFalse(unittest.TestCase):
                 return True
             return False
 
-        result = PairwiseAllowance.filterfalse(predicate, iterable)
+        pairwise = PairwiseAllowance(predicate)
+        result = pairwise.filterfalse(iterable)
         expected = {'x': [Missing(1), Missing(3)],
                     'y': [Missing(5), Invalid(7)]}
         self.assertEqual(dict(result), expected)
@@ -149,7 +151,8 @@ class TestPairwiseAllowanceFilterFalse(unittest.TestCase):
             assert key is None  # <- For non-mapping, key is always None.
             return isinstance(value, Missing)
 
-        result = PairwiseAllowance.filterfalse(predicate, iterable)
+        pairwise = PairwiseAllowance(predicate)
+        result = pairwise.filterfalse(iterable)
         self.assertEqual(list(result), [Extra(1), Invalid(3)])
 
 

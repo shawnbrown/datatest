@@ -32,18 +32,15 @@ def _is_mapping_type(obj):
 
 
 class BaseAllowance(object):
-    """Context manager to allow differences without triggering a
-    test failure. *filterfalse* should accept a predicate and an
-    iterable of data errors and return an iterable of only those
-    errors which are **not** allowed.
+    """Context manager to allow certain data errors without
+    triggering a test failure. *filterfalse* should accept an
+    iterable of data errors and return an iterable of only
+    those errors which are **not** allowed.
     """
-    def __init__(self, filterfalse, predicate, msg=None):
+    def __init__(self, filterfalse, msg=None):
         """Initialize object values."""
         assert callable(filterfalse)
-        assert callable(predicate) or predicate is None
-
         self.filterfalse = filterfalse
-        self.predicate = predicate
         self.msg = msg
 
     def __or__(self, other):
@@ -58,9 +55,9 @@ class BaseAllowance(object):
     def __exit__(self, exc_type, exc_value, tb):
         # Apply filterfalse or reraise non-validation error.
         if issubclass(exc_type, ValidationError):
-            errors = self.filterfalse(self.predicate, exc_value.errors)
+            errors = self.filterfalse(exc_value.errors)
         elif exc_type is None:
-            errors = self.filterfalse(self.predicate, [])
+            errors = self.filterfalse([])
         else:
             raise exc_value
 
@@ -123,19 +120,22 @@ def getkey(function):
 
 
 class PairwiseAllowance(BaseAllowance):
-    """Allow errors in a mapping where *function* returns True.
-    For each error, *function* will receive two arguments---the
-    **key** and **error**.
+    """Allow errors where *predicate* returns True. For each
+    error, *predicate* will receive two arguments---the **key**
+    and **error**---and should return True if the error is
+    allowed or False if it is not.
     """
-    def __init__(self, function, msg=None):
-        super(PairwiseAllowance, self).__init__(self.filterfalse, function, msg)
+    def __init__(self, predicate, msg=None):
+        self.predicate = predicate
+        super(PairwiseAllowance, self).__init__(self.filterfalse, msg)
 
-    @staticmethod
-    def filterfalse(predicate, iterable):
+    def filterfalse(self, iterable):
         """Make an iterator that filters elements from *iterable*
-        returning only those for which the *predicate* is False. The
-        *predicate* must be a function of two arguments (key and value).
+        returning only those for which the *predicate* is False.
+        The *predicate* must be a function of two arguments (key
+        and value).
         """
+        predicate = self.predicate
         if isinstance(iterable, collections.Mapping):
             iterable = getattr(iterable, 'iteritems', iterable.items)()
 
@@ -177,10 +177,10 @@ class PairwiseAllowance(BaseAllowance):
 
 
 class allow_key(PairwiseAllowance):
-    """The given *function* should accept a number of arguments equal
-    the given key elements. If key is a single value (string or
-    otherwise), *function* should accept one argument. If key is a
-    three-tuple, *function* should accept three arguments.
+    """The given *function* should accept a number of arguments
+    equal the given key elements. If key is a single value (string
+    or otherwise), *function* should accept one argument. If key
+    is a three-tuple, *function* should accept three arguments.
     """
     def __init__(self, function, msg=None):
         @wraps(function)
@@ -330,7 +330,7 @@ class allow_specified(BaseAllowance):
                 exc.__cause__ = None
                 yield exc
 
-        def filterfalse(_, iterable):
+        def filterfalse(iterable):
             if isinstance(iterable, collections.Mapping):
                 iterable = getattr(iterable, 'iteritems', iterable.items)()
 
@@ -361,7 +361,7 @@ class allow_specified(BaseAllowance):
                                              errors.__class__.__name__)
                     raise ValueError(message)
 
-        super(allow_specified, self).__init__(filterfalse, None, msg)
+        super(allow_specified, self).__init__(filterfalse, msg)
 
 
 class allow_limit(BaseAllowance):
@@ -384,7 +384,7 @@ class allow_limit(BaseAllowance):
                 for value in itertools.chain(matching, group):
                     yield value
 
-        def filterfalse(_, iterable):
+        def filterfalse(iterable):
             if isinstance(iterable, collections.Mapping):
                 iterable = getattr(iterable, 'iteritems', iterable.items)()
 
@@ -408,4 +408,4 @@ class allow_limit(BaseAllowance):
                 for value in grpfltrfalse(None, iterable):
                     yield value
 
-        super(allow_limit, self).__init__(filterfalse, None, **kwds)
+        super(allow_limit, self).__init__(filterfalse, **kwds)
