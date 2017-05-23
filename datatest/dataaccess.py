@@ -980,6 +980,10 @@ class DataSource(object):
         key, value = self._parse_selection(select)
         key_columns, value_columns = self._parse_key_value(key, value)
 
+        if isinstance(value, collections.Set):
+            func = lambda col: 'DISTINCT {0}'.format(col)
+            value_columns = tuple(func(col) for col in value_columns)
+
         sqlfunc = sqlfunc.upper()
         value_columns = tuple('{0}({1})'.format(sqlfunc, x) for x in value_columns)
         select_clause = ', '.join(key_columns + value_columns)

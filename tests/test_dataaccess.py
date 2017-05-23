@@ -788,8 +788,12 @@ class TestDataSourceBasics(unittest.TestCase):
 
     def test_select_aggregate(self):
         # Not grouped, single result.
-        result = self.source._select_aggregate('SUM', ['value'])
-        self.assertEqual(result, 135)
+        result = self.source._select_aggregate('COUNT', ['label2'])
+        self.assertEqual(result, 7)
+
+        # Not grouped, single result as set.
+        result = self.source._select_aggregate('COUNT', set(['label2']))
+        self.assertEqual(result, 3)
 
         # Not grouped, multiple results.
         result = self.source._select_aggregate('SUM', [['value', 'value']])
