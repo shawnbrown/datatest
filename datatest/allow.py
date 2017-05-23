@@ -365,21 +365,29 @@ class allow_specified(BaseAllowance):
 
 
 class allow_limit(BaseAllowance):
-    def __init__(self, number, *funcs, **kwds):
-        normalize = lambda f: f if hasattr(f, '_decorator') else getvalue(f)
-        funcs = tuple(normalize(f) for f in funcs)
+    def __init__(self, number, msg=None):
+        self.number = number
+        self.or_predicate = None
+        self.and_predicate = None
 
         def grpfltrfalse(key, group):
+            # Closes over number, or_predicate, and and_predicate.
+            number = self.number                # Reduce the number of
+            or_predicate = self.or_predicate    # dot-lookups--these are
+            and_predicate = self.and_predicate  # referenced many times.
+
             group = iter(group)  # Must be consumable.
             matching = []
             for value in group:
-                if all(f(key, value) for f in funcs):  # Closes over 'funcs'.
-                    matching.append(value)
-                    if len(matching) > number:  # Closes over 'number'.
-                        break
-                else:
+                if or_predicate and or_predicate(key, value):
+                    continue
+                if and_predicate and not and_predicate(key, value):
                     yield value
-            # If number is exceeded, return all errors.
+                    continue
+                matching.append(value)
+                if len(matching) > number:
+                    break
+
             if len(matching) > number:
                 for value in itertools.chain(matching, group):
                     yield value
@@ -398,14 +406,45 @@ class allow_limit(BaseAllowance):
                     if value:
                         yield key, value
             else:
-                for f in funcs:  # Closes over 'funcs'.
-                    if f._decorator != getvalue:
-                        message = 'cannot use {0!r} decorator with {1!r} of errors'
-                        dec_name = f._decorator.__name__
-                        itr_type = iterable.__class__.__name__
-                        raise ValueError(message.format(dec_name, itr_type))
-
                 for value in grpfltrfalse(None, iterable):
                     yield value
 
-        super(allow_limit, self).__init__(filterfalse, **kwds)
+        super(allow_limit, self).__init__(filterfalse, msg)
+
+    def __or__(self, other):
+        if not isinstance(other, PairwiseAllowance):
+            return NotImplemented
+
+        allowance = allow_limit(self.number, self.msg)
+        allowance.and_predicate = self.and_predicate  # Copy 'and' as-is.
+        if not self.or_predicate:
+            allowance.or_predicate = other.predicate
+        else:
+            pred1 = self.or_predicate
+            pred2 = other.predicate
+            def predicate(*args, **kwds):
+                return pred1(*args, **kwds) or pred2(*args, **kwds)
+            allowance.or_predicate = predicate
+        return allowance
+
+    def __ror__(self, other):
+        return self.__or__(other)
+
+    def __and__(self, other):
+        if not isinstance(other, PairwiseAllowance):
+            return NotImplemented
+
+        allowance = allow_limit(self.number, self.msg)
+        allowance.or_predicate = self.or_predicate  # Copy 'or' as-is.
+        if not self.and_predicate:
+            allowance.and_predicate = other.predicate
+        else:
+            pred1 = self.and_predicate
+            pred2 = other.predicate
+            def predicate(*args, **kwds):
+                return pred1(*args, **kwds) and pred2(*args, **kwds)
+            allowance.and_predicate = predicate
+        return allowance
+
+    def __rand__(self, other):
+        return self.__and__(other)

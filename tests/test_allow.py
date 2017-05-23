@@ -454,28 +454,6 @@ class TestAllowLimit(unittest.TestCase):
         with allow_limit(3):  # <- Allows 3 and there are only 2.
             raise ValidationError('example error', errors)
 
-    def test_function_exceeds_limit(self):
-        errors = [Extra('xxx'), Missing('yyy'), Extra('zzz')]
-        with self.assertRaises(ValidationError) as cm:
-            is_extra = lambda x: isinstance(x, Extra)
-            with allow_limit(1, is_extra):  # <- Limit of 1 and is_extra().
-                raise ValidationError('example error', errors)
-
-        # Returned errors can be in different order.
-        actual = list(cm.exception.errors)
-        expected = [Missing('yyy'), Extra('xxx'), Extra('zzz')]
-        self.assertEqual(actual, expected)
-
-    def test_function_under_limit(self):
-        errors = [Extra('xxx'), Missing('yyy'), Extra('zzz')]
-        with self.assertRaises(ValidationError) as cm:
-            is_extra = lambda x: isinstance(x, Extra)
-            with allow_limit(4, is_extra):  # <- Limit of 4 and is_extra().
-                raise ValidationError('example error', errors)
-
-        actual = list(cm.exception.errors)
-        self.assertEqual(actual, [Missing('yyy')])
-
     def test_dict_of_diffs_exceeds_and_match(self):
         errors = {
             'foo': [Extra('xxx'), Missing('yyy')],
@@ -489,18 +467,106 @@ class TestAllowLimit(unittest.TestCase):
         expected = {'foo': [Extra('xxx'), Missing('yyy')]}
         self.assertEqual(dict(actual), expected)
 
-    def test_dict_of_diffs_and_function(self):
+    def test_bitwise_or_composition_under_limit(self):
+        errors = [
+            Extra('aaa'),
+            Extra('bbb'),
+            Missing('ccc'),
+            Missing('ddd'),
+            Missing('eee'),
+        ]
+        with allow_limit(2) | allow_missing():  # <- Limit of 2 or Missing.
+            raise ValidationError('example error', errors)
+
+    def test_bitwise_ror(self):
+        """The right-side-or/__ror__ should be wired up to __or__."""
+        errors = [
+            Extra('aaa'),
+            Extra('bbb'),
+            Missing('ccc'),
+            Missing('ddd'),
+            Missing('eee'),
+        ]
+        with allow_missing() | allow_limit(2):  # <- On right-hand side!
+            raise ValidationError('example error', errors)
+
+    def test_bitwise_or_composition_over_limit(self):
+        errors = [
+            Extra('aaa'),
+            Extra('bbb'),
+            Extra('ccc'),
+            Missing('ddd'),
+            Missing('eee'),
+        ]
+        with self.assertRaises(ValidationError) as cm:
+            with allow_limit(2) | allow_missing():
+                raise ValidationError('example error', errors)
+
+        # Returned errors *may* not be in the same order.
+        actual = list(cm.exception.errors)
+        self.assertEqual(actual, errors)
+
+        # Test __ror__().
+        with self.assertRaises(ValidationError) as cm:
+            with allow_missing() | allow_limit(2):  # <- On right-hand side!
+                raise ValidationError('example error', errors)
+
+        # Returned errors *may* not be in the same order.
+        actual = list(cm.exception.errors)
+        self.assertEqual(actual, errors)
+
+    def test_bitwise_and_composition_under_limit(self):
+        errors = [Extra('xxx'), Missing('yyy'), Extra('zzz')]
+
+        with self.assertRaises(ValidationError) as cm:
+            is_extra = lambda x: isinstance(x, Extra)
+            with allow_limit(4) & allow_extra():
+                raise ValidationError('example error', errors)
+
+        actual = list(cm.exception.errors)
+        self.assertEqual(actual, [Missing('yyy')])
+
+    def test_bitwise_rand(self):
+        """The right-side-and/__rand__ should be wired up to __and__."""
+        errors = [Extra('xxx'), Missing('yyy'), Extra('zzz')]
+
+        # Make sure __rand__ (right-and) is wired-up to __and__.
+        with self.assertRaises(ValidationError) as cm:
+            is_extra = lambda x: isinstance(x, Extra)
+            with allow_extra() & allow_limit(4):  # <- On right-hand side!
+                raise ValidationError('example error', errors)
+
+        actual = list(cm.exception.errors)
+        self.assertEqual(actual, [Missing('yyy')])
+
+    def test_bitwise_and_composition_over_limit(self):
+        errors = [Extra('xxx'), Missing('yyy'), Extra('zzz')]
+        with self.assertRaises(ValidationError) as cm:
+            is_extra = lambda x: isinstance(x, Extra)
+            with allow_limit(1) & allow_extra():  # <- Limit of 1 and is_extra().
+                raise ValidationError('example error', errors)
+
+        # Returned errors can be in different order.
+        actual = list(cm.exception.errors)
+        expected = [Missing('yyy'), Extra('xxx'), Extra('zzz')]
+        self.assertEqual(actual, expected)
+
+    def test_bitwise_and_composition_with_dict(self):
         errors = {
-            'foo': [Extra('xxx'), Missing('yyy')],
-            'bar': [Extra('zzz')],
+            'foo': [Extra('aaa'), Missing('bbb')],
+            'bar': [Extra('ccc')],
+            'baz': [Extra('ddd'), Extra('eee')],
         }
         with self.assertRaises(ValidationError) as cm:
             is_extra = lambda x: isinstance(x, Extra)
-            with allow_limit(1, is_extra):
+            with allow_limit(1) & allow_extra():
                 raise ValidationError('example error', errors)
 
         actual = cm.exception.errors
-        expected = {'foo': [Missing('yyy')]}
+        expected = {
+            'foo': [Missing('bbb')],              # <- Missing not allowed at all.
+            'baz': [Extra('ddd'), Extra('eee')],  # <- Returns everything when over limit.
+        }
         self.assertEqual(dict(actual), expected)
 
 
