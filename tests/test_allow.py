@@ -2,6 +2,7 @@
 import inspect
 from . import _unittest as unittest
 from datatest.utils import collections
+from datatest.utils import contextlib
 
 from datatest.allow import BaseAllowance
 from datatest.allow import ElementwiseAllowance
@@ -572,12 +573,10 @@ class TestAllowDeviation(unittest.TestCase):
     """Test allow_deviation() behavior."""
     def test_method_signature(self):
         """Check for prettified default signature in Python 3.3 and later."""
-        try:
-            sig = inspect.signature(allow_deviation)
+        with contextlib.suppress(AttributeError):     # Python 3.2 and older
+            sig = inspect.signature(allow_deviation)  # use ugly signatures.
             parameters = list(sig.parameters)
             self.assertEqual(parameters, ['tolerance', 'msg'])
-        except AttributeError:
-            pass  # Python 3.2 and older use ugly signature as default.
 
     def test_tolerance_syntax(self):
         differences = {
@@ -682,12 +681,10 @@ class TestAllowPercentDeviation(unittest.TestCase):
     """Test allow_percent_deviation() behavior."""
     def test_method_signature(self):
         """Check for prettified default signature in Python 3.3 and later."""
-        try:
-            sig = inspect.signature(allow_percent_deviation)
-            parameters = list(sig.parameters)
+        with contextlib.suppress(AttributeError):             # Python 3.2 and
+            sig = inspect.signature(allow_percent_deviation)  # older use the
+            parameters = list(sig.parameters)                 # ugly signature.
             self.assertEqual(parameters, ['tolerance', 'msg'])
-        except AttributeError:
-            pass  # Python 3.2 and older use ugly signature as default.
 
     def test_tolerance_syntax(self):
         differences = [

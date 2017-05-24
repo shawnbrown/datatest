@@ -353,12 +353,10 @@ def _get_step_repr(step):
     """Helper function to return repr for a single query step."""
     func, args, kwds = step
 
-    def _callable_name_or_repr(x):  # <- Helper function for
-        if callable(x):             #    the helper function!
-            try:
+    def _callable_name_or_repr(x):            # <- Helper function for
+        with contextlib.suppress(NameError):  #    the helper function!
+            if callable(x):
                 return x.__name__
-            except NameError:
-                pass
         return repr(x)
 
     func_repr = _callable_name_or_repr(func)

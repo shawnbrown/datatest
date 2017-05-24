@@ -5,6 +5,7 @@ from unittest import TestCase
 
 from .utils.builtins import *
 from .utils import collections
+from .utils import contextlib
 
 from .dataaccess import DataQuery
 from .dataaccess import DataResult
@@ -312,7 +313,9 @@ class DataTestCase(TestCase):
 
 
 # Prettify default signature of methods that accept multiple signatures.
-try:
+# This only works for Python 3.3 and newer--older versions will simply
+# have the original method sigture.
+with contextlib.suppress(AttributeError):
     # For DataTestCase.allowDeviation(), build "tolerance" signature.
     _sig = inspect.signature(DataTestCase.allowDeviation)
     _self, _lower, _upper, _msg = _sig.parameters.values()
@@ -328,5 +331,3 @@ try:
     _tolerance = inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY)
     _sig = _sig.replace(parameters=[_self, _tolerance, _msg])
     DataTestCase.allowPercentDeviation.__signature__ = _sig
-except AttributeError:  # Fails for Python 3.2 and earlier.
-    pass

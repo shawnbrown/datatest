@@ -5,6 +5,7 @@ from numbers import Number
 from pprint import pformat
 
 from .utils import collections
+from .utils import contextlib
 from .utils.decimal import Decimal
 from .utils.misc import _is_nsiterable
 from .utils.misc import _is_consumable
@@ -64,11 +65,9 @@ NANTOKEN = _make_token(
 )
 
 def _nan_to_token(x):
-    try:
+    with contextlib.suppress(TypeError):
         if isnan(x):
             return NANTOKEN
-    except TypeError:
-        pass
     return x
 
 
