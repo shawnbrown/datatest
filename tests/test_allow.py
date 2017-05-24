@@ -14,8 +14,6 @@ from datatest.allow import allow_deviation
 from datatest.allow import allow_percent_deviation
 from datatest.allow import allow_specified
 from datatest.allow import allow_limit
-from datatest.allow import getvalue
-from datatest.allow import getkey
 from datatest.errors import ValidationError
 from datatest.errors import DataError
 from datatest.errors import Missing
@@ -805,24 +803,3 @@ class TestMsgIntegration(unittest.TestCase):
                 raise ValidationError('original', [Extra('X')])
         message = cm.exception.message
         self.assertEqual(message, 'modified: original')
-
-
-class TestGetKeyDecorator(unittest.TestCase):
-    def test_key_strings(self):
-        @getkey  # <- Apply decorator!
-        def func(key):
-            return key == 'aa'
-
-        self.assertTrue(func('aa', None))
-        self.assertFalse(func('bb', None))
-
-    def test_key_tuples(self):
-        """Keys of non-string containers are unpacked before passing
-        to function.
-        """
-        @getkey  # <- Apply decorator!
-        def func(letter, number):  # <- Non-string iterable keys are unpacked.
-            return letter == 'aa'
-
-        self.assertTrue(func(('aa', 1), None))
-        self.assertFalse(func(('bb', 2), None))

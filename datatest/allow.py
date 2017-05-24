@@ -101,24 +101,6 @@ class BaseAllowance(object):
                               #    effect as "raise ... from None").
 
 
-def getvalue(function):
-    def adapted(key, value):  # <- key not used.
-        return function(value)
-    adapted.__name__ = 'adapted_' + function.__name__
-    adapted._decorator = getvalue
-    return adapted
-
-
-def getkey(function):
-    def adapted(key, value):  # <- value not used.
-        if _is_nsiterable(key):
-            return function(*key)
-        return function(key)
-    adapted.__name__ = 'adapted_' + function.__name__
-    adapted._decorator = getkey
-    return adapted
-
-
 class ElementwiseAllowance(BaseAllowance):
     """Allow errors where *predicate* returns True. For each
     error, *predicate* will receive two arguments---a **key**
