@@ -277,7 +277,6 @@ class DataTestCase(TestCase):
         """
         return allow_extra(msg)
 
-    # TODO!!!: Rewrite this as a pairwise subclass.
     def allowLimit(self, number, *funcs, **kwds):
         """Context manager to allow a limited *number* of differences
         (of any type) without triggering a test failure::

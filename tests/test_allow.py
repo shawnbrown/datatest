@@ -4,7 +4,7 @@ from . import _unittest as unittest
 from datatest.utils import collections
 
 from datatest.allow import BaseAllowance
-from datatest.allow import PairwiseAllowance
+from datatest.allow import ElementwiseAllowance
 from datatest.allow import allow_key
 from datatest.allow import allow_error
 from datatest.allow import allow_args
@@ -96,7 +96,7 @@ class TestBaseAllowance(unittest.TestCase):
         self.assertEqual(message, 'allowance message: original message')
 
 
-class TestPairwiseAllowanceFilterFalse(unittest.TestCase):
+class TestElementwiseAllowanceFilterFalse(unittest.TestCase):
     def test_mapping_of_nongroups(self):
         iterable = {
             'a': Missing(1),
@@ -106,8 +106,8 @@ class TestPairwiseAllowanceFilterFalse(unittest.TestCase):
         def predicate(key, value):
             return (key == 'b') or isinstance(value, Invalid)
 
-        pairwise = PairwiseAllowance(predicate)
-        result = pairwise.filterfalse(iterable)
+        elementwise = ElementwiseAllowance(predicate)
+        result = elementwise.filterfalse(iterable)
         self.assertEqual(dict(result), {'a':  Missing(1)})
 
     def test_mapping_of_groups(self):
@@ -138,8 +138,8 @@ class TestPairwiseAllowanceFilterFalse(unittest.TestCase):
                 return True
             return False
 
-        pairwise = PairwiseAllowance(predicate)
-        result = pairwise.filterfalse(iterable)
+        elementwise = ElementwiseAllowance(predicate)
+        result = elementwise.filterfalse(iterable)
         expected = {'x': [Missing(1), Missing(3)],
                     'y': [Missing(5), Invalid(7)]}
         self.assertEqual(dict(result), expected)
@@ -151,20 +151,20 @@ class TestPairwiseAllowanceFilterFalse(unittest.TestCase):
             assert key is None  # <- For non-mapping, key is always None.
             return isinstance(value, Missing)
 
-        pairwise = PairwiseAllowance(predicate)
-        result = pairwise.filterfalse(iterable)
+        elementwise = ElementwiseAllowance(predicate)
+        result = elementwise.filterfalse(iterable)
         self.assertEqual(list(result), [Extra(1), Invalid(3)])
 
 
-class TestPairwiseAllowances(unittest.TestCase):
-    def test_PairwiseAllowance(self):
+class TestElementwiseAllowances(unittest.TestCase):
+    def test_ElementwiseAllowance(self):
         # Test mapping of errors.
         errors = {'a': Missing(1), 'b': Missing(2)}
         def function(key, error):
             return key == 'b' and isinstance(error, Missing)
 
         with self.assertRaises(ValidationError) as cm:
-            with PairwiseAllowance(function):  # <- Apply allowance!
+            with ElementwiseAllowance(function):  # <- Apply allowance!
                 raise ValidationError('some message', errors)
 
         remaining_errors = cm.exception.errors
@@ -177,7 +177,7 @@ class TestPairwiseAllowances(unittest.TestCase):
             return isinstance(error, Missing)
 
         with self.assertRaises(ValidationError) as cm:
-            with PairwiseAllowance(function):  # <- Apply allowance!
+            with ElementwiseAllowance(function):  # <- Apply allowance!
                 raise ValidationError('some message', errors)
 
         remaining_errors = cm.exception.errors

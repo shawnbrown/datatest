@@ -119,64 +119,64 @@ def getkey(function):
     return adapted
 
 
-class PairwiseAllowance(BaseAllowance):
+class ElementwiseAllowance(BaseAllowance):
     """Allow errors where *predicate* returns True. For each
-    error, *predicate* will receive two arguments---the **key**
+    error, *predicate* will receive two arguments---a **key**
     and **error**---and should return True if the error is
     allowed or False if it is not.
     """
     def __init__(self, predicate, msg=None):
         self.predicate = predicate
-        super(PairwiseAllowance, self).__init__(self.filterfalse, msg)
+        super(ElementwiseAllowance, self).__init__(self.filterfalse, msg)
 
     def filterfalse(self, iterable):
         """Make an iterator that filters elements from *iterable*
         returning only those for which the *predicate* is False.
         The *predicate* must be a function of two arguments (key
-        and value).
+        and error).
         """
         predicate = self.predicate
         if isinstance(iterable, collections.Mapping):
             iterable = getattr(iterable, 'iteritems', iterable.items)()
 
         if _is_collection_of_items(iterable):
-            for key, value in iterable:
-                if (not _is_nsiterable(value)
-                        or isinstance(value, Exception)
-                        or isinstance(value, collections.Mapping)):
-                    if not predicate(key, value):
-                        yield key, value
+            for key, error in iterable:
+                if (not _is_nsiterable(error)
+                        or isinstance(error, Exception)
+                        or isinstance(error, collections.Mapping)):
+                    if not predicate(key, error):
+                        yield key, error
                 else:
-                    values = list(v for v in value if not predicate(key, v))
+                    values = list(e for e in error if not predicate(key, e))
                     if values:
                         yield key, values
         else:
-            for value in iterable:
-                if not predicate(None, value):
-                    yield value
+            for error in iterable:
+                if not predicate(None, error):
+                    yield error
 
     def __or__(self, other):
-        if not isinstance(other, PairwiseAllowance):
+        if not isinstance(other, ElementwiseAllowance):
             return NotImplemented
 
         pred1 = self.predicate
         pred2 = other.predicate
         def predicate(*args, **kwds):
             return pred1(*args, **kwds) or pred2(*args, **kwds)
-        return PairwiseAllowance(predicate)
+        return ElementwiseAllowance(predicate)
 
     def __and__(self, other):
-        if not isinstance(other, PairwiseAllowance):
+        if not isinstance(other, ElementwiseAllowance):
             return NotImplemented
 
         pred1 = self.predicate
         pred2 = other.predicate
         def predicate(*args, **kwds):
             return pred1(*args, **kwds) and pred2(*args, **kwds)
-        return PairwiseAllowance(predicate)
+        return ElementwiseAllowance(predicate)
 
 
-class allow_key(PairwiseAllowance):
+class allow_key(ElementwiseAllowance):
     """The given *function* should accept a number of arguments
     equal the given key elements. If key is a single value (string
     or otherwise), *function* should accept one argument. If key
@@ -191,12 +191,12 @@ class allow_key(PairwiseAllowance):
         super(allow_key, self).__init__(wrapped, msg)
 
 
-class allow_error(PairwiseAllowance):
+class allow_error(ElementwiseAllowance):
     """Accepts a *function* of one argument."""
     def __init__(self, function, msg=None):
         @wraps(function)
-        def wrapped(_, value):
-            return function(value)
+        def wrapped(_, error):
+            return function(error)
         super(allow_error, self).__init__(wrapped, msg)
 
 
@@ -218,15 +218,15 @@ class allow_args(allow_error):
 
 class allow_missing(allow_error):
     def __init__(self, msg=None):
-        def is_missing(value):
-            return isinstance(value, Missing)
+        def is_missing(error):
+            return isinstance(error, Missing)
         super(allow_missing, self).__init__(is_missing, msg)
 
 
 class allow_extra(allow_error):
     def __init__(self, msg=None):
-        def is_extra(value):
-            return isinstance(value, Extra)
+        def is_extra(error):
+            return isinstance(error, Extra)
         super(allow_extra, self).__init__(is_extra, msg)
 
 
@@ -302,6 +302,92 @@ class allow_percent_deviation(allow_error):
 _prettify_devsig(allow_percent_deviation.__init__)
 
 
+class allow_limit(BaseAllowance):
+    def __init__(self, number, msg=None):
+        self.number = number
+        self.or_predicate = None
+        self.and_predicate = None
+
+        def grpfltrfalse(key, group):
+            # Closes over 'number', 'or_predicate', and 'and_predicate'.
+            number = self.number                # Reduce the number of
+            or_predicate = self.or_predicate    # dot-lookups--these are
+            and_predicate = self.and_predicate  # referenced many times.
+
+            group = iter(group)  # Must be consumable.
+            matching = []
+            for value in group:
+                if or_predicate and or_predicate(key, value):
+                    continue
+                if and_predicate and not and_predicate(key, value):
+                    yield value
+                    continue
+                matching.append(value)
+                if len(matching) > number:
+                    break
+
+            if len(matching) > number:
+                for value in itertools.chain(matching, group):
+                    yield value
+
+        def filterfalse(iterable):
+            if isinstance(iterable, collections.Mapping):
+                iterable = getattr(iterable, 'iteritems', iterable.items)()
+
+            if _is_collection_of_items(iterable):
+                for key, group in iterable:
+                    if (not _is_nsiterable(group)
+                            or isinstance(group, Exception)
+                            or isinstance(group, collections.Mapping)):
+                        group = [group]
+                    value = list(grpfltrfalse(key, group))
+                    if value:
+                        yield key, value
+            else:
+                for value in grpfltrfalse(None, iterable):
+                    yield value
+
+        super(allow_limit, self).__init__(filterfalse, msg)
+
+    def __or__(self, other):
+        if not isinstance(other, ElementwiseAllowance):
+            return NotImplemented
+
+        allowance = allow_limit(self.number, self.msg)
+        allowance.and_predicate = self.and_predicate  # Copy 'and' as-is.
+        if not self.or_predicate:
+            allowance.or_predicate = other.predicate
+        else:
+            pred1 = self.or_predicate
+            pred2 = other.predicate
+            def predicate(*args, **kwds):
+                return pred1(*args, **kwds) or pred2(*args, **kwds)
+            allowance.or_predicate = predicate
+        return allowance
+
+    def __ror__(self, other):
+        return self.__or__(other)
+
+    def __and__(self, other):
+        if not isinstance(other, ElementwiseAllowance):
+            return NotImplemented
+
+        allowance = allow_limit(self.number, self.msg)
+        allowance.or_predicate = self.or_predicate  # Copy 'or' as-is.
+        if not self.and_predicate:
+            allowance.and_predicate = other.predicate
+        else:
+            pred1 = self.and_predicate
+            pred2 = other.predicate
+            def predicate(*args, **kwds):
+                return pred1(*args, **kwds) and pred2(*args, **kwds)
+            allowance.and_predicate = predicate
+        return allowance
+
+    def __rand__(self, other):
+        return self.__and__(other)
+
+
 class allow_specified(BaseAllowance):
     def __init__(self, errors, msg=None):
         if _is_collection_of_items(errors):
@@ -362,89 +448,3 @@ class allow_specified(BaseAllowance):
                     raise ValueError(message)
 
         super(allow_specified, self).__init__(filterfalse, msg)
-
-
-class allow_limit(BaseAllowance):
-    def __init__(self, number, msg=None):
-        self.number = number
-        self.or_predicate = None
-        self.and_predicate = None
-
-        def grpfltrfalse(key, group):
-            # Closes over number, or_predicate, and and_predicate.
-            number = self.number                # Reduce the number of
-            or_predicate = self.or_predicate    # dot-lookups--these are
-            and_predicate = self.and_predicate  # referenced many times.
-
-            group = iter(group)  # Must be consumable.
-            matching = []
-            for value in group:
-                if or_predicate and or_predicate(key, value):
-                    continue
-                if and_predicate and not and_predicate(key, value):
-                    yield value
-                    continue
-                matching.append(value)
-                if len(matching) > number:
-                    break
-
-            if len(matching) > number:
-                for value in itertools.chain(matching, group):
-                    yield value
-
-        def filterfalse(iterable):
-            if isinstance(iterable, collections.Mapping):
-                iterable = getattr(iterable, 'iteritems', iterable.items)()
-
-            if _is_collection_of_items(iterable):
-                for key, group in iterable:
-                    if (not _is_nsiterable(group)
-                            or isinstance(group, Exception)
-                            or isinstance(group, collections.Mapping)):
-                        group = [group]
-                    value = list(grpfltrfalse(key, group))
-                    if value:
-                        yield key, value
-            else:
-                for value in grpfltrfalse(None, iterable):
-                    yield value
-
-        super(allow_limit, self).__init__(filterfalse, msg)
-
-    def __or__(self, other):
-        if not isinstance(other, PairwiseAllowance):
-            return NotImplemented
-
-        allowance = allow_limit(self.number, self.msg)
-        allowance.and_predicate = self.and_predicate  # Copy 'and' as-is.
-        if not self.or_predicate:
-            allowance.or_predicate = other.predicate
-        else:
-            pred1 = self.or_predicate
-            pred2 = other.predicate
-            def predicate(*args, **kwds):
-                return pred1(*args, **kwds) or pred2(*args, **kwds)
-            allowance.or_predicate = predicate
-        return allowance
-
-    def __ror__(self, other):
-        return self.__or__(other)
-
-    def __and__(self, other):
-        if not isinstance(other, PairwiseAllowance):
-            return NotImplemented
-
-        allowance = allow_limit(self.number, self.msg)
-        allowance.or_predicate = self.or_predicate  # Copy 'or' as-is.
-        if not self.and_predicate:
-            allowance.and_predicate = other.predicate
-        else:
-            pred1 = self.and_predicate
-            pred2 = other.predicate
-            def predicate(*args, **kwds):
-                return pred1(*args, **kwds) and pred2(*args, **kwds)
-            allowance.and_predicate = predicate
-        return allowance
-
-    def __rand__(self, other):
-        return self.__and__(other)
