@@ -54,15 +54,15 @@ class BaseAllowance(object):
 
     def __exit__(self, exc_type, exc_value, tb):
         # Apply filterfalse or reraise non-validation error.
-        if issubclass(exc_type, ValidationError):
-            errors = self.filterfalse(exc_value.errors)
-        elif exc_type is None:
+        if not exc_type:
             errors = self.filterfalse([])
+        elif issubclass(exc_type, ValidationError):
+            errors = self.filterfalse(exc_value.errors)
         else:
             raise exc_value
 
         # Check container types.
-        mappable_in = _is_mapping_type(exc_value.errors)
+        mappable_in = _is_mapping_type(getattr(exc_value, 'errors', False))
         mappable_out = _is_mapping_type(errors)
 
         # Check if any errors were returned.
