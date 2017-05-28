@@ -22,13 +22,13 @@ from datatest.errors import Missing
 from datatest.errors import Invalid
 from datatest.errors import Deviation
 
-from datatest.allow import allow_missing
-from datatest.allow import allow_extra
-from datatest.allow import allow_invalid
-from datatest.allow import allow_deviation
-from datatest.allow import allow_percent_deviation
-from datatest.allow import allow_limit
-from datatest.allow import allow_specified
+from datatest.allow import allowed_missing
+from datatest.allow import allowed_extra
+from datatest.allow import allowed_invalid
+from datatest.allow import allowed_deviation
+from datatest.allow import allowed_percent_deviation
+from datatest.allow import allowed_limit
+from datatest.allow import allowed_specific
 
 
 class TestHelperCase(unittest.TestCase):
@@ -163,30 +163,30 @@ class TestAllowanceWrappers(unittest.TestCase):
                 pass
         self.case = DummyCase()
 
-    def test_allowSpecified(self):
-        cm = self.case.allowSpecified([Missing('foo')])
-        self.assertTrue(isinstance(cm, allow_specified))
+    def test_allowedSpecific(self):
+        cm = self.case.allowedSpecific([Missing('foo')])
+        self.assertTrue(isinstance(cm, allowed_specific))
 
-    def test_allowMissing(self):
-        cm = self.case.allowMissing()
-        self.assertTrue(isinstance(cm, allow_missing))
+    def test_allowedMissing(self):
+        cm = self.case.allowedMissing()
+        self.assertTrue(isinstance(cm, allowed_missing))
 
-    def test_allowExtra(self):
-        cm = self.case.allowExtra()
-        self.assertTrue(isinstance(cm, allow_extra))
+    def test_allowedExtra(self):
+        cm = self.case.allowedExtra()
+        self.assertTrue(isinstance(cm, allowed_extra))
 
-    def test_allowInvalid(self):
-        cm = self.case.allowInvalid()
-        self.assertTrue(isinstance(cm, allow_invalid))
+    def test_allowedInvalid(self):
+        cm = self.case.allowedInvalid()
+        self.assertTrue(isinstance(cm, allowed_invalid))
 
-    def test_allowDeviation(self):
-        cm = self.case.allowDeviation(5)
-        self.assertTrue(isinstance(cm, allow_deviation))
+    def test_allowedDeviation(self):
+        cm = self.case.allowedDeviation(5)
+        self.assertTrue(isinstance(cm, allowed_deviation))
 
-    def test_allowPercentDeviation(self):
-        result = self.case.allowPercentDeviation(5)
-        self.assertTrue(isinstance(result, allow_percent_deviation))
+    def test_allowedPercentDeviation(self):
+        result = self.case.allowedPercentDeviation(5)
+        self.assertTrue(isinstance(result, allowed_percent_deviation))
 
-    def test_allowLimit(self):
-        cm = self.case.allowLimit(10)
-        self.assertTrue(isinstance(cm, allow_limit))
+    def test_allowedLimit(self):
+        cm = self.case.allowedLimit(10)
+        self.assertTrue(isinstance(cm, allowed_limit))

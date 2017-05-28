@@ -178,25 +178,25 @@ class ElementAllowance(BaseAllowance):
         return ElementAllowance(predicate)
 
 
-class allow_missing(ElementAllowance):
+class allowed_missing(ElementAllowance):
     def __init__(self, msg=None):
         def is_missing(_, error):
             return isinstance(error, Missing)
-        super(allow_missing, self).__init__(is_missing, msg)
+        super(allowed_missing, self).__init__(is_missing, msg)
 
 
-class allow_extra(ElementAllowance):
+class allowed_extra(ElementAllowance):
     def __init__(self, msg=None):
         def is_extra(_, error):
             return isinstance(error, Extra)
-        super(allow_extra, self).__init__(is_extra, msg)
+        super(allowed_extra, self).__init__(is_extra, msg)
 
 
-class allow_invalid(ElementAllowance):
+class allowed_invalid(ElementAllowance):
     def __init__(self, msg=None):
         def is_invalid(_, error):
             return isinstance(error, Invalid)
-        super(allow_invalid, self).__init__(is_invalid, msg)
+        super(allowed_invalid, self).__init__(is_invalid, msg)
 
 
 def _prettify_devsig(method):
@@ -239,9 +239,9 @@ def _normalize_devargs(lower, upper, msg):
     return (lower, upper, msg)
 
 
-class allow_deviation(ElementAllowance):
-    """allow_deviation(tolerance, /, msg=None)
-    allow_deviation(lower, upper, msg=None)
+class allowed_deviation(ElementAllowance):
+    """allowed_deviation(tolerance, /, msg=None)
+    allowed_deviation(lower, upper, msg=None)
 
     Context manager that allows Deviations within a given tolerance
     without triggering a test failure.
@@ -255,11 +255,11 @@ class allow_deviation(ElementAllowance):
             if isnan(deviation) or isnan(error.expected or 0.0):
                 return False
             return lower <= deviation <= upper
-        super(allow_deviation, self).__init__(tolerance, msg)
-_prettify_devsig(allow_deviation.__init__)
+        super(allowed_deviation, self).__init__(tolerance, msg)
+_prettify_devsig(allowed_deviation.__init__)
 
 
-class allow_percent_deviation(ElementAllowance):
+class allowed_percent_deviation(ElementAllowance):
     def __init__(self, lower, upper=None, msg=None):
         lower, upper, msg = _normalize_devargs(lower, upper, msg)
         def percent_tolerance(_, error):  # <- Closes over lower & upper.
@@ -267,16 +267,16 @@ class allow_percent_deviation(ElementAllowance):
             if isnan(percent_deviation) or isnan(error.expected or 0):
                 return False
             return lower <= percent_deviation <= upper
-        super(allow_percent_deviation, self).__init__(percent_tolerance, msg)
-_prettify_devsig(allow_percent_deviation.__init__)
+        super(allowed_percent_deviation, self).__init__(percent_tolerance, msg)
+_prettify_devsig(allowed_percent_deviation.__init__)
 
 
-class allow_specified(BaseAllowance):
+class allowed_specific(BaseAllowance):
     def __init__(self, errors, msg=None):
         if _is_collection_of_items(errors):
             errors = dict(errors)
         self.errors = errors
-        super(allow_specified, self).__init__(self.grpfltrfalse, msg)
+        super(allowed_specific, self).__init__(self.grpfltrfalse, msg)
 
     def grpfltrfalse(self, iterable):
         if isinstance(self.errors, collections.Mapping):
@@ -310,7 +310,7 @@ class allow_specified(BaseAllowance):
             iterable = getattr(iterable, 'iteritems', iterable.items)()
 
         if _is_collection_of_items(iterable):
-            return super(allow_specified, self).apply_filterfalse(iterable)  # <- EXIT!
+            return super(allowed_specific, self).apply_filterfalse(iterable)  # <- EXIT!
 
         if _is_mapping_type(self.errors):
             message = ('{0!r} of errors cannot be matched using {1!r} '
@@ -320,11 +320,11 @@ class allow_specified(BaseAllowance):
             raise ValueError(message)
 
         iterable = ((None, error) for error in iterable)
-        filtered = super(allow_specified, self).apply_filterfalse(iterable)
+        filtered = super(allowed_specific, self).apply_filterfalse(iterable)
         return (error for key, error in filtered)  # 'key' intentionally discarded
 
 
-class allow_key(ElementAllowance):
+class allowed_key(ElementAllowance):
     """The given *function* should accept a number of arguments
     equal the given key elements. If key is a single value (string
     or otherwise), *function* should accept one argument. If key
@@ -336,10 +336,10 @@ class allow_key(ElementAllowance):
             if _is_nsiterable(key):
                 return function(*key)
             return function(key)
-        super(allow_key, self).__init__(wrapped, msg)
+        super(allowed_key, self).__init__(wrapped, msg)
 
 
-class allow_args(ElementAllowance):
+class allowed_args(ElementAllowance):
     """The given *function* should accept a number of arguments equal
     the given elements in the 'args' attribute. If args is a single
     value (string or otherwise), *function* should accept one argument.
@@ -352,15 +352,15 @@ class allow_args(ElementAllowance):
             if _is_nsiterable(args):
                 return function(*args)
             return function(args)
-        super(allow_args, self).__init__(wrapped, msg)
+        super(allowed_args, self).__init__(wrapped, msg)
 
 
-class allow_limit(BaseAllowance):
+class allowed_limit(BaseAllowance):
     def __init__(self, number, msg=None):
         self.number = number
         self.or_predicate = None
         self.and_predicate = None
-        super(allow_limit, self).__init__(self.limit_filterfalse, msg)
+        super(allowed_limit, self).__init__(self.limit_filterfalse, msg)
 
     def limit_filterfalse(self, iterable):
         number = self.number                # Reduce the number of
@@ -388,17 +388,17 @@ class allow_limit(BaseAllowance):
             iterable = getattr(iterable, 'iteritems', iterable.items)()
 
         if _is_collection_of_items(iterable):
-            return super(allow_limit, self).apply_filterfalse(iterable)
+            return super(allowed_limit, self).apply_filterfalse(iterable)
 
         iterable = ((None, error) for error in iterable)
-        filtered = super(allow_limit, self).apply_filterfalse(iterable)
+        filtered = super(allowed_limit, self).apply_filterfalse(iterable)
         return (error for key, error in filtered)  # 'key' intentionally discarded
 
     def __or__(self, other):
         if not isinstance(other, ElementAllowance):
             return NotImplemented
 
-        allowance = allow_limit(self.number, self.msg)
+        allowance = allowed_limit(self.number, self.msg)
         allowance.and_predicate = self.and_predicate  # Copy 'and' as-is.
         if not self.or_predicate:
             allowance.or_predicate = other.predicate
@@ -417,7 +417,7 @@ class allow_limit(BaseAllowance):
         if not isinstance(other, ElementAllowance):
             return NotImplemented
 
-        allowance = allow_limit(self.number, self.msg)
+        allowance = allowed_limit(self.number, self.msg)
         allowance.or_predicate = self.or_predicate  # Copy 'or' as-is.
         if not self.and_predicate:
             allowance.and_predicate = other.predicate

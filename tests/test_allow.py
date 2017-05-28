@@ -6,15 +6,15 @@ from datatest.utils import contextlib
 
 from datatest.allow import BaseAllowance
 from datatest.allow import ElementAllowance
-from datatest.allow import allow_missing
-from datatest.allow import allow_extra
-from datatest.allow import allow_invalid
-from datatest.allow import allow_deviation
-from datatest.allow import allow_percent_deviation
-from datatest.allow import allow_specified
-from datatest.allow import allow_key
-from datatest.allow import allow_args
-from datatest.allow import allow_limit
+from datatest.allow import allowed_missing
+from datatest.allow import allowed_extra
+from datatest.allow import allowed_invalid
+from datatest.allow import allowed_deviation
+from datatest.allow import allowed_percent_deviation
+from datatest.allow import allowed_specific
+from datatest.allow import allowed_key
+from datatest.allow import allowed_args
+from datatest.allow import allowed_limit
 
 from datatest.errors import ValidationError
 from datatest.errors import DataError
@@ -213,14 +213,14 @@ class TestElementAllowanceAndSubclasses(unittest.TestCase):
         remaining_errors = cm.exception.errors
         self.assertEqual(list(remaining_errors), [Extra(2)])
 
-    def test_allow_key(self):
+    def test_allowed_key(self):
         # Test mapping of errors.
         errors = {'aaa': Missing(1), 'bbb': Missing(2)}
         def function(key):
             return key == 'aaa'
 
         with self.assertRaises(ValidationError) as cm:
-            with allow_key(function):  # <- Apply allowance!
+            with allowed_key(function):  # <- Apply allowance!
                 raise ValidationError('some message', errors)
 
         remaining_errors = cm.exception.errors
@@ -232,7 +232,7 @@ class TestElementAllowanceAndSubclasses(unittest.TestCase):
             return letter == 'a' and number == 7
 
         with self.assertRaises(ValidationError) as cm:
-            with allow_key(function):  # <- Apply allowance!
+            with allowed_key(function):  # <- Apply allowance!
                 raise ValidationError('some message', errors)
 
         remaining_errors = cm.exception.errors
@@ -245,20 +245,20 @@ class TestElementAllowanceAndSubclasses(unittest.TestCase):
             return False  # < Don't match any errors.
 
         with self.assertRaises(ValidationError) as cm:
-            with allow_key(function):  # <- Apply allowance!
+            with allowed_key(function):  # <- Apply allowance!
                 raise ValidationError('some message', errors)
 
         remaining_errors = cm.exception.errors
         self.assertEqual(list(remaining_errors), [Missing(1), Extra(2)])
 
-    def test_allow_args(self):
+    def test_allowed_args(self):
         # Single argument.
         errors =  [Missing('aaa'), Missing('bbb'), Extra('bbb')]
         def function(arg):
             return arg == 'bbb'
 
         with self.assertRaises(ValidationError) as cm:
-            with allow_args(function):  # <- Apply allowance!
+            with allowed_args(function):  # <- Apply allowance!
                 raise ValidationError('some message', errors)
 
         remaining_errors = cm.exception.errors
@@ -270,45 +270,48 @@ class TestElementAllowanceAndSubclasses(unittest.TestCase):
             return diff < 2 and expected == 5
 
         with self.assertRaises(ValidationError) as cm:
-            with allow_args(function):  # <- Apply allowance!
+            with allowed_args(function):  # <- Apply allowance!
                 raise ValidationError('some message', errors)
 
         remaining_errors = cm.exception.errors
         self.assertEqual(list(remaining_errors), [Deviation(2, 5)])
 
-    def test_allow_missing(self):
+    def test_allowed_missing(self):
         errors =  [Missing('X'), Missing('Y'), Extra('X')]
 
         with self.assertRaises(ValidationError) as cm:
-            with allow_missing():  # <- Apply allowance!
+            with allowed_missing():  # <- Apply allowance!
                 raise ValidationError('some message', errors)
         remaining_errors = cm.exception.errors
         self.assertEqual(list(remaining_errors), [Extra('X')])
 
-    def test_allow_extra(self):
+    def test_allowed_extra(self):
         errors =  [Extra('X'), Extra('Y'), Missing('X')]
 
         with self.assertRaises(ValidationError) as cm:
-            with allow_extra():  # <- Apply allowance!
+            with allowed_extra():  # <- Apply allowance!
                 raise ValidationError('some message', errors)
         remaining_errors = cm.exception.errors
         self.assertEqual(list(remaining_errors), [Missing('X')])
 
-    def test_allow_invalid(self):
+    def test_allowed_invalid(self):
         errors =  [Invalid('X'), Invalid('Y'), Extra('Z')]
 
         with self.assertRaises(ValidationError) as cm:
-            with allow_invalid():  # <- Apply allowance!
+            with allowed_invalid():  # <- Apply allowance!
                 raise ValidationError('some message', errors)
         remaining_errors = cm.exception.errors
         self.assertEqual(list(remaining_errors), [Extra('Z')])
 
 
-class TestComposabilityOfAllowances(unittest.TestCase):
+class TestComposability(unittest.TestCase):
+    """Most allowances should support being combined using the
+    "&" and "|" (bitwise-and and bitwise-or operators).
+    """
     def test_or_operator(self):
         errors =  [Extra('X'), Missing('Y'), Invalid('Z')]
         with self.assertRaises(ValidationError) as cm:
-            with allow_extra() | allow_missing():  # <- Compose with "|"!
+            with allowed_extra() | allowed_missing():  # <- Compose with "|"!
                 raise ValidationError('some message', errors)
         remaining_errors = cm.exception.errors
         self.assertEqual(list(remaining_errors), [Invalid('Z')])
@@ -317,19 +320,19 @@ class TestComposabilityOfAllowances(unittest.TestCase):
         errors =  [Missing('X'), Extra('Y'), Missing('Z')]
         with self.assertRaises(ValidationError) as cm:
             is_x = lambda arg: arg == 'X'
-            with allow_missing() & allow_args(is_x):  # <- Compose with "&"!
+            with allowed_missing() & allowed_args(is_x):  # <- Compose with "&"!
                 raise ValidationError('some message', errors)
         remaining_errors = cm.exception.errors
         self.assertEqual(list(remaining_errors), [Extra('Y'), Missing('Z')])
 
 
-class TestAllowSpecified(unittest.TestCase):
+class TestAllowedSpecific(unittest.TestCase):
     def test_some_allowed(self):
         errors = [Extra('xxx'), Missing('yyy')]
         allowed = [Extra('xxx')]
 
         with self.assertRaises(ValidationError) as cm:
-            with allow_specified(allowed):
+            with allowed_specific(allowed):
                 raise ValidationError('example error', errors)
 
         expected = [Missing('yyy')]
@@ -341,7 +344,7 @@ class TestAllowSpecified(unittest.TestCase):
         allowed = Extra('xxx')  # <- Single diff, not in list.
 
         with self.assertRaises(ValidationError) as cm:
-            with allow_specified(allowed):
+            with allowed_specific(allowed):
                 raise ValidationError('example error', errors)
 
         expected = [Missing('yyy')]
@@ -351,7 +354,7 @@ class TestAllowSpecified(unittest.TestCase):
     def test_all_allowed(self):
         diffs = [Extra('xxx'), Missing('yyy')]
         allowed = [Extra('xxx'), Missing('yyy')]
-        with allow_specified(allowed):
+        with allowed_specific(allowed):
             raise ValidationError('example error', diffs)
 
     def test_duplicates(self):
@@ -361,7 +364,7 @@ class TestAllowSpecified(unittest.TestCase):
         # Only allow one of them.
         with self.assertRaises(ValidationError) as cm:
             allowed = [Extra('xxx')]
-            with allow_specified(allowed):
+            with allowed_specific(allowed):
                 raise ValidationError('example error', errors)
 
         expected = [Extra('xxx'), Extra('xxx')]  # Expect two remaining.
@@ -371,7 +374,7 @@ class TestAllowSpecified(unittest.TestCase):
         # Only allow two of them.
         with self.assertRaises(ValidationError) as cm:
             allowed = [Extra('xxx'), Extra('xxx')]
-            with allow_specified(allowed):
+            with allowed_specific(allowed):
                 raise ValidationError('example error', errors)
 
         expected = [Extra('xxx')]  # Expect one remaining.
@@ -380,7 +383,7 @@ class TestAllowSpecified(unittest.TestCase):
 
         # Allow all three.
         allowed = [Extra('xxx'), Extra('xxx'), Extra('xxx')]
-        with allow_specified(allowed):
+        with allowed_specific(allowed):
             raise ValidationError('example error', errors)
 
     def test_error_mapping_allowance_list(self):
@@ -388,7 +391,7 @@ class TestAllowSpecified(unittest.TestCase):
         allowed = [Extra('xxx')]
 
         with self.assertRaises(ValidationError) as cm:
-            with allow_specified(allowed):
+            with allowed_specific(allowed):
                 raise ValidationError('example error', differences)
 
         expected = {'bar': [Missing('yyy')]}
@@ -400,7 +403,7 @@ class TestAllowSpecified(unittest.TestCase):
         allowed = {'foo': Extra('xxx')}
 
         with self.assertRaises(ValidationError) as cm:
-            with allow_specified(allowed):
+            with allowed_specific(allowed):
                 raise ValidationError('example error', differences)
 
         expected = {'bar': Missing('yyy')}
@@ -412,7 +415,7 @@ class TestAllowSpecified(unittest.TestCase):
         allowed = {}
 
         with self.assertRaises(ValidationError) as cm:
-            with allow_specified(allowed):
+            with allowed_specific(allowed):
                 raise ValidationError('example error', differences)
 
         actual = cm.exception.errors
@@ -422,7 +425,7 @@ class TestAllowSpecified(unittest.TestCase):
         errors = {'foo': Extra('xxx'), 'bar': Missing('yyy')}
         allowed = errors
 
-        with allow_specified(allowed):  # <- Catches all differences, no error!
+        with allowed_specific(allowed):  # <- Catches all differences, no error!
             raise ValidationError('example error', errors)
 
     def test_mapping_mismatched_types(self):
@@ -431,7 +434,7 @@ class TestAllowSpecified(unittest.TestCase):
 
         regex = "'list' of errors cannot be matched.*requires non-mapping type"
         with self.assertRaisesRegex(ValueError, regex):
-            with allow_specified(allowed_dict):
+            with allowed_specific(allowed_dict):
                 raise ValidationError('example error', error_list)
 
     def test_integration(self):
@@ -444,16 +447,16 @@ class TestAllowSpecified(unittest.TestCase):
 
         regex = r"allowed errors not found: 'bar': \[Missing\('yyy'\)\]"
         with self.assertRaisesRegex(ValueError, regex):
-            with allow_specified(allowed):
+            with allowed_specific(allowed):
                 raise ValidationError('example error', differences)
 
 
-class TestAllowLimit(unittest.TestCase):
-    """Test allow_limit() behavior."""
+class TestAllowedLimit(unittest.TestCase):
+    """Test allowed_limit() behavior."""
     def test_exceeds_limit(self):
         errors = [Extra('xxx'), Missing('yyy')]
         with self.assertRaises(ValidationError) as cm:
-            with allow_limit(1):  # <- Allows only 1 but there are 2!
+            with allowed_limit(1):  # <- Allows only 1 but there are 2!
                 raise ValidationError('example error', errors)
 
         remaining = list(cm.exception.errors)
@@ -461,12 +464,12 @@ class TestAllowLimit(unittest.TestCase):
 
     def test_matches_limit(self):
         errors = [Extra('xxx'), Missing('yyy')]
-        with allow_limit(2):  # <- Allows 2 and there are only 2.
+        with allowed_limit(2):  # <- Allows 2 and there are only 2.
             raise ValidationError('example error', errors)
 
     def test_under_limit(self):
         errors = [Extra('xxx'), Missing('yyy')]
-        with allow_limit(3):  # <- Allows 3 and there are only 2.
+        with allowed_limit(3):  # <- Allows 3 and there are only 2.
             raise ValidationError('example error', errors)
 
     def test_dict_of_diffs_exceeds_and_match(self):
@@ -475,7 +478,7 @@ class TestAllowLimit(unittest.TestCase):
             'bar': [Extra('zzz')],
         }
         with self.assertRaises(ValidationError) as cm:
-            with allow_limit(1):  # <- Allows only 1 but there are 2!
+            with allowed_limit(1):  # <- Allows only 1 but there are 2!
                 raise ValidationError('example error', errors)
 
         actual = cm.exception.errors
@@ -490,7 +493,7 @@ class TestAllowLimit(unittest.TestCase):
             Missing('ddd'),
             Missing('eee'),
         ]
-        with allow_limit(2) | allow_missing():  # <- Limit of 2 or Missing.
+        with allowed_limit(2) | allowed_missing():  # <- Limit of 2 or Missing.
             raise ValidationError('example error', errors)
 
     def test_bitwise_ror(self):
@@ -502,7 +505,7 @@ class TestAllowLimit(unittest.TestCase):
             Missing('ddd'),
             Missing('eee'),
         ]
-        with allow_missing() | allow_limit(2):  # <- On right-hand side!
+        with allowed_missing() | allowed_limit(2):  # <- On right-hand side!
             raise ValidationError('example error', errors)
 
     def test_bitwise_or_composition_over_limit(self):
@@ -514,7 +517,7 @@ class TestAllowLimit(unittest.TestCase):
             Missing('eee'),
         ]
         with self.assertRaises(ValidationError) as cm:
-            with allow_limit(2) | allow_missing():
+            with allowed_limit(2) | allowed_missing():
                 raise ValidationError('example error', errors)
 
         # Returned errors *may* not be in the same order.
@@ -523,7 +526,7 @@ class TestAllowLimit(unittest.TestCase):
 
         # Test __ror__().
         with self.assertRaises(ValidationError) as cm:
-            with allow_missing() | allow_limit(2):  # <- On right-hand side!
+            with allowed_missing() | allowed_limit(2):  # <- On right-hand side!
                 raise ValidationError('example error', errors)
 
         # Returned errors *may* not be in the same order.
@@ -535,7 +538,7 @@ class TestAllowLimit(unittest.TestCase):
 
         with self.assertRaises(ValidationError) as cm:
             is_extra = lambda x: isinstance(x, Extra)
-            with allow_limit(4) & allow_extra():
+            with allowed_limit(4) & allowed_extra():
                 raise ValidationError('example error', errors)
 
         actual = list(cm.exception.errors)
@@ -548,7 +551,7 @@ class TestAllowLimit(unittest.TestCase):
         # Make sure __rand__ (right-and) is wired-up to __and__.
         with self.assertRaises(ValidationError) as cm:
             is_extra = lambda x: isinstance(x, Extra)
-            with allow_extra() & allow_limit(4):  # <- On right-hand side!
+            with allowed_extra() & allowed_limit(4):  # <- On right-hand side!
                 raise ValidationError('example error', errors)
 
         actual = list(cm.exception.errors)
@@ -558,7 +561,7 @@ class TestAllowLimit(unittest.TestCase):
         errors = [Extra('xxx'), Missing('yyy'), Extra('zzz')]
         with self.assertRaises(ValidationError) as cm:
             is_extra = lambda x: isinstance(x, Extra)
-            with allow_limit(1) & allow_extra():  # <- Limit of 1 and is_extra().
+            with allowed_limit(1) & allowed_extra():  # <- Limit of 1 and is_extra().
                 raise ValidationError('example error', errors)
 
         # Returned errors can be in different order.
@@ -574,7 +577,7 @@ class TestAllowLimit(unittest.TestCase):
         }
         with self.assertRaises(ValidationError) as cm:
             is_extra = lambda x: isinstance(x, Extra)
-            with allow_limit(1) & allow_extra():
+            with allowed_limit(1) & allowed_extra():
                 raise ValidationError('example error', errors)
 
         actual = cm.exception.errors
@@ -585,12 +588,12 @@ class TestAllowLimit(unittest.TestCase):
         self.assertEqual(dict(actual), expected)
 
 
-class TestAllowDeviation(unittest.TestCase):
-    """Test allow_deviation() behavior."""
+class TestAllowedDeviation(unittest.TestCase):
+    """Test allowed_deviation() behavior."""
     def test_method_signature(self):
         """Check for prettified default signature in Python 3.3 and later."""
-        with contextlib.suppress(AttributeError):     # Python 3.2 and older
-            sig = inspect.signature(allow_deviation)  # use ugly signatures.
+        with contextlib.suppress(AttributeError):       # Python 3.2 and older
+            sig = inspect.signature(allowed_deviation)  # use ugly signatures.
             parameters = list(sig.parameters)
             self.assertEqual(parameters, ['tolerance', 'msg'])
 
@@ -600,7 +603,7 @@ class TestAllowDeviation(unittest.TestCase):
             'bbb': Deviation(+3, 10),  # <- Not in allowed range.
         }
         with self.assertRaises(ValidationError) as cm:
-            with allow_deviation(2):  # <- Allows +/- 2.
+            with allowed_deviation(2):  # <- Allows +/- 2.
                 raise ValidationError('example error', differences)
 
         remaining_errors = cm.exception.errors
@@ -612,7 +615,7 @@ class TestAllowDeviation(unittest.TestCase):
             'bbb': Deviation(+3, 10),
         }
         with self.assertRaises(ValidationError) as cm:
-            with allow_deviation(0, 3):  # <- Allows from 0 to 3.
+            with allowed_deviation(0, 3):  # <- Allows from 0 to 3.
                 raise ValidationError('example error', differences)
 
         result_diffs = cm.exception.errors
@@ -626,7 +629,7 @@ class TestAllowDeviation(unittest.TestCase):
             Deviation(+3.1, 10),  # <- Not allowed.
         ]
         with self.assertRaises(ValidationError) as cm:
-            with allow_deviation(3, 3):  # <- Allows +3 only.
+            with allowed_deviation(3, 3):  # <- Allows +3 only.
                 raise ValidationError('example error', differences)
 
         result_diffs = list(cm.exception.errors)
@@ -648,7 +651,7 @@ class TestAllowDeviation(unittest.TestCase):
             def fn(key):
                 return key in ('aaa', 'bbb', 'ddd')
 
-            with allow_deviation(2) & allow_key(fn):  # <- composed with "&"!
+            with allowed_deviation(2) & allowed_key(fn):  # <- composed with "&"!
                 raise ValidationError('example error', differences)
 
         actual = cm.exception.errors
@@ -660,46 +663,46 @@ class TestAllowDeviation(unittest.TestCase):
 
     def test_invalid_tolerance(self):
         with self.assertRaises(AssertionError) as cm:
-            with allow_deviation(-5):  # <- invalid
+            with allowed_deviation(-5):  # <- invalid
                 pass
         exc = str(cm.exception)
         self.assertTrue(exc.startswith('tolerance should not be negative'))
 
     def test_empty_value_handling(self):
         # Test NoneType.
-        with allow_deviation(0):  # <- Pass without failure.
+        with allowed_deviation(0):  # <- Pass without failure.
             raise ValidationError('example error', [Deviation(None, 0)])
 
-        with allow_deviation(0):  # <- Pass without failure.
+        with allowed_deviation(0):  # <- Pass without failure.
             raise ValidationError('example error', [Deviation(0, None)])
 
         # Test empty string.
-        with allow_deviation(0):  # <- Pass without failure.
+        with allowed_deviation(0):  # <- Pass without failure.
             raise ValidationError('example error', [Deviation('', 0)])
 
-        with allow_deviation(0):  # <- Pass without failure.
+        with allowed_deviation(0):  # <- Pass without failure.
             raise ValidationError('example error', [Deviation(0, '')])
 
         # Test NaN (not a number) values.
         with self.assertRaises(ValidationError):  # <- NaN values should not be caught!
-            with allow_deviation(0):
+            with allowed_deviation(0):
                 raise ValidationError('example error', [Deviation(float('nan'), 0)])
 
         with self.assertRaises(ValidationError):  # <- NaN values should not be caught!
-            with allow_deviation(0):
+            with allowed_deviation(0):
                 raise ValidationError('example error', [Deviation(0, float('nan'))])
 
     # AN OPEN QUESTION: Should deviation allowances raise an error if
     # the maximum oberved deviation is _less_ than the given tolerance?
 
 
-class TestAllowPercentDeviation(unittest.TestCase):
-    """Test allow_percent_deviation() behavior."""
+class TestAllowedPercentDeviation(unittest.TestCase):
+    """Test allowed_percent_deviation() behavior."""
     def test_method_signature(self):
         """Check for prettified default signature in Python 3.3 and later."""
-        with contextlib.suppress(AttributeError):             # Python 3.2 and
-            sig = inspect.signature(allow_percent_deviation)  # older use the
-            parameters = list(sig.parameters)                 # ugly signature.
+        with contextlib.suppress(AttributeError):               # Python 3.2 and
+            sig = inspect.signature(allowed_percent_deviation)  # older use the
+            parameters = list(sig.parameters)                   # ugly signature.
             self.assertEqual(parameters, ['tolerance', 'msg'])
 
     def test_tolerance_syntax(self):
@@ -708,7 +711,7 @@ class TestAllowPercentDeviation(unittest.TestCase):
             Deviation(+3, 10),  # <- Not in allowed range.
         ]
         with self.assertRaises(ValidationError) as cm:
-            with allow_percent_deviation(0.2):  # <- Allows +/- 20%.
+            with allowed_percent_deviation(0.2):  # <- Allows +/- 20%.
                 raise ValidationError('example error', differences)
 
         result_string = str(cm.exception)
@@ -723,7 +726,7 @@ class TestAllowPercentDeviation(unittest.TestCase):
             'bbb': Deviation(+3, 10),
         }
         with self.assertRaises(ValidationError) as cm:
-            with allow_percent_deviation(0.0, 0.3):  # <- Allows from 0 to 30%.
+            with allowed_percent_deviation(0.0, 0.3):  # <- Allows from 0 to 30%.
                 raise ValidationError('example error', differences)
 
         result_string = str(cm.exception)
@@ -740,7 +743,7 @@ class TestAllowPercentDeviation(unittest.TestCase):
             Deviation(+3.1, 10),  # <- Not allowed.
         ]
         with self.assertRaises(ValidationError) as cm:
-            with allow_percent_deviation(0.3, 0.3):  # <- Allows +30% only.
+            with allowed_percent_deviation(0.3, 0.3):  # <- Allows +30% only.
                 raise ValidationError('example error', differences)
 
         result_diffs = list(cm.exception.errors)
@@ -761,7 +764,7 @@ class TestAllowPercentDeviation(unittest.TestCase):
             def keyfn(key):
                 return key in ('aaa', 'bbb', 'ddd')
 
-            with allow_percent_deviation(0.2) & allow_key(keyfn):  # <- Allows +/- 20%.
+            with allowed_percent_deviation(0.2) & allowed_key(keyfn):  # <- Allows +/- 20%.
                 raise ValidationError('example error', differences)
 
         result_set = cm.exception.errors
@@ -773,33 +776,33 @@ class TestAllowPercentDeviation(unittest.TestCase):
 
     def test_invalid_tolerance(self):
         with self.assertRaises(AssertionError) as cm:
-            with allow_percent_deviation(-0.5):  # <- invalid
+            with allowed_percent_deviation(-0.5):  # <- invalid
                 pass
         exc = str(cm.exception)
         self.assertTrue(exc.startswith('tolerance should not be negative'))
 
     def test_empty_value_handling(self):
         # Test NoneType.
-        with allow_percent_deviation(0):  # <- Pass without failure.
+        with allowed_percent_deviation(0):  # <- Pass without failure.
             raise ValidationError('example error', [Deviation(None, 0)])
 
-        with allow_percent_deviation(0):  # <- Pass without failure.
+        with allowed_percent_deviation(0):  # <- Pass without failure.
             raise ValidationError('example error', [Deviation(0, None)])
 
         # Test empty string.
-        with allow_percent_deviation(0):  # <- Pass without failure.
+        with allowed_percent_deviation(0):  # <- Pass without failure.
             raise ValidationError('example error', [Deviation('', 0)])
 
-        with allow_percent_deviation(0):  # <- Pass without failure.
+        with allowed_percent_deviation(0):  # <- Pass without failure.
             raise ValidationError('example error', [Deviation(0, '')])
 
         # Test NaN (not a number) values.
         with self.assertRaises(ValidationError):  # <- NaN values should not be caught!
-            with allow_percent_deviation(0):
+            with allowed_percent_deviation(0):
                 raise ValidationError('example error', [Deviation(float('nan'), 0)])
 
         with self.assertRaises(ValidationError):  # <- NaN values should not be caught!
-            with allow_percent_deviation(0):
+            with allowed_percent_deviation(0):
                 raise ValidationError('example error', [Deviation(0, float('nan'))])
 
 
@@ -809,10 +812,10 @@ class TestMsgIntegration(unittest.TestCase):
     do some sanity checking to make sure that 'msg' values are
     passed through the inheritance chain.
     """
-    def test_allow_missing(self):
+    def test_allowed_missing(self):
         # Check for modified message.
         with self.assertRaises(ValidationError) as cm:
-            with allow_missing(msg='modified'):  # <- No msg!
+            with allowed_missing(msg='modified'):  # <- No msg!
                 raise ValidationError('original', [Extra('X')])
         message = cm.exception.message
         self.assertEqual(message, 'modified: original')

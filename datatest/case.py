@@ -16,15 +16,15 @@ from .errors import ValidationError
 __datatest = True  # Used to detect in-module stack frames (which are
                    # omitted from output).
 
-from .allow import allow_missing
-from .allow import allow_extra
-from .allow import allow_invalid
-from .allow import allow_deviation
-from .allow import allow_percent_deviation
-from .allow import allow_specified
-from .allow import allow_key
-from .allow import allow_args
-from .allow import allow_limit
+from .allow import allowed_missing
+from .allow import allowed_extra
+from .allow import allowed_invalid
+from .allow import allowed_deviation
+from .allow import allowed_percent_deviation
+from .allow import allowed_specific
+from .allow import allowed_key
+from .allow import allowed_args
+from .allow import allowed_limit
 
 
 class DataTestCase(TestCase):
@@ -217,58 +217,58 @@ class DataTestCase(TestCase):
     #def assertUnique(self, data, msg=None):
     #    pass
 
-    def allowMissing(self, msg=None):
+    def allowedMissing(self, msg=None):
         """Allows :class:`Missing` values without triggering a test
         failure::
 
-            with self.allowMissing():
+            with self.allowedMissing():
                 data = ...
                 requirement = ...
                 self.assertValid(data, requirement)
         """
-        return allow_missing(msg)
+        return allowed_missing(msg)
 
-    def allowExtra(self, msg=None):
+    def allowedExtra(self, msg=None):
         """Allows :class:`Extra` values without triggering a test
         failure::
 
-            with self.allowExtra():
+            with self.allowedExtra():
                 data = ...
                 requirement = ...
                 self.assertValid(data, requirement)
         """
-        return allow_extra(msg)
+        return allowed_extra(msg)
 
-    def allowInvalid(self, msg=None):
+    def allowedInvalid(self, msg=None):
         """Allows :class:`Invalid` errors without triggering a test
         failure::
 
-            with self.allowInvalid():
+            with self.allowedInvalid():
                 data = ...
                 requirement = ...
                 self.assertValid(data, requirement)
         """
-        return allow_invalid(msg)
+        return allowed_invalid(msg)
 
-    def allowDeviation(self, lower, upper=None, msg=None):
+    def allowedDeviation(self, lower, upper=None, msg=None):
         """
-        allowDeviation(tolerance, /, msg=None)
-        allowDeviation(lower, upper, msg=None)
+        allowedDeviation(tolerance, /, msg=None)
+        allowedDeviation(lower, upper, msg=None)
 
         See documentation for full details.
         """
-        return allow_deviation(lower, upper, msg)
+        return allowed_deviation(lower, upper, msg)
 
-    def allowPercentDeviation(self, lower, upper=None, msg=None):
+    def allowedPercentDeviation(self, lower, upper=None, msg=None):
         """
-        allowPercentDeviation(tolerance, /, msg=None)
-        allowPercentDeviation(lower, upper, msg=None)
+        allowedPercentDeviation(tolerance, /, msg=None)
+        allowedPercentDeviation(lower, upper, msg=None)
 
         See documentation for full details.
         """
-        return allow_percent_deviation(lower, upper, msg)
+        return allowed_percent_deviation(lower, upper, msg)
 
-    def allowSpecified(self, errors, msg=None):
+    def allowedSpecific(self, errors, msg=None):
         """Context manager to allow specified *errors* without
         triggering a test failure::
 
@@ -276,7 +276,7 @@ class DataTestCase(TestCase):
                 Extra('X'),
                 Missing('Y')
             ]
-            with self.allowSpecified(errors):
+            with self.allowedSpecific(errors):
                 data = ...
                 requirement = ...
                 self.assertValid(data, requirement)
@@ -284,27 +284,27 @@ class DataTestCase(TestCase):
         The *errors* argument can be a :py:obj:`list` or :py:obj:`dict`
         of errors or a single :class:`DataError`.
         """
-        return allow_specified(errors, msg)
+        return allowed_specific(errors, msg)
 
-    def allowKey(self, function, msg=None):
+    def allowedKey(self, function, msg=None):
         """Allow errors in a mapping where *function* returns True.
         For each error, *function* will receive the associated
         mapping **key** unpacked into one or more arguments.
         """
-        return allow_key(function, msg)
+        return allowed_key(function, msg)
 
-    def allowArgs(self, function, msg=None):
+    def allowedArgs(self, function, msg=None):
         """Allows errors where *function* returns True. For the 'args'
         attribute of each error (a tuple), *function* must accept the
         number of arguments unpacked from 'args'.
         """
-        return allow_args(function, msg)
+        return allowed_args(function, msg)
 
-    def allowLimit(self, number, *funcs, **kwds):
+    def allowedLimit(self, number, *funcs, **kwds):
         """Context manager to allow a limited *number* of differences
         (of any type) without triggering a test failure::
 
-            with self.allowLimit(10):  # Allow up to ten differences.
+            with self.allowedLimit(10):  # Allow up to ten differences.
                 data = ...
                 requirement = ...
                 self.assertValid(data, requirement)
@@ -313,25 +313,25 @@ class DataTestCase(TestCase):
         will fail with a :class:`ValidationError` containing all
         observed differences.
         """
-        return allow_limit(number, *funcs, **kwds)
+        return allowed_limit(number, *funcs, **kwds)
 
 
 # Prettify default signature of methods that accept multiple signatures.
 # This only works for Python 3.3 and newer--older versions will simply
 # have the original method sigture.
 with contextlib.suppress(AttributeError):
-    # For DataTestCase.allowDeviation(), build "tolerance" signature.
-    _sig = inspect.signature(DataTestCase.allowDeviation)
+    # For DataTestCase.allowedDeviation(), build "tolerance" signature.
+    _sig = inspect.signature(DataTestCase.allowedDeviation)
     _self, _lower, _upper, _msg = _sig.parameters.values()
     _self = _self.replace(kind=inspect.Parameter.POSITIONAL_ONLY)
     _tolerance = inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY)
     _sig = _sig.replace(parameters=[_self, _tolerance, _msg])
-    DataTestCase.allowDeviation.__signature__ = _sig
+    DataTestCase.allowedDeviation.__signature__ = _sig
 
-    # For DataTestCase.allowPercentDeviation(), build "tolerance" signature.
-    _sig = inspect.signature(DataTestCase.allowPercentDeviation)
+    # For DataTestCase.allowedPercentDeviation(), build "tolerance" signature.
+    _sig = inspect.signature(DataTestCase.allowedPercentDeviation)
     _self, _lower, _upper, _msg = _sig.parameters.values()
     _self = _self.replace(kind=inspect.Parameter.POSITIONAL_ONLY)
     _tolerance = inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY)
     _sig = _sig.replace(parameters=[_self, _tolerance, _msg])
-    DataTestCase.allowPercentDeviation.__signature__ = _sig
+    DataTestCase.allowedPercentDeviation.__signature__ = _sig
