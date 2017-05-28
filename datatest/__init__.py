@@ -47,14 +47,14 @@ __all__ = [
     'Deviation',
 
     # Allowance context mangers.
-    'allow_key',
-    'allow_args',
     'allow_missing',
     'allow_extra',
     'allow_deviation',
     'allow_percent_deviation',
-    'allow_limit',
     'allow_specified',
+    'allow_key',
+    'allow_args',
+    'allow_limit',
 
     # Test runner and command-line program.
     'mandatory',

@@ -16,14 +16,14 @@ from .errors import ValidationError
 __datatest = True  # Used to detect in-module stack frames (which are
                    # omitted from output).
 
-from .allow import allow_args
-from .allow import allow_key
 from .allow import allow_missing
 from .allow import allow_extra
 from .allow import allow_deviation
 from .allow import allow_percent_deviation
-from .allow import allow_limit
 from .allow import allow_specified
+from .allow import allow_key
+from .allow import allow_args
+from .allow import allow_limit
 
 
 class DataTestCase(TestCase):
@@ -216,38 +216,6 @@ class DataTestCase(TestCase):
     #def assertUnique(self, data, msg=None):
     #    pass
 
-    def allowSpecified(self, errors, msg=None):
-        """Context manager to allow specified *errors* without
-        triggering a test failure::
-
-            errors = [
-                Extra('X'),
-                Missing('Y')
-            ]
-            with self.allowSpecified(errors):
-                data = ...
-                requirement = ...
-                self.assertValid(data, requirement)
-
-        The *errors* argument can be a :py:obj:`list` or :py:obj:`dict`
-        of errors or a single :class:`DataError`.
-        """
-        return allow_specified(errors, msg)
-
-    def allowArgs(self, function, msg=None):
-        """Allows errors where *function* returns True. For the 'args'
-        attribute of each error (a tuple), *function* must accept the
-        number of arguments unpacked from 'args'.
-        """
-        return allow_args(function, msg)
-
-    def allowKey(self, function, msg=None):
-        """Allow errors in a mapping where *function* returns True.
-        For each error, *function* will receive the associated
-        mapping **key** unpacked into one or more arguments.
-        """
-        return allow_key(function, msg)
-
     def allowMissing(self, msg=None):
         """Allows :class:`Missing` values without triggering a test
         failure::
@@ -270,21 +238,6 @@ class DataTestCase(TestCase):
         """
         return allow_extra(msg)
 
-    def allowLimit(self, number, *funcs, **kwds):
-        """Context manager to allow a limited *number* of differences
-        (of any type) without triggering a test failure::
-
-            with self.allowLimit(10):  # Allow up to ten differences.
-                data = ...
-                requirement = ...
-                self.assertValid(data, requirement)
-
-        If the count of differences exceeds the given *number*, the test
-        will fail with a :class:`ValidationError` containing all
-        observed differences.
-        """
-        return allow_limit(number, *funcs, **kwds)
-
     def allowDeviation(self, lower, upper=None, msg=None):
         """
         allowDeviation(tolerance, /, msg=None)
@@ -302,6 +255,53 @@ class DataTestCase(TestCase):
         See documentation for full details.
         """
         return allow_percent_deviation(lower, upper, msg)
+
+    def allowSpecified(self, errors, msg=None):
+        """Context manager to allow specified *errors* without
+        triggering a test failure::
+
+            errors = [
+                Extra('X'),
+                Missing('Y')
+            ]
+            with self.allowSpecified(errors):
+                data = ...
+                requirement = ...
+                self.assertValid(data, requirement)
+
+        The *errors* argument can be a :py:obj:`list` or :py:obj:`dict`
+        of errors or a single :class:`DataError`.
+        """
+        return allow_specified(errors, msg)
+
+    def allowKey(self, function, msg=None):
+        """Allow errors in a mapping where *function* returns True.
+        For each error, *function* will receive the associated
+        mapping **key** unpacked into one or more arguments.
+        """
+        return allow_key(function, msg)
+
+    def allowArgs(self, function, msg=None):
+        """Allows errors where *function* returns True. For the 'args'
+        attribute of each error (a tuple), *function* must accept the
+        number of arguments unpacked from 'args'.
+        """
+        return allow_args(function, msg)
+
+    def allowLimit(self, number, *funcs, **kwds):
+        """Context manager to allow a limited *number* of differences
+        (of any type) without triggering a test failure::
+
+            with self.allowLimit(10):  # Allow up to ten differences.
+                data = ...
+                requirement = ...
+                self.assertValid(data, requirement)
+
+        If the count of differences exceeds the given *number*, the test
+        will fail with a :class:`ValidationError` containing all
+        observed differences.
+        """
+        return allow_limit(number, *funcs, **kwds)
 
 
 # Prettify default signature of methods that accept multiple signatures.

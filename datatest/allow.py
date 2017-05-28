@@ -178,37 +178,6 @@ class ElementAllowance(BaseAllowance):
         return ElementAllowance(predicate)
 
 
-class allow_key(ElementAllowance):
-    """The given *function* should accept a number of arguments
-    equal the given key elements. If key is a single value (string
-    or otherwise), *function* should accept one argument. If key
-    is a three-tuple, *function* should accept three arguments.
-    """
-    def __init__(self, function, msg=None):
-        @wraps(function)
-        def wrapped(key, _):
-            if _is_nsiterable(key):
-                return function(*key)
-            return function(key)
-        super(allow_key, self).__init__(wrapped, msg)
-
-
-class allow_args(ElementAllowance):
-    """The given *function* should accept a number of arguments equal
-    the given elements in the 'args' attribute. If args is a single
-    value (string or otherwise), *function* should accept one argument.
-    If args is a three-tuple, *function* should accept three arguments.
-    """
-    def __init__(self, function, msg=None):
-        @wraps(function)
-        def wrapped(_, error):
-            args = error.args
-            if _is_nsiterable(args):
-                return function(*args)
-            return function(args)
-        super(allow_args, self).__init__(wrapped, msg)
-
-
 class allow_missing(ElementAllowance):
     def __init__(self, msg=None):
         def is_missing(_, error):
@@ -295,6 +264,90 @@ class allow_percent_deviation(ElementAllowance):
 _prettify_devsig(allow_percent_deviation.__init__)
 
 
+class allow_specified(BaseAllowance):
+    def __init__(self, errors, msg=None):
+        if _is_collection_of_items(errors):
+            errors = dict(errors)
+        self.errors = errors
+        super(allow_specified, self).__init__(self.grpfltrfalse, msg)
+
+    def grpfltrfalse(self, iterable):
+        if isinstance(self.errors, collections.Mapping):
+            iterable = iter(iterable)
+            first_key, first_error = next(iterable)
+            iterable = itertools.chain([(first_key, first_error)], iterable)
+            allowed = self.errors.get(first_key, [])
+        else:
+            allowed = self.errors
+
+        if isinstance(allowed, Exception):
+            allowed = [allowed]
+        else:
+            allowed = list(allowed)  # Make list or copy existing list.
+
+        for key, error in iterable:
+            try:
+                allowed.remove(error)
+            except ValueError:
+                yield key, error
+
+        if allowed:  # If there are left-over errors.
+            key_repr = '{0!r}: '.format(key) if key else ''
+            message = 'allowed errors not found: {0}{1!r}'
+            exc = ValueError(message.format(key_repr, allowed))
+            exc.__cause__ = None
+            raise exc
+
+    def apply_filterfalse(self, iterable):
+        if isinstance(iterable, collections.Mapping):
+            iterable = getattr(iterable, 'iteritems', iterable.items)()
+
+        if _is_collection_of_items(iterable):
+            return super(allow_specified, self).apply_filterfalse(iterable)  # <- EXIT!
+
+        if _is_mapping_type(self.errors):
+            message = ('{0!r} of errors cannot be matched using {1!r} '
+                       'of allowances, requires non-mapping type')
+            message = message.format(iterable.__class__.__name__,
+                                     self.errors.__class__.__name__)
+            raise ValueError(message)
+
+        iterable = ((None, error) for error in iterable)
+        filtered = super(allow_specified, self).apply_filterfalse(iterable)
+        return (error for key, error in filtered)  # 'key' intentionally discarded
+
+
+class allow_key(ElementAllowance):
+    """The given *function* should accept a number of arguments
+    equal the given key elements. If key is a single value (string
+    or otherwise), *function* should accept one argument. If key
+    is a three-tuple, *function* should accept three arguments.
+    """
+    def __init__(self, function, msg=None):
+        @wraps(function)
+        def wrapped(key, _):
+            if _is_nsiterable(key):
+                return function(*key)
+            return function(key)
+        super(allow_key, self).__init__(wrapped, msg)
+
+
+class allow_args(ElementAllowance):
+    """The given *function* should accept a number of arguments equal
+    the given elements in the 'args' attribute. If args is a single
+    value (string or otherwise), *function* should accept one argument.
+    If args is a three-tuple, *function* should accept three arguments.
+    """
+    def __init__(self, function, msg=None):
+        @wraps(function)
+        def wrapped(_, error):
+            args = error.args
+            if _is_nsiterable(args):
+                return function(*args)
+            return function(args)
+        super(allow_args, self).__init__(wrapped, msg)
+
+
 class allow_limit(BaseAllowance):
     def __init__(self, number, msg=None):
         self.number = number
@@ -371,56 +424,3 @@ class allow_limit(BaseAllowance):
 
     def __rand__(self, other):
         return self.__and__(other)
-
-
-class allow_specified(BaseAllowance):
-    def __init__(self, errors, msg=None):
-        if _is_collection_of_items(errors):
-            errors = dict(errors)
-        self.errors = errors
-        super(allow_specified, self).__init__(self.grpfltrfalse, msg)
-
-    def grpfltrfalse(self, iterable):
-        if isinstance(self.errors, collections.Mapping):
-            iterable = iter(iterable)
-            first_key, first_error = next(iterable)
-            iterable = itertools.chain([(first_key, first_error)], iterable)
-            allowed = self.errors.get(first_key, [])
-        else:
-            allowed = self.errors
-
-        if isinstance(allowed, Exception):
-            allowed = [allowed]
-        else:
-            allowed = list(allowed)  # Make list or copy existing list.
-
-        for key, error in iterable:
-            try:
-                allowed.remove(error)
-            except ValueError:
-                yield key, error
-
-        if allowed:  # If there are left-over errors.
-            key_repr = '{0!r}: '.format(key) if key else ''
-            message = 'allowed errors not found: {0}{1!r}'
-            exc = ValueError(message.format(key_repr, allowed))
-            exc.__cause__ = None
-            raise exc
-
-    def apply_filterfalse(self, iterable):
-        if isinstance(iterable, collections.Mapping):
-            iterable = getattr(iterable, 'iteritems', iterable.items)()
-
-        if _is_collection_of_items(iterable):
-            return super(allow_specified, self).apply_filterfalse(iterable)  # <- EXIT!
-
-        if _is_mapping_type(self.errors):
-            message = ('{0!r} of errors cannot be matched using {1!r} '
-                       'of allowances, requires non-mapping type')
-            message = message.format(iterable.__class__.__name__,
-                                     self.errors.__class__.__name__)
-            raise ValueError(message)
-
-        iterable = ((None, error) for error in iterable)
-        filtered = super(allow_specified, self).apply_filterfalse(iterable)
-        return (error for key, error in filtered)  # 'key' intentionally discarded

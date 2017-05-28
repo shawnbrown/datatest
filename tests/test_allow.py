@@ -6,14 +6,15 @@ from datatest.utils import contextlib
 
 from datatest.allow import BaseAllowance
 from datatest.allow import ElementAllowance
-from datatest.allow import allow_key
-from datatest.allow import allow_args
 from datatest.allow import allow_missing
 from datatest.allow import allow_extra
 from datatest.allow import allow_deviation
 from datatest.allow import allow_percent_deviation
 from datatest.allow import allow_specified
+from datatest.allow import allow_key
+from datatest.allow import allow_args
 from datatest.allow import allow_limit
+
 from datatest.errors import ValidationError
 from datatest.errors import DataError
 from datatest.errors import Missing
