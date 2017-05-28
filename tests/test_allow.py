@@ -5,7 +5,7 @@ from datatest.utils import collections
 from datatest.utils import contextlib
 
 from datatest.allow import BaseAllowance
-from datatest.allow import ElementwiseAllowance
+from datatest.allow import ElementAllowance
 from datatest.allow import allow_key
 from datatest.allow import allow_error
 from datatest.allow import allow_args
@@ -24,25 +24,54 @@ from datatest.errors import Deviation
 
 
 class TestBaseAllowance(unittest.TestCase):
-    def test_iterable_all_good(self):
+    def test_apply_filterfalse_good_list(self):
+        in_diffs = [Missing('x')]
+
         filterfalse = lambda iterable: list()  # <- empty list
-        with BaseAllowance(filterfalse, None):  # <- Should pass without error.
-            raise ValidationError('example error', [Missing('x')])
+        base = BaseAllowance(filterfalse)
+        allowed = base.apply_filterfalse(in_diffs)
+        self.assertEqual(list(allowed), [])
 
         filterfalse = lambda iterable: iter([])  # <- empty iterator
-        with BaseAllowance(filterfalse, None):  # <- Should pass pass without error.
-            raise ValidationError('example error', [Missing('x')])
+        base = BaseAllowance(filterfalse)
+        allowed = base.apply_filterfalse(in_diffs)
+        self.assertEqual(list(allowed), [])
 
-    def test_iterable_some_bad(self):
-        filterfalse = lambda iterable: [Missing('foo')]
+    def test_apply_filterfalse_good_mapping(self):
+        """If no errors are returned, the type doesn't matter."""
+        in_diffs = {'a': Missing('x')}  # <- Input of mapping differences!
+
+        filterfalse = lambda iterable: dict()  # <- empty dict
+        base = BaseAllowance(filterfalse)
+        allowed = base.apply_filterfalse(in_diffs)
+        self.assertEqual(list(allowed), [])
+
+        filterfalse = lambda iterable: iter([])  # <- empty iterator
+        base = BaseAllowance(filterfalse)
+        allowed = base.apply_filterfalse(in_diffs)
+        self.assertEqual(list(allowed), [])
+
+    def test_apply_filterfalse_bad_list(self):
         in_diffs = [Missing('foo'), Missing('bar')]
 
         with self.assertRaises(ValidationError) as cm:
+            filterfalse = lambda iterable: [Missing('foo')]
             with BaseAllowance(filterfalse, None):
                 raise ValidationError('example error', in_diffs)
 
         errors = cm.exception.errors
         self.assertEqual(list(errors), [Missing('foo')])
+
+    def test_apply_filterfalse_bad_mapping(self):
+        in_diffs = {'a': Missing('x'), 'b': Missing('y')}
+
+        with self.assertRaises(ValidationError) as cm:
+            filterfalse = lambda iterable: {'b': Missing('y')}
+            with BaseAllowance(filterfalse, None):
+                raise ValidationError('example error', in_diffs)
+
+        errors = cm.exception.errors
+        self.assertEqual(dict(errors), {'b': Missing('y')})
 
     def test_mismatched_types(self):
         """When given a non-mapping container, a non-mapping container
@@ -95,7 +124,7 @@ class TestBaseAllowance(unittest.TestCase):
         self.assertEqual(message, 'allowance message: original message')
 
 
-class TestElementwiseAllowanceFilterFalse(unittest.TestCase):
+class TestElementAllowanceFilterFalse(unittest.TestCase):
     def test_mapping_of_nongroups(self):
         iterable = {
             'a': Missing(1),
@@ -105,8 +134,8 @@ class TestElementwiseAllowanceFilterFalse(unittest.TestCase):
         def predicate(key, value):
             return (key == 'b') or isinstance(value, Invalid)
 
-        elementwise = ElementwiseAllowance(predicate)
-        result = elementwise.filterfalse(iterable)
+        elementwise = ElementAllowance(predicate)
+        result = elementwise.apply_filterfalse(iterable)
         self.assertEqual(dict(result), {'a':  Missing(1)})
 
     def test_mapping_of_groups(self):
@@ -137,8 +166,8 @@ class TestElementwiseAllowanceFilterFalse(unittest.TestCase):
                 return True
             return False
 
-        elementwise = ElementwiseAllowance(predicate)
-        result = elementwise.filterfalse(iterable)
+        elementwise = ElementAllowance(predicate)
+        result = elementwise.apply_filterfalse(iterable)
         expected = {'x': [Missing(1), Missing(3)],
                     'y': [Missing(5), Invalid(7)]}
         self.assertEqual(dict(result), expected)
@@ -150,20 +179,21 @@ class TestElementwiseAllowanceFilterFalse(unittest.TestCase):
             assert key is None  # <- For non-mapping, key is always None.
             return isinstance(value, Missing)
 
-        elementwise = ElementwiseAllowance(predicate)
-        result = elementwise.filterfalse(iterable)
+        elementwise = ElementAllowance(predicate)
+        #result = elementwise.filterfalse(iterable)
+        result = elementwise.apply_filterfalse(iterable)
         self.assertEqual(list(result), [Extra(1), Invalid(3)])
 
 
-class TestElementwiseAllowances(unittest.TestCase):
-    def test_ElementwiseAllowance(self):
+class TestElementAllowanceAndSubclasses(unittest.TestCase):
+    def test_ElementAllowance(self):
         # Test mapping of errors.
         errors = {'a': Missing(1), 'b': Missing(2)}
         def function(key, error):
             return key == 'b' and isinstance(error, Missing)
 
         with self.assertRaises(ValidationError) as cm:
-            with ElementwiseAllowance(function):  # <- Apply allowance!
+            with ElementAllowance(function):  # <- Apply allowance!
                 raise ValidationError('some message', errors)
 
         remaining_errors = cm.exception.errors
@@ -176,7 +206,7 @@ class TestElementwiseAllowances(unittest.TestCase):
             return isinstance(error, Missing)
 
         with self.assertRaises(ValidationError) as cm:
-            with ElementwiseAllowance(function):  # <- Apply allowance!
+            with ElementAllowance(function):  # <- Apply allowance!
                 raise ValidationError('some message', errors)
 
         remaining_errors = cm.exception.errors
@@ -408,28 +438,16 @@ class TestAllowSpecified(unittest.TestCase):
 
     def test_integration(self):
         """This is a bit of an integration test."""
-        differences = {'foo': Extra('xxx'), 'bar': Missing('zzz')}
+        differences = {
+            'foo': [Extra('xxx'), Missing('yyy')],
+            'bar': [Extra('xxx')],
+        }
         allowed = [Extra('xxx'), Missing('yyy')]
 
-        with self.assertRaises(ValidationError) as cm:
+        regex = r"allowed errors not found: 'bar': \[Missing\('yyy'\)\]"
+        with self.assertRaisesRegex(ValueError, regex):
             with allow_specified(allowed):
                 raise ValidationError('example error', differences)
-        actual = cm.exception.errors
-
-        # Item-by-item assertion used to because Exception()
-        # can not be tested for equality.
-        self.assertIsInstance(actual, dict)
-        self.assertEqual(set(actual.keys()), set(['foo', 'bar']))
-        self.assertEqual(len(actual), 2)
-        self.assertEqual(
-            actual['foo'][0].args[0],
-            "allowed errors not found: [Missing('yyy')]"
-        )
-        self.assertEqual(actual['bar'][0], Missing('zzz'))
-        self.assertEqual(
-            actual['bar'][1].args[0],
-            "allowed errors not found: [Extra('xxx'), Missing('yyy')]"
-        )
 
 
 class TestAllowLimit(unittest.TestCase):

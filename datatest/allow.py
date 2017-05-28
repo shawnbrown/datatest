@@ -52,12 +52,41 @@ class BaseAllowance(object):
     def __enter__(self):
         return self
 
+    def apply_filterfalse(self, iterable):
+        if isinstance(iterable, collections.Mapping):
+            iterable = getattr(iterable, 'iteritems', iterable.items)()
+
+        if _is_collection_of_items(iterable):
+            for key, error in iterable:
+                if (not _is_nsiterable(error)
+                        or isinstance(error, Exception)
+                        or isinstance(error, collections.Mapping)):
+                    # Error is a single element.
+                    filtered = self.filterfalse(iter([(key, error)]))
+                    if isinstance(filtered, collections.Mapping):
+                        filtered = filtered.items()
+                    filtered = list(filtered)
+                    if filtered:
+                        yield filtered[0]
+                else:
+                    # Error is a container of multiple elements.
+                    error = self.filterfalse((key, e) for e in error)
+                    error = list(e for key, e in error)
+                    if error:
+                        yield key, error
+        else:
+            filtered = self.filterfalse(iterable)
+            if _is_mapping_type(filtered):
+                raise TypeError('returned mapping output for non-mapping input')
+            for error in filtered:
+                yield error
+
     def __exit__(self, exc_type, exc_value, tb):
         # Apply filterfalse or reraise non-validation error.
         if not exc_type:
-            errors = self.filterfalse([])
+            errors = self.apply_filterfalse([])
         elif issubclass(exc_type, ValidationError):
-            errors = self.filterfalse(exc_value.errors)
+            errors = self.apply_filterfalse(exc_value.errors)
         else:
             raise exc_value
 
@@ -101,7 +130,7 @@ class BaseAllowance(object):
                               #    effect as "raise ... from None").
 
 
-class ElementwiseAllowance(BaseAllowance):
+class ElementAllowance(BaseAllowance):
     """Allow errors where *predicate* returns True. For each
     error, *predicate* will receive two arguments---a **key**
     and **error**---and should return True if the error is
@@ -109,56 +138,47 @@ class ElementwiseAllowance(BaseAllowance):
     """
     def __init__(self, predicate, msg=None):
         self.predicate = predicate
-        super(ElementwiseAllowance, self).__init__(self.filterfalse, msg)
+        super(ElementAllowance, self).__init__(self.filterfalse, msg)
 
     def filterfalse(self, iterable):
-        """Make an iterator that filters elements from *iterable*
-        returning only those for which the *predicate* is False.
-        The *predicate* must be a function of two arguments (key
-        and error).
-        """
         predicate = self.predicate
+        for key, error in iterable:
+            if not predicate(key, error):
+                yield key, error
+
+    def apply_filterfalse(self, iterable):
         if isinstance(iterable, collections.Mapping):
             iterable = getattr(iterable, 'iteritems', iterable.items)()
 
         if _is_collection_of_items(iterable):
-            for key, error in iterable:
-                if (not _is_nsiterable(error)
-                        or isinstance(error, Exception)
-                        or isinstance(error, collections.Mapping)):
-                    if not predicate(key, error):
-                        yield key, error
-                else:
-                    values = list(e for e in error if not predicate(key, e))
-                    if values:
-                        yield key, values
-        else:
-            for error in iterable:
-                if not predicate(None, error):
-                    yield error
+            return super(ElementAllowance, self).apply_filterfalse(iterable)
+
+        iterable = ((None, error) for error in iterable)
+        filtered = super(ElementAllowance, self).apply_filterfalse(iterable)
+        return (error for key, error in filtered)  # 'key' intentionally discarded
 
     def __or__(self, other):
-        if not isinstance(other, ElementwiseAllowance):
+        if not isinstance(other, ElementAllowance):
             return NotImplemented
 
         pred1 = self.predicate
         pred2 = other.predicate
         def predicate(*args, **kwds):
             return pred1(*args, **kwds) or pred2(*args, **kwds)
-        return ElementwiseAllowance(predicate)
+        return ElementAllowance(predicate)
 
     def __and__(self, other):
-        if not isinstance(other, ElementwiseAllowance):
+        if not isinstance(other, ElementAllowance):
             return NotImplemented
 
         pred1 = self.predicate
         pred2 = other.predicate
         def predicate(*args, **kwds):
             return pred1(*args, **kwds) and pred2(*args, **kwds)
-        return ElementwiseAllowance(predicate)
+        return ElementAllowance(predicate)
 
 
-class allow_key(ElementwiseAllowance):
+class allow_key(ElementAllowance):
     """The given *function* should accept a number of arguments
     equal the given key elements. If key is a single value (string
     or otherwise), *function* should accept one argument. If key
@@ -173,7 +193,7 @@ class allow_key(ElementwiseAllowance):
         super(allow_key, self).__init__(wrapped, msg)
 
 
-class allow_error(ElementwiseAllowance):
+class allow_error(ElementAllowance):
     """Accepts a *function* of one argument."""
     def __init__(self, function, msg=None):
         @wraps(function)
@@ -289,50 +309,42 @@ class allow_limit(BaseAllowance):
         self.number = number
         self.or_predicate = None
         self.and_predicate = None
+        super(allow_limit, self).__init__(self.limit_filterfalse, msg)
 
-        def grpfltrfalse(key, group):
-            # Closes over 'number', 'or_predicate', and 'and_predicate'.
-            number = self.number                # Reduce the number of
-            or_predicate = self.or_predicate    # dot-lookups--these are
-            and_predicate = self.and_predicate  # referenced many times.
+    def limit_filterfalse(self, iterable):
+        number = self.number                # Reduce the number of
+        or_predicate = self.or_predicate    # dot-lookups--these are
+        and_predicate = self.and_predicate  # referenced many times.
 
-            group = iter(group)  # Must be consumable.
-            matching = []
-            for value in group:
-                if or_predicate and or_predicate(key, value):
-                    continue
-                if and_predicate and not and_predicate(key, value):
-                    yield value
-                    continue
-                matching.append(value)
-                if len(matching) > number:
-                    break
-
+        iterable = iter(iterable)  # Must be consumable.
+        matching = []
+        for key, value in iterable:
+            if or_predicate and or_predicate(key, value):
+                continue
+            if and_predicate and not and_predicate(key, value):
+                yield key, value
+                continue
+            matching.append((key, value))
             if len(matching) > number:
-                for value in itertools.chain(matching, group):
-                    yield value
+                break
 
-        def filterfalse(iterable):
-            if isinstance(iterable, collections.Mapping):
-                iterable = getattr(iterable, 'iteritems', iterable.items)()
+        if len(matching) > number:
+            for key, value in itertools.chain(matching, iterable):
+                yield key, value
 
-            if _is_collection_of_items(iterable):
-                for key, group in iterable:
-                    if (not _is_nsiterable(group)
-                            or isinstance(group, Exception)
-                            or isinstance(group, collections.Mapping)):
-                        group = [group]
-                    value = list(grpfltrfalse(key, group))
-                    if value:
-                        yield key, value
-            else:
-                for value in grpfltrfalse(None, iterable):
-                    yield value
+    def apply_filterfalse(self, iterable):
+        if isinstance(iterable, collections.Mapping):
+            iterable = getattr(iterable, 'iteritems', iterable.items)()
 
-        super(allow_limit, self).__init__(filterfalse, msg)
+        if _is_collection_of_items(iterable):
+            return super(allow_limit, self).apply_filterfalse(iterable)
+
+        iterable = ((None, error) for error in iterable)
+        filtered = super(allow_limit, self).apply_filterfalse(iterable)
+        return (error for key, error in filtered)  # 'key' intentionally discarded
 
     def __or__(self, other):
-        if not isinstance(other, ElementwiseAllowance):
+        if not isinstance(other, ElementAllowance):
             return NotImplemented
 
         allowance = allow_limit(self.number, self.msg)
@@ -351,7 +363,7 @@ class allow_limit(BaseAllowance):
         return self.__or__(other)
 
     def __and__(self, other):
-        if not isinstance(other, ElementwiseAllowance):
+        if not isinstance(other, ElementAllowance):
             return NotImplemented
 
         allowance = allow_limit(self.number, self.msg)
@@ -374,59 +386,50 @@ class allow_specified(BaseAllowance):
     def __init__(self, errors, msg=None):
         if _is_collection_of_items(errors):
             errors = dict(errors)
-        elif isinstance(errors, Exception):
-            errors = [errors]
+        self.errors = errors
+        super(allow_specified, self).__init__(self.grpfltrfalse, msg)
 
-        def grpfltrfalse(allowed, iterable):
-            if isinstance(iterable, Exception):
-                iterable = [iterable]
+    def grpfltrfalse(self, iterable):
+        if isinstance(self.errors, collections.Mapping):
+            iterable = iter(iterable)
+            first_key, first_error = next(iterable)
+            iterable = itertools.chain([(first_key, first_error)], iterable)
+            allowed = self.errors.get(first_key, [])
+        else:
+            allowed = self.errors
 
-            if isinstance(allowed, Exception):
-                allowed = [allowed]
-            else:
-                allowed = list(allowed)  # Make list or copy existing list.
+        if isinstance(allowed, Exception):
+            allowed = [allowed]
+        else:
+            allowed = list(allowed)  # Make list or copy existing list.
 
-            for x in iterable:
-                try:
-                    allowed.remove(x)
-                except ValueError:
-                    yield x
+        for key, error in iterable:
+            try:
+                allowed.remove(error)
+            except ValueError:
+                yield key, error
 
-            if allowed:  # If there are left-over errors.
-                message = 'allowed errors not found: {0!r}'
-                exc = Exception(message.format(allowed))
-                exc.__cause__ = None
-                yield exc
+        if allowed:  # If there are left-over errors.
+            key_repr = '{0!r}: '.format(key) if key else ''
+            message = 'allowed errors not found: {0}{1!r}'
+            exc = ValueError(message.format(key_repr, allowed))
+            exc.__cause__ = None
+            raise exc
 
-        def filterfalse(iterable):
-            if isinstance(iterable, collections.Mapping):
-                iterable = getattr(iterable, 'iteritems', iterable.items)()
+    def apply_filterfalse(self, iterable):
+        if isinstance(iterable, collections.Mapping):
+            iterable = getattr(iterable, 'iteritems', iterable.items)()
 
-            if _is_collection_of_items(iterable):
-                if isinstance(errors, collections.Mapping):
-                    for key, group in iterable:
-                        try:
-                            errors_lst = errors[key]
-                            result = list(grpfltrfalse(errors_lst, group))
-                            if result:
-                                yield key, result
-                        except KeyError:
-                            yield key, group
-                else:
-                    errors_lst = list(errors)  # Errors must not be consumable.
-                    for key, group in iterable:
-                        result = list(grpfltrfalse(errors_lst, group))
-                        if result:
-                            yield key, result
-            else:
-                if not _is_mapping_type(errors):
-                    for x in grpfltrfalse(errors, iterable):
-                        yield x
-                else:
-                    message = ('{0!r} of errors cannot be matched using {1!r} '
-                               'of allowances, requires non-mapping type')
-                    message = message.format(iterable.__class__.__name__,
-                                             errors.__class__.__name__)
-                    raise ValueError(message)
+        if _is_collection_of_items(iterable):
+            return super(allow_specified, self).apply_filterfalse(iterable)  # <- EXIT!
 
-        super(allow_specified, self).__init__(filterfalse, msg)
+        if _is_mapping_type(self.errors):
+            message = ('{0!r} of errors cannot be matched using {1!r} '
+                       'of allowances, requires non-mapping type')
+            message = message.format(iterable.__class__.__name__,
+                                     self.errors.__class__.__name__)
+            raise ValueError(message)
+
+        iterable = ((None, error) for error in iterable)
+        filtered = super(allow_specified, self).apply_filterfalse(iterable)
+        return (error for key, error in filtered)  # 'key' intentionally discarded
