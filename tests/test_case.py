@@ -24,6 +24,7 @@ from datatest.errors import Deviation
 
 from datatest.allow import allow_missing
 from datatest.allow import allow_extra
+from datatest.allow import allow_invalid
 from datatest.allow import allow_deviation
 from datatest.allow import allow_percent_deviation
 from datatest.allow import allow_limit
@@ -173,6 +174,10 @@ class TestAllowanceWrappers(unittest.TestCase):
     def test_allowExtra(self):
         cm = self.case.allowExtra()
         self.assertTrue(isinstance(cm, allow_extra))
+
+    def test_allowInvalid(self):
+        cm = self.case.allowInvalid()
+        self.assertTrue(isinstance(cm, allow_invalid))
 
     def test_allowDeviation(self):
         cm = self.case.allowDeviation(5)

@@ -8,6 +8,7 @@ from datatest.allow import BaseAllowance
 from datatest.allow import ElementAllowance
 from datatest.allow import allow_missing
 from datatest.allow import allow_extra
+from datatest.allow import allow_invalid
 from datatest.allow import allow_deviation
 from datatest.allow import allow_percent_deviation
 from datatest.allow import allow_specified
@@ -292,6 +293,15 @@ class TestElementAllowanceAndSubclasses(unittest.TestCase):
                 raise ValidationError('some message', errors)
         remaining_errors = cm.exception.errors
         self.assertEqual(list(remaining_errors), [Missing('X')])
+
+    def test_allow_invalid(self):
+        errors =  [Invalid('X'), Invalid('Y'), Extra('Z')]
+
+        with self.assertRaises(ValidationError) as cm:
+            with allow_invalid():  # <- Apply allowance!
+                raise ValidationError('some message', errors)
+        remaining_errors = cm.exception.errors
+        self.assertEqual(list(remaining_errors), [Extra('Z')])
 
 
 class TestComposabilityOfAllowances(unittest.TestCase):

@@ -18,6 +18,7 @@ __datatest = True  # Used to detect in-module stack frames (which are
 
 from .allow import allow_missing
 from .allow import allow_extra
+from .allow import allow_invalid
 from .allow import allow_deviation
 from .allow import allow_percent_deviation
 from .allow import allow_specified
@@ -237,6 +238,17 @@ class DataTestCase(TestCase):
                 self.assertValid(data, requirement)
         """
         return allow_extra(msg)
+
+    def allowInvalid(self, msg=None):
+        """Allows :class:`Invalid` errors without triggering a test
+        failure::
+
+            with self.allowInvalid():
+                data = ...
+                requirement = ...
+                self.assertValid(data, requirement)
+        """
+        return allow_invalid(msg)
 
     def allowDeviation(self, lower, upper=None, msg=None):
         """

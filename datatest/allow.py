@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import inspect
-from functools import wraps
 from math import isnan
 from numbers import Number
 from .utils.builtins import *
@@ -8,17 +7,18 @@ from .utils import collections
 from .utils import functools
 from .utils import itertools
 
-from .dataaccess import _is_collection_of_items
-from .dataaccess import DictItems
-from .errors import ValidationError
-
 from .utils.misc import _is_consumable
 from .utils.misc import _is_nsiterable
 from .utils.misc import _get_arg_lengths
 from .utils.misc import _expects_multiple_params
 from .utils.misc import _make_decimal
+from .dataaccess import _is_collection_of_items
+from .dataaccess import DictItems
+
+from .errors import ValidationError
 from .errors import Missing
 from .errors import Extra
+from .errors import Invalid
 from .errors import Deviation
 
 
@@ -192,6 +192,13 @@ class allow_extra(ElementAllowance):
         super(allow_extra, self).__init__(is_extra, msg)
 
 
+class allow_invalid(ElementAllowance):
+    def __init__(self, msg=None):
+        def is_invalid(_, error):
+            return isinstance(error, Invalid)
+        super(allow_invalid, self).__init__(is_invalid, msg)
+
+
 def _prettify_devsig(method):
     """Prettify signature of deviation __init__ classes by patching
     its signature to make the "tolerance" syntax the default option
@@ -324,7 +331,7 @@ class allow_key(ElementAllowance):
     is a three-tuple, *function* should accept three arguments.
     """
     def __init__(self, function, msg=None):
-        @wraps(function)
+        @functools.wraps(function)
         def wrapped(key, _):
             if _is_nsiterable(key):
                 return function(*key)
@@ -339,7 +346,7 @@ class allow_args(ElementAllowance):
     If args is a three-tuple, *function* should accept three arguments.
     """
     def __init__(self, function, msg=None):
-        @wraps(function)
+        @functools.wraps(function)
         def wrapped(_, error):
             args = error.args
             if _is_nsiterable(args):
