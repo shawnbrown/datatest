@@ -7,7 +7,6 @@ from datatest.utils import contextlib
 from datatest.allow import BaseAllowance
 from datatest.allow import ElementAllowance
 from datatest.allow import allow_key
-from datatest.allow import allow_error
 from datatest.allow import allow_args
 from datatest.allow import allow_missing
 from datatest.allow import allow_extra
@@ -249,18 +248,6 @@ class TestElementAllowanceAndSubclasses(unittest.TestCase):
 
         remaining_errors = cm.exception.errors
         self.assertEqual(list(remaining_errors), [Missing(1), Extra(2)])
-
-    def test_allow_error(self):
-        errors =  [Missing('X'), Missing('Y'), Extra('X')]
-        def function(error):
-            return isinstance(error, Missing)
-
-        with self.assertRaises(ValidationError) as cm:
-            with allow_error(function):  # <- Apply allowance!
-                raise ValidationError('some message', errors)
-
-        remaining_errors = cm.exception.errors
-        self.assertEqual(list(remaining_errors), [Extra('X')])
 
     def test_allow_args(self):
         # Single argument.

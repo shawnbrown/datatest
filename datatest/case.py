@@ -16,7 +16,6 @@ from .errors import ValidationError
 __datatest = True  # Used to detect in-module stack frames (which are
                    # omitted from output).
 
-from .allow import allow_error
 from .allow import allow_args
 from .allow import allow_key
 from .allow import allow_missing
@@ -234,13 +233,6 @@ class DataTestCase(TestCase):
         of errors or a single :class:`DataError`.
         """
         return allow_specified(errors, msg)
-
-    def allowError(self, function, msg=None):
-        """Allows errors where *function* returns True. For each
-        error, *function* must accept a single argument (the error
-        itself).
-        """
-        return allow_error(function, msg)
 
     def allowArgs(self, function, msg=None):
         """Allows errors where *function* returns True. For the 'args'

@@ -9,7 +9,6 @@ from .errors import Invalid
 from .errors import Deviation
 
 from datatest.allow import allow_key
-from datatest.allow import allow_error
 from datatest.allow import allow_args
 from datatest.allow import allow_missing
 from datatest.allow import allow_extra
@@ -49,7 +48,6 @@ __all__ = [
 
     # Allowance context mangers.
     'allow_key',
-    'allow_error',
     'allow_args',
     'allow_missing',
     'allow_extra',

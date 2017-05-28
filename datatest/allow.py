@@ -193,16 +193,7 @@ class allow_key(ElementAllowance):
         super(allow_key, self).__init__(wrapped, msg)
 
 
-class allow_error(ElementAllowance):
-    """Accepts a *function* of one argument."""
-    def __init__(self, function, msg=None):
-        @wraps(function)
-        def wrapped(_, error):
-            return function(error)
-        super(allow_error, self).__init__(wrapped, msg)
-
-
-class allow_args(allow_error):
+class allow_args(ElementAllowance):
     """The given *function* should accept a number of arguments equal
     the given elements in the 'args' attribute. If args is a single
     value (string or otherwise), *function* should accept one argument.
@@ -210,7 +201,7 @@ class allow_args(allow_error):
     """
     def __init__(self, function, msg=None):
         @wraps(function)
-        def wrapped(error):
+        def wrapped(_, error):
             args = error.args
             if _is_nsiterable(args):
                 return function(*args)
@@ -218,16 +209,16 @@ class allow_args(allow_error):
         super(allow_args, self).__init__(wrapped, msg)
 
 
-class allow_missing(allow_error):
+class allow_missing(ElementAllowance):
     def __init__(self, msg=None):
-        def is_missing(error):
+        def is_missing(_, error):
             return isinstance(error, Missing)
         super(allow_missing, self).__init__(is_missing, msg)
 
 
-class allow_extra(allow_error):
+class allow_extra(ElementAllowance):
     def __init__(self, msg=None):
-        def is_extra(error):
+        def is_extra(_, error):
             return isinstance(error, Extra)
         super(allow_extra, self).__init__(is_extra, msg)
 
@@ -272,7 +263,7 @@ def _normalize_devargs(lower, upper, msg):
     return (lower, upper, msg)
 
 
-class allow_deviation(allow_error):
+class allow_deviation(ElementAllowance):
     """allow_deviation(tolerance, /, msg=None)
     allow_deviation(lower, upper, msg=None)
 
@@ -283,7 +274,7 @@ class allow_deviation(allow_error):
     """
     def __init__(self, lower, upper=None, msg=None):
         lower, upper, msg = _normalize_devargs(lower, upper, msg)
-        def tolerance(error):  # <- Closes over lower & upper.
+        def tolerance(_, error):  # <- Closes over lower & upper.
             deviation = error.deviation or 0.0
             if isnan(deviation) or isnan(error.expected or 0.0):
                 return False
@@ -292,10 +283,10 @@ class allow_deviation(allow_error):
 _prettify_devsig(allow_deviation.__init__)
 
 
-class allow_percent_deviation(allow_error):
+class allow_percent_deviation(ElementAllowance):
     def __init__(self, lower, upper=None, msg=None):
         lower, upper, msg = _normalize_devargs(lower, upper, msg)
-        def percent_tolerance(error):  # <- Closes over lower & upper.
+        def percent_tolerance(_, error):  # <- Closes over lower & upper.
             percent_deviation = error.percent_deviation
             if isnan(percent_deviation) or isnan(error.expected or 0):
                 return False
