@@ -82,36 +82,26 @@ DataTestCase
 
     .. automethod:: assertValid
 
-    .. automethod:: allowOnly
+    .. automethod:: allowedMissing
 
-    .. automethod:: allowError
+    .. automethod:: allowedExtra
 
-    .. automethod:: allowArgs
+    .. automethod:: allowedInvalid
 
-    .. automethod:: allowKey
-
-    .. automethod:: allowPair
-
-    .. automethod:: allowMissing
-
-    .. automethod:: allowExtra
-
-    .. automethod:: allowLimit
-
-    .. method:: allowDeviation(tolerance, /, msg=None)
-                allowDeviation(lower, upper, msg=None)
+    .. method:: allowedDeviation(tolerance, /, msg=None)
+                allowedDeviation(lower, upper, msg=None)
 
         Context manager that allows :class:`Deviations <datatest.Deviation>`
         within a given *tolerance* without triggering a test failure::
 
-            with self.allowDeviation(5):  # tolerance of +/- 5
+            with self.allowedDeviation(5):  # tolerance of +/- 5
                 data = ...
                 requirement = ...
                 self.assertValid(data, requirement)
 
         Specifying different *lower* and *upper* bounds::
 
-            with self.allowDeviation(-2, 3):  # tolerance from -2 to +3
+            with self.allowedDeviation(-2, 3):  # tolerance from -2 to +3
                 data = ...
                 requirement = ...
                 self.assertValid(data, requirement)
@@ -122,21 +112,21 @@ DataTestCase
         Empty values (None, empty string, etc.) are treated as zeros when
         performing comparisons.
 
-    .. method:: allowPercentDeviation(tolerance, /, msg=None)
-                allowPercentDeviation(lower, upper, msg=None)
+    .. method:: allowedPercentDeviation(tolerance, /, msg=None)
+                allowedPercentDeviation(lower, upper, msg=None)
 
         Context manager that allows :class:`Deviations <datatest.Deviation>`
         within a given percentage of error without triggering a test
         failure::
 
-            with self.allowPercentDeviation(0.03):  # tolerance of +/- 3%
+            with self.allowedPercentDeviation(0.03):  # tolerance of +/- 3%
                 data = ...
                 requirement = ...
                 self.assertValid(data, requirement)
 
         Specifying different *lower* and *upper* bounds::
 
-            with self.allowPercentDeviation(-0.02, 0.01):  # tolerance from -2% to +1%
+            with self.allowedPercentDeviation(-0.02, 0.01):  # tolerance from -2% to +1%
                 data = ...
                 requirement = ...
                 self.assertValid(data, requirement)
@@ -147,8 +137,16 @@ DataTestCase
         Empty values (None, empty string, etc.) are treated as zeros when
         performing comparisons.
 
+    .. automethod:: allowedSpecific
+
+    .. automethod:: allowedKey
+
+    .. automethod:: allowedArgs
+
+    .. automethod:: allowedLimit
+
     .. note::
-        In the two methods above, *tolerance* is a positional-only
+        In the deviation methods above, *tolerance* is a positional-only
         parameter---it cannot be specified using keyword syntax.
 
 

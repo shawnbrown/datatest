@@ -1,6 +1,6 @@
 
 .. meta::
-    :description: datatest: Testing driven data wrangling.
+    :description: Datatest provides validation tools for test-driven data wrangling.
     :keywords: datatest, data wrangling, unittest, data preparation
     :title: Index
 
@@ -19,6 +19,10 @@ It extends Python's `unittest
 <http://docs.python.org/3/library/unittest.html>`_ package to provide
 testing tools for asserting data correctness.
 
+..
+    It provides tools to quickly load, query, and validate data
+    using both unittest- and pytest-style testing.
+
 When a test fails, users are presented with a list of differences to
 help identify data quality issues:
 
@@ -27,12 +31,12 @@ help identify data quality issues:
 
     Traceback (most recent call last):
       File "test_census_update.py", line 13, in test_population
-        self.assertSubjectSum('population', ['county'])
+        self.assertValid(population, census_total)
     datatest.error.DataError: different column sums:
-     Deviation(-1, 71372, county='Franklin'),
-     Deviation(+8, 160248, county='Jackson'),
-     Deviation(+1, 116229, county='Jefferson'),
-     Deviation(-3, 17581, county='Washington')
+     'Franklin': Deviation(-1, 71372),
+     'Jackson': Deviation(+8, 160248),
+     'Jefferson': Deviation(+1, 116229),
+     'Washington': Deviation(-3, 17581)
 
 If differences are considered acceptable, they can be allowed inside
 a ``with`` statement:
@@ -40,14 +44,12 @@ a ``with`` statement:
 .. code-block:: python
     :emphasize-lines: 1
 
-    with self.allowDeviation(8):  # Allows deviations of +/- 8.
-        self.assertSubjectSum('population', ['county'])
+    with self.allowedDeviation(8):  # Allows deviations of +/- 8.
+        self.assertValid(population, census_total)
 
 To understand the basics of datatest, please see :doc:`intro`.  To use
 datatest effectively, users should be familiar with Python's standard
-unittest library and with the data they want to test.  (If you're
-already familiar with datatest, you might want to skip to the
-:ref:`list of assert methods <assert-methods>`.)
+unittest library and with the data they want to test.
 
 
 *************
@@ -73,6 +75,5 @@ Contents
     dataprep
     unittest_style
     data_handling
-    api
 
 * :ref:`genindex`
