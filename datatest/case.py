@@ -300,7 +300,7 @@ class DataTestCase(TestCase):
         """
         return allowed_args(function, msg)
 
-    def allowedLimit(self, number, *funcs, **kwds):
+    def allowedLimit(self, number, msg=None):
         """Context manager to allow a limited *number* of differences
         (of any type) without triggering a test failure::
 
@@ -313,7 +313,7 @@ class DataTestCase(TestCase):
         will fail with a :class:`ValidationError` containing all
         observed differences.
         """
-        return allowed_limit(number, *funcs, **kwds)
+        return allowed_limit(number, msg)
 
 
 # Prettify default signature of methods that accept multiple signatures.
