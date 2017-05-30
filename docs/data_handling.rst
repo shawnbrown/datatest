@@ -136,15 +136,17 @@ contain mutable objects like lists or other sets.
 Groups of Columns
 -----------------
 
-Group and select column elements using a :py:class:`dict`::
+Select groups of elements from column **one** that contain lists
+of elements from column **two** as a :py:class:`dict`::
 
-    >>> source({'one': ['three']}).execute()  # Grouped by key.
-    {'a': ['100', '100'],
-     'b': ['100', '100'],
-     'c': ['100', '100']}
+    >>> source({'one': ['two']}).execute()  # Grouped by key.
+    {'a': ['x', 'x'],
+     'b': ['x', 'y'],
+     'c': ['y', 'y']}
 
-Group and select column elements using a :py:class:`dict` with a
-:py:class:`tuple` of keys::
+Select groups of elements from columns **one** and **two** (using
+a :py:class:`tuple`) that contain lists of elements from column
+**three**::
 
     >>> source({('one', 'two'): ['three']}).execute()
     {('a', 'x'): ['100', '100'],
