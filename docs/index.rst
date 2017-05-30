@@ -14,31 +14,15 @@
 :mod:`datatest` --- Test driven data wrangling
 ##############################################
 
-Datatest provides validation tools for test-driven data wrangling.
-It extends Python's `unittest
-<http://docs.python.org/3/library/unittest.html>`_ package to provide
-testing tools for asserting data correctness.
-
-..
-    Datatest provides validation tools for test-driven data
-    wrangling. It includes tools to quickly load, query, and
-    validate data using both unittest- and pytest-style testing.
-
-You can install datatest from the PyPI:
-
-.. code-block:: none
-
-    pip install datatest
-
-For installation details, see https://pypi.python.org/pypi/datatest or
-the README.rst file included with the source distribution.
+.. include:: ../README.rst
+    :start-after: start-inclusion-marker-used-by-index.rst
+    :end-before: end-inclusion-marker-used-by-index.rst
 
 
 .. toctree::
-    :caption: Table of Contents
+    :caption: Documentation
     :maxdepth: 2
 
-    Introduction <self>
     unittest_style
     data_handling
 

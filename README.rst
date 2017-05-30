@@ -6,7 +6,17 @@ datatest: Test driven data wrangling
 .. image:: https://api.travis-ci.org/shawnbrown/datatest.png
     :target: https://travis-ci.org/shawnbrown/datatest
 
+.. start-inclusion-marker-used-by-index.rst
+
 Datatest provides validation tools for test-driven data wrangling.
+It extends Python's `unittest
+<http://docs.python.org/3/library/unittest.html>`_ package to provide
+testing tools for asserting data correctness.
+
+..
+    Datatest provides validation tools for test-driven data
+    wrangling. It includes tools to quickly load, query, and
+    validate data using both unittest- and pytest-style testing.
 
 * Documentation:
     - http://datatest.readthedocs.io/ (latest)
@@ -114,6 +124,8 @@ interface with pandas DataFrames, MS Excel workbooks, or other
 optional data sources, you will need to install the relevant
 packages (``pandas``, ``xlrd``, etc.).
 
+
+.. end-inclusion-marker-used-by-index.rst
 
 ------------
 
