@@ -69,9 +69,16 @@ for full details.
 
 .. note::
 
-    Unlike unittest, datatest's default behavior runs test cases and
-    methods **in order** (ordered first by module name and then by
-    line number).
+    By default, tests are ordered by **module name** and
+    **line number** (within each module).
+
+    Unlike strict unit testing, data preparation tests are often
+    dependant on one another---this strict order-by-line-number
+    behavior lets users design test suites appropriately.
+    For example, asserting the population of a city will always
+    fail when the 'city' column is missing. So it's appropriate
+    to validate column names *before* validating the contents of
+    each column.
 
 
 ************
