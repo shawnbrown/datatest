@@ -81,21 +81,16 @@ Select elements from column **one** as a :py:class:`set`::
 
 The container type used in the selection determines the container
 type returned in the result. You can think of the selection as a
-template that describes the values and data types returned by
-the query.
-
-Selecting column **one** as a :py:class:`list` returns a list of
-the elements contained in column **one**. Selecting column **one**
-as a :py:class:`set` returns a set of the elements contained in
-column **one**. Because set objects can not contain duplicates,
-the second example, above, has only one element for each unique
-value in the column.
+template that describes the values and data types returned by the
+query. Because set objects can not contain duplicates, the second
+example above has only one element for each unique value in the
+column.
 
 .. note::
-    In these examples, we also call :meth:`execute() <DataQuery.execute>`
-    to eagerly evaluate the queries and display their results. But in
+    In these examples, we call :meth:`execute() <DataQuery.execute>`
+    to eagerly evaluate the queries and display their results. In
     daily use, it's more efficient to leave off the "``.execute()``"
-    part and, instead, validate the *un-executed* queries (which takes
+    part and validate the *un-executed* queries instead (which takes
     advantage of lazy evaluation).
 
 
@@ -128,9 +123,9 @@ always hold a single element (a string or inner container).
 
 In addition to lists, tuples and sets, users can also select
 :py:class:`frozensets <frozenset>`, :py:func:`namedtuples
-<collections.namedtuple>`, etc. It should be noted however, that
-normal object limitations still apply---for example, sets can not
-contain mutable objects like lists or other sets.
+<collections.namedtuple>`, etc. However, normal object limitations
+still apply---for example, sets can not contain mutable objects like
+lists or other sets.
 
 
 Groups of Columns
@@ -156,7 +151,7 @@ a :py:class:`tuple`) that contain lists of elements from column
 
 When selecting groups of elements, you must provide a dictionary with
 a single key-value pair. As before, the selection types determine the
-result types but keep in mind that dictionary keys must be `immutable
+result types, but keep in mind that dictionary keys must be `immutable
 <http://docs.python.org/3/glossary.html#term-immutable>`_
 (:py:class:`str`, :py:class:`tuple`, :py:class:`frozenset`, etc.).
 
