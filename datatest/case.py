@@ -218,23 +218,23 @@ class DataTestCase(TestCase):
     #    pass
 
     def allowedMissing(self, msg=None):
-        """Allows :class:`Missing` values without triggering a test
+        """Allows :class:`Missing` errors without triggering a test
         failure::
 
             with self.allowedMissing():
-                data = ...
-                requirement = ...
+                data = {'A', 'B'}  # <- 'C' is missing
+                requirement = {'A', 'B', 'C'}
                 self.assertValid(data, requirement)
         """
         return allowed_missing(msg)
 
     def allowedExtra(self, msg=None):
-        """Allows :class:`Extra` values without triggering a test
+        """Allows :class:`Extra` errors without triggering a test
         failure::
 
             with self.allowedExtra():
-                data = ...
-                requirement = ...
+                data = {'A', 'B', 'C', 'D'}  # <- 'D' is extra
+                requirement = {'A', 'B', 'C'}
                 self.assertValid(data, requirement)
         """
         return allowed_extra(msg)
@@ -244,8 +244,8 @@ class DataTestCase(TestCase):
         failure::
 
             with self.allowedInvalid():
-                data = ...
-                requirement = ...
+                data = {'x': 'A', 'y': 'E'}  # <- 'E' is invalid
+                requirement = {'x': 'A', 'y': 'B'}
                 self.assertValid(data, requirement)
         """
         return allowed_invalid(msg)
@@ -269,20 +269,20 @@ class DataTestCase(TestCase):
         return allowed_percent_deviation(lower, upper, msg)
 
     def allowedSpecific(self, errors, msg=None):
-        """Context manager to allow specified *errors* without
-        triggering a test failure::
+        """Allows specified *errors* without triggering a test
+        failure::
 
             errors = [
-                Extra('X'),
-                Missing('Y')
+                Missing('C')
+                Extra('D'),
             ]
             with self.allowedSpecific(errors):
-                data = ...
-                requirement = ...
+                data = {'A', 'B', 'D'}  # <- 'D' extra, 'C' missing
+                requirement = {'A', 'B', 'C'}
                 self.assertValid(data, requirement)
 
         The *errors* argument can be a :py:obj:`list` or :py:obj:`dict`
-        of errors or a single :class:`DataError`.
+        of data errors or a single :class:`DataError`.
         """
         return allowed_specific(errors, msg)
 
@@ -301,16 +301,16 @@ class DataTestCase(TestCase):
         return allowed_args(function, msg)
 
     def allowedLimit(self, number, msg=None):
-        """Context manager to allow a limited *number* of differences
-        (of any type) without triggering a test failure::
+        """Allows a limited *number* of data errors (of any type)
+        without triggering a test failure::
 
-            with self.allowedLimit(10):  # Allow up to ten differences.
+            with self.allowedLimit(10):  # Allows up to ten errors.
                 data = ...
                 requirement = ...
                 self.assertValid(data, requirement)
 
-        If the count of differences exceeds the given *number*, the test
-        will fail with a :class:`ValidationError` containing all
+        If the count of data errors exceeds the given *number*, the
+        test will fail with a :class:`ValidationError` containing all
         observed differences.
         """
         return allowed_limit(number, msg)

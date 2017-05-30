@@ -91,8 +91,9 @@ DataTestCase
     .. method:: allowedDeviation(tolerance, /, msg=None)
                 allowedDeviation(lower, upper, msg=None)
 
-        Context manager that allows :class:`Deviations <datatest.Deviation>`
-        within a given *tolerance* without triggering a test failure::
+        Allows numeric :class:`Deviations <datatest.Deviation>`
+        within a given *tolerance* without triggering a test
+        failure::
 
             with self.allowedDeviation(5):  # tolerance of +/- 5
                 data = ...
@@ -109,15 +110,15 @@ DataTestCase
         Deviations within the given range are suppressed while those
         outside the range will trigger a test failure.
 
-        Empty values (None, empty string, etc.) are treated as zeros when
-        performing comparisons.
+        Empty values (None, empty string, etc.) are treated as zeros
+        when performing comparisons.
 
     .. method:: allowedPercentDeviation(tolerance, /, msg=None)
                 allowedPercentDeviation(lower, upper, msg=None)
 
-        Context manager that allows :class:`Deviations <datatest.Deviation>`
-        within a given percentage of error without triggering a test
-        failure::
+        Allows :class:`Deviations <datatest.Deviation>` with
+        percentages of error within a given *tolerance* without
+        triggering a test failure::
 
             with self.allowedPercentDeviation(0.03):  # tolerance of +/- 3%
                 data = ...
@@ -134,8 +135,8 @@ DataTestCase
         Deviations within the given range are suppressed while those
         outside the range will trigger a test failure.
 
-        Empty values (None, empty string, etc.) are treated as zeros when
-        performing comparisons.
+        Empty values (None, empty string, etc.) are treated as zeros
+        when performing comparisons.
 
     .. automethod:: allowedSpecific
 
