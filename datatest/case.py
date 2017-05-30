@@ -133,7 +133,7 @@ class DataTestCase(TestCase):
 
             def test_mydata(self):
                 data = ...
-                requirement = re.compile(r'^\S.*\S$|^\S?$')  # <- regex
+                requirement = re.compile(r'^[0-9A-F]*$')  # <- regex
                 self.assertValid(data, requirement)
 
         **Sequence order:** When *requirement* is a list or other
