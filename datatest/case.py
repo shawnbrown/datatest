@@ -244,8 +244,8 @@ class DataTestCase(TestCase):
         failure::
 
             with self.allowedInvalid():
-                data = {'x': 'A', 'y': 'E'}  # <- 'E' is invalid
-                requirement = {'x': 'A', 'y': 'B'}
+                data = {'xxx': 'A', 'yyy': 'E'}  # <- 'E' is invalid
+                requirement = {'xxx': 'A', 'yyy': 'B'}
                 self.assertValid(data, requirement)
         """
         return allowed_invalid(msg)
@@ -273,7 +273,7 @@ class DataTestCase(TestCase):
         failure::
 
             errors = [
-                Missing('C')
+                Missing('C'),
                 Extra('D'),
             ]
             with self.allowedSpecific(errors):
@@ -301,12 +301,12 @@ class DataTestCase(TestCase):
         return allowed_args(function, msg)
 
     def allowedLimit(self, number, msg=None):
-        """Allows a limited *number* of data errors (of any type)
-        without triggering a test failure::
+        """Allows a limited *number* of data errors without
+        triggering a test failure::
 
-            with self.allowedLimit(10):  # Allows up to ten errors.
-                data = ...
-                requirement = ...
+            with self.allowedLimit(2):  # Allows up to two errors.
+                data = ['47306', '1370', 'TX']  # <- '1370' and 'TX' invalid
+                requirement = re.compile('^\d{5}$')
                 self.assertValid(data, requirement)
 
         If the count of data errors exceeds the given *number*, the
