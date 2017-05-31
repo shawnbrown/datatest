@@ -436,9 +436,9 @@ class DataQuery(object):
     the :meth:`execute` method is called.
     """
     def __init__(self, select, **where):
-        _parse_select(select)  # <- Returned values are discarded (if it's
-        self._select = select  #    a mapping its type must be preserved,
-                               #    not just the key and value).
+        _parse_select(select)  # <- Returned values are discarded (if it is
+        self._select = select  #    a mapping then its type must be preserved,
+                               #    not just its key and value).
         self._query_steps = tuple([
             _query_step('select', (select,), where),
         ])

@@ -833,6 +833,16 @@ class TestDataSourceBasics(unittest.TestCase):
         }
         self.assertEqual(result.evaluate(), expected)
 
+    def test_select_alternate_mapping_type(self):
+        result = self.source._select(collections.OrderedDict([('label1', ['value'])]))
+        result = result.evaluate()
+        expected = {
+            'a': ['17', '13', '20', '15'],
+            'b': ['5', '40', '25'],
+        }
+        self.assertIsInstance(result, collections.OrderedDict)
+        self.assertEqual(result, expected)
+
     def test_select_distinct(self):
         result = self.source._select_distinct(['label1'])
         expected = ['a', 'b']
