@@ -34,12 +34,12 @@ Basic Example
 
         def test_is_active(self):
             allowed_values = {'Y', 'N'}
-            self.assertValid(self.source('is_active'), allowed_values)
+            self.assertValid(self.source(['is_active']), allowed_values)
 
         def test_member_id(self):
             def positive_integer(x):  # <- Helper function.
                 return isinstance(x, int) and x > 0
-            self.assertValid(self.source('member_id'), positive_integer)
+            self.assertValid(self.source(['member_id']), positive_integer)
 
     if __name__ == '__main__':
         datatest.main()
