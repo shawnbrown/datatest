@@ -8,9 +8,10 @@ from . import _io as io
 from . import _unittest as unittest
 from datatest.utils import collections
 from datatest.utils.misc import _is_nsiterable
-from datatest.dataaccess import DataSource
-from datatest.dataaccess import DataQuery
-from datatest.dataaccess import RESULT_TOKEN
+
+from datatest.dataaccess import working_directory
+from datatest.dataaccess import _is_collection_of_items
+from datatest.dataaccess import DictItems
 from datatest.dataaccess import DataResult
 from datatest.dataaccess import _map_data
 from datatest.dataaccess import _filter_data
@@ -22,9 +23,11 @@ from datatest.dataaccess import _sqlite_avg
 from datatest.dataaccess import _sqlite_min
 from datatest.dataaccess import _sqlite_max
 from datatest.dataaccess import _sqlite_distinct
-from datatest.dataaccess import DictItems
-from datatest.dataaccess import _is_collection_of_items
-from datatest.dataaccess import working_directory
+from datatest.dataaccess import _validate_select_container
+from datatest.dataaccess import _parse_select
+from datatest.dataaccess import RESULT_TOKEN
+from datatest.dataaccess import DataQuery
+from datatest.dataaccess import DataSource
 
 
 class TestWorkingDirectory(unittest.TestCase):
@@ -407,6 +410,56 @@ class TestDistinctData(unittest.TestCase):
         self.assertIsInstance(result, DataResult)
         self.assertEqual(result.evaluation_type, dict)
         self.assertEqual(result.evaluate(), {'a': 2, 'b': 3})
+
+
+class Test_select_functions(unittest.TestCase):
+    def test_validate_select_container(self):
+        _validate_select_container(['A'])
+        _validate_select_container(set(['A']))
+        _validate_select_container([('A', 'B')])
+        _validate_select_container([['A', 'B']])
+        _validate_select_container([set(['A', 'B'])])
+
+        with self.assertRaises(ValueError):
+            _validate_select_container('A')
+
+        with self.assertRaises(ValueError):
+            _validate_select_container(['A', 'B'])
+
+        # POINT OF DISCUSSION: Should non-string items fail
+        # immediately? Currently, it's conceivable that column
+        # names could be something other than strings.
+
+        #with self.assertRaises(ValueError):
+        #    _validate_select_container({'A': 'foo'})
+
+        #with self.assertRaises(ValueError):
+        #    _validate_select_container([['A', ['B']]])
+
+    def test_parse_select(self):
+        key, value = _parse_select(['A'])  # Single column.
+        self.assertEqual(key, tuple())
+        self.assertEqual(value, ['A'])
+
+        key, value = _parse_select([('A', 'B')])  # Multiple colummns.
+        self.assertEqual(key, tuple())
+        self.assertEqual(value, [('A', 'B')])
+
+        key, value = _parse_select({'A': ['B']})  # Mapping.
+        self.assertEqual(key, 'A')
+        self.assertEqual(value, ['B'])
+
+        with self.assertRaises(ValueError):
+            _parse_select(1)  # Integer, no container.
+
+        with self.assertRaises(ValueError):
+            _parse_select('A')  # String without container.
+
+        with self.assertRaises(ValueError):
+            _parse_select({'A': 'B'})  # String without container (in value).
+
+        with self.assertRaises(ValueError):
+            _parse_select({'A': {'B': ['C']}})  # Nested mapping.
 
 
 class TestDataQuery(unittest.TestCase):

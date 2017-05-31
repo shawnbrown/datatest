@@ -353,13 +353,15 @@ def _sqlite_distinct(iterable):
 # Functions to validate and parse query 'select' syntax.
 ########################################################
 
-def _validate_select_container(container):
-    assert isinstance(container, collections.Sized)
-    if isinstance(container, str):
-        raise ValueError("expected container type " \
-                         "(list, tuple, etc.), got 'str'")
-    if len(container) != 1:
-        raise ValueError('expects a container of 1 item')
+def _validate_select_container(select):
+    if isinstance(select, str) or not isinstance(select, collections.Sized):
+        select_type = select.__class__.__name__
+        raise ValueError(('expected list, tuple, or other container, '
+                          'got {0}: {1!r}').format(select_type, select))
+
+    if len(select) != 1:
+        raise ValueError(('expected container of 1 item, got {0} '
+                          'items: {1!r}').format(len(select), select))
 
 
 def _parse_select(select):
@@ -434,11 +436,9 @@ class DataQuery(object):
     the :meth:`execute` method is called.
     """
     def __init__(self, select, **where):
-        select_key, select_value = _parse_select(select)
-        self._select_key = select_key
-        self._select_value = select_value
-        self._select = select
-
+        _parse_select(select)  # <- Returned values are discarded (if it's
+        self._select = select  #    a mapping its type must be preserved,
+                               #    not just the key and value).
         self._query_steps = tuple([
             _query_step('select', (select,), where),
         ])
@@ -451,9 +451,7 @@ class DataQuery(object):
 
     @select.setter
     def select(self, value):
-        select_key, select_value = _parse_select(value)
-        self._select_key = select_key
-        self._select_value = select_value
+        _parse_select(value)
         self._select = value
 
     @staticmethod
