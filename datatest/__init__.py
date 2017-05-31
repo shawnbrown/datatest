@@ -33,7 +33,7 @@ from .dataaccess import DataResult
 from .dataaccess import working_directory
 
 
-__version__ = '0.8.0.dev3'
+__version__ = '0.8.0'
 
 __all__ = [
     # Test case.

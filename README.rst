@@ -19,8 +19,8 @@ testing tools for asserting data correctness.
     validate data using both unittest- and pytest-style testing.
 
 * Documentation:
-    - http://datatest.readthedocs.io/ (latest)
-    - http://datatest.readthedocs.io/en/0.7.0.dev2/ (stable)
+    - https://datatest.readthedocs.io/ (stable)
+    - https://datatest.readthedocs.io/en/latest/ (latest)
 * Official Releases:
    - https://pypi.python.org/pypi/datatest
 * Development:
