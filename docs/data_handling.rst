@@ -274,7 +274,7 @@ DataSource
 
     .. automethod:: from_excel
 
-    .. automethod:: columns
+    .. automethod:: columns(type=list)
 
     .. automethod:: __call__
 

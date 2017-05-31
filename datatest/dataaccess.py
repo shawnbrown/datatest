@@ -765,8 +765,8 @@ class DataSource(object):
 
         return new_instance
 
-    def columns(self, container=list):
-        """Return a list of column names.
+    def columns(self, type=list):
+        """Return column names as given *type* (defaults to list).
 
         .. code-block:: python
 
@@ -776,11 +776,13 @@ class DataSource(object):
         cursor = self._connection.cursor()
         cursor.execute('PRAGMA table_info(' + self._table + ')')
 
-        # Get results as a list of column names then call container().
+        # Get results as a list of column names *then* call type().
         # Passing a list tends to give less confusing error messages
-        # when container is an inappropriate constructor.
+        # when type contains an inappropriate constructor.
         column_list = [x[1] for x in cursor]  # <- Make list first.
-        return container(column_list)
+        if type != list:
+            return type(column_list)
+        return column_list
 
     def __iter__(self):
         """Return iterable of dictionary rows (like csv.DictReader)."""

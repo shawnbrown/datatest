@@ -647,7 +647,7 @@ class TestDataSourceBasics(unittest.TestCase):
     def test_columns(self):
         expected = ['label1', 'label2', 'value']
         self.assertEqual(self.source.columns(), expected)
-        self.assertEqual(self.source.columns(container=set), set(expected))
+        self.assertEqual(self.source.columns(type=set), set(expected))
 
     def test_iter(self):
         """Test __iter__."""
