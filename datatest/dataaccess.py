@@ -349,6 +349,37 @@ def _sqlite_distinct(iterable):
     return dodistinct(iterable)
 
 
+########################################################
+# Functions to validate and parse query 'select' syntax.
+########################################################
+
+def _validate_select_container(container):
+    assert isinstance(container, collections.Sized)
+    if isinstance(container, str):
+        raise ValueError("expected container type " \
+                         "(list, tuple, etc.), got 'str'")
+    if len(container) != 1:
+        raise ValueError('expects a container of 1 item')
+
+
+def _parse_select(select):
+    _validate_select_container(select)
+    if isinstance(select, collections.Mapping):
+        key, value = tuple(select.items())[0]
+        if isinstance(value, collections.Mapping):
+            message = 'mappings can not be nested, got {0!r}'
+            raise ValueError(message.format(select))
+        _validate_select_container(value)
+    else:
+        key = tuple()
+        value = select
+    return key, value
+
+
+##########################################
+# Functions for query and execution steps.
+##########################################
+
 def _get_step_repr(step):
     """Helper function to return repr for a single query step."""
     func, args, kwds = step
@@ -385,6 +416,11 @@ RESULT_TOKEN = _make_token(
     'Token for representing a data result when optimizing execution plan.',
 )
 
+
+########################################################
+# Main data handling classes (DataQuery and DataSource).
+########################################################
+
 class DataQuery(object):
     """A class to query data from a :class:`DataSource` object.
     The *select* argument must be a container of one column name
@@ -398,11 +434,27 @@ class DataQuery(object):
     the :meth:`execute` method is called.
     """
     def __init__(self, select, **where):
+        select_key, select_value = _parse_select(select)
+        self._select_key = select_key
+        self._select_value = select_value
+        self._select = select
+
         self._query_steps = tuple([
             _query_step('select', (select,), where),
         ])
         self.default_source = None  # Optional default DataSource.
                                     # See docs for full details.
+
+    @property
+    def select(self):
+        return self._select
+
+    @select.setter
+    def select(self, value):
+        select_key, select_value = _parse_select(value)
+        self._select_key = select_key
+        self._select_value = select_value
+        self._select = value
 
     @staticmethod
     def _validate_source(source):
@@ -912,27 +964,6 @@ class DataSource(object):
                 msg = '{0!r} not in {1!r}'.format(column, self)
                 raise LookupError(msg)
 
-    def _validate_container(self, container):
-        assert isinstance(container, collections.Sized)
-        if isinstance(container, str):
-            raise ValueError("expected container type " \
-                             "(list, tuple, etc.), got 'str'")
-        if len(container) != 1:
-            raise AssertionError('expects a container of 1 item')
-
-    def _parse_selection(self, select):
-        self._validate_container(select)
-        if isinstance(select, collections.Mapping):
-            key, value = tuple(select.items())[0]
-            if isinstance(value, collections.Mapping):
-                message = 'mappings can not be nested, got {0!r}'
-                raise ValueError(message.format(select))
-            self._validate_container(value)
-        else:
-            key = tuple()
-            value = select
-        return key, value
-
     def _escape_column(self, column):
         column = column.replace('"', '""')  # Escape for SQLite.
         return '"{0}"'.format(column)
@@ -949,7 +980,7 @@ class DataSource(object):
         return key_columns, value_columns
 
     def _select(self, select, **where):
-        key, value = self._parse_selection(select)
+        key, value = _parse_select(select)
         key_columns, value_columns = self._parse_key_value(key, value)
 
         select_clause = ', '.join(key_columns + value_columns)
@@ -964,7 +995,7 @@ class DataSource(object):
         return self._format_results(select, cursor)
 
     def _select_distinct(self, select, **where):
-        key, value = self._parse_selection(select)
+        key, value = _parse_select(select)
         key_columns, value_columns = self._parse_key_value(key, value)
 
         columns = ', '.join(key_columns + value_columns)
@@ -977,7 +1008,7 @@ class DataSource(object):
         return self._format_results(select, cursor)
 
     def _select_aggregate(self, sqlfunc, select, **where):
-        key, value = self._parse_selection(select)
+        key, value = _parse_select(select)
         key_columns, value_columns = self._parse_key_value(key, value)
 
         if isinstance(value, collections.Set):

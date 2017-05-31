@@ -421,6 +421,9 @@ class TestDataQuery(unittest.TestCase):
         with self.assertRaises(TypeError, msg='should require select args'):
             DataQuery()
 
+        with self.assertRaises(ValueError, msg='should fail immediately when "select" is bad'):
+            DataQuery(['bad', 'syntax'])
+
     def test_from_parts(self):
         source = DataSource([(1, 2), (1, 2)], columns=['A', 'B'])
         query = DataQuery._from_parts(source=source)
