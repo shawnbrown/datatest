@@ -450,6 +450,28 @@ class TestAllowedSpecific(unittest.TestCase):
             with allowed_specific(allowed):
                 raise ValidationError('example error', differences)
 
+    def test_composition_bitwise_or(self):
+        allowed1 = [Extra('xxx'), Missing('yyy')]
+        allowed2 = [Missing('yyy'), Extra('zzz')]
+        specific = allowed_specific(allowed1) | allowed_specific(allowed2)
+        self.assertEqual(specific.errors, [Extra('xxx'), Missing('yyy'), Extra('zzz')])
+
+        allowed1 = [Extra('xxx'), Extra('xxx')]
+        allowed2 = [Missing('yyy'), Extra('xxx')]
+        specific = allowed_specific(allowed1) | allowed_specific(allowed2)
+        self.assertEqual(specific.errors, [Extra('xxx'), Extra('xxx'), Missing('yyy')])
+
+    def test_composition_bitwise_and(self):
+        allowed1 = [Extra('xxx'), Missing('yyy')]
+        allowed2 = [Missing('yyy'), Invalid('zzz')]
+        specific = allowed_specific(allowed1) & allowed_specific(allowed2)
+        self.assertEqual(specific.errors, [Missing('yyy')])
+
+        allowed1 = [Extra('xxx'), Extra('xxx'), Missing('yyy')]
+        allowed2 = [Missing('yyy'), Extra('xxx'), Invalid('zzz'), Extra('xxx')]
+        specific = allowed_specific(allowed1) & allowed_specific(allowed2)
+        self.assertEqual(specific.errors, [Extra('xxx'), Extra('xxx'), Missing('yyy')])
+
 
 class TestAllowedLimit(unittest.TestCase):
     """Test allowed_limit() behavior."""

@@ -323,6 +323,42 @@ class allowed_specific(BaseAllowance):
         filtered = super(allowed_specific, self).apply_filterfalse(iterable)
         return (error for key, error in filtered)  # 'key' intentionally discarded
 
+    def __or__(self, other):
+        if not isinstance(other, allowed_specific):
+            return NotImplemented
+
+        self_errors = self.errors
+        other_errors = other.errors
+
+        errors = []
+        for e in self_errors:
+            if self_errors.count(e) >= other_errors.count(e):
+                errors.append(e)
+
+        for e in other_errors:
+            if other_errors.count(e) > self_errors.count(e):
+                errors.append(e)
+
+        return allowed_specific(errors)
+
+    def __and__(self, other):
+        if not isinstance(other, allowed_specific):
+            return NotImplemented
+
+        self_errors = self.errors
+        other_errors = other.errors
+
+        errors = []
+        for e in self_errors:
+            if self_errors.count(e) <= other_errors.count(e):
+                errors.append(e)
+
+        for e in other_errors:
+            if other_errors.count(e) < self_errors.count(e):
+                errors.append(e)
+
+        return allowed_specific(errors)
+
 
 class allowed_key(ElementAllowance):
     """The given *function* should accept a number of arguments
