@@ -323,12 +323,11 @@ class allowed_specific(BaseAllowance):
         filtered = super(allowed_specific, self).apply_filterfalse(iterable)
         return (error for key, error in filtered)  # 'key' intentionally discarded
 
-    def __or__(self, other):
-        if not isinstance(other, allowed_specific):
-            return NotImplemented
-
-        self_errors = self.errors
-        other_errors = other.errors
+    def _or_combine_errors(self, self_errors, other_errors):
+        if isinstance(self_errors, Exception):
+            self_errors = [self_errors]
+        if isinstance(other_errors, Exception):
+            other_errors = [other_errors]
 
         errors = []
         for e in self_errors:
@@ -338,15 +337,40 @@ class allowed_specific(BaseAllowance):
         for e in other_errors:
             if other_errors.count(e) > self_errors.count(e):
                 errors.append(e)
+        return errors
 
-        return allowed_specific(errors)
-
-    def __and__(self, other):
+    def __or__(self, other):
         if not isinstance(other, allowed_specific):
             return NotImplemented
 
         self_errors = self.errors
         other_errors = other.errors
+
+        if isinstance(self_errors, collections.Mapping) != \
+                isinstance(other_errors, collections.Mapping):
+            self_type = self_errors.__class__.__name__
+            other_type = other_errors.__class__.__name__
+            msg = ('cannot combine mapping with non-mapping errors: '
+                   '{0!r} and {1!r}').format(self_type, other_type)
+            raise ValueError(msg)
+
+        if not isinstance(self_errors, collections.Mapping):
+            errors = self._or_combine_errors(self_errors, other_errors)
+            return allowed_specific(errors)  # <- EXIT!
+
+        all_keys = set(self_errors.keys()) | set(other_errors.keys())
+        errors = {}
+        for key in all_keys:
+            err1 = self_errors.get(key, [])
+            err2 = other_errors.get(key, [])
+            errors[key] = self._or_combine_errors(err1, err2)
+        return allowed_specific(errors)
+
+    def _and_combine_errors(self, self_errors, other_errors):
+        if isinstance(self_errors, Exception):
+            self_errors = [self_errors]
+        if isinstance(other_errors, Exception):
+            other_errors = [other_errors]
 
         errors = []
         for e in self_errors:
@@ -356,7 +380,35 @@ class allowed_specific(BaseAllowance):
         for e in other_errors:
             if other_errors.count(e) < self_errors.count(e):
                 errors.append(e)
+        return errors
 
+    def __and__(self, other):
+        if not isinstance(other, allowed_specific):
+            return NotImplemented
+
+        self_errors = self.errors
+        other_errors = other.errors
+
+        if isinstance(self_errors, collections.Mapping) != \
+                isinstance(other_errors, collections.Mapping):
+            self_type = self_errors.__class__.__name__
+            other_type = other_errors.__class__.__name__
+            msg = ('cannot combine mapping with non-mapping errors: '
+                   '{0!r} and {1!r}').format(self_type, other_type)
+            raise ValueError(msg)
+
+        if not isinstance(self_errors, collections.Mapping):
+            errors = self._and_combine_errors(self_errors, other_errors)
+            return allowed_specific(errors)  # <- EXIT!
+
+        all_keys = set(self_errors.keys()) & set(other_errors.keys())
+        errors = {}
+        for key in all_keys:
+            err1 = self_errors[key]
+            err2 = other_errors[key]
+            combined = self._and_combine_errors(err1, err2)
+            if combined:
+                errors[key] = combined
         return allowed_specific(errors)
 
 

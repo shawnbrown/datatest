@@ -451,15 +451,55 @@ class TestAllowedSpecific(unittest.TestCase):
                 raise ValidationError('example error', differences)
 
     def test_composition_bitwise_or(self):
+        # One shared element.
         allowed1 = [Extra('xxx'), Missing('yyy')]
-        allowed2 = [Missing('yyy'), Extra('zzz')]
+        allowed2 = [Missing('yyy'), Invalid('zzz')]
         specific = allowed_specific(allowed1) | allowed_specific(allowed2)
-        self.assertEqual(specific.errors, [Extra('xxx'), Missing('yyy'), Extra('zzz')])
+        self.assertEqual(specific.errors, [Extra('xxx'), Missing('yyy'), Invalid('zzz')])
 
+        # Duplicate shared element.
         allowed1 = [Extra('xxx'), Extra('xxx')]
         allowed2 = [Missing('yyy'), Extra('xxx')]
         specific = allowed_specific(allowed1) | allowed_specific(allowed2)
         self.assertEqual(specific.errors, [Extra('xxx'), Extra('xxx'), Missing('yyy')])
+
+        # Mismatched types (list and dict)
+        allowed1 = [Extra('xxx'), Missing('yyy')]
+        allowed2 = {'a': Missing('yyy'), 'b': Extra('zzz')}
+        regex = r"cannot combine .* 'list' and 'dict'"
+        with self.assertRaisesRegex(ValueError, regex):
+            allowed_specific(allowed1) | allowed_specific(allowed2)
+
+        # Mapping with one shared element.
+        allowed1 = {'a': [Extra('xxx'), Missing('yyy')]}
+        allowed2 = {'a': [Missing('yyy'), Invalid('zzz')]}
+        specific = allowed_specific(allowed1) | allowed_specific(allowed2)
+        self.assertEqual(
+            specific.errors,
+            {'a': [Extra('xxx'), Missing('yyy'), Invalid('zzz')]},
+        )
+
+        # Mapping mismatched keys.
+        allowed1 = {'a': [Extra('xxx'), Missing('yyy')]}
+        allowed2 = {'b': [Missing('yyy'), Invalid('zzz')]}
+        specific = allowed_specific(allowed1) | allowed_specific(allowed2)
+        self.assertEqual(
+            specific.errors,
+            {'a': [Extra('xxx'), Missing('yyy')],
+             'b': [Missing('yyy'), Invalid('zzz')]}
+        )
+
+        # Mapping with unwrapped errors.
+        allowed1 = {'a': Extra('xxx'),    # <- Not in container.
+                    'b': Missing('yyy')}  # <- Not in container.
+        allowed2 = {'a': Extra('xxx'),    # <- Not in container.
+                    'b': [Missing('yyy'), Invalid('zzz')]}
+        specific = allowed_specific(allowed1) | allowed_specific(allowed2)
+        self.assertEqual(
+            specific.errors,
+            {'a': [Extra('xxx')],
+             'b': [Missing('yyy'), Invalid('zzz')]}
+        )
 
     def test_composition_bitwise_and(self):
         allowed1 = [Extra('xxx'), Missing('yyy')]
@@ -471,6 +511,40 @@ class TestAllowedSpecific(unittest.TestCase):
         allowed2 = [Missing('yyy'), Extra('xxx'), Invalid('zzz'), Extra('xxx')]
         specific = allowed_specific(allowed1) & allowed_specific(allowed2)
         self.assertEqual(specific.errors, [Extra('xxx'), Extra('xxx'), Missing('yyy')])
+
+        # Mismatched types (list and dict)
+        allowed1 = [Extra('xxx'), Missing('yyy')]
+        allowed2 = {'a': Missing('yyy'), 'b': Extra('zzz')}
+        regex = r"cannot combine .* 'list' and 'dict'"
+        with self.assertRaisesRegex(ValueError, regex):
+            allowed_specific(allowed1) & allowed_specific(allowed2)
+
+        # Mapping with one shared element.
+        allowed1 = {'a': [Extra('xxx'), Missing('yyy')]}
+        allowed2 = {'a': [Missing('yyy'), Invalid('zzz')]}
+        specific = allowed_specific(allowed1) & allowed_specific(allowed2)
+        self.assertEqual(specific.errors, {'a': [Missing('yyy')]})
+
+        # Mapping mismatched keys.
+        allowed1 = {'a': [Extra('xxx')]}
+        allowed2 = {'b': [Extra('xxx')]}
+        specific = allowed_specific(allowed1) & allowed_specific(allowed2)
+        self.assertEqual(specific.errors, {})
+
+        # Mapping mismatched values.
+        allowed1 = {'a': [Extra('xxx')]}
+        allowed2 = {'a': [Missing('yyy')]}
+        specific = allowed_specific(allowed1) & allowed_specific(allowed2)
+        self.assertEqual(specific.errors, {})
+
+        # Mapping with unwrapped errors.
+        allowed1 = {'a': Extra('xxx'),    # <- Not in container.
+                    'b': Missing('yyy')}  # <- Not in container.
+        allowed2 = {'a': Extra('xxx'),    # <- Not in container.
+                    'b': [Missing('yyy'), Invalid('zzz')]}
+        specific = allowed_specific(allowed1) & allowed_specific(allowed2)
+        self.assertEqual(specific.errors,
+                         {'a': [Extra('xxx')], 'b': [Missing('yyy')]})
 
 
 class TestAllowedLimit(unittest.TestCase):
