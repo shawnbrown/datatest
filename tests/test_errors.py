@@ -50,6 +50,19 @@ class TestValidationError(unittest.TestCase):
             single_error = MinimalDataError('A')
             ValidationError('invalid data', single_error)
 
+    def test_repr(self):
+        err = ValidationError('invalid data', [MinimalDataError('A')])
+        expected = "ValidationError('invalid data', [MinimalDataError('A')])"
+        self.assertEqual(repr(err), expected)
+
+        # Objects that inhereit from some Exceptions can cache their
+        # repr--but ValidationError should not do this.
+        err.args = ('changed', [MinimalDataError('B')])
+        self.assertNotEqual(repr(err), expected, 'exception should not cache repr')
+
+        updated = "ValidationError('changed', [MinimalDataError('B')])"
+        self.assertEqual(repr(err), updated)
+
 
 class TestDataError(unittest.TestCase):
     def test_instantiation(self):

@@ -16,6 +16,23 @@ from .dataaccess import _is_collection_of_items
 class ValidationError(AssertionError):
     """Iterable container of errors."""
     def __init__(self, message, errors):
+        self.args = message, errors
+
+    @property
+    def args(self):
+        """The tuple of arguments given to the exception constructor."""
+        return (self._message, self._errors)
+
+    @args.setter
+    def args(self, value):
+        if not isinstance(value, tuple):
+            value_type = value.__class__.__name__
+            raise ValueError('expected tuple, got {0!r}'.format(value_type))
+
+        if not len(value) == 2:
+            raise ValueError('expected tuple of 2 items, got {0}'.format(len(value)))
+
+        message, errors = value
         if not _is_nsiterable(errors) or isinstance(errors, Exception):
             # Above condition checks for Exception because
             # exceptions are iterable in Python 2.7 and 2.6.
@@ -32,11 +49,6 @@ class ValidationError(AssertionError):
 
         self._message = message
         self._errors = errors
-
-    @property
-    def args(self):
-        """The tuple of arguments given to the exception constructor."""
-        return (self._message, self._errors)
 
     @property
     def message(self):
@@ -57,6 +69,10 @@ class ValidationError(AssertionError):
 
         output = '{0} ({1} errors):\n {2}'
         return output.format(self._message, len(self._errors), errors)
+
+    def __repr__(self):
+        class_name = self.__class__.__name__
+        return '{0}({1!r}, {2!r})'.format(class_name, self.message, self.errors)
 
 
 NANTOKEN = _make_token(
