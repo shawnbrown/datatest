@@ -7,7 +7,7 @@ import unittest
 import warnings
 
 from .utils import functools
-from .__past__.api07_error import xDataError
+from .errors import ValidationError
 
 try:
     TextTestResult = unittest.TextTestResult
@@ -147,7 +147,7 @@ class DataTestResult(TextTestResult):
         """Called when an error has occurred. 'err' is a tuple of
         values as returned by sys.exc_info().
         """
-        if err[0] == xDataError:
+        if err[0] == ValidationError:
             exctype, value, tb = err          # Unpack tuple.
             tb = HideInternalStackFrames(tb)  # Hide internal frames.
             value._verbose = self.showAll     # Set verbose flag (True/False).
