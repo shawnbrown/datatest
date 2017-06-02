@@ -19,11 +19,11 @@ from datatest import DataTestCase
 
 # Put error and differences into main namespace.
 from datatest.error import xDataError
-from datatest.differences import xBaseDifference
-from datatest.differences import xMissing
-from datatest.differences import xExtra
-from datatest.differences import xInvalid
-from datatest.differences import xDeviation
+from datatest.__past__.api07_diffs import xBaseDifference
+from datatest.__past__.api07_diffs import xMissing
+from datatest.__past__.api07_diffs import xExtra
+from datatest.__past__.api07_diffs import xInvalid
+from datatest.__past__.api07_diffs import xDeviation
 datatest.DataError = xDataError
 datatest.BaseDifference = xBaseDifference
 datatest.Missing = xMissing

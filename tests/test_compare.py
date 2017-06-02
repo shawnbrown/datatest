@@ -10,12 +10,12 @@ from datatest.compare import _compare_set
 from datatest.compare import _compare_mapping
 from datatest.compare import _compare_sequence
 
-from datatest.differences import xExtra
-from datatest.differences import xMissing
-from datatest.differences import xInvalid
-from datatest.differences import xDeviation
-from datatest.differences import xNotProperSubset
-from datatest.differences import xNotProperSuperset
+from datatest.__past__.api07_diffs import xExtra
+from datatest.__past__.api07_diffs import xMissing
+from datatest.__past__.api07_diffs import xInvalid
+from datatest.__past__.api07_diffs import xDeviation
+from datatest.__past__.api07_diffs import xNotProperSubset
+from datatest.__past__.api07_diffs import xNotProperSuperset
 
 
 class Test_compare_sequence(unittest.TestCase):

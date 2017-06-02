@@ -19,7 +19,7 @@ from datatest.error import xDataError
 from datatest import Missing
 from datatest import Extra
 from datatest import Invalid
-from datatest.differences import xDeviation
+from datatest.__past__.api07_diffs import xDeviation
 from datatest.sources.csv import CsvSource
 from datatest import DataTestCase
 from datatest.compare import CompareSet
@@ -32,6 +32,8 @@ from datatest import allow_missing
 from datatest import allow_extra
 from datatest import allow_deviation
 from datatest import allow_percent_deviation
+
+from .past_api07_diffs import *  # <- Import additional tests!
 
 
 class TestNamesAndAttributes(unittest.TestCase):

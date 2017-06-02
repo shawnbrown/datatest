@@ -5,13 +5,13 @@ import re
 from . import _io as io
 from . import _unittest as unittest
 
-from datatest.differences import xBaseDifference
-from datatest.differences import xExtra
-from datatest.differences import xMissing
-from datatest.differences import xInvalid
-from datatest.differences import xDeviation
-from datatest.differences import _xNOTFOUND
-from datatest.differences import _xgetdiff
+from datatest.__past__.api07_diffs import xBaseDifference
+from datatest.__past__.api07_diffs import xExtra
+from datatest.__past__.api07_diffs import xMissing
+from datatest.__past__.api07_diffs import xInvalid
+from datatest.__past__.api07_diffs import xDeviation
+from datatest.__past__.api07_diffs import _xNOTFOUND
+from datatest.__past__.api07_diffs import _xgetdiff
 
 
 class TestBaseDifference(unittest.TestCase):

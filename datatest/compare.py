@@ -10,15 +10,15 @@ from .utils import itertools
 from .utils.misc import _expects_multiple_params
 from .utils.misc import _is_nsiterable
 from .utils.misc import _unique_everseen
-from .differences import xExtra
-from .differences import xMissing
-from .differences import xInvalid
-from .differences import xDeviation
-from .differences import xNotProperSubset
-from .differences import xNotProperSuperset
+from .__past__.api07_diffs import xExtra
+from .__past__.api07_diffs import xMissing
+from .__past__.api07_diffs import xInvalid
+from .__past__.api07_diffs import xDeviation
+from .__past__.api07_diffs import xNotProperSubset
+from .__past__.api07_diffs import xNotProperSuperset
 
-from .differences import _xgetdiff
-from .differences import _xNOTFOUND
+from .__past__.api07_diffs import _xgetdiff
+from .__past__.api07_diffs import _xNOTFOUND
 
 _regex_type = type(re.compile(''))
 

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from math import isnan
 from numbers import Number
-from .utils.misc import _make_decimal
+from ..utils.misc import _make_decimal
 
 
 class xBaseDifference(object):

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from . import _unittest as unittest
 
-from datatest.differences import xMissing
+from datatest.__past__.api07_diffs import xMissing
 from datatest.error import xDataError
 
 
