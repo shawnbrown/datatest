@@ -18,13 +18,13 @@ from datatest.utils.misc import _make_decimal
 from datatest import DataTestCase
 
 # Put error and differences into main namespace.
-from datatest.__past__.api07_error import xDataError
+from datatest.__past__.api07_error import DataError
 from datatest.__past__.api07_diffs import xBaseDifference
 from datatest.__past__.api07_diffs import xMissing
 from datatest.__past__.api07_diffs import xExtra
 from datatest.__past__.api07_diffs import xInvalid
 from datatest.__past__.api07_diffs import xDeviation
-datatest.DataError = xDataError
+datatest.DataError = DataError
 datatest.BaseDifference = xBaseDifference
 datatest.Missing = xMissing
 datatest.Extra = xExtra
@@ -234,7 +234,7 @@ def fail(self, msg, differences=None):
             required = self.reference
         except NameError:
             required = None
-        raise xDataError(msg, differences, subject, required)
+        raise DataError(msg, differences, subject, required)
     else:
         raise self.failureException(msg)
 DataTestCase.fail = fail
@@ -265,8 +265,8 @@ class allow_iter(object):
             exc.__cause__ = None
             raise exc
 
-        if not issubclass(exc_type, xDataError):
-            raise exc_value  # If not xDataError, re-raise without changes.
+        if not issubclass(exc_type, DataError):
+            raise exc_value  # If not DataError, re-raise without changes.
 
         diffs = exc_value.differences
         rejected_kwds, accepted_kwds = self._partition_kwds(diffs, **self.kwds)
@@ -277,7 +277,7 @@ class allow_iter(object):
         if not_allowed:
             msg = [self.msg, getattr(exc_value, 'msg')]
             msg = ': '.join(x for x in msg if x)
-            exc = xDataError(msg, not_allowed)
+            exc = DataError(msg, not_allowed)
             exc.__cause__ = None  # <- Suppress context using verbose
             raise exc             # alternative to support older Python
                                   # versions--see PEP 415 (same as
@@ -314,7 +314,7 @@ datatest.allow_iter = allow_iter
 class allow_only(allow_iter):
     """Context manager to allow specified *differences* without
     triggering a test failure.  If a test fails with some differences
-    that have not been allowed, the xDataError is re-raised with the
+    that have not been allowed, the DataError is re-raised with the
     remaining differences.
 
     Using a dictionary---keys are strings that provide context (for
@@ -335,7 +335,7 @@ class allow_only(allow_iter):
                 return not_allowed  # <- EXIT!
             not_found = list(allowed.elements())
             if not_found:
-                exc = xDataError('Allowed difference not found', not_found)
+                exc = DataError('Allowed difference not found', not_found)
                 exc.__cause__ = None
                 raise exc
             return iter([])
@@ -371,7 +371,7 @@ class allow_limit(allow_iter):
     triggering a test failure.
 
     If the count of differences exceeds the given *number*, the test
-    case will fail with a xDataError containing all observed differences.
+    case will fail with a DataError containing all observed differences.
     """
     def __init__(self, number, msg=None, **kwds):
         if not isinstance(number, Number):

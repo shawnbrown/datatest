@@ -18,7 +18,7 @@ DataTestCase.assertDataSet = DataTestCase.assertSubjectSet
 DataTestCase.assertDataSum = DataTestCase.assertSubjectSum
 DataTestCase.assertDataRegex = DataTestCase.assertSubjectRegex
 DataTestCase.assertDataNotRegex = DataTestCase.assertSubjectNotRegex
-datatest.DataAssertionError = datatest.__past__.api07_error.xDataError
+datatest.DataAssertionError = datatest.__past__.api07_error.DataError
 
 
 _wrapped_find_data_source = DataTestCase._find_data_source

@@ -7,7 +7,7 @@ from datatest.__past__ import api07
 from datatest.__past__ import api06
 from datatest import DataTestCase
 
-datatest.DataAssertionError = datatest.__past__.api07_error.xDataError
+datatest.DataAssertionError = datatest.__past__.api07_error.DataError
 
 # Allowances.
 DataTestCase.allowSpecified = DataTestCase.allowOnly
