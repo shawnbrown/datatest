@@ -22,7 +22,7 @@ from datatest import Invalid
 from datatest.__past__.api07_diffs import xDeviation
 from datatest.sources.csv import CsvSource
 from datatest import DataTestCase
-from datatest.compare import CompareSet
+from datatest.__past__.api07_comp import CompareSet
 from datatest import allow_iter
 from datatest import allow_each
 from datatest import allow_any
@@ -33,7 +33,9 @@ from datatest import allow_extra
 from datatest import allow_deviation
 from datatest import allow_percent_deviation
 
-from .past_api07_diffs import *  # <- Import additional tests!
+# IMPORT ADDITIONAL TESTS
+from .past_api07_diffs import *
+from .past_api07_comp import *
 
 
 class TestNamesAndAttributes(unittest.TestCase):

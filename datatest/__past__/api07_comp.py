@@ -2,23 +2,23 @@
 import re
 from numbers import Number
 
-from .utils.builtins import *
-from .utils import collections
-from .utils import functools
-from .utils import itertools
+from ..utils.builtins import *
+from ..utils import collections
+from ..utils import functools
+from ..utils import itertools
 
-from .utils.misc import _expects_multiple_params
-from .utils.misc import _is_nsiterable
-from .utils.misc import _unique_everseen
-from .__past__.api07_diffs import xExtra
-from .__past__.api07_diffs import xMissing
-from .__past__.api07_diffs import xInvalid
-from .__past__.api07_diffs import xDeviation
-from .__past__.api07_diffs import xNotProperSubset
-from .__past__.api07_diffs import xNotProperSuperset
+from ..utils.misc import _expects_multiple_params
+from ..utils.misc import _is_nsiterable
+from ..utils.misc import _unique_everseen
+from .api07_diffs import xExtra
+from .api07_diffs import xMissing
+from .api07_diffs import xInvalid
+from .api07_diffs import xDeviation
+from .api07_diffs import xNotProperSubset
+from .api07_diffs import xNotProperSuperset
 
-from .__past__.api07_diffs import _xgetdiff
-from .__past__.api07_diffs import _xNOTFOUND
+from .api07_diffs import _xgetdiff
+from .api07_diffs import _xNOTFOUND
 
 _regex_type = type(re.compile(''))
 

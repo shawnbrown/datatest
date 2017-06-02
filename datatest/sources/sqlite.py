@@ -6,8 +6,8 @@ from ..utils import decimal
 from ..load.sqltemp import TemporarySqliteTable
 from ..utils.misc import _is_nsiterable
 
-from ..compare import CompareDict
-from ..compare import CompareSet
+from ..__past__.api07_comp import CompareDict
+from ..__past__.api07_comp import CompareSet
 
 from .base import BaseSource
 

@@ -4,8 +4,8 @@ from ..utils import collections
 from ..utils import itertools
 from ..utils import functools
 
-from ..compare import CompareDict
-from ..compare import CompareSet
+from ..__past__.api07_comp import CompareDict
+from ..__past__.api07_comp import CompareSet
 
 from .base import BaseSource
 from .adapter import AdapterSource

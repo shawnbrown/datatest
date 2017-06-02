@@ -32,9 +32,9 @@ datatest.Invalid = xInvalid
 datatest.Deviation = xDeviation
 
 # Needed for assertEqual() wrapper.
-from datatest.compare import CompareSet
-from datatest.compare import CompareDict
-from datatest.compare import BaseCompare
+from datatest.__past__.api07_comp import CompareSet
+from datatest.__past__.api07_comp import CompareDict
+from datatest.__past__.api07_comp import BaseCompare
 
 # Put old data source classes into main namespace.
 from datatest.sources.adapter import AdapterSource

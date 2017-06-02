@@ -2,13 +2,13 @@
 import re
 from . import _unittest as unittest
 
-from datatest.compare import _coerce_other
-from datatest.compare import CompareSet
-from datatest.compare import CompareDict
-from datatest.compare import _compare_other
-from datatest.compare import _compare_set
-from datatest.compare import _compare_mapping
-from datatest.compare import _compare_sequence
+from datatest.__past__.api07_comp import _coerce_other
+from datatest.__past__.api07_comp import CompareSet
+from datatest.__past__.api07_comp import CompareDict
+from datatest.__past__.api07_comp import _compare_other
+from datatest.__past__.api07_comp import _compare_set
+from datatest.__past__.api07_comp import _compare_mapping
+from datatest.__past__.api07_comp import _compare_sequence
 
 from datatest.__past__.api07_diffs import xExtra
 from datatest.__past__.api07_diffs import xMissing
