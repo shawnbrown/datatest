@@ -12,7 +12,7 @@ from datatest.__past__ import api00  # <- MONKEY PATCH!!!
 
 from .common import MinimalSource
 DataTestCase = datatest.DataTestCase
-from datatest.error import xDataError
+from datatest.__past__.api07_error import xDataError
 
 
 class TestAttributes(unittest.TestCase):

@@ -13,6 +13,8 @@ from .common import MinimalSource
 import datatest
 from datatest.__past__ import api06  # <- MONKEY PATCH!!!
 
+from datatest.__past__.api07_error import xDataError
+
 
 class TestApiDev1(unittest.TestCase):
     def test_api_dev1(self):
@@ -148,7 +150,7 @@ class TestAllowAny_Missing_Extra(TestHelperCase):
                         datatest.Missing('bar'),
                         datatest.Invalid('baz'),
                     ]
-                    raise datatest.error.xDataError('some differences', differences)
+                    raise xDataError('some differences', differences)
 
             def test_method2(_self):
                 with _self.allowAny(4):  # <- allow four
@@ -157,7 +159,7 @@ class TestAllowAny_Missing_Extra(TestHelperCase):
                         datatest.Missing('bar'),
                         datatest.Invalid('baz'),
                     ]
-                    raise datatest.error.xDataError('some differences', differences)
+                    raise xDataError('some differences', differences)
 
             def test_method3(_self):
                 with _self.allowAny():  # <- missing required keyword arg!
@@ -182,7 +184,7 @@ class TestAllowAny_Missing_Extra(TestHelperCase):
                         datatest.Missing('bar'),
                         datatest.Missing('baz'),
                     ]
-                    raise datatest.error.xDataError('some differences', differences)
+                    raise xDataError('some differences', differences)
 
         failure = self._run_one_test(_TestClass, 'test_method')
         pattern = ("xDataError: expected at most 2 matching differences: some differences:\n"
@@ -201,7 +203,7 @@ class TestAllowAny_Missing_Extra(TestHelperCase):
                         datatest.Deviation(+1, 4, label1='a', label2='y'),
                         datatest.Deviation(-2, 5, label1='a', label2='z'),
                     ]
-                    raise datatest.error.xDataError('some differences', differences)
+                    raise xDataError('some differences', differences)
 
             def test_fail_with_nonmatched(_self):
                 with _self.allowAny(label1='a'):  # <- allow unlimited where label1 equals 'a'
@@ -210,7 +212,7 @@ class TestAllowAny_Missing_Extra(TestHelperCase):
                         datatest.Deviation(+1, 4, label1='a', label2='y'),
                         datatest.Deviation(-2, 5, label1='b', label2='z'),  # <- label='b'
                     ]
-                    raise datatest.error.xDataError('some differences', differences)
+                    raise xDataError('some differences', differences)
 
         failure = self._run_one_test(_TestClass, 'test_passing')
         self.assertIsNone(failure)
@@ -232,7 +234,7 @@ class TestAllowMissing(TestHelperCase):
                         datatest.Extra('bar'),
                         datatest.Extra('baz'),
                     ]
-                    raise datatest.error.xDataError('some differences', differences)
+                    raise xDataError('some differences', differences)
 
             def test_method2(_self):
                 with _self.allowMissing():  # <- Allow unlimited.
@@ -241,7 +243,7 @@ class TestAllowMissing(TestHelperCase):
                         datatest.Extra('bar'),
                         datatest.Extra('baz'),
                     ]
-                    raise datatest.error.xDataError('some differences', differences)
+                    raise xDataError('some differences', differences)
 
         failure = self._run_one_test(_TestClass, 'test_method1')
         pattern = ("xDataError: some differences:\n"
@@ -267,7 +269,7 @@ class TestAllowExtra(TestHelperCase):
                         datatest.Missing('bar'),
                         datatest.Missing('baz'),
                     ]
-                    raise datatest.error.xDataError('some differences', differences)
+                    raise xDataError('some differences', differences)
 
             def test_method2(_self):
                 with _self.allowExtra():  # <- allow unlimited number.
@@ -276,7 +278,7 @@ class TestAllowExtra(TestHelperCase):
                         datatest.Missing('bar'),
                         datatest.Missing('baz'),
                     ]
-                    raise datatest.error.xDataError('some differences', differences)
+                    raise xDataError('some differences', differences)
 
         failure = self._run_one_test(_TestClass, 'test_method1')
         pattern = ("xDataError: some differences:\n"

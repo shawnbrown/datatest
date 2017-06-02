@@ -18,7 +18,7 @@ from datatest.utils.misc import _make_decimal
 from datatest import DataTestCase
 
 # Put error and differences into main namespace.
-from datatest.error import xDataError
+from datatest.__past__.api07_error import xDataError
 from datatest.__past__.api07_diffs import xBaseDifference
 from datatest.__past__.api07_diffs import xMissing
 from datatest.__past__.api07_diffs import xExtra

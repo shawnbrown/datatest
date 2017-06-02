@@ -15,7 +15,7 @@ from .common import MinimalSource
 import datatest
 from datatest.__past__ import api07  # <- MONKEY PATCH!!!
 
-from datatest.error import xDataError
+from datatest.__past__.api07_error import xDataError
 from datatest import Missing
 from datatest import Extra
 from datatest import Invalid
@@ -36,6 +36,7 @@ from datatest import allow_percent_deviation
 # IMPORT ADDITIONAL TESTS
 from .past_api07_diffs import *
 from .past_api07_comp import *
+from .past_api07_error import *
 
 
 class TestNamesAndAttributes(unittest.TestCase):

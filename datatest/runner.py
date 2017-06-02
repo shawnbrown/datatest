@@ -7,7 +7,7 @@ import unittest
 import warnings
 
 from .utils import functools
-from .error import xDataError
+from .__past__.api07_error import xDataError
 
 try:
     TextTestResult = unittest.TextTestResult

@@ -2,7 +2,7 @@
 from . import _unittest as unittest
 
 from datatest.__past__.api07_diffs import xMissing
-from datatest.error import xDataError
+from datatest.__past__.api07_error import xDataError
 
 
 class TestDataError(unittest.TestCase):
