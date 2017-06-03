@@ -11,7 +11,7 @@ from .errors import Extra
 from .errors import Missing
 from .errors import Invalid
 from .errors import Deviation
-from .errors import _get_difference
+from .errors import _make_difference
 from .errors import NOTFOUND
 
 _regex_type = type(re.compile(''))
@@ -167,9 +167,9 @@ def _require_other(data, other, show_expected=True):
     for element in data:
         try:
             if element != other:
-                yield _get_difference(element, other, show_expected)
+                yield _make_difference(element, other, show_expected)
         except Exception:
-            yield _get_difference(element, other, show_expected)
+            yield _make_difference(element, other, show_expected)
 
 
 def _apply_requirement(data, requirement):
@@ -254,8 +254,8 @@ def _normalize_mapping_result(result):
     return None
 
 
-def _get_differences(data, requirement):
-    """Return iterable of diffferences or None."""
+def _find_differences(data, requirement):
+    """Return iterable of differences or None."""
     if isinstance(requirement, collections.Mapping):
         result = _apply_mapping_requirement(data, requirement)
         result = _normalize_mapping_result(result)

@@ -8,7 +8,7 @@ from datatest.errors import Missing
 from datatest.errors import Extra
 from datatest.errors import Invalid
 from datatest.errors import Deviation
-from datatest.errors import _get_difference
+from datatest.errors import _make_difference
 from datatest.errors import NOTFOUND
 
 
@@ -174,92 +174,92 @@ class TestDeviation(unittest.TestCase):
         self.assertEqual(diff, eval(repr(diff)))
 
 
-class Test_get_difference(unittest.TestCase):
+class TestMakeDifference(unittest.TestCase):
     def test_numeric_vs_numeric(self):
-        diff = _get_difference(5, 6)
+        diff = _make_difference(5, 6)
         self.assertEqual(diff, Deviation(-1, 6))
 
     def test_numeric_vs_none(self):
-        diff = _get_difference(5, None)
+        diff = _make_difference(5, None)
         self.assertEqual(diff, Deviation(+5, None))
 
-        diff = _get_difference(0, None)
+        diff = _make_difference(0, None)
         self.assertEqual(diff, Deviation(+0, None))
 
     def test_none_vs_numeric(self):
-        diff = _get_difference(None, 6)           # For None vs non-zero,
+        diff = _make_difference(None, 6)          # For None vs non-zero,
         self.assertEqual(diff, Deviation(-6, 6))  # difference is calculated
                                                   # as 0 - other.
 
-        diff = _get_difference(None, 0)             # For None vs zero,
+        diff = _make_difference(None, 0)            # For None vs zero,
         self.assertEqual(diff, Deviation(None, 0))  # difference remains None.
 
     def test_object_vs_object(self):
         """Non-numeric comparisons return Invalid type."""
-        diff = _get_difference('a', 'b')
+        diff = _make_difference('a', 'b')
         self.assertEqual(diff, Invalid('a', 'b'))
 
-        diff = _get_difference(5, 'b')
+        diff = _make_difference(5, 'b')
         self.assertEqual(diff, Invalid(5, 'b'))
 
-        diff = _get_difference('a', 6)
+        diff = _make_difference('a', 6)
         self.assertEqual(diff, Invalid('a', 6))
 
-        diff = _get_difference(float('nan'), 6)
+        diff = _make_difference(float('nan'), 6)
         self.assertEqual(diff, Invalid(float('nan'), 6))
 
-        diff = _get_difference(5, float('nan'))
+        diff = _make_difference(5, float('nan'))
         self.assertEqual(diff, Invalid(5, float('nan')))
 
         fn = lambda x: True
-        diff = _get_difference('a', fn)
+        diff = _make_difference('a', fn)
         self.assertEqual(diff, Invalid('a', fn))
 
         regex = re.compile('^test$')
-        diff = _get_difference('a', regex)
+        diff = _make_difference('a', regex)
         self.assertEqual(diff, Invalid('a', re.compile('^test$')))
 
     def test_notfound_comparisons(self):
-        diff = _get_difference('a', NOTFOUND)
+        diff = _make_difference('a', NOTFOUND)
         self.assertEqual(diff, Extra('a'))
 
-        diff = _get_difference(NOTFOUND, 'b')
+        diff = _make_difference(NOTFOUND, 'b')
         self.assertEqual(diff, Missing('b'))
 
         # For numeric comparisons, NOTFOUND behaves like None.
-        diff = _get_difference(5, NOTFOUND)
+        diff = _make_difference(5, NOTFOUND)
         self.assertEqual(diff, Deviation(+5, None))
 
-        diff = _get_difference(0, NOTFOUND)
+        diff = _make_difference(0, NOTFOUND)
         self.assertEqual(diff, Deviation(0, None))
 
-        diff = _get_difference(NOTFOUND, 6)
+        diff = _make_difference(NOTFOUND, 6)
         self.assertEqual(diff, Deviation(-6, 6))  # <- Asymmetric behavior
                                                   #    (see None vs numeric)!
 
-        diff = _get_difference(NOTFOUND, 0)
+        diff = _make_difference(NOTFOUND, 0)
         self.assertEqual(diff, Deviation(None, 0))
 
     def test_show_expected(self):
         """If requirement is common it should be omitted from Invalid
         difference (but not from Deviation differences).
         """
-        diff = _get_difference('a', 6, show_expected=True)
+        diff = _make_difference('a', 6, show_expected=True)
         self.assertEqual(diff, Invalid('a', expected=6))
 
-        diff = _get_difference('a', 6, show_expected=False)
+        diff = _make_difference('a', 6, show_expected=False)
         self.assertEqual(diff, Invalid('a'))
 
-        diff = _get_difference(NOTFOUND, 6, show_expected=False)
+        diff = _make_difference(NOTFOUND, 6, show_expected=False)
         self.assertEqual(diff, Deviation(-6, 6))
 
     def test_same(self):
-        """The _get_difference() function returns differences for
+        """The _make_difference() function returns differences for
         objects that are KNOWN TO BE DIFFERENT--it does not test
         for differences itself.
         """
-        diff = _get_difference('a', 'a')
+        diff = _make_difference('a', 'a')
         self.assertEqual(diff, Invalid('a', 'a'))
 
-        diff = _get_difference(None, None)
+        diff = _make_difference(None, None)
         self.assertEqual(diff, Invalid(None, None))

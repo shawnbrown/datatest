@@ -10,7 +10,7 @@ from .utils import contextlib
 from .dataaccess import DataQuery
 from .dataaccess import DataResult
 
-from .require import _get_differences
+from .require import _find_differences
 from .errors import ValidationError
 
 __datatest = True  # Used to detect in-module stack frames (which are
@@ -187,16 +187,16 @@ class DataTestCase(TestCase):
         elif isinstance(requirement, DataResult):  # DataResult, we must
             requirement = requirement.evaluate()   # eagerly evaluate it.
 
-        errors = _get_differences(data, requirement)
-        if not errors:
+        differences = _find_differences(data, requirement)
+        if not differences:
             return None  # <- EXIT!
 
-        if not msg and not isinstance(errors, Exception):
+        if not msg and not isinstance(differences, Exception):
             name = getattr(requirement, '__name__',
                            requirement.__class__.__name__)
             msg = 'data does not satisfy {0!r} requirement'.format(name)
 
-        self.fail(msg, errors)
+        self.fail(msg, differences)
 
     def fail(self, msg, errors=None):
         if isinstance(errors, Exception):

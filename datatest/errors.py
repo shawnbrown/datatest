@@ -195,7 +195,7 @@ NOTFOUND = _make_token(
 )
 
 
-def _get_difference(actual, expected, show_expected=True):
+def _make_difference(actual, expected, show_expected=True):
     """Returns an appropriate difference for *actual* and *expected*
     values that are known to be unequal.
 
