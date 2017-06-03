@@ -119,7 +119,8 @@ class DataTestCase(TestCase):
 
         **Set membership:** When *requirement* is a set, elements
         in *data* are checked for membership in this set. On failure,
-        :class:`Missing` or :class:`Extra` errors are raised::
+        a :class:`ValidationError` is raised which contains
+        `:class:`Missing` or :class:`Extra` differences::
 
             def test_mydata(self):
                 data = ...
@@ -128,8 +129,9 @@ class DataTestCase(TestCase):
 
         **Regular expression match:** When *requirement* is a regular
         expression object, elements in *data* are checked to see if
-        they match the given pattern. On failure, :class:`Invalid`
-        errors are raised::
+        they match the given pattern. On failure, a
+        :class:`ValidationError` is raised with :class:`Invalid`
+        differences::
 
             def test_mydata(self):
                 data = ...
@@ -149,8 +151,8 @@ class DataTestCase(TestCase):
         **Mapping comparison:** When *requirement* is a dict (or other
         mapping), elements of matching keys are checked for equality.
         This comparison also requires *data* to be a mapping. On
-        failure, :class:`Invalid` or :class:`Deviation` errors are
-        raised::
+        failure, a :class:`ValidationError` is raised with
+        :class:`Invalid` or :class:`Deviation` differences::
 
             def test_mydata(self):
                 data = ...  # <- Should also be a mapping.
@@ -159,8 +161,9 @@ class DataTestCase(TestCase):
 
         **Function comparison:** When *requirement* is a function or
         other callable, elements in *data* are checked to see if they
-        evaluate to True. When the function returns False,
-        :class:`Invalid` errors are raised::
+        evaluate to True. When the function returns False, a
+        :class:`ValidationError` is raised with :class:`Invalid`
+        differences::
 
             def test_mydata(self):
                 data = ...
@@ -171,8 +174,8 @@ class DataTestCase(TestCase):
         **Other comparison:** When *requirement* does not match any
         previously specified type (e.g., str, float, etc.), elements
         in *data* are checked to see if they are equal to the given
-        object. On failure, an :class:`Invalid` or :class:`Deviation`
-        error is raised::
+        object. On failure, a :class:`ValidationError` is raised which
+        contains :class:`Invalid` or :class:`Deviation` differences::
 
             def test_mydata(self):
                 data = ...
@@ -218,7 +221,7 @@ class DataTestCase(TestCase):
     #    pass
 
     def allowedMissing(self, msg=None):
-        """Allows :class:`Missing` errors without triggering a test
+        """Allows :class:`Missing` elements without triggering a test
         failure::
 
             with self.allowedMissing():
@@ -229,7 +232,7 @@ class DataTestCase(TestCase):
         return allowed_missing(msg)
 
     def allowedExtra(self, msg=None):
-        """Allows :class:`Extra` errors without triggering a test
+        """Allows :class:`Extra` elements without triggering a test
         failure::
 
             with self.allowedExtra():
@@ -240,7 +243,7 @@ class DataTestCase(TestCase):
         return allowed_extra(msg)
 
     def allowedInvalid(self, msg=None):
-        """Allows :class:`Invalid` errors without triggering a test
+        """Allows :class:`Invalid` elements without triggering a test
         failure::
 
             with self.allowedInvalid():
