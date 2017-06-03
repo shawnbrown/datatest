@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
-import abc
-import io
 import os
 import sys
+from io import IOBase
 from numbers import Number
 from sqlite3 import Binary
 
@@ -764,7 +763,7 @@ class DataSource(object):
             files = ['mydata1.csv', 'mydata2.csv']
             source = datatest.DataSource.from_csv(files)
         """
-        if not _is_nsiterable(file) or isinstance(file, io.IOBase):
+        if not _is_nsiterable(file) or isinstance(file, IOBase):
             file = [file]
 
         new_cls = cls.__new__(cls)
