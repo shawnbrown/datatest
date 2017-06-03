@@ -28,7 +28,7 @@ class working_directory(contextlib.ContextDecorator):
     location.
 
     Use the global ``__file__`` variable to load data relative to
-    the test file itself::
+    test file's current directory::
 
         with datatest.working_directory(__file__):
             source = datatest.DataSource.from_csv('myfile.csv')
