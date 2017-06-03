@@ -54,50 +54,50 @@ class TestSubclass(TestHelperCase):
 
 class TestAssertValid(DataTestCase):
     """
-    +------------------------------------------------------------+
-    |      Object Comparisons and Returned *errors* Object       |
-    +--------------+---------------------------------------------+
-    |              |             *requirement* type              |
-    | *data* type  +-------+---------+--------------+------------+
-    |              | set   | mapping | sequence     | other      |
-    +==============+=======+=========+==============+============+
-    | **set**      | list  |         |              | list       |
-    +--------------+-------+---------+--------------+------------+
-    | **mapping**  | dict  | dict    | dict         | dict       |
-    +--------------+-------+---------+--------------+------------+
-    | **sequence** | list  |         | assert error | list       |
-    +--------------+-------+---------+--------------+------------+
-    | **iterable** | list  |         |              | list       |
-    +--------------+-------+---------+--------------+------------+
-    | **other**    | list  |         |              | data error |
-    +--------------+-------+---------+--------------+------------+
+    +-------------------------------------------------------------+
+    |   Object Comparisons and Returned *differences* Container   |
+    +--------------+----------------------------------------------+
+    |              |             *requirement* type               |
+    | *data* type  +-------+---------+--------------+-------------+
+    |              | set   | mapping | sequence     | other       |
+    +==============+=======+=========+==============+=============+
+    | **set**      | list  |         |              | list        |
+    +--------------+-------+---------+--------------+-------------+
+    | **mapping**  | dict  | dict    | dict         | dict        |
+    +--------------+-------+---------+--------------+-------------+
+    | **sequence** | list  |         | assert error | list        |
+    +--------------+-------+---------+--------------+-------------+
+    | **iterable** | list  |         |              | list        |
+    +--------------+-------+---------+--------------+-------------+
+    | **other**    | list  |         |              | diff object |
+    +--------------+-------+---------+--------------+-------------+
     """
     def test_nonmapping(self):
         with self.assertRaises(ValidationError) as cm:
             data = set([1, 2, 3])
             required = set([1, 2, 4])
             self.assertValid(data, required)
-        errors = cm.exception.errors
+        differences = cm.exception.differences
 
-        self.assertEqual(errors, [Missing(4), Extra(3)])
+        self.assertEqual(differences, [Missing(4), Extra(3)])
 
     def test_data_mapping(self):
         with self.assertRaises(ValidationError) as cm:
             data = {'a': set([1, 2]), 'b': set([1]), 'c': set([1, 2, 3])}
             required = set([1, 2])
             self.assertValid(data, required)
-        errors = cm.exception.errors
+        differences = cm.exception.differences
 
-        self.assertEqual(errors, {'b': [Missing(2)], 'c': [Extra(3)]})
+        self.assertEqual(differences, {'b': [Missing(2)], 'c': [Extra(3)]})
 
     def test_required_mapping(self):
         with self.assertRaises(ValidationError) as cm:
             data = {'AAA': 'a', 'BBB': 'x'}
             required = {'AAA': 'a', 'BBB': 'b', 'CCC': 'c'}
             self.assertValid(data, required)
-        errors = cm.exception.errors
+        differences = cm.exception.differences
 
-        self.assertEqual(errors, {'BBB': Invalid('x', 'b'), 'CCC': Missing('c')})
+        self.assertEqual(differences, {'BBB': Invalid('x', 'b'), 'CCC': Missing('c')})
 
     def test_required_sequence(self):
         """When *required* is a sequence, _compare_sequence() should be
@@ -107,11 +107,11 @@ class TestAssertValid(DataTestCase):
             data = ['a', 2, 'x', 3]
             required = ['a', 2, 'c', 4]
             self.assertValid(data, required)
-        errors = cm.exception
+        error = cm.exception
 
-        self.assertIsInstance(errors, AssertionError)
+        self.assertIsInstance(error, AssertionError)
 
-        error_string = str(errors)
+        error_string = str(error)
         expected = 'Data sequence differs starting at index 2'
         self.assertTrue(error_string.startswith(expected))
 
@@ -123,10 +123,10 @@ class TestAssertValid(DataTestCase):
             required = lambda x: x.isupper()
             data = ['AAA', 'BBB', 'ccc', 'DDD']
             self.assertValid(data, required)
-        errors = cm.exception.errors
+        differences = cm.exception.differences
 
         self.assertEqual = super(DataTestCase, self).assertEqual
-        self.assertEqual(errors, [Invalid('ccc')])
+        self.assertEqual(differences, [Invalid('ccc')])
 
     def test_query_objects(self):
         source = DataSource([('1', '2'), ('1', '2')], columns=['A', 'B'])

@@ -3,125 +3,126 @@ import re
 from . import _unittest as unittest
 
 from datatest.errors import ValidationError
-from datatest.errors import DataError
+from datatest.errors import BaseDifference
 from datatest.errors import Missing
 from datatest.errors import Extra
 from datatest.errors import Invalid
 from datatest.errors import Deviation
-from datatest.errors import _get_error
+from datatest.errors import _get_difference
 from datatest.errors import NOTFOUND
 
 
-# FOR TESTING: A minimal subclass of DataError. DataError itself
-# is a base class that should not be instantiated directly.
-class MinimalDataError(DataError):
+# FOR TESTING: A minimal subclass of BaseDifference.
+# BaseDifference itself should not be instantiated
+# directly.
+class MinimalDifference(BaseDifference):
     pass
 
 
 class TestValidationError(unittest.TestCase):
     def test_error_list(self):
-        error_list = [MinimalDataError('A'), MinimalDataError('B')]
+        error_list = [MinimalDifference('A'), MinimalDifference('B')]
 
         err = ValidationError('invalid data', error_list)
-        self.assertEqual(err.errors, error_list)
+        self.assertEqual(err.differences, error_list)
 
     def test_error_iter(self):
-        error_list = [MinimalDataError('A'), MinimalDataError('B')]
+        error_list = [MinimalDifference('A'), MinimalDifference('B')]
         error_iter = iter(error_list)
 
         err = ValidationError('invalid data', error_iter)
-        self.assertEqual(err.errors, error_list, 'iterable should be converted to list')
+        self.assertEqual(err.differences, error_list, 'iterable should be converted to list')
 
     def test_error_dict(self):
-        error_dict = {'a': MinimalDataError('A'), 'b': MinimalDataError('B')}
+        error_dict = {'a': MinimalDifference('A'), 'b': MinimalDifference('B')}
 
         err = ValidationError('invalid data', error_dict)
-        self.assertEqual(err.errors, error_dict)
+        self.assertEqual(err.differences, error_dict)
 
     def test_error_iteritems(self):
-        error_dict = {'a': MinimalDataError('A'), 'b': MinimalDataError('B')}
+        error_dict = {'a': MinimalDifference('A'), 'b': MinimalDifference('B')}
         error_iteritems = getattr(error_dict, 'iteritems', error_dict.items)()
 
         err = ValidationError('invalid data', error_iteritems)
-        self.assertEqual(err.errors, error_dict)
+        self.assertEqual(err.differences, error_dict)
 
     def test_bad_args(self):
         with self.assertRaises(TypeError, msg='must be iterable'):
-            single_error = MinimalDataError('A')
+            single_error = MinimalDifference('A')
             ValidationError('invalid data', single_error)
 
     def test_repr(self):
-        err = ValidationError('invalid data', [MinimalDataError('A')])
-        expected = "ValidationError('invalid data', [MinimalDataError('A')])"
+        err = ValidationError('invalid data', [MinimalDifference('A')])
+        expected = "ValidationError('invalid data', [MinimalDifference('A')])"
         self.assertEqual(repr(err), expected)
 
         # Objects that inhereit from some Exceptions can cache their
         # repr--but ValidationError should not do this.
-        err.args = ('changed', [MinimalDataError('B')])
+        err.args = ('changed', [MinimalDifference('B')])
         self.assertNotEqual(repr(err), expected, 'exception should not cache repr')
 
-        updated = "ValidationError('changed', [MinimalDataError('B')])"
+        updated = "ValidationError('changed', [MinimalDifference('B')])"
         self.assertEqual(repr(err), updated)
 
 
-class TestDataError(unittest.TestCase):
+class TestBaseDifference(unittest.TestCase):
     def test_instantiation(self):
-        """DataError is a base class that should not be
-        instantiated directly. It should only serve as a
-        superclass for more specific errors.
+        """BaseDifference should not be instantiated directly.
+        It should only serve as a superclass for more specific
+        differences.
         """
         # Subclass should instantiate normally:
-        subclass_instance = MinimalDataError('A')
+        subclass_instance = MinimalDifference('A')
 
         regex = 'requires at least 1 argument'
         with self.assertRaisesRegex(TypeError, regex):
-            MinimalDataError()
+            MinimalDifference()
 
         # Base class should raise error.
-        regex = "can't instantiate base class DataError"
+        regex = "can't instantiate BaseDifference"
         with self.assertRaisesRegex(TypeError, regex):
-            base_instance = DataError('A')
+            base_instance = BaseDifference('A')
 
     def test_args(self):
         """Args should be tuple of arguments."""
-        error = MinimalDataError('A')
-        self.assertEqual(error.args, ('A',))
+        diff = MinimalDifference('A')
+        self.assertEqual(diff.args, ('A',))
 
     def test_repr(self):
-        error = MinimalDataError('A')
-        self.assertEqual(repr(error), "MinimalDataError('A')")
+        diff = MinimalDifference('A')
+        self.assertEqual(repr(diff), "MinimalDifference('A')")
 
-        error = MinimalDataError('A', 'B')
-        self.assertEqual(repr(error), "MinimalDataError('A', 'B')")
+        diff = MinimalDifference('A', 'B')
+        self.assertEqual(repr(diff), "MinimalDifference('A', 'B')")
 
-        error = MinimalDataError('A', None)
-        self.assertEqual(repr(error), "MinimalDataError('A', None)")
+        diff = MinimalDifference('A', None)
+        self.assertEqual(repr(diff), "MinimalDifference('A', None)")
 
     def test_string_equal(self):
-        first = MinimalDataError('A')
-        second = MinimalDataError('A')
+        first = MinimalDifference('A')
+        second = MinimalDifference('A')
         self.assertEqual(first, second)
 
     def test_nan_equal(self):
-        """NaN values should test as equal when part of a data error."""
-        first = MinimalDataError(float('nan'))
-        second = MinimalDataError(float('nan'))
+        """NaN values should test as equal when part of a difference."""
+        first = MinimalDifference(float('nan'))
+        second = MinimalDifference(float('nan'))
         self.assertEqual(first, second)
 
     def test_comparing_different_types(self):
-        error = MinimalDataError('X')
-        self.assertNotEqual(error, Exception('X'))
-        self.assertNotEqual(error, None)
-        self.assertNotEqual(error, True)
-        self.assertNotEqual(error, False)
+        diff = MinimalDifference('X')
+        self.assertNotEqual(diff, Exception('X'))
+        self.assertNotEqual(diff, None)
+        self.assertNotEqual(diff, True)
+        self.assertNotEqual(diff, False)
 
 
 class TestSubclassRelationship(unittest.TestCase):
     def test_subclass(self):
-        self.assertTrue(issubclass(Extra, DataError))
-        self.assertTrue(issubclass(Missing, DataError))
-        self.assertTrue(issubclass(Invalid, DataError))
-        self.assertTrue(issubclass(Deviation, DataError))
+        self.assertTrue(issubclass(Extra, BaseDifference))
+        self.assertTrue(issubclass(Missing, BaseDifference))
+        self.assertTrue(issubclass(Invalid, BaseDifference))
+        self.assertTrue(issubclass(Deviation, BaseDifference))
 
 
 class TestDeviation(unittest.TestCase):
@@ -173,92 +174,92 @@ class TestDeviation(unittest.TestCase):
         self.assertEqual(diff, eval(repr(diff)))
 
 
-class Test_get_error(unittest.TestCase):
+class Test_get_difference(unittest.TestCase):
     def test_numeric_vs_numeric(self):
-        diff = _get_error(5, 6)
+        diff = _get_difference(5, 6)
         self.assertEqual(diff, Deviation(-1, 6))
 
     def test_numeric_vs_none(self):
-        diff = _get_error(5, None)
+        diff = _get_difference(5, None)
         self.assertEqual(diff, Deviation(+5, None))
 
-        diff = _get_error(0, None)
+        diff = _get_difference(0, None)
         self.assertEqual(diff, Deviation(+0, None))
 
     def test_none_vs_numeric(self):
-        diff = _get_error(None, 6)                # For None vs non-zero,
+        diff = _get_difference(None, 6)           # For None vs non-zero,
         self.assertEqual(diff, Deviation(-6, 6))  # difference is calculated
                                                   # as 0 - other.
 
-        diff = _get_error(None, 0)                  # For None vs zero,
+        diff = _get_difference(None, 0)             # For None vs zero,
         self.assertEqual(diff, Deviation(None, 0))  # difference remains None.
 
     def test_object_vs_object(self):
         """Non-numeric comparisons return Invalid type."""
-        diff = _get_error('a', 'b')
+        diff = _get_difference('a', 'b')
         self.assertEqual(diff, Invalid('a', 'b'))
 
-        diff = _get_error(5, 'b')
+        diff = _get_difference(5, 'b')
         self.assertEqual(diff, Invalid(5, 'b'))
 
-        diff = _get_error('a', 6)
+        diff = _get_difference('a', 6)
         self.assertEqual(diff, Invalid('a', 6))
 
-        diff = _get_error(float('nan'), 6)
+        diff = _get_difference(float('nan'), 6)
         self.assertEqual(diff, Invalid(float('nan'), 6))
 
-        diff = _get_error(5, float('nan'))
+        diff = _get_difference(5, float('nan'))
         self.assertEqual(diff, Invalid(5, float('nan')))
 
         fn = lambda x: True
-        diff = _get_error('a', fn)
+        diff = _get_difference('a', fn)
         self.assertEqual(diff, Invalid('a', fn))
 
         regex = re.compile('^test$')
-        diff = _get_error('a', regex)
+        diff = _get_difference('a', regex)
         self.assertEqual(diff, Invalid('a', re.compile('^test$')))
 
     def test_notfound_comparisons(self):
-        diff = _get_error('a', NOTFOUND)
+        diff = _get_difference('a', NOTFOUND)
         self.assertEqual(diff, Extra('a'))
 
-        diff = _get_error(NOTFOUND, 'b')
+        diff = _get_difference(NOTFOUND, 'b')
         self.assertEqual(diff, Missing('b'))
 
         # For numeric comparisons, NOTFOUND behaves like None.
-        diff = _get_error(5, NOTFOUND)
+        diff = _get_difference(5, NOTFOUND)
         self.assertEqual(diff, Deviation(+5, None))
 
-        diff = _get_error(0, NOTFOUND)
+        diff = _get_difference(0, NOTFOUND)
         self.assertEqual(diff, Deviation(0, None))
 
-        diff = _get_error(NOTFOUND, 6)
-        self.assertEqual(diff, Deviation(-6, 6))  # <- Assymetric behavior
+        diff = _get_difference(NOTFOUND, 6)
+        self.assertEqual(diff, Deviation(-6, 6))  # <- Asymmetric behavior
                                                   #    (see None vs numeric)!
 
-        diff = _get_error(NOTFOUND, 0)
+        diff = _get_difference(NOTFOUND, 0)
         self.assertEqual(diff, Deviation(None, 0))
 
     def test_show_expected(self):
         """If requirement is common it should be omitted from Invalid
         difference (but not from Deviation differences).
         """
-        diff = _get_error('a', 6, show_expected=True)
+        diff = _get_difference('a', 6, show_expected=True)
         self.assertEqual(diff, Invalid('a', expected=6))
 
-        diff = _get_error('a', 6, show_expected=False)
+        diff = _get_difference('a', 6, show_expected=False)
         self.assertEqual(diff, Invalid('a'))
 
-        diff = _get_error(NOTFOUND, 6, show_expected=False)
+        diff = _get_difference(NOTFOUND, 6, show_expected=False)
         self.assertEqual(diff, Deviation(-6, 6))
 
     def test_same(self):
-        """The _get_error() function returns differences for objects
-        that are KNOWN TO BE DIFFERENT--it does not test for differences
-        itself.
+        """The _get_difference() function returns differences for
+        objects that are KNOWN TO BE DIFFERENT--it does not test
+        for differences itself.
         """
-        diff = _get_error('a', 'a')
+        diff = _get_difference('a', 'a')
         self.assertEqual(diff, Invalid('a', 'a'))
 
-        diff = _get_error(None, None)
+        diff = _get_difference(None, None)
         self.assertEqual(diff, Invalid(None, None))

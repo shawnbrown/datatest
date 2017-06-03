@@ -17,7 +17,6 @@ from datatest.allow import allowed_args
 from datatest.allow import allowed_limit
 
 from datatest.errors import ValidationError
-from datatest.errors import DataError
 from datatest.errors import Missing
 from datatest.errors import Extra
 from datatest.errors import Invalid
@@ -60,8 +59,8 @@ class TestBaseAllowance(unittest.TestCase):
             with BaseAllowance(filterfalse, None):
                 raise ValidationError('example error', in_diffs)
 
-        errors = cm.exception.errors
-        self.assertEqual(list(errors), [Missing('foo')])
+        differences = cm.exception.differences
+        self.assertEqual(list(differences), [Missing('foo')])
 
     def test_apply_filterfalse_bad_mapping(self):
         in_diffs = {'a': Missing('x'), 'b': Missing('y')}
@@ -71,40 +70,40 @@ class TestBaseAllowance(unittest.TestCase):
             with BaseAllowance(filterfalse, None):
                 raise ValidationError('example error', in_diffs)
 
-        errors = cm.exception.errors
-        self.assertEqual(dict(errors), {'b': Missing('y')})
+        differences = cm.exception.differences
+        self.assertEqual(dict(differences), {'b': Missing('y')})
 
     def test_mismatched_types(self):
         """When given a non-mapping container, a non-mapping container
-        should be returned for any remaining errors. Likewise, when
+        should be returned for any remaining differences. Likewise, when
         given a mapping, a mapping should be returned for any remaining
         errors. If the intput and output types are mismatched, a
         TypeError should be raised.
         """
         # List input and dict output.
-        errors_list =  [Missing('foo'), Missing('bar')]
+        diffs_list =  [Missing('foo'), Missing('bar')]
         function = lambda iterable: {'a': Missing('foo')}  # <- dict type
         with self.assertRaises(TypeError):
             with BaseAllowance(function, None):
-                raise ValidationError('example error', errors_list)
+                raise ValidationError('example error', diffs_list)
 
         # Dict input and list output.
-        errors_dict =  {'a': Missing('foo'), 'b': Missing('bar')}
+        diffs_dict =  {'a': Missing('foo'), 'b': Missing('bar')}
         function = lambda iterable: [Missing('foo')]  # <- list type
         with self.assertRaises(TypeError):
             with BaseAllowance(function, None):
-                raise ValidationError('example error', errors_dict)
+                raise ValidationError('example error', diffs_dict)
 
         # Dict input and list-item output.
-        errors_dict =  {'a': Missing('foo'), 'b': Missing('bar')}
+        diffs_dict =  {'a': Missing('foo'), 'b': Missing('bar')}
         function = lambda iterable: [('a', Missing('foo'))]  # <- list of items
         with self.assertRaises(ValidationError) as cm:
             with BaseAllowance(function, None):
-                raise ValidationError('example error', errors_dict)
+                raise ValidationError('example error', diffs_dict)
 
-        errors = cm.exception.errors
-        #self.assertIsInstance(errors, DictItems)
-        self.assertEqual(dict(errors), {'a': Missing('foo')})
+        differences = cm.exception.differences
+        #self.assertIsInstance(differences, DictItems)
+        self.assertEqual(dict(differences), {'a': Missing('foo')})
 
     def test_error_message(self):
         function = lambda iterable: iterable
@@ -181,127 +180,126 @@ class TestElementAllowanceFilterFalse(unittest.TestCase):
             return isinstance(value, Missing)
 
         elementwise = ElementAllowance(predicate)
-        #result = elementwise.filterfalse(iterable)
         result = elementwise.apply_filterfalse(iterable)
         self.assertEqual(list(result), [Extra(1), Invalid(3)])
 
 
 class TestElementAllowanceAndSubclasses(unittest.TestCase):
     def test_ElementAllowance(self):
-        # Test mapping of errors.
-        errors = {'a': Missing(1), 'b': Missing(2)}
+        # Test mapping of differences.
+        differences = {'a': Missing(1), 'b': Missing(2)}
         def function(key, error):
             return key == 'b' and isinstance(error, Missing)
 
         with self.assertRaises(ValidationError) as cm:
             with ElementAllowance(function):  # <- Apply allowance!
-                raise ValidationError('some message', errors)
+                raise ValidationError('some message', differences)
 
-        remaining_errors = cm.exception.errors
-        self.assertEqual(dict(remaining_errors), {'a': Missing(1)})
+        remaining_diffs = cm.exception.differences
+        self.assertEqual(dict(remaining_diffs), {'a': Missing(1)})
 
-        # Test non-mapping container of errors.
-        errors = [Missing(1), Extra(2)]
+        # Test non-mapping container of differences.
+        differences = [Missing(1), Extra(2)]
         def function(key, error):
-            assert key is None  # None when errors are non-mapping.
+            assert key is None  # None when differences are non-mapping.
             return isinstance(error, Missing)
 
         with self.assertRaises(ValidationError) as cm:
             with ElementAllowance(function):  # <- Apply allowance!
-                raise ValidationError('some message', errors)
+                raise ValidationError('some message', differences)
 
-        remaining_errors = cm.exception.errors
-        self.assertEqual(list(remaining_errors), [Extra(2)])
+        remaining_diffs = cm.exception.differences
+        self.assertEqual(list(remaining_diffs), [Extra(2)])
 
     def test_allowed_key(self):
-        # Test mapping of errors.
-        errors = {'aaa': Missing(1), 'bbb': Missing(2)}
+        # Test mapping of differences.
+        differences = {'aaa': Missing(1), 'bbb': Missing(2)}
         def function(key):
             return key == 'aaa'
 
         with self.assertRaises(ValidationError) as cm:
             with allowed_key(function):  # <- Apply allowance!
-                raise ValidationError('some message', errors)
+                raise ValidationError('some message', differences)
 
-        remaining_errors = cm.exception.errors
-        self.assertEqual(dict(remaining_errors), {'bbb': Missing(2)})
+        remaining_diffs = cm.exception.differences
+        self.assertEqual(dict(remaining_diffs), {'bbb': Missing(2)})
 
-        # Test mapping of errors with composite keys.
-        errors = {('a', 7): Missing(1), ('b', 7): Missing(2)}
+        # Test mapping of differences with composite keys.
+        differences = {('a', 7): Missing(1), ('b', 7): Missing(2)}
         def function(letter, number):
             return letter == 'a' and number == 7
 
         with self.assertRaises(ValidationError) as cm:
             with allowed_key(function):  # <- Apply allowance!
-                raise ValidationError('some message', errors)
+                raise ValidationError('some message', differences)
 
-        remaining_errors = cm.exception.errors
-        self.assertEqual(dict(remaining_errors), {('b', 7): Missing(2)})
+        remaining_diffs = cm.exception.differences
+        self.assertEqual(dict(remaining_diffs), {('b', 7): Missing(2)})
 
-        # Test non-mapping container of errors.
-        errors = [Missing(1), Extra(2)]
+        # Test non-mapping container of differences.
+        differences = [Missing(1), Extra(2)]
         def function(key):
-            assert key is None  # <- Always Non for non-mapping errors.
-            return False  # < Don't match any errors.
+            assert key is None  # <- Always Non for non-mapping differences.
+            return False  # < Don't match any differences.
 
         with self.assertRaises(ValidationError) as cm:
             with allowed_key(function):  # <- Apply allowance!
-                raise ValidationError('some message', errors)
+                raise ValidationError('some message', differences)
 
-        remaining_errors = cm.exception.errors
-        self.assertEqual(list(remaining_errors), [Missing(1), Extra(2)])
+        remaining_diffs = cm.exception.differences
+        self.assertEqual(list(remaining_diffs), [Missing(1), Extra(2)])
 
     def test_allowed_args(self):
         # Single argument.
-        errors =  [Missing('aaa'), Missing('bbb'), Extra('bbb')]
+        differences =  [Missing('aaa'), Missing('bbb'), Extra('bbb')]
         def function(arg):
             return arg == 'bbb'
 
         with self.assertRaises(ValidationError) as cm:
             with allowed_args(function):  # <- Apply allowance!
-                raise ValidationError('some message', errors)
+                raise ValidationError('some message', differences)
 
-        remaining_errors = cm.exception.errors
-        self.assertEqual(list(remaining_errors), [Missing('aaa')])
+        remaining_diffs = cm.exception.differences
+        self.assertEqual(list(remaining_diffs), [Missing('aaa')])
 
         # Multiple arguments.
-        errors =  [Deviation(1, 5), Deviation(2, 5)]
+        differences =  [Deviation(1, 5), Deviation(2, 5)]
         def function(diff, expected):
             return diff < 2 and expected == 5
 
         with self.assertRaises(ValidationError) as cm:
             with allowed_args(function):  # <- Apply allowance!
-                raise ValidationError('some message', errors)
+                raise ValidationError('some message', differences)
 
-        remaining_errors = cm.exception.errors
-        self.assertEqual(list(remaining_errors), [Deviation(2, 5)])
+        remaining_diffs = cm.exception.differences
+        self.assertEqual(list(remaining_diffs), [Deviation(2, 5)])
 
     def test_allowed_missing(self):
-        errors =  [Missing('X'), Missing('Y'), Extra('X')]
+        differences =  [Missing('X'), Missing('Y'), Extra('X')]
 
         with self.assertRaises(ValidationError) as cm:
             with allowed_missing():  # <- Apply allowance!
-                raise ValidationError('some message', errors)
-        remaining_errors = cm.exception.errors
-        self.assertEqual(list(remaining_errors), [Extra('X')])
+                raise ValidationError('some message', differences)
+        remaining_diffs = cm.exception.differences
+        self.assertEqual(list(remaining_diffs), [Extra('X')])
 
     def test_allowed_extra(self):
-        errors =  [Extra('X'), Extra('Y'), Missing('X')]
+        differences =  [Extra('X'), Extra('Y'), Missing('X')]
 
         with self.assertRaises(ValidationError) as cm:
             with allowed_extra():  # <- Apply allowance!
-                raise ValidationError('some message', errors)
-        remaining_errors = cm.exception.errors
-        self.assertEqual(list(remaining_errors), [Missing('X')])
+                raise ValidationError('some message', differences)
+        remaining_diffs = cm.exception.differences
+        self.assertEqual(list(remaining_diffs), [Missing('X')])
 
     def test_allowed_invalid(self):
-        errors =  [Invalid('X'), Invalid('Y'), Extra('Z')]
+        differences =  [Invalid('X'), Invalid('Y'), Extra('Z')]
 
         with self.assertRaises(ValidationError) as cm:
             with allowed_invalid():  # <- Apply allowance!
-                raise ValidationError('some message', errors)
-        remaining_errors = cm.exception.errors
-        self.assertEqual(list(remaining_errors), [Extra('Z')])
+                raise ValidationError('some message', differences)
+        remaining_diffs = cm.exception.differences
+        self.assertEqual(list(remaining_diffs), [Extra('Z')])
 
 
 class TestComposability(unittest.TestCase):
@@ -309,46 +307,46 @@ class TestComposability(unittest.TestCase):
     "&" and "|" (bitwise-and and bitwise-or operators).
     """
     def test_or_operator(self):
-        errors =  [Extra('X'), Missing('Y'), Invalid('Z')]
+        differences =  [Extra('X'), Missing('Y'), Invalid('Z')]
         with self.assertRaises(ValidationError) as cm:
             with allowed_extra() | allowed_missing():  # <- Compose with "|"!
-                raise ValidationError('some message', errors)
-        remaining_errors = cm.exception.errors
-        self.assertEqual(list(remaining_errors), [Invalid('Z')])
+                raise ValidationError('some message', differences)
+        remaining_diffs = cm.exception.differences
+        self.assertEqual(list(remaining_diffs), [Invalid('Z')])
 
     def test_and_operator(self):
-        errors =  [Missing('X'), Extra('Y'), Missing('Z')]
+        differences =  [Missing('X'), Extra('Y'), Missing('Z')]
         with self.assertRaises(ValidationError) as cm:
             is_x = lambda arg: arg == 'X'
             with allowed_missing() & allowed_args(is_x):  # <- Compose with "&"!
-                raise ValidationError('some message', errors)
-        remaining_errors = cm.exception.errors
-        self.assertEqual(list(remaining_errors), [Extra('Y'), Missing('Z')])
+                raise ValidationError('some message', differences)
+        remaining_diffs = cm.exception.differences
+        self.assertEqual(list(remaining_diffs), [Extra('Y'), Missing('Z')])
 
 
 class TestAllowedSpecific(unittest.TestCase):
     def test_some_allowed(self):
-        errors = [Extra('xxx'), Missing('yyy')]
+        differences = [Extra('xxx'), Missing('yyy')]
         allowed = [Extra('xxx')]
 
         with self.assertRaises(ValidationError) as cm:
             with allowed_specific(allowed):
-                raise ValidationError('example error', errors)
+                raise ValidationError('example error', differences)
 
         expected = [Missing('yyy')]
-        actual = list(cm.exception.errors)
+        actual = list(cm.exception.differences)
         self.assertEqual(expected, actual)
 
     def test_single_diff_without_container(self):
-        errors = [Extra('xxx'), Missing('yyy')]
+        differences = [Extra('xxx'), Missing('yyy')]
         allowed = Extra('xxx')  # <- Single diff, not in list.
 
         with self.assertRaises(ValidationError) as cm:
             with allowed_specific(allowed):
-                raise ValidationError('example error', errors)
+                raise ValidationError('example error', differences)
 
         expected = [Missing('yyy')]
-        actual = list(cm.exception.errors)
+        actual = list(cm.exception.differences)
         self.assertEqual(expected, actual)
 
     def test_all_allowed(self):
@@ -359,32 +357,32 @@ class TestAllowedSpecific(unittest.TestCase):
 
     def test_duplicates(self):
         # Three of the exact-same differences.
-        errors = [Extra('xxx'), Extra('xxx'), Extra('xxx')]
+        differences = [Extra('xxx'), Extra('xxx'), Extra('xxx')]
 
         # Only allow one of them.
         with self.assertRaises(ValidationError) as cm:
             allowed = [Extra('xxx')]
             with allowed_specific(allowed):
-                raise ValidationError('example error', errors)
+                raise ValidationError('example error', differences)
 
         expected = [Extra('xxx'), Extra('xxx')]  # Expect two remaining.
-        actual = list(cm.exception.errors)
+        actual = list(cm.exception.differences)
         self.assertEqual(expected, actual)
 
         # Only allow two of them.
         with self.assertRaises(ValidationError) as cm:
             allowed = [Extra('xxx'), Extra('xxx')]
             with allowed_specific(allowed):
-                raise ValidationError('example error', errors)
+                raise ValidationError('example error', differences)
 
         expected = [Extra('xxx')]  # Expect one remaining.
-        actual = list(cm.exception.errors)
+        actual = list(cm.exception.differences)
         self.assertEqual(expected, actual)
 
         # Allow all three.
         allowed = [Extra('xxx'), Extra('xxx'), Extra('xxx')]
         with allowed_specific(allowed):
-            raise ValidationError('example error', errors)
+            raise ValidationError('example error', differences)
 
     def test_error_mapping_allowance_list(self):
         differences = {'foo': [Extra('xxx')], 'bar': [Extra('xxx'), Missing('yyy')]}
@@ -395,7 +393,7 @@ class TestAllowedSpecific(unittest.TestCase):
                 raise ValidationError('example error', differences)
 
         expected = {'bar': [Missing('yyy')]}
-        actual = cm.exception.errors
+        actual = cm.exception.differences
         self.assertEqual(expected, actual)
 
     def test_mapping_some_allowed(self):
@@ -407,7 +405,7 @@ class TestAllowedSpecific(unittest.TestCase):
                 raise ValidationError('example error', differences)
 
         expected = {'bar': Missing('yyy')}
-        actual = cm.exception.errors
+        actual = cm.exception.differences
         self.assertEqual(expected, actual)
 
     def test_mapping_none_allowed(self):
@@ -418,24 +416,25 @@ class TestAllowedSpecific(unittest.TestCase):
             with allowed_specific(allowed):
                 raise ValidationError('example error', differences)
 
-        actual = cm.exception.errors
+        actual = cm.exception.differences
         self.assertEqual(differences, actual)
 
     def test_mapping_all_allowed(self):
-        errors = {'foo': Extra('xxx'), 'bar': Missing('yyy')}
-        allowed = errors
+        differences = {'foo': Extra('xxx'), 'bar': Missing('yyy')}
+        allowed = differences
 
         with allowed_specific(allowed):  # <- Catches all differences, no error!
-            raise ValidationError('example error', errors)
+            raise ValidationError('example error', differences)
 
     def test_mapping_mismatched_types(self):
-        error_list = [Extra('xxx'), Missing('yyy')]
+        diff_list = [Extra('xxx'), Missing('yyy')]
         allowed_dict = {'foo': Extra('xxx'), 'bar': Missing('yyy')}
 
-        regex = "'list' of errors cannot be matched.*requires non-mapping type"
+        regex = "'list' of differences cannot be matched.*requires non-mapping container"
+
         with self.assertRaisesRegex(ValueError, regex):
             with allowed_specific(allowed_dict):
-                raise ValidationError('example error', error_list)
+                raise ValidationError('example error', diff_list)
 
     def test_integration(self):
         """This is a bit of an integration test."""
@@ -445,7 +444,7 @@ class TestAllowedSpecific(unittest.TestCase):
         }
         allowed = [Extra('xxx'), Missing('yyy')]
 
-        regex = r"allowed errors not found: 'bar': \[Missing\('yyy'\)\]"
+        regex = r"allowed differences not found: 'bar': \[Missing\('yyy'\)\]"
         with self.assertRaisesRegex(ValueError, regex):
             with allowed_specific(allowed):
                 raise ValidationError('example error', differences)
@@ -455,13 +454,13 @@ class TestAllowedSpecific(unittest.TestCase):
         allowed1 = [Extra('xxx'), Missing('yyy')]
         allowed2 = [Missing('yyy'), Invalid('zzz')]
         specific = allowed_specific(allowed1) | allowed_specific(allowed2)
-        self.assertEqual(specific.errors, [Extra('xxx'), Missing('yyy'), Invalid('zzz')])
+        self.assertEqual(specific.differences, [Extra('xxx'), Missing('yyy'), Invalid('zzz')])
 
         # Duplicate shared element.
         allowed1 = [Extra('xxx'), Extra('xxx')]
         allowed2 = [Missing('yyy'), Extra('xxx')]
         specific = allowed_specific(allowed1) | allowed_specific(allowed2)
-        self.assertEqual(specific.errors, [Extra('xxx'), Extra('xxx'), Missing('yyy')])
+        self.assertEqual(specific.differences, [Extra('xxx'), Extra('xxx'), Missing('yyy')])
 
         # Mismatched types (list and dict)
         allowed1 = [Extra('xxx'), Missing('yyy')]
@@ -475,7 +474,7 @@ class TestAllowedSpecific(unittest.TestCase):
         allowed2 = {'a': [Missing('yyy'), Invalid('zzz')]}
         specific = allowed_specific(allowed1) | allowed_specific(allowed2)
         self.assertEqual(
-            specific.errors,
+            specific.differences,
             {'a': [Extra('xxx'), Missing('yyy'), Invalid('zzz')]},
         )
 
@@ -484,20 +483,20 @@ class TestAllowedSpecific(unittest.TestCase):
         allowed2 = {'b': [Missing('yyy'), Invalid('zzz')]}
         specific = allowed_specific(allowed1) | allowed_specific(allowed2)
         self.assertEqual(
-            specific.errors,
+            specific.differences,
             {'a': [Extra('xxx'), Missing('yyy')],
              'b': [Missing('yyy'), Invalid('zzz')]}
         )
 
-        # Mapping with unwrapped errors.
-        allowed1 = {'a': Extra('xxx'),    # <- Not in container.
-                    'b': Missing('yyy')}  # <- Not in container.
-        allowed2 = {'a': Extra('xxx'),    # <- Not in container.
+        # Mapping with unwrapped differences.
+        allowed1 = {'a': Extra('xxx'),    # <- Not wrapped in container.
+                    'b': Missing('yyy')}  # <- Not wrapped in container.
+        allowed2 = {'a': Extra('xxx'),    # <- Not wrapped in container.
                     'b': [Missing('yyy'), Invalid('zzz')]}
         specific = allowed_specific(allowed1) | allowed_specific(allowed2)
         self.assertEqual(
-            specific.errors,
-            {'a': [Extra('xxx')],
+            specific.differences,
+            {'a': [Extra('xxx')],  # <- Output is wrapped in list.
              'b': [Missing('yyy'), Invalid('zzz')]}
         )
 
@@ -505,12 +504,12 @@ class TestAllowedSpecific(unittest.TestCase):
         allowed1 = [Extra('xxx'), Missing('yyy')]
         allowed2 = [Missing('yyy'), Invalid('zzz')]
         specific = allowed_specific(allowed1) & allowed_specific(allowed2)
-        self.assertEqual(specific.errors, [Missing('yyy')])
+        self.assertEqual(specific.differences, [Missing('yyy')])
 
         allowed1 = [Extra('xxx'), Extra('xxx'), Missing('yyy')]
         allowed2 = [Missing('yyy'), Extra('xxx'), Invalid('zzz'), Extra('xxx')]
         specific = allowed_specific(allowed1) & allowed_specific(allowed2)
-        self.assertEqual(specific.errors, [Extra('xxx'), Extra('xxx'), Missing('yyy')])
+        self.assertEqual(specific.differences, [Extra('xxx'), Extra('xxx'), Missing('yyy')])
 
         # Mismatched types (list and dict)
         allowed1 = [Extra('xxx'), Missing('yyy')]
@@ -523,66 +522,66 @@ class TestAllowedSpecific(unittest.TestCase):
         allowed1 = {'a': [Extra('xxx'), Missing('yyy')]}
         allowed2 = {'a': [Missing('yyy'), Invalid('zzz')]}
         specific = allowed_specific(allowed1) & allowed_specific(allowed2)
-        self.assertEqual(specific.errors, {'a': [Missing('yyy')]})
+        self.assertEqual(specific.differences, {'a': [Missing('yyy')]})
 
         # Mapping mismatched keys.
         allowed1 = {'a': [Extra('xxx')]}
         allowed2 = {'b': [Extra('xxx')]}
         specific = allowed_specific(allowed1) & allowed_specific(allowed2)
-        self.assertEqual(specific.errors, {})
+        self.assertEqual(specific.differences, {})
 
         # Mapping mismatched values.
         allowed1 = {'a': [Extra('xxx')]}
         allowed2 = {'a': [Missing('yyy')]}
         specific = allowed_specific(allowed1) & allowed_specific(allowed2)
-        self.assertEqual(specific.errors, {})
+        self.assertEqual(specific.differences, {})
 
-        # Mapping with unwrapped errors.
+        # Mapping with unwrapped differences.
         allowed1 = {'a': Extra('xxx'),    # <- Not in container.
                     'b': Missing('yyy')}  # <- Not in container.
         allowed2 = {'a': Extra('xxx'),    # <- Not in container.
                     'b': [Missing('yyy'), Invalid('zzz')]}
         specific = allowed_specific(allowed1) & allowed_specific(allowed2)
-        self.assertEqual(specific.errors,
+        self.assertEqual(specific.differences,
                          {'a': [Extra('xxx')], 'b': [Missing('yyy')]})
 
 
 class TestAllowedLimit(unittest.TestCase):
     """Test allowed_limit() behavior."""
     def test_exceeds_limit(self):
-        errors = [Extra('xxx'), Missing('yyy')]
+        differences = [Extra('xxx'), Missing('yyy')]
         with self.assertRaises(ValidationError) as cm:
             with allowed_limit(1):  # <- Allows only 1 but there are 2!
-                raise ValidationError('example error', errors)
+                raise ValidationError('example error', differences)
 
-        remaining = list(cm.exception.errors)
-        self.assertEqual(remaining, errors)
+        remaining = list(cm.exception.differences)
+        self.assertEqual(remaining, differences)
 
     def test_matches_limit(self):
-        errors = [Extra('xxx'), Missing('yyy')]
+        differences = [Extra('xxx'), Missing('yyy')]
         with allowed_limit(2):  # <- Allows 2 and there are only 2.
-            raise ValidationError('example error', errors)
+            raise ValidationError('example error', differences)
 
     def test_under_limit(self):
-        errors = [Extra('xxx'), Missing('yyy')]
+        differences = [Extra('xxx'), Missing('yyy')]
         with allowed_limit(3):  # <- Allows 3 and there are only 2.
-            raise ValidationError('example error', errors)
+            raise ValidationError('example error', differences)
 
     def test_dict_of_diffs_exceeds_and_match(self):
-        errors = {
+        differences = {
             'foo': [Extra('xxx'), Missing('yyy')],
             'bar': [Extra('zzz')],
         }
         with self.assertRaises(ValidationError) as cm:
             with allowed_limit(1):  # <- Allows only 1 but there are 2!
-                raise ValidationError('example error', errors)
+                raise ValidationError('example error', differences)
 
-        actual = cm.exception.errors
+        actual = cm.exception.differences
         expected = {'foo': [Extra('xxx'), Missing('yyy')]}
         self.assertEqual(dict(actual), expected)
 
     def test_bitwise_or_composition_under_limit(self):
-        errors = [
+        differences = [
             Extra('aaa'),
             Extra('bbb'),
             Missing('ccc'),
@@ -590,11 +589,11 @@ class TestAllowedLimit(unittest.TestCase):
             Missing('eee'),
         ]
         with allowed_limit(2) | allowed_missing():  # <- Limit of 2 or Missing.
-            raise ValidationError('example error', errors)
+            raise ValidationError('example error', differences)
 
     def test_bitwise_ror(self):
         """The right-side-or/__ror__ should be wired up to __or__."""
-        errors = [
+        differences = [
             Extra('aaa'),
             Extra('bbb'),
             Missing('ccc'),
@@ -602,10 +601,10 @@ class TestAllowedLimit(unittest.TestCase):
             Missing('eee'),
         ]
         with allowed_missing() | allowed_limit(2):  # <- On right-hand side!
-            raise ValidationError('example error', errors)
+            raise ValidationError('example error', differences)
 
     def test_bitwise_or_composition_over_limit(self):
-        errors = [
+        differences = [
             Extra('aaa'),
             Extra('bbb'),
             Extra('ccc'),
@@ -614,59 +613,59 @@ class TestAllowedLimit(unittest.TestCase):
         ]
         with self.assertRaises(ValidationError) as cm:
             with allowed_limit(2) | allowed_missing():
-                raise ValidationError('example error', errors)
+                raise ValidationError('example error', differences)
 
-        # Returned errors *may* not be in the same order.
-        actual = list(cm.exception.errors)
-        self.assertEqual(actual, errors)
+        # Returned differences *may* not be in the same order.
+        actual = list(cm.exception.differences)
+        self.assertEqual(actual, differences)
 
         # Test __ror__().
         with self.assertRaises(ValidationError) as cm:
             with allowed_missing() | allowed_limit(2):  # <- On right-hand side!
-                raise ValidationError('example error', errors)
+                raise ValidationError('example error', differences)
 
-        # Returned errors *may* not be in the same order.
-        actual = list(cm.exception.errors)
-        self.assertEqual(actual, errors)
+        # Returned differences *may* not be in the same order.
+        actual = list(cm.exception.differences)
+        self.assertEqual(actual, differences)
 
     def test_bitwise_and_composition_under_limit(self):
-        errors = [Extra('xxx'), Missing('yyy'), Extra('zzz')]
+        differences = [Extra('xxx'), Missing('yyy'), Extra('zzz')]
 
         with self.assertRaises(ValidationError) as cm:
             is_extra = lambda x: isinstance(x, Extra)
             with allowed_limit(4) & allowed_extra():
-                raise ValidationError('example error', errors)
+                raise ValidationError('example error', differences)
 
-        actual = list(cm.exception.errors)
+        actual = list(cm.exception.differences)
         self.assertEqual(actual, [Missing('yyy')])
 
     def test_bitwise_rand(self):
         """The right-side-and/__rand__ should be wired up to __and__."""
-        errors = [Extra('xxx'), Missing('yyy'), Extra('zzz')]
+        differences = [Extra('xxx'), Missing('yyy'), Extra('zzz')]
 
         # Make sure __rand__ (right-and) is wired-up to __and__.
         with self.assertRaises(ValidationError) as cm:
             is_extra = lambda x: isinstance(x, Extra)
             with allowed_extra() & allowed_limit(4):  # <- On right-hand side!
-                raise ValidationError('example error', errors)
+                raise ValidationError('example error', differences)
 
-        actual = list(cm.exception.errors)
+        actual = list(cm.exception.differences)
         self.assertEqual(actual, [Missing('yyy')])
 
     def test_bitwise_and_composition_over_limit(self):
-        errors = [Extra('xxx'), Missing('yyy'), Extra('zzz')]
+        differences = [Extra('xxx'), Missing('yyy'), Extra('zzz')]
         with self.assertRaises(ValidationError) as cm:
             is_extra = lambda x: isinstance(x, Extra)
             with allowed_limit(1) & allowed_extra():  # <- Limit of 1 and is_extra().
-                raise ValidationError('example error', errors)
+                raise ValidationError('example error', differences)
 
         # Returned errors can be in different order.
-        actual = list(cm.exception.errors)
+        actual = list(cm.exception.differences)
         expected = [Missing('yyy'), Extra('xxx'), Extra('zzz')]
         self.assertEqual(actual, expected)
 
     def test_bitwise_and_composition_with_dict(self):
-        errors = {
+        differences = {
             'foo': [Extra('aaa'), Missing('bbb')],
             'bar': [Extra('ccc')],
             'baz': [Extra('ddd'), Extra('eee')],
@@ -674,9 +673,9 @@ class TestAllowedLimit(unittest.TestCase):
         with self.assertRaises(ValidationError) as cm:
             is_extra = lambda x: isinstance(x, Extra)
             with allowed_limit(1) & allowed_extra():
-                raise ValidationError('example error', errors)
+                raise ValidationError('example error', differences)
 
-        actual = cm.exception.errors
+        actual = cm.exception.differences
         expected = {
             'foo': [Missing('bbb')],              # <- Missing not allowed at all.
             'baz': [Extra('ddd'), Extra('eee')],  # <- Returns everything when over limit.
@@ -702,8 +701,8 @@ class TestAllowedDeviation(unittest.TestCase):
             with allowed_deviation(2):  # <- Allows +/- 2.
                 raise ValidationError('example error', differences)
 
-        remaining_errors = cm.exception.errors
-        self.assertEqual(remaining_errors, {'bbb': Deviation(+3, 10)})
+        remaining = cm.exception.differences
+        self.assertEqual(remaining, {'bbb': Deviation(+3, 10)})
 
     def test_lowerupper_syntax(self):
         differences = {
@@ -714,7 +713,7 @@ class TestAllowedDeviation(unittest.TestCase):
             with allowed_deviation(0, 3):  # <- Allows from 0 to 3.
                 raise ValidationError('example error', differences)
 
-        result_diffs = cm.exception.errors
+        result_diffs = cm.exception.differences
         self.assertEqual({'aaa': Deviation(-1, 10)}, result_diffs)
 
     def test_single_value_allowance(self):
@@ -728,7 +727,7 @@ class TestAllowedDeviation(unittest.TestCase):
             with allowed_deviation(3, 3):  # <- Allows +3 only.
                 raise ValidationError('example error', differences)
 
-        result_diffs = list(cm.exception.errors)
+        result_diffs = list(cm.exception.differences)
         expected_diffs = [
             Deviation(+2.9, 10),
             Deviation(+3.1, 10),
@@ -750,7 +749,7 @@ class TestAllowedDeviation(unittest.TestCase):
             with allowed_deviation(2) & allowed_key(fn):  # <- composed with "&"!
                 raise ValidationError('example error', differences)
 
-        actual = cm.exception.errors
+        actual = cm.exception.differences
         expected = {
             'ccc': Deviation(+2, 10),  # <- Keyword value not allowed.
             'ddd': Deviation(+3, 10),  # <- Not in allowed range.
@@ -813,7 +812,7 @@ class TestAllowedPercentDeviation(unittest.TestCase):
         result_string = str(cm.exception)
         self.assertTrue(result_string.startswith('example error'))
 
-        result_diffs = list(cm.exception.errors)
+        result_diffs = list(cm.exception.differences)
         self.assertEqual([Deviation(+3, 10)], result_diffs)
 
     def test_lowerupper_syntax(self):
@@ -828,7 +827,7 @@ class TestAllowedPercentDeviation(unittest.TestCase):
         result_string = str(cm.exception)
         self.assertTrue(result_string.startswith('example error'))
 
-        result_diffs = cm.exception.errors
+        result_diffs = cm.exception.differences
         self.assertEqual({'aaa': Deviation(-1, 10)}, result_diffs)
 
     def test_single_value_allowance(self):
@@ -842,7 +841,7 @@ class TestAllowedPercentDeviation(unittest.TestCase):
             with allowed_percent_deviation(0.3, 0.3):  # <- Allows +30% only.
                 raise ValidationError('example error', differences)
 
-        result_diffs = list(cm.exception.errors)
+        result_diffs = list(cm.exception.differences)
         expected_diffs = [
             Deviation(+2.9, 10),
             Deviation(+3.1, 10),
@@ -863,12 +862,12 @@ class TestAllowedPercentDeviation(unittest.TestCase):
             with allowed_percent_deviation(0.2) & allowed_key(keyfn):  # <- Allows +/- 20%.
                 raise ValidationError('example error', differences)
 
-        result_set = cm.exception.errors
-        expected_set = {
+        actual = cm.exception.differences
+        expected = {
             'ccc': Deviation(+2, 10),  # <- Key value not 'aaa'.
             'ddd': Deviation(+3, 10),  # <- Not in allowed range.
         }
-        self.assertEqual(expected_set, result_set)
+        self.assertEqual(actual, expected)
 
     def test_invalid_tolerance(self):
         with self.assertRaises(AssertionError) as cm:

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-#from decimal import Decimal
 from math import isnan
 from numbers import Number
 from pprint import pformat
@@ -14,9 +13,9 @@ from .dataaccess import _is_collection_of_items
 
 
 class ValidationError(AssertionError):
-    """Iterable container of errors."""
-    def __init__(self, message, errors):
-        self.args = message, errors
+    """Raised when a data validation fails."""
+    def __init__(self, message, differences):
+        self.args = message, differences
 
     @property
     def args(self):
@@ -32,23 +31,23 @@ class ValidationError(AssertionError):
         if not len(value) == 2:
             raise ValueError('expected tuple of 2 items, got {0}'.format(len(value)))
 
-        message, errors = value
-        if not _is_nsiterable(errors) or isinstance(errors, Exception):
+        message, differences = value
+        if not _is_nsiterable(differences) or isinstance(differences, Exception):
             # Above condition checks for Exception because
             # exceptions are iterable in Python 2.7 and 2.6.
-            msg = 'expected iterable of errors, got {0!r}'
-            raise TypeError(msg.format(errors.__class__.__name__))
+            msg = 'expected iterable of differences, got {0!r}'
+            raise TypeError(msg.format(differences.__class__.__name__))
 
-        if _is_collection_of_items(errors):
-            errors = dict(errors)
-        elif _is_consumable(errors):
-            errors = list(errors)
+        if _is_collection_of_items(differences):
+            differences = dict(differences)
+        elif _is_consumable(differences):
+            differences = list(differences)
 
-        if not errors:
-            raise ValueError('errors must not be empty')
+        if not differences:
+            raise ValueError('differences must not be empty')
 
         self._message = message
-        self._errors = errors
+        self._differences = differences
 
     @property
     def message(self):
@@ -56,28 +55,28 @@ class ValidationError(AssertionError):
         return self._message
 
     @property
-    def errors(self):
-        """The errors given to the exception constructor."""
-        return self._errors
+    def differences(self):
+        """The differences given to the exception constructor."""
+        return self._differences
 
     def __str__(self):
-        errors = pformat(self._errors, width=1)
-        if any([errors.startswith('[') and errors.endswith(']'),
-                errors.startswith('{') and errors.endswith('}'),
-                errors.startswith('(') and errors.endswith(')')]):
-            errors = errors[1:-1]
+        differences = pformat(self._differences, width=1)
+        if any([differences.startswith('[') and differences.endswith(']'),
+                differences.startswith('{') and differences.endswith('}'),
+                differences.startswith('(') and differences.endswith(')')]):
+            differences = differences[1:-1]
 
-        output = '{0} ({1} errors):\n {2}'
-        return output.format(self._message, len(self._errors), errors)
+        output = '{0} ({1} differences):\n {2}'
+        return output.format(self._message, len(self._differences), differences)
 
     def __repr__(self):
         class_name = self.__class__.__name__
-        return '{0}({1!r}, {2!r})'.format(class_name, self.message, self.errors)
+        return '{0}({1!r}, {2!r})'.format(class_name, self.message, self.differences)
 
 
 NANTOKEN = _make_token(
     'NANTOKEN',
-    'Token for comparing errors that contain not-a-number values.'
+    'Token for comparing differences that contain not-a-number values.'
 )
 
 def _nan_to_token(x):
@@ -87,17 +86,13 @@ def _nan_to_token(x):
     return x
 
 
-class DataError(AssertionError):
-    """
-    DataError(arg[, arg [, ...]])
-
-    Base class for data errors.
-    """
+class BaseDifference(object):
+    """Base class for data differences."""
     def __new__(cls, *args, **kwds):
-        if cls is DataError:
-            msg = "can't instantiate base class DataError - use a subclass"
+        if cls is BaseDifference:
+            msg = "can't instantiate BaseDifference directly - use a subclass"
             raise TypeError(msg)
-        return super(DataError, cls).__new__(cls)
+        return super(BaseDifference, cls).__new__(cls)
 
     def __init__(self, *args):
         if not args:
@@ -125,17 +120,17 @@ class DataError(AssertionError):
         return '{0}({1})'.format(cls_name, args_repr)
 
 
-class Missing(DataError):
+class Missing(BaseDifference):
     """A value **not found in data** that is in *requirement*."""
     pass
 
 
-class Extra(DataError):
+class Extra(BaseDifference):
     """A value found in *data* that is **not in requirement**."""
     pass
 
 
-class Invalid(DataError):
+class Invalid(BaseDifference):
     """A value in *data* that does not satisfy a function or regular
     expression *requirement*.
     """
@@ -146,7 +141,7 @@ class Invalid(DataError):
             super(Invalid, self).__init__(invalid)
 
 
-class Deviation(DataError):
+class Deviation(BaseDifference):
     """The difference between a numeric value in *data* and a matching
     numeric value in *requirement*.
     """
@@ -200,14 +195,14 @@ NOTFOUND = _make_token(
 )
 
 
-def _get_error(actual, expected, show_expected=True):
-    """Returns an appropriate error for *actual* and *expected*
+def _get_difference(actual, expected, show_expected=True):
+    """Returns an appropriate difference for *actual* and *expected*
     values that are known to be unequal.
 
     Setting *show_expected* to False, signals that the *expected*
-    argument should be omitted when creating an Invalid error (this
-    is useful for reducing duplication when validating data against
-    a single function or object).
+    argument should be omitted when creating an Invalid difference
+    (this is useful for reducing duplication when validating data
+    against a single function or object).
     """
     # Prepare for numeric comparisons.
     _isnum = lambda x: isinstance(x, Number) and not isnan(x)

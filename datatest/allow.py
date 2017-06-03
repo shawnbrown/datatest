@@ -16,6 +16,7 @@ from .dataaccess import _is_collection_of_items
 from .dataaccess import DictItems
 
 from .errors import ValidationError
+from .errors import BaseDifference
 from .errors import Missing
 from .errors import Extra
 from .errors import Invalid
@@ -83,22 +84,20 @@ class BaseAllowance(object):
 
     def __exit__(self, exc_type, exc_value, tb):
         # Apply filterfalse or reraise non-validation error.
-        if not exc_type:
-            errors = self.apply_filterfalse([])
-        elif issubclass(exc_type, ValidationError):
-            errors = self.apply_filterfalse(exc_value.errors)
-        else:
+        if exc_type and not issubclass(exc_type, ValidationError):
             raise exc_value
+        differences = getattr(exc_value, 'differences', [])
+        differences = self.apply_filterfalse(differences)
 
         # Check container types.
-        mappable_in = _is_mapping_type(getattr(exc_value, 'errors', False))
-        mappable_out = _is_mapping_type(errors)
+        mappable_in = _is_mapping_type(getattr(exc_value, 'differences', None))
+        mappable_out = _is_mapping_type(differences)
 
-        # Check if any errors were returned.
+        # Check if any differences were returned.
         try:
-            first_item = next(iter(errors))
-            if _is_consumable(errors):  # Rebuild if consumable.
-                errors = itertools.chain([first_item], errors)
+            first_item = next(iter(differences))
+            if _is_consumable(differences):  # Rebuild if consumable.
+                differences = itertools.chain([first_item], differences)
         except StopIteration:
             return True  # <- EXIT!
 
@@ -106,7 +105,7 @@ class BaseAllowance(object):
         if (mappable_in and not mappable_out
                 and isinstance(first_item, collections.Sized)
                 and len(first_item) == 2):
-            errors = DictItems(errors)
+            differences = DictItems(differences)
             mappable_out = True
 
         # Verify type compatibility.
@@ -115,15 +114,15 @@ class BaseAllowance(object):
                        'returned incompatible {2!r} collection')
             filter_name = getattr(self.filterfalse, '__name__',
                                   repr(self.filterfalse))
-            output_cls = errors.__class__.__name__
-            input_cls = exc_value.errors.__class__.__name__
+            output_cls = differences.__class__.__name__
+            input_cls = exc_value.differences.__class__.__name__
             raise TypeError(message.format(filter_name, input_cls, output_cls))
 
-        # Re-raise ValidationError() with remaining errors.
+        # Re-raise ValidationError() with remaining differences.
         message = getattr(exc_value, 'message', '')
         if self.msg:
             message = '{0}: {1}'.format(self.msg, message)
-        exc = ValidationError(message, errors)
+        exc = ValidationError(message, differences)
         exc.__cause__ = None  # <- Suppress context using verbose
         raise exc             #    alternative to support older Python
                               #    versions--see PEP 415 (same as
@@ -131,10 +130,10 @@ class BaseAllowance(object):
 
 
 class ElementAllowance(BaseAllowance):
-    """Allow errors where *predicate* returns True. For each
-    error, *predicate* will receive two arguments---a **key**
-    and **error**---and should return True if the error is
-    allowed or False if it is not.
+    """Allow differences where *predicate* returns True. For each
+    difference, *predicate* will receive two arguments---a **key**
+    and **difference**---and should return True if the difference
+    is allowed or False if it is not.
     """
     def __init__(self, predicate, msg=None):
         self.predicate = predicate
@@ -142,9 +141,9 @@ class ElementAllowance(BaseAllowance):
 
     def filterfalse(self, iterable):
         predicate = self.predicate
-        for key, error in iterable:
-            if not predicate(key, error):
-                yield key, error
+        for key, difference in iterable:
+            if not predicate(key, difference):
+                yield key, difference
 
     def apply_filterfalse(self, iterable):
         if isinstance(iterable, collections.Mapping):
@@ -153,9 +152,9 @@ class ElementAllowance(BaseAllowance):
         if _is_collection_of_items(iterable):
             return super(ElementAllowance, self).apply_filterfalse(iterable)
 
-        iterable = ((None, error) for error in iterable)
+        iterable = ((None, difference) for difference in iterable)
         filtered = super(ElementAllowance, self).apply_filterfalse(iterable)
-        return (error for key, error in filtered)  # 'key' intentionally discarded
+        return (diff for key, diff in filtered)  # 'key' intentionally discarded
 
     def __or__(self, other):
         if not isinstance(other, ElementAllowance):
@@ -180,22 +179,22 @@ class ElementAllowance(BaseAllowance):
 
 class allowed_missing(ElementAllowance):
     def __init__(self, msg=None):
-        def is_missing(_, error):
-            return isinstance(error, Missing)
+        def is_missing(_, difference):  # Key argument "_" not used.
+            return isinstance(difference, Missing)
         super(allowed_missing, self).__init__(is_missing, msg)
 
 
 class allowed_extra(ElementAllowance):
     def __init__(self, msg=None):
-        def is_extra(_, error):
-            return isinstance(error, Extra)
+        def is_extra(_, difference):  # Key argument "_" not used.
+            return isinstance(difference, Extra)
         super(allowed_extra, self).__init__(is_extra, msg)
 
 
 class allowed_invalid(ElementAllowance):
     def __init__(self, msg=None):
-        def is_invalid(_, error):
-            return isinstance(error, Invalid)
+        def is_invalid(_, difference):  # Key argument "_" not used.
+            return isinstance(difference, Invalid)
         super(allowed_invalid, self).__init__(is_invalid, msg)
 
 
@@ -272,35 +271,39 @@ _prettify_devsig(allowed_percent_deviation.__init__)
 
 
 class allowed_specific(BaseAllowance):
-    def __init__(self, errors, msg=None):
-        if _is_collection_of_items(errors):
-            errors = dict(errors)
-        self.errors = errors
+    def __init__(self, differences, msg=None):
+        if _is_collection_of_items(differences):
+            differences = dict(differences)
+        self.differences = differences
         super(allowed_specific, self).__init__(self.grpfltrfalse, msg)
 
     def grpfltrfalse(self, iterable):
-        if isinstance(self.errors, collections.Mapping):
+        """If the data being tested is a mapping, this is called for
+        every group (grouped by key). If the data is a non-mapping,
+        this is called only one time for the entire iterable.
+        """
+        if isinstance(self.differences, collections.Mapping):
             iterable = iter(iterable)
-            first_key, first_error = next(iterable)
-            iterable = itertools.chain([(first_key, first_error)], iterable)
-            allowed = self.errors.get(first_key, [])
+            first_key, first_diff = next(iterable)
+            iterable = itertools.chain([(first_key, first_diff)], iterable)
+            allowed = self.differences.get(first_key, [])
         else:
-            allowed = self.errors
+            allowed = self.differences
 
-        if isinstance(allowed, Exception):
+        if isinstance(allowed, BaseDifference):
             allowed = [allowed]
         else:
             allowed = list(allowed)  # Make list or copy existing list.
 
-        for key, error in iterable:
+        for key, difference in iterable:
             try:
-                allowed.remove(error)
+                allowed.remove(difference)
             except ValueError:
-                yield key, error
+                yield key, difference
 
-        if allowed:  # If there are left-over errors.
+        if allowed:  # If there are left-over differences.
             key_repr = '{0!r}: '.format(key) if key else ''
-            message = 'allowed errors not found: {0}{1!r}'
+            message = 'allowed differences not found: {0}{1!r}'
             exc = ValueError(message.format(key_repr, allowed))
             exc.__cause__ = None
             raise exc
@@ -312,104 +315,104 @@ class allowed_specific(BaseAllowance):
         if _is_collection_of_items(iterable):
             return super(allowed_specific, self).apply_filterfalse(iterable)  # <- EXIT!
 
-        if _is_mapping_type(self.errors):
-            message = ('{0!r} of errors cannot be matched using {1!r} '
-                       'of allowances, requires non-mapping type')
+        if _is_mapping_type(self.differences):
+            message = ('{0!r} of differences cannot be matched using a '
+                       'specified {1!r}, requires non-mapping container')
             message = message.format(iterable.__class__.__name__,
-                                     self.errors.__class__.__name__)
+                                     self.differences.__class__.__name__)
             raise ValueError(message)
 
         iterable = ((None, error) for error in iterable)
         filtered = super(allowed_specific, self).apply_filterfalse(iterable)
         return (error for key, error in filtered)  # 'key' intentionally discarded
 
-    def _or_combine_errors(self, self_errors, other_errors):
-        if isinstance(self_errors, Exception):
-            self_errors = [self_errors]
-        if isinstance(other_errors, Exception):
-            other_errors = [other_errors]
+    def _or_combine_diffs(self, self_diffs, other_diffs):
+        if isinstance(self_diffs, BaseDifference):
+            self_diffs = [self_diffs]
+        if isinstance(other_diffs, BaseDifference):
+            other_diffs = [other_diffs]
 
-        errors = []
-        for e in self_errors:
-            if self_errors.count(e) >= other_errors.count(e):
-                errors.append(e)
+        differences = []
+        for diff in self_diffs:
+            if self_diffs.count(diff) >= other_diffs.count(diff):
+                differences.append(diff)
 
-        for e in other_errors:
-            if other_errors.count(e) > self_errors.count(e):
-                errors.append(e)
-        return errors
+        for diff in other_diffs:
+            if other_diffs.count(diff) > self_diffs.count(diff):
+                differences.append(diff)
+        return differences
 
     def __or__(self, other):
         if not isinstance(other, allowed_specific):
             return NotImplemented
 
-        self_errors = self.errors
-        other_errors = other.errors
+        self_diffs = self.differences
+        other_diffs = other.differences
 
-        if isinstance(self_errors, collections.Mapping) != \
-                isinstance(other_errors, collections.Mapping):
-            self_type = self_errors.__class__.__name__
-            other_type = other_errors.__class__.__name__
-            msg = ('cannot combine mapping with non-mapping errors: '
+        if isinstance(self_diffs, collections.Mapping) != \
+                isinstance(other_diffs, collections.Mapping):
+            self_type = self_diffs.__class__.__name__
+            other_type = other_diffs.__class__.__name__
+            msg = ('cannot combine mapping with non-mapping differences: '
                    '{0!r} and {1!r}').format(self_type, other_type)
             raise ValueError(msg)
 
-        if not isinstance(self_errors, collections.Mapping):
-            errors = self._or_combine_errors(self_errors, other_errors)
-            return allowed_specific(errors)  # <- EXIT!
+        if not isinstance(self_diffs, collections.Mapping):
+            differences = self._or_combine_diffs(self_diffs, other_diffs)
+            return allowed_specific(differences)  # <- EXIT!
 
-        all_keys = set(self_errors.keys()) | set(other_errors.keys())
-        errors = {}
+        all_keys = set(self_diffs.keys()) | set(other_diffs.keys())
+        differences = {}
         for key in all_keys:
-            err1 = self_errors.get(key, [])
-            err2 = other_errors.get(key, [])
-            errors[key] = self._or_combine_errors(err1, err2)
-        return allowed_specific(errors)
+            diff1 = self_diffs.get(key, [])
+            diff2 = other_diffs.get(key, [])
+            differences[key] = self._or_combine_diffs(diff1, diff2)
+        return allowed_specific(differences)
 
-    def _and_combine_errors(self, self_errors, other_errors):
-        if isinstance(self_errors, Exception):
-            self_errors = [self_errors]
-        if isinstance(other_errors, Exception):
-            other_errors = [other_errors]
+    def _and_combine_diffs(self, self_diffs, other_diffs):
+        if isinstance(self_diffs, BaseDifference):
+            self_diffs = [self_diffs]
+        if isinstance(other_diffs, BaseDifference):
+            other_diffs = [other_diffs]
 
-        errors = []
-        for e in self_errors:
-            if self_errors.count(e) <= other_errors.count(e):
-                errors.append(e)
+        differences = []
+        for diff in self_diffs:
+            if self_diffs.count(diff) <= other_diffs.count(diff):
+                differences.append(diff)
 
-        for e in other_errors:
-            if other_errors.count(e) < self_errors.count(e):
-                errors.append(e)
-        return errors
+        for diff in other_diffs:
+            if other_diffs.count(diff) < self_diffs.count(diff):
+                differences.append(diff)
+        return differences
 
     def __and__(self, other):
         if not isinstance(other, allowed_specific):
             return NotImplemented
 
-        self_errors = self.errors
-        other_errors = other.errors
+        self_diffs = self.differences
+        other_diffs = other.differences
 
-        if isinstance(self_errors, collections.Mapping) != \
-                isinstance(other_errors, collections.Mapping):
-            self_type = self_errors.__class__.__name__
-            other_type = other_errors.__class__.__name__
-            msg = ('cannot combine mapping with non-mapping errors: '
+        if isinstance(self_diffs, collections.Mapping) != \
+                isinstance(other_diffs, collections.Mapping):
+            self_type = self_diffs.__class__.__name__
+            other_type = other_diffs.__class__.__name__
+            msg = ('cannot combine mapping with non-mapping differences: '
                    '{0!r} and {1!r}').format(self_type, other_type)
             raise ValueError(msg)
 
-        if not isinstance(self_errors, collections.Mapping):
-            errors = self._and_combine_errors(self_errors, other_errors)
-            return allowed_specific(errors)  # <- EXIT!
+        if not isinstance(self_diffs, collections.Mapping):
+            differences = self._and_combine_diffs(self_diffs, other_diffs)
+            return allowed_specific(differences)  # <- EXIT!
 
-        all_keys = set(self_errors.keys()) & set(other_errors.keys())
-        errors = {}
+        all_keys = set(self_diffs.keys()) & set(other_diffs.keys())
+        differences = {}
         for key in all_keys:
-            err1 = self_errors[key]
-            err2 = other_errors[key]
-            combined = self._and_combine_errors(err1, err2)
+            diff1 = self_diffs[key]
+            diff2 = other_diffs[key]
+            combined = self._and_combine_diffs(diff1, diff2)
             if combined:
-                errors[key] = combined
-        return allowed_specific(errors)
+                differences[key] = combined
+        return allowed_specific(differences)
 
 
 class allowed_key(ElementAllowance):
@@ -435,8 +438,8 @@ class allowed_args(ElementAllowance):
     """
     def __init__(self, function, msg=None):
         @functools.wraps(function)
-        def wrapped(_, error):
-            args = error.args
+        def wrapped(_, difference):
+            args = difference.args
             if _is_nsiterable(args):
                 return function(*args)
             return function(args)

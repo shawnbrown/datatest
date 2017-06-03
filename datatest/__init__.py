@@ -2,7 +2,6 @@
 from .case import DataTestCase
 
 from .errors import ValidationError
-from .errors import DataError
 from .errors import Missing
 from .errors import Extra
 from .errors import Invalid
@@ -41,7 +40,6 @@ __all__ = [
 
     # Error classes.
     'ValidationError',
-    'DataError',
     'Missing',
     'Extra',
     'Invalid',

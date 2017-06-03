@@ -268,48 +268,49 @@ class DataTestCase(TestCase):
         """
         return allowed_percent_deviation(lower, upper, msg)
 
-    def allowedSpecific(self, errors, msg=None):
-        """Allows specified *errors* without triggering a test
+    def allowedSpecific(self, differences, msg=None):
+        """Allows specified *differences* without triggering a test
         failure::
 
-            errors = [
+            diffs = [
                 Missing('C'),
                 Extra('D'),
             ]
-            with self.allowedSpecific(errors):
+            with self.allowedSpecific(diffs):
                 data = {'A', 'B', 'D'}  # <- 'D' extra, 'C' missing
                 requirement = {'A', 'B', 'C'}
                 self.assertValid(data, requirement)
 
-        The *errors* argument can be a :py:obj:`list` or :py:obj:`dict`
-        of data errors or a single :class:`DataError`.
+        The *differences* argument can be a :py:obj:`list` or
+        :py:obj:`dict` of differences or a single difference.
         """
-        return allowed_specific(errors, msg)
+        return allowed_specific(differences, msg)
 
     def allowedKey(self, function, msg=None):
-        """Allow errors in a mapping where *function* returns True.
-        For each error, *function* will receive the associated
-        mapping **key** unpacked into one or more arguments.
+        """Allows differences in a mapping where *function* returns
+        True. For each difference, *function* will receive the
+        associated mapping **key** unpacked into one or more
+        arguments.
         """
         return allowed_key(function, msg)
 
     def allowedArgs(self, function, msg=None):
-        """Allows errors where *function* returns True. For the 'args'
-        attribute of each error (a tuple), *function* must accept the
-        number of arguments unpacked from 'args'.
+        """Allows differences where *function* returns True. For the
+        'args' attribute of each difference (a tuple), *function* must
+        accept the number of arguments unpacked from 'args'.
         """
         return allowed_args(function, msg)
 
     def allowedLimit(self, number, msg=None):
-        """Allows a limited *number* of data errors without
-        triggering a test failure::
+        """Allows a limited *number* of differences without triggering
+        a test failure::
 
-            with self.allowedLimit(2):  # Allows up to two errors.
+            with self.allowedLimit(2):  # Allows up to two differences.
                 data = ['47306', '1370', 'TX']  # <- '1370' and 'TX' invalid
                 requirement = re.compile('^\d{5}$')
                 self.assertValid(data, requirement)
 
-        If the count of data errors exceeds the given *number*, the
+        If the count of differences exceeds the given *number*, the
         test will fail with a :class:`ValidationError` containing all
         observed differences.
         """

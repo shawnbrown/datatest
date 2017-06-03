@@ -6,12 +6,12 @@ from .utils.builtins import callable
 from .utils.misc import _is_nsiterable
 from .dataaccess import DictItems
 from .dataaccess import _is_collection_of_items
-from .errors import DataError
+from .errors import BaseDifference
 from .errors import Extra
 from .errors import Missing
 from .errors import Invalid
 from .errors import Deviation
-from .errors import _get_error
+from .errors import _get_difference
 from .errors import NOTFOUND
 
 _regex_type = type(re.compile(''))
@@ -135,13 +135,13 @@ def _require_callable(data, function):
         if returned_value is False:
             yield Invalid(element)
             continue
-        if isinstance(returned_value, DataError):
-            yield returned_value  # Returned data errors are used as-is.
+        if isinstance(returned_value, BaseDifference):
+            yield returned_value  # Returned difference is used as-is.
             continue
 
         callable_name = function.__name__
         message = \
-            '{0!r} returned {1!r}, should return True, False or DataError'
+            '{0!r} returned {1!r}, should return True, False or a difference instance'
         raise TypeError(message.format(callable_name, returned_value))
 
 
@@ -167,9 +167,9 @@ def _require_other(data, other, show_expected=True):
     for element in data:
         try:
             if element != other:
-                yield _get_error(element, other, show_expected)
+                yield _get_difference(element, other, show_expected)
         except Exception:
-            yield _get_error(element, other, show_expected)
+            yield _get_difference(element, other, show_expected)
 
 
 def _apply_requirement(data, requirement):
@@ -255,7 +255,7 @@ def _normalize_mapping_result(result):
 
 
 def _get_differences(data, requirement):
-    """Return iterable of data errors or None."""
+    """Return iterable of diffferences or None."""
     if isinstance(requirement, collections.Mapping):
         result = _apply_mapping_requirement(data, requirement)
         result = _normalize_mapping_result(result)
@@ -267,6 +267,6 @@ def _get_differences(data, requirement):
         result = _normalize_mapping_result(result)
     else:
         result = _apply_requirement(data, requirement)
-        if isinstance(result, DataError):
+        if isinstance(result, BaseDifference):
             result = [result]
     return result

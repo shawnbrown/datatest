@@ -158,7 +158,7 @@ class TestRequireCallable(unittest.TestCase):
         self.assertEqual(list(result), [Invalid(30)])
 
     def test_returned_error(self):
-        """When a DataError is returned, it is used in place of Invalid."""
+        """When a difference is returned, it is used in place of Invalid."""
         def func(x):
             if x == 'c':
                 return Invalid("Letter 'c' is no good!")
@@ -171,7 +171,7 @@ class TestRequireCallable(unittest.TestCase):
     def test_bad_return_type(self):
         """If callable returns an unexpected type, raise a TypeError."""
         def func(x):
-            return Exception('my error')  # <- Not True, False or DataError!
+            return Exception('my error')  # <- Not True, False or difference!
 
         with self.assertRaises(TypeError):
             result = _require_callable(['a', 'b', 'c'], func)
