@@ -26,7 +26,7 @@ class working_directory(contextlib.ContextDecorator):
     to a given *path*. If *path* specifies a file, the file's
     directory is used. When exiting the with-block, the working
     directory is automatically changed back to its previous
-    location::
+    location.
 
     Use the global ``__file__`` variable to load data relative to
     the test file itself::
