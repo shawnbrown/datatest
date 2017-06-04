@@ -722,20 +722,20 @@ class DataSource(object):
 
     The given *data* should be an iterable of rows. The rows
     themselves can be lists (as below), dictionaries, or other
-    sequences or mappings. *columns* must be a sequence of strings
-    to use when referencing data by column name::
+    sequences or mappings. *fieldnames* must be a sequence of
+    strings to use when referencing data by field::
 
         data = [
             ['x', 100],
             ['y', 200],
             ['z', 300],
         ]
-        columns = ['A', 'B']
-        source = datatest.DataSource(data, columns)
+        fieldnames = ['A', 'B']
+        source = datatest.DataSource(data, fieldnames)
 
     If *data* is an iterable of :py:class:`dict` or
     :py:func:`namedtuple <collections.namedtuple>` rows,
-    then *columns* can be omitted::
+    then *fieldnames* can be omitted::
 
         data = [
             {'A': 'x', 'B': 100},
@@ -744,9 +744,9 @@ class DataSource(object):
         ]
         source = datatest.DataSource(data)
     """
-    def __init__(self, data, columns=None):
+    def __init__(self, data, fieldnames=None):
         """Initialize self."""
-        temptable = TemporarySqliteTable(data, columns)
+        temptable = TemporarySqliteTable(data, fieldnames)
         self._connection = temptable.connection
         self._table = temptable.name
 
@@ -806,40 +806,34 @@ class DataSource(object):
             else:
                 sheet = book.sheet_by_name(worksheet)
             data = (sheet.row(i) for i in range(sheet.nrows))  # Build *data*
-            data = ([x.value for x in row] for row in data)    # and *columns*
-            columns = next(data)                               # from rows.
-            new_instance = cls(data, columns)  # <- Create instance.
+            data = ([x.value for x in row] for row in data)    # and *fields*
+            fieldnames = next(data)                            # from rows.
+            new_instance = cls(data, fieldnames)  # <- Create instance.
         finally:
             book.release_resources()
 
         return new_instance
 
-    def columns(self, type=list):
-        """Return column names as given *type* (defaults to list).
+    @property
+    def fieldnames(self):
+        """A list of field names used by the data source.
 
         .. code-block:: python
 
             source = datatest.DataSource(...)
-            columns = source.columns()
+            fields = source.fieldnames
         """
         cursor = self._connection.cursor()
         cursor.execute('PRAGMA table_info(' + self._table + ')')
-
-        # Get results as a list of column names *then* call type().
-        # Passing a list tends to give less confusing error messages
-        # when type contains an inappropriate constructor.
-        column_list = [x[1] for x in cursor]  # <- Make list first.
-        if type != list:
-            return type(column_list)
-        return column_list
+        return [x[1] for x in cursor]
 
     def __iter__(self):
         """Return iterable of dictionary rows (like csv.DictReader)."""
         cursor = self._connection.cursor()
         cursor.execute('SELECT * FROM ' + self._table)
 
-        column_names = self.columns()
-        dict_row = lambda x: dict(zip(column_names, x))
+        fieldnames = self.fieldnames
+        dict_row = lambda x: dict(zip(fieldnames, x))
         return (dict_row(row) for row in cursor.fetchall())
 
     def __call__(self, select, **where):
@@ -949,30 +943,31 @@ class DataSource(object):
 
         raise TypeError('type {0!r} not supported'.format(type(select)))
 
-    def _assert_columns_exist(self, columns):
-        """Assert that given columns are present in data source,
-        raises LookupError if columns are missing.
+    def _assert_fields_exist(self, fieldnames):
+        """Assert that given fieldnames are present in data source,
+        raises LookupError if fields are missing.
         """
-        #assert _is_nsiterable(columns)
-        #assert not isinstance(columns, collections.Mapping)
-        available = self.columns()
-        for column in columns:
-            if column not in available:
-                msg = '{0!r} not in {1!r}'.format(column, self)
+        #assert _is_nsiterable(fieldnames)
+        #assert not isinstance(fieldnames, collections.Mapping)
+        available = self.fieldnames
+        for name in fieldnames:
+            if name not in available:
+                msg = '{0!r} not in {1!r}'.format(name, self)
                 raise LookupError(msg)
 
-    def _escape_column(self, column):
-        column = column.replace('"', '""')  # Escape for SQLite.
-        return '"{0}"'.format(column)
+    def _escape_field_name(self, name):
+        """Escape field names for SQLite."""
+        name = name.replace('"', '""')
+        return '"{0}"'.format(name)
 
     def _parse_key_value(self, key, value):
         key_columns = (key,) if isinstance(key, str) else tuple(key)
         value = tuple(value)[0]
         value_columns = (value,) if isinstance(value, str) else  tuple(value)
-        self._assert_columns_exist(key_columns)
-        self._assert_columns_exist(value_columns)
-        key_columns = tuple(self._escape_column(x) for x in key_columns)
-        value_columns = tuple(self._escape_column(x) for x in value_columns)
+        self._assert_fields_exist(key_columns)
+        self._assert_fields_exist(value_columns)
+        key_columns = tuple(self._escape_field_name(x) for x in key_columns)
+        value_columns = tuple(self._escape_field_name(x) for x in value_columns)
 
         return key_columns, value_columns
 
@@ -1059,7 +1054,7 @@ class DataSource(object):
                   several indexes before testing even begins could
                   lead to longer run times so use indexes with care.
         """
-        self._assert_columns_exist(columns)
+        self._assert_fields_exist(columns)
 
         # Build index name.
         whitelist = lambda col: ''.join(x for x in col if x.isalnum())
@@ -1067,7 +1062,7 @@ class DataSource(object):
         idx_name = 'idx_{0}_{1}'.format(self._table, idx_name)
 
         # Build column names.
-        columns = tuple(self._escape_column(x) for x in columns)
+        columns = tuple(self._escape_field_name(x) for x in columns)
 
         # Prepare statement.
         statement = 'CREATE INDEX IF NOT EXISTS {0} ON {1} ({2})'

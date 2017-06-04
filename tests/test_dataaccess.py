@@ -427,7 +427,7 @@ class Test_select_functions(unittest.TestCase):
             _validate_select_container(['A', 'B'])
 
         # POINT OF DISCUSSION: Should non-string items fail
-        # immediately? Currently, it's conceivable that column
+        # immediately? Currently, it's conceivable that field
         # names could be something other than strings.
 
         #with self.assertRaises(ValueError):
@@ -478,7 +478,7 @@ class TestDataQuery(unittest.TestCase):
             DataQuery(['bad', 'syntax'])
 
     def test_from_parts(self):
-        source = DataSource([(1, 2), (1, 2)], columns=['A', 'B'])
+        source = DataSource([(1, 2), (1, 2)], fieldnames=['A', 'B'])
         query = DataQuery._from_parts(source=source)
         self.assertEqual(query._query_steps, tuple())
         self.assertIs(query.default_source, source)
@@ -489,7 +489,7 @@ class TestDataQuery(unittest.TestCase):
             query = DataQuery._from_parts(source=wrong_type)
 
     def test_execute(self):
-        source = DataSource([('1', '2'), ('1', '2')], columns=['A', 'B'])
+        source = DataSource([('1', '2'), ('1', '2')], fieldnames=['A', 'B'])
         query = DataQuery._from_parts(source=source)
         query._query_steps = [
             ('select', (['B'],), {}),
@@ -510,7 +510,7 @@ class TestDataQuery(unittest.TestCase):
         query2 = query1.map(int)
         self.assertIsNot(query1, query2, 'should return new object')
 
-        source = DataSource([('a', '2'), ('b', '2')], columns=['col1', 'col2'])
+        source = DataSource([('a', '2'), ('b', '2')], fieldnames=['col1', 'col2'])
         result = query2.execute(source)
         self.assertEqual(result, [2, 2])
 
@@ -519,12 +519,12 @@ class TestDataQuery(unittest.TestCase):
         query2 = query1.filter(lambda x: x == 'a')
         self.assertIsNot(query1, query2, 'should return new object')
 
-        source = DataSource([('a', '2'), ('b', '2')], columns=['col1', 'col2'])
+        source = DataSource([('a', '2'), ('b', '2')], fieldnames=['col1', 'col2'])
         result = query2.execute(source)
         self.assertEqual(result, ['a'])
 
         # No filter arg should default to bool()
-        source = DataSource([(1,), (2,), (0,), (3,)], columns=['col1'])
+        source = DataSource([(1,), (2,), (0,), (3,)], fieldnames=['col1'])
         query = DataQuery(set(['col1'])).filter()  # <- No arg!
         result = query.execute(source)
         self.assertEqual(result, set([1, 2, 3]))
@@ -534,7 +534,7 @@ class TestDataQuery(unittest.TestCase):
         query2 = query1.reduce(lambda x, y: x + y)
         self.assertIsNot(query1, query2, 'should return new object')
 
-        source = DataSource([('a', '2'), ('b', '2')], columns=['col1', 'col2'])
+        source = DataSource([('a', '2'), ('b', '2')], fieldnames=['col1', 'col2'])
         result = query2.execute(source)
         self.assertEqual(result, 'ab')
 
@@ -628,9 +628,9 @@ class TestDataSourceConstructors(unittest.TestCase):
         data = [('x', 1),
                 ('y', 2),
                 ('z', 3)]
-        columns = ['A', 'B']
+        fieldnames = ['A', 'B']
 
-        source = DataSource(data, columns)
+        source = DataSource(data, fieldnames)
         table_contents = self.get_table_contents(source)
         self.assertEqual(set(table_contents), set(data))
 
@@ -644,7 +644,7 @@ class TestDataSourceConstructors(unittest.TestCase):
         expected = [('x', 1), ('y', 2), ('z', 3)]
         self.assertEqual(set(table_contents), set(expected))
 
-        source = DataSource(data, columns=['B', 'A'])  # <- Set column order.
+        source = DataSource(data, fieldnames=['B', 'A'])  # <- Set field order.
         table_contents = self.get_table_contents(source)
         expected = [(1, 'x'), (2, 'y'), (3, 'z')]
         self.assertEqual(set(table_contents), set(expected))
@@ -690,7 +690,7 @@ class TestDataSourceConstructors(unittest.TestCase):
 
 class TestDataSourceBasics(unittest.TestCase):
     def setUp(self):
-        columns = ['label1', 'label2', 'value']
+        fieldnames = ['label1', 'label2', 'value']
         data = [['a', 'x', '17'],
                 ['a', 'x', '13'],
                 ['a', 'y', '20'],
@@ -698,12 +698,11 @@ class TestDataSourceBasics(unittest.TestCase):
                 ['b', 'z', '5' ],
                 ['b', 'y', '40'],
                 ['b', 'x', '25']]
-        self.source = DataSource(data, columns)
+        self.source = DataSource(data, fieldnames)
 
-    def test_columns(self):
+    def test_fieldnames(self):
         expected = ['label1', 'label2', 'value']
-        self.assertEqual(self.source.columns(), expected)
-        self.assertEqual(self.source.columns(type=set), set(expected))
+        self.assertEqual(self.source.fieldnames, expected)
 
     def test_iter(self):
         """Test __iter__."""
@@ -734,9 +733,9 @@ class TestDataSourceBasics(unittest.TestCase):
         expected = set(['a', 'b'])
         self.assertEqual(result.evaluate(), expected)
 
-    def test_select_column_not_found(self):
+    def test_select_field_not_found(self):
         with self.assertRaises(LookupError):
-            result = self.source._select(['bad_column_name'])
+            result = self.source._select(['bad_field_name'])
 
     def test_select_list_of_lists(self):
         result = self.source._select([['label1']])

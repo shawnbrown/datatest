@@ -129,7 +129,7 @@ class TestAssertValid(DataTestCase):
         self.assertEqual(differences, [Invalid('ccc')])
 
     def test_query_objects(self):
-        source = DataSource([('1', '2'), ('1', '2')], columns=['A', 'B'])
+        source = DataSource([('1', '2'), ('1', '2')], fieldnames=['A', 'B'])
         query_obj1 = source(['B'])
         query_obj2 = source(['B'])
         self.assertValid(query_obj1, query_obj2)

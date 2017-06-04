@@ -53,13 +53,13 @@ You can load the data from a CSV file (:download:`example.csv
     >>> source = datatest.DataSource.from_csv('example.csv')
 
 
-Getting Column Names
-====================
+Getting Field Names
+===================
 
-You can get a list of column names with :meth:`columns()
-<DataSource.columns>`::
+You can get a list of field names with :attr:`fieldnames
+<DataSource.fieldnames>`::
 
-    >>> source.columns()
+    >>> source.fieldnames
     ['one', 'two', 'three']
 
 
@@ -67,7 +67,7 @@ Selecting Data
 ==============
 
 Calling our source like a function returns a :class:`DataQuery`
-for the specified column or columns.
+for the specified field or fields.
 
 Select elements from column **one** as a :py:class:`list`::
 
@@ -274,7 +274,7 @@ DataSource
 
     .. automethod:: from_excel
 
-    .. automethod:: columns(type=list)
+    .. autoattribute:: fieldnames
 
     .. automethod:: __call__
 
