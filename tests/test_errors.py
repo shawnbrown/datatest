@@ -79,7 +79,7 @@ class TestBaseDifference(unittest.TestCase):
             MinimalDifference()
 
         # Base class should raise error.
-        regex = "can't instantiate BaseDifference"
+        regex = "Can't instantiate abstract class BaseDifference"
         with self.assertRaisesRegex(TypeError, regex):
             base_instance = BaseDifference('A')
 

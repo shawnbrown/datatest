@@ -3,6 +3,7 @@ from math import isnan
 from numbers import Number
 from pprint import pformat
 
+from .utils import abc
 from .utils import collections
 from .utils import contextlib
 from .utils.decimal import Decimal
@@ -86,12 +87,12 @@ def _nan_to_token(x):
     return x
 
 
-class BaseDifference(object):
+class BaseDifference(abc.ABC):
     """Base class for data differences."""
     def __new__(cls, *args, **kwds):
         if cls is BaseDifference:
-            msg = "can't instantiate BaseDifference directly - use a subclass"
-            raise TypeError(msg)
+            raise TypeError("Can't instantiate abstract class "
+                            "BaseDifference, make a subclass instead")
         return super(BaseDifference, cls).__new__(cls)
 
     def __init__(self, *args):
