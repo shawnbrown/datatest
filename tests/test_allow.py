@@ -25,49 +25,65 @@ from datatest.errors import Deviation
 
 class TestBaseAllowance(unittest.TestCase):
     def test_apply_filterfalse_good_list(self):
-        in_diffs = [Missing('x')]
-
-        filterfalse = lambda iterable: list()  # <- empty list
-        base = BaseAllowance(filterfalse)
-        allowed = base.apply_filterfalse(in_diffs)
+        class AllowEverything(BaseAllowance):
+            def filterfalse(self, iterable):
+                return []
+        base = AllowEverything()
+        allowed = base.apply_filterfalse([Missing('x')])
         self.assertEqual(list(allowed), [])
 
-        filterfalse = lambda iterable: iter([])  # <- empty iterator
-        base = BaseAllowance(filterfalse)
-        allowed = base.apply_filterfalse(in_diffs)
+        class AllowEverything(BaseAllowance):
+            def filterfalse(self, iterable):
+                return iter([])  # <- empty iterator
+        base = AllowEverything()
+        allowed = base.apply_filterfalse([Missing('x')])
         self.assertEqual(list(allowed), [])
 
     def test_apply_filterfalse_good_mapping(self):
         """If no errors are returned, the type doesn't matter."""
         in_diffs = {'a': Missing('x')}  # <- Input of mapping differences!
 
-        filterfalse = lambda iterable: dict()  # <- empty dict
-        base = BaseAllowance(filterfalse)
+        class AllowEverything(BaseAllowance):
+            def filterfalse(self, iterable):
+                return dict()  # <- returns dict
+        base = AllowEverything()
         allowed = base.apply_filterfalse(in_diffs)
         self.assertEqual(list(allowed), [])
 
-        filterfalse = lambda iterable: iter([])  # <- empty iterator
-        base = BaseAllowance(filterfalse)
+        class AllowEverything(BaseAllowance):
+            def filterfalse(self, iterable):
+                return iter([])  # <- empty iterator
+        base = AllowEverything()
         allowed = base.apply_filterfalse(in_diffs)
         self.assertEqual(list(allowed), [])
 
     def test_apply_filterfalse_bad_list(self):
-        in_diffs = [Missing('foo'), Missing('bar')]
+        in_diffs = [Missing('foo'), Extra('bar')]
+
+        class ExampleAllowance(BaseAllowance):
+            def filterfalse(self, iterable):
+                return (x for x in iterable if not isinstance(x, Extra))
 
         with self.assertRaises(ValidationError) as cm:
-            filterfalse = lambda iterable: [Missing('foo')]
-            with BaseAllowance(filterfalse, None):
+            with ExampleAllowance():
                 raise ValidationError('example error', in_diffs)
 
         differences = cm.exception.differences
         self.assertEqual(list(differences), [Missing('foo')])
 
     def test_apply_filterfalse_bad_mapping(self):
-        in_diffs = {'a': Missing('x'), 'b': Missing('y')}
+        in_diffs = {'a': Extra('x'), 'b': Missing('y')}
+
+        class ExampleAllowance(BaseAllowance):
+            def filterfalse(self, iterable):
+                differences = {}
+                for key, diff in iterable:
+                    if not isinstance(diff, Extra):
+                        differences[key] = diff
+                return differences
 
         with self.assertRaises(ValidationError) as cm:
-            filterfalse = lambda iterable: {'b': Missing('y')}
-            with BaseAllowance(filterfalse, None):
+            with ExampleAllowance():
                 raise ValidationError('example error', in_diffs)
 
         differences = cm.exception.differences
@@ -81,25 +97,34 @@ class TestBaseAllowance(unittest.TestCase):
         TypeError should be raised.
         """
         # List input and dict output.
-        diffs_list =  [Missing('foo'), Missing('bar')]
-        function = lambda iterable: {'a': Missing('foo')}  # <- dict type
+        list_input =  [Missing('foo'), Missing('bar')]
+        class DictOutput(BaseAllowance):
+            def filterfalse(self, iterable):
+                return {'a': Missing('foo')}  # <- dict type
+
         with self.assertRaises(TypeError):
-            with BaseAllowance(function, None):
-                raise ValidationError('example error', diffs_list)
+            with DictOutput():
+                raise ValidationError('example error', list_input)
 
         # Dict input and list output.
-        diffs_dict =  {'a': Missing('foo'), 'b': Missing('bar')}
-        function = lambda iterable: [Missing('foo')]  # <- list type
+        dict_input =  {'a': Missing('foo'), 'b': Missing('bar')}
+        class ListOutput(BaseAllowance):
+            def filterfalse(self, iterable):
+                return [Missing('foo')]  # <- list type
+
         with self.assertRaises(TypeError):
-            with BaseAllowance(function, None):
-                raise ValidationError('example error', diffs_dict)
+            with ListOutput():
+                raise ValidationError('example error', dict_input)
 
         # Dict input and list-item output.
-        diffs_dict =  {'a': Missing('foo'), 'b': Missing('bar')}
-        function = lambda iterable: [('a', Missing('foo'))]  # <- list of items
+        dict_input =  {'a': Missing('foo'), 'b': Missing('bar')}
+        class ItemOutput(BaseAllowance):
+            def filterfalse(self, iterable):
+                return [('a', Missing('foo'))]  # <- list of items
+
         with self.assertRaises(ValidationError) as cm:
-            with BaseAllowance(function, None):
-                raise ValidationError('example error', diffs_dict)
+            with ItemOutput():
+                raise ValidationError('example error', dict_input)
 
         differences = cm.exception.differences
         #self.assertIsInstance(differences, DictItems)
@@ -109,16 +134,27 @@ class TestBaseAllowance(unittest.TestCase):
         function = lambda iterable: iterable
         error = ValidationError('original message', [Missing('foo')])
 
+        class AllowedNothing(BaseAllowance):
+            def filterfalse(self, iterable):
+                return iterable
+
         # No message.
         with self.assertRaises(ValidationError) as cm:
-            with BaseAllowance(function):  # <- No 'msg' keyword!
+            with AllowedNothing():  # <- No 'msg' keyword!
                 raise error
         message = cm.exception.message
         self.assertEqual(message, 'original message')
 
         # Test allowance message.
         with self.assertRaises(ValidationError) as cm:
-            with BaseAllowance(function, msg='allowance message'):  # <- Uses 'msg'.
+            with AllowedNothing('allowance message'):  # <- Provides 'msg'.
+                raise error
+        message = cm.exception.message
+        self.assertEqual(message, 'allowance message: original message')
+
+        # Test allowance message.
+        with self.assertRaises(ValidationError) as cm:
+            with AllowedNothing(msg='allowance message'):  # <- Uses keyword.
                 raise error
         message = cm.exception.message
         self.assertEqual(message, 'allowance message: original message')

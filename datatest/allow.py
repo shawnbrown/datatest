@@ -3,6 +3,7 @@ import inspect
 from math import isnan
 from numbers import Number
 from .utils.builtins import *
+from .utils import abc
 from .utils import collections
 from .utils import functools
 from .utils import itertools
@@ -32,16 +33,14 @@ def _is_mapping_type(obj):
                 _is_collection_of_items(obj)
 
 
-class BaseAllowance(object):
+class BaseAllowance(abc.ABC):
     """Context manager to allow certain data errors without
     triggering a test failure. *filterfalse* should accept an
     iterable of data errors and return an iterable of only
     those errors which are **not** allowed.
     """
-    def __init__(self, filterfalse, msg=None):
+    def __init__(self, msg=None):
         """Initialize object values."""
-        assert callable(filterfalse)
-        self.filterfalse = filterfalse
         self.msg = msg
 
     def __or__(self, other):
@@ -53,17 +52,21 @@ class BaseAllowance(object):
     def __enter__(self):
         return self
 
+    @abc.abstractmethod
+    def filterfalse(self, iterable):
+        """Filter iterable and yield elements that are not allowed."""
+
     def apply_filterfalse(self, iterable):
         if isinstance(iterable, collections.Mapping):
             iterable = getattr(iterable, 'iteritems', iterable.items)()
 
         if _is_collection_of_items(iterable):
-            for key, error in iterable:
-                if (not _is_nsiterable(error)
-                        or isinstance(error, Exception)
-                        or isinstance(error, collections.Mapping)):
+            for key, diff in iterable:
+                if (not _is_nsiterable(diff)
+                        or isinstance(diff, Exception)
+                        or isinstance(diff, collections.Mapping)):
                     # Error is a single element.
-                    filtered = self.filterfalse(iter([(key, error)]))
+                    filtered = self.filterfalse(iter([(key, diff)]))
                     if isinstance(filtered, collections.Mapping):
                         filtered = filtered.items()
                     filtered = list(filtered)
@@ -71,16 +74,16 @@ class BaseAllowance(object):
                         yield filtered[0]
                 else:
                     # Error is a container of multiple elements.
-                    error = self.filterfalse((key, e) for e in error)
-                    error = list(e for key, e in error)
-                    if error:
-                        yield key, error
+                    diff = self.filterfalse((key, d) for d in diff)
+                    diff = list(d for key, d in diff)
+                    if diff:
+                        yield key, diff
         else:
             filtered = self.filterfalse(iterable)
             if _is_mapping_type(filtered):
                 raise TypeError('returned mapping output for non-mapping input')
-            for error in filtered:
-                yield error
+            for diff in filtered:
+                yield diff
 
     def __exit__(self, exc_type, exc_value, tb):
         # Apply filterfalse or reraise non-validation error.
@@ -137,7 +140,7 @@ class ElementAllowance(BaseAllowance):
     """
     def __init__(self, predicate, msg=None):
         self.predicate = predicate
-        super(ElementAllowance, self).__init__(self.filterfalse, msg)
+        super(ElementAllowance, self).__init__(msg)
 
     def filterfalse(self, iterable):
         predicate = self.predicate
@@ -146,11 +149,8 @@ class ElementAllowance(BaseAllowance):
                 yield key, difference
 
     def apply_filterfalse(self, iterable):
-        if isinstance(iterable, collections.Mapping):
-            iterable = getattr(iterable, 'iteritems', iterable.items)()
-
-        if _is_collection_of_items(iterable):
-            return super(ElementAllowance, self).apply_filterfalse(iterable)
+        if _is_mapping_type(iterable):
+            return super(ElementAllowance, self).apply_filterfalse(iterable)  # <- EXIT!
 
         iterable = ((None, difference) for difference in iterable)
         filtered = super(ElementAllowance, self).apply_filterfalse(iterable)
@@ -249,9 +249,9 @@ class allowed_deviation(ElementAllowance):
     """
     def __init__(self, lower, upper=None, msg=None):
         lower, upper, msg = _normalize_devargs(lower, upper, msg)
-        def tolerance(_, error):  # <- Closes over lower & upper.
-            deviation = error.deviation or 0.0
-            if isnan(deviation) or isnan(error.expected or 0.0):
+        def tolerance(_, diff):  # <- Closes over lower & upper.
+            deviation = diff.deviation or 0.0
+            if isnan(deviation) or isnan(diff.expected or 0.0):
                 return False
             return lower <= deviation <= upper
         super(allowed_deviation, self).__init__(tolerance, msg)
@@ -261,9 +261,9 @@ _prettify_devsig(allowed_deviation.__init__)
 class allowed_percent_deviation(ElementAllowance):
     def __init__(self, lower, upper=None, msg=None):
         lower, upper, msg = _normalize_devargs(lower, upper, msg)
-        def percent_tolerance(_, error):  # <- Closes over lower & upper.
-            percent_deviation = error.percent_deviation
-            if isnan(percent_deviation) or isnan(error.expected or 0):
+        def percent_tolerance(_, diff):  # <- Closes over lower & upper.
+            percent_deviation = diff.percent_deviation
+            if isnan(percent_deviation) or isnan(diff.expected or 0):
                 return False
             return lower <= percent_deviation <= upper
         super(allowed_percent_deviation, self).__init__(percent_tolerance, msg)
@@ -275,9 +275,9 @@ class allowed_specific(BaseAllowance):
         if _is_collection_of_items(differences):
             differences = dict(differences)
         self.differences = differences
-        super(allowed_specific, self).__init__(self.grpfltrfalse, msg)
+        super(allowed_specific, self).__init__(msg)
 
-    def grpfltrfalse(self, iterable):
+    def filterfalse(self, iterable):
         """If the data being tested is a mapping, this is called for
         every group (grouped by key). If the data is a non-mapping,
         this is called only one time for the entire iterable.
@@ -309,10 +309,7 @@ class allowed_specific(BaseAllowance):
             raise exc
 
     def apply_filterfalse(self, iterable):
-        if isinstance(iterable, collections.Mapping):
-            iterable = getattr(iterable, 'iteritems', iterable.items)()
-
-        if _is_collection_of_items(iterable):
+        if _is_mapping_type(iterable):
             return super(allowed_specific, self).apply_filterfalse(iterable)  # <- EXIT!
 
         if _is_mapping_type(self.differences):
@@ -322,9 +319,9 @@ class allowed_specific(BaseAllowance):
                                      self.differences.__class__.__name__)
             raise ValueError(message)
 
-        iterable = ((None, error) for error in iterable)
+        iterable = ((None, diff) for diff in iterable)
         filtered = super(allowed_specific, self).apply_filterfalse(iterable)
-        return (error for key, error in filtered)  # 'key' intentionally discarded
+        return (diff for key, diff in filtered)  # 'key' intentionally discarded
 
     def _or_combine_diffs(self, self_diffs, other_diffs):
         if isinstance(self_diffs, BaseDifference):
@@ -451,39 +448,36 @@ class allowed_limit(BaseAllowance):
         self.number = number
         self.or_predicate = None
         self.and_predicate = None
-        super(allowed_limit, self).__init__(self.limit_filterfalse, msg)
+        super(allowed_limit, self).__init__(msg)
 
-    def limit_filterfalse(self, iterable):
+    def filterfalse(self, iterable):
         number = self.number                # Reduce the number of
         or_predicate = self.or_predicate    # dot-lookups--these are
         and_predicate = self.and_predicate  # referenced many times.
 
         iterable = iter(iterable)  # Must be consumable.
         matching = []
-        for key, value in iterable:
-            if or_predicate and or_predicate(key, value):
+        for key, diff in iterable:
+            if or_predicate and or_predicate(key, diff):
                 continue
-            if and_predicate and not and_predicate(key, value):
-                yield key, value
+            if and_predicate and not and_predicate(key, diff):
+                yield key, diff
                 continue
-            matching.append((key, value))
+            matching.append((key, diff))
             if len(matching) > number:
                 break
 
         if len(matching) > number:
-            for key, value in itertools.chain(matching, iterable):
-                yield key, value
+            for key, diff in itertools.chain(matching, iterable):
+                yield key, diff
 
     def apply_filterfalse(self, iterable):
-        if isinstance(iterable, collections.Mapping):
-            iterable = getattr(iterable, 'iteritems', iterable.items)()
+        if _is_mapping_type(iterable):
+            return super(allowed_limit, self).apply_filterfalse(iterable)  # <- EXIT!
 
-        if _is_collection_of_items(iterable):
-            return super(allowed_limit, self).apply_filterfalse(iterable)
-
-        iterable = ((None, error) for error in iterable)
+        iterable = ((None, diff) for diff in iterable)
         filtered = super(allowed_limit, self).apply_filterfalse(iterable)
-        return (error for key, error in filtered)  # 'key' intentionally discarded
+        return (diff for key, diff in filtered)  # 'key' intentionally discarded
 
     def __or__(self, other):
         if not isinstance(other, ElementAllowance):
