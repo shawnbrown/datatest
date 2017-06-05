@@ -64,6 +64,10 @@ class TestValidationError(unittest.TestCase):
         updated = "ValidationError('changed', [MinimalDifference('B')])"
         self.assertEqual(repr(err), updated)
 
+    def test_args(self):
+        err = ValidationError('invalid data', [MinimalDifference('A')])
+        self.assertEqual(err.args, ('invalid data', [MinimalDifference('A')]))
+
 
 class TestBaseDifference(unittest.TestCase):
     def test_instantiation(self):

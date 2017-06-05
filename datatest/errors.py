@@ -21,7 +21,7 @@ class ValidationError(AssertionError):
     @property
     def args(self):
         """The tuple of arguments given to the exception constructor."""
-        return (self._message, self._errors)
+        return (self._message, self._differences)
 
     @args.setter
     def args(self, value):
