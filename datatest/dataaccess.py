@@ -750,6 +750,11 @@ class DataSource(object):
         self._connection = temptable.connection
         self._table = temptable.name
 
+        repr_string = '{0}(<{1} of records>, fieldnames={2})'
+        self._repr_string = repr_string.format(self.__class__.__name__,
+                                               data.__class__.__name__,
+                                               repr(self.fieldnames))
+
     @classmethod
     def from_csv(cls, file, encoding=None, **fmtparams):
         """Create a DataSource from a CSV *file* (a path or file-like
@@ -770,6 +775,15 @@ class DataSource(object):
         temptable = _from_csv(file, encoding, **fmtparams)
         new_cls._connection = temptable.connection
         new_cls._table = temptable.name
+
+        repr_string = '{0}.from_csv({1}{2}{3})'.format(
+            new_cls.__class__.__name__,
+            repr(file[0]) if len(file) == 1 else repr(file),
+            ', {0!r}'.format(encoding) if encoding else '',
+            ', **{0!r}'.format(fmtparams) if fmtparams else '',
+        )
+        new_cls._repr_string = repr_string
+
         return new_cls
 
     @classmethod
@@ -826,6 +840,13 @@ class DataSource(object):
         cursor = self._connection.cursor()
         cursor.execute('PRAGMA table_info(' + self._table + ')')
         return [x[1] for x in cursor]
+
+    def __repr__(self):
+        """Return a string representation of the data source."""
+        repr_string = getattr(self, '_repr_string', None)
+        if repr_string:
+            return repr_string
+        return super(DataSource, self).__repr__()
 
     def __iter__(self):
         """Return iterable of dictionary rows (like csv.DictReader)."""
@@ -1021,13 +1042,6 @@ class DataSource(object):
             results = DictItems((k, next(v)) for k, v in results)
             return DataResult(results, evaluation_type=dict)
         return next(results)
-
-    def __repr__(self):
-        """Return a string representation of the data source."""
-        cls_name = self.__class__.__name__
-        conn_name = str(self._connection)
-        tbl_name = self._table
-        return '{0}({1}, table={2!r})'.format(cls_name, conn_name, tbl_name)
 
     def create_index(self, *columns):
         """Create an index for specified columns---can speed up

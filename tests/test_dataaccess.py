@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 import os
+import re
 import tempfile
 import textwrap
 from . import _io as io
@@ -613,6 +614,14 @@ class TestDataQuery(unittest.TestCase):
         # Get result as string.
         returned_value = query._explain(file=None)
         self.assertEqual(returned_value, expected)
+
+    def test_repr(self):
+        data = [['x', 100], ['y', 200], ['z', 300]]
+        filednames = ['A', 'B']
+        source = DataSource(data, filednames)
+
+        regex = r"DataSource\(<list of records>, fieldnames=\[u?'A', u?'B'\]\)"
+        self.assertRegex(repr(source), regex)
 
 
 class TestDataSourceConstructors(unittest.TestCase):
