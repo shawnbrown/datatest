@@ -285,7 +285,7 @@ DataQuery
 
 .. autoclass:: DataQuery
 
-    .. attribute:: default_source
+    .. attribute:: defaultsource
 
         A property for setting a predetermined :class:`DataSource`
         to use when :meth:`execute` is called without a *source*

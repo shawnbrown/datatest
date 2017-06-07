@@ -465,12 +465,23 @@ class Test_select_functions(unittest.TestCase):
 
 class TestDataQuery(unittest.TestCase):
     def test_init(self):
+        expected = tuple([('select', (['foo'],), {'bar': 'baz'})])
+
+        # Use select-only syntax.
         query = DataQuery(['foo'], bar='baz')
-        expected = (
-            ('select', (['foo'],), {'bar': 'baz'}),
-        )
         self.assertEqual(query._query_steps, expected)
-        self.assertEqual(query.default_source, None)
+        self.assertEqual(query.defaultsource, None)
+
+        # Pass defaultsource and subject explicitly.
+        query = DataQuery(None, ['foo'], bar='baz')
+        self.assertEqual(query._query_steps, expected)
+        self.assertEqual(query.defaultsource, None)
+
+        # Use defaultsource-and-select syntax.
+        source = DataSource([(1, 2), (1, 2)], fieldnames=['A', 'B'])
+        query = DataQuery(source, ['foo'], bar='baz')
+        self.assertEqual(query._query_steps, expected)
+        self.assertEqual(query.defaultsource, source)
 
         with self.assertRaises(TypeError, msg='should require select args'):
             DataQuery()
@@ -482,7 +493,7 @@ class TestDataQuery(unittest.TestCase):
         source = DataSource([(1, 2), (1, 2)], fieldnames=['A', 'B'])
         query = DataQuery._from_parts(source=source)
         self.assertEqual(query._query_steps, tuple())
-        self.assertIs(query.default_source, source)
+        self.assertIs(query.defaultsource, source)
 
         regex = "expected 'DataSource', got 'list'"
         with self.assertRaisesRegex(TypeError, regex):

@@ -434,15 +434,28 @@ class DataQuery(object):
     actually computing the result. No data computation occurs until
     the :meth:`execute` method is called.
     """
-    def __init__(self, select, **where):
+    def __init__(self, defaultsource=None, select=None, **where):
+        """
+        DataQuery(select, **where)
+        DataQuery(defaultsource, select, **where)
+        """
+        if select is None:
+            if defaultsource is None or isinstance(defaultsource, DataSource):
+                message = "__init__() missing 1 required positional argument: 'select'"
+                raise TypeError(message)
+            select, defaultsource = defaultsource, None
+        elif defaultsource and not isinstance(defaultsource, DataSource):
+            message = "'defaultsource' must be of the type DataSource, got {0}"
+            raise TypeError(message.format(defaultsource.__class__.__name__))
+
         _parse_select(select)  # <- Returned values are discarded (if it is
-        self._select = select  #    a mapping then its type must be preserved,
+                               #    a mapping then its type must be preserved,
                                #    not just its key and value).
+        self.defaultsource = defaultsource
+        self._select = select
         self._query_steps = tuple([
             _query_step('select', (select,), where),
         ])
-        self.default_source = None  # Optional default DataSource.
-                                    # See docs for full details.
 
     @property
     def select(self):
@@ -478,12 +491,12 @@ class DataQuery(object):
 
         new_cls = cls.__new__(cls)
         new_cls._query_steps = query_steps
-        new_cls.default_source = source
+        new_cls.defaultsource = source
         return new_cls
 
     def _add_step(self, name, *args, **kwds):
         steps = self._query_steps + (_query_step(name, args, kwds),)
-        new_query = self.__class__._from_parts(steps, self.default_source)
+        new_query = self.__class__._from_parts(steps, self.defaultsource)
         return new_query
 
     def map(self, function):
@@ -637,7 +650,7 @@ class DataQuery(object):
 
         Execute the query and return its result. The *source* should
         be a :class:`DataSource` on which the query will operate.
-        If *source* is omitted, the :attr:`default_source` is used.
+        If *source* is omitted, the :attr:`defaultsource` is used.
 
         By default, results are eagerly evaluated and loaded into
         memory. For lazy evaluation, set *evaluate* to False to
@@ -645,7 +658,7 @@ class DataQuery(object):
 
         Set *optimize* to False to turn-off query optimization.
         """
-        result = source or self.default_source
+        result = source or self.defaultsource
         if not result:
             raise ValueError('must provide source, none found')
         self._validate_source(result)
@@ -858,22 +871,17 @@ class DataSource(object):
         return (dict_row(row) for row in cursor.fetchall())
 
     def __call__(self, select, **where):
-        """Calling a DataSource like a function returns a new
-        query object (see :class:`DataQuery` for *select* and
-        *where* syntax). The new query's :attr:`default_source
-        <DataQuery.default_source>` is automatically set to the
-        originating source object::
+        """Calling a DataSource like a function returns a DataQuery
+        object that is automatically associated with the source (see
+        :class:`DataQuery` for *select* and *where* syntax)::
 
             query = source(['A'])
 
         This is a shorthand for::
 
-            query = DataQuery(['A'])
-            query.default_source = source
+            query = DataQuery(source, ['A'])
         """
-        query = DataQuery(select, **where)
-        query.default_source = self
-        return query
+        return DataQuery(self, select, **where)
 
     def _execute_query(self, select_clause, trailing_clause=None, **kwds_filter):
         """Execute query and return cursor object."""
