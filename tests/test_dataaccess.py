@@ -465,23 +465,27 @@ class Test_select_functions(unittest.TestCase):
 
 class TestDataQuery(unittest.TestCase):
     def test_init(self):
-        expected = tuple([('select', (['foo'],), {'bar': 'baz'})])
-
         # Use select-only syntax.
         query = DataQuery(['foo'], bar='baz')
-        self.assertEqual(query._query_steps, expected)
         self.assertEqual(query.defaultsource, None)
 
         # Pass defaultsource and subject explicitly.
         query = DataQuery(None, ['foo'], bar='baz')
-        self.assertEqual(query._query_steps, expected)
         self.assertEqual(query.defaultsource, None)
 
         # Use defaultsource-and-select syntax.
         source = DataSource([(1, 2), (1, 2)], fieldnames=['A', 'B'])
         query = DataQuery(source, ['foo'], bar='baz')
-        self.assertEqual(query._query_steps, expected)
         self.assertEqual(query.defaultsource, source)
+
+        # Test query steps.
+        query = DataQuery(['foo'], bar='baz')
+        self.assertEqual(query._query_steps, tuple())
+
+        # Adding query steps.
+        query = query.distinct().sum()
+        expected = tuple([('distinct', (), {}), ('sum', (), {})])
+        self.assertEqual(query._query_steps, expected)
 
         with self.assertRaises(TypeError, msg='should require select args'):
             DataQuery()
@@ -527,7 +531,6 @@ class TestDataQuery(unittest.TestCase):
         source = DataSource([('1', '2'), ('1', '2')], fieldnames=['A', 'B'])
         query = DataQuery(source, ['B'])
         query._query_steps = [
-            ('select', (['B'],), {}),
             ('map', (int,), {}),
             ('map', (lambda x: x * 2,), {}),
             ('sum', (), {}),

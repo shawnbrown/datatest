@@ -454,9 +454,7 @@ class DataQuery(object):
         self.defaultsource = defaultsource
         self._select = select
         self._where = where
-        self._query_steps = tuple([
-            _query_step('select', (select,), where),
-        ])
+        self._query_steps = tuple()
 
     @property
     def select(self):
@@ -576,19 +574,13 @@ class DataQuery(object):
 
         return _execution_step(function, args, {})
 
-    @classmethod
-    def _get_execution_plan(cls, query_steps):
-        if not query_steps:
-            return ()
-        query_steps = iter(query_steps)
-        first_name, first_args, first_kwds = next(query_steps)
-        assert first_name == 'select', "first query step must be a 'select'"
+    def _get_execution_plan(self, query_steps):
         execution_plan = [
             _execution_step(getattr, (RESULT_TOKEN, '_select'), {}),
-            _execution_step(RESULT_TOKEN, first_args, first_kwds),
+            _execution_step(RESULT_TOKEN, (self._select,), self._where),
         ]
         for query_step in query_steps:
-            execution_step = cls._translate_step(query_step)
+            execution_step = self._translate_step(query_step)
             execution_plan.append(execution_step)
         return tuple(execution_plan)
 
