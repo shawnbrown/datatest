@@ -323,19 +323,15 @@ class DataTestCase(TestCase):
 # Prettify default signature of methods that accept multiple signatures.
 # This only works for Python 3.3 and newer--older versions will simply
 # have the original method sigture.
-with contextlib.suppress(AttributeError):
-    # For DataTestCase.allowedDeviation(), build "tolerance" signature.
-    _sig = inspect.signature(DataTestCase.allowedDeviation)
-    _self, _lower, _upper, _msg = _sig.parameters.values()
-    _self = _self.replace(kind=inspect.Parameter.POSITIONAL_ONLY)
-    _tolerance = inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY)
-    _sig = _sig.replace(parameters=[_self, _tolerance, _msg])
-    DataTestCase.allowedDeviation.__signature__ = _sig
+with contextlib.suppress(AttributeError):  # New in Python 3.3.
+    DataTestCase.allowedDeviation.__signature__ = inspect.Signature([
+        inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY),
+        inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),
+        inspect.Parameter('msg', inspect.Parameter.POSITIONAL_OR_KEYWORD),
+    ])
 
-    # For DataTestCase.allowedPercentDeviation(), build "tolerance" signature.
-    _sig = inspect.signature(DataTestCase.allowedPercentDeviation)
-    _self, _lower, _upper, _msg = _sig.parameters.values()
-    _self = _self.replace(kind=inspect.Parameter.POSITIONAL_ONLY)
-    _tolerance = inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY)
-    _sig = _sig.replace(parameters=[_self, _tolerance, _msg])
-    DataTestCase.allowedPercentDeviation.__signature__ = _sig
+    DataTestCase.allowedPercentDeviation.__signature__ = inspect.Signature([
+        inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY),
+        inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),
+        inspect.Parameter('msg', inspect.Parameter.POSITIONAL_OR_KEYWORD),
+    ])

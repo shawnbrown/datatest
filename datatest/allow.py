@@ -5,6 +5,7 @@ from numbers import Number
 from .utils.builtins import *
 from .utils import abc
 from .utils import collections
+from .utils import contextlib
 from .utils import functools
 from .utils import itertools
 
@@ -198,26 +199,6 @@ class allowed_invalid(ElementAllowance):
         super(allowed_invalid, self).__init__(is_invalid, msg)
 
 
-def _prettify_devsig(method):
-    """Prettify signature of deviation __init__ classes by patching
-    its signature to make the "tolerance" syntax the default option
-    when introspected (with an IDE, REPL, or other user interface).
-    This helper function is intended for internal use.
-    """
-    assert method.__name__ == '__init__'
-    try:
-        signature = inspect.signature(method)
-    except AttributeError:  # Not supported in Python 3.2 or older.
-        return  # <- EXIT!
-
-    parameters = [
-        inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY),
-        inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),
-        inspect.Parameter('msg', inspect.Parameter.POSITIONAL_OR_KEYWORD),
-    ]
-    method.__signature__ = signature.replace(parameters=parameters)
-
-
 def _normalize_devargs(lower, upper, msg):
     """Normalize deviation allowance arguments to support both
     "tolerance" and "lower, upper" signatures. This helper function
@@ -255,7 +236,13 @@ class allowed_deviation(ElementAllowance):
                 return False
             return lower <= deviation <= upper
         super(allowed_deviation, self).__init__(tolerance, msg)
-_prettify_devsig(allowed_deviation.__init__)
+
+with contextlib.suppress(AttributeError):  # New in Python 3.3.
+    allowed_deviation.__init__.__signature__ = inspect.Signature([
+        inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY),
+        inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),
+        inspect.Parameter('msg', inspect.Parameter.POSITIONAL_OR_KEYWORD),
+    ])
 
 
 class allowed_percent_deviation(ElementAllowance):
@@ -267,7 +254,13 @@ class allowed_percent_deviation(ElementAllowance):
                 return False
             return lower <= percent_deviation <= upper
         super(allowed_percent_deviation, self).__init__(percent_tolerance, msg)
-_prettify_devsig(allowed_percent_deviation.__init__)
+
+with contextlib.suppress(AttributeError):  # New in Python 3.3.
+    allowed_percent_deviation.__init__.__signature__ = inspect.Signature([
+        inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY),
+        inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),
+        inspect.Parameter('msg', inspect.Parameter.POSITIONAL_OR_KEYWORD),
+    ])
 
 
 class allowed_specific(BaseAllowance):
