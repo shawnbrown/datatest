@@ -424,15 +424,8 @@ RESULT_TOKEN = _make_token(
 
 class DataQuery(object):
     """A class to query data from a :class:`DataSource` object.
-    The *select* argument must be a container of one column name
-    or of one inner-container holding multiple column names (see
-    `Selecting Data`_ for examples). The optional *where* keywords
-    can narrow a selection to rows where columns match specified
-    values (see `Narrowing a Selection`_ for examples).
 
-    DataQueries can be created, modified and passed around without
-    actually computing the result. No data computation occurs until
-    the :meth:`execute` method is called.
+    See documentation for full details.
     """
     def __init__(self, defaultsource=None, select=None, **where):
         """
@@ -677,7 +670,7 @@ class DataQuery(object):
         evaluation::
 
             query = source(['A'])
-            result = query()  # <- Returns DataResult
+            result = query()  # <- Returns DataResult (iterator)
 
         This is a shorthand for calling the :meth:`execute` method
         with *evaluate* set to False.
