@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
+import inspect
 import os
 import sys
 from io import IOBase
@@ -746,6 +747,14 @@ class DataQuery(object):
                                           select_repr,
                                           where_repr,
                                           query_steps_repr)
+
+
+with contextlib.suppress(AttributeError):  # New in Python 3.3.
+    DataQuery.__init__.__signature__ = inspect.Signature([
+        inspect.Parameter('self', inspect.Parameter.POSITIONAL_OR_KEYWORD),
+        inspect.Parameter('select', inspect.Parameter.POSITIONAL_OR_KEYWORD),
+        inspect.Parameter('where', inspect.Parameter.VAR_KEYWORD),
+    ])
 
 
 class DataSource(object):
