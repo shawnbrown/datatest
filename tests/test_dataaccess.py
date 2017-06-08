@@ -489,20 +489,43 @@ class TestDataQuery(unittest.TestCase):
         with self.assertRaises(ValueError, msg='should fail immediately when "select" is bad'):
             DataQuery(['bad', 'syntax'])
 
-    def test_from_parts(self):
-        source = DataSource([(1, 2), (1, 2)], fieldnames=['A', 'B'])
-        query = DataQuery._from_parts(source=source)
-        self.assertEqual(query._query_steps, tuple())
-        self.assertIs(query.defaultsource, source)
+    def test__copy__(self):
+        # Select-arg only.
+        query = DataQuery(['B'])
+        copied = query.__copy__()
+        self.assertEqual(copied.defaultsource, query.defaultsource)
+        self.assertEqual(copied._select, query._select)
+        self.assertEqual(copied._where, query._where)
+        self.assertEqual(copied._query_steps, query._query_steps)
 
-        regex = "expected 'DataSource', got 'list'"
-        with self.assertRaisesRegex(TypeError, regex):
-            wrong_type = ['hello', 'world']
-            query = DataQuery._from_parts(source=wrong_type)
+        # Select and keyword.
+        query = DataQuery(['B'], C='x')
+        copied = query.__copy__()
+        self.assertEqual(copied.defaultsource, query.defaultsource)
+        self.assertEqual(copied._select, query._select)
+        self.assertEqual(copied._where, query._where)
+        self.assertEqual(copied._query_steps, query._query_steps)
+
+        # Source, select, and keyword.
+        source = DataSource([(1, 2), (1, 2)], fieldnames=['A', 'B'])
+        query = DataQuery(source, ['B'])
+        copied = query.__copy__()
+        self.assertEqual(copied.defaultsource, query.defaultsource)
+        self.assertEqual(copied._select, query._select)
+        self.assertEqual(copied._where, query._where)
+        self.assertEqual(copied._query_steps, query._query_steps)
+
+        # Select and additional query methods.
+        query = DataQuery(['B']).map(lambda x: str(x).upper())
+        copied = query.__copy__()
+        self.assertEqual(copied.defaultsource, query.defaultsource)
+        self.assertEqual(copied._select, query._select)
+        self.assertEqual(copied._where, query._where)
+        self.assertEqual(copied._query_steps, query._query_steps)
 
     def test_execute(self):
         source = DataSource([('1', '2'), ('1', '2')], fieldnames=['A', 'B'])
-        query = DataQuery._from_parts(source=source)
+        query = DataQuery(source, ['B'])
         query._query_steps = [
             ('select', (['B'],), {}),
             ('map', (int,), {}),
@@ -626,14 +649,6 @@ class TestDataQuery(unittest.TestCase):
         returned_value = query._explain(file=None)
         self.assertEqual(returned_value, expected)
 
-    def test_repr(self):
-        data = [['x', 100], ['y', 200], ['z', 300]]
-        filednames = ['A', 'B']
-        source = DataSource(data, filednames)
-
-        regex = r"DataSource\(<list of records>, fieldnames=\[u?'A', u?'B'\]\)"
-        self.assertRegex(repr(source), regex)
-
 
 class TestDataSourceConstructors(unittest.TestCase):
     @staticmethod
@@ -723,6 +738,14 @@ class TestDataSourceBasics(unittest.TestCase):
     def test_fieldnames(self):
         expected = ['label1', 'label2', 'value']
         self.assertEqual(self.source.fieldnames, expected)
+
+    def test_repr(self):
+        data = [['x', 100], ['y', 200], ['z', 300]]
+        filednames = ['A', 'B']
+        source = DataSource(data, filednames)
+
+        regex = r"DataSource\(<list of records>, fieldnames=\[u?'A', u?'B'\]\)"
+        self.assertRegex(repr(source), regex)
 
     def test_iter(self):
         """Test __iter__."""

@@ -453,6 +453,7 @@ class DataQuery(object):
                                #    not just its key and value).
         self.defaultsource = defaultsource
         self._select = select
+        self._where = where
         self._query_steps = tuple([
             _query_step('select', (select,), where),
         ])
@@ -478,25 +479,16 @@ class DataQuery(object):
     #def _validate_steps(steps):
     #    pass
 
-    @classmethod
-    def _from_parts(cls, query_steps=None, source=None):
-        # TODO: Make query_steps mandatory (should not allow None).
-        if source:
-            cls._validate_source(source)
-
-        if query_steps:
-            query_steps = tuple(query_steps)
-        else:
-            query_steps = tuple()
-
-        new_cls = cls.__new__(cls)
-        new_cls._query_steps = query_steps
-        new_cls.defaultsource = source
-        return new_cls
+    def __copy__(self):
+        new_copy = self.__class__(self.defaultsource,
+                                  self._select, **self._where)
+        new_copy._query_steps = self._query_steps
+        return new_copy
 
     def _add_step(self, name, *args, **kwds):
-        steps = self._query_steps + (_query_step(name, args, kwds),)
-        new_query = self.__class__._from_parts(steps, self.defaultsource)
+        new_query = self.__copy__()
+        new_steps = self._query_steps + (_query_step(name, args, kwds),)
+        new_query._query_steps = new_steps
         return new_query
 
     def map(self, function):
