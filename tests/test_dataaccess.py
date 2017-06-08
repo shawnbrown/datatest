@@ -652,6 +652,50 @@ class TestDataQuery(unittest.TestCase):
         returned_value = query._explain(file=None)
         self.assertEqual(returned_value, expected)
 
+    def test_repr(self):
+        # Check "select-only" signature.
+        query = DataQuery(['label1'])
+        regex = r"DataQuery\(\[u?'label1'\]\)"
+        self.assertRegex(repr(query), regex)
+
+        # Check "select-only" with keyword string.
+        query = DataQuery(['label1'], label2='x')
+        regex = r"DataQuery\(\[u?'label1'\], label2='x'\)"
+        self.assertRegex(repr(query), regex)
+
+        # Check "select-only" with keyword list.
+        query = DataQuery(['label1'], label2=['x', 'y'])
+        regex = r"DataQuery\(\[u?'label1'\], label2=\[u?'x', u?'y'\]\)"
+        self.assertRegex(repr(query), regex)
+
+        # Check "defaultsource" signature.
+        query = DataQuery(DataSource([('x', 1), ('y', 2), ('z', 3)], ['A', 'B']),
+                          ['label1'])
+        regex = r"""
+            DataQuery\(DataSource\(<list of records>, fieldnames=\[u?'A', u?'B'\]\),
+                      \[u?'label1'\]\)
+        """
+        regex = textwrap.dedent(regex).strip()
+        self.assertRegex(repr(query), regex)
+
+        # Check query steps.
+        query = DataQuery(['label1']).distinct().count()
+        regex = r"DataQuery\(\[u?'label1'\]\).distinct\(\).count\(\)"
+        self.assertRegex(repr(query), regex)
+
+        # Check query steps with function argument.
+        def upper(x):
+            return str(x.upper())
+        query = DataQuery(['label1']).map(upper)
+        regex = r"DataQuery\(\[u?'label1'\]\).map\(upper\)"
+        self.assertRegex(repr(query), regex)
+
+        # Check query steps with lambda argument.
+        lower = lambda x: str(x).lower()
+        query = DataQuery(['label1']).map(lower)
+        regex = r"DataQuery\(\[u?'label1'\]\).map\(<lambda>\)"
+        self.assertRegex(repr(query), regex)
+
 
 class TestDataSourceConstructors(unittest.TestCase):
     @staticmethod

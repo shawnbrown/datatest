@@ -713,6 +713,47 @@ class DataQuery(object):
         else:
             return formatted
 
+    def __repr__(self):
+        name_or_repr = lambda x: getattr(x, '__name__', None) or repr(x)
+
+        name_repr = self.__class__.__name__
+
+        if self.defaultsource:
+            source_repr = repr(self.defaultsource)
+            source_repr += ',\n{0}'.format(' ' * (len(name_repr) + 1))
+        else:
+            source_repr = ''
+
+        select_repr = repr(self._select)
+
+        if self._where:
+            where_repr = [(k, name_or_repr(v)) for k, v in self._where.items()]
+            where_repr = ['{0}={1}'.format(k, v) for k, v in where_repr]
+            where_repr = ', {0}'.format(', '.join(where_repr))
+        else:
+            where_repr = ''
+
+        query_steps_repr = []
+        for name, args, kwds in self._query_steps:
+            if kwds:
+                kwds_repr = [(k, name_or_repr(v)) for k, v in kwds.items()]
+                kwds_repr = ['{0}={1}'.format(k, v) for k, v in kwds_repr]
+                kwds_repr = ', {0}'.format(', '.join(kwds_repr))
+            else:
+                kwds_repr = ''
+            args_repr = ', '.join(name_or_repr(arg) for arg in args)
+            step_repr = '{0}({1}{2})'.format(name, args_repr, kwds_repr)
+            query_steps_repr.append(step_repr)
+        query_steps_repr = '.'.join(query_steps_repr)
+        if query_steps_repr:
+            query_steps_repr = '.' + query_steps_repr
+
+        return '{0}({1}{2}{3}){4}'.format(name_repr,
+                                          source_repr,
+                                          select_repr,
+                                          where_repr,
+                                          query_steps_repr)
+
 
 class DataSource(object):
     """A basic data source to quickly load and query data.
