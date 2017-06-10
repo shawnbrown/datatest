@@ -475,7 +475,7 @@ class TestDataQuery(unittest.TestCase):
 
         # Use defaultsource-and-select syntax.
         source = DataSource([(1, 2), (1, 2)], fieldnames=['A', 'B'])
-        query = DataQuery(source, ['foo'], bar='baz')
+        query = DataQuery(source, ['A'], B=2)
         self.assertEqual(query.defaultsource, source)
 
         # Test query steps.
@@ -492,6 +492,16 @@ class TestDataQuery(unittest.TestCase):
 
         with self.assertRaises(ValueError, msg='should fail immediately when "select" is bad'):
             DataQuery(['bad', 'syntax'])
+
+        # Bad "select" field.
+        source = DataSource([(1, 2), (1, 2)], fieldnames=['A', 'B'])
+        with self.assertRaises(LookupError, msg='should fail immediately when fieldname conflicts with provided source'):
+            query = DataQuery(source, ['X'], B=2)
+
+        # Bad "where" field.
+        source = DataSource([(1, 2), (1, 2)], fieldnames=['A', 'B'])
+        with self.assertRaises(LookupError, msg='should fail immediately when fieldname conflicts with provided "where" field'):
+            query = DataQuery(source, ['A'], Y=2)
 
     def test__copy__(self):
         # Select-arg only.
@@ -670,10 +680,10 @@ class TestDataQuery(unittest.TestCase):
 
         # Check "defaultsource" signature.
         query = DataQuery(DataSource([('x', 1), ('y', 2), ('z', 3)], ['A', 'B']),
-                          ['label1'])
+                          ['A'])
         regex = r"""
             DataQuery\(DataSource\(<list of records>, fieldnames=\[u?'A', u?'B'\]\),
-                      \[u?'label1'\]\)
+                      \[u?'A'\]\)
         """
         regex = textwrap.dedent(regex).strip()
         self.assertRegex(repr(query), regex)

@@ -33,6 +33,16 @@ def _is_consumable(obj):
     return iter(obj) is iter(obj)
 
 
+def _flatten(iterable):
+    """Flatten an iterable of elements."""
+    for element in iterable:
+        if _is_nsiterable(element):
+            for sub_element in _flatten(element):
+                yield sub_element
+        else:
+            yield element
+
+
 def _unique_everseen(iterable):  # Adapted from itertools recipes.
     """Returns unique elements, preserving order."""
     seen = set()

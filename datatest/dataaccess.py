@@ -14,6 +14,7 @@ from .utils import functools
 from .utils import itertools
 from .utils.misc import _is_nsiterable
 from .utils.misc import _is_sortable
+from .utils.misc import _flatten
 from .utils.misc import _unique_everseen
 from .utils.misc import _make_token
 from .utils.misc import string_types
@@ -442,9 +443,10 @@ class DataQuery(object):
             message = "'defaultsource' must be of the type DataSource, got {0}"
             raise TypeError(message.format(defaultsource.__class__.__name__))
 
-        _parse_select(select)  # <- Returned values are discarded (if it is
-                               #    a mapping then its type must be preserved,
-                               #    not just its key and value).
+        parsed = _parse_select(select)
+        if defaultsource:
+            query_fields = itertools.chain(_flatten(parsed), where.keys())
+            defaultsource._assert_fields_exist(query_fields)
         self.defaultsource = defaultsource
         self._select = select
         self._where = where
