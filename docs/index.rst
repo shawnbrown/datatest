@@ -1,7 +1,7 @@
 
 .. meta::
-    :description: Datatest provides validation tools for test-driven data wrangling.
-    :keywords: datatest, data wrangling, unittest, data preparation
+    :description: Table of Contents for Datatest.
+    :keywords:
     :title: Index
 
 .. module:: datatest
@@ -10,13 +10,17 @@
 .. sectionauthor:: Shawn Brown <sbrown@ncecservices.com>
 
 
-##############################################
-:mod:`datatest` --- Test driven data wrangling
-##############################################
+####################################
+Datatest: Test driven data wrangling
+####################################
 
-.. include:: ../README.rst
-    :start-after: start-inclusion-marker-used-by-index.rst
-    :end-before: end-inclusion-marker-used-by-index.rst
+Version |release| (`Installation Instructions <https://pypi.python.org/pypi/datatest#installation>`_)
+
+
+.. toctree::
+    :maxdepth: 2
+
+    Introduction <intro>
 
 
 .. toctree::
@@ -25,5 +29,6 @@
 
     unittest_style
     data_handling
+
 
 * :ref:`Package Index <genindex>`
