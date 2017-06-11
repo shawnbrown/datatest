@@ -2,11 +2,11 @@
 *************************************
 datatest: Test driven data wrangling
 *************************************
+..
+    Badges for quick reference.
+|buildstatus| |pyversions| |license|
 
-.. image:: https://api.travis-ci.org/shawnbrown/datatest.png
-    :target: https://travis-ci.org/shawnbrown/datatest
-
-.. start-inclusion-marker-used-by-index.rst
+.. start-inclusion-marker
 
 Datatest provides validation tools for test-driven data wrangling.
 It extends Python's `unittest
@@ -124,11 +124,26 @@ interface with pandas DataFrames, MS Excel workbooks, or other
 optional data sources, you will need to install the relevant
 packages (``pandas``, ``xlrd``, etc.).
 
-
-.. end-inclusion-marker-used-by-index.rst
+.. end-inclusion-marker
 
 ------------
 
 Freely licensed under the Apache License, Version 2.0
 
 Copyright 2014 - 2017 NCEC Services, LLC and contributing authors
+
+
+.. |buildstatus| image:: https://api.travis-ci.org/shawnbrown/datatest.png
+    :target: https://travis-ci.org/shawnbrown/datatest
+    :alt: Current Build Status
+
+.. |pyversions| image:: https://img.shields.io/pypi/pyversions/datatest.svg
+    :alt: Supported Python Versions
+
+.. |license| image:: https://img.shields.io/badge/license-Apache%202-blue.svg
+    :target: https://opensource.org/licenses/Apache-2.0
+    :alt: Apache 2.0 License
+
+.. |pypiversion| image:: https://img.shields.io/pypi/v/datatest.svg
+    :target: https://pypi.python.org/pypi/datatest
+    :alt: Current PyPI Version
