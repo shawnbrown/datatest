@@ -35,5 +35,6 @@ Version |release| (`Installation Instructions <https://pypi.python.org/pypi/data
 
     reference/unittest_style
     reference/data_handling
+    reference/error_and_difference
 
 * :ref:`Package Index <genindex>`
