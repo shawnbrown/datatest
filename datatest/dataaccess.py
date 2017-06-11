@@ -632,11 +632,11 @@ class DataQuery(object):
         be a :class:`DataSource` on which the query will operate.
         If *source* is omitted, the :attr:`defaultsource` is used.
 
-        By default, results are eagerly evaluated and loaded into
-        memory. For lazy evaluation, set *evaluate* to False to
+        By default, results are eagerly evaluated (and loaded into
+        memory). For lazy evaluation, set *evaluate* to False to
         return a :class:`DataResult` iterator instead.
 
-        Set *optimize* to False to turn-off query optimization.
+        Setting *optimize* to False turns-off query optimization.
         """
         result = source or self.defaultsource
         if not result:
@@ -872,13 +872,7 @@ class DataSource(object):
 
     @property
     def fieldnames(self):
-        """A list of field names used by the data source.
-
-        .. code-block:: python
-
-            source = datatest.DataSource(...)
-            fields = source.fieldnames
-        """
+        """A list of field names used by the data source."""
         cursor = self._connection.cursor()
         cursor.execute('PRAGMA table_info(' + self._table + ')')
         return [x[1] for x in cursor]
