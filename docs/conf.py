@@ -65,7 +65,7 @@ author = 'Shawn Brown'
 #
 # The short X.Y version.
 #from datatest import __version__
-__version__ = '0.8.2'
+__version__ = '0.8.3.dev0'
 version = __version__
 
 # The full version, including alpha/beta/rc tags.
