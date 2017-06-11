@@ -4,7 +4,7 @@ datatest: Test driven data wrangling
 *************************************
 ..
     Badges for quick reference.
-|buildstatus| |pyversions| |license|
+|buildstatus| |license| |pyversions|
 
 .. start-inclusion-marker
 
@@ -138,6 +138,7 @@ Copyright 2014 - 2017 NCEC Services, LLC and contributing authors
     :alt: Current Build Status
 
 .. |pyversions| image:: https://img.shields.io/pypi/pyversions/datatest.svg
+    :target: https://pypi.python.org/pypi/datatest#supported-versions
     :alt: Supported Python Versions
 
 .. |license| image:: https://img.shields.io/badge/license-Apache%202-blue.svg
