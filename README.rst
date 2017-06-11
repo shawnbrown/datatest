@@ -137,13 +137,17 @@ Copyright 2014 - 2017 NCEC Services, LLC and contributing authors
     :target: https://travis-ci.org/shawnbrown/datatest
     :alt: Current Build Status
 
+.. |license| image:: https://img.shields.io/badge/license-Apache%202-blue.svg
+    :target: https://opensource.org/licenses/Apache-2.0
+    :alt: Apache 2.0 License
+
 .. |pyversions| image:: https://img.shields.io/pypi/pyversions/datatest.svg
     :target: https://pypi.python.org/pypi/datatest#supported-versions
     :alt: Supported Python Versions
 
-.. |license| image:: https://img.shields.io/badge/license-Apache%202-blue.svg
-    :target: https://opensource.org/licenses/Apache-2.0
-    :alt: Apache 2.0 License
+.. |githubstars| image:: https://img.shields.io/github/stars/shawnbrown/datatest.svg
+    :target: https://github.com/shawnbrown/datatest/stargazers
+    :alt: GitHub users who have starred this project
 
 .. |pypiversion| image:: https://img.shields.io/pypi/v/datatest.svg
     :target: https://pypi.python.org/pypi/datatest
