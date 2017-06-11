@@ -6,9 +6,9 @@
     :keywords: datatest, unittest, data wrangling
 
 
-##################
-Unittest-Style API
-##################
+##############
+Unittest-Style
+##############
 
 
 *************

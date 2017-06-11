@@ -8,7 +8,7 @@
 
 
 #############
-Data Handling
+Querying Data
 #############
 
 Datatest provides built-in classes for loading, querying, and
@@ -19,11 +19,6 @@ to use whatever they find to be most productive.
 ..  To help use third-party data sources, datatest includes
     a number of helper functions to quickly load data into
     a variety of ORMs and DALs.
-
-
-********
-Examples
-********
 
 The following examples demonstrate datatest's :class:`DataSource`,
 :class:`DataQuery`, and :class:`DataResult` classes. Users can
@@ -47,7 +42,7 @@ Loading Data
 ============
 
 You can load the data from a CSV file (:download:`example.csv
-<_static/example.csv>`) with :meth:`DataSource.from_csv`::
+</_static/example.csv>`) with :meth:`DataSource.from_csv`::
 
     >>> import datatest
     >>> source = datatest.DataSource.from_csv('example.csv')
@@ -61,6 +56,15 @@ You can get a list of field names with :attr:`fieldnames
 
     >>> source.fieldnames
     ['one', 'two', 'three']
+
+
+.. sidebar:: The execute() Method
+
+    In the following examples, we call :meth:`execute() <DataQuery.execute>`
+    to eagerly evaluate the queries and display their results. In daily
+    use, it's more efficient to leave off the "``.execute()``" part and
+    validate the *un-executed* queries instead (which takes advantage of
+    lazy evaluation).
 
 
 Selecting Data
@@ -85,13 +89,6 @@ template that describes the values and data types returned by the
 query. Because set objects can not contain duplicates, the second
 example above has only one element for each unique value in the
 column.
-
-.. note::
-    In these examples, we call :meth:`execute() <DataQuery.execute>`
-    to eagerly evaluate the queries and display their results. In
-    daily use, it's more efficient to leave off the "``.execute()``"
-    part and validate the *un-executed* queries instead (which takes
-    advantage of lazy evaluation).
 
 
 Multiple Columns
@@ -157,7 +154,7 @@ result types, but keep in mind that dictionary keys must be `immutable
 
 
 Narrowing a Selection
----------------------
+=====================
 
 Selections can be narrowed to rows that satisfy given keyword
 arguments.
@@ -191,8 +188,8 @@ column **two** equals "y"::
     [('b', 'y')]  # Only 1 row matches these keyword conditions.
 
 
-Query Operations
-================
+Additional Operations
+=====================
 
 :meth:`Sum <DataQuery.sum>` the values from column **three**::
 
@@ -208,7 +205,7 @@ each group)::
      'c': 200}
 
 Group by columns **one** and **two** and sum the values from column
-**three**::
+**three**:
 
     >>> source({('one', 'two'): ['three']}).sum().execute()
     {('a', 'x'): 200,
@@ -216,12 +213,12 @@ Group by columns **one** and **two** and sum the values from column
      ('b', 'y'): 100,
      ('c', 'y'): 200}
 
-Select :meth:`distinct <DataQuery.distinct>` values::
+Select :meth:`distinct <DataQuery.distinct>` values:
 
     >>> source(['one']).distinct().execute()
     ['a', 'b', 'c']
 
-:meth:`Map <DataQuery.map>` values with a function::
+:meth:`Map <DataQuery.map>` values with a function:
 
     >>> def uppercase(x):
     ...     return str(x).upper()
@@ -229,15 +226,8 @@ Select :meth:`distinct <DataQuery.distinct>` values::
     >>> source(['one']).map(uppercase).execute()
     ['A', 'A', 'B', 'B', 'C', 'C']
 
-:meth:`Reduce <DataQuery.reduce>` values with a function::
 
-    >>> def concatenate(x, y):
-    ...     return '{0}{1}'.format(x, y)
-    ...
-    >>> source(['one']).reduce(concatenate).execute()
-    'aabbcc'
-
-:meth:`Filter <DataQuery.filter>` values with a function::
+:meth:`Filter <DataQuery.filter>` values with a function:
 
     >>> def not_c(x):
     ...     return x != 'c'
@@ -247,121 +237,11 @@ Select :meth:`distinct <DataQuery.distinct>` values::
 
 Multiple methods can be chained together:
 
+    >>> def not_c(x):
+    ...     return x != 'c'
+    ...
     >>> def uppercase(x):
     ...     return str(x).upper()
     ...
-    >>> def concatenate(x, y):
-    ...     return '{0}{1}'.format(x, y)
-    ...
-    >>> source(['one']).map(uppercase).reduce(concatenate).execute()
-    'AABBCC'
-
-
-*****************
-working_directory
-*****************
-
-.. autoclass:: working_directory
-
-
-**********
-DataSource
-**********
-
-.. autoclass:: DataSource
-
-    .. automethod:: from_csv
-
-    .. automethod:: from_excel
-
-    .. autoattribute:: fieldnames
-
-    .. automethod:: __call__
-
-
-*********
-DataQuery
-*********
-
-.. class:: DataQuery(select, **where)
-           DataQuery(defaultsource, select, **where)
-
-    A class to query data from a :class:`DataSource` object.
-    Queries can be created, modified and passed around without
-    actually computing the result---computation doesn't occur
-    until the :meth:`execute` method is called.
-
-    The *select* argument must be a container of one field name
-    (a string) or of an inner-container of multiple filed names
-    (see `Selecting Data`_ for examples). The optional *where*
-    keywords can narrow a selection to rows where fields match
-    specified values (see `Narrowing a Selection`_ for examples).
-    A *defaultsource* can be provided to associate the query
-    with a specific DataSource object.
-
-    Queries are usually created from an existing source (the
-    originating source is automatically associated with the new
-    query)::
-
-        source = DataSource(...)
-        query = source(['A'])  # <- DataQuery created from source.
-
-    Queries can be created directly as well::
-
-        source = DataSource(...)
-        query = DataQuery(source, ['A'])  # <- Direct initialization.
-
-    Queries can also be created independent of any single data source::
-
-        query = DataQuery(['A'])
-
-    .. attribute:: defaultsource
-
-        A property for setting a predetermined :class:`DataSource`
-        to use when :meth:`execute` is called without a *source*
-        argument.
-
-        When a query is created from a DataSource call, this property
-        is assigned automatically. When a query is created directly,
-        the value can be passed explicitly or it can be omitted.
-
-    .. automethod:: sum
-
-    .. automethod:: count
-
-    .. automethod:: avg
-
-    .. automethod:: min
-
-    .. automethod:: max
-
-    .. automethod:: distinct
-
-    .. automethod:: map
-
-    .. automethod:: filter
-
-    .. automethod:: reduce
-
-    .. automethod:: execute
-
-    .. automethod:: __call__
-
-
-**********
-DataResult
-**********
-
-.. autoclass:: DataResult
-
-    .. attribute:: evaluation_type
-
-        The type of instance returned by the
-        :meth:`evaluate <DataResult.evaluate>` method.
-
-    .. automethod:: evaluate
-
-    .. attribute:: __wrapped__
-
-        The underlying iterator---useful when introspecting
-        or rewrapping.
+    >>> source(['one']).filter(not_c).map(uppercase).execute()
+    'AABB'
