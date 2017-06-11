@@ -102,6 +102,7 @@ if __name__ == '__main__':
             description='Test driven data wrangling.',
             long_description=long_description,
             author='Shawn Brown',
+            license='Apache 2.0',
             classifiers  = [
                 'Topic :: Software Development :: Quality Assurance',
                 'Topic :: Software Development :: Testing',
