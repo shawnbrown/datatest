@@ -19,6 +19,16 @@ class ValidationError(AssertionError):
         self.args = message, differences
 
     @property
+    def message(self):
+        """The message given to the exception constructor."""
+        return self._message
+
+    @property
+    def differences(self):
+        """The differences given to the exception constructor."""
+        return self._differences
+
+    @property
     def args(self):
         """The tuple of arguments given to the exception constructor."""
         return (self._message, self._differences)
@@ -49,16 +59,6 @@ class ValidationError(AssertionError):
 
         self._message = message
         self._differences = differences
-
-    @property
-    def message(self):
-        """The message given to the exception constructor."""
-        return self._message
-
-    @property
-    def differences(self):
-        """The differences given to the exception constructor."""
-        return self._differences
 
     def __str__(self):
         differences = pformat(self._differences, width=1)
@@ -132,14 +132,14 @@ class Extra(BaseDifference):
 
 
 class Invalid(BaseDifference):
-    """A value in *data* that does not satisfy a function or regular
-    expression *requirement*.
+    """A value in *data* that does not satisfy a function, equality,
+    or regular expression *requirement*.
     """
     def __init__(self, invalid, expected=None):
-        if expected:
-            super(Invalid, self).__init__(invalid, expected)
-        else:
+        if expected is None:
             super(Invalid, self).__init__(invalid)
+        else:
+            super(Invalid, self).__init__(invalid, expected)
 
 
 class Deviation(BaseDifference):
@@ -159,10 +159,6 @@ class Deviation(BaseDifference):
         return self.args[0]
 
     @property
-    def expected(self):
-        return self.args[1]
-
-    @property
     def percent_deviation(self):
         expected = self.expected
         if isinstance(expected, float):
@@ -179,6 +175,10 @@ class Deviation(BaseDifference):
         if isnan(expected) or isnan(deviation):
             return Decimal('NaN')
         return deviation / expected if expected else Decimal(0)  # % error calc.
+
+    @property
+    def expected(self):
+        return self.args[1]
 
     def __repr__(self):
         cls_name = self.__class__.__name__
