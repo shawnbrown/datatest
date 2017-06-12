@@ -3,8 +3,9 @@
 datatest: Test driven data wrangling
 *************************************
 ..
-    Badges for quick reference.
-|buildstatus| |license| |pyversions|
+    Project badges for quick reference:
+
+|buildstatus| |devstatus| |license| |pyversions|
 
 .. start-inclusion-marker
 
@@ -39,6 +40,10 @@ The easiest way to install datatest is to use pip::
 
   pip install datatest
 
+To upgrade an existing installation, use the "``--upgrade``" option::
+
+  pip install --upgrade datatest
+
 
 Stuntman Mike
 -------------
@@ -64,7 +69,7 @@ install datatest manually.
 Download the latest **source** distribution from the Python Package
 Index (PyPI):
 
-  https://pypi.python.org/pypi/datatest
+  https://pypi.python.org/pypi/datatest#downloads
 
 Unpack the file (replacing X.Y.Z with the appropriate version number)
 and review the source code::
@@ -76,7 +81,7 @@ Change to the unpacked directory and run the tests::
   cd datatest-X.Y.Z
   python setup.py test
 
-Don't worry if some of the tests are skipped.  Tests for optional data
+Don't worry if some of the tests are skipped. Tests for optional data
 sources (like pandas DataFrames or MS Excel files) are skipped when the
 related third-party packages are not installed.
 
@@ -136,6 +141,10 @@ Copyright 2014 - 2017 NCEC Services, LLC and contributing authors
 .. |buildstatus| image:: https://api.travis-ci.org/shawnbrown/datatest.png
     :target: https://travis-ci.org/shawnbrown/datatest
     :alt: Current Build Status
+
+.. |devstatus| image:: https://img.shields.io/pypi/status/datatest.svg
+    :target: https://pypi.python.org/pypi/datatest
+    :alt: Development Status
 
 .. |license| image:: https://img.shields.io/badge/license-Apache%202-blue.svg
     :target: https://opensource.org/licenses/Apache-2.0
