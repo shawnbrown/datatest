@@ -19,27 +19,30 @@ Basic Example
 
     import datatest
 
+
+    def setUpModule():
+        global source
+        source = datatest.DataSource.from_csv('mydata.csv')
+
+
     class TestMyData(datatest.DataTestCase):
-        @classmethod
-        def setUpClass(cls):
-            data = [
-                {'is_active': 'Y', 'member_id': 105},
-                {'is_active': 'Y', 'member_id': 104},
-                {'is_active': 'Y', 'member_id': 103},
-                {'is_active': 'N', 'member_id': 102},
-                {'is_active': 'N', 'member_id': 101},
-                {'is_active': 'N', 'member_id': 100},
-            ]
-            cls.source = datatest.DataSource(data)
+        def test_header(self):
+            fieldnames = source.fieldnames
+            required_names = ['member_id', 'is_active']
+            self.assertValid(fieldnames, required_names)
 
         def test_is_active(self):
-            allowed_values = {'Y', 'N'}
-            self.assertValid(self.source(['is_active']), allowed_values)
+            is_active = source({'is_active'})
+            accepted_values = {'Y', 'N'}
+            with self.allowedMissing():
+                self.assertValid(is_active, accepted_values)
 
         def test_member_id(self):
-            def positive_integer(x):  # <- Helper function.
-                return isinstance(x, int) and x > 0
-            self.assertValid(self.source(['member_id']), positive_integer)
+            member_id = source(['member_id'])
+            def positive_int(x):  # <- Helper function.
+                return int(x) > 0
+            self.assertValid(member_id, positive_int)
+
 
     if __name__ == '__main__':
         datatest.main()
