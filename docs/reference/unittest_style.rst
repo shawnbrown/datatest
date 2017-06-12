@@ -15,6 +15,11 @@ Unittest-Style
 Basic Example
 *************
 
+This short example demonstrates unittest-style testing using
+:class:`DataTestCase <datatest.DataTestCase>` and the
+:meth:`assertValid() <DataTestCase.assertValid>` method to test
+a CSV file (:download:`mydata.csv </_static/mydata.csv>`):
+
 .. code-block:: python
 
     import datatest
@@ -28,24 +33,28 @@ Basic Example
     class TestMyData(datatest.DataTestCase):
         def test_header(self):
             fieldnames = source.fieldnames
-            required_names = ['member_id', 'is_active']
+            required_names = ['user_id', 'active']
             self.assertValid(fieldnames, required_names)
 
-        def test_is_active(self):
-            is_active = source({'is_active'})
+        def test_active_column(self):
+            active = source({'active'})
             accepted_values = {'Y', 'N'}
-            with self.allowedMissing():
-                self.assertValid(is_active, accepted_values)
+            self.assertValid(active, accepted_values)
 
-        def test_member_id(self):
-            member_id = source(['member_id'])
+        def test_user_id_column(self):
+            user_id = source(['user_id'])
             def positive_int(x):  # <- Helper function.
                 return int(x) > 0
-            self.assertValid(member_id, positive_int)
+            self.assertValid(user_id, positive_int)
 
 
     if __name__ == '__main__':
         datatest.main()
+
+
+A data test-case is created by subclassing :class:`datatest.DataTestCase`
+and individual tests are defined with methods whose names start with
+"``test``".
 
 
 **********************
