@@ -15,9 +15,7 @@ Unittest-Style
 Basic Example
 *************
 
-This short example demonstrates unittest-style testing using
-:class:`DataTestCase <datatest.DataTestCase>` and the
-:meth:`assertValid() <DataTestCase.assertValid>` method to test
+This short example demonstrates unittest-style testing of data in
 a CSV file (:download:`mydata.csv </_static/mydata.csv>`):
 
 .. code-block:: python
@@ -52,9 +50,14 @@ a CSV file (:download:`mydata.csv </_static/mydata.csv>`):
         datatest.main()
 
 
-A data test-case is created by subclassing :class:`datatest.DataTestCase`
-and individual tests are defined with methods whose names start with
-"``test``".
+A data test-case is created by subclassing
+:class:`datatest.DataTestCase` and individual
+tests are defined with methods whose names
+start with "``test``".
+
+Inside each method, a call to :meth:`self.assertValid()
+<DataTestCase.assertValid>` checks that the data satisfies
+a given requirement.
 
 
 **********************
@@ -74,16 +77,17 @@ Run tests from specific modules, classes, or individual methods with::
     python -m datatest test_module.TestClass
     python -m datatest test_module.TestClass.test_method
 
-The syntax and command-line options (``-f``, ``-v``, etc.) are the same
-as unittest---see the
-`unittest documentation <http://docs.python.org/library/unittest.html#command-line-interface>`_
+The syntax and command-line options (``-f``, ``-v``, etc.) are the
+same as unittest---see unittest's `command-line documentation
+<http://docs.python.org/library/unittest.html#command-line-interface>`_
 for full details.
 
 .. note::
 
-    By default, tests are ordered by **module name** and
-    **line number** (within each module).
+    Tests are ordered by **file name** and then by **line number**
+    (within each file) when running datatest from the command-line.
 
+..
     Unlike strict unit testing, data preparation tests are often
     dependant on one another---this strict order-by-line-number
     behavior lets users design test suites appropriately.
@@ -164,10 +168,6 @@ DataTestCase
     .. automethod:: allowedArgs
 
     .. automethod:: allowedLimit
-
-    .. note::
-        In the deviation methods above, *tolerance* is a positional-only
-        parameter---it cannot be specified using keyword syntax.
 
 
 *******************

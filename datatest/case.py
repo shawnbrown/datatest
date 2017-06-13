@@ -120,7 +120,7 @@ class DataTestCase(TestCase):
         **Set membership:** When *requirement* is a set, elements
         in *data* are checked for membership in this set. On failure,
         a :class:`ValidationError` is raised which contains
-        `:class:`Missing` or :class:`Extra` differences::
+        :class:`Missing` or :class:`Extra` differences::
 
             def test_mydata(self):
                 data = ...
