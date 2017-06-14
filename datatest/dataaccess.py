@@ -234,6 +234,11 @@ def _filter_data(function, iterable):
     return _apply_to_data(wrapper, iterable)
 
 
+def _apply_data(function, data):
+    """Group-wise function application."""
+    return _apply_to_data(function, data)
+
+
 def _sqlite_cast_as_real(value):
     """Convert value to REAL (float) or default to 0.0 to match SQLite
     behavior. See the "Conversion Processing" table in the "CAST
@@ -503,6 +508,13 @@ class DataQuery(object):
         """
         return self._add_step('reduce', function)
 
+    def apply(self, function):
+        """Apply *function* to entire group keeping the resulting data.
+        If group is not an iterable, it will be wrapped as a single-item
+        list.
+        """
+        return self._add_step('apply', function)
+
     def sum(self):
         """Get the sum of non-None elements."""
         return self._add_step('sum')
@@ -544,6 +556,9 @@ class DataQuery(object):
             args = (query_args[0], RESULT_TOKEN,)
         elif name == 'reduce':
             function = _reduce_data
+            args = (query_args[0], RESULT_TOKEN,)
+        elif name == 'apply':
+            function = _apply_data
             args = (query_args[0], RESULT_TOKEN,)
         elif name == 'sum':
             function = _apply_to_data

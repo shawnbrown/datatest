@@ -17,7 +17,8 @@ from datatest.dataaccess import DataResult
 from datatest.dataaccess import _map_data
 from datatest.dataaccess import _filter_data
 from datatest.dataaccess import _reduce_data
-from datatest.dataaccess import _apply_to_data
+from datatest.dataaccess import _apply_data
+from datatest.dataaccess import _apply_to_data  # <- TODO: Change function name.
 from datatest.dataaccess import _sqlite_sum
 from datatest.dataaccess import _sqlite_count
 from datatest.dataaccess import _sqlite_avg
@@ -218,6 +219,39 @@ class TestReduceData(unittest.TestCase):
         self.assertIsInstance(result, DataResult)
         self.assertEqual(result.evaluation_type, dict)
         self.assertEqual(result.evaluate(), {'a': 2, 'b': 3})
+
+
+class TestGroupwiseApply(unittest.TestCase):
+    def test_dataiter_list(self):
+        iterable = DataResult([1, 2, 3], list)
+        function = lambda itr: [x * 2 for x in itr]
+        result = _apply_data(function, iterable)
+        self.assertEqual(result, [2, 4, 6])
+
+    def test_single_int(self):
+        function = lambda x: x * 2
+        result = _apply_data(function, 3)
+        self.assertEqual(result, 6)
+
+    def test_dataiter_dict_of_mixed_iterables(self):
+        iterable = DataResult({'a': iter([1, 2]), 'b': (3, 4)}, dict)
+
+        function = lambda itr: [x * 2 for x in itr]
+        result = _apply_data(function, iterable)
+
+        self.assertIsInstance(result, DataResult)
+        self.assertEqual(result.evaluation_type, dict)
+        self.assertEqual(result.evaluate(), {'a': [2, 4], 'b': [6, 8]})
+
+    def test_dataiter_dict_of_ints(self):
+        iterable = DataResult({'a': 2, 'b': 3}, dict)
+
+        function = lambda x: x * 2
+        result = _apply_data(function, iterable)
+
+        self.assertIsInstance(result, DataResult)
+        self.assertEqual(result.evaluation_type, dict)
+        self.assertEqual(result.evaluate(), {'a': 4, 'b': 6})
 
 
 class TestSumData(unittest.TestCase):
