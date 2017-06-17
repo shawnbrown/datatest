@@ -27,14 +27,20 @@ Version |release| (`Installation Instructions <https://pypi.python.org/pypi/data
     :caption: Tutorial
     :maxdepth: 2
 
-    tutorial/querying_data
+    tutorial/querying-data
+
+.. toctree::
+    :caption: How-to
+    :maxdepth: 2
+
+    how-to
 
 .. toctree::
     :caption: Reference
     :maxdepth: 2
 
-    reference/unittest_style
-    reference/data_handling
-    reference/error_and_difference
+    reference/unittest-support
+    reference/data-handling
+    reference/error-and-difference
 
 * :ref:`Package Index <genindex>`

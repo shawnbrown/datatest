@@ -6,9 +6,9 @@
     :keywords: datatest, unittest, data wrangling
 
 
-##############
-Unittest-Style
-##############
+################
+Unittest Support
+################
 
 
 *************
@@ -25,7 +25,8 @@ a CSV file (:download:`mydata.csv </_static/mydata.csv>`):
 
     def setUpModule():
         global source
-        source = datatest.DataSource.from_csv('mydata.csv')
+        with datatest.working_directory(__file__):
+            source = datatest.DataSource.from_csv('mydata.csv')
 
 
     class TestMyData(datatest.DataTestCase):

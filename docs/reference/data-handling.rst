@@ -89,6 +89,8 @@ DataQuery
 
     .. automethod:: distinct
 
+    .. automethod:: apply
+
     .. automethod:: map
 
     .. automethod:: filter
