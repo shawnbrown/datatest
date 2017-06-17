@@ -766,7 +766,7 @@ class DataQuery(object):
                                           query_steps_repr)
 
 
-with contextlib.suppress(AttributeError):  # New in Python 3.3.
+with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
     DataQuery.__init__.__signature__ = inspect.Signature([
         inspect.Parameter('self', inspect.Parameter.POSITIONAL_OR_KEYWORD),
         inspect.Parameter('select', inspect.Parameter.POSITIONAL_OR_KEYWORD),

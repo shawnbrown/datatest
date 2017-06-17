@@ -323,7 +323,7 @@ class DataTestCase(TestCase):
 # Prettify default signature of methods that accept multiple signatures.
 # This only works for Python 3.3 and newer--older versions will simply
 # have the original method sigture.
-with contextlib.suppress(AttributeError):  # New in Python 3.3.
+with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
     DataTestCase.allowedDeviation.__signature__ = inspect.Signature([
         inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY),
         inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),

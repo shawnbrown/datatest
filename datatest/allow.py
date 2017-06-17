@@ -237,7 +237,7 @@ class allowed_deviation(ElementAllowance):
             return lower <= deviation <= upper
         super(allowed_deviation, self).__init__(tolerance, msg)
 
-with contextlib.suppress(AttributeError):  # New in Python 3.3.
+with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
     allowed_deviation.__init__.__signature__ = inspect.Signature([
         inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY),
         inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),
@@ -255,7 +255,7 @@ class allowed_percent_deviation(ElementAllowance):
             return lower <= percent_deviation <= upper
         super(allowed_percent_deviation, self).__init__(percent_tolerance, msg)
 
-with contextlib.suppress(AttributeError):  # New in Python 3.3.
+with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
     allowed_percent_deviation.__init__.__signature__ = inspect.Signature([
         inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY),
         inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),
