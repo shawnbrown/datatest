@@ -26,16 +26,16 @@ follow along and type the commands themselves at Python's
 interactive prompt (``>>>``). For these examples, we will use
 the following data:
 
-    ===  ===  =====
-    one  two  three
-    ===  ===  =====
-     a    x    100
-     a    x    100
-     b    x    100
-     b    y    100
-     c    y    100
-     c    y    100
-    ===  ===  =====
+    ===  ===  ===
+     A    B    C
+    ===  ===  ===
+     x   foo   20
+     x   foo   30
+     y   foo   10
+     y   bar   20
+     z   bar   10
+     z   bar   10
+    ===  ===  ===
 
 
 Loading Data
@@ -55,7 +55,7 @@ You can get a list of field names with :attr:`fieldnames
 <DataSource.fieldnames>`::
 
     >>> source.fieldnames
-    ['one', 'two', 'three']
+    ['A', 'B', 'C']
 
 
 .. sidebar:: The execute() Method
@@ -73,78 +73,93 @@ Selecting Data
 Calling our source like a function returns a :class:`DataQuery`
 for the specified field or fields.
 
-Select elements from column **one** as a :py:class:`list`::
+Select elements from column **A**::
 
-    >>> source(['one']).execute()
-    ['a', 'a', 'b', 'b', 'c', 'c']
+    >>> source('A').execute()
+    ['x', 'x', 'y', 'y', 'z', 'z']
 
-Select elements from column **one** as a :py:class:`set`::
+Select elements from column **A** as a :py:class:`set`::
 
-    >>> source({'one'}).execute()
-    {'a', 'b', 'c'}
+    >>> source({'A'}).execute()
+    {'x', 'y', 'z'}
+
+Select elements from column **A** as a :py:class:`tuple`::
+
+    >>> source(('A',)).execute()
+    ('x', 'x', 'y', 'y', 'z', 'z')
 
 The container type used in the selection determines the container
 type returned in the result. You can think of the selection as a
 template that describes the values and data types returned by the
-query. Because set objects can not contain duplicates, the second
-example above has only one element for each unique value in the
-column.
+query. When the outer container type is not specified, it defaults
+to a :py:class:`list`. In the first example we selected ``'A'``
+which is used as shorthand for ``['A']``::
+
+    >>> source(['A']).execute()
+    ['x', 'x', 'y', 'y', 'z', 'z']
 
 
 Multiple Columns
 ----------------
 
-Select elements from columns **one** and **two** as a list of
-:py:class:`tuple` values::
+Select elements from columns **A** and **B** as a list of tuples::
 
-    >>> source([('one', 'two')]).execute()  # Returns a list of tuples.
-    [('a', 'x'),
-     ('a', 'x'),
-     ('b', 'x'),
-     ('b', 'y'),
-     ('c', 'y'),
-     ('c', 'y')]
+    >>> source(('A', 'B')).execute()  # Returns a list of tuples.
+    [('x', 'foo'),
+     ('x', 'foo'),
+     ('y', 'foo'),
+     ('y', 'bar'),
+     ('z', 'bar'),
+     ('z', 'bar')]
 
-Select elements from columns **one** and **two** as a set of tuple
-values::
+Select elements from columns **A** and **B** as a set of tuples::
 
-    >>> source({('one', 'two')}).execute()  # Returns a set of tuples.
-    {('a', 'x'),
-     ('b', 'x'),
-     ('b', 'y'),
-     ('c', 'y')}
+    >>> source({('A', 'B')}).execute()  # Returns a set of tuples.
+    {('x', 'foo'),
+     ('y', 'foo'),
+     ('y', 'bar'),
+     ('z', 'bar')}
 
 Compatible sequence and set types can be selected as inner and
-outer containers as needed. A selection's outer container must
-always hold a single element (a string or inner container).
+outer containers as needed.
 
-In addition to lists, tuples and sets, users can also select
+In addition to lists, tuples, and sets, users can also select
 :py:class:`frozensets <frozenset>`, :py:func:`namedtuples
-<collections.namedtuple>`, etc. However, normal object limitations
-still apply---for example, sets can not contain mutable objects like
-lists or other sets.
+<collections.namedtuple>`, etc. However, normal object
+limitations still apply---for example, sets can not contain
+mutable objects like lists or other sets.
 
 
 Groups of Columns
 -----------------
 
-Select groups of elements from column **one** that contain lists
-of elements from column **two** as a :py:class:`dict`::
+:py:class:`dict`
 
-    >>> source({'one': ['two']}).execute()  # Grouped by key.
-    {'a': ['x', 'x'],
-     'b': ['x', 'y'],
-     'c': ['y', 'y']}
+Select groups of elements from column **A** that contain lists
+of elements from column **B**::
 
-Select groups of elements from columns **one** and **two** (using
+    >>> source({'A': 'B'}).execute()  # Grouped by key.
+    {'x': ['foo', 'foo'],
+     'y': ['foo', 'bar'],
+     'z': ['bar', 'bar']}
+
+Select groups of elements from column **A** that contain
+:py:class:`sets <set>` of elements from column **B**::
+
+     >>> source({'A': {'B'}}).execute()  # Grouped by key.
+     {'x': {'foo'},
+      'y': {'foo', 'bar'},
+      'z': {'bar'}}
+
+Select groups of elements from columns **A** and **B** (using
 a :py:class:`tuple`) that contain lists of elements from column
-**three**::
+**C**::
 
-    >>> source({('one', 'two'): ['three']}).execute()
-    {('a', 'x'): ['100', '100'],
-     ('b', 'x'): ['100'],
-     ('b', 'y'): ['100'],
-     ('c', 'y'): ['100', '100']}
+    >>> source({('A', 'B'): 'C'}).execute()
+    {('x', 'foo'): ['20', '30'],
+     ('y', 'foo'): ['10'],
+     ('y', 'bar'): ['20'],
+     ('z', 'bar'): ['10', '10']}
 
 When selecting groups of elements, you must provide a dictionary with
 a single key-value pair. As before, the selection types determine the
@@ -159,89 +174,85 @@ Narrowing a Selection
 Selections can be narrowed to rows that satisfy given keyword
 arguments.
 
-Narrow a selection to rows where column **two** equals "x"::
+Narrow a selection to rows where column **B** equals "foo"::
 
-    >>> source([('one', 'two')], two='x').execute()
-    [('a', 'x'),
-     ('a', 'x'),
-     ('b', 'x')]
+    >>> source(('A', 'B'), B='foo').execute()
+    [('x', 'foo'), ('x', 'foo'), ('y', 'foo')]
 
 The keyword column does not have to be in the selected result::
 
-    >>> source(['one'], two='x').execute()
-    ['a',
-     'a',
-     'b']
+    >>> source('A', B='foo').execute()
+    ['x', 'x', 'y']
 
-Narrow a selection to rows where column **one** equals "a" *or* "b"::
+Narrow a selection to rows where column **A** equals "x" *or* "y"::
 
-    >>> source([('one', 'two')], one=['a', 'b']).execute()
-    [('a', 'x'),
-     ('a', 'x'),
-     ('b', 'x'),
-     ('b', 'y')]
+    >>> source(('A', 'B'), A=['x', 'y']).execute()
+    [('x', 'foo'),
+     ('x', 'foo'),
+     ('y', 'foo'),
+     ('y', 'bar')]
 
-Narrow a selection to rows where column **one** equals "b" *and*
-column **two** equals "y"::
+Narrow a selection to rows where column **A** equals "y" *and*
+column **B** equals "bar"::
 
-    >>> source([('one', 'two')], one='b', two='y').execute()
-    [('b', 'y')]  # Only 1 row matches these keyword conditions.
+    >>> source([('A', 'B', 'C')], A='y', B='bar').execute()
+    [('y', 'bar', '20')]
+
+Only one row matches the above keyword conditions.
 
 
 Additional Operations
 =====================
 
-:meth:`Sum <DataQuery.sum>` the values from column **three**::
+:meth:`Sum <DataQuery.sum>` the values from column **C**::
 
-    >>> source(['three']).sum().execute()
-    600
+    >>> source('C').sum().execute()
+    100
 
-Group by column **one** and sum the values from column **three** (for
+Group by column **A** and sum the values from column **C** (for
 each group)::
 
-    >>> source({'one': ['three']}).sum().execute()
-    {'a': 200,
-     'b': 200,
-     'c': 200}
+    >>> source({'A': 'C'}).sum().execute()
+    {'x': 50, 'y': 30, 'z': 20}
 
-Group by columns **one** and **two** and sum the values from column
-**three**:
+Group by columns **A** and **B** and sum the values from column
+**C**:
 
-    >>> source({('one', 'two'): ['three']}).sum().execute()
-    {('a', 'x'): 200,
-     ('b', 'x'): 100,
-     ('b', 'y'): 100,
-     ('c', 'y'): 200}
+    >>> source({('A', 'B'): 'C'}).sum().execute()
+    {('x', 'foo'): 50,
+     ('y', 'foo'): 10,
+     ('y', 'bar'): 20,
+     ('z', 'bar'): 20}
 
 Select :meth:`distinct <DataQuery.distinct>` values:
 
-    >>> source(['one']).distinct().execute()
-    ['a', 'b', 'c']
+    >>> source('A').distinct().execute()
+    ['x', 'y', 'z']
 
 :meth:`Map <DataQuery.map>` values with a function:
 
-    >>> def uppercase(x):
-    ...     return str(x).upper()
+    >>> def uppercase(value):
+    ...     return str(value).upper()
     ...
-    >>> source(['one']).map(uppercase).execute()
-    ['A', 'A', 'B', 'B', 'C', 'C']
+    >>> source(['A']).map(uppercase).execute()
+    ['X', 'X', 'Y', 'Y', 'Z', 'Z']
 
 
 :meth:`Filter <DataQuery.filter>` values with a function:
 
-    >>> def not_c(x):
-    ...     return x != 'c'
+    >>> def not_z(value):
+    ...     return value != 'z'
     ...
-    >>> source(['one']).filter(not_c).execute()
-    ['a', 'a', 'b', 'b']
+    >>> source(['A']).filter(not_z).execute()
+    ['x', 'x', 'y', 'y']
 
 Multiple methods can be chained together:
 
-    >>> def not_c(x):
-    ...     return x != 'c'
+    >>> def not_z(value):
+    ...     return value != 'z'
     ...
-    >>> def uppercase(x):
-    ...     return str(x).upper()
+    >>> def uppercase(value):
+    ...     return str(value).upper()
     ...
-    >>> source(['one']).filter(not_c).map(uppercase).execute()
-    'AABB'
+    >>> source(['A']).filter(not_z).map(uppercase).execute()
+    ['X', 'X', 'Y', 'Y']
