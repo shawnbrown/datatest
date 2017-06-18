@@ -453,7 +453,7 @@ class Test_select_functions(unittest.TestCase):
 
         self.assertEqual(_normalize_select(['A']), ['A'], msg=no_change)
 
-        self.assertEqual(_normalize_select({'A'}), set(['A']), msg=no_change)
+        self.assertEqual(_normalize_select(set(['A'])), set(['A']), msg=no_change)
 
         self.assertEqual(
             _normalize_select([('A', 'B')]),
