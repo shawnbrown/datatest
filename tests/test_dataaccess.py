@@ -25,7 +25,7 @@ from datatest.dataaccess import _sqlite_avg
 from datatest.dataaccess import _sqlite_min
 from datatest.dataaccess import _sqlite_max
 from datatest.dataaccess import _sqlite_distinct
-from datatest.dataaccess import _validate_select_container
+from datatest.dataaccess import _normalize_select
 from datatest.dataaccess import _parse_select
 from datatest.dataaccess import RESULT_TOKEN
 from datatest.dataaccess import DataQuery
@@ -448,28 +448,68 @@ class TestDistinctData(unittest.TestCase):
 
 
 class Test_select_functions(unittest.TestCase):
-    def test_validate_select_container(self):
-        _validate_select_container(['A'])
-        _validate_select_container(set(['A']))
-        _validate_select_container([('A', 'B')])
-        _validate_select_container([['A', 'B']])
-        _validate_select_container([set(['A', 'B'])])
+    def test_normalize_select(self):
+        no_change = 'no change for valid containers'
 
-        with self.assertRaises(ValueError):
-            _validate_select_container('A')
+        self.assertEqual(_normalize_select(['A']), ['A'], msg=no_change)
 
-        with self.assertRaises(ValueError):
-            _validate_select_container(['A', 'B'])
+        self.assertEqual(_normalize_select({'A'}), set(['A']), msg=no_change)
 
-        # POINT OF DISCUSSION: Should non-string items fail
-        # immediately? Currently, it's conceivable that field
-        # names could be something other than strings.
+        self.assertEqual(
+            _normalize_select([('A', 'B')]),
+            [('A', 'B')],
+            msg=no_change,
+        )
 
-        #with self.assertRaises(ValueError):
-        #    _validate_select_container({'A': 'foo'})
+        self.assertEqual(
+            _normalize_select({'A': ['B']}),
+            {'A': ['B']},
+            msg=no_change)
 
-        #with self.assertRaises(ValueError):
-        #    _validate_select_container([['A', ['B']]])
+        self.assertEqual(
+            _normalize_select({'A': [('B', 'C')]}),
+            {'A': [('B', 'C')]},
+            msg=no_change)
+
+        self.assertEqual(
+            _normalize_select({('A', 'B'): ['C']}),
+            {('A', 'B'): ['C']},
+            msg=no_change)
+
+        default_list = 'unwrapped column or multi-column selects should get list wrapper'
+
+        self.assertEqual(_normalize_select('A'), ['A'], msg=no_change)
+
+        self.assertEqual(
+            _normalize_select(('A', 'B')),
+            [('A', 'B')],
+            msg=no_change)
+
+        self.assertEqual(
+            _normalize_select({'A': 'B'}),
+            {'A': ['B']},
+            msg=no_change)
+
+        self.assertEqual(
+            _normalize_select({('A', 'B'): 'C'}),
+            {('A', 'B'): ['C']},
+            msg=no_change)
+
+        self.assertEqual(
+            _normalize_select({'A': ('B', 'C')}),
+            {'A': [('B', 'C')]},
+            msg=no_change)
+
+        unsupported = 'unsupported values should raise error'
+
+        with self.assertRaises(ValueError, msg=unsupported):
+            _normalize_select(1)
+
+        with self.assertRaises(ValueError, msg=unsupported):
+            _normalize_select({'A': {'B': ['C']}})  # Nested mapping.
+
+        with self.assertRaises(ValueError, msg=unsupported):
+            _normalize_select(['A', ['B']])  # Nested list.
 
     def test_parse_select(self):
         key, value = _parse_select(['A'])  # Single column.
@@ -484,17 +524,13 @@ class Test_select_functions(unittest.TestCase):
         self.assertEqual(key, 'A')
         self.assertEqual(value, ['B'])
 
-        with self.assertRaises(ValueError):
-            _parse_select(1)  # Integer, no container.
+        key, value = _parse_select({'A': [('B', 'C')]})  # Mapping with multi-column value.
+        self.assertEqual(key, 'A')
+        self.assertEqual(value, [('B', 'C')])
 
-        with self.assertRaises(ValueError):
-            _parse_select('A')  # String without container.
-
-        with self.assertRaises(ValueError):
-            _parse_select({'A': 'B'})  # String without container (in value).
-
-        with self.assertRaises(ValueError):
-            _parse_select({'A': {'B': ['C']}})  # Nested mapping.
+        key, value = _parse_select({('A', 'B'): ['C']})  # Mapping with multi-column key.
+        self.assertEqual(key, ('A', 'B'))
+        self.assertEqual(value, ['C'])
 
 
 class TestDataQuery(unittest.TestCase):
@@ -521,11 +557,24 @@ class TestDataQuery(unittest.TestCase):
         expected = tuple([('distinct', (), {}), ('sum', (), {})])
         self.assertEqual(query._query_steps, expected)
 
+        # Single-string defaults to list-of-single-string.
+        query = DataQuery('foo')
+        self.assertEqual(query.select, ['foo'], 'should be wrapped as list')
+
+        # Multi-item-container defaults to list-of-container.
+        query = DataQuery(['foo', 'bar'])
+        self.assertEqual(query.select, [['foo', 'bar']], 'should be wrapped as list')
+
+        # Mapping with single-string defaults to list-of-single-string.
+        query = DataQuery({'foo': 'bar'})
+        self.assertEqual(query.select, {'foo': ['bar']}, 'value should be wrapped as list')
+
+        # Mapping with multi-item-container defaults to list-of-container.
+        query = DataQuery({'foo': ['bar', 'baz']})
+        self.assertEqual(query.select, {'foo': [['bar', 'baz']]}, 'value should be wrapped as list')
+
         with self.assertRaises(TypeError, msg='should require select args'):
             DataQuery()
-
-        with self.assertRaises(ValueError, msg='should fail immediately when "select" is bad'):
-            DataQuery(['bad', 'syntax'])
 
         # Bad "select" field.
         source = DataSource([(1, 2), (1, 2)], fieldnames=['A', 'B'])
@@ -536,6 +585,16 @@ class TestDataQuery(unittest.TestCase):
         source = DataSource([(1, 2), (1, 2)], fieldnames=['A', 'B'])
         with self.assertRaises(LookupError, msg='should fail immediately when fieldname conflicts with provided "where" field'):
             query = DataQuery(source, ['A'], Y=2)
+
+    def test_init_with_nested_dicts(self):
+        """Support for nested dictionaries was removed (for now).
+        It's likely that arbitrary nesting would complicate the ability
+        to check complex data values that are, themselves, mappings
+        (like probability mass functions represented as a dictionary).
+        """
+        regex = 'mappings can not be nested'
+        with self.assertRaisesRegex(ValueError, regex):
+            query = DataQuery({'A': {'B': 'C'}}, D='x')
 
     def test__copy__(self):
         # Select-arg only.
@@ -1026,16 +1085,6 @@ class TestDataSourceBasics(unittest.TestCase):
             ('b', 'b'): [70, 70],
         }
         self.assertEqual(dict(result), expected)
-
-    def test_select_nested_dicts(self):
-        """Support for nested dictionaries was removed (for now).
-        It's likely that arbitrary nesting would complicate the ability
-        to check complex data values that are, themselves, mappings
-        (like probability mass functions represented as a dictionary).
-        """
-        regex = 'mappings can not be nested'
-        with self.assertRaisesRegex(ValueError, regex):
-            self.source._select({'label1': {'label2': 'value'}})
 
     def test_call(self):
         query = self.source(['label1'])

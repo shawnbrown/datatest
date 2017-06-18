@@ -359,28 +359,54 @@ def _sqlite_distinct(iterable):
 # Functions to validate and parse query 'select' syntax.
 ########################################################
 
-def _validate_select_container(select):
-    if isinstance(select, str) or not isinstance(select, collections.Sized):
-        select_type = select.__class__.__name__
-        raise ValueError(('expected list, tuple, or other container, '
-                          'got {0}: {1!r}').format(select_type, select))
+def _validate_fields(fields):
+    if not _is_nsiterable(fields):
+        fields = [fields]
 
-    if len(select) != 1:
-        raise ValueError(('expected container of 1 item, got {0} '
-                          'items: {1!r}').format(len(select), select))
+    for field in fields:
+        if not isinstance(field, str):
+            message = "expected 'str' elements, got {0!r}"
+            raise ValueError(message.format(field))
 
 
-def _parse_select(select):
-    _validate_select_container(select)
+def _normalize_select(select):
+    """Returns normalized *select* container or raises error if unsupported."""
+    if not isinstance(select, collections.Sized):
+        raise ValueError(('unsupported select '
+                          'format, got {0!r}').format(select))
+
     if isinstance(select, collections.Mapping):
+        if len(select) != 1:
+            raise ValueError(('expected container of 1 item, got {0} '
+                              'items: {1!r}').format(len(select), select))
+
         key, value = tuple(select.items())[0]
         if isinstance(value, collections.Mapping):
             message = 'mappings can not be nested, got {0!r}'
             raise ValueError(message.format(select))
-        _validate_select_container(value)
+
+        if isinstance(value, str) or len(value) > 1:
+            select = {key: [value]}  # Rebuild with default list container.
+
+        _validate_fields(key)
+        _validate_fields(tuple(value)[0])
+        return select  # <- EXIT!
+
+    if isinstance(select, str) or len(select) > 1:
+        select = [select]  # Wrap with default list container.
+
+    _validate_fields(tuple(select)[0])
+    return select
+
+
+def _parse_select(select):
+    """Expects a normalized *select* and returns *key* and *value*
+    components as a tuple.
+    """
+    if isinstance(select, collections.Mapping):
+        key, value = tuple(select.items())[0]
     else:
-        key = tuple()
-        value = select
+        key, value = tuple(), select
     return key, value
 
 
@@ -448,10 +474,12 @@ class DataQuery(object):
             message = "'defaultsource' must be of the type DataSource, got {0}"
             raise TypeError(message.format(defaultsource.__class__.__name__))
 
-        parsed = _parse_select(select)
+        select = _normalize_select(select)
+
         if defaultsource:
-            query_fields = itertools.chain(_flatten(parsed), where.keys())
-            defaultsource._assert_fields_exist(query_fields)
+            flattened = _flatten([_parse_select(select), where.keys()])
+            defaultsource._assert_fields_exist(flattened)
+
         self.defaultsource = defaultsource
         self._select = select
         self._where = where
@@ -460,11 +488,6 @@ class DataQuery(object):
     @property
     def select(self):
         return self._select
-
-    @select.setter
-    def select(self, value):
-        _parse_select(value)
-        self._select = value
 
     @staticmethod
     def _validate_source(source):
@@ -913,11 +936,11 @@ class DataSource(object):
         object that is automatically associated with the source (see
         :class:`DataQuery` for *select* and *where* syntax)::
 
-            query = source(['A'])
+            query = source('A')
 
         This is a shorthand for::
 
-            query = DataQuery(source, ['A'])
+            query = DataQuery(source, 'A')
         """
         return DataQuery(self, select, **where)
 
