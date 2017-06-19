@@ -51,8 +51,8 @@ You can load the data from a CSV file (:download:`example.csv
 Getting Field Names
 ===================
 
-You can get a list of field names with :attr:`fieldnames
-<DataSource.fieldnames>`::
+You can get a list of field names with the :attr:`fieldnames
+<DataSource.fieldnames>` attribute::
 
     >>> source.fieldnames
     ['A', 'B', 'C']
@@ -133,27 +133,32 @@ mutable objects like lists or other sets.
 Groups of Columns
 -----------------
 
-:py:class:`dict`
+Selecting groups of elements is accomplished using a
+:py:class:`dict` or other mapping type. The key specifies
+how the elements are grouped and the value specifies the
+fields from which the elements are selected.
 
-Select groups of elements from column **A** that contain lists
-of elements from column **B**::
+For each unique value of column **A**, we select a list of
+elements from column **B**::
 
-    >>> source({'A': 'B'}).execute()  # Grouped by key.
+    >>> source({'A': 'B'}).execute()
     {'x': ['foo', 'foo'],
      'y': ['foo', 'bar'],
      'z': ['bar', 'bar']}
 
-Select groups of elements from column **A** that contain
-:py:class:`sets <set>` of elements from column **B**::
+As before, the types used in the selection determine the
+types returned in the result. For unique values of column
+**A**, we can select a :py:class:`set` of elements from
+column **B** with the following::
 
-     >>> source({'A': {'B'}}).execute()  # Grouped by key.
+     >>> source({'A': {'B'}}).execute()
      {'x': {'foo'},
       'y': {'foo', 'bar'},
       'z': {'bar'}}
 
-Select groups of elements from columns **A** and **B** (using
-a :py:class:`tuple`) that contain lists of elements from column
-**C**::
+To group by multiple columns, we use a :py:class:`tuple` of
+key fields. For each unique tuple of columns **A** and **B**,
+we select a list of elements from column **C**::
 
     >>> source({('A', 'B'): 'C'}).execute()
     {('x', 'foo'): ['20', '30'],
@@ -161,9 +166,8 @@ a :py:class:`tuple`) that contain lists of elements from column
      ('y', 'bar'): ['20'],
      ('z', 'bar'): ['10', '10']}
 
-When selecting groups of elements, you must provide a dictionary with
-a single key-value pair. As before, the selection types determine the
-result types, but keep in mind that dictionary keys must be `immutable
+Although selection types can be specified as needed, remember
+that dictionary keys must be `immutable
 <http://docs.python.org/3/glossary.html#term-immutable>`_
 (:py:class:`str`, :py:class:`tuple`, :py:class:`frozenset`, etc.).
 
@@ -204,19 +208,21 @@ Only one row matches the above keyword conditions.
 Additional Operations
 =====================
 
-:meth:`Sum <DataQuery.sum>` the values from column **C**::
+:class:`DataQuery` objects also support methods for operating
+on selected values.
+
+:meth:`Sum <DataQuery.sum>` the elements from column **C**::
 
     >>> source('C').sum().execute()
     100
 
-Group by column **A** and sum the values from column **C** (for
-each group)::
+Group by column **A** the sums of elements from column **C**::
 
     >>> source({'A': 'C'}).sum().execute()
     {'x': 50, 'y': 30, 'z': 20}
 
-Group by columns **A** and **B** and sum the values from column
-**C**:
+Group by columns **A** and **B** the sums of elements from column
+**C**::
 
     >>> source({('A', 'B'): 'C'}).sum().execute()
     {('x', 'foo'): 50,
@@ -224,29 +230,30 @@ Group by columns **A** and **B** and sum the values from column
      ('y', 'bar'): 20,
      ('z', 'bar'): 20}
 
-Select :meth:`distinct <DataQuery.distinct>` values:
+Select :meth:`distinct <DataQuery.distinct>` elements::
 
     >>> source('A').distinct().execute()
     ['x', 'y', 'z']
 
-:meth:`Map <DataQuery.map>` values with a function:
+:meth:`Map <DataQuery.map>` elements with a function::
 
     >>> def uppercase(value):
     ...     return str(value).upper()
     ...
-    >>> source(['A']).map(uppercase).execute()
+    >>> source('A').map(uppercase).execute()
     ['X', 'X', 'Y', 'Y', 'Z', 'Z']
 
-
-:meth:`Filter <DataQuery.filter>` values with a function:
+:meth:`Filter <DataQuery.filter>` elements with a function::
 
     >>> def not_z(value):
     ...     return value != 'z'
     ...
-    >>> source(['A']).filter(not_z).execute()
+    >>> source('A').filter(not_z).execute()
     ['x', 'x', 'y', 'y']
 
-Multiple methods can be chained together:
+Since each method returns a new DataQuery, it's possible to
+chain together multiple method calls to transform the data
+as needed::
 
     >>> def not_z(value):
     ...     return value != 'z'
@@ -254,5 +261,5 @@ Multiple methods can be chained together:
     >>> def uppercase(value):
     ...     return str(value).upper()
     ...
-    >>> source(['A']).filter(not_z).map(uppercase).execute()
+    >>> source('A').filter(not_z).map(uppercase).execute()
     ['X', 'X', 'Y', 'Y']
