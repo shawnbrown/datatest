@@ -120,6 +120,16 @@ class TestMapData(unittest.TestCase):
         self.assertEqual(result.evaluation_type, list)
         self.assertEqual(result.evaluate(), [2, 4, 6])
 
+    def test_settype_to_list(self):
+        iterable = DataResult([1, 2, 3], set)  # <- Starts as 'set'.
+
+        function = lambda x: x % 2
+        result = _map_data(function, iterable)
+
+        self.assertIsInstance(result, DataResult)
+        self.assertEqual(result.evaluation_type, list) # <- Now a 'list'.
+        self.assertEqual(result.evaluate(), [1, 0, 1])
+
     def test_single_int(self):
         function = lambda x: x * 2
         result = _map_data(function, 3)

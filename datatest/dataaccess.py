@@ -98,10 +98,10 @@ class DataResult(collections.Iterator):
 
     When iterated over, the *iterable* must yield only those values
     necessary for constructing an object of the given *evaluation_type*
-    and no more. When the *evaluation_type* is a set, the *iterable*
-    must not contain duplicate values. When the *evaluation_type* is
-    a :py:class:`dict` or other mapping, the *iterable* must contain
-    suitable key-value pairs or a mapping.
+    and no more. For example, when the *evaluation_type* is a set, the
+    *iterable* must not contain duplicate or unhashable values. When
+    the *evaluation_type* is a :py:class:`dict` or other mapping, the
+    *iterable* must contain unique key-value pairs or a mapping.
     """
     def __init__(self, iterable, evaluation_type):
         if not isinstance(evaluation_type, type):
@@ -208,6 +208,8 @@ def _map_data(function, iterable):
     def wrapper(iterable):
         if _is_nsiterable(iterable):
             evaluation_type = _get_evaluation_type(iterable)
+            if issubclass(evaluation_type, collections.Set):
+                evaluation_type = list
             return DataResult(map(function, iterable), evaluation_type)
         return function(iterable)
 
@@ -514,7 +516,10 @@ class DataQuery(object):
         return new_query
 
     def map(self, function):
-        """Apply *function* to each element keeping the resulting data."""
+        """Apply *function* to each element, keeping the results.
+        If the group of data is a set type, it will be converted
+        to a list (as the results may not be distinct or hashable).
+        """
         return self._add_step('map', function)
 
     def filter(self, function=None):
