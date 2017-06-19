@@ -136,7 +136,7 @@ Groups of Columns
 Selecting groups of elements is accomplished using a
 :py:class:`dict` or other mapping type. The key specifies
 how the elements are grouped and the value specifies the
-fields from which the elements are selected.
+fields from which elements are selected.
 
 For each unique value of column **A**, we select a list of
 elements from column **B**::
@@ -157,8 +157,8 @@ column **B** with the following::
       'z': {'bar'}}
 
 To group by multiple columns, we use a :py:class:`tuple` of
-key fields. For each unique tuple of columns **A** and **B**,
-we select a list of elements from column **C**::
+key fields. For each unique tuple of **A** and **B**, we select
+a list of elements from column **C**::
 
     >>> source({('A', 'B'): 'C'}).execute()
     {('x', 'foo'): ['20', '30'],
