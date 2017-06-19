@@ -56,16 +56,16 @@ DataQuery
     query)::
 
         source = DataSource(...)
-        query = source(['A'])  # <- DataQuery created from source.
+        query = source('A')  # <- DataQuery created from source.
 
     Queries can be created directly as well::
 
         source = DataSource(...)
-        query = DataQuery(source, ['A'])  # <- Direct initialization.
+        query = DataQuery(source, 'A')  # <- Direct initialization.
 
     Queries can also be created independent of any single data source::
 
-        query = DataQuery(['A'])
+        query = DataQuery('A')
 
     .. attribute:: defaultsource
 
