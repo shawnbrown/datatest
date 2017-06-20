@@ -10,11 +10,12 @@ from .utils import functools
 from .utils import itertools
 
 from .utils.misc import _is_consumable
-from .utils.misc import _is_nsiterable
 from .utils.misc import _get_arg_lengths
 from .utils.misc import _expects_multiple_params
 from .utils.misc import _make_decimal
+from .utils.misc import string_types
 from .dataaccess import _is_collection_of_items
+from .dataaccess import BaseElement
 from .dataaccess import DictItems
 
 from .errors import ValidationError
@@ -63,9 +64,7 @@ class BaseAllowance(abc.ABC):
 
         if _is_collection_of_items(iterable):
             for key, diff in iterable:
-                if (not _is_nsiterable(diff)
-                        or isinstance(diff, Exception)
-                        or isinstance(diff, collections.Mapping)):
+                if isinstance(diff, (BaseElement, Exception)):
                     # Error is a single element.
                     filtered = self.filterfalse(iter([(key, diff)]))
                     if isinstance(filtered, collections.Mapping):
@@ -414,9 +413,9 @@ class allowed_key(ElementAllowance):
     def __init__(self, function, msg=None):
         @functools.wraps(function)
         def wrapped(key, _):
-            if _is_nsiterable(key):
-                return function(*key)
-            return function(key)
+            if isinstance(key, BaseElement):
+                return function(key)
+            return function(*key)
         super(allowed_key, self).__init__(wrapped, msg)
 
 
@@ -430,9 +429,9 @@ class allowed_args(ElementAllowance):
         @functools.wraps(function)
         def wrapped(_, difference):
             args = difference.args
-            if _is_nsiterable(args):
-                return function(*args)
-            return function(args)
+            if isinstance(args, BaseElement):
+                return function(args)
+            return function(*args)
         super(allowed_args, self).__init__(wrapped, msg)
 
 

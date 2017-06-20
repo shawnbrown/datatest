@@ -254,8 +254,8 @@ def _map_data(function, iterable):
 
 def _reduce_data(function, iterable):
     def wrapper(iterable):
-        if not _is_nsiterable(iterable):
-            return iterable  # <- Not iterable, return object.
+        if isinstance(iterable, BaseElement):
+            return iterable
         return functools.reduce(function, iterable)
 
     return _apply_to_data(wrapper, iterable)
@@ -263,9 +263,9 @@ def _reduce_data(function, iterable):
 
 def _filter_data(function, iterable):
     def wrapper(iterable):
-        if not _is_nsiterable(iterable):
-            msg= 'filter expects a non-string iterable, found {0}'
-            raise TypeError(msg.format(iterable.__class__.__name__))
+        if isinstance(iterable, BaseElement):
+            raise TypeError(('filter expects a collection of data elements, '
+                             'got 1 data element {0}').format(iterable))
         filtered_data = filter(function, iterable)
         return DataResult(filtered_data, _get_evaluation_type(iterable))
 
@@ -295,7 +295,7 @@ def _sqlite_sum(iterable):
     """Sum the elements and return the total (should match SQLite
     behavior).
     """
-    if not _is_nsiterable(iterable):
+    if isinstance(iterable, BaseElement):
         iterable = [iterable]
     iterable = (_sqlite_cast_as_real(x) for x in iterable if x != None)
     try:
@@ -307,7 +307,7 @@ def _sqlite_sum(iterable):
 
 def _sqlite_count(iterable):
     """Return the number non-NULL (!= None) elements in iterable."""
-    if not _is_nsiterable(iterable):
+    if isinstance(iterable, BaseElement):
         iterable = [iterable]
     return sum(1 for x in iterable if x != None)
 
@@ -348,7 +348,7 @@ def _sqlite_avg(iterable):
     """Return the average of elements in iterable. Returns None if all
     elements are None.
     """
-    if not _is_nsiterable(iterable):
+    if isinstance(iterable, BaseElement):
         iterable = [iterable]
     iterable = (x for x in iterable if x != None)
     total = 0.0
@@ -363,7 +363,7 @@ def _sqlite_min(iterable):
     """Return the minimum non-None value of all values. Returns
     None only if all values are None.
     """
-    if not _is_nsiterable(iterable):
+    if isinstance(iterable, BaseElement):
         return iterable  # <- EXIT!
     iterable = (x for x in iterable if x != None)
     return min(iterable, default=None, key=_sqlite_sortkey)
@@ -373,7 +373,7 @@ def _sqlite_max(iterable):
     """Return the maximum value of all values. Returns None if all
     values are None.
     """
-    if not _is_nsiterable(iterable):
+    if isinstance(iterable, BaseElement):
         return iterable  # <- EXIT!
     return max(iterable, default=None, key=_sqlite_sortkey)
 
@@ -383,7 +383,7 @@ def _sqlite_distinct(iterable):
     evaluation_type.
     """
     def dodistinct(itr):
-        if not _is_nsiterable(itr):
+        if isinstance(itr, BaseElement):
             return itr
         return DataResult(_unique_everseen(itr), _get_evaluation_type(itr))
 
@@ -398,11 +398,11 @@ def _sqlite_distinct(iterable):
 ########################################################
 
 def _validate_fields(fields):
-    if not _is_nsiterable(fields):
-        fields = [fields]
+    if isinstance(fields, string_types):
+        return  # <- EXIT!
 
     for field in fields:
-        if not isinstance(field, str):
+        if not isinstance(field, string_types):
             message = "expected 'str' elements, got {0!r}"
             raise ValueError(message.format(field))
 
@@ -889,7 +889,7 @@ class DataSource(object):
             files = ['mydata1.csv', 'mydata2.csv']
             source = datatest.DataSource.from_csv(files)
         """
-        if not _is_nsiterable(file) or isinstance(file, IOBase):
+        if isinstance(file, string_types) or isinstance(file, IOBase):
             file = [file]
 
         new_cls = cls.__new__(cls)
@@ -1078,8 +1078,7 @@ class DataSource(object):
         """Assert that given fieldnames are present in data source,
         raises LookupError if fields are missing.
         """
-        #assert _is_nsiterable(fieldnames)
-        #assert not isinstance(fieldnames, collections.Mapping)
+        #assert not isinstance(fieldnames, BaseElement)
         available = self.fieldnames
         for name in fieldnames:
             if name not in available:

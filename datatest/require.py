@@ -3,7 +3,7 @@ import re
 from .utils import itertools
 from .utils import collections
 from .utils.builtins import callable
-from .utils.misc import _is_nsiterable
+from .dataaccess import BaseElement
 from .dataaccess import DictItems
 from .dataaccess import _is_collection_of_items
 from .errors import BaseDifference
@@ -97,7 +97,7 @@ def _require_set(data, requirement_set):
     """Compare *data* against a *requirement_set* of values."""
     if data is NOTFOUND:
         data = []
-    elif not _is_nsiterable(data):
+    elif isinstance(data, BaseElement):
         data = [data]
 
     matching_elements = set()
@@ -118,15 +118,15 @@ def _require_set(data, requirement_set):
 def _require_callable(data, function):
     if data is NOTFOUND:
         data = [None]
-    elif not _is_nsiterable(data):
+    elif isinstance(data, BaseElement):
         data = [data]
 
     for element in data:
         try:
-            if _is_nsiterable(element):
-                returned_value = function(*element)
-            else:
+            if isinstance(element, BaseElement):
                 returned_value = function(element)
+            else:
+                returned_value = function(*element)
         except Exception:
             returned_value = False  # Raised errors count as False.
 
@@ -148,7 +148,7 @@ def _require_callable(data, function):
 def _require_regex(data, regex):
     if data is NOTFOUND:
         data = [None]
-    elif not _is_nsiterable(data):
+    elif isinstance(data, BaseElement):
         data = [data]
 
     search = regex.search
@@ -193,8 +193,7 @@ def _apply_requirement(data, requirement):
             return itertools.chain([first_element], result)  # <- EXIT!
         return None  # <- EXIT!
 
-    is_single_element = (not _is_nsiterable(data)) or \
-                                isinstance(data, collections.Mapping)
+    is_single_element = isinstance(data, BaseElement)
     if is_single_element:
         data = [data]
 
@@ -228,8 +227,7 @@ def _apply_mapping_requirement(data, mapping):
         expected = mapping.get(key, NOTFOUND)
         result = _apply_requirement(actual, expected)
         if result:
-            if _is_nsiterable(result) and \
-                       not isinstance(result, collections.Mapping):
+            if not isinstance(result, BaseElement):
                 result = list(result)
             yield key, result
 
@@ -237,8 +235,7 @@ def _apply_mapping_requirement(data, mapping):
     for key, expected in mapping_items:
         if key not in data_keys:
             result = _apply_requirement(NOTFOUND, expected)
-            if _is_nsiterable(result) and \
-                       not isinstance(result, collections.Mapping):
+            if not isinstance(result, BaseElement):
                 result = list(result)
             yield key, result
 
@@ -262,7 +259,7 @@ def _find_differences(data, requirement):
     elif isinstance(data, collections.Mapping):
         items = getattr(data, 'iteritems', data.items)()
         result = ((k, _apply_requirement(v, requirement)) for k, v in items)
-        iter_to_list = lambda x: list(x) if _is_nsiterable(x) else x
+        iter_to_list = lambda x: x if isinstance(x, BaseElement) else list(x)
         result = ((k, iter_to_list(v)) for k, v in result if v)
         result = _normalize_mapping_result(result)
     else:
