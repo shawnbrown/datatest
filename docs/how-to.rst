@@ -166,8 +166,56 @@ Test-cases that inherit from this class can use "assertReference()":
 
     class TestMyData(ReferenceTestCase):
         def test_select_syntax(self):
-            self.assertReference({('one', 'two')}, two='x')
+            self.assertReference({('A', 'B')}, B='foo')
 
         def test_query_syntax(self):
-            query = datatest.DataQuery({'one': ['three']}).sum()
+            query = datatest.DataQuery({'A': 'C'}).sum()
             self.assertReference(query)
+
+
+***************************************
+How to Allow Approximate String Matches
+***************************************
+
+.. code-block:: python
+
+    class FuzzyTestCase(datatest.DataTestCase):
+        def allowedFuzzyMatch(self, percent, msg=None):
+            """Context manager to allow approximate string matches."""
+            def fuzzy_match(a, b):  # Calculates Levenshtein/edit distance.
+                maxlen = max(len(a), len(b))
+                n, m = len(a), len(b)
+                if n > m:
+                    a, b = b, a
+                    n, m = m, n
+                current = range(n + 1)
+                for i in range(1, m + 1):
+                    previous, current = current, [i] + [0] * n
+                    for j in range(1, n + 1):
+                        add, delete = previous[j] + 1, current[j - 1] + 1
+                        change = previous[j - 1]
+                        if a[j - 1] != b[i - 1]:
+                            change = change + 1
+                        current[j] = min(add, delete, change)
+                distance = current[n]
+                similarity = 1 - (distance / maxlen)  # As percentage.
+                return similarity >= percent
+
+            return self.allowedArgs(fuzzy_match, msg)
+
+.. code-block:: python
+
+    class TestFuzzyMatch(FuzzyTestCase):
+        def test_product_name(self):
+            scraped_data = {
+                'MKT-GA4530': '4 1/2 inch Angle Grinder',
+                'FLK-87-5': 'Fluke 87-5 Multimeter',
+                'LEW-K2698-1': 'Lincoln Elec Easy MIG 180',
+            }
+            catalog_reference = {
+                'MKT-GA4530': '4-1/2in Angle Grinder',
+                'FLK-87-5': 'Fluke 87-5 Multimeter',
+                'LEW-K2698-1': 'Lincoln Easy MIG 180',
+            }
+            with self.allowedFuzzyMatch(percent=0.75):
+                self.assertValid(scraped_data, catalog_reference)
