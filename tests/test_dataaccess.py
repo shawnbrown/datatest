@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
+from __future__ import division
 import os
 import re
 import tempfile
@@ -190,6 +191,16 @@ class TestMapData(unittest.TestCase):
         self.assertIsInstance(result, DataResult)
         self.assertEqual(result.evaluation_type, dict)
         self.assertEqual(result.evaluate(), {'a': 4, 'b': 6})
+
+    def test_unpacking_behavior(self):
+        iterable = DataResult([(1, 2), (1, 4), (1, 8)], list)
+
+        function = lambda x, y: x / y  # <- function receives 2 args
+        result = _map_data(function, iterable)
+
+        self.assertIsInstance(result, DataResult)
+        self.assertEqual(result.evaluation_type, list)
+        self.assertEqual(result.evaluate(), [0.5, 0.25, 0.125])
 
 
 class TestFilterData(unittest.TestCase):
