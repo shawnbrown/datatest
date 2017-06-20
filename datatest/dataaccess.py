@@ -8,6 +8,7 @@ from numbers import Number
 from sqlite3 import Binary
 
 from .utils.builtins import *
+from .utils import abc
 from .utils import collections
 from .utils import contextlib
 from .utils import functools
@@ -48,6 +49,33 @@ class working_directory(contextlib.ContextDecorator):
 
     def __exit__(self, exc_type, exc_value, traceback):
         os.chdir(self._original_dir)
+
+
+_Mapping = collections.Mapping    # Get direct reference to eliminate
+_Iterable = collections.Iterable  # dot-lookups (these are used a lot).
+
+class BaseElement(abc.ABC):
+    """An abstract base class used to determine if an object should
+    be treated as a single data element or as a collection of multiple
+    data elements.
+
+    Objects that are considered individual data elements include:
+
+    * non-iterable objects
+    * strings
+    * mappings
+    """
+    @abc.abstractmethod
+    def __init__(self, *args, **kwds):
+        pass
+
+    @classmethod
+    def __subclasshook__(cls, subclass):
+        if cls is BaseElement:
+            if (issubclass(subclass, (string_types, _Mapping))
+                    or not issubclass(subclass, _Iterable)):
+                return True
+        return NotImplemented
 
 
 class DictItems(collections.Iterator):

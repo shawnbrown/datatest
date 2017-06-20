@@ -11,6 +11,7 @@ from datatest.utils import collections
 from datatest.utils.misc import _is_nsiterable
 
 from datatest.dataaccess import working_directory
+from datatest.dataaccess import BaseElement
 from datatest.dataaccess import _is_collection_of_items
 from datatest.dataaccess import DictItems
 from datatest.dataaccess import DataResult
@@ -58,6 +59,41 @@ class TestWorkingDirectory(unittest.TestCase):
         myfunction()  # <- Actually run the function.
 
         self.assertEqual(os.getcwd(), original_dir)
+
+
+class TestBaseElement(unittest.TestCase):
+    def test_type_checking(self):
+        # Base data elements include non-iterables, strings, and mappings.
+        self.assertTrue(isinstance(123, BaseElement))
+        self.assertTrue(isinstance('123', BaseElement))
+        self.assertTrue(isinstance({'abc': '123'}, BaseElement))
+
+        # Other iterable types are not considered base data elements.
+        self.assertFalse(isinstance(['123'], BaseElement))
+        self.assertFalse(isinstance(set(['123']), BaseElement))
+        self.assertFalse(isinstance(iter([1, 2, 3]), BaseElement))
+
+    def test_register_method(self):
+        class CustomElement(object):
+            def __iter__(self):
+                return iter([1, 2, 3])
+
+        custom_element = CustomElement()
+        self.assertFalse(isinstance(custom_element, BaseElement))
+
+        BaseElement.register(CustomElement)
+        self.assertTrue(isinstance(custom_element, BaseElement))
+
+    def test_direct_subclass(self):
+        class CustomElement(BaseElement):
+            def __init__(self):
+                pass
+
+            def __iter__(self):
+                return iter([1, 2, 3])
+
+        custom_element = CustomElement()
+        self.assertTrue(isinstance(custom_element, BaseElement))
 
 
 def convert_iter_to_type(iterable, target_type):
