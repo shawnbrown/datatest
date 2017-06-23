@@ -216,6 +216,26 @@ class TestRequireRegex(unittest.TestCase):
 
 
 class TestRequireOther(unittest.TestCase):
+    def test_eq(self):
+        """Should use __eq__() comparison, not __ne__()."""
+
+        class EqualsAll(object):
+            def __init__(_self):
+                _self.times_called = 0
+
+            def __eq__(_self, other):
+                _self.times_called += 1
+                return True
+
+            def __ne__(_self, other):
+                return NotImplemented
+
+        data = ['A', 'A', 'A']
+        requirement = EqualsAll()
+        result = _require_other(data, requirement)
+        list(result)  # Evaluate list (discarding results).
+        self.assertEqual(requirement.times_called, len(data))
+
     def test_all_true(self):
         data = iter(['A', 'A', 'A'])
         result = _require_other(data, 'A')

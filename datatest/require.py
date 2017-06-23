@@ -132,9 +132,11 @@ def _require_callable(data, function):
 
         if returned_value is True:
             continue
+
         if returned_value is False:
             yield Invalid(element)
             continue
+
         if isinstance(returned_value, BaseDifference):
             yield returned_value  # Returned difference is used as-is.
             continue
@@ -166,7 +168,7 @@ def _require_other(data, other, show_expected=True):
     """
     for element in data:
         try:
-            if element != other:
+            if not other == element:  # Uses "==" to trigger __eq__() call.
                 yield _make_difference(element, other, show_expected)
         except Exception:
             yield _make_difference(element, other, show_expected)
