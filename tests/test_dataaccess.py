@@ -193,11 +193,16 @@ class TestMapData(unittest.TestCase):
         self.assertEqual(result.evaluate(), {'a': 4, 'b': 6})
 
     def test_unpacking_behavior(self):
-        iterable = DataResult([(1, 2), (1, 4), (1, 8)], list)
+        data = [(1, 2), (1, 4), (1, 8)]
 
-        function = lambda x, y: x / y  # <- function receives 2 args
-        result = _map_data(function, iterable)
+        function = lambda x, y: x / y  # <- function takes 2 args
+        result = _map_data(function, DataResult(data, list))
+        self.assertIsInstance(result, DataResult)
+        self.assertEqual(result.evaluation_type, list)
+        self.assertEqual(result.evaluate(), [0.5, 0.25, 0.125])
 
+        function = lambda z: z[0] / z[1]  # <- function takes 1 arg
+        result = _map_data(function, DataResult(data, list))
         self.assertIsInstance(result, DataResult)
         self.assertEqual(result.evaluation_type, list)
         self.assertEqual(result.evaluate(), [0.5, 0.25, 0.125])

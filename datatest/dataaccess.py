@@ -13,11 +13,12 @@ from .utils import collections
 from .utils import contextlib
 from .utils import functools
 from .utils import itertools
+from .utils.misc import _expects_multiple_params
+from .utils.misc import _flatten
 from .utils.misc import _is_nsiterable
 from .utils.misc import _is_sortable
-from .utils.misc import _flatten
-from .utils.misc import _unique_everseen
 from .utils.misc import _make_token
+from .utils.misc import _unique_everseen
 from .utils.misc import string_types
 from .load.sqltemp import TemporarySqliteTable
 from .load.sqltemp import _from_csv
@@ -242,11 +243,15 @@ def _map_data(function, iterable):
             evaluation_type = list
 
         def domap(func, itrbl):
-            for x in itrbl:
-                if isinstance(x, BaseElement):
+            if _expects_multiple_params(func):
+                for x in itrbl:
+                    if isinstance(x, BaseElement):
+                        yield func(x)
+                    else:
+                        yield func(*x)
+            else:
+                for x in itrbl:
                     yield func(x)
-                else:
-                    yield func(*x)
         return DataResult(domap(function, iterable), evaluation_type)
 
     return _apply_to_data(wrapper, iterable)
@@ -265,7 +270,7 @@ def _filter_data(function, iterable):
     def wrapper(iterable):
         if isinstance(iterable, BaseElement):
             raise TypeError(('filter expects a collection of data elements, '
-                             'got 1 data element {0}').format(iterable))
+                             'got 1 data element: {0}').format(iterable))
         filtered_data = filter(function, iterable)
         return DataResult(filtered_data, _get_evaluation_type(iterable))
 
