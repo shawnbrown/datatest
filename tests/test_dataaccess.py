@@ -624,19 +624,19 @@ class Test_select_functions(unittest.TestCase):
 
 
 class TestDataQuery(unittest.TestCase):
-    def test_init(self):
+    def test_init_no_default(self):
         # Use select-only syntax.
         query = DataQuery(['foo'], bar='baz')
-        self.assertEqual(query.defaultsource, None)
+        self.assertEqual(query._data_source, None)
 
-        # Pass defaultsource and subject explicitly.
-        query = DataQuery(None, ['foo'], bar='baz')
-        self.assertEqual(query.defaultsource, None)
+        # Pass empty source explicitly.
+        query = DataQuery.from_data(None, ['foo'], bar='baz')
+        self.assertEqual(query._data_source, None)
 
-        # Use defaultsource-and-select syntax.
+        # Use source-and-select syntax.
         source = DataSource([(1, 2), (1, 2)], fieldnames=['A', 'B'])
-        query = DataQuery(source, ['A'], B=2)
-        self.assertEqual(query.defaultsource, source)
+        query = DataQuery.from_data(source, ['A'], B=2)
+        self.assertEqual(query._data_source, source)
 
         # Test query steps.
         query = DataQuery(['foo'], bar='baz')
@@ -649,32 +649,42 @@ class TestDataQuery(unittest.TestCase):
 
         # Single-string defaults to list-of-single-string.
         query = DataQuery('foo')
-        self.assertEqual(query.select, ['foo'], 'should be wrapped as list')
+        self.assertEqual(query._data_args[0][0], ['foo'], 'should be wrapped as list')
 
         # Multi-item-container defaults to list-of-container.
         query = DataQuery(['foo', 'bar'])
-        self.assertEqual(query.select, [['foo', 'bar']], 'should be wrapped as list')
+        self.assertEqual(query._data_args[0][0], [['foo', 'bar']], 'should be wrapped as list')
 
         # Mapping with single-string defaults to list-of-single-string.
         query = DataQuery({'foo': 'bar'})
-        self.assertEqual(query.select, {'foo': ['bar']}, 'value should be wrapped as list')
+        self.assertEqual(query._data_args[0][0], {'foo': ['bar']}, 'value should be wrapped as list')
 
         # Mapping with multi-item-container defaults to list-of-container.
         query = DataQuery({'foo': ['bar', 'baz']})
-        self.assertEqual(query.select, {'foo': [['bar', 'baz']]}, 'value should be wrapped as list')
+        self.assertEqual(query._data_args[0][0], {'foo': [['bar', 'baz']]}, 'value should be wrapped as list')
 
+    def test_init_from_data(self):
+        source = DataSource([(1, 2), (1, 2)], fieldnames=['A', 'B'])
+        query = DataQuery.from_data(source, ['B'])
+
+        source = DataSource([(1, 2), (1, 2)], fieldnames=['A', 'B'])
+        query = DataQuery.from_data(source, ['B'])
+        query.map(list)
+
+    def test_init_with_invalid_args(self):
+        # Missing args.
         with self.assertRaises(TypeError, msg='should require select args'):
             DataQuery()
 
         # Bad "select" field.
         source = DataSource([(1, 2), (1, 2)], fieldnames=['A', 'B'])
         with self.assertRaises(LookupError, msg='should fail immediately when fieldname conflicts with provided source'):
-            query = DataQuery(source, ['X'], B=2)
+            query = DataQuery.from_data(source, ['X'], B=2)
 
         # Bad "where" field.
         source = DataSource([(1, 2), (1, 2)], fieldnames=['A', 'B'])
         with self.assertRaises(LookupError, msg='should fail immediately when fieldname conflicts with provided "where" field'):
-            query = DataQuery(source, ['A'], Y=2)
+            query = DataQuery.from_data(source, ['A'], Y=2)
 
     def test_init_with_nested_dicts(self):
         """Support for nested dictionaries was removed (for now).
@@ -690,39 +700,35 @@ class TestDataQuery(unittest.TestCase):
         # Select-arg only.
         query = DataQuery(['B'])
         copied = query.__copy__()
-        self.assertEqual(copied.defaultsource, query.defaultsource)
-        self.assertEqual(copied._select, query._select)
-        self.assertEqual(copied._where, query._where)
+        self.assertEqual(copied._data_source, query._data_source)
+        self.assertEqual(copied._data_args, query._data_args)
         self.assertEqual(copied._query_steps, query._query_steps)
 
         # Select and keyword.
         query = DataQuery(['B'], C='x')
         copied = query.__copy__()
-        self.assertEqual(copied.defaultsource, query.defaultsource)
-        self.assertEqual(copied._select, query._select)
-        self.assertEqual(copied._where, query._where)
+        self.assertEqual(copied._data_source, query._data_source)
+        self.assertEqual(copied._data_args, query._data_args)
         self.assertEqual(copied._query_steps, query._query_steps)
 
         # Source, select, and keyword.
         source = DataSource([(1, 2), (1, 2)], fieldnames=['A', 'B'])
-        query = DataQuery(source, ['B'])
+        query = DataQuery.from_data(source, ['B'])
         copied = query.__copy__()
-        self.assertEqual(copied.defaultsource, query.defaultsource)
-        self.assertEqual(copied._select, query._select)
-        self.assertEqual(copied._where, query._where)
+        self.assertEqual(copied._data_source, query._data_source)
+        self.assertEqual(copied._data_args, query._data_args)
         self.assertEqual(copied._query_steps, query._query_steps)
 
         # Select and additional query methods.
         query = DataQuery(['B']).map(lambda x: str(x).upper())
         copied = query.__copy__()
-        self.assertEqual(copied.defaultsource, query.defaultsource)
-        self.assertEqual(copied._select, query._select)
-        self.assertEqual(copied._where, query._where)
+        self.assertEqual(copied._data_source, query._data_source)
+        self.assertEqual(copied._data_args, query._data_args)
         self.assertEqual(copied._query_steps, query._query_steps)
 
     def test_execute(self):
         source = DataSource([('1', '2'), ('1', '2')], fieldnames=['A', 'B'])
-        query = DataQuery(source, ['B'])
+        query = DataQuery.from_data(source, ['B'])
         query._query_steps = [
             ('map', (int,), {}),
             ('map', (lambda x: x * 2,), {}),
@@ -861,13 +867,15 @@ class TestDataQuery(unittest.TestCase):
         regex = r"DataQuery\(\[u?'label1'\], label2=\[u?'x', u?'y'\]\)"
         self.assertRegex(repr(query), regex)
 
-        # Check "defaultsource" signature.
-        query = DataQuery(DataSource([('x', 1), ('y', 2), ('z', 3)], ['A', 'B']),
-                          ['A'])
-        regex = r"""
-            DataQuery\(DataSource\(<list of records>, fieldnames=\[u?'A', u?'B'\]\),
-                      \[u?'A'\]\)
-        """
+        # Check "from_data" signature.
+        query = DataQuery.from_data(
+            DataSource([('x', 1), ('y', 2), ('z', 3)], ['A', 'B']),
+            ['A'],
+        )
+        regex = (
+            r"DataQuery\.from_data\(DataSource\(<list of records>, "
+            r"fieldnames=\[u?'A', u?'B'\]\), \[u?'A'\]\)"
+        )
         regex = textwrap.dedent(regex).strip()
         self.assertRegex(repr(query), regex)
 

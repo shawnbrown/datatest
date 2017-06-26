@@ -536,34 +536,29 @@ class DataQuery(object):
 
     See documentation for full details.
     """
-    def __init__(self, defaultsource=None, select=None, **where):
-        """
-        DataQuery(select, **where)
-        DataQuery(defaultsource, select, **where)
-        """
-        if select is None:
-            if defaultsource is None or isinstance(defaultsource, DataSource):
-                message = "__init__() missing 1 required positional argument: 'select'"
-                raise TypeError(message)
-            select, defaultsource = defaultsource, None
-        elif defaultsource and not isinstance(defaultsource, DataSource):
-            message = "'defaultsource' must be of the type DataSource, got {0}"
-            raise TypeError(message.format(defaultsource.__class__.__name__))
-
+    def __init__(self, select, **where):
         select = _normalize_select(select)
-
-        if defaultsource:
-            flattened = _flatten([_parse_select(select), where.keys()])
-            defaultsource._assert_fields_exist(flattened)
-
-        self.defaultsource = defaultsource
-        self._select = select
-        self._where = where
+        self._data_args = ((select,), where)
+        self._data_source = None
         self._query_steps = tuple()
 
-    @property
-    def select(self):
-        return self._select
+    @classmethod
+    def from_data(cls, source, *args, **kwds):
+        if isinstance(source, DataSource):
+            if len(args) != 1:
+                raise ValueError(
+                    'DataSource object expects 1 additional '
+                    'positional argument but {0} were given'
+                ).format(len(args))
+            select = _normalize_select(args[0])
+            flattened = _flatten([_parse_select(select), kwds.keys()])
+            source._assert_fields_exist(flattened)
+            args = (select,)  # Rebuild args with normalized "select".
+        query = cls.__new__(cls)
+        query._data_args = (args, kwds)
+        query._data_source = source
+        query._query_steps = tuple()
+        return query
 
     @staticmethod
     def _validate_source(source):
@@ -578,8 +573,8 @@ class DataQuery(object):
     #    pass
 
     def __copy__(self):
-        new_copy = self.__class__(self.defaultsource,
-                                  self._select, **self._where)
+        args, kwds = self._data_args
+        new_copy = self.from_data(self._data_source, *args, **kwds)
         new_copy._query_steps = self._query_steps
         return new_copy
 
@@ -688,9 +683,10 @@ class DataQuery(object):
         return _execution_step(function, args, {})
 
     def _get_execution_plan(self, query_steps):
+        args, kwds = self._data_args
         execution_plan = [
             _execution_step(getattr, (RESULT_TOKEN, '_select'), {}),
-            _execution_step(RESULT_TOKEN, (self._select,), self._where),
+            _execution_step(RESULT_TOKEN, args, kwds),
         ]
         for query_step in query_steps:
             execution_step = self._translate_step(query_step)
@@ -755,7 +751,7 @@ class DataQuery(object):
 
         Setting *optimize* to False turns-off query optimization.
         """
-        result = source or self.defaultsource
+        result = source or self._data_source
         if not result:
             raise ValueError('must provide source, none found')
         self._validate_source(result)
@@ -829,51 +825,47 @@ class DataQuery(object):
     def __repr__(self):
         name_or_repr = lambda x: getattr(x, '__name__', None) or repr(x)
 
-        name_repr = self.__class__.__name__
+        class_repr = self.__class__.__name__
 
-        if self.defaultsource:
-            source_repr = repr(self.defaultsource)
-            source_repr += ',\n{0}'.format(' ' * (len(name_repr) + 1))
+        if self._data_source:
+            method_repr = '.from_data'
+            source_repr = repr(self._data_source) + ', '
         else:
+            method_repr = ''
             source_repr = ''
 
-        select_repr = repr(self._select)
+        args_repr = repr(self._data_args[0][0])
 
-        if self._where:
-            where_repr = [(k, name_or_repr(v)) for k, v in self._where.items()]
-            where_repr = ['{0}={1}'.format(k, v) for k, v in where_repr]
-            where_repr = ', {0}'.format(', '.join(where_repr))
+        if self._data_args[1]:
+            kwds_repr = [(k, name_or_repr(v)) for k, v in self._data_args[1].items()]
+            kwds_repr = ['{0}={1}'.format(k, v) for k, v in kwds_repr]
+            kwds_repr = ', {0}'.format(', '.join(kwds_repr))
         else:
-            where_repr = ''
+            kwds_repr = ''
 
-        query_steps_repr = []
-        for name, args, kwds in self._query_steps:
-            if kwds:
-                kwds_repr = [(k, name_or_repr(v)) for k, v in kwds.items()]
-                kwds_repr = ['{0}={1}'.format(k, v) for k, v in kwds_repr]
-                kwds_repr = ', {0}'.format(', '.join(kwds_repr))
+        all_steps_repr = []
+        for step_name, step_args, step_kwds in self._query_steps:
+            if step_kwds:
+                step_kwds_repr = [(k, name_or_repr(v)) for k, v in step_kwds.items()]
+                step_kwds_repr = ['{0}={1}'.format(k, v) for k, v in step_kwds_repr]
+                step_kwds_repr = ', {0}'.format(', '.join(step_kwds_repr))
             else:
-                kwds_repr = ''
-            args_repr = ', '.join(name_or_repr(arg) for arg in args)
-            step_repr = '{0}({1}{2})'.format(name, args_repr, kwds_repr)
-            query_steps_repr.append(step_repr)
-        query_steps_repr = '.'.join(query_steps_repr)
-        if query_steps_repr:
-            query_steps_repr = '.' + query_steps_repr
+                step_kwds_repr = ''
+            step_args_repr = ', '.join(name_or_repr(arg) for arg in step_args)
+            step_repr = '{0}({1}{2})'.format(step_name, step_args_repr, step_kwds_repr)
+            all_steps_repr.append(step_repr)
 
-        return '{0}({1}{2}{3}){4}'.format(name_repr,
-                                          source_repr,
-                                          select_repr,
-                                          where_repr,
-                                          query_steps_repr)
+        if all_steps_repr:
+            query_steps_repr = '.' + ('.'.join(all_steps_repr))
+        else:
+            query_steps_repr = ''
 
-
-with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
-    DataQuery.__init__.__signature__ = inspect.Signature([
-        inspect.Parameter('self', inspect.Parameter.POSITIONAL_OR_KEYWORD),
-        inspect.Parameter('select', inspect.Parameter.POSITIONAL_OR_KEYWORD),
-        inspect.Parameter('where', inspect.Parameter.VAR_KEYWORD),
-    ])
+        return '{0}{1}({2}{3}{4}){5}'.format(class_repr,
+                                             method_repr,
+                                             source_repr,
+                                             args_repr,
+                                             kwds_repr,
+                                             query_steps_repr)
 
 
 class DataSource(object):
@@ -1019,9 +1011,9 @@ class DataSource(object):
 
         This is a shorthand for::
 
-            query = DataQuery(source, 'A')
+            query = DataQuery.from_data(source, 'A')
         """
-        return DataQuery(self, select, **where)
+        return DataQuery.from_data(self, select, **where)
 
     def _execute_query(self, select_clause, trailing_clause=None, **kwds_filter):
         """Execute query and return cursor object."""
