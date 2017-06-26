@@ -130,9 +130,37 @@ class TestDataResult(unittest.TestCase):
 
 
 class TestDictItems(unittest.TestCase):
-    def test_dictitems(self):
-        foo = DictItems([('a', 1), ('b', 2)])
-        self.assertEqual(list(foo), [('a', 1), ('b', 2)])
+    def test_list_of_items(self):
+        items = DictItems([('a', 1), ('b', 2)])
+        self.assertEqual(list(items), [('a', 1), ('b', 2)])
+
+    def test_iter_of_items(self):
+        items = DictItems(iter([('a', 1), ('b', 2)]))
+        self.assertEqual(list(items), [('a', 1), ('b', 2)])
+
+    def test_dict(self):
+        items = DictItems({'a': 1, 'b': 2})
+        self.assertEqual(set(items), set([('a', 1), ('b', 2)]))
+
+    def test_DataResult(self):
+        result = DataResult(DictItems([('a', 1), ('b', 2)]), evaluation_type=dict)
+        normalized = DictItems(result)
+        self.assertEqual(list(normalized), [('a', 1), ('b', 2)])
+
+    def test_DataQuery(self):
+        source = DataSource([('x', 1), ('y', 2)], fieldnames=['A', 'B'])
+        query = source({'A': 'B'}).apply(lambda x: next(x))
+        normalized = DictItems(query)
+        self.assertEqual(list(normalized), [('x', 1), ('y', 2)])
+
+    def test_invalid_input(self):
+        source = ['x', 1, 'y', 2]
+        with self.assertRaises(TypeError):
+            normalized = DictItems(source)
+
+        source = [{'x': 1}, {'y': 2}]
+        with self.assertRaises(TypeError):
+            normalized = DictItems(source)
 
 
 class TestIsCollectionOfItems(unittest.TestCase):
@@ -226,22 +254,22 @@ class TestFilterData(unittest.TestCase):
             _filter_data(function, 'b')  # <- str
 
     def test_dict_iter_of_lists(self):
-        iterable = DataResult({'a': [1, 2, 3], 'b': [4, 5, 6]}, dict)
+        iterable = DataResult({'a': [1, 3], 'b': [4, 5, 6]}, dict)
 
         iseven = lambda x: x % 2 == 0
         result = _filter_data(iseven, iterable)
 
         self.assertIsInstance(result, DataResult)
         self.assertEqual(result.evaluation_type, dict)
-        self.assertEqual(result.evaluate(), {'a': [2], 'b': [4, 6]})
+        self.assertEqual(result.evaluate(), {'a': [], 'b': [4, 6]})
 
     def test_dict_iter_of_integers(self):
         iterable = DataResult({'a': 2, 'b': 3}, dict)
 
         iseven = lambda x: x % 2 == 0
-        result = _filter_data(iseven, iterable)
         with self.assertRaises(TypeError):
-            result.evaluate()
+            result = _filter_data(iseven, iterable)
+            #result.evaluate()
 
 
 class TestReduceData(unittest.TestCase):
@@ -744,10 +772,10 @@ class TestDataQuery(unittest.TestCase):
     def test_optimize_aggregation(self):
         """
         Unoptimized:
-            DataQuery._select({'col1': ['values']}, col2='xyz').sum()
+            DataSource._select({'col1': ['values']}, col2='xyz').sum()
 
         Optimized:
-            DataQuery._select_aggregate('SUM', {'col1': ['values']}, col2='xyz')
+            DataSource._select_aggregate('SUM', {'col1': ['values']}, col2='xyz')
         """
         unoptimized = (
             (getattr, (RESULT_TOKEN, '_select'), {}),
@@ -765,10 +793,10 @@ class TestDataQuery(unittest.TestCase):
     def test_optimize_distinct(self):
         """
         Unoptimized:
-            DataQuery._select({'col1': ['values']}, col2='xyz').distinct()
+            DataSource._select({'col1': ['values']}, col2='xyz').distinct()
 
         Optimized:
-            DataQuery._select_distinct({'col1': ['values']}, col2='xyz')
+            DataSource._select_distinct({'col1': ['values']}, col2='xyz')
         """
         unoptimized = (
             (getattr, (RESULT_TOKEN, '_select'), {}),

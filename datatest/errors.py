@@ -127,7 +127,7 @@ class Missing(BaseDifference):
 
 
 class Extra(BaseDifference):
-    """A value found in *data* that is **not in requirement**."""
+    """A value found in *data* but is **not in requirement**."""
     pass
 
 
