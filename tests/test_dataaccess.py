@@ -624,19 +624,14 @@ class Test_select_functions(unittest.TestCase):
 
 
 class TestDataQuery(unittest.TestCase):
-    def test_init_no_default(self):
+    def test_init_no_data(self):
         # Use select-only syntax.
         query = DataQuery(['foo'], bar='baz')
         self.assertEqual(query._data_source, None)
 
         # Pass empty source explicitly.
-        query = DataQuery.from_data(None, ['foo'], bar='baz')
+        query = DataQuery.from_object(None, ['foo'], bar='baz')
         self.assertEqual(query._data_source, None)
-
-        # Use source-and-select syntax.
-        source = DataSource([(1, 2), (1, 2)], fieldnames=['A', 'B'])
-        query = DataQuery.from_data(source, ['A'], B=2)
-        self.assertEqual(query._data_source, source)
 
         # Test query steps.
         query = DataQuery(['foo'], bar='baz')
@@ -663,13 +658,31 @@ class TestDataQuery(unittest.TestCase):
         query = DataQuery({'foo': ['bar', 'baz']})
         self.assertEqual(query._data_args[0][0], {'foo': [['bar', 'baz']]}, 'value should be wrapped as list')
 
-    def test_init_from_data(self):
+    def test_init_from_object(self):
+        # Using DataSource object.
         source = DataSource([(1, 2), (1, 2)], fieldnames=['A', 'B'])
-        query = DataQuery.from_data(source, ['B'])
+        query = DataQuery.from_object(source, ['A'], B=2)
+        self.assertEqual(query._data_source, source)
+        self.assertEqual(query._data_args, ((['A'],), {'B': 2}))
+        self.assertEqual(query._query_steps, ())
 
+        # Using another DataQuery object.
         source = DataSource([(1, 2), (1, 2)], fieldnames=['A', 'B'])
-        query = DataQuery.from_data(source, ['B'])
-        query.map(list)
+        query1 = DataQuery.from_object(source, ['A'], B=2)
+        query2 = DataQuery.from_object(query1)
+        self.assertEqual(query2._data_source, source)
+        self.assertEqual(query2._data_args, ((['A'],), {'B': 2}))
+        self.assertEqual(query2._query_steps, ())
+
+        # Using non-DataSource object.
+        query = DataQuery.from_object([1, 3, 4, 2])
+        self.assertEqual(query._data_source, [1, 3, 4, 2])
+        self.assertEqual(query._data_args, ((), {}))
+        self.assertEqual(query._query_steps, ())
+
+        # Using non-DataSource object.
+        with self.assertRaises(ValueError):
+            query = DataQuery.from_object([1, 3, 4, 2], 'foo', bar='baz')
 
     def test_init_with_invalid_args(self):
         # Missing args.
@@ -679,12 +692,12 @@ class TestDataQuery(unittest.TestCase):
         # Bad "select" field.
         source = DataSource([(1, 2), (1, 2)], fieldnames=['A', 'B'])
         with self.assertRaises(LookupError, msg='should fail immediately when fieldname conflicts with provided source'):
-            query = DataQuery.from_data(source, ['X'], B=2)
+            query = DataQuery.from_object(source, ['X'], B=2)
 
         # Bad "where" field.
         source = DataSource([(1, 2), (1, 2)], fieldnames=['A', 'B'])
         with self.assertRaises(LookupError, msg='should fail immediately when fieldname conflicts with provided "where" field'):
-            query = DataQuery.from_data(source, ['A'], Y=2)
+            query = DataQuery.from_object(source, ['A'], Y=2)
 
     def test_init_with_nested_dicts(self):
         """Support for nested dictionaries was removed (for now).
@@ -713,7 +726,7 @@ class TestDataQuery(unittest.TestCase):
 
         # Source, select, and keyword.
         source = DataSource([(1, 2), (1, 2)], fieldnames=['A', 'B'])
-        query = DataQuery.from_data(source, ['B'])
+        query = DataQuery.from_object(source, ['B'])
         copied = query.__copy__()
         self.assertEqual(copied._data_source, query._data_source)
         self.assertEqual(copied._data_args, query._data_args)
@@ -726,9 +739,9 @@ class TestDataQuery(unittest.TestCase):
         self.assertEqual(copied._data_args, query._data_args)
         self.assertEqual(copied._query_steps, query._query_steps)
 
-    def test_execute(self):
+    def test_execute_datasource(self):
         source = DataSource([('1', '2'), ('1', '2')], fieldnames=['A', 'B'])
-        query = DataQuery.from_data(source, ['B'])
+        query = DataQuery.from_object(source, ['B'])
         query._query_steps = [
             ('map', (int,), {}),
             ('map', (lambda x: x * 2,), {}),
@@ -741,6 +754,10 @@ class TestDataQuery(unittest.TestCase):
         regex = "expected 'DataSource', got 'list'"
         with self.assertRaisesRegex(TypeError, regex):
             query.execute(['hello', 'world'])  # <- Expects None or DataQuery, not list!
+
+    def test_execute_other_source(self):
+        query = DataQuery.from_object([1, 3, 4, 2])
+        self.assertEqual(query.execute(), [1, 3, 4, 2])
 
     def test_map(self):
         query1 = DataQuery(['col2'])
@@ -820,6 +837,8 @@ class TestDataQuery(unittest.TestCase):
     def test_explain(self):
         query = DataQuery(['col1'])
         expected = """
+            Data Source:
+              <none given> (assuming DataSource object)
             Execution Plan:
               getattr, (<RESULT>, '_select'), {}
               <RESULT>, (['col1']), {}
@@ -833,6 +852,8 @@ class TestDataQuery(unittest.TestCase):
         query = DataQuery(['label1'])
 
         expected = """
+            Data Source:
+              <none given> (assuming DataSource object)
             Execution Plan:
               getattr, (<RESULT>, '_select'), {}
               <RESULT>, (['label1']), {}
@@ -867,13 +888,13 @@ class TestDataQuery(unittest.TestCase):
         regex = r"DataQuery\(\[u?'label1'\], label2=\[u?'x', u?'y'\]\)"
         self.assertRegex(repr(query), regex)
 
-        # Check "from_data" signature.
-        query = DataQuery.from_data(
+        # Check "from_object" signature.
+        query = DataQuery.from_object(
             DataSource([('x', 1), ('y', 2), ('z', 3)], ['A', 'B']),
             ['A'],
         )
         regex = (
-            r"DataQuery\.from_data\(DataSource\(<list of records>, "
+            r"DataQuery\.from_object\(DataSource\(<list of records>, "
             r"fieldnames=\[u?'A', u?'B'\]\), \[u?'A'\]\)"
         )
         regex = textwrap.dedent(regex).strip()

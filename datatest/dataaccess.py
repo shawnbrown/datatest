@@ -230,7 +230,7 @@ class DataResult(collections.Iterator):
         return evaluation_type(self)
 
 
-def _get_evaluation_type(obj):
+def _get_evaluation_type(obj, default=None):
     """Return object's evaluation_type property. If the object does
     not have an evaluation_type property and is a mapping, sequence,
     or set, then return the type of the object itself. If the object
@@ -240,20 +240,32 @@ def _get_evaluation_type(obj):
     if hasattr(obj, 'evaluation_type'):
         return obj.evaluation_type  # <- EXIT!
 
-    #if _is_collection_of_items(obj):
-    #    return dict
+    obj_cls = obj.__class__  # Avoiding type() to support old-style
+                             # classes in Python 2.7 and 2.6.
 
-    if isinstance(obj, (collections.Mapping,
-                        collections.Sequence,
-                        collections.Set)):
-        return type(obj)  # <- EXIT!
+    #if isinstance(obj, DictItems):
+    #    return dict  # <- EXIT!
 
-    if isinstance(obj, collections.Iterable):
-        return None  # <- EXIT!
+    if issubclass(obj_cls, (collections.Mapping,
+                            collections.Sequence,
+                            collections.Set)):
+        return obj_cls  # <- EXIT!
 
-    cls_name = obj.__class__.__name__
-    err_msg = 'unable to determine intended type for {0!r} instance'
-    raise TypeError(err_msg.format(cls_name))
+    if default and issubclass(obj_cls, collections.Iterable):
+        return default  # <- EXIT!
+
+    err_msg = 'unable to determine target type for {0!r} instance'
+    raise TypeError(err_msg.format(obj_cls.__name__))
+
+
+def _make_dataresult(iterable):
+    eval_type = _get_evaluation_type(iterable)
+    if issubclass(eval_type, collections.Mapping):
+        iterable = getattr(iterable, 'iteritems', iterable.items)()
+        iterable = DictItems(iterable)
+    else:
+        iterable = iter(iterable)
+    return DataResult(iterable, eval_type)
 
 
 def _apply_to_data(function, data_iterator):
@@ -543,22 +555,38 @@ class DataQuery(object):
         self._query_steps = tuple()
 
     @classmethod
-    def from_data(cls, source, *args, **kwds):
-        if isinstance(source, DataSource):
-            if len(args) != 1:
+    def from_object(cls, obj, select=None, **where):
+        """
+        DataQuery.from_object(source, select, **where)
+        DataQuery.from_object(object)
+        """
+        if obj is None:
+            return  cls(select, **where)  # <- EXIT!
+
+        if isinstance(obj, DataQuery):
+            return obj.__copy__()  # <- EXIT!
+
+        if isinstance(obj, DataSource):
+            if select is None:
                 raise ValueError(
-                    'DataSource object expects 1 additional '
-                    'positional argument but {0} were given'
-                ).format(len(args))
-            select = _normalize_select(args[0])
-            flattened = _flatten([_parse_select(select), kwds.keys()])
-            source._assert_fields_exist(flattened)
-            args = (select,)  # Rebuild args with normalized "select".
-        query = cls.__new__(cls)
-        query._data_args = (args, kwds)
-        query._data_source = source
-        query._query_steps = tuple()
-        return query
+                    "missing 1 required positional argument: 'select'"
+                )
+            select = _normalize_select(select)
+            flattened = _flatten([_parse_select(select), where.keys()])
+            obj._assert_fields_exist(flattened)
+            args = (select,)
+        else:
+            if select or where:
+                raise ValueError((
+                    "can only use 'select' and 'where' with DataSource, got {0!r}"
+                ).format(obj.__class__.__name__))
+            args = ()
+
+        new_query = cls.__new__(cls)
+        new_query._data_args = (args, where)
+        new_query._data_source = obj
+        new_query._query_steps = tuple()
+        return new_query
 
     @staticmethod
     def _validate_source(source):
@@ -574,9 +602,9 @@ class DataQuery(object):
 
     def __copy__(self):
         args, kwds = self._data_args
-        new_copy = self.from_data(self._data_source, *args, **kwds)
-        new_copy._query_steps = self._query_steps
-        return new_copy
+        new_query = self.from_object(self._data_source, *args, **kwds)
+        new_query._query_steps = self._query_steps
+        return new_query
 
     def _add_step(self, name, *args, **kwds):
         new_query = self.__copy__()
@@ -682,12 +710,17 @@ class DataQuery(object):
 
         return _execution_step(function, args, {})
 
-    def _get_execution_plan(self, query_steps):
-        args, kwds = self._data_args
-        execution_plan = [
-            _execution_step(getattr, (RESULT_TOKEN, '_select'), {}),
-            _execution_step(RESULT_TOKEN, args, kwds),
-        ]
+    def _get_execution_plan(self, source, query_steps):
+        if isinstance(source, DataSource):
+            args, kwds = self._data_args
+            execution_plan = [
+                _execution_step(getattr, (RESULT_TOKEN, '_select'), {}),
+                _execution_step(RESULT_TOKEN, args, kwds),
+            ]
+        else:
+            execution_plan = [
+                _execution_step(_make_dataresult, (RESULT_TOKEN,), {}),
+            ]
         for query_step in query_steps:
             execution_step = self._translate_step(query_step)
             execution_plan.append(execution_step)
@@ -739,7 +772,8 @@ class DataQuery(object):
 
     def execute(self, source=None, **kwds):
         """
-        execute(source=None, *, evaluate=True, optimize=True)
+        execute(*, evaluate=True, optimize=True)
+        execute(source, *, evaluate=True, optimize=True)
 
         Execute the query and return its result. The *source* should
         be a :class:`DataSource` on which the query will operate.
@@ -751,10 +785,18 @@ class DataQuery(object):
 
         Setting *optimize* to False turns-off query optimization.
         """
-        result = source or self._data_source
-        if not result:
-            raise ValueError('must provide source, none found')
-        self._validate_source(result)
+        if source:
+            if self._data_source:
+                raise ValueError((
+                    "cannot take 'source' argument, query is "
+                    "already associated with a data source: {0!r}"
+                ).format(self._data_source))
+            self._validate_source(source)
+            result = source
+        else:
+            if not self._data_source:
+                raise ValueError("missing 'source' argument, none found")
+            result = self._data_source
 
         evaluate = kwds.pop('evaluate', True)  # Emulate keyword-only
         optimize = kwds.pop('optimize', True)  # behavior for 2.7 and
@@ -763,7 +805,7 @@ class DataQuery(object):
             raise TypeError('got an unexpected keyword '
                             'argument {0!r}'.format(key))
 
-        execution_plan = self._get_execution_plan(self._query_steps)
+        execution_plan = self._get_execution_plan(result, self._query_steps)
         if optimize:
             execution_plan = self._optimize(execution_plan) or execution_plan
 
@@ -803,7 +845,16 @@ class DataQuery(object):
 
         If *file* is set to None, returns execution plan as a string.
         """
-        execution_plan = self._get_execution_plan(self._query_steps)
+        source = self._data_source
+        if source is not None:
+            source_repr = repr(source)
+            if len(source_repr) > 70:
+                source_repr = source_repr[:67] + '...'
+        else:
+            source = DataSource([], fieldnames=['dummy_source'])
+            source_repr = '<none given> (assuming DataSource object)'
+
+        execution_plan = self._get_execution_plan(source, self._query_steps)
 
         optimized_text = ''
         if optimize:
@@ -814,7 +865,9 @@ class DataQuery(object):
 
         steps = [_get_step_repr(step) for step in execution_plan]
         steps = '\n'.join('  {0}'.format(step) for step in steps)
-        formatted = 'Execution Plan{0}:\n{1}'.format(optimized_text, steps)
+
+        formatted = 'Data Source:\n  {0}\nExecution Plan{1}:\n{2}'
+        formatted = formatted.format(source_repr, optimized_text, steps)
 
         if file:
             file.write(formatted)
@@ -828,13 +881,15 @@ class DataQuery(object):
         class_repr = self.__class__.__name__
 
         if self._data_source:
-            method_repr = '.from_data'
-            source_repr = repr(self._data_source) + ', '
+            method_repr = '.from_object'
+            source_repr = repr(self._data_source)
         else:
             method_repr = ''
             source_repr = ''
 
-        args_repr = repr(self._data_args[0][0])
+        args_repr = ', '.join(repr(x) for x in self._data_args[0])
+        if source_repr and args_repr:
+            args_repr = ', ' + args_repr
 
         if self._data_args[1]:
             kwds_repr = [(k, name_or_repr(v)) for k, v in self._data_args[1].items()]
@@ -1011,9 +1066,9 @@ class DataSource(object):
 
         This is a shorthand for::
 
-            query = DataQuery.from_data(source, 'A')
+            query = DataQuery.from_object(source, 'A')
         """
-        return DataQuery.from_data(self, select, **where)
+        return DataQuery.from_object(self, select, **where)
 
     def _execute_query(self, select_clause, trailing_clause=None, **kwds_filter):
         """Execute query and return cursor object."""
