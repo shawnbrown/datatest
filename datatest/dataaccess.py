@@ -188,8 +188,8 @@ class DataResult(collections.Iterator):
         #: or rewrapping.
         self.__wrapped__ = iter(iterable)
 
-        #: The type of instance returned by the
-        #: :meth:`evaluate <DataResult.evaluate>` method.
+        #: The type of instance returned when data is evaluated
+        #: with the :meth:`fetch <DataResult.fetch>` method.
         self.evaluation_type = evaluation_type
 
     def __iter__(self):
@@ -208,11 +208,11 @@ class DataResult(collections.Iterator):
     def next(self):
         return next(self.__wrapped__)  # For Python 2 compatibility.
 
-    def evaluate(self):
+    def fetch(self):
         """Evaluate the entire iterator and return its result::
 
             result = DataResult(iter([...]), evaluation_type=set)
-            result_set = result.evaluate()  # <- Returns a set of values.
+            result_set = result.fetch()  # <- Returns a set of values.
 
         When evaluating a :py:class:`dict` or other mapping type, any
         values that are, themselves, :class:`DataResult` objects will
@@ -770,6 +770,9 @@ class DataQuery(object):
             return optimized_steps + remaining_steps
         return None
 
+    def fetch(self):
+        return self().fetch()
+
     def execute(self, source=None, **kwds):
         """
         execute(*, evaluate=True, optimize=True)
@@ -818,7 +821,7 @@ class DataQuery(object):
             result = function(*args, **keywords)
 
         if isinstance(result, DataResult) and evaluate:
-            result = result.evaluate()
+            result = result.fetch()
 
         return result
 

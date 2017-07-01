@@ -111,9 +111,9 @@ DataResult
     .. attribute:: evaluation_type
 
         The type of instance returned by the
-        :meth:`evaluate <DataResult.evaluate>` method.
+        :meth:`fetch <DataResult.fetch>` method.
 
-    .. automethod:: evaluate
+    .. automethod:: fetch
 
     .. attribute:: __wrapped__
 

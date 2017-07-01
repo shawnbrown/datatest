@@ -188,7 +188,7 @@ class DataTestCase(TestCase):
         if isinstance(requirement, DataQuery):     # If requirement is
             requirement = requirement.execute()    # a DataQuery or
         elif isinstance(requirement, DataResult):  # DataResult, we must
-            requirement = requirement.evaluate()   # eagerly evaluate it.
+            requirement = requirement.fetch()      # eagerly evaluate it.
 
         differences = _find_differences(data, requirement)
         if not differences:
