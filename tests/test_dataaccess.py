@@ -739,6 +739,17 @@ class TestDataQuery(unittest.TestCase):
         self.assertEqual(copied._data_args, query._data_args)
         self.assertEqual(copied._query_steps, query._query_steps)
 
+    def test_fetch_datasource(self):
+        source = DataSource([('1', '2'), ('1', '2')], fieldnames=['A', 'B'])
+        query = DataQuery.from_object(source, ['B'])
+        query._query_steps = [
+            ('map', (int,), {}),
+            ('map', (lambda x: x * 2,), {}),
+            ('sum', (), {}),
+        ]
+        result = query.fetch()
+        self.assertEqual(result, 8)
+
     def test_execute_datasource(self):
         source = DataSource([('1', '2'), ('1', '2')], fieldnames=['A', 'B'])
         query = DataQuery.from_object(source, ['B'])
@@ -747,17 +758,19 @@ class TestDataQuery(unittest.TestCase):
             ('map', (lambda x: x * 2,), {}),
             ('sum', (), {}),
         ]
-        result = query.execute()
+        result = query()
         self.assertEqual(result, 8)
 
         query = DataQuery(['A'])
         regex = "expected 'DataSource', got 'list'"
         with self.assertRaisesRegex(TypeError, regex):
-            query.execute(['hello', 'world'])  # <- Expects None or DataQuery, not list!
+            query(['hello', 'world'])  # <- Expects None or DataQuery, not list!
 
     def test_execute_other_source(self):
         query = DataQuery.from_object([1, 3, 4, 2])
-        self.assertEqual(query.execute(), [1, 3, 4, 2])
+        result = query()
+        self.assertIsInstance(result, DataResult)
+        self.assertEqual(result.fetch(), [1, 3, 4, 2])
 
     def test_map(self):
         query1 = DataQuery(['col2'])
@@ -765,8 +778,8 @@ class TestDataQuery(unittest.TestCase):
         self.assertIsNot(query1, query2, 'should return new object')
 
         source = DataSource([('a', '2'), ('b', '2')], fieldnames=['col1', 'col2'])
-        result = query2.execute(source)
-        self.assertEqual(result, [2, 2])
+        result = query2(source)
+        self.assertEqual(result.fetch(), [2, 2])
 
     def test_filter(self):
         query1 = DataQuery(['col1'])
@@ -774,14 +787,14 @@ class TestDataQuery(unittest.TestCase):
         self.assertIsNot(query1, query2, 'should return new object')
 
         source = DataSource([('a', '2'), ('b', '2')], fieldnames=['col1', 'col2'])
-        result = query2.execute(source)
-        self.assertEqual(result, ['a'])
+        result = query2(source)
+        self.assertEqual(result.fetch(), ['a'])
 
         # No filter arg should default to bool()
         source = DataSource([(1,), (2,), (0,), (3,)], fieldnames=['col1'])
         query = DataQuery(set(['col1'])).filter()  # <- No arg!
-        result = query.execute(source)
-        self.assertEqual(result, set([1, 2, 3]))
+        result = query(source)
+        self.assertEqual(result.fetch(), set([1, 2, 3]))
 
     def test_reduce(self):
         query1 = DataQuery(['col1'])
@@ -789,7 +802,7 @@ class TestDataQuery(unittest.TestCase):
         self.assertIsNot(query1, query2, 'should return new object')
 
         source = DataSource([('a', '2'), ('b', '2')], fieldnames=['col1', 'col2'])
-        result = query2.execute(source)
+        result = query2(source)
         self.assertEqual(result, 'ab')
 
     def test_optimize_aggregation(self):
@@ -1209,13 +1222,13 @@ class TestDataSourceBasics(unittest.TestCase):
         query = self.source(['label1'])
         expected = ['a', 'a', 'a', 'a', 'b', 'b', 'b']
         self.assertIsInstance(query, DataQuery)
-        self.assertEqual(query.execute(), expected)
+        self.assertEqual(query.fetch(), expected)
 
         query = self.source([('label1', 'label2')])
         expected = [('a', 'x'), ('a', 'x'), ('a', 'y'), ('a', 'z'),
                     ('b', 'z'), ('b', 'y'), ('b', 'x')]
         self.assertIsInstance(query, DataQuery)
-        self.assertEqual(query.execute(), expected)
+        self.assertEqual(query.fetch(), expected)
 
         query = self.source([set(['label1', 'label2'])])
         expected = [set(['a', 'x']),
@@ -1226,9 +1239,9 @@ class TestDataSourceBasics(unittest.TestCase):
                     set(['b', 'y']),
                     set(['b', 'x'])]
         self.assertIsInstance(query, DataQuery)
-        self.assertEqual(query.execute(), expected)
+        self.assertEqual(query.fetch(), expected)
 
         query = self.source({'label1': ['label2']})
         expected = {'a': ['x', 'x', 'y', 'z'], 'b': ['z', 'y', 'x']}
         self.assertIsInstance(query, DataQuery)
-        self.assertEqual(query.execute(), expected)
+        self.assertEqual(query.fetch(), expected)

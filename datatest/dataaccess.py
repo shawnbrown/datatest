@@ -91,7 +91,7 @@ class DictItems(collections.Iterator):
             iterable = iter(iterable)
         else:
             if isinstance(iterable, DataQuery):
-                iterable = iterable.execute(evaluate=False)
+                iterable = iterable()
 
             while hasattr(iterable, '__wrapped__'):
                 iterable = iterable.__wrapped__
@@ -771,20 +771,19 @@ class DataQuery(object):
         return None
 
     def fetch(self):
-        return self().fetch()
+        """Executes query and returns an eagerly evaluated result."""
+        result = self()
+        if isinstance(result, DataResult):
+            return result.fetch()
+        return result
 
-    def execute(self, source=None, **kwds):
-        """
-        execute(*, evaluate=True, optimize=True)
-        execute(source, *, evaluate=True, optimize=True)
+    def __call__(self, source=None, optimize=True):
+        """A DataQuery can be called like a function to execute
+        it and return a value or :class:`DataResult` appropriate
+        for lazy evaluation::
 
-        Execute the query and return its result. The *source* should
-        be a :class:`DataSource` on which the query will operate.
-        If *source* is omitted, the :attr:`defaultsource` is used.
-
-        By default, results are eagerly evaluated (and loaded into
-        memory). For lazy evaluation, set *evaluate* to False to
-        return a :class:`DataResult` iterator instead.
+            query = source('A')
+            result = query()  # <- Returns DataResult (iterator)
 
         Setting *optimize* to False turns-off query optimization.
         """
@@ -801,13 +800,6 @@ class DataQuery(object):
                 raise ValueError("missing 'source' argument, none found")
             result = self._data_source
 
-        evaluate = kwds.pop('evaluate', True)  # Emulate keyword-only
-        optimize = kwds.pop('optimize', True)  # behavior for 2.7 and
-        if kwds:                               # 2.6 compatibility.
-            key, _ = kwds.popitem()
-            raise TypeError('got an unexpected keyword '
-                            'argument {0!r}'.format(key))
-
         execution_plan = self._get_execution_plan(result, self._query_steps)
         if optimize:
             execution_plan = self._optimize(execution_plan) or execution_plan
@@ -820,23 +812,7 @@ class DataQuery(object):
             keywords = dict((k, replace_token(v)) for k, v in keywords.items())
             result = function(*args, **keywords)
 
-        if isinstance(result, DataResult) and evaluate:
-            result = result.fetch()
-
         return result
-
-    def __call__(self, source=None):
-        """A DataQuery can be called like a function to execute
-        it and return a :class:`DataResult` appropriate for lazy
-        evaluation::
-
-            query = source('A')
-            result = query()  # <- Returns DataResult (iterator)
-
-        This is a shorthand for calling the :meth:`execute` method
-        with *evaluate* set to False.
-        """
-        return self.execute(source, evaluate=False)
 
     def _explain(self, optimize=True, file=sys.stdout):
         """A convenience method primarily intended to help when

@@ -182,13 +182,13 @@ class DataTestCase(TestCase):
                 requirement = 'FOO'
                 self.assertValid(data, requirement)
         """
-        if isinstance(data, DataQuery):          # If data is a DataQuery,
-            data = data.execute(evaluate=False)  # lazily evaluate it.
+        # If data is a DataQuery, lazily evaluate it.
+        if isinstance(data, DataQuery):
+            data = data()
 
-        if isinstance(requirement, DataQuery):     # If requirement is
-            requirement = requirement.execute()    # a DataQuery or
-        elif isinstance(requirement, DataResult):  # DataResult, we must
-            requirement = requirement.fetch()      # eagerly evaluate it.
+        # If requirement is DataQuery or DataResult, eagerly evaluate it.
+        if isinstance(requirement, (DataQuery, DataResult)):
+            requirement = requirement.fetch()
 
         differences = _find_differences(data, requirement)
         if not differences:
