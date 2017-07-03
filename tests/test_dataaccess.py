@@ -908,7 +908,7 @@ class TestDataQuery(unittest.TestCase):
         )
         regex = (
             r"DataQuery\.from_object\(DataSource\(<list of records>, "
-            r"fieldnames=\[u?'A', u?'B'\]\), \[u?'A'\]\)"
+            r"fieldnames=\(u?'A', u?'B'\)\), \[u?'A'\]\)"
         )
         regex = textwrap.dedent(regex).strip()
         self.assertRegex(repr(query), regex)
@@ -1018,7 +1018,7 @@ class TestDataSourceBasics(unittest.TestCase):
         self.source = DataSource(data, fieldnames)
 
     def test_fieldnames(self):
-        expected = ['label1', 'label2', 'value']
+        expected = ('label1', 'label2', 'value')
         self.assertEqual(self.source.fieldnames, expected)
 
     def test_repr(self):
@@ -1026,7 +1026,7 @@ class TestDataSourceBasics(unittest.TestCase):
         filednames = ['A', 'B']
         source = DataSource(data, filednames)
 
-        regex = r"DataSource\(<list of records>, fieldnames=\[u?'A', u?'B'\]\)"
+        regex = r"DataSource\(<list of records>, fieldnames=\(u?'A', u?'B'\)\)"
         self.assertRegex(repr(source), regex)
 
     def test_iter(self):

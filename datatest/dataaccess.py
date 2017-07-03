@@ -1033,10 +1033,10 @@ class DataSource(object):
 
     @property
     def fieldnames(self):
-        """A list of field names used by the data source."""
+        """A tuple of field names used by the data source."""
         cursor = self._connection.cursor()
         cursor.execute('PRAGMA table_info(' + self._table + ')')
-        return [x[1] for x in cursor]
+        return tuple(x[1] for x in cursor)
 
     def __repr__(self):
         """Return a string representation of the data source."""

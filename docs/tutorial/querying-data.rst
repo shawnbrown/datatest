@@ -55,7 +55,7 @@ You can get a list of field names with the :attr:`fieldnames
 <DataSource.fieldnames>` attribute::
 
     >>> source.fieldnames
-    ['A', 'B', 'C']
+    ('A', 'B', 'C')
 
 
 .. sidebar:: The fetch() Method
