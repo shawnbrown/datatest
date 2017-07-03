@@ -127,7 +127,7 @@ How to Use Reference Data
 *************************
 
 To compare two data sources that have the same field names,
-we can create a single query and execute it twice (once for
+we can create a single query and call it twice (once for
 each source). The pair of results can then be passed to
 :meth:`assertValid() <datatest.DataTestCase.assertValid>`.
 
@@ -263,7 +263,7 @@ The assertFuzzy() method in the above example creates a subclass of
 for equality.
 
 .. note::
-    We *could* have created a helper-function that retrieves values
+    We could have created a helper-function that retrieves values
     from required_dict and performs a fuzzy match directly. But our
     implementation would grow increasingly complex if we wanted to
     cleanly handle dictionaries with extra or missing keys. By creating

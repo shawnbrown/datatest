@@ -37,45 +37,24 @@ DataSource
 DataQuery
 *********
 
-.. class:: DataQuery(select, **where)
-           DataQuery(defaultsource, select, **where)
+.. autoclass:: DataQuery
 
-    A class to query data from a :class:`DataSource` object.
-    Queries can be created, modified and passed around without
-    actually computing the result---computation doesn't occur
-    until the :meth:`execute` method is called.
+    .. classmethod:: from_object(source, select, **where)
+                     from_object(object)
 
-    The *select* argument must be a container of one field name (a
-    string) or of an inner-container of multiple filed names. The
-    optional *where* keywords can narrow a selection to rows where
-    fields match specified values. A *defaultsource* can be provided
-    to associate the query with a specific DataSource object.
+        Creates a query and associates it with the given object.
 
-    Queries are usually created from an existing source (the
-    originating source is automatically associated with the new
-    query)::
+        If the object is a DataSource, you must provide a *select*
+        argument and may also narrow the selection with keyword
+        arguments::
 
-        source = DataSource(...)
-        query = source('A')  # <- DataQuery created from source.
+            source = DataSource(...)
+            query = DataQuery.from_object(source, 'A')
 
-    Queries can be created directly as well::
+        A non-DataSource container may also be used::
 
-        source = DataSource(...)
-        query = DataQuery(source, 'A')  # <- Direct initialization.
-
-    Queries can also be created independent of any single data source::
-
-        query = DataQuery('A')
-
-    .. attribute:: defaultsource
-
-        A property for setting a predetermined :class:`DataSource`
-        to use when :meth:`execute` is called without a *source*
-        argument.
-
-        When a query is created from a DataSource call, this property
-        is assigned automatically. When a query is created directly,
-        the value can be passed explicitly or it can be omitted.
+            list_object = [1, 2, 3, 4]
+            query = DataQuery.from_object(list_object)
 
     .. automethod:: sum
 
@@ -97,7 +76,7 @@ DataQuery
 
     .. automethod:: reduce
 
-    .. automethod:: execute
+    .. automethod:: fetch
 
     .. automethod:: __call__
 

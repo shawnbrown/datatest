@@ -544,11 +544,25 @@ RESULT_TOKEN = _make_token(
 ########################################################
 
 class DataQuery(object):
-    """A class to query data from a :class:`DataSource` object.
+    """A class to query data from a source object. Queries can be
+    created, modified, and passed around without actually computing
+    the result---computation doesn't occur until the query object
+    itself or its :meth:`fetch` method is called.
 
-    See documentation for full details.
+    The *select* argument must be a container of one field name (a
+    string) or of an inner-container of multiple filed names. The
+    optional *where* keywords can narrow a selection to rows where
+    fields match specified values.
+
+    Although DataQuery objects are usually created by
+    :meth:`calling <datatest.DataSource.__call__>` an existing
+    DataSource object like a function, it's possible to create
+    them independent of any single data source::
+
+        query = DataQuery('A')
     """
     def __init__(self, select, **where):
+        """Initialize self."""
         select = _normalize_select(select)
         self._data_args = ((select,), where)
         self._data_source = None
@@ -559,6 +573,10 @@ class DataQuery(object):
         """
         DataQuery.from_object(source, select, **where)
         DataQuery.from_object(object)
+
+        Creates a query and associates it with the given object.
+
+        See documentation for full details.
         """
         if obj is None:
             return  cls(select, **where)  # <- EXIT!
@@ -635,7 +653,7 @@ class DataQuery(object):
 
     def apply(self, function):
         """Apply *function* to entire group keeping the resulting data.
-        If group is not an iterable, it will be wrapped as a single-item
+        If element is not iterable, it will be wrapped as a single-item
         list.
         """
         return self._add_step('apply', function)

@@ -58,12 +58,12 @@ You can get a list of field names with the :attr:`fieldnames
     ['A', 'B', 'C']
 
 
-.. sidebar:: The execute() Method
+.. sidebar:: The fetch() Method
 
-    In the following examples, we call :meth:`execute() <DataQuery.execute>`
+    In the following examples, we call :meth:`fetch() <DataQuery.fetch>`
     to eagerly evaluate the queries and display their results. In daily
-    use, it's more efficient to leave off the "``.execute()``" part and
-    validate the *un-executed* queries instead (which takes advantage of
+    use, it's more efficient to leave off the "``.fetch()``" part and
+    validate the *un-fetched* queries instead (which takes advantage of
     lazy evaluation).
 
 
@@ -75,17 +75,17 @@ for the specified field or fields.
 
 Select elements from column **A**::
 
-    >>> source('A').execute()
+    >>> source('A').fetch()
     ['x', 'x', 'y', 'y', 'z', 'z']
 
 Select elements from column **A** as a :py:class:`set`::
 
-    >>> source({'A'}).execute()
+    >>> source({'A'}).fetch()
     {'x', 'y', 'z'}
 
 Select elements from column **A** as a :py:class:`tuple`::
 
-    >>> source(('A',)).execute()
+    >>> source(('A',)).fetch()
     ('x', 'x', 'y', 'y', 'z', 'z')
 
 The container type used in the selection determines the container
@@ -95,7 +95,7 @@ query. When the outer container type is not specified, it defaults
 to a :py:class:`list`. In the first example we selected ``'A'``
 which is used as shorthand for ``['A']``::
 
-    >>> source(['A']).execute()
+    >>> source(['A']).fetch()
     ['x', 'x', 'y', 'y', 'z', 'z']
 
 
@@ -104,7 +104,7 @@ Multiple Columns
 
 Select elements from columns **A** and **B** as a list of tuples::
 
-    >>> source(('A', 'B')).execute()  # Returns a list of tuples.
+    >>> source(('A', 'B')).fetch()  # Returns a list of tuples.
     [('x', 'foo'),
      ('x', 'foo'),
      ('y', 'foo'),
@@ -114,7 +114,7 @@ Select elements from columns **A** and **B** as a list of tuples::
 
 Select elements from columns **A** and **B** as a set of tuples::
 
-    >>> source({('A', 'B')}).execute()  # Returns a set of tuples.
+    >>> source({('A', 'B')}).fetch()  # Returns a set of tuples.
     {('x', 'foo'),
      ('y', 'foo'),
      ('y', 'bar'),
@@ -141,7 +141,7 @@ fields from which elements are selected.
 For each unique value of column **A**, we select a list of
 elements from column **B**::
 
-    >>> source({'A': 'B'}).execute()
+    >>> source({'A': 'B'}).fetch()
     {'x': ['foo', 'foo'],
      'y': ['foo', 'bar'],
      'z': ['bar', 'bar']}
@@ -151,7 +151,7 @@ types returned in the result. For unique values of column
 **A**, we can select a :py:class:`set` of elements from
 column **B** with the following::
 
-     >>> source({'A': {'B'}}).execute()
+     >>> source({'A': {'B'}}).fetch()
      {'x': {'foo'},
       'y': {'foo', 'bar'},
       'z': {'bar'}}
@@ -160,7 +160,7 @@ To group by multiple columns, we use a :py:class:`tuple` of
 key fields. For each unique tuple of **A** and **B**, we select
 a list of elements from column **C**::
 
-    >>> source({('A', 'B'): 'C'}).execute()
+    >>> source({('A', 'B'): 'C'}).fetch()
     {('x', 'foo'): ['20', '30'],
      ('y', 'foo'): ['10'],
      ('y', 'bar'): ['20'],
@@ -180,17 +180,17 @@ arguments.
 
 Narrow a selection to rows where column **B** equals "foo"::
 
-    >>> source(('A', 'B'), B='foo').execute()
+    >>> source(('A', 'B'), B='foo').fetch()
     [('x', 'foo'), ('x', 'foo'), ('y', 'foo')]
 
 The keyword column does not have to be in the selected result::
 
-    >>> source('A', B='foo').execute()
+    >>> source('A', B='foo').fetch()
     ['x', 'x', 'y']
 
 Narrow a selection to rows where column **A** equals "x" *or* "y"::
 
-    >>> source(('A', 'B'), A=['x', 'y']).execute()
+    >>> source(('A', 'B'), A=['x', 'y']).fetch()
     [('x', 'foo'),
      ('x', 'foo'),
      ('y', 'foo'),
@@ -199,7 +199,7 @@ Narrow a selection to rows where column **A** equals "x" *or* "y"::
 Narrow a selection to rows where column **A** equals "y" *and*
 column **B** equals "bar"::
 
-    >>> source([('A', 'B', 'C')], A='y', B='bar').execute()
+    >>> source([('A', 'B', 'C')], A='y', B='bar').fetch()
     [('y', 'bar', '20')]
 
 Only one row matches the above keyword conditions.
@@ -213,18 +213,18 @@ on selected values.
 
 :meth:`Sum <DataQuery.sum>` the elements from column **C**::
 
-    >>> source('C').sum().execute()
+    >>> source('C').sum().fetch()
     100
 
 Group by column **A** the sums of elements from column **C**::
 
-    >>> source({'A': 'C'}).sum().execute()
+    >>> source({'A': 'C'}).sum().fetch()
     {'x': 50, 'y': 30, 'z': 20}
 
 Group by columns **A** and **B** the sums of elements from column
 **C**::
 
-    >>> source({('A', 'B'): 'C'}).sum().execute()
+    >>> source({('A', 'B'): 'C'}).sum().fetch()
     {('x', 'foo'): 50,
      ('y', 'foo'): 10,
      ('y', 'bar'): 20,
@@ -232,7 +232,7 @@ Group by columns **A** and **B** the sums of elements from column
 
 Select :meth:`distinct <DataQuery.distinct>` elements::
 
-    >>> source('A').distinct().execute()
+    >>> source('A').distinct().fetch()
     ['x', 'y', 'z']
 
 :meth:`Map <DataQuery.map>` elements with a function::
@@ -240,7 +240,7 @@ Select :meth:`distinct <DataQuery.distinct>` elements::
     >>> def uppercase(value):
     ...     return str(value).upper()
     ...
-    >>> source('A').map(uppercase).execute()
+    >>> source('A').map(uppercase).fetch()
     ['X', 'X', 'Y', 'Y', 'Z', 'Z']
 
 :meth:`Filter <DataQuery.filter>` elements with a function::
@@ -248,7 +248,7 @@ Select :meth:`distinct <DataQuery.distinct>` elements::
     >>> def not_z(value):
     ...     return value != 'z'
     ...
-    >>> source('A').filter(not_z).execute()
+    >>> source('A').filter(not_z).fetch()
     ['x', 'x', 'y', 'y']
 
 Since each method returns a new DataQuery, it's possible to
@@ -261,5 +261,5 @@ as needed::
     >>> def uppercase(value):
     ...     return str(value).upper()
     ...
-    >>> source('A').filter(not_z).map(uppercase).execute()
+    >>> source('A').filter(not_z).map(uppercase).fetch()
     ['X', 'X', 'Y', 'Y']
