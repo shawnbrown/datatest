@@ -1,3 +1,4 @@
+:tocdepth: 2
 
 .. meta::
     :description: Table of Contents for Datatest.
@@ -14,33 +15,20 @@
 Datatest: Test driven data wrangling
 ####################################
 
-Version |release| (`Installation Instructions <https://pypi.python.org/pypi/datatest#installation>`_)
+Version |release|
+
+.. include:: ../README.rst
+    :start-after: start-inclusion-marker-description
+    :end-before: end-inclusion-marker-description
+
+See the project's `README <https://pypi.python.org/pypi/datatest>`_
+file for supported versions, backward compatibility, and more.
 
 
 .. toctree::
+    :caption: Documentation
     :maxdepth: 2
 
-    Introduction <intro>
-
-
-.. toctree::
-    :caption: Tutorial
-    :maxdepth: 2
-
-    tutorial/querying-data
-
-.. toctree::
-    :caption: How-to
-    :maxdepth: 2
-
-    how-to
-
-.. toctree::
-    :caption: Reference
-    :maxdepth: 2
-
-    reference/unittest-support
-    reference/data-handling
-    reference/error-and-difference
-
-* :ref:`Package Index <genindex>`
+    tutorial/index.rst
+    how-to/index.rst
+    reference/index.rst

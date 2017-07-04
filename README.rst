@@ -7,7 +7,7 @@ datatest: Test driven data wrangling
 
 |buildstatus| |devstatus| |license| |pyversions|
 
-.. start-inclusion-marker
+.. start-inclusion-marker-description
 
 Datatest provides validation tools for test-driven data wrangling.
 It extends Python's `unittest
@@ -19,6 +19,14 @@ testing tools for asserting data correctness.
     wrangling. It includes tools to quickly load, query, and
     validate data using both unittest- and pytest-style testing.
 
+Datatest can help prepare messy data that needs to be cleaned,
+integrated, formatted, and verified. It can provide structure for the
+tidying process, automate checklists, log discrepancies, and measure
+progress.
+
+.. end-inclusion-marker-description
+
+
 * Documentation:
     - https://datatest.readthedocs.io/ (stable)
     - https://datatest.readthedocs.io/en/latest/ (latest)
@@ -27,14 +35,11 @@ testing tools for asserting data correctness.
 * Development:
    - https://github.com/shawnbrown/datatest
 
-Datatest can help prepare messy data that needs to be cleaned,
-integrated, formatted, and verified. It can provide structure for the
-tidying process, automate checklists, log discrepancies, and measure
-progress.
-
 
 Installation
 ============
+
+.. start-inclusion-marker-install
 
 The easiest way to install datatest is to use pip::
 
@@ -90,6 +95,8 @@ package::
 
   python setup.py install
 
+.. end-inclusion-marker-install
+
 
 Supported Versions
 ==================
@@ -129,7 +136,6 @@ interface with pandas DataFrames, MS Excel workbooks, or other
 optional data sources, you will need to install the relevant
 packages (``pandas``, ``xlrd``, etc.).
 
-.. end-inclusion-marker
 
 ------------
 
