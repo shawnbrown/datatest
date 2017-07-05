@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import division
 import os
 import re
+import sqlite3
 import tempfile
 import textwrap
 from . import _io as io
@@ -1176,8 +1177,17 @@ class TestDataSourceBasics(unittest.TestCase):
         self.assertEqual(list(result), expected)
 
         result = self.source._select_distinct({'label1': ['label2']})
+        result = result.fetch()
         expected = {'a': ['x', 'y', 'z'], 'b': ['z', 'y', 'x']}
-        self.assertEqual(result.fetch(), expected)
+
+        self.assertIsInstance(result, dict)
+
+        # Sort values for SQLite versions earlier than 3.7.12
+        if (3, 7, 12) > sqlite3.sqlite_version_info:
+            sortvalues = lambda x: dict((k, sorted(v)) for k, v in x.items())
+            result = sortvalues(result)
+            expected = sortvalues(expected)
+        self.assertEqual(result, expected)
 
     def test_select_aggregate(self):
         # Not grouped, single result.
