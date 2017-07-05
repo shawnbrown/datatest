@@ -78,8 +78,8 @@ Allowing Fuzzy Matches
 
 While it's usually more efficient to assert approximate matches and
 allow specific differences, it may be appropriate to allow approximate
-matches in certain cases. The ``FuzzyTestCase`` class can be extended
-with an ``allowedFuzzy()`` method for this purpose:
+differences in certain cases. The ``FuzzyTestCase`` class can be
+extended with an ``allowedFuzzy()`` method for this purpose:
 
 .. code-block:: python
 
@@ -94,8 +94,8 @@ with an ``allowedFuzzy()`` method for this purpose:
             of the difflib.SequenceMatcher class and range from 1.0 (exactly
             the same) to 0.0 (completely different).
             """
-            def fuzzy_match(invalid, expected):
+            def approx_diff(invalid, expected):
                 matcher = difflib.SequenceMatcher(a=expected, b=invalid)
                 return matcher.ratio() >= cutoff  # <- closes over cutoff
             msg = msg or 'string similarity of {0} or higher'.format(cutoff)
-            return self.allowedInvalid() & self.allowedArgs(fuzzy_match, msg)
+            return self.allowedInvalid() & self.allowedArgs(approx_diff, msg)
