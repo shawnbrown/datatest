@@ -72,9 +72,9 @@ method to assert approximate string matches:
         datatest.main()
 
 
-**********************
-Allowing Fuzzy Matches
-**********************
+**************************
+Allowing Fuzzy Differences
+**************************
 
 While it's usually more efficient to assert approximate matches and
 allow specific differences, it may be appropriate to allow approximate
