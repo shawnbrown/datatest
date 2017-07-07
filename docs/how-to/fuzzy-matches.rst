@@ -10,10 +10,10 @@
 How to Assert Fuzzy Matches
 ###########################
 
-When comparing strings of text, it may be necessary to assert that
-values are similar even though they are not exactly the same. To do
-this, we define an assertion that implements approximate string
-matching (also called fuzzy matching):
+When comparing strings of text, it can sometimes be useful to assert
+that values are similar instead of asserting that they are exactly the
+same. To do this, we define an assertion that implements approximate
+string matching (also called fuzzy matching):
 
 .. code-block:: python
 
@@ -27,8 +27,8 @@ matching (also called fuzzy matching):
             or equal to *cutoff*.
 
             Similarity measures are determined using the ratio() method
-            of the difflib.SequenceMatcher class and range from 1.0 (exactly
-            the same) to 0.0 (completely different).
+            of the difflib.SequenceMatcher class. The values range from
+            1.0 (exactly the same) to 0.0 (completely different).
             """
             class FuzzyMatcher(str):
                 def __eq__(inner_self, other):
@@ -46,7 +46,7 @@ matching (also called fuzzy matching):
 
 
 Tests that inherit from ``FuzzyTestCase``, can use the ``assertFuzzy()``
-method to assert approximate string matches:
+method to check for approximate string matches:
 
 .. code-block:: python
     :emphasize-lines: 15
@@ -78,8 +78,8 @@ Allowing Fuzzy Differences
 
 While it's usually more efficient to assert approximate matches and
 allow specific differences, it may be appropriate to allow approximate
-differences in certain cases. The ``FuzzyTestCase`` class can be
-extended with an ``allowedFuzzy()`` method for this purpose:
+differences in certain cases. To do this, we can extend ``FuzzyTestCase``
+from the previous example by defining an allowance:
 
 .. code-block:: python
 
@@ -88,11 +88,11 @@ extended with an ``allowedFuzzy()`` method for this purpose:
 
         def allowedFuzzy(self, cutoff=0.6, msg=None):
             """Allows Invalid differences whose measures of similarity are
-            greater than or equal to *cutoff*
+            greater than or equal to *cutoff*.
 
             Similarity measures are determined using the ratio() method
-            of the difflib.SequenceMatcher class and range from 1.0 (exactly
-            the same) to 0.0 (completely different).
+            of the difflib.SequenceMatcher class. The values range from
+            1.0 (exactly the same) to 0.0 (completely different).
             """
             def approx_diff(invalid, expected):
                 matcher = difflib.SequenceMatcher(a=expected, b=invalid)
