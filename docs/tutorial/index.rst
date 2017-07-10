@@ -17,4 +17,5 @@ Tutorials
 .. toctree::
     :maxdepth: 2
 
+    introduction
     querying-data
