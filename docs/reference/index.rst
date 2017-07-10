@@ -1,13 +1,13 @@
 
-.. meta::
-    :description: Table of Contents for Reference.
-    :keywords:
-    :title: Reference
-
 .. module:: datatest
     :synopsis: Test driven data wrangling.
 .. moduleauthor:: Shawn Brown <sbrown@ncecservices.com>
 .. sectionauthor:: Shawn Brown <sbrown@ncecservices.com>
+
+.. meta::
+    :description: Table of Contents for Reference.
+    :keywords:
+    :title: Reference
 
 
 ####################################
