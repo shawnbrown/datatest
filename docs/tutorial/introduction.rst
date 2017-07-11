@@ -152,8 +152,9 @@ difference:
       File "test_errors.py", line 10, in test_membership_in_set
         self.assertValid(data, required_elements)
     datatest.errors.ValidationError: data does not satisfy 'set' requirement (1 diff
-    erences):
-     Extra('x2')
+    erence): [
+        Extra('x2'),
+    ]
 
 
 Here, we use a helper-function to assert that all of the elements are
@@ -177,8 +178,9 @@ Because ``'y'`` is lower-case, the test fails with an :class:`Invalid
       File "test_errors.py", line 16, in test_function_returns_true
         self.assertValid(data, uppercase)
     datatest.errors.ValidationError: data does not satisfy 'uppercase' requirement (
-    1 differences):
-     Invalid('y')
+    1 difference): [
+        Invalid('y'),
+    ]
 
 
 When comparing dictionaries, a dictionary of differences is raised if
@@ -205,11 +207,12 @@ value is ``'bar'``. The test fails with a dictionary of this
     :emphasize-lines: 3,6
 
     Traceback (most recent call last):
-      File "test_errors.py", line 36, in test_mapping
+      File "test_errors.py", line 42, in test_mapping1
         self.assertValid(data, required_values)
     datatest.errors.ValidationError: data does not satisfy 'dict' requirement (1 dif
-    ferences):
-     'y': Invalid('BAZ', 'bar')
+    ference): {
+        'y': Invalid('BAZ', 'bar'),
+    }
 
 
 When comparing numbers, numeric deviations are raised when differences
@@ -235,12 +238,13 @@ between the value under test and the expected value:
     :emphasize-lines: 3,6-7
 
     Traceback (most recent call last):
-      File "test_errors.py", line 41, in test_mapping2
+      File "test_errors.py", line 53, in test_mapping2
         self.assertValid(data, required_values)
     datatest.errors.ValidationError: data does not satisfy 'dict' requirement (2 dif
-    ferences):
-     'x': Deviation(+1, 10),
-     'y': Deviation(-2, 15)
+    ferences): {
+        'x': Deviation(+1, 10),
+        'y': Deviation(-2, 15),
+    }
 
 
 You can run the above examples (:download:`test_errors.py
@@ -316,7 +320,7 @@ testing values that should range from 10 to 20. A more appropriate
 solution is to allow a single specified difference:
 
 .. code-block:: python
-    :emphasize-lines: 16
+    :emphasize-lines: 13-15,17
 
     def test_mapping3(self):
         data = {
@@ -330,8 +334,9 @@ solution is to allow a single specified difference:
             'z': 20,
         }
 
-        diffs = {
+        known_outliers = {
             'z': Deviation(+980, 20),
         }
-        with self.allowedSpecific(diffs, msg='known outlier'):
+
+        with self.allowedSpecific(known_outliers):
             self.assertValid(data, required_values)
