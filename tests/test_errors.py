@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import re
+import textwrap
 from . import _unittest as unittest
 
 from datatest.errors import ValidationError
@@ -50,6 +51,41 @@ class TestValidationError(unittest.TestCase):
         with self.assertRaises(TypeError, msg='must be iterable'):
             single_error = MinimalDifference('A')
             ValidationError('invalid data', single_error)
+
+    def test_str(self):
+        # Assert basic format and trailing comma.
+        err = ValidationError('invalid data', [MinimalDifference('A')])
+        expected = """
+            invalid data (1 difference): [
+                MinimalDifference('A'),
+            ]
+        """
+        expected = textwrap.dedent(expected).strip()
+        self.assertEqual(str(err), expected)
+
+        # Assert "no cacheing"--objects that inhereit from some
+        # Exceptions can cache their str--but ValidationError should
+        # not do this.
+        err.args = ('changed', [MinimalDifference('B')])  # <- Change existing error.
+        updated = textwrap.dedent("""
+            changed (1 difference): [
+                MinimalDifference('B'),
+            ]
+        """).strip()
+        self.assertEqual(str(err), updated)
+
+        # Assert dict format and trailing comma.
+        err = ValidationError('invalid data', {'x': MinimalDifference('A'),
+                                               'y': MinimalDifference('B')})
+        regex = textwrap.dedent(r"""
+            invalid data \(2 differences\): \{
+                '[xy]': MinimalDifference\('[AB]'\),
+                '[xy]': MinimalDifference\('[AB]'\),
+            \}
+        """).strip()
+        self.assertRegex(str(err), regex)  # <- Using regex because dict order
+                                           #    can not be assumed for Python
+                                           #    versions 3.5 and earlier.
 
     def test_repr(self):
         err = ValidationError('invalid data', [MinimalDifference('A')])

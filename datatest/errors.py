@@ -61,14 +61,25 @@ class ValidationError(AssertionError):
         self._differences = differences
 
     def __str__(self):
-        differences = pformat(self._differences, width=1)
-        if any([differences.startswith('[') and differences.endswith(']'),
-                differences.startswith('{') and differences.endswith('}'),
-                differences.startswith('(') and differences.endswith(')')]):
-            differences = differences[1:-1]
+        if isinstance(self._differences, dict):
+            begin, end = '{', '}'
+            list_of_strings = []
+            for k, v in self._differences.items():
+                list_of_strings.append('{0!r}: {1!r}'.format(k, v))
+        else:
+            begin, end = '[', ']'
+            list_of_strings = [repr(x) for x in self._differences]
 
-        output = '{0} ({1} differences):\n {2}'
-        return output.format(self._message, len(self._differences), differences)
+        diff_len = len(self._differences)
+        output = '{0} ({1} difference{2}): {3}\n    {4},\n{5}'.format(
+            self._message,
+            diff_len,
+            '' if diff_len == 1 else 's',
+            begin,
+            ',\n    '.join(list_of_strings),
+            end,
+        )
+        return output
 
     def __repr__(self):
         class_name = self.__class__.__name__
