@@ -32,3 +32,4 @@ file for supported versions, backward compatibility, and more.
     tutorial/index.rst
     how-to/index.rst
     reference/index.rst
+    Discussion <discussion/data-wrangling.rst>
