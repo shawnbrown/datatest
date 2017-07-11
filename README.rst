@@ -1,6 +1,6 @@
 
 *************************************
-datatest: Test driven data wrangling
+datatest: Test driven data-wrangling
 *************************************
 ..
     Project badges for quick reference:
@@ -9,15 +9,15 @@ datatest: Test driven data wrangling
 
 .. start-inclusion-marker-description
 
-Datatest provides validation tools for test-driven data wrangling.
+Datatest provides validation tools for test driven data-wrangling.
 It extends Python's `unittest
 <http://docs.python.org/3/library/unittest.html>`_ package to provide
 testing tools for asserting data correctness.
 
 ..
-    Datatest provides validation tools for test-driven data
-    wrangling. It includes tools to quickly load, query, and
-    validate data using both unittest- and pytest-style testing.
+    Datatest provides validation tools for test driven data-wrangling.
+    It includes tools to quickly load, query, and validate data using
+    both unittest- and pytest-style testing.
 
 Datatest can help prepare messy data that needs to be cleaned,
 integrated, formatted, and verified. It can provide structure for the

@@ -1,6 +1,4 @@
 
-.. module:: datatest
-
 .. meta::
     :description: An introduction and basic examples demonstrating the
                   datatest Python package.

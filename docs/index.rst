@@ -6,13 +6,13 @@
     :title: Index
 
 .. module:: datatest
-    :synopsis: Test driven data wrangling.
+    :synopsis: Test driven data-wrangling.
 .. moduleauthor:: Shawn Brown <sbrown@ncecservices.com>
 .. sectionauthor:: Shawn Brown <sbrown@ncecservices.com>
 
 
 ####################################
-Datatest: Test driven data wrangling
+Datatest: Test driven data-wrangling
 ####################################
 
 Version |release|

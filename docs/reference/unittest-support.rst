@@ -3,7 +3,7 @@
 
 .. meta::
     :description: datatest API for unittest-style testing
-    :keywords: datatest, unittest, data wrangling
+    :keywords: datatest, unittest, data-wrangling
 
 
 ################

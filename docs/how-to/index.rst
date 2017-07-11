@@ -5,7 +5,7 @@
     :title: How-to Guide
 
 .. module:: datatest
-    :synopsis: Test driven data wrangling.
+    :synopsis: Test driven data-wrangling.
 .. moduleauthor:: Shawn Brown <sbrown@ncecservices.com>
 .. sectionauthor:: Shawn Brown <sbrown@ncecservices.com>
 
