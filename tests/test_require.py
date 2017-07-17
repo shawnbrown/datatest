@@ -11,6 +11,7 @@ from datatest.errors import Deviation
 from datatest.errors import NOTFOUND
 
 from datatest.require import _require_sequence
+from datatest.require import _require_sequence2
 from datatest.require import _require_set
 from datatest.require import _require_callable
 from datatest.require import _require_regex
@@ -18,6 +19,64 @@ from datatest.require import _require_other
 from datatest.require import _apply_requirement
 from datatest.require import _apply_mapping_requirement
 from datatest.require import _find_differences
+
+
+class TestRequireSequence2(unittest.TestCase):
+    def test_no_difference(self):
+        first = ['aaa', 'bbb', 'ccc']
+        second = ['aaa', 'bbb', 'ccc']
+        error = _require_sequence2(first, second)
+        self.assertEqual(error, {})  # No difference, returns empty dict
+
+    def test_extra(self):
+        data = ['aaa', 'bbb', 'ccc', 'ddd', 'eee']
+        requirement = ['aaa', 'ccc', 'eee']
+        error = _require_sequence2(data, requirement)
+        self.assertEqual(error, {(1, 1): Extra('bbb'), (3, 2): Extra('ddd')})
+
+    def test_extra_with_empty_requirement(self):
+        data = ['aaa', 'bbb']
+        requirement = []
+        error = _require_sequence2(data, requirement)
+        self.assertEqual(error, {(0, 0): Extra('aaa'), (1, 0): Extra('bbb')})
+
+    def test_missing(self):
+        data = ['bbb', 'ddd']
+        requirement = ['aaa', 'bbb', 'ccc', 'ddd', 'eee']
+        error = _require_sequence2(data, requirement)
+        expected = {
+            (0, 0): Missing('aaa'),
+            (1, 2): Missing('ccc'),
+            (2, 4): Missing('eee'),
+        }
+        self.assertEqual(error, expected)
+
+    def test_missing_with_empty_data(self):
+        data = []
+        requirement = ['aaa', 'bbb']
+        error = _require_sequence2(data, requirement)
+        self.assertEqual(error, {(0, 0): Missing('aaa'), (0, 1): Missing('bbb')})
+
+    def test_invalid(self):
+        data = ['aaa', 'bbb', '---', 'ddd', 'eee']
+        requirement = ['aaa', 'bbb', 'ccc', 'ddd', 'eee']
+        actual = _require_sequence2(data, requirement)
+        expected = {
+            (2, 2): Invalid('---', 'ccc'),
+        }
+        self.assertEqual(actual, expected)
+
+    def test_mixed_differences(self):
+        data = ['aaa', '---', 'ddd', 'eee', 'ggg']
+        requirement = ['aaa', 'bbb', 'ccc', 'ddd', 'fff']
+        actual = _require_sequence2(data, requirement)
+        expected = {
+            (1, 1): Invalid('---', 'bbb'),
+            (2, 2): Missing('ccc'),
+            (3, 4): Invalid('eee', 'fff'),
+            (4, 5): Extra('ggg'),
+        }
+        self.assertEqual(actual, expected)
 
 
 class TestRequireSequence(unittest.TestCase):

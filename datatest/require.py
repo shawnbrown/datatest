@@ -1,4 +1,5 @@
 """Validation and comparison handling."""
+import difflib
 import re
 from .utils import itertools
 from .utils import collections
@@ -91,6 +92,39 @@ def _require_sequence(data, sequence):
                                                     caret_underline,
                                                     message_suffix)
     return AssertionError(message)
+
+
+def _require_sequence2(data, sequence):
+    """Compare *data* against a *sequence* of values. If differences
+    are found, a dictionary is returned with two-tuple keys that
+    contain the index positions of the difference in both the *data*
+    and *sequence* objects. If no differences are found, returns None.
+    """
+    if not isinstance(data, collections.Sequence):
+        data = tuple(data)
+
+    differences = {}
+    def append_diff(i1, i2, j1, j2):
+        if j1 == j2:
+            for i in range(i1, i2):
+                differences[(i, j1)] = Extra(data[i])
+        elif i1 == i2:
+            for j in range(j1, j2):
+                differences[(i1, j)] = Missing(sequence[j])
+        else:
+            shortest = min(i2 - i1, j2 - j1)
+            for i, j in zip(range(i1, i1+shortest), range(j1, j1+shortest)):
+                differences[(i, j)] = Invalid(data[i], sequence[j])
+
+            if (i1 + shortest != i2) or (j1 + shortest != j2):
+                append_diff(i1+shortest, i2, j1+shortest, j2)
+
+    matcher = difflib.SequenceMatcher(a=data, b=sequence)
+    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+        if tag != 'equal':
+            append_diff(i1, i2, j1, j2)
+
+    return differences
 
 
 def _require_set(data, requirement_set):
