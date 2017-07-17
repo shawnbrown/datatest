@@ -78,6 +78,24 @@ class TestRequireSequence2(unittest.TestCase):
         }
         self.assertEqual(actual, expected)
 
+    def test_unhashable(self):
+        """Uses "deep hashing" to attempt to sort unhashable types."""
+        first = [{'a': 1}, {'b': 2}, {'c': 3}]
+        second = [{'a': 1}, {'b': 2}, {'c': 3}]
+        error = _require_sequence2(first, second)
+        self.assertEqual(error, {})  # No difference, returns empty dict
+
+        data = [{'a': 1}, {'-': 0}, {'d': 4}, {'e': 5}, {'g': 7}]
+        requirement = [{'a': 1}, {'b': 2}, {'c': 3}, {'d': 4}, {'f': 6}]
+        actual = _require_sequence2(data, requirement)
+        expected = {
+            (1, 1): Invalid({'-': 0}, {'b': 2}),
+            (2, 2): Missing({'c': 3}),
+            (3, 4): Invalid({'e': 5}, {'f': 6}),
+            (4, 5): Extra({'g': 7}),
+        }
+        self.assertEqual(actual, expected)
+
 
 class TestRequireSequence(unittest.TestCase):
     def test_return_object(self):

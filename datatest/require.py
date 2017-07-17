@@ -94,14 +94,64 @@ def _require_sequence(data, sequence):
     return AssertionError(message)
 
 
+def _deephash(obj):
+    """Return a "deep hash" value for the given object. If the
+    object can not be deep-hashed, a TypeError is raised.
+    """
+    # Adapted from "deephash" Copyright 2017 Shawn Brown, Apache License 2.0.
+    already_seen = {}
+
+    def _hashable_proxy(obj):
+        if isinstance(obj, collections.Hashable) and not isinstance(obj, tuple):
+            return obj  # <- EXIT!
+
+        # Guard against recursive references in compound objects.
+        obj_id = id(obj)
+        if obj_id in already_seen:
+            return already_seen[obj_id]  # <- EXIT!
+        else:
+            already_seen[obj_id] = object()  # Token for duplicates.
+
+        # Recurse into compound object to make hashable proxies.
+        if isinstance(obj, collections.Sequence):
+            proxy = tuple(_hashable_proxy(x) for x in obj)
+        elif isinstance(obj, collections.Set):
+            proxy = frozenset(_hashable_proxy(x) for x in obj)
+        elif isinstance(obj, collections.Mapping):
+            items = getattr(obj, 'iteritems', obj.items)()
+            items = ((k, _hashable_proxy(v)) for k, v in items)
+            proxy = frozenset(items)
+        else:
+            message = 'unhashable type: {0!r}'.format(obj.__class__.__name__)
+            raise TypeError(message)
+        return obj.__class__, proxy
+
+    try:
+        return hash(obj)
+    except TypeError:
+        return hash(_hashable_proxy(obj))
+
+
 def _require_sequence2(data, sequence):
     """Compare *data* against a *sequence* of values. If differences
     are found, a dictionary is returned with two-tuple keys that
     contain the index positions of the difference in both the *data*
     and *sequence* objects. If no differences are found, returns None.
+
+    This function uses difflib.SequenceMatcher() which requires hashable
+    values. This said, _require_sequence() will make a best effort
+    attempt to build a "deep hash" to sort many types of unhashable
+    objects.
     """
     if not isinstance(data, collections.Sequence):
         data = tuple(data)
+
+    try:
+        matcher = difflib.SequenceMatcher(a=data, b=sequence)
+    except TypeError:  # Fall back to slower "deep hash" only if needed.
+        data_proxy = tuple(_deephash(x) for x in data)
+        sequence_proxy = tuple(_deephash(x) for x in sequence)
+        matcher = difflib.SequenceMatcher(a=data_proxy, b=sequence_proxy)
 
     differences = {}
     def append_diff(i1, i2, j1, j2):
@@ -119,7 +169,6 @@ def _require_sequence2(data, sequence):
             if (i1 + shortest != i2) or (j1 + shortest != j2):
                 append_diff(i1+shortest, i2, j1+shortest, j2)
 
-    matcher = difflib.SequenceMatcher(a=data, b=sequence)
     for tag, i1, i2, j1, j2 in matcher.get_opcodes():
         if tag != 'equal':
             append_diff(i1, i2, j1, j2)
