@@ -11,7 +11,6 @@ from datatest.errors import Deviation
 from datatest.errors import NOTFOUND
 
 from datatest.require import _require_sequence
-from datatest.require import _require_sequence2
 from datatest.require import _require_set
 from datatest.require import _require_callable
 from datatest.require import _require_regex
@@ -21,29 +20,29 @@ from datatest.require import _apply_mapping_requirement
 from datatest.require import _find_differences
 
 
-class TestRequireSequence2(unittest.TestCase):
+class TestRequireSequence(unittest.TestCase):
     def test_no_difference(self):
         first = ['aaa', 'bbb', 'ccc']
         second = ['aaa', 'bbb', 'ccc']
-        error = _require_sequence2(first, second)
+        error = _require_sequence(first, second)
         self.assertEqual(error, {})  # No difference, returns empty dict
 
     def test_extra(self):
         data = ['aaa', 'bbb', 'ccc', 'ddd', 'eee']
         requirement = ['aaa', 'ccc', 'eee']
-        error = _require_sequence2(data, requirement)
+        error = _require_sequence(data, requirement)
         self.assertEqual(error, {(1, 1): Extra('bbb'), (3, 2): Extra('ddd')})
 
     def test_extra_with_empty_requirement(self):
         data = ['aaa', 'bbb']
         requirement = []
-        error = _require_sequence2(data, requirement)
+        error = _require_sequence(data, requirement)
         self.assertEqual(error, {(0, 0): Extra('aaa'), (1, 0): Extra('bbb')})
 
     def test_missing(self):
         data = ['bbb', 'ddd']
         requirement = ['aaa', 'bbb', 'ccc', 'ddd', 'eee']
-        error = _require_sequence2(data, requirement)
+        error = _require_sequence(data, requirement)
         expected = {
             (0, 0): Missing('aaa'),
             (1, 2): Missing('ccc'),
@@ -54,13 +53,13 @@ class TestRequireSequence2(unittest.TestCase):
     def test_missing_with_empty_data(self):
         data = []
         requirement = ['aaa', 'bbb']
-        error = _require_sequence2(data, requirement)
+        error = _require_sequence(data, requirement)
         self.assertEqual(error, {(0, 0): Missing('aaa'), (0, 1): Missing('bbb')})
 
     def test_invalid(self):
         data = ['aaa', 'bbb', '---', 'ddd', 'eee']
         requirement = ['aaa', 'bbb', 'ccc', 'ddd', 'eee']
-        actual = _require_sequence2(data, requirement)
+        actual = _require_sequence(data, requirement)
         expected = {
             (2, 2): Invalid('---', 'ccc'),
         }
@@ -69,7 +68,7 @@ class TestRequireSequence2(unittest.TestCase):
     def test_mixed_differences(self):
         data = ['aaa', '---', 'ddd', 'eee', 'ggg']
         requirement = ['aaa', 'bbb', 'ccc', 'ddd', 'fff']
-        actual = _require_sequence2(data, requirement)
+        actual = _require_sequence(data, requirement)
         expected = {
             (1, 1): Invalid('---', 'bbb'),
             (2, 2): Missing('ccc'),
@@ -82,12 +81,12 @@ class TestRequireSequence2(unittest.TestCase):
         """Uses "deep hashing" to attempt to sort unhashable types."""
         first = [{'a': 1}, {'b': 2}, {'c': 3}]
         second = [{'a': 1}, {'b': 2}, {'c': 3}]
-        error = _require_sequence2(first, second)
+        error = _require_sequence(first, second)
         self.assertEqual(error, {})  # No difference, returns empty dict
 
         data = [{'a': 1}, {'-': 0}, {'d': 4}, {'e': 5}, {'g': 7}]
         requirement = [{'a': 1}, {'b': 2}, {'c': 3}, {'d': 4}, {'f': 6}]
-        actual = _require_sequence2(data, requirement)
+        actual = _require_sequence(data, requirement)
         expected = {
             (1, 1): Invalid({'-': 0}, {'b': 2}),
             (2, 2): Missing({'c': 3}),
@@ -95,68 +94,6 @@ class TestRequireSequence2(unittest.TestCase):
             (4, 5): Extra({'g': 7}),
         }
         self.assertEqual(actual, expected)
-
-
-class TestRequireSequence(unittest.TestCase):
-    def test_return_object(self):
-        first = ['aaa', 'bbb', 'ccc']
-        second = ['aaa', 'bbb', 'ccc']
-        error = _require_sequence(first, second)
-        self.assertIsNone(error)  # No difference, returns None.
-
-        first = ['aaa', 'XXX', 'ccc']
-        second = ['aaa', 'bbb', 'ccc']
-        error = _require_sequence(first, second)
-        self.assertIsInstance(error, AssertionError)
-
-    def test_differs(self):
-        first = ['aaa', 'XXX', 'ccc']
-        second = ['aaa', 'bbb', 'ccc']
-        error = _require_sequence(first, second)
-
-        message = """
-            Data sequence differs starting at index 1:
-
-              'aaa', 'XXX', 'ccc'
-                     ^^^^^
-            Found 'XXX', expected 'bbb'
-        """
-        message = textwrap.dedent(message).strip()
-        self.assertEqual(str(error), message)
-
-    def test_missing(self):
-        first = ['aaa', 'bbb']
-        second = ['aaa', 'bbb', 'ccc']
-        error = _require_sequence(first, second)
-
-        message = """
-            Data sequence is missing elements starting with index 2:
-
-              ..., 'bbb', ?????
-                          ^^^^^
-            Expected 'ccc'
-        """
-        message = textwrap.dedent(message).strip()
-        self.assertEqual(str(error), message)
-
-    def test_extra(self):
-        first = ['aaa', 'bbb', 'ccc', 'ddd']
-        second = ['aaa', 'bbb', 'ccc']
-        error = _require_sequence(first, second)
-
-        message = """
-            Data sequence contains extra elements starting with index 3:
-
-              ..., 'ccc', 'ddd'
-                          ^^^^^
-            Found 'ddd'
-        """
-        message = textwrap.dedent(message).strip()
-        self.assertEqual(str(error), message)
-
-    def test_notfound(self):
-        with self.assertRaises(ValueError):
-            _require_sequence(NOTFOUND, [1, 2, 3])
 
 
 class TestRequireSet(unittest.TestCase):
@@ -370,10 +307,11 @@ class TestApplyRequirement(unittest.TestCase):
         self.assertIsNone(result)
 
         result = _apply_requirement(self.multiple, ['A', 'A', 'B'])
-        self.assertIsInstance(result, AssertionError)
+        self.assertEqual(result, {(0, 0): Missing('A'), (2, 3): Extra('A')})
 
         with self.assertRaises(ValueError):
-            _apply_requirement(self.single, ['A', 'A', 'B'])
+            result = _apply_requirement(self.single, ['A', 'A', 'B'])
+            dict(result)  # <- evaluate items
 
     def test_set(self):
         result = _apply_requirement(self.multiple, set(['A', 'B']))
@@ -465,7 +403,7 @@ class TestApplyMappingRequirement(unittest.TestCase):
         result = _apply_mapping_requirement(data, {'a': ['x', 'z']})
         result = dict(result)
         self.assertTrue(len(result) == 1)
-        self.assertIsInstance(result['a'], AssertionError)
+        self.assertEqual(result, {'a': {(1, 1): Invalid('y', 'z')}})
 
         # Set membership.
         data = {'a': ['x', 'x'], 'b': ['x', 'y', 'z']}

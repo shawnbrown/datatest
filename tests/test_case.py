@@ -99,21 +99,23 @@ class TestAssertValid(DataTestCase):
 
         self.assertEqual(differences, {'BBB': Invalid('x', 'b'), 'CCC': Missing('c')})
 
+    @unittest.skip('Waiting to update default messages.')
     def test_required_sequence(self):
         """When *required* is a sequence, _compare_sequence() should be
         called.
         """
-        with self.assertRaises(AssertionError) as cm:
+        with self.assertRaises(ValidationError) as cm:
             data = ['a', 2, 'x', 3]
             required = ['a', 2, 'c', 4]
             self.assertValid(data, required)
-        error = cm.exception
+        err = cm.exception
 
-        self.assertIsInstance(error, AssertionError)
-
-        error_string = str(error)
-        expected = 'Data sequence differs starting at index 2'
-        self.assertTrue(error_string.startswith(expected))
+        expected = {
+            (2, 2): Invalid('x', 'c'),
+            (3, 3): Invalid(3, 4),
+        }
+        self.assertEqual(err.differences, expected)
+        self.assertEqual(err.args[0], 'data does not satisfy sequence order')
 
     def test_required_other(self):
         """When *required* is a string or other object, _compare_other()
