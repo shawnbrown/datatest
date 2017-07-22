@@ -201,19 +201,9 @@ class DataTestCase(TestCase):
             msg = 'data does not satisfy {0!r} requirement'.format(name)
         self.fail(msg, differences)
 
-    def fail(self, msg, errors=None):
-        if isinstance(errors, Exception):
-            if msg:
-                args = errors.args
-                if isinstance(args[0], str):
-                    first_arg = '{0}\n{1}'.format(msg, args[0])
-                    args = args[1:]
-                else:
-                    first_arg = msg
-                errors.args = (first_arg,) + args
-            raise errors
-        elif errors:
-            raise ValidationError(msg, errors)
+    def fail(self, msg, differences=None):
+        if differences:
+            raise ValidationError(msg, differences)
         else:
             raise self.failureException(msg)
 
