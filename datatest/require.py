@@ -103,7 +103,7 @@ def _require_sequence(data, sequence):
         if tag != 'equal':
             append_diff(i1, i2, j1, j2)
 
-    return differences
+    return differences or None
 
 
 def _require_set(data, requirement_set):
@@ -123,18 +123,18 @@ def _require_set(data, requirement_set):
 
     missing_elements = requirement_set.difference(matching_elements)
 
-    missing = (Missing(x) for x in missing_elements)
-    extra = (Extra(x) for x in extra_elements)
-    return itertools.chain(missing, extra)
+    if extra_elements or missing_elements:
+        missing = (Missing(x) for x in missing_elements)
+        extra = (Extra(x) for x in extra_elements)
+        return itertools.chain(missing, extra)
+    return None
 
 
 def _require_callable(data, function):
     if data is NOTFOUND:
-        data = [None]
-    elif isinstance(data, BaseElement):
-        data = [data]
+        return Invalid(None)  # <- EXIT!
 
-    for element in data:
+    def wrapped(element):
         try:
             if isinstance(element, BaseElement):
                 returned_value = function(element)
@@ -143,48 +143,57 @@ def _require_callable(data, function):
         except Exception:
             returned_value = False  # Raised errors count as False.
 
-        if returned_value is True:
-            continue
+        if returned_value == True:
+            return None  # <- EXIT!
 
-        if returned_value is False:
-            yield Invalid(element)
-            continue
+        if returned_value == False:
+            return Invalid(element)  # <- EXIT!
 
         if isinstance(returned_value, BaseDifference):
-            yield returned_value  # Returned difference is used as-is.
-            continue
+            return returned_value  # <- EXIT!
 
         callable_name = function.__name__
         message = \
             '{0!r} returned {1!r}, should return True, False or a difference instance'
         raise TypeError(message.format(callable_name, returned_value))
 
+    if isinstance(data, BaseElement):
+        return wrapped(data)  # <- EXIT!
+
+    results = (wrapped(elem) for elem in data)
+    diffs = (diff for diff in results if diff)
+    first_element = next(diffs, None)
+    if first_element:
+        return itertools.chain([first_element], diffs)  # <- EXIT!
+    return None
+
 
 def _require_regex(data, regex):
-    if data is NOTFOUND:
-        data = [None]
-    elif isinstance(data, BaseElement):
-        data = [data]
-
-    search = regex.search
-    for element in data:
-        try:
-            if search(element) is None:
-                yield Invalid(element)
-        except TypeError:
-            yield Invalid(element)
+    search = regex.search  # Assign locally to minimize dot-lookups.
+    func = lambda element: search(element) is not None
+    return _require_callable(data, func)
 
 
 def _require_other(data, other, show_expected=True):
     """Compare *data* against *other* object--one that does not match
     another supported comparison type.
     """
-    for element in data:
+    def func(element):
         try:
             if not other == element:  # Uses "==" to trigger __eq__() call.
-                yield _make_difference(element, other, show_expected)
+                return _make_difference(element, other, show_expected)
         except Exception:
-            yield _make_difference(element, other, show_expected)
+            return _make_difference(element, other, show_expected)
+
+    if isinstance(data, BaseElement):
+        return func(data)  # <- EXIT!
+
+    results = (func(elem) for elem in data)
+    diffs = (diff for diff in results if diff)
+    first_element = next(diffs, None)
+    if first_element:
+        return itertools.chain([first_element], diffs)  # <- EXIT!
+    return None
 
 
 def _apply_requirement(data, requirement):
@@ -198,36 +207,19 @@ def _apply_requirement(data, requirement):
     """
     if not isinstance(requirement, str) and \
                isinstance(requirement, collections.Sequence):
-        result = _require_sequence(data, requirement)
-        if result:
-            return result  # <- EXIT!
-        return None  # <- EXIT!
+        return _require_sequence(data, requirement)  # <- EXIT!
 
     if isinstance(requirement, collections.Set):
-        result =  _require_set(data, requirement)
-        first_element = next(result, None)
-        if first_element:
-            return itertools.chain([first_element], result)  # <- EXIT!
-        return None  # <- EXIT!
-
-    is_single_element = isinstance(data, BaseElement)
-    if is_single_element:
-        data = [data]
+        return _require_set(data, requirement)  # <- EXIT!
 
     if callable(requirement):
-        result = _require_callable(data, requirement)
-    elif isinstance(requirement, _regex_type):
-        result = _require_regex(data, requirement)
-    else:
-        result = _require_other(data, requirement,
-                                show_expected=is_single_element)
+        return _require_callable(data, requirement)  # <- EXIT!
 
-    first_element = next(result, None)
-    if first_element:
-        if is_single_element:
-            return first_element  # <- EXIT!
-        return itertools.chain([first_element], result)  # <- EXIT!
-    return None
+    if isinstance(requirement, _regex_type):
+        return _require_regex(data, requirement)  # <- EXIT!
+
+    is_single_element = isinstance(data, BaseElement)
+    return _require_other(data, requirement, show_expected=is_single_element)
 
 
 def _apply_mapping_requirement(data, mapping):
@@ -268,19 +260,27 @@ def _normalize_mapping_result(result):
     return None
 
 
+#def _get_difference_info(data, requirement):
 def _find_differences(data, requirement):
     """Return iterable of differences or None."""
     if isinstance(requirement, collections.Mapping):
         result = _apply_mapping_requirement(data, requirement)
         result = _normalize_mapping_result(result)
+        default_msg = 'does not satisfy mapping requirement'
     elif isinstance(data, collections.Mapping):
         items = getattr(data, 'iteritems', data.items)()
         result = ((k, _apply_requirement(v, requirement)) for k, v in items)
         iter_to_list = lambda x: x if isinstance(x, BaseElement) else list(x)
         result = ((k, iter_to_list(v)) for k, v in result if v)
         result = _normalize_mapping_result(result)
+        default_msg = None
     else:
         result = _apply_requirement(data, requirement)
+        #default_msg, result = _apply_requirement(data, requirement)
         if isinstance(result, BaseDifference):
             result = [result]
-    return result
+        default_msg = None
+
+    if not result:
+        return None
+    return (default_msg, result)

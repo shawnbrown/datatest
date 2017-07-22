@@ -190,15 +190,15 @@ class DataTestCase(TestCase):
         if isinstance(requirement, (DataQuery, DataResult)):
             requirement = requirement.fetch()
 
-        differences = _find_differences(data, requirement)
-        if not differences:
-            return None  # <- EXIT!
-
-        if not msg and not isinstance(differences, Exception):
+        diff_info = _find_differences(data, requirement)
+        if not diff_info:
+            return None
+        default_msg, differences = diff_info  # Unpack values.
+        #msg = msg or default_msg
+        if not msg:
             name = getattr(requirement, '__name__',
                            requirement.__class__.__name__)
             msg = 'data does not satisfy {0!r} requirement'.format(name)
-
         self.fail(msg, differences)
 
     def fail(self, msg, errors=None):

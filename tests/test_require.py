@@ -25,7 +25,7 @@ class TestRequireSequence(unittest.TestCase):
         first = ['aaa', 'bbb', 'ccc']
         second = ['aaa', 'bbb', 'ccc']
         error = _require_sequence(first, second)
-        self.assertEqual(error, {})  # No difference, returns empty dict
+        self.assertIsNone(error)  # No difference, returns None.
 
     def test_extra(self):
         data = ['aaa', 'bbb', 'ccc', 'ddd', 'eee']
@@ -82,7 +82,7 @@ class TestRequireSequence(unittest.TestCase):
         first = [{'a': 1}, {'b': 2}, {'c': 3}]
         second = [{'a': 1}, {'b': 2}, {'c': 3}]
         error = _require_sequence(first, second)
-        self.assertEqual(error, {})  # No difference, returns empty dict
+        self.assertIsNone(error)  # No difference, returns None.
 
         data = [{'a': 1}, {'-': 0}, {'d': 4}, {'e': 5}, {'g': 7}]
         requirement = [{'a': 1}, {'b': 2}, {'c': 3}, {'d': 4}, {'f': 6}]
@@ -103,7 +103,7 @@ class TestRequireSet(unittest.TestCase):
     def test_no_difference(self):
         data = iter(['a', 'b', 'c'])
         result = _require_set(data, self.requirement)
-        self.assertEqual(list(result), [])
+        self.assertIsNone(result)  # No difference, returns None.
 
     def test_missing(self):
         data = iter(['a', 'b'])
@@ -151,7 +151,7 @@ class TestRequireCallable(unittest.TestCase):
     def test_all_true(self):
         data = ['10', '20', '30']
         result = _require_callable(data, self.isdigit)
-        self.assertEqual(list(result), [])
+        self.assertIsNone(result)
 
     def test_some_false(self):
         """Elements that evaluate to False are returned as Invalid() errors."""
@@ -195,7 +195,7 @@ class TestRequireCallable(unittest.TestCase):
         def func(x):
             return False
         result = _require_callable(NOTFOUND, func)
-        self.assertEqual(list(result), [Invalid(None)])
+        self.assertEqual(result, Invalid(None))
 
 
 class TestRequireRegex(unittest.TestCase):
@@ -205,7 +205,7 @@ class TestRequireRegex(unittest.TestCase):
     def test_all_true(self):
         data = iter(['a1', 'b2', 'c3'])
         result = _require_regex(data, self.regex)
-        self.assertEqual(list(result), [])
+        self.assertIsNone(result)
 
     def test_some_false(self):
         data = iter(['a1', 'b2', 'XX'])
@@ -226,7 +226,7 @@ class TestRequireRegex(unittest.TestCase):
 
     def test_notfound(self):
         result = _require_regex(NOTFOUND, self.regex)
-        self.assertEqual(list(result), [Invalid(None)])
+        self.assertEqual(result, Invalid(None))
 
 
 class TestRequireOther(unittest.TestCase):
@@ -247,13 +247,12 @@ class TestRequireOther(unittest.TestCase):
         data = ['A', 'A', 'A']
         requirement = EqualsAll()
         result = _require_other(data, requirement)
-        list(result)  # Evaluate list (discarding results).
         self.assertEqual(requirement.times_called, len(data))
 
     def test_all_true(self):
         data = iter(['A', 'A', 'A'])
         result = _require_other(data, 'A')
-        self.assertEqual(list(result), [])
+        self.assertIsNone(result)
 
     def test_some_invalid(self):
         data = iter(['A', 'A', 'XX'])
@@ -455,12 +454,12 @@ class TestFindDifferences(unittest.TestCase):
         mapping1 = {'a': 'x', 'b': 'y'}
         mapping2 = {'a': 'x', 'b': 'z'}
 
-        result = _find_differences(mapping1, mapping1)
-        self.assertIsNone(result)
+        info = _find_differences(mapping1, mapping1)
+        self.assertIsNone(info)
 
-        result = _find_differences(mapping1, mapping2)
-        self.assertTrue(_is_consumable(result))
-        self.assertEqual(dict(result), {'b': Invalid('y', expected='z')})
+        msg, diffs = _find_differences(mapping1, mapping2)
+        self.assertTrue(_is_consumable(diffs))
+        self.assertEqual(dict(diffs), {'b': Invalid('y', expected='z')})
 
         with self.assertRaises(TypeError):
             _find_differences(set(['x', 'y']), mapping2)
@@ -473,19 +472,19 @@ class TestFindDifferences(unittest.TestCase):
         result = _find_differences(mapping, x_or_y)
         self.assertIsNone(result)
 
-        result = _find_differences(mapping, 'x')  # <- string
-        self.assertTrue(_is_consumable(result))
-        self.assertEqual(dict(result), {'b': Invalid('y', expected='x')})
+        msg, diffs = _find_differences(mapping, 'x')  # <- string
+        self.assertTrue(_is_consumable(diffs))
+        self.assertEqual(dict(diffs), {'b': Invalid('y', expected='x')})
 
-        result = _find_differences(mapping, set('x'))  # <- set
-        self.assertTrue(_is_consumable(result))
-        self.assertEqual(dict(result), {'b': [Missing('x'), Extra('y')]})
+        msg, diffs = _find_differences(mapping, set('x'))  # <- set
+        self.assertTrue(_is_consumable(diffs))
+        self.assertEqual(dict(diffs), {'b': [Missing('x'), Extra('y')]})
 
     def test_nonmapping(self):
         """When neither *data* or *requirement* are mappings."""
         result = _find_differences(set(['x', 'y']), set(['x', 'y']))
         self.assertIsNone(result)
 
-        result = _find_differences(set(['x']), set(['x', 'y']))
-        self.assertTrue(_is_consumable(result))
-        self.assertEqual(list(result), [Missing('y')])
+        msg, diffs = _find_differences(set(['x']), set(['x', 'y']))
+        self.assertTrue(_is_consumable(diffs))
+        self.assertEqual(list(diffs), [Missing('y')])
