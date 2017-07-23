@@ -205,21 +205,33 @@ def _apply_requirement(data, requirement):
      * a single error,
      * or None.
     """
+    _, require_func = _get_msg_and_func(data, requirement)
+    return require_func(data, requirement)
+
+
+def _get_msg_and_func(data, requirement):
+    """"""
     if not isinstance(requirement, str) and \
                isinstance(requirement, collections.Sequence):
-        return _require_sequence(data, requirement)  # <- EXIT!
+        return 'data does not satisfy sequence order', _require_sequence
 
     if isinstance(requirement, collections.Set):
-        return _require_set(data, requirement)  # <- EXIT!
+        return 'data does not satisfy set membership', _require_set
 
     if callable(requirement):
-        return _require_callable(data, requirement)  # <- EXIT!
+        name = getattr(requirement, '__name__', requirement.__class__.__name__)
+        return 'data does not satisfy {0!r}'.format(name), _require_callable
 
     if isinstance(requirement, _regex_type):
-        return _require_regex(data, requirement)  # <- EXIT!
+        pattern = requirement.pattern
+        return 'data does not satisfy {0!r} regex'.format(pattern), _require_regex
 
-    is_single_element = isinstance(data, BaseElement)
-    return _require_other(data, requirement, show_expected=is_single_element)
+    if isinstance(data, BaseElement):  # Checking *data* (not *requirement*).
+        return 'data does not satisfy equality comparison', _require_other
+
+    def wrapped(dat, req):
+        return _require_other(dat, req, show_expected=False)
+    return 'data does not satisfy equality comparison', wrapped
 
 
 def _apply_mapping_requirement(data, mapping):
@@ -234,19 +246,22 @@ def _apply_mapping_requirement(data, mapping):
     for key, actual in data_items:
         data_keys.add(key)
         expected = mapping.get(key, NOTFOUND)
-        result = _apply_requirement(actual, expected)
-        if result:
-            if not isinstance(result, BaseElement):
-                result = list(result)
-            yield key, result
+
+        _, require_func = _get_msg_and_func(actual, expected)
+        diff = require_func(actual, expected)
+        if diff:
+            if not isinstance(diff, BaseElement):
+                diff = list(diff)
+            yield key, diff
 
     mapping_items = getattr(mapping, 'iteritems', mapping.items)()
     for key, expected in mapping_items:
         if key not in data_keys:
-            result = _apply_requirement(NOTFOUND, expected)
-            if not isinstance(result, BaseElement):
-                result = list(result)
-            yield key, result
+            _, require_func = _get_msg_and_func(actual, expected)
+            diff = require_func(NOTFOUND, expected)
+            if not isinstance(diff, BaseElement):
+                diff = list(diff)
+            yield key, diff
 
 
 def _normalize_mapping_result(result):
@@ -264,23 +279,22 @@ def _normalize_mapping_result(result):
 def _find_differences(data, requirement):
     """Return iterable of differences or None."""
     if isinstance(requirement, collections.Mapping):
-        result = _apply_mapping_requirement(data, requirement)
-        result = _normalize_mapping_result(result)
         default_msg = 'does not satisfy mapping requirement'
+        diffs = _apply_mapping_requirement(data, requirement)
+        diffs = _normalize_mapping_result(diffs)
     elif isinstance(data, collections.Mapping):
+        default_msg, require_func = _get_msg_and_func(data, requirement)
         items = getattr(data, 'iteritems', data.items)()
-        result = ((k, _apply_requirement(v, requirement)) for k, v in items)
+        diffs = ((k, require_func(v, requirement)) for k, v in items)
         iter_to_list = lambda x: x if isinstance(x, BaseElement) else list(x)
-        result = ((k, iter_to_list(v)) for k, v in result if v)
-        result = _normalize_mapping_result(result)
-        default_msg = None
+        diffs = ((k, iter_to_list(v)) for k, v in diffs if v)
+        diffs = _normalize_mapping_result(diffs)
     else:
-        result = _apply_requirement(data, requirement)
-        #default_msg, result = _apply_requirement(data, requirement)
-        if isinstance(result, BaseDifference):
-            result = [result]
-        default_msg = None
+        default_msg, require_func = _get_msg_and_func(data, requirement)
+        diffs = require_func(data, requirement)
+        if isinstance(diffs, BaseDifference):
+            diffs = [diffs]
 
-    if not result:
+    if not diffs:
         return None
-    return (default_msg, result)
+    return (default_msg, diffs)
