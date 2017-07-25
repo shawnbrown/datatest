@@ -158,12 +158,15 @@ class DataResult(collections.Iterator):
         iterable = iter([...])
         result = DataResult(iterable, evaluation_type=list)
 
-    When iterated over, the *iterable* must yield only those values
-    necessary for constructing an object of the given *evaluation_type*
-    and no more. For example, when the *evaluation_type* is a set, the
-    *iterable* must not contain duplicate or unhashable values. When
-    the *evaluation_type* is a :py:class:`dict` or other mapping, the
-    *iterable* must contain unique key-value pairs or a mapping.
+    .. warning::
+
+        When iterated over, the *iterable* **must** yield only those
+        values necessary for constructing an object of the given
+        *evaluation_type* and no more. For example, when the
+        *evaluation_type* is a set, the *iterable* must not contain
+        duplicate or unhashable values. When the *evaluation_type*
+        is a :py:class:`dict` or other mapping, the *iterable* must
+        contain unique key-value pairs or a mapping.
     """
     def __init__(self, iterable, evaluation_type):
         if not isinstance(evaluation_type, type):
