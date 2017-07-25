@@ -146,13 +146,12 @@ in the data, the test fails with an :class:`Extra <datatest.Extra>`
 difference:
 
 .. code-block:: none
-    :emphasize-lines: 3,6
+    :emphasize-lines: 3,5
 
     Traceback (most recent call last):
-      File "test_errors.py", line 10, in test_membership_in_set
+      File "docs/_static/test_errors.py", line 10, in test_membership_in_set
         self.assertValid(data, required_elements)
-    datatest.errors.ValidationError: data does not satisfy 'set' requirement (1 diff
-    erence): [
+    datatest.errors.ValidationError: does not satisfy set membership (1 difference): [
         Extra('x2'),
     ]
 
@@ -175,10 +174,10 @@ Because ``'y'`` is lower-case, the test fails with an :class:`Invalid
     :emphasize-lines: 3,6
 
     Traceback (most recent call last):
-      File "test_errors.py", line 16, in test_function_returns_true
+      File "docs/_static/test_errors.py", line 16, in test_function_returns_true
         self.assertValid(data, uppercase)
-    datatest.errors.ValidationError: data does not satisfy 'uppercase' requirement (
-    1 difference): [
+    datatest.errors.ValidationError: does not satisfy 'uppercase' condition (1 diffe
+    rence): [
         Invalid('y'),
     ]
 
@@ -207,10 +206,10 @@ value is ``'bar'``. The test fails with a dictionary of this
     :emphasize-lines: 3,6
 
     Traceback (most recent call last):
-      File "test_errors.py", line 42, in test_mapping1
+      File "docs/_static/test_errors.py", line 42, in test_mapping1
         self.assertValid(data, required_values)
-    datatest.errors.ValidationError: data does not satisfy 'dict' requirement (1 dif
-    ference): {
+    datatest.errors.ValidationError: does not satisfy mapping requirement (1 differe
+    nce): {
         'y': Invalid('BAZ', 'bar'),
     }
 
@@ -238,10 +237,10 @@ between the value under test and the expected value:
     :emphasize-lines: 3,6-7
 
     Traceback (most recent call last):
-      File "test_errors.py", line 53, in test_mapping2
+      File "docs/_static/test_errors.py", line 53, in test_mapping2
         self.assertValid(data, required_values)
-    datatest.errors.ValidationError: data does not satisfy 'dict' requirement (2 dif
-    ferences): {
+    datatest.errors.ValidationError: does not satisfy mapping requirement (2 differe
+    nces): {
         'x': Deviation(+1, 10),
         'y': Deviation(-2, 15),
     }
