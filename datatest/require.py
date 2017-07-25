@@ -275,8 +275,7 @@ def _normalize_mapping_result(result):
     return None
 
 
-#def _get_difference_info(data, requirement):
-def _find_differences(data, requirement):
+def _get_difference_info(data, requirement):
     """Return iterable of differences or None."""
     if isinstance(requirement, collections.Mapping):
         default_msg = 'does not satisfy mapping requirement'
