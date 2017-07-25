@@ -18,7 +18,7 @@ How-to Guide
     :maxdepth: 1
 
     Install Datatest <install>
-    Use Reference Data <reference-data>
+    Compare Two Files <compare-files>
     Assert Types <assert-type>
     Assert Subsets and Supersets <set-relations>
     Assert Fuzzy Matches <fuzzy-matches>

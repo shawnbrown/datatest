@@ -3,12 +3,12 @@
 
 .. meta::
     :description: How to assert data types.
-    :keywords: datatest, reference data
+    :keywords: reference data, compare files, datatest
 
 
-#########################
-How to Use Reference Data
-#########################
+########################
+How to Compare Two Files
+########################
 
 To compare two data sources that have the same field names,
 we can create a single query and call it twice (once for
