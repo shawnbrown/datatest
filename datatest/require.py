@@ -174,64 +174,64 @@ def _require_regex(data, regex):
     return _require_callable(data, func)
 
 
-def _require_other(data, other, show_expected=True):
-    """Compare *data* against *other* object--one that does not match
-    another supported comparison type.
-    """
+def _require_equality(data, other):
+    if data is NOTFOUND:
+        return _make_difference(data, other, show_expected=False)  # <- EXIT!
+
     def func(element):
         try:
-            if not other == element:  # Uses "==" to trigger __eq__() call.
-                return _make_difference(element, other, show_expected)
+            if not other == element:  # Use "==" to call __eq__(), don't use "!=".
+                return _make_difference(element, other, show_expected=False)
         except Exception:
-            return _make_difference(element, other, show_expected)
+            return _make_difference(element, other, show_expected=False)
+        return None
+    diffs = (func(elem) for elem in data)
+    diffs = (x for x in diffs if x)
 
-    if isinstance(data, BaseElement):
-        return func(data)  # <- EXIT!
-
-    results = (func(elem) for elem in data)
-    diffs = (diff for diff in results if diff)
     first_element = next(diffs, None)
     if first_element:
         return itertools.chain([first_element], diffs)  # <- EXIT!
     return None
 
 
-def _apply_requirement(data, requirement):
-    """Compare *data* against *requirement* using appropriate
-    comparison function (as determined by *requirement* type).
+def _require_single_equality(data, other):
+    try:
+        if not other == data:  # Use "==" to call __eq__(), don't use "!=".
+            return _make_difference(data, other)
+    except Exception:
+        return _make_difference(data, other)
+    return None
 
-    Returns one of three types:
+
+def _get_msg_and_func(data, requirement):
+    """
+    Each require-function will one of the following:
      * an iterable of errors,
      * a single error,
      * or None.
     """
-    _, require_func = _get_msg_and_func(data, requirement)
-    return require_func(data, requirement)
-
-
-def _get_msg_and_func(data, requirement):
-    """"""
+    # Check for special cases--*requirement* types
+    # that trigger a particular validation method.
     if not isinstance(requirement, str) and \
                isinstance(requirement, collections.Sequence):
-        return 'data does not satisfy sequence order', _require_sequence
+        return 'does not match sequence order', _require_sequence
 
     if isinstance(requirement, collections.Set):
-        return 'data does not satisfy set membership', _require_set
+        return 'does not satisfy set membership', _require_set
 
     if callable(requirement):
         name = getattr(requirement, '__name__', requirement.__class__.__name__)
-        return 'data does not satisfy {0!r}'.format(name), _require_callable
+        return 'does not satisfy {0!r} condition'.format(name), _require_callable
 
     if isinstance(requirement, _regex_type):
         pattern = requirement.pattern
-        return 'data does not satisfy {0!r} regex'.format(pattern), _require_regex
+        return 'does not satisfy {0!r} regex'.format(pattern), _require_regex
 
-    if isinstance(data, BaseElement):  # Checking *data* (not *requirement*).
-        return 'data does not satisfy equality comparison', _require_other
-
-    def wrapped(dat, req):
-        return _require_other(dat, req, show_expected=False)
-    return 'data does not satisfy equality comparison', wrapped
+    # If *requirement* did not match any of the special cases
+    # above, then return an appropriate equality function.
+    if isinstance(data, BaseElement):
+        return 'does not satisfy equality comparison', _require_single_equality
+    return 'does not equal {0!r}'.format(requirement), _require_equality
 
 
 def _apply_mapping_requirement(data, mapping):

@@ -14,8 +14,9 @@ from datatest.require import _require_sequence
 from datatest.require import _require_set
 from datatest.require import _require_callable
 from datatest.require import _require_regex
-from datatest.require import _require_other
-from datatest.require import _apply_requirement
+from datatest.require import _require_equality
+from datatest.require import _require_single_equality
+from datatest.require import _get_msg_and_func
 from datatest.require import _apply_mapping_requirement
 from datatest.require import _find_differences
 
@@ -229,7 +230,7 @@ class TestRequireRegex(unittest.TestCase):
         self.assertEqual(result, Invalid(None))
 
 
-class TestRequireOther(unittest.TestCase):
+class TestRequireEquality(unittest.TestCase):
     def test_eq(self):
         """Should use __eq__() comparison, not __ne__()."""
 
@@ -246,37 +247,33 @@ class TestRequireOther(unittest.TestCase):
 
         data = ['A', 'A', 'A']
         requirement = EqualsAll()
-        result = _require_other(data, requirement)
+        result = _require_equality(data, requirement)
         self.assertEqual(requirement.times_called, len(data))
 
     def test_all_true(self):
-        data = iter(['A', 'A', 'A'])
-        result = _require_other(data, 'A')
+        result = _require_equality(iter(['A', 'A']), 'A')
         self.assertIsNone(result)
 
     def test_some_invalid(self):
-        data = iter(['A', 'A', 'XX'])
-        result = _require_other(data, 'A')
-        self.assertEqual(list(result), [Invalid('XX', expected='A')])
+        result = _require_equality(iter(['A', 'XX']), 'A')
+        self.assertEqual(list(result), [Invalid('XX')])
 
     def test_some_deviation(self):
-        data = iter([10, 10, 11])
-        result = _require_other(data, 10)
+        result = _require_equality(iter([10, 11]), 10)
         self.assertEqual(list(result), [Deviation(+1, 10)])
 
     def test_invalid_and_deviation(self):
-        data = iter([10, 'XX', 11])
-        result = _require_other(data, 10)
+        result = _require_equality(iter([10, 'XX', 11]), 10)
 
         result = list(result)
         self.assertEqual(len(result), 2)
-        self.assertIn(Invalid('XX', expected=10), result)
+        self.assertIn(Invalid('XX'), result)
         self.assertIn(Deviation(+1, 10), result)
 
     def test_dict_comparison(self):
         data = iter([{'a': 1}, {'b': 2}])
-        result = _require_other(data, {'a': 1})
-        self.assertEqual(list(result), [Invalid({'b': 2}, expected={'a': 1})])
+        result = _require_equality(data, {'a': 1})
+        self.assertEqual(list(result), [Invalid({'b': 2})])
 
     def test_broken_comparison(self):
         class BadClass(object):
@@ -289,90 +286,120 @@ class TestRequireOther(unittest.TestCase):
         bad_instance = BadClass()
 
         data = iter([10, bad_instance, 10])
-        result = _require_other(data, 10)
-        self.assertEqual(list(result), [Invalid(bad_instance, 10)])
+        result = _require_equality(data, 10)
+        self.assertEqual(list(result), [Invalid(bad_instance)])
 
 
-class TestApplyRequirement(unittest.TestCase):
-    """Calling _apply_requirement() should run the appropriate
-    comparison function (internally) and return the result.
-    """
+class TestRequireSingleEquality(unittest.TestCase):
+    def test_eq(self):
+        """Should use __eq__() comparison, not __ne__()."""
+
+        class EqualsAll(object):
+            def __init__(_self):
+                _self.times_called = 0
+
+            def __eq__(_self, other):
+                _self.times_called += 1
+                return True
+
+            def __ne__(_self, other):
+                return NotImplemented
+
+        requirement = EqualsAll()
+        result = _require_single_equality('A', requirement)
+        self.assertEqual(requirement.times_called, 1)
+
+    def test_all_true(self):
+        result = _require_single_equality('A', 'A')
+        self.assertIsNone(result)
+
+    def test_some_invalid(self):
+        result = _require_single_equality('XX', 'A')
+        self.assertEqual(result, Invalid('XX', 'A'))
+
+    def test_deviation(self):
+        result = _require_single_equality(11, 10)
+        self.assertEqual(result, Deviation(+1, 10))
+
+    def test_invalid(self):
+        result = _require_single_equality('XX', 10)
+        self.assertEqual(result, Invalid('XX', 10))
+
+    def test_dict_comparison(self):
+        result = _require_single_equality({'a': 1}, {'a': 2})
+        self.assertEqual(result, Invalid({'a': 1}, {'a': 2}))
+
+    def test_broken_comparison(self):
+        class BadClass(object):
+            def __eq__(self, other):
+                raise Exception("I have betrayed you!")
+
+            def __hash__(self):
+                return hash((self.__class__, 101))
+
+        bad_instance = BadClass()
+        result = _require_single_equality(bad_instance, 10)
+        self.assertEqual(result, Invalid(bad_instance, 10))
+
+
+class TestGetMsgAndFunc(unittest.TestCase):
     def setUp(self):
         self.multiple = ['A', 'B', 'A']
         self.single = 'B'
 
     def test_sequence(self):
-        result = _apply_requirement(self.multiple, ['A', 'B', 'A'])
-        self.assertIsNone(result)
-
-        result = _apply_requirement(self.multiple, ['A', 'A', 'B'])
-        self.assertEqual(result, {(0, 0): Missing('A'), (2, 3): Extra('A')})
-
-        with self.assertRaises(ValueError):
-            result = _apply_requirement(self.single, ['A', 'A', 'B'])
-            dict(result)  # <- evaluate items
+        default_msg, require_func = _get_msg_and_func(['A', 'B'], ['A', 'B'])
+        self.assertIsInstance(default_msg, str)
+        self.assertEqual(require_func, _require_sequence)
 
     def test_set(self):
-        result = _apply_requirement(self.multiple, set(['A', 'B']))
-        self.assertIsNone(result)
-
-        result = _apply_requirement(self.multiple, set(['A', 'B', 'C']))
-        self.assertTrue(_is_consumable(result))
-        self.assertEqual(list(result), [Missing('C')])
-
-        result = _apply_requirement(self.single, set(['A', 'B']))
-        self.assertEqual(list(result), [Missing('A')])  # <- Iterable of errors.
+        default_msg, require_func = _get_msg_and_func(['A', 'B'], set(['A', 'B']))
+        self.assertIsInstance(default_msg, str)
+        self.assertEqual(require_func, _require_set)
 
     def test_callable(self):
-        result = _apply_requirement(self.multiple, lambda x: x in ('A', 'B'))
-        self.assertIsNone(result)
+        def myfunc(x):
+            return True
+        default_msg, require_func = _get_msg_and_func(['A', 'B'], myfunc)
+        self.assertIn(myfunc.__name__, default_msg, 'message should include function name')
+        self.assertEqual(require_func, _require_callable)
 
-        result = _apply_requirement(self.multiple, lambda x: x == 'A')
-        self.assertTrue(_is_consumable(result))
-        self.assertEqual(list(result), [Invalid('B')])
+        mylambda = lambda x: True
+        default_msg, require_func = _get_msg_and_func(['A', 'B'], mylambda)
+        self.assertIn('<lambda>', default_msg, 'message should include function name')
+        self.assertEqual(require_func, _require_callable)
 
-        #func = lambda x: x == 'A'
-        result = _apply_requirement(self.single, lambda x: x == 'A')
-        self.assertEqual(result, Invalid('B'))  # <- Error.
-        #self.assertEqual(result, Invalid('B', expected=func)  # <- Error.
+        class MyClass(object):
+            def __call__(_self, x):
+                return True
+        myinstance = MyClass()
+        default_msg, require_func = _get_msg_and_func(['A', 'B'], myinstance)
+        self.assertIn('MyClass', default_msg, 'message should include class name')
+        self.assertEqual(require_func, _require_callable)
 
     def test_regex(self):
-        result = _apply_requirement(self.multiple, re.compile('[AB]'))
-        self.assertIsNone(result)
+        myregex = re.compile('[AB]')
+        default_msg, require_func = _get_msg_and_func(['A', 'B'], myregex)
+        self.assertIn(repr(myregex.pattern), default_msg, 'message should include pattern')
+        self.assertEqual(require_func, _require_regex)
 
-        result = _apply_requirement(self.multiple, re.compile('[A]'))
-        self.assertTrue(_is_consumable(result))
-        self.assertEqual(list(result), [Invalid('B')])
+    def test_equality(self):
+        default_msg, require_func = _get_msg_and_func(['A', 'B'], 'A')
+        self.assertIsInstance(default_msg, str)
+        self.assertEqual(require_func, _require_equality)
 
-        result = _apply_requirement(self.single, re.compile('[A]'))
-        self.assertEqual(result, Invalid('B'))  # <- Error.
-        #self.assertEqual(result, Invalid('B', expected=re.compile('[A]')))  # <- Error.
+        default_msg, require_func = _get_msg_and_func([{'a': 1}, {'a': 1}], {'a': 1})
+        self.assertIsInstance(default_msg, str)
+        self.assertEqual(require_func, _require_equality)
 
-    def test_other_string(self):
-        data = ['A', 'A', 'A']
-        result = _apply_requirement(data, 'A')
-        self.assertIsNone(result)
+    def test_single_equality(self):
+        default_msg, require_func = _get_msg_and_func('A', 'A')
+        self.assertIsInstance(default_msg, str)
+        self.assertEqual(require_func, _require_single_equality)
 
-        result = _apply_requirement(self.multiple, 'A')
-        self.assertTrue(_is_consumable(result))
-        self.assertEqual(list(result), [Invalid('B')])
-
-        result = _apply_requirement(self.single, 'A')
-        self.assertEqual(result, Invalid('B', expected='A'))  # <- Error.
-
-    def test_other_mapping(self):
-        data = [{'a': 1}, {'b': 2}]
-        result = _apply_requirement(data, [{'a': 1}, {'b': 2}])
-        self.assertIsNone(result)
-
-        data = [{'b': 2}]
-        result = _apply_requirement(data, {'a': 1})
-        self.assertTrue(_is_consumable(result))
-        self.assertEqual(list(result), [Invalid({'b': 2})])
-
-        data = {'b': 2}
-        result = _apply_requirement(data, {'a': 1})
-        self.assertEqual(result, Invalid({'b': 2}, expected={'a': 1}))  # <- Error.
+        default_msg, require_func = _get_msg_and_func({'a': 1}, {'a': 1})
+        self.assertIsInstance(default_msg, str)
+        self.assertEqual(require_func, _require_single_equality)
 
 
 class TestApplyMappingRequirement(unittest.TestCase):
