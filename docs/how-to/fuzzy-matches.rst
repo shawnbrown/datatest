@@ -3,7 +3,7 @@
 
 .. meta::
     :description: How to assert fuzzy matches.
-    :keywords: testing, fuzzy match, datatest
+    :keywords: approximate string, fuzzy match, testing, datatest
 
 
 ###########################
