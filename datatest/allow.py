@@ -295,13 +295,6 @@ class allowed_specific(BaseAllowance):
             except ValueError:
                 yield key, difference
 
-        if allowed:  # If there are left-over differences.
-            key_repr = '{0!r}: '.format(key) if key else ''
-            message = 'allowed differences not found: {0}{1!r}'
-            exc = ValueError(message.format(key_repr, allowed))
-            exc.__cause__ = None
-            raise exc
-
     def apply_filterfalse(self, iterable):
         if _is_mapping_type(iterable):
             return super(allowed_specific, self).apply_filterfalse(iterable)  # <- EXIT!

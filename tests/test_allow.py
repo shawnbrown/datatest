@@ -405,6 +405,12 @@ class TestAllowedSpecific(unittest.TestCase):
         with allowed_specific(allowed):
             raise ValidationError('example error', diffs)
 
+    def test_excess_allowed(self):
+        diffs = [Extra('xxx')]
+        allowed = [Extra('xxx'), Missing('yyy'), Invalid('zzz', 'ZZZ')]
+        with allowed_specific(allowed):
+            raise ValidationError('example error', diffs)
+
     def test_duplicates(self):
         # Three of the exact-same differences.
         differences = [Extra('xxx'), Extra('xxx'), Extra('xxx')]
@@ -491,13 +497,15 @@ class TestAllowedSpecific(unittest.TestCase):
         differences = {
             'foo': [Extra('xxx'), Missing('yyy')],
             'bar': [Extra('xxx')],
+            'baz': [Extra('xxx'), Missing('yyy'), Extra('zzz')],
         }
         allowed = [Extra('xxx'), Missing('yyy')]
-
-        regex = r"allowed differences not found: 'bar': \[Missing\('yyy'\)\]"
-        with self.assertRaisesRegex(ValueError, regex):
+        with self.assertRaises(ValidationError) as cm:
             with allowed_specific(allowed):
                 raise ValidationError('example error', differences)
+
+        actual = cm.exception.differences
+        self.assertEqual(actual, {'baz': [Extra('zzz')]})
 
     def test_composition_bitwise_or(self):
         # One shared element.
