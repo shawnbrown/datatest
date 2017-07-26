@@ -131,7 +131,6 @@ class TestBaseAllowance(unittest.TestCase):
         self.assertEqual(dict(differences), {'a': Missing('foo')})
 
     def test_error_message(self):
-        function = lambda iterable: iterable
         error = ValidationError('original message', [Missing('foo')])
 
         class AllowedNothing(BaseAllowance):
@@ -158,6 +157,21 @@ class TestBaseAllowance(unittest.TestCase):
                 raise error
         message = cm.exception.message
         self.assertEqual(message, 'allowance message: original message')
+
+    def test_propagation_of_maxdiff(self):
+        """Check that re-raised errors inherit the original error's maxDiff."""
+        error = ValidationError('original message', [Missing('foo')])
+        error.maxDiff = 35  # <- set maxDiff!
+
+        class AllowedNothing(BaseAllowance):
+            def filterfalse(self, iterable):
+                return iterable
+
+        with self.assertRaises(ValidationError) as cm:
+            with AllowedNothing(msg='allowance message'):  # <- Uses keyword.
+                raise error
+        child_error = cm.exception
+        self.assertEqual(child_error.maxDiff, 35)
 
 
 class TestElementAllowanceFilterFalse(unittest.TestCase):
