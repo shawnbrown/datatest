@@ -126,7 +126,8 @@ class BaseAllowance(abc.ABC):
         if self.msg:
             message = '{0}: {1}'.format(self.msg, message)
         exc = ValidationError(message, differences)
-        exc.maxDiff = exc_value.maxDiff  # <- Propagate maxDiff to child error.
+        exc.maxDiff = exc_value.maxDiff  # <- Re-raised error inherits the
+                                         #    maxDiff of the original error.
         exc.__cause__ = None  # <- Suppress context using verbose
         raise exc             #    alternative to support older Python
                               #    versions--see PEP 415 (same as

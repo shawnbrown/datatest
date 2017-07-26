@@ -195,10 +195,15 @@ class DataTestCase(TestCase):
         diff_info = _get_difference_info(data, requirement)
         if diff_info:
             default_msg, differences = diff_info  # Unpack values.
-            msg = msg or default_msg
+            self.fail(msg or default_msg, differences)
+
+    def fail(self, msg, differences=None):
+        if differences:
             err = ValidationError(msg, differences)
-            err.maxDiff = self.maxDiff
+            err.maxDiff = self.maxDiff  # <- Propagate maxDiff to error object.
             raise err
+        else:
+            raise self.failureException(msg)
 
     #def assertUnique(self, data, msg=None):
     #    pass

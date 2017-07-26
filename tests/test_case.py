@@ -77,8 +77,8 @@ class TestAssertValid(DataTestCase):
             data = set([1, 2, 3])
             required = set([1, 2, 4])
             self.assertValid(data, required)
-        differences = cm.exception.differences
 
+        differences = cm.exception.differences
         self.assertEqual(differences, [Missing(4), Extra(3)])
 
     def test_data_mapping(self):
@@ -86,8 +86,8 @@ class TestAssertValid(DataTestCase):
             data = {'a': set([1, 2]), 'b': set([1]), 'c': set([1, 2, 3])}
             required = set([1, 2])
             self.assertValid(data, required)
-        differences = cm.exception.differences
 
+        differences = cm.exception.differences
         self.assertEqual(differences, {'b': [Missing(2)], 'c': [Extra(3)]})
 
     def test_required_mapping(self):
@@ -95,8 +95,8 @@ class TestAssertValid(DataTestCase):
             data = {'AAA': 'a', 'BBB': 'x'}
             required = {'AAA': 'a', 'BBB': 'b', 'CCC': 'c'}
             self.assertValid(data, required)
-        differences = cm.exception.differences
 
+        differences = cm.exception.differences
         self.assertEqual(differences, {'BBB': Invalid('x', 'b'), 'CCC': Missing('c')})
 
     def test_required_sequence(self):
@@ -107,14 +107,14 @@ class TestAssertValid(DataTestCase):
             data = ['a', 2, 'x', 3]
             required = ['a', 2, 'c', 4]
             self.assertValid(data, required)
-        err = cm.exception
 
+        error = cm.exception
         expected = {
             (2, 2): Invalid('x', 'c'),
             (3, 3): Invalid(3, 4),
         }
-        self.assertEqual(err.differences, expected)
-        self.assertEqual(err.args[0], 'does not match sequence order')
+        self.assertEqual(error.differences, expected)
+        self.assertEqual(error.args[0], 'does not match sequence order')
 
     def test_required_other(self):
         """When *required* is a string or other object, _compare_other()
@@ -124,8 +124,16 @@ class TestAssertValid(DataTestCase):
             required = lambda x: x.isupper()
             data = ['AAA', 'BBB', 'ccc', 'DDD']
             self.assertValid(data, required)
+
         differences = cm.exception.differences
         self.assertEqual(differences, [Invalid('ccc')])
+
+    def test_maxdiff_propagation(self):
+        self.maxDiff = 35  # <- Set custom maxDiff (as number of characters)!
+        with self.assertRaises(ValidationError) as cm:
+            self.assertValid(set([1, 2, 3]), set([1, 2]))
+
+        self.assertEqual(cm.exception.maxDiff, 35)
 
     def test_query_objects(self):
         source = DataSource([('1', '2'), ('1', '2')], fieldnames=['A', 'B'])
@@ -146,7 +154,15 @@ class TestAssertEqual(unittest.TestCase):
         datatest DID wrap this method--this test should remain part
         of the suite to prevent regression.
         """
-        self.assertIs(DataTestCase.assertEqual, unittest.TestCase.assertEqual)
+        if _version_info >= (3, 1):
+            self.assertIs(DataTestCase.assertEqual, unittest.TestCase.assertEqual)
+        else:
+            with self.assertRaises(Exception) as cm:
+                first  = set([1,2,3,4,5,6,7])
+                second = set([1,2,3,4,5,6])
+                self.assertEqual(first, second)
+
+            self.assertIs(type(cm.exception), AssertionError)
 
 
 class TestAllowanceWrappers(unittest.TestCase):
