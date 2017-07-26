@@ -125,8 +125,6 @@ class TestAssertValid(DataTestCase):
             data = ['AAA', 'BBB', 'ccc', 'DDD']
             self.assertValid(data, required)
         differences = cm.exception.differences
-
-        self.assertEqual = super(DataTestCase, self).assertEqual
         self.assertEqual(differences, [Invalid('ccc')])
 
     def test_query_objects(self):
@@ -148,12 +146,7 @@ class TestAssertEqual(unittest.TestCase):
         datatest DID wrap this method--this test should remain part
         of the suite to prevent regression.
         """
-        with self.assertRaises(Exception) as cm:
-            first  = set([1,2,3,4,5,6,7])
-            second = set([1,2,3,4,5,6])
-            self.assertEqual(first, second)
-
-        self.assertIs(type(cm.exception), AssertionError)
+        self.assertIs(DataTestCase.assertEqual, unittest.TestCase.assertEqual)
 
 
 class TestAllowanceWrappers(unittest.TestCase):
