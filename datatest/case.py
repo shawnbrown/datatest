@@ -33,6 +33,8 @@ class DataTestCase(TestCase):
     familiar methods (like setUp, addCleanup, etc.) are still
     available.
     """
+    maxDiff = 80 * 8  # TestCase.maxDiff not defined in 3.1 or 2.6.
+
     @property
     def subject(self):
         """A convenience property that references the data under
@@ -193,13 +195,10 @@ class DataTestCase(TestCase):
         diff_info = _get_difference_info(data, requirement)
         if diff_info:
             default_msg, differences = diff_info  # Unpack values.
-            self.fail(msg or default_msg, differences)
-
-    def fail(self, msg, differences=None):
-        if differences:
-            raise ValidationError(msg, differences)
-        else:
-            raise self.failureException(msg)
+            msg = msg or default_msg
+            err = ValidationError(msg, differences)
+            err.maxDiff = self.maxDiff
+            raise err
 
     #def assertUnique(self, data, msg=None):
     #    pass

@@ -17,6 +17,7 @@ class ValidationError(AssertionError):
     """Raised when a data validation fails."""
     def __init__(self, message, differences):
         self.args = message, differences
+        self.maxDiff = None  # Optional unittest-style message truncation.
 
     @property
     def message(self):
@@ -61,22 +62,49 @@ class ValidationError(AssertionError):
         self._differences = differences
 
     def __str__(self):
+        list_of_strings = []
+        string_length = 0
+        difference_count = 0
+        max_diff = self.maxDiff
+
+        # Prepare difference-strings. These loops count lengths
+        # and build lists iteratively to help optimize memory use.
         if isinstance(self._differences, dict):
             begin, end = '{', '}'
-            list_of_strings = []
-            for k, v in self._differences.items():
-                list_of_strings.append('{0!r}: {1!r}'.format(k, v))
+            iterable = iter(self._differences.items())
+            for k, v in iterable:
+                difference_count += 1
+                diff_string = '    {0!r}: {1!r},'.format(k, v)
+                string_length += len(diff_string)
+                if max_diff and string_length > max_diff:
+                    list_of_strings.append('    ...: ...')
+                    break
+                list_of_strings.append(diff_string)
         else:
             begin, end = '[', ']'
-            list_of_strings = [repr(x) for x in self._differences]
+            iterable = iter(self._differences)
+            for x in iterable:
+                difference_count += 1
+                diff_string = '    {0!r},'.format(x)
+                string_length += len(diff_string)
+                if max_diff and string_length > max_diff:
+                    list_of_strings.append('    ...')
+                    break
+                list_of_strings.append(diff_string)
 
-        diff_len = len(self._differences)
-        output = '{0} ({1} difference{2}): {3}\n    {4},\n{5}'.format(
+        # If maxDiff was exceeded, finish counting and prepare end message.
+        if max_diff and string_length > max_diff:
+            difference_count += sum(1 for x in iterable)
+            end += ('\nTruncated (too long). Set '
+                    'self.maxDiff to None for full message.')
+
+        # Prepare final output.
+        output = '{0} ({1} difference{2}): {3}\n{4}\n{5}'.format(
             self._message,
-            diff_len,
-            '' if diff_len == 1 else 's',
+            difference_count,
+            '' if difference_count == 1 else 's',
             begin,
-            ',\n    '.join(list_of_strings),
+            '\n'.join(list_of_strings),
             end,
         )
         return output

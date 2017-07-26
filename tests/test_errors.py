@@ -87,6 +87,21 @@ class TestValidationError(unittest.TestCase):
                                            #    can not be assumed for Python
                                            #    versions 3.5 and earlier.
 
+        # Assert unittest style maxDiff truncation.
+        err = ValidationError('invalid data', [MinimalDifference('A'),
+                                               MinimalDifference('B'),
+                                               MinimalDifference('C'),])
+        err.maxDiff = 35
+        expected = """
+            invalid data (3 differences): [
+                MinimalDifference('A'),
+                ...
+            ]
+            Truncated (too long). Set self.maxDiff to None for full message.
+        """
+        expected = textwrap.dedent(expected).strip()
+        self.assertEqual(str(err), expected)
+
     def test_repr(self):
         err = ValidationError('invalid data', [MinimalDifference('A')])
         expected = "ValidationError('invalid data', [MinimalDifference('A')])"
