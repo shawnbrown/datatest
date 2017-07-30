@@ -41,7 +41,7 @@ Installation
 
 .. start-inclusion-marker-install
 
-The easiest way to install datatest is to use pip::
+The easiest way to install datatest is to use `pip <https://pip.pypa.io>`_::
 
   pip install datatest
 
