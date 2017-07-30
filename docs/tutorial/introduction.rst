@@ -126,10 +126,10 @@ Error Messages
 **************
 
 When validation fails, a :class:`ValidationError <datatest.ValidationError>`
-is raised. A ValidationError contains the differences detected in the *data*
-under test. To demonstrate this, we will used the same tests shown in the
-previous example but the *data* values will contain errors---these errors
-will trigger test case failures.
+is raised. A ValidationError contains the differences detected in the
+*data* under test. To demonstrate this we will reuse tests from before,
+but this time the *data* will contain invalid elements which will
+trigger test case failures.
 
 In the following test, we assert that *data* contains all of the elements
 in the required set:
@@ -141,9 +141,9 @@ in the required set:
         required_elements = {'x', 'y', 'z'}
         self.assertValid(data, required_elements)
 
-Because ``'x2'`` does not appear in the requirement but does appear
-in the data, the test fails with an :class:`Extra <datatest.Extra>`
-difference:
+But this assertion fails because ``'x2'`` does not appear in the
+requirement but it does appear in the data. The test fails with an
+:class:`Extra <datatest.Extra>` difference:
 
 .. code-block:: none
     :emphasize-lines: 3,5
@@ -190,7 +190,7 @@ validation fails:
     def test_mapping1(self):
         data = {
             'x': 'foo',
-            'y': 'BAZ',
+            'y': 'BAZ',  # <- required value is 'bar'
         }
         required_values = {
             'x': 'foo',
@@ -256,25 +256,29 @@ line flag to stop at the first error.
 Allowances
 **********
 
-When confronted with an error, we'd like to make the required
-correction and move on---but doing this isn't always possible.
-Sometimes, two equally authoritative sources of data will contain
-different results. Sometimes, a lack of information could make
-correction impossible. In any case, there are situations where
-it's appropriate to allow certain discrepancies for the purposes
-of data processing.
+It's not always possible to correct certain data errors. Sometimes,
+two equally authoritative sources report different results. Sometimes,
+a lack of information makes correction impossible. In any case, there
+are situations where it's appropriate to allow certain discrepancies
+for the purposes of data processing.
+
+.. sidebar:: Similar Context Managers
+
+    Allowances are similar, in concept, to the Standard Library's
+    :py:func:`contextlib.suppress` and :py:meth:`TestCase.assertRaises()
+    <unittest.TestCase.assertRaises>` context managers. But rather
+    than acting on an error itself, allowances operate on a
+    collection of difference objects.
 
 Datatest provides allowances in the form of context managers.
-These allowances are similar to the :py:meth:`TestCase.assertRaises()
-<unittest.TestCase.assertRaises>` and :py:func:`contextlib.suppress`
-context managers. Allowing **all** of a ValidationError's underlying
-differences suppresses the error entirely. Allowing **some** of the
-differences will re-raise the error with the remaining ones.
+Allowances operate on a ValidationError's collection of differences.
+Allowing **all** of an error's differences will suppress the error
+entirely. While allowing **some** of them will re-raise the error
+with the remaining differences.
 
-To revisit the set-membership failure above, we might decide---instead
-of asserting strict membership---that it is more appropriate to allow
-:class:`Extra <datatest.Extra>` differences without triggering a test
-failure. To do this, we use the :meth:`allowedExtra()
+Revisiting the set-membership failure above, we might decide that it's
+appropriate to allow :class:`Extra <datatest.Extra>` differences without
+triggering a test failure. To do this, we use the :meth:`allowedExtra()
 <datatest.DataTestCase.allowedExtra>` context manager:
 
 .. code-block:: python
