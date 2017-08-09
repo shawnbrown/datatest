@@ -1033,18 +1033,17 @@ class TestDataSource(unittest.TestCase):
     def test_build_where_clause(self):
         _build_where_clause = DataSource._build_where_clause
 
-        result = _build_where_clause(where_dict={'A': 'x'}, func_dict={})
+        result = _build_where_clause({'A': 'x'})
         expected = ('A=?', ['x'])
         self.assertEqual(result, expected)
 
-        result = _build_where_clause(where_dict={'A': ['x', 'y']}, func_dict={})
+        result = _build_where_clause({'A': ['x', 'y']})
         expected = ('A IN (?, ?)', ['x', 'y'])
         self.assertEqual(result, expected)
 
         userfunc = lambda x: len(x) == 1
-        result = _build_where_clause(where_dict={'A': userfunc},
-                                     func_dict={id(userfunc): 'func1'})
-        expected = ('func1(A)', [])
+        result = _build_where_clause({'A': userfunc})
+        expected = ('FUNC{0}(A)'.format(id(userfunc)), [])
         self.assertEqual(result, expected)
 
     def test_execute_query(self):
@@ -1062,6 +1061,17 @@ class TestDataSource(unittest.TestCase):
         def iseven(x):
             return x % 2 == 0
         result = source('A', B=iseven).fetch()
+        self.assertEqual(result, ['y'])
+
+        # Test callable-but-unhashable.
+        class IsEven(object):
+            __hash__ = None
+
+            def __call__(self, x):
+                return x % 2 == 0
+
+        unhashable_iseven = IsEven()
+        result = source('A', B=unhashable_iseven).fetch()
         self.assertEqual(result, ['y'])
 
     def test_iter(self):

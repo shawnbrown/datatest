@@ -923,6 +923,31 @@ class DataQuery(object):
                                              query_steps_repr)
 
 
+_registered_function_ids = collections.defaultdict(set)
+def _register_function(connection, func_list):
+    """Register user-defined functions with SQLite connection.
+
+    This uses a global defaultdict to prevent from registering
+    the same function multiple times with the same connection.
+    """
+    connection_id = id(connection)
+    for func in func_list:
+        func_id = id(func)
+        if func_id in _registered_function_ids[connection_id]:
+            return  # <- EXIT! (if already registered)
+
+        _registered_function_ids[connection_id].add(func_id)
+
+        name = 'FUNC{0}'.format(func_id)
+        if isinstance(func, collections.Hashable):
+            connection.create_function(name, 1, func)  # <- Register!
+        else:
+            @functools.wraps(func)
+            def wrapper(x):
+                return func(x)
+            connection.create_function(name, 1, wrapper)  # <- Register!
+
+
 class DataSource(object):
     """A basic data source to quickly load and query data.
 
@@ -1073,17 +1098,13 @@ class DataSource(object):
     def _execute_query(self, select_clause, trailing_clause=None, **kwds_filter):
         """Execute query and return cursor object."""
         try:
-            # Register where-clause functions, build id-to-name lookup.
+            # Register where-clause functions with SQLite connection.
             func_list = [x for x in kwds_filter.values() if callable(x)]
-            func_dict = {}
-            for i, func in enumerate(func_list):
-                name = '{0}_FUNC{1}'.format(self._table, i)
-                self._connection.create_function(name, 1, func)  # <- Register!
-                func_dict[id(func)] = name
+            _register_function(self._connection, func_list)
 
             # Build selecct-query.
             stmnt = 'SELECT {0} FROM {1}'.format(select_clause, self._table)
-            where_clause, params = self._build_where_clause(kwds_filter, func_dict)
+            where_clause, params = self._build_where_clause(kwds_filter)
             if where_clause:
                 stmnt = '{0} WHERE {1}'.format(stmnt, where_clause)
             if trailing_clause:
@@ -1101,7 +1122,7 @@ class DataSource(object):
         return cursor
 
     @staticmethod
-    def _build_where_clause(where_dict, func_dict):
+    def _build_where_clause(where_dict):
         """Return 'WHERE' clause that implements *where* keyword
         constraints.
         """
@@ -1112,7 +1133,7 @@ class DataSource(object):
         for key, val in items:
             # If value is a function.
             if callable(val):
-                func_name = func_dict[id(val)]
+                func_name = 'FUNC{0}'.format(id(val))
                 clause.append('{0}({1})'.format(func_name, key))
             # If value is a collection of strings.
             elif _is_nsiterable(val):
