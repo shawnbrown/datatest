@@ -1073,41 +1073,56 @@ class DataSource(object):
     def _execute_query(self, select_clause, trailing_clause=None, **kwds_filter):
         """Execute query and return cursor object."""
         try:
-            stmnt, params = self._build_query(self._table, select_clause, **kwds_filter)
+            # Register where-clause functions, build id-to-name lookup.
+            func_list = [x for x in kwds_filter.values() if callable(x)]
+            func_dict = {}
+            for i, func in enumerate(func_list):
+                name = '{0}_FUNC{1}'.format(self._table, i)
+                self._connection.create_function(name, 1, func)  # <- Register!
+                func_dict[id(func)] = name
+
+            # Build selecct-query.
+            stmnt = 'SELECT {0} FROM {1}'.format(select_clause, self._table)
+            where_clause, params = self._build_where_clause(kwds_filter, func_dict)
+            if where_clause:
+                stmnt = '{0} WHERE {1}'.format(stmnt, where_clause)
             if trailing_clause:
-                stmnt += '\n' + trailing_clause
+                stmnt = '{0}\n{1}'.format(stmnt, trailing_clause)
+
+            # Execute query.
             cursor = self._connection.cursor()
-            #print(stmnt, params)
             cursor.execute(stmnt, params)
+
         except Exception as e:
             exc_cls = e.__class__
-            msg = '%s\n  query: %s\n  params: %r' % (e, stmnt, params)
+            msg = '{0}\n  query: {1}\n  params: {2}'.format(e, stmnt, params)
             raise exc_cls(msg)
+
         return cursor
 
-    @classmethod
-    def _build_query(cls, table, select_clause, **kwds_filter):
-        """Return 'SELECT' query."""
-        query = 'SELECT ' + select_clause + ' FROM ' + table
-        where_clause, params = cls._build_where_clause(**kwds_filter)
-        if where_clause:
-            query = query + ' WHERE ' + where_clause
-        return query, params
-
     @staticmethod
-    def _build_where_clause(**where):
+    def _build_where_clause(where_dict, func_dict):
         """Return 'WHERE' clause that implements *where* keyword
         constraints.
         """
         clause = []
         params = []
-        items = where.items()
+        items = where_dict.items()
         items = sorted(items, key=lambda x: x[0])  # Ordered by key.
         for key, val in items:
-            if _is_nsiterable(val):
-                clause.append(key + ' IN (%s)' % (', '.join('?' * len(val))))
+            # If value is a function.
+            if callable(val):
+                func_name = func_dict[id(val)]
+                clause.append('{0}({1})'.format(func_name, key))
+            # If value is a collection of strings.
+            elif _is_nsiterable(val):
+                clause.append('{key} IN ({qmarks})'.format(
+                    key=key,
+                    qmarks=', '.join('?' * len(val))
+                ))
                 for x in val:
                     params.append(x)
+            # Else, treat as a single value.
             else:
                 clause.append(key + '=?')
                 params.append(val)

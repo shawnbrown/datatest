@@ -1006,7 +1006,7 @@ class TestDataSourceConstructors(unittest.TestCase):
         self.assertEqual(set(table_contents), set(expected))
 
 
-class TestDataSourceBasics(unittest.TestCase):
+class TestDataSource(unittest.TestCase):
     def setUp(self):
         fieldnames = ['label1', 'label2', 'value']
         data = [['a', 'x', '17'],
@@ -1029,6 +1029,40 @@ class TestDataSourceBasics(unittest.TestCase):
 
         regex = r"DataSource\(<list of records>, fieldnames=\(u?'A', u?'B'\)\)"
         self.assertRegex(repr(source), regex)
+
+    def test_build_where_clause(self):
+        _build_where_clause = DataSource._build_where_clause
+
+        result = _build_where_clause(where_dict={'A': 'x'}, func_dict={})
+        expected = ('A=?', ['x'])
+        self.assertEqual(result, expected)
+
+        result = _build_where_clause(where_dict={'A': ['x', 'y']}, func_dict={})
+        expected = ('A IN (?, ?)', ['x', 'y'])
+        self.assertEqual(result, expected)
+
+        userfunc = lambda x: len(x) == 1
+        result = _build_where_clause(where_dict={'A': userfunc},
+                                     func_dict={id(userfunc): 'func1'})
+        expected = ('func1(A)', [])
+        self.assertEqual(result, expected)
+
+    def test_execute_query(self):
+        data = [['x', 101], ['y', 202], ['z', 303]]
+        filednames = ['A', 'B']
+        source = DataSource(data, filednames)
+
+        # Test where-clause function.
+        def isodd(x):
+            return x % 2 == 1
+        result = source('A', B=isodd).fetch()
+        self.assertEqual(result, ['x', 'z'])
+
+        # Test replacing function.
+        def iseven(x):
+            return x % 2 == 0
+        result = source('A', B=iseven).fetch()
+        self.assertEqual(result, ['y'])
 
     def test_iter(self):
         """Test __iter__."""
