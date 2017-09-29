@@ -952,6 +952,23 @@ class TestDataSourceConstructors(unittest.TestCase):
         table_contents = self.get_table_contents(source)
         self.assertEqual(set(table_contents), set(data))
 
+    def test_duplicate_fieldnames(self):
+        records = [
+            ('1', '2'),
+            ('1', '2'),
+        ]
+
+        # Should pass without error--field names are unique.
+        source = DataSource(records, fieldnames=['A', 'B'])
+
+        regex = r"data contains multiple fields named 'A' \(field names must be unique\)"
+        with self.assertRaisesRegex(Exception, regex):
+            source = DataSource(records, fieldnames=['A', 'A'])
+
+        regex = r"data contains multiple fields where the name is blank \(field names must be unique\)"
+        with self.assertRaisesRegex(Exception, regex):
+            source = DataSource(records, fieldnames=['', ''])
+
     def test_from_dict_rows(self):
         data = [{'A': 'x', 'B': 1},
                 {'A': 'y', 'B': 2},

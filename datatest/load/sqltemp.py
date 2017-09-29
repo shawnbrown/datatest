@@ -150,13 +150,14 @@ class TemporarySqliteTable(object):
     @classmethod
     def _create_table_statement(cls, table, columns):
         """Return 'CREATE TEMPORARY TABLE' statement."""
-        cls._assert_unique(columns)
+        #cls._assert_unique(columns)
         columns = [cls._normalize_column(x) for x in columns]
         #return 'CREATE TABLE %s (%s)' % (table, ', '.join(columns))
         return 'CREATE TEMPORARY TABLE %s (%s)' % (table, ', '.join(columns))
 
     @classmethod
     def _create_table(cls, cursor, table, columns):
+        cls._assert_unique(columns)
         try:
             statement = cls._create_table_statement(table, columns)
             cursor.execute(statement)
@@ -210,7 +211,13 @@ class TemporarySqliteTable(object):
                 values.append(x)
 
         if duplicates:
-            raise ValueError('Duplicate values: ' + ', '.join(duplicates))
+            if '' in duplicates:
+                raise ValueError('data contains multiple fields where the '
+                                   'name is blank (field names must be unique)')
+
+            duplicate_names = ', '.join(repr(x) for x in duplicates)
+            msg = 'data contains multiple fields named {0} (field names must be unique)'
+            raise ValueError(msg.format(duplicate_names))
 
 
 class TemporarySqliteTableForCsv(TemporarySqliteTable):
