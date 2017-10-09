@@ -86,4 +86,4 @@ def _require_sequence(data, sequence):  # New behavior in datatest 0.8.3
                                                     caret_underline,
                                                     message_suffix)
     return AssertionError(message)
-datatest.require._require_sequence = _require_sequence
+datatest.validation._require_sequence = _require_sequence

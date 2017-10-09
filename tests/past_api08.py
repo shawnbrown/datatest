@@ -7,7 +7,7 @@ import datatest
 from datatest.__past__ import api08  # <- MONKEY PATCH!!!
 
 from datatest.errors import NOTFOUND
-from datatest.require import _require_sequence
+from datatest.validation import _require_sequence
 
 
 class TestColumns(unittest.TestCase):

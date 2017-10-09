@@ -207,7 +207,7 @@ def _require_single_equality(data, other):
 
 def _get_msg_and_func(data, requirement):
     """
-    Each require-function will one of the following:
+    Each validation-function will one of the following:
      * an iterable of errors,
      * a single error,
      * or None.
@@ -277,8 +277,11 @@ def _normalize_mapping_result(result):
     return None
 
 
-def _get_difference_info(data, requirement):
-    """Return iterable of differences or None."""
+def _get_invalid_info(data, requirement):
+    """If data is invalid, return a 2-tuple containing a default-message
+    string and an iterable of differences. If data is not invalid,
+    return None.
+    """
     # Normalize *data* and *requirement* objects.
     if isinstance(data, DataQuery):
         data = data()  # <- Consumable iterator (for lazy evaluation).

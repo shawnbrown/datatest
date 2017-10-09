@@ -10,7 +10,7 @@ from .utils import contextlib
 from .dataaccess import DataQuery
 from .dataaccess import DataResult
 
-from .require import _get_difference_info
+from .validation import _get_invalid_info
 from .errors import ValidationError
 
 __datatest = True  # Used to detect in-module stack frames (which are
@@ -184,9 +184,9 @@ class DataTestCase(TestCase):
                 requirement = 'FOO'
                 self.assertValid(data, requirement)
         """
-        diff_info = _get_difference_info(data, requirement)
-        if diff_info:
-            default_msg, differences = diff_info  # Unpack values.
+        invalid_info = _get_invalid_info(data, requirement)
+        if invalid_info:
+            default_msg, differences = invalid_info  # Unpack values.
             self.fail(msg or default_msg, differences)
 
     def fail(self, msg, differences=None):

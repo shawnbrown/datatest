@@ -108,8 +108,8 @@ class Test_compare_mapping(unittest.TestCase):
 class Test_compare_set(unittest.TestCase):
     """Calling _compare_set(data, required) can be used to compare a
     number of different data types.  The *data* argument can be a set,
-    mapping, sequence, or iterable.  The *require* argument must always
-    be a set.
+    mapping, sequence, or iterable.  The *requirement* argument must
+    always be a set.
 
     The return value should always be a sequence (list).
     """
