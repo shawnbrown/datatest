@@ -184,14 +184,6 @@ class DataTestCase(TestCase):
                 requirement = 'FOO'
                 self.assertValid(data, requirement)
         """
-        # If data is a DataQuery, lazily evaluate it.
-        if isinstance(data, DataQuery):
-            data = data()
-
-        # If requirement is DataQuery or DataResult, eagerly evaluate it.
-        if isinstance(requirement, (DataQuery, DataResult)):
-            requirement = requirement.fetch()
-
         diff_info = _get_difference_info(data, requirement)
         if diff_info:
             default_msg, differences = diff_info  # Unpack values.

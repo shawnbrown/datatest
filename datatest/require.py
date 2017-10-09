@@ -7,6 +7,8 @@ from .utils.builtins import callable
 from .dataaccess import BaseElement
 from .dataaccess import DictItems
 from .dataaccess import _is_collection_of_items
+from .dataaccess import DataQuery
+from .dataaccess import DataResult
 from .errors import BaseDifference
 from .errors import Extra
 from .errors import Missing
@@ -277,6 +279,14 @@ def _normalize_mapping_result(result):
 
 def _get_difference_info(data, requirement):
     """Return iterable of differences or None."""
+    # Normalize *data* and *requirement* objects.
+    if isinstance(data, DataQuery):
+        data = data()  # <- Consumable iterator (for lazy evaluation).
+
+    if isinstance(requirement, (DataQuery, DataResult)):
+        requirement = requirement.fetch()  # <- Eagerly evaluated.
+
+    # Get default-message and differences (if any exist).
     if isinstance(requirement, collections.Mapping):
         default_msg = 'does not satisfy mapping requirement'
         diffs = _apply_mapping_requirement(data, requirement)
