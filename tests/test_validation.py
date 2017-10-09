@@ -4,6 +4,7 @@ import textwrap
 from . import _unittest as unittest
 from datatest.utils.misc import _is_consumable
 
+from datatest.errors import ValidationError
 from datatest.errors import Extra
 from datatest.errors import Missing
 from datatest.errors import Invalid
@@ -19,6 +20,8 @@ from datatest.validation import _require_single_equality
 from datatest.validation import _get_msg_and_func
 from datatest.validation import _apply_mapping_requirement
 from datatest.validation import _get_invalid_info
+from datatest.validation import is_valid
+from datatest.validation import validate
 
 
 class TestRequireSequence(unittest.TestCase):
@@ -515,3 +518,16 @@ class TestGetDifferenceInfo(unittest.TestCase):
         msg, diffs = _get_invalid_info(set(['x']), set(['x', 'y']))
         self.assertTrue(_is_consumable(diffs))
         self.assertEqual(list(diffs), [Missing('y')])
+
+
+class TestIsValidAndValidate(unittest.TestCase):
+    def test_is_valid_and_validate(self):
+        a = set([1, 2, 3])
+        b = set([2, 3, 4])
+
+        self.assertTrue(is_valid(a, a))
+        self.assertFalse(is_valid(a, b))
+
+        self.assertTrue(validate(a, a))
+        with self.assertRaises(ValidationError):
+            validate(a, b)

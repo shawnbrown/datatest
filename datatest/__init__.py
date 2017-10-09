@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 from .case import DataTestCase
 
+from .validation import is_valid
+from .validation import validate
+
 from .errors import ValidationError
 from .errors import Missing
 from .errors import Extra
@@ -37,6 +40,10 @@ __version__ = '0.8.3.dev0'
 __all__ = [
     # Test case.
     'DataTestCase',
+
+    # Validation functions.
+    'is_valid',
+    'validate',
 
     # Error classes.
     'ValidationError',

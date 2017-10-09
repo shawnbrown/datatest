@@ -9,6 +9,7 @@ from .dataaccess import DictItems
 from .dataaccess import _is_collection_of_items
 from .dataaccess import DataQuery
 from .dataaccess import DataResult
+from .errors import ValidationError
 from .errors import BaseDifference
 from .errors import Extra
 from .errors import Missing
@@ -310,3 +311,21 @@ def _get_invalid_info(data, requirement):
     if not diffs:
         return None
     return (default_msg, diffs)
+
+
+def is_valid(data, requirement):
+    """Return True if *data* satisfies *requirement* else return False."""
+    if _get_invalid_info(data, requirement):
+        return False
+    return True
+
+
+def validate(data, requirement, msg=None):
+    """Raise a ValidationError if *data* does not satisfy *requirement*
+    or pass without error (returning True) if data is valid.
+    """
+    invalid_info = _get_invalid_info(data, requirement)
+    if invalid_info:
+        default_msg, differences = invalid_info  # Unpack values.
+        raise ValidationError(msg or default_msg, differences)
+    return True
