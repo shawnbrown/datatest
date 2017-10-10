@@ -30,6 +30,21 @@ __datatest = True  # Used to detect in-module stack frames (which are
                    # omitted from output).
 
 
+__all__ = [
+    'BaseAllowance',
+    'ElementAllowance',
+    'allowed_missing',
+    'allowed_extra',
+    'allowed_invalid',
+    'allowed_deviation',
+    'allowed_percent_deviation',
+    'allowed_specific',
+    'allowed_key',
+    'allowed_args',
+    'allowed_limit',
+]
+
+
 def _is_mapping_type(obj):
     return isinstance(obj, collections.Mapping) or \
                 _is_collection_of_items(obj)

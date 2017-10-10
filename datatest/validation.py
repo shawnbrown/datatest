@@ -19,6 +19,14 @@ from .difference import Deviation
 from .difference import _make_difference
 from .difference import NOTFOUND
 
+
+__all__ = [
+    'ValidationError',
+    'is_valid',
+    'validate',
+]
+
+
 _regex_type = type(re.compile(''))
 
 

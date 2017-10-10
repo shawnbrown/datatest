@@ -10,6 +10,15 @@ from .utils.decimal import Decimal
 from .utils.misc import _make_token
 
 
+__all__ = [
+    'BaseDifference',
+    'Missing',
+    'Extra',
+    'Invalid',
+    'Deviation',
+]
+
+
 NANTOKEN = _make_token(
     'NANTOKEN',
     'Token for comparing differences that contain not-a-number values.'
