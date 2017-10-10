@@ -16,7 +16,7 @@ from datatest.allow import allowed_key
 from datatest.allow import allowed_args
 from datatest.allow import allowed_limit
 
-from datatest.errors import ValidationError
+from datatest.validation import ValidationError
 from datatest.errors import Missing
 from datatest.errors import Extra
 from datatest.errors import Invalid

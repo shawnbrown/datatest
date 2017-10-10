@@ -4,12 +4,13 @@ import re
 from .utils import itertools
 from .utils import collections
 from .utils.builtins import callable
+from .utils.misc import _is_nsiterable
+from .utils.misc import _is_consumable
 from .dataaccess import BaseElement
 from .dataaccess import DictItems
 from .dataaccess import _is_collection_of_items
 from .dataaccess import DataQuery
 from .dataaccess import DataResult
-from .errors import ValidationError
 from .errors import BaseDifference
 from .errors import Extra
 from .errors import Missing
@@ -311,6 +312,107 @@ def _get_invalid_info(data, requirement):
     if not diffs:
         return None
     return (default_msg, diffs)
+
+
+class ValidationError(AssertionError):
+    """Raised when a data validation fails."""
+    def __init__(self, message, differences):
+        self.args = message, differences
+        self.maxDiff = None  # Optional unittest-style message truncation.
+
+    @property
+    def message(self):
+        """The message given to the exception constructor."""
+        return self._message
+
+    @property
+    def differences(self):
+        """The differences given to the exception constructor."""
+        return self._differences
+
+    @property
+    def args(self):
+        """The tuple of arguments given to the exception constructor."""
+        return (self._message, self._differences)
+
+    @args.setter
+    def args(self, value):
+        if not isinstance(value, tuple):
+            value_type = value.__class__.__name__
+            raise ValueError('expected tuple, got {0!r}'.format(value_type))
+
+        if not len(value) == 2:
+            raise ValueError('expected tuple of 2 items, got {0}'.format(len(value)))
+
+        message, differences = value
+        if not _is_nsiterable(differences) or isinstance(differences, Exception):
+            # Above condition checks for Exception because
+            # exceptions are iterable in Python 2.7 and 2.6.
+            msg = 'expected iterable of differences, got {0!r}'
+            raise TypeError(msg.format(differences.__class__.__name__))
+
+        if _is_collection_of_items(differences):
+            differences = dict(differences)
+        elif _is_consumable(differences):
+            differences = list(differences)
+
+        if not differences:
+            raise ValueError('differences must not be empty')
+
+        self._message = message
+        self._differences = differences
+
+    def __str__(self):
+        list_of_strings = []
+        string_length = 0
+        difference_count = 0
+        max_diff = self.maxDiff
+
+        # Prepare difference-strings. These loops count lengths
+        # and build lists iteratively to help optimize memory use.
+        if isinstance(self._differences, dict):
+            begin, end = '{', '}'
+            iterable = iter(self._differences.items())
+            for k, v in iterable:
+                difference_count += 1
+                diff_string = '    {0!r}: {1!r},'.format(k, v)
+                string_length += len(diff_string)
+                if max_diff and string_length > max_diff:
+                    list_of_strings.append('    ...: ...')
+                    break
+                list_of_strings.append(diff_string)
+        else:
+            begin, end = '[', ']'
+            iterable = iter(self._differences)
+            for x in iterable:
+                difference_count += 1
+                diff_string = '    {0!r},'.format(x)
+                string_length += len(diff_string)
+                if max_diff and string_length > max_diff:
+                    list_of_strings.append('    ...')
+                    break
+                list_of_strings.append(diff_string)
+
+        # If maxDiff was exceeded, finish counting and prepare end message.
+        if max_diff and string_length > max_diff:
+            difference_count += sum(1 for x in iterable)
+            end += ('\nTruncated (too long). Set '
+                    'self.maxDiff to None for full message.')
+
+        # Prepare final output.
+        output = '{0} ({1} difference{2}): {3}\n{4}\n{5}'.format(
+            self._message,
+            difference_count,
+            '' if difference_count == 1 else 's',
+            begin,
+            '\n'.join(list_of_strings),
+            end,
+        )
+        return output
+
+    def __repr__(self):
+        class_name = self.__class__.__name__
+        return '{0}({1!r}, {2!r})'.format(class_name, self.message, self.differences)
 
 
 def is_valid(data, requirement):

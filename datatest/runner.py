@@ -7,7 +7,7 @@ import unittest
 import warnings
 
 from .utils import functools
-from .errors import ValidationError
+from .validation import ValidationError
 
 try:
     TextTestResult = unittest.TextTestResult

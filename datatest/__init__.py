@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 from .case import DataTestCase
 
+from .validation import ValidationError
 from .validation import is_valid
 from .validation import validate
 
-from .errors import ValidationError
 from .errors import Missing
 from .errors import Extra
 from .errors import Invalid
@@ -42,11 +42,11 @@ __all__ = [
     'DataTestCase',
 
     # Validation functions.
+    'ValidationError',
     'is_valid',
     'validate',
 
     # Error classes.
-    'ValidationError',
     'Missing',
     'Extra',
     'Invalid',

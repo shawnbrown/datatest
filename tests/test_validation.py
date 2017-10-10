@@ -4,7 +4,7 @@ import textwrap
 from . import _unittest as unittest
 from datatest.utils.misc import _is_consumable
 
-from datatest.errors import ValidationError
+from datatest.errors import BaseDifference
 from datatest.errors import Extra
 from datatest.errors import Missing
 from datatest.errors import Invalid
@@ -20,6 +20,7 @@ from datatest.validation import _require_single_equality
 from datatest.validation import _get_msg_and_func
 from datatest.validation import _apply_mapping_requirement
 from datatest.validation import _get_invalid_info
+from datatest.validation import ValidationError
 from datatest.validation import is_valid
 from datatest.validation import validate
 
@@ -518,6 +519,113 @@ class TestGetDifferenceInfo(unittest.TestCase):
         msg, diffs = _get_invalid_info(set(['x']), set(['x', 'y']))
         self.assertTrue(_is_consumable(diffs))
         self.assertEqual(list(diffs), [Missing('y')])
+
+
+# FOR TESTING: A minimal subclass of BaseDifference.
+# BaseDifference itself should not be instantiated
+# directly.
+class MinimalDifference(BaseDifference):
+    pass
+
+
+class TestValidationError(unittest.TestCase):
+    def test_error_list(self):
+        error_list = [MinimalDifference('A'), MinimalDifference('B')]
+
+        err = ValidationError('invalid data', error_list)
+        self.assertEqual(err.differences, error_list)
+
+    def test_error_iter(self):
+        error_list = [MinimalDifference('A'), MinimalDifference('B')]
+        error_iter = iter(error_list)
+
+        err = ValidationError('invalid data', error_iter)
+        self.assertEqual(err.differences, error_list, 'iterable should be converted to list')
+
+    def test_error_dict(self):
+        error_dict = {'a': MinimalDifference('A'), 'b': MinimalDifference('B')}
+
+        err = ValidationError('invalid data', error_dict)
+        self.assertEqual(err.differences, error_dict)
+
+    def test_error_iteritems(self):
+        error_dict = {'a': MinimalDifference('A'), 'b': MinimalDifference('B')}
+        error_iteritems = getattr(error_dict, 'iteritems', error_dict.items)()
+
+        err = ValidationError('invalid data', error_iteritems)
+        self.assertEqual(err.differences, error_dict)
+
+    def test_bad_args(self):
+        with self.assertRaises(TypeError, msg='must be iterable'):
+            single_error = MinimalDifference('A')
+            ValidationError('invalid data', single_error)
+
+    def test_str(self):
+        # Assert basic format and trailing comma.
+        err = ValidationError('invalid data', [MinimalDifference('A')])
+        expected = """
+            invalid data (1 difference): [
+                MinimalDifference('A'),
+            ]
+        """
+        expected = textwrap.dedent(expected).strip()
+        self.assertEqual(str(err), expected)
+
+        # Assert "no cacheing"--objects that inhereit from some
+        # Exceptions can cache their str--but ValidationError should
+        # not do this.
+        err.args = ('changed', [MinimalDifference('B')])  # <- Change existing error.
+        updated = textwrap.dedent("""
+            changed (1 difference): [
+                MinimalDifference('B'),
+            ]
+        """).strip()
+        self.assertEqual(str(err), updated)
+
+        # Assert dict format and trailing comma.
+        err = ValidationError('invalid data', {'x': MinimalDifference('A'),
+                                               'y': MinimalDifference('B')})
+        regex = textwrap.dedent(r"""
+            invalid data \(2 differences\): \{
+                '[xy]': MinimalDifference\('[AB]'\),
+                '[xy]': MinimalDifference\('[AB]'\),
+            \}
+        """).strip()
+        self.assertRegex(str(err), regex)  # <- Using regex because dict order
+                                           #    can not be assumed for Python
+                                           #    versions 3.5 and earlier.
+
+        # Assert unittest style maxDiff truncation.
+        err = ValidationError('invalid data', [MinimalDifference('A'),
+                                               MinimalDifference('B'),
+                                               MinimalDifference('C'),])
+        err.maxDiff = 35
+        expected = """
+            invalid data (3 differences): [
+                MinimalDifference('A'),
+                ...
+            ]
+            Truncated (too long). Set self.maxDiff to None for full message.
+        """
+        expected = textwrap.dedent(expected).strip()
+        self.assertEqual(str(err), expected)
+
+    def test_repr(self):
+        err = ValidationError('invalid data', [MinimalDifference('A')])
+        expected = "ValidationError('invalid data', [MinimalDifference('A')])"
+        self.assertEqual(repr(err), expected)
+
+        # Objects that inhereit from some Exceptions can cache their
+        # repr--but ValidationError should not do this.
+        err.args = ('changed', [MinimalDifference('B')])
+        self.assertNotEqual(repr(err), expected, 'exception should not cache repr')
+
+        updated = "ValidationError('changed', [MinimalDifference('B')])"
+        self.assertEqual(repr(err), updated)
+
+    def test_args(self):
+        err = ValidationError('invalid data', [MinimalDifference('A')])
+        self.assertEqual(err.args, ('invalid data', [MinimalDifference('A')]))
 
 
 class TestIsValidAndValidate(unittest.TestCase):

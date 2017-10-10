@@ -11,7 +11,7 @@ from .dataaccess import DataQuery
 from .dataaccess import DataResult
 
 from .validation import _get_invalid_info
-from .errors import ValidationError
+from .validation import ValidationError
 
 __datatest = True  # Used to detect in-module stack frames (which are
                    # omitted from output).

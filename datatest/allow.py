@@ -18,7 +18,7 @@ from .dataaccess import _is_collection_of_items
 from .dataaccess import BaseElement
 from .dataaccess import DictItems
 
-from .errors import ValidationError
+from .validation import ValidationError
 from .errors import BaseDifference
 from .errors import Missing
 from .errors import Extra

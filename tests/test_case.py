@@ -16,7 +16,7 @@ from datatest.dataaccess import DataSource
 from datatest.dataaccess import DataQuery
 from datatest.dataaccess import DataResult
 
-from datatest.errors import ValidationError
+from datatest.validation import ValidationError
 from datatest.errors import Extra
 from datatest.errors import Missing
 from datatest.errors import Invalid
