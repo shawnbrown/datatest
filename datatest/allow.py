@@ -86,6 +86,9 @@ class BaseAllowance(abc.ABC):
                 yield diff
 
     def __exit__(self, exc_type, exc_value, tb):
+        # Setup traceback-hiding for pytest integration.
+        __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
+
         # Apply filterfalse or reraise non-validation error.
         if exc_type and not issubclass(exc_type, ValidationError):
             raise exc_value

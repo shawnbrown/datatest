@@ -324,6 +324,10 @@ def validate(data, requirement, msg=None):
     """Raise a ValidationError if *data* does not satisfy *requirement*
     or pass without error (returning True) if data is valid.
     """
+    # Setup traceback-hiding for pytest integration.
+    __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
+
+    # Perform validation.
     invalid_info = _get_invalid_info(data, requirement)
     if invalid_info:
         default_msg, differences = invalid_info  # Unpack values.

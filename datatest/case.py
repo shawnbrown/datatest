@@ -184,18 +184,15 @@ class DataTestCase(TestCase):
                 requirement = 'FOO'
                 self.assertValid(data, requirement)
         """
+        # Setup traceback-hiding for pytest integration.
+        __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
+
         invalid_info = _get_invalid_info(data, requirement)
         if invalid_info:
             default_msg, differences = invalid_info  # Unpack values.
-            self.fail(msg or default_msg, differences)
-
-    def fail(self, msg, differences=None):
-        if differences:
-            err = ValidationError(msg, differences)
+            err = ValidationError(msg or default_msg, differences)
             err.maxDiff = self.maxDiff  # <- Propagate maxDiff to error object.
             raise err
-        else:
-            raise self.failureException(msg)
 
     #def assertUnique(self, data, msg=None):
     #    pass
