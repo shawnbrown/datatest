@@ -6,7 +6,7 @@ from . import _unittest as unittest
 import datatest
 from datatest.__past__ import api08  # <- MONKEY PATCH!!!
 
-from datatest.errors import NOTFOUND
+from datatest.difference import NOTFOUND
 from datatest.validation import _require_sequence
 
 

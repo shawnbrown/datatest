@@ -19,11 +19,11 @@ from .dataaccess import BaseElement
 from .dataaccess import DictItems
 
 from .validation import ValidationError
-from .errors import BaseDifference
-from .errors import Missing
-from .errors import Extra
-from .errors import Invalid
-from .errors import Deviation
+from .difference import BaseDifference
+from .difference import Missing
+from .difference import Extra
+from .difference import Invalid
+from .difference import Deviation
 
 
 __datatest = True  # Used to detect in-module stack frames (which are
@@ -36,10 +36,10 @@ def _is_mapping_type(obj):
 
 
 class BaseAllowance(abc.ABC):
-    """Context manager to allow certain data errors without
+    """Context manager to allow certain differences without
     triggering a test failure. *filterfalse* should accept an
-    iterable of data errors and return an iterable of only
-    those errors which are **not** allowed.
+    iterable of difference and return an iterable of only
+    those differences which are **not** allowed.
     """
     def __init__(self, msg=None):
         """Initialize object values."""

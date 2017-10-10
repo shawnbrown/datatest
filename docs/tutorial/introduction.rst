@@ -151,7 +151,7 @@ requirement but it does appear in the data. The test fails with an
     Traceback (most recent call last):
       File "docs/_static/test_errors.py", line 10, in test_membership_in_set
         self.assertValid(data, required_elements)
-    datatest.errors.ValidationError: does not satisfy set membership (1 difference): [
+    datatest.validation.ValidationError: does not satisfy set membership (1 difference): [
         Extra('x2'),
     ]
 
@@ -176,7 +176,7 @@ Because ``'y'`` is lower-case, the test fails with an :class:`Invalid
     Traceback (most recent call last):
       File "docs/_static/test_errors.py", line 16, in test_function_returns_true
         self.assertValid(data, uppercase)
-    datatest.errors.ValidationError: does not satisfy 'uppercase' condition (1 diffe
+    datatest.validation.ValidationError: does not satisfy 'uppercase' condition (1 diffe
     rence): [
         Invalid('y'),
     ]
@@ -208,7 +208,7 @@ value is ``'bar'``. The test fails with a dictionary of this
     Traceback (most recent call last):
       File "docs/_static/test_errors.py", line 42, in test_mapping1
         self.assertValid(data, required_values)
-    datatest.errors.ValidationError: does not satisfy mapping requirement (1 differe
+    datatest.validation.ValidationError: does not satisfy mapping requirement (1 differe
     nce): {
         'y': Invalid('BAZ', 'bar'),
     }
@@ -239,7 +239,7 @@ between the value under test and the expected value:
     Traceback (most recent call last):
       File "docs/_static/test_errors.py", line 53, in test_mapping2
         self.assertValid(data, required_values)
-    datatest.errors.ValidationError: does not satisfy mapping requirement (2 differe
+    datatest.validation.ValidationError: does not satisfy mapping requirement (2 differe
     nces): {
         'x': Deviation(+1, 10),
         'y': Deviation(-2, 15),

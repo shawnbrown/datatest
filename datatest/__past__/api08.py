@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import datatest
 from datatest.utils import collections
 from datatest.utils import itertools
-from datatest.errors import NOTFOUND
+from datatest.difference import NOTFOUND
 
 
 

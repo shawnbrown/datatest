@@ -4,23 +4,23 @@ from . import _unittest as unittest
 from datatest.utils import collections
 from datatest.utils import contextlib
 
-from datatest.allow import BaseAllowance
-from datatest.allow import ElementAllowance
-from datatest.allow import allowed_missing
-from datatest.allow import allowed_extra
-from datatest.allow import allowed_invalid
-from datatest.allow import allowed_deviation
-from datatest.allow import allowed_percent_deviation
-from datatest.allow import allowed_specific
-from datatest.allow import allowed_key
-from datatest.allow import allowed_args
-from datatest.allow import allowed_limit
+from datatest.allowance import BaseAllowance
+from datatest.allowance import ElementAllowance
+from datatest.allowance import allowed_missing
+from datatest.allowance import allowed_extra
+from datatest.allowance import allowed_invalid
+from datatest.allowance import allowed_deviation
+from datatest.allowance import allowed_percent_deviation
+from datatest.allowance import allowed_specific
+from datatest.allowance import allowed_key
+from datatest.allowance import allowed_args
+from datatest.allowance import allowed_limit
 
 from datatest.validation import ValidationError
-from datatest.errors import Missing
-from datatest.errors import Extra
-from datatest.errors import Invalid
-from datatest.errors import Deviation
+from datatest.difference import Missing
+from datatest.difference import Extra
+from datatest.difference import Invalid
+from datatest.difference import Deviation
 
 
 class TestBaseAllowance(unittest.TestCase):

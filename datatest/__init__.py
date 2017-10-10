@@ -1,31 +1,29 @@
 # -*- coding: utf-8 -*-
-from .case import DataTestCase
-
 from .validation import ValidationError
 from .validation import is_valid
 from .validation import validate
 
-from .errors import Missing
-from .errors import Extra
-from .errors import Invalid
-from .errors import Deviation
+from .difference import Missing
+from .difference import Extra
+from .difference import Invalid
+from .difference import Deviation
 
-from datatest.allow import allowed_missing
-from datatest.allow import allowed_extra
-from datatest.allow import allowed_invalid
-from datatest.allow import allowed_deviation
-from datatest.allow import allowed_percent_deviation
-from datatest.allow import allowed_specific
-from datatest.allow import allowed_key
-from datatest.allow import allowed_args
-from datatest.allow import allowed_limit
+from .allowance import allowed_missing
+from .allowance import allowed_extra
+from .allowance import allowed_invalid
+from .allowance import allowed_deviation
+from .allowance import allowed_percent_deviation
+from .allowance import allowed_specific
+from .allowance import allowed_key
+from .allowance import allowed_args
+from .allowance import allowed_limit
 
+from .case import DataTestCase
 from .runner import mandatory
 from .runner import skip
 from .runner import skipIf
 from .runner import skipUnless
 from .runner import DataTestRunner
-
 from .main import DataTestProgram
 from .main import main
 
@@ -38,15 +36,12 @@ from .dataaccess import working_directory
 __version__ = '0.8.3.dev0'
 
 __all__ = [
-    # Test case.
-    'DataTestCase',
-
-    # Validation functions.
+    # Validation error and functions.
     'ValidationError',
     'is_valid',
     'validate',
 
-    # Error classes.
+    # Difference classes.
     'Missing',
     'Extra',
     'Invalid',
@@ -63,7 +58,8 @@ __all__ = [
     'allowed_args',
     'allowed_limit',
 
-    # Test runner and command-line program.
+    # Unittest-style classes, decorators, and functions.
+    'DataTestCase',
     'mandatory',
     'skip',
     'skipIf',
@@ -72,7 +68,7 @@ __all__ = [
     'DataTestProgram',
     'main',
 
-    # From Data Access sub-package.
+    # Data Access sub-package.
     'DataSource',
     'DataQuery',
     'DataResult',

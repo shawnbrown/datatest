@@ -17,18 +17,18 @@ from datatest.dataaccess import DataQuery
 from datatest.dataaccess import DataResult
 
 from datatest.validation import ValidationError
-from datatest.errors import Extra
-from datatest.errors import Missing
-from datatest.errors import Invalid
-from datatest.errors import Deviation
+from datatest.difference import Extra
+from datatest.difference import Missing
+from datatest.difference import Invalid
+from datatest.difference import Deviation
 
-from datatest.allow import allowed_missing
-from datatest.allow import allowed_extra
-from datatest.allow import allowed_invalid
-from datatest.allow import allowed_deviation
-from datatest.allow import allowed_percent_deviation
-from datatest.allow import allowed_limit
-from datatest.allow import allowed_specific
+from datatest.allowance import allowed_missing
+from datatest.allowance import allowed_extra
+from datatest.allowance import allowed_invalid
+from datatest.allowance import allowed_deviation
+from datatest.allowance import allowed_percent_deviation
+from datatest.allowance import allowed_limit
+from datatest.allowance import allowed_specific
 
 
 class TestHelperCase(unittest.TestCase):

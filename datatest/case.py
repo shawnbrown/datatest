@@ -16,15 +16,15 @@ from .validation import ValidationError
 __datatest = True  # Used to detect in-module stack frames (which are
                    # omitted from output).
 
-from .allow import allowed_missing
-from .allow import allowed_extra
-from .allow import allowed_invalid
-from .allow import allowed_deviation
-from .allow import allowed_percent_deviation
-from .allow import allowed_specific
-from .allow import allowed_key
-from .allow import allowed_args
-from .allow import allowed_limit
+from .allowance import allowed_missing
+from .allowance import allowed_extra
+from .allowance import allowed_invalid
+from .allowance import allowed_deviation
+from .allowance import allowed_percent_deviation
+from .allowance import allowed_specific
+from .allowance import allowed_key
+from .allowance import allowed_args
+from .allowance import allowed_limit
 
 
 class DataTestCase(TestCase):

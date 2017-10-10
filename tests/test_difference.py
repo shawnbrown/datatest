@@ -3,14 +3,13 @@ import re
 import textwrap
 from . import _unittest as unittest
 
-from datatest.validation import ValidationError
-from datatest.errors import BaseDifference
-from datatest.errors import Missing
-from datatest.errors import Extra
-from datatest.errors import Invalid
-from datatest.errors import Deviation
-from datatest.errors import _make_difference
-from datatest.errors import NOTFOUND
+from datatest.difference import BaseDifference
+from datatest.difference import Missing
+from datatest.difference import Extra
+from datatest.difference import Invalid
+from datatest.difference import Deviation
+from datatest.difference import _make_difference
+from datatest.difference import NOTFOUND
 
 
 # FOR TESTING: A minimal subclass of BaseDifference.

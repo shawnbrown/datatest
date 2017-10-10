@@ -11,13 +11,13 @@ from .dataaccess import DictItems
 from .dataaccess import _is_collection_of_items
 from .dataaccess import DataQuery
 from .dataaccess import DataResult
-from .errors import BaseDifference
-from .errors import Extra
-from .errors import Missing
-from .errors import Invalid
-from .errors import Deviation
-from .errors import _make_difference
-from .errors import NOTFOUND
+from .difference import BaseDifference
+from .difference import Extra
+from .difference import Missing
+from .difference import Invalid
+from .difference import Deviation
+from .difference import _make_difference
+from .difference import NOTFOUND
 
 _regex_type = type(re.compile(''))
 
@@ -210,8 +210,8 @@ def _require_single_equality(data, other):
 def _get_msg_and_func(data, requirement):
     """
     Each validation-function will one of the following:
-     * an iterable of errors,
-     * a single error,
+     * an iterable of differences,
+     * a single difference,
      * or None.
     """
     # Check for special cases--*requirement* types

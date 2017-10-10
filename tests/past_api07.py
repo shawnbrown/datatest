@@ -565,7 +565,7 @@ class TestAssertSubjectUnique(datatest.DataTestCase):
 
 
 ########################################################################
-# Test allowances from datatest.allow sub-package.
+# Test allowances from datatest.allowance sub-package.
 ########################################################################
 class TestAllowIter(unittest.TestCase):
     def test_function_all_bad(self):
