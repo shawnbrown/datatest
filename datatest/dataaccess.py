@@ -98,28 +98,33 @@ class DictItems(collections.Iterator):
 
             # Get first item and rebuild iterable.
             iterable = iter(iterable)
-            first_item = next(iterable)
-            iterable = itertools.chain([first_item], iterable)
+            try:
+                first_item = next(iterable)
+                iterable = itertools.chain([first_item], iterable)
+            except StopIteration:
+                first_item = None
+                iterable = iter([])
 
             # Assert that first item contains a suitable key-value pair.
-            if isinstance(first_item, BaseElement):
-                raise TypeError((
-                    'dictionary update sequence items can not be '
-                    'registered BaseElement types, got {0}: {1!r}'
-                ).format(first_item.__class__.__name__, first_item))
-            try:
-                first_item = tuple(first_item)
-            except TypeError:
-                raise TypeError('cannot convert dictionary update '
-                                'sequence element #0 to a sequence')
-            if len(first_item) != 2:
-                ValueError(('dictionary update sequence element #0 has length '
-                            '{0}; 2 is required').format(len(first_item)))
-            first_key = first_item[0]
-            if not isinstance(first_key, collections.Hashable):
-                raise ValueError((
-                    'unhashable type {0}: {1!r}'
-                ).format(first_key.__class__.__name__, first_key))
+            if first_item:
+                if isinstance(first_item, BaseElement):
+                    raise TypeError((
+                        'dictionary update sequence items can not be '
+                        'registered BaseElement types, got {0}: {1!r}'
+                    ).format(first_item.__class__.__name__, first_item))
+                try:
+                    first_item = tuple(first_item)
+                except TypeError:
+                    raise TypeError('cannot convert dictionary update '
+                                    'sequence element #0 to a sequence')
+                if len(first_item) != 2:
+                    ValueError(('dictionary update sequence element #0 has length '
+                                '{0}; 2 is required').format(len(first_item)))
+                first_key = first_item[0]
+                if not isinstance(first_key, collections.Hashable):
+                    raise ValueError((
+                        'unhashable type {0}: {1!r}'
+                    ).format(first_key.__class__.__name__, first_key))
 
         self.__wrapped__ = iterable
 

@@ -143,6 +143,10 @@ class TestDictItems(unittest.TestCase):
         items = DictItems({'a': 1, 'b': 2})
         self.assertEqual(set(items), set([('a', 1), ('b', 2)]))
 
+    def test_empty_iterable(self):
+        items = DictItems(iter([]))
+        self.assertEqual(list(items), [])
+
     def test_DataResult(self):
         result = DataResult(DictItems([('a', 1), ('b', 2)]), evaluation_type=dict)
         normalized = DictItems(result)
