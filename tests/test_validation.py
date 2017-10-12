@@ -466,14 +466,26 @@ class TestApplyMappingRequirement(unittest.TestCase):
         expected = {'b': [Missing('z')]}
         self.assertEqual(dict(result), expected)
 
-    def test_comparison_error(self):
-        # Sequence failure.
-        nonsequence = {'a': 'x'}  # The value "x" is not a sequence
-                                  # so comparing  it against the list
-                                  # ['x', 'y'] should raise an error.
+    def test_mismatched_types(self):
+        nonsequence_type = {'a': 'x'}      # The value 'x' is not a sequence so
+        sequence_type = {'a': ['x', 'y']}  # comparing it against the required
+                                           # ['x', 'y'] should raise an error.
         with self.assertRaises(ValueError):
-            result = _apply_mapping_requirement(nonsequence, {'a': ['x', 'y']})
+            result = _apply_mapping_requirement(nonsequence_type, sequence_type)
             dict(result)  # Evaluate iterator.
+
+    def test_empty_vs_nonempty_values(self):
+        empty = {}
+        nonempty = {'a': set(['x'])}
+
+        result = _apply_mapping_requirement(empty, empty)
+        self.assertEqual(dict(result), {})
+
+        result = _apply_mapping_requirement(nonempty, empty)
+        self.assertEqual(dict(result), {'a': [Extra('x')]})
+
+        result = _apply_mapping_requirement(empty, nonempty)
+        self.assertEqual(dict(result), {'a': [Missing('x')]})
 
 
 class TestGetDifferenceInfo(unittest.TestCase):

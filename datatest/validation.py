@@ -269,7 +269,7 @@ def _apply_mapping_requirement(data, mapping):
     mapping_items = getattr(mapping, 'iteritems', mapping.items)()
     for key, expected in mapping_items:
         if key not in data_keys:
-            _, require_func = _get_msg_and_func(actual, expected)
+            _, require_func = _get_msg_and_func(NOTFOUND, expected)
             diff = require_func(NOTFOUND, expected)
             if not isinstance(diff, BaseElement):
                 diff = list(diff)
