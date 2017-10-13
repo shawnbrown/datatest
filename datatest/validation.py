@@ -324,6 +324,8 @@ def _get_invalid_info(data, requirement):
 
 class ValidationError(AssertionError):
     """Raised when a data validation fails."""
+    __module__ = 'datatest'
+
     def __init__(self, message, differences):
         self.args = message, differences
         self.maxDiff = None  # Optional unittest-style message truncation.

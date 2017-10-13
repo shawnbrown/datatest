@@ -635,6 +635,22 @@ class TestValidationError(unittest.TestCase):
         updated = "ValidationError('changed', [MinimalDifference('B')])"
         self.assertEqual(repr(err), updated)
 
+    def test_module_property(self):
+        """Module property should be 'datatest' so that testing
+        frameworks display the error as 'datatest.ValidationError'.
+
+        By default, instances would be displayed as
+        'datatest.validation.ValidationError' but this awkwardly
+        long and the submodule name--'validation'--is not needed
+        because the class is imported into datatest's root namespace.
+        """
+        import datatest
+        msg = "should be in datatest's root namespace"
+        self.assertIs(ValidationError, datatest.ValidationError)
+
+        msg = "should be set to 'datatest' to shorten display name"
+        self.assertEqual('datatest', ValidationError.__module__)
+
     def test_args(self):
         err = ValidationError('invalid data', [MinimalDifference('A')])
         self.assertEqual(err.args, ('invalid data', [MinimalDifference('A')]))
