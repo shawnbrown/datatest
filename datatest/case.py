@@ -33,7 +33,7 @@ class DataTestCase(TestCase):
     familiar methods (like setUp, addCleanup, etc.) are still
     available.
     """
-    maxDiff = 80 * 8  # TestCase.maxDiff not defined in 3.1 or 2.6.
+    maxDiff = getattr(TestCase, 'maxDiff', 80 * 8)  # Uses default in 3.1 and 2.6.
 
     @property
     def subject(self):
