@@ -616,8 +616,8 @@ class TestValidationError(unittest.TestCase):
             invalid data (3 differences): [
                 MinimalDifference('A'),
                 ...
-            ]
-            Truncated (too long). Set self.maxDiff to None for full message.
+
+            ...Full output truncated, assign 'self.maxDiff = None' to show
         """
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(str(err), expected)

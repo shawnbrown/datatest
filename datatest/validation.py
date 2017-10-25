@@ -382,32 +382,24 @@ class ValidationError(AssertionError):
         # and build lists iteratively to help optimize memory use.
         if isinstance(self._differences, dict):
             begin, end = '{', '}'
-            iterable = iter(self._differences.items())
-            for k, v in iterable:
-                difference_count += 1
-                diff_string = '    {0!r}: {1!r},'.format(k, v)
-                string_length += len(diff_string)
-                if max_diff and string_length > max_diff:
-                    list_of_strings.append('    ...: ...')
-                    break
-                list_of_strings.append(diff_string)
+            iterator = iter(self._differences.items())
+            format_diff = lambda x: '    {0!r}: {1!r},'.format(x[0], x[1])
         else:
             begin, end = '[', ']'
-            iterable = iter(self._differences)
-            for x in iterable:
-                difference_count += 1
-                diff_string = '    {0!r},'.format(x)
-                string_length += len(diff_string)
-                if max_diff and string_length > max_diff:
-                    list_of_strings.append('    ...')
-                    break
-                list_of_strings.append(diff_string)
+            iterator = iter(self._differences)
+            format_diff = lambda x: '    {0!r},'.format(x)
 
-        # If maxDiff was exceeded, finish counting and prepare end message.
-        if max_diff and string_length > max_diff:
-            difference_count += sum(1 for x in iterable)
-            end += ('\nTruncated (too long). Set '
-                    'self.maxDiff to None for full message.')
+        # Count lengths and build lists iteratively to help optimize memory use.
+        for x in iterator:
+            difference_count += 1
+            diff_string = format_diff(x)
+            string_length += len(diff_string)
+            if max_diff and string_length > max_diff:
+                difference_count += sum(1 for x in iterator)
+                end = ("    ...\n\n...Full output truncated, "
+                       "assign 'self.maxDiff = None' to show")
+                break
+            list_of_strings.append(diff_string)
 
         # Prepare final output.
         output = '{0} ({1} difference{2}): {3}\n{4}\n{5}'.format(
