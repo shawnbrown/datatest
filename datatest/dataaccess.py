@@ -954,7 +954,7 @@ def _register_function(connection, func_list):
 
 
 class DataSource(object):
-    """A basic data source to quickly load and query data.
+    """A class to quickly load and query tabular data.
 
     The given *data* should be an iterable of rows. The rows
     themselves can be lists (as below), dictionaries, or other
