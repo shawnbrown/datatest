@@ -396,7 +396,9 @@ class ValidationError(AssertionError):
                 char_count += len(diff_string)
                 if self._should_truncate(line_count, char_count):
                     line_count += sum(1 for x in iterator)
-                    end = '    ...\n\n{0}'.format(self._truncation_notice)
+                    end = '    ...'
+                    if self._truncation_notice:
+                        end += '\n\n{0}'.format(self._truncation_notice)
                     break
                 list_of_strings.append(diff_string)
         else:
