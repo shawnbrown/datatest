@@ -160,8 +160,9 @@ class TestBaseAllowance(unittest.TestCase):
 
     def test_propagation_of_maxdiff(self):
         """Check that re-raised errors inherit the original error's maxDiff."""
-        error = ValidationError('original message', [Missing('foo')])
-        error.maxDiff = 35  # <- set maxDiff!
+        parent = ValidationError('original message', [Missing('foo')])
+        parent._should_truncate = lambda line_count, char_count: char_count > 35
+        parent._truncation_notice = 'Message truncated.'
 
         class AllowedNothing(BaseAllowance):
             def filterfalse(self, iterable):
@@ -169,9 +170,10 @@ class TestBaseAllowance(unittest.TestCase):
 
         with self.assertRaises(ValidationError) as cm:
             with AllowedNothing(msg='allowance message'):  # <- Uses keyword.
-                raise error
-        child_error = cm.exception
-        self.assertEqual(child_error.maxDiff, 35)
+                raise parent
+        child = cm.exception
+        self.assertEqual(child._should_truncate, parent._should_truncate)
+        self.assertEqual(child._truncation_notice, parent._truncation_notice)
 
 
 class TestElementAllowanceFilterFalse(unittest.TestCase):

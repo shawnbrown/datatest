@@ -328,7 +328,8 @@ class ValidationError(AssertionError):
 
     def __init__(self, message, differences):
         self.args = message, differences
-        self.maxDiff = None  # Optional unittest-style message truncation.
+        self._should_truncate = None
+        self._truncation_notice = None
 
     @property
     def message(self):
@@ -373,11 +374,6 @@ class ValidationError(AssertionError):
         self._differences = differences
 
     def __str__(self):
-        list_of_strings = []
-        string_length = 0
-        difference_count = 0
-        max_diff = self.maxDiff
-
         # Prepare difference-strings. These loops count lengths
         # and build lists iteratively to help optimize memory use.
         if isinstance(self._differences, dict):
@@ -390,22 +386,28 @@ class ValidationError(AssertionError):
             format_diff = lambda x: '    {0!r},'.format(x)
 
         # Count lengths and build lists iteratively to help optimize memory use.
-        for x in iterator:
-            difference_count += 1
-            diff_string = format_diff(x)
-            string_length += len(diff_string)
-            if max_diff and string_length > max_diff:
-                difference_count += sum(1 for x in iterator)
-                end = ("    ...\n\n...Full output truncated, "
-                       "assign 'self.maxDiff = None' to show")
-                break
-            list_of_strings.append(diff_string)
+        if self._should_truncate:
+            line_count = 0
+            char_count = 0
+            list_of_strings = []
+            for x in iterator:
+                line_count += 1
+                diff_string = format_diff(x)
+                char_count += len(diff_string)
+                if self._should_truncate(line_count, char_count):
+                    line_count += sum(1 for x in iterator)
+                    end = '    ...\n\n{0}'.format(self._truncation_notice)
+                    break
+                list_of_strings.append(diff_string)
+        else:
+            list_of_strings = [format_diff(x) for x in iterator]
+            line_count = len(list_of_strings)
 
         # Prepare final output.
         output = '{0} ({1} difference{2}): {3}\n{4}\n{5}'.format(
             self._message,
-            difference_count,
-            '' if difference_count == 1 else 's',
+            line_count,
+            '' if line_count == 1 else 's',
             begin,
             '\n'.join(list_of_strings),
             end,

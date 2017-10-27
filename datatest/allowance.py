@@ -139,13 +139,18 @@ class BaseAllowance(abc.ABC):
             input_cls = exc_value.differences.__class__.__name__
             raise TypeError(message.format(filter_name, input_cls, output_cls))
 
-        # Re-raise ValidationError() with remaining differences.
+        # Extend message with allowance message.
         message = getattr(exc_value, 'message', '')
         if self.msg:
             message = '{0}: {1}'.format(self.msg, message)
+
+        # Build new ValidationError with remaining differences.
         exc = ValidationError(message, differences)
-        exc.maxDiff = exc_value.maxDiff  # <- Re-raised error inherits the
-                                         #    maxDiff of the original error.
+
+        # Re-raised error inherits truncation behavior of original.
+        exc._should_truncate = exc_value._should_truncate
+        exc._truncation_notice = exc_value._truncation_notice
+
         exc.__cause__ = None  # <- Suppress context using verbose
         raise exc             #    alternative to support older Python
                               #    versions--see PEP 415 (same as

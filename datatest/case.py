@@ -191,7 +191,14 @@ class DataTestCase(TestCase):
         if invalid_info:
             default_msg, differences = invalid_info  # Unpack values.
             err = ValidationError(msg or default_msg, differences)
-            err.maxDiff = self.maxDiff  # <- Propagate maxDiff to error object.
+
+            def should_truncate(line_count, char_count):
+                return char_count > self.maxDiff
+            err._should_truncate = should_truncate
+
+            err._truncation_notice = \
+                'Diff is too long. Set self.maxDiff to None to see it.'
+
             raise err
 
     #def assertUnique(self, data, msg=None):

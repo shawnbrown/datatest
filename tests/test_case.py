@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import inspect
 import re
+import textwrap
 from sys import version_info as _version_info
 from unittest import TestCase as _TestCase  # Originial TestCase, not
                                             # compatibility layer.
@@ -131,9 +132,18 @@ class TestAssertValid(DataTestCase):
     def test_maxdiff_propagation(self):
         self.maxDiff = 35  # <- Set custom maxDiff (as number of characters)!
         with self.assertRaises(ValidationError) as cm:
-            self.assertValid(set([1, 2, 3]), set([1, 2]))
+            self.assertValid(set([1, 2, 3, 4, 5, 6]), set([1, 2]))
 
-        self.assertEqual(cm.exception.maxDiff, 35)
+        expected = """
+            does not satisfy set membership (4 differences): [
+                Extra(3),
+                Extra(4),
+                ...
+
+            Diff is too long. Set self.maxDiff to None to see it.
+        """
+        expected = textwrap.dedent(expected).strip()
+        self.assertEqual(str(cm.exception), expected)
 
     def test_query_objects(self):
         source = DataSource([('1', '2'), ('1', '2')], fieldnames=['A', 'B'])
