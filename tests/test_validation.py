@@ -607,22 +607,46 @@ class TestValidationError(unittest.TestCase):
                                            #    can not be assumed for Python
                                            #    versions 3.5 and earlier.
 
+    def test_str_truncation(self):
         # Assert optional truncation behavior.
         err = ValidationError('invalid data', [MinimalDifference('A'),
                                                MinimalDifference('B'),
                                                MinimalDifference('C'),])
+        self.assertIsNone(err._should_truncate)
+        self.assertIsNone(err._truncation_notice)
+        no_truncation = """
+            invalid data (3 differences): [
+                MinimalDifference('A'),
+                MinimalDifference('B'),
+                MinimalDifference('C'),
+            ]
+        """
+        no_truncation = textwrap.dedent(no_truncation).strip()
+        self.assertEqual(str(err), no_truncation)
+
+        # Truncate without notice.
+        err._should_truncate = lambda line_count, char_count: char_count > 35
+        err._truncation_notice = None
+        truncation_witout_notice = """
+            invalid data (3 differences): [
+                MinimalDifference('A'),
+                ...
+        """
+        truncation_witout_notice = textwrap.dedent(truncation_witout_notice).strip()
+        self.assertEqual(str(err), truncation_witout_notice)
+
+        # Truncate and use truncation notice.
         err._should_truncate = lambda line_count, char_count: char_count > 35
         err._truncation_notice = 'Message truncated.'
-
-        expected = """
+        truncation_plus_notice = """
             invalid data (3 differences): [
                 MinimalDifference('A'),
                 ...
 
             Message truncated.
         """
-        expected = textwrap.dedent(expected).strip()
-        self.assertEqual(str(err), expected)
+        truncation_plus_notice = textwrap.dedent(truncation_plus_notice).strip()
+        self.assertEqual(str(err), truncation_plus_notice)
 
     def test_repr(self):
         err = ValidationError('invalid data', [MinimalDifference('A')])
