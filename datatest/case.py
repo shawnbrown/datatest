@@ -193,7 +193,7 @@ class DataTestCase(TestCase):
             err = ValidationError(msg or default_msg, differences)
 
             def should_truncate(line_count, char_count):
-                return char_count > self.maxDiff
+                return self.maxDiff and (char_count > self.maxDiff)
             err._should_truncate = should_truncate
 
             err._truncation_notice = \

@@ -145,6 +145,14 @@ class TestAssertValid(DataTestCase):
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(str(cm.exception), expected)
 
+    def test_maxdiff_none(self):
+        self.maxDiff = None
+        with self.assertRaises(ValidationError) as cm:
+            self.assertValid(set([1, 2, 3, 4, 5, 6]), set([1, 2]))
+
+        message = str(cm.exception)
+        self.assertTrue(message.endswith(']'), 'should show full diff when None')
+
     def test_query_objects(self):
         source = DataSource([('1', '2'), ('1', '2')], fieldnames=['A', 'B'])
         query_obj1 = source(['B'])
