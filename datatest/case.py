@@ -256,14 +256,14 @@ class DataTestCase(TestCase):
         return allowed_percent_deviation(lower, upper, msg)
 
     def allowedSpecific(self, differences, msg=None):
-        """Allows specified *differences* without triggering a test
-        failure::
+        """Allows individually specified *differences* without
+        triggering a test failure::
 
-            diffs = [
+            two_diffs = self.allowedSpecific([
                 Missing('C'),
                 Extra('D'),
-            ]
-            with self.allowedSpecific(diffs):
+            ])
+            with two_diffs:
                 data = {'A', 'B', 'D'}  # <- 'D' extra, 'C' missing
                 requirement = {'A', 'B', 'C'}
                 self.assertValid(data, requirement)
