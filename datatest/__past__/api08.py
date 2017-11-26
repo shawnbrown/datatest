@@ -1,10 +1,40 @@
 """Backward compatibility for version 0.8 API."""
 from __future__ import absolute_import
+import inspect
+
 import datatest
 from datatest.utils import collections
 from datatest.utils import itertools
 from datatest.difference import NOTFOUND
 
+
+def get_subject(self):
+    if hasattr(self, '_subject_data'):
+        return self._subject_data
+    return self._find_data_source('subject')
+def set_subject(self, value):
+    self._subject_data = value
+datatest.DataTestCase.subject = property(get_subject, set_subject)
+
+
+def get_reference(self):
+    if hasattr(self, '_reference_data'):
+        return self._reference_data
+    return self._find_data_source('reference')
+def set_reference(self, value):
+    self._reference_data = value
+datatest.DataTestCase.reference = property(get_reference, set_reference)
+
+
+def _find_data_source(name):
+    stack = inspect.stack()
+    stack.pop()  # Skip record of current frame.
+    for record in stack:   # Bubble-up stack looking for name.
+        frame = record[0]
+        if name in frame.f_globals:
+            return frame.f_globals[name]  # <- EXIT!
+    raise NameError('cannot find {0!r}'.format(name))
+datatest.DataTestCase._find_data_source = staticmethod(_find_data_source)
 
 
 def _columns(self, type=list):  # Removed in datatest 0.8.2
