@@ -111,10 +111,10 @@ Backward Compatibility
 ======================
 
 If you have existing tests that use API features which have
-changed since 0.7.0.dev2, you can still run your old code by
+changed since 0.8.0, you can still run your old code by
 adding the following import to the beginning of each file::
 
-  from datatest.__past__ import api07
+  from datatest.__past__ import api08
 
 To maintain existing test code, this project makes a best-effort
 attempt to provide backward compatibility support for older
@@ -122,10 +122,10 @@ features. The API will be improved in the future but only in
 measured and sustainable ways.
 
 All of the data used at the `National Committee for an Effective
-Congress <http://ncec.org/about>`_ has been checked with datatest
-for more than a year so there is, already, a large and growing
-codebase that relies on current features and must be maintained
-into the future.
+Congress <http://www.ncec.org/about>`_ has been checked with
+datatest for more than a year so there is, already, a large and
+growing codebase that relies on current features and must be
+maintained into the future.
 
 
 Dependencies

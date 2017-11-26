@@ -22,6 +22,6 @@ from .dataaccess import DataResult
 from .dataaccess import working_directory
 
 
-__version__ = '0.8.3.dev0'
+__version__ = '0.8.3'
 
 required = mandatory  # Temporary alias for old "required" decorator.
