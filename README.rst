@@ -144,7 +144,7 @@ Freely licensed under the Apache License, Version 2.0
 Copyright 2014 - 2017 NCEC Services, LLC and contributing authors
 
 
-.. |buildstatus| image:: https://api.travis-ci.org/shawnbrown/datatest.png
+.. |buildstatus| image:: https://travis-ci.org/shawnbrown/datatest.svg?branch=master
     :target: https://travis-ci.org/shawnbrown/datatest
     :alt: Current Build Status
 
