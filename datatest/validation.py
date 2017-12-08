@@ -6,6 +6,7 @@ from .utils import collections
 from .utils.builtins import callable
 from .utils.misc import _is_nsiterable
 from .utils.misc import _is_consumable
+from .utils.misc import _safesort_key
 from .dataaccess import BaseElement
 from .dataaccess import DictItems
 from .dataaccess import _is_collection_of_items
@@ -378,11 +379,19 @@ class ValidationError(AssertionError):
         # and build lists iteratively to help optimize memory use.
         if isinstance(self._differences, dict):
             begin, end = '{', '}'
-            iterator = iter(self._differences.items())
+            all_keys = sorted(self._differences.keys(), key=_safesort_key)
+            def sorted_value(key):
+                value = self._differences[key]
+                if _is_nsiterable(value):
+                    sort_args = lambda diff: _safesort_key(diff.args)
+                    return sorted(value, key=sort_args)
+                return value
+            iterator = iter((key, sorted_value(key)) for key in all_keys)
             format_diff = lambda x: '    {0!r}: {1!r},'.format(x[0], x[1])
         else:
             begin, end = '[', ']'
-            iterator = iter(self._differences)
+            sort_args = lambda diff: _safesort_key(diff.args)
+            iterator = iter(sorted(self._differences, key=sort_args))
             format_diff = lambda x: '    {0!r},'.format(x)
 
         # Count lengths and build lists iteratively to help optimize memory use.

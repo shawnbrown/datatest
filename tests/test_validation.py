@@ -607,6 +607,72 @@ class TestValidationError(unittest.TestCase):
                                            #    can not be assumed for Python
                                            #    versions 3.5 and earlier.
 
+    def test_str_sorting(self):
+        """Check that string shows differences sorted by arguments."""
+        self.maxDiff = None
+
+        # Check sorting of non-mapping container.
+        err = ValidationError('invalid data', [MinimalDifference('Z', 'Z'),
+                                               MinimalDifference('Z'),
+                                               MinimalDifference(1, 'C'),
+                                               MinimalDifference('B', 'C'),
+                                               MinimalDifference('A'),
+                                               MinimalDifference(1.5),
+                                               MinimalDifference(True),
+                                               MinimalDifference(0),
+                                               MinimalDifference(None)])
+        expected = """
+            invalid data (9 differences): [
+                MinimalDifference(None),
+                MinimalDifference(0),
+                MinimalDifference(True),
+                MinimalDifference(1, 'C'),
+                MinimalDifference(1.5),
+                MinimalDifference('A'),
+                MinimalDifference('B', 'C'),
+                MinimalDifference('Z'),
+                MinimalDifference('Z', 'Z'),
+            ]
+        """
+        expected = textwrap.dedent(expected).strip()
+        self.assertEqual(str(err), expected)
+
+        # Make sure that all differences are being sorted (not just
+        # those being displayed).
+        err._should_truncate = lambda lines, chars: lines > 4
+        expected = """
+            invalid data (9 differences): [
+                MinimalDifference(None),
+                MinimalDifference(0),
+                MinimalDifference(True),
+                MinimalDifference(1, 'C'),
+                ...
+        """
+        expected = textwrap.dedent(expected).strip()
+        self.assertEqual(str(err), expected)
+
+        # Check sorting of non-mapping container.
+        err = ValidationError('invalid data', {
+            ('C', 3): [MinimalDifference('Z', 3), MinimalDifference(1, 2)],
+            ('A', 'C'): MinimalDifference('A'),
+            'A': [MinimalDifference('C'), MinimalDifference(1)],
+            2: [MinimalDifference('B'), MinimalDifference('A')],
+            1: MinimalDifference('A'),
+            (None, 4): MinimalDifference('A'),
+        })
+        expected = """
+            invalid data (6 differences): {
+                1: MinimalDifference('A'),
+                2: [MinimalDifference('A'), MinimalDifference('B')],
+                'A': [MinimalDifference(1), MinimalDifference('C')],
+                (None, 4): MinimalDifference('A'),
+                ('A', 'C'): MinimalDifference('A'),
+                ('C', 3): [MinimalDifference(1, 2), MinimalDifference('Z', 3)],
+            }
+        """
+        expected = textwrap.dedent(expected).strip()
+        self.assertEqual(str(err), expected)
+
     def test_str_truncation(self):
         # Assert optional truncation behavior.
         err = ValidationError('invalid data', [MinimalDifference('A'),

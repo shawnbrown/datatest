@@ -2,6 +2,7 @@
 """Miscellaneous helper functions."""
 from __future__ import absolute_import
 import inspect
+from numbers import Number
 from sys import version_info as _version_info
 from .collections import Iterable
 from .decimal import Decimal
@@ -31,6 +32,23 @@ def _is_sortable(obj):
 def _is_consumable(obj):
     """Returns True of *obj* is a consumable iterator or generator."""
     return iter(obj) is iter(obj)
+
+
+def _safesort_key(obj):
+    """Return a key suitable for sorting objects of any type."""
+    if obj is None:
+        index = 0
+    elif isinstance(obj, Number):
+        index = 1
+    elif isinstance(obj, str):
+        index = 2
+    elif isinstance(obj, Iterable):
+        index = 3
+        obj = tuple(_safesort_key(x) for x in obj)
+    else:
+        index = id(obj.__class__)
+        obj = str(obj)
+    return (index, obj)
 
 
 def _flatten(iterable):
