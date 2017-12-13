@@ -146,12 +146,12 @@ requirement but it does appear in the data. The test fails with an
 :class:`Extra <datatest.Extra>` difference:
 
 .. code-block:: none
-    :emphasize-lines: 3,5
+    :emphasize-lines: 4-6
 
     Traceback (most recent call last):
       File "docs/_static/test_errors.py", line 10, in test_membership_in_set
         self.assertValid(data, required_elements)
-    datatest.validation.ValidationError: does not satisfy set membership (1 difference): [
+    datatest.ValidationError: does not satisfy set membership (1 difference): [
         Extra('x2'),
     ]
 
@@ -171,13 +171,12 @@ Because ``'y'`` is lower-case, the test fails with an :class:`Invalid
 <datatest.Invalid>` difference:
 
 .. code-block:: none
-    :emphasize-lines: 3,6
+    :emphasize-lines: 4-6
 
     Traceback (most recent call last):
       File "docs/_static/test_errors.py", line 16, in test_function_returns_true
         self.assertValid(data, uppercase)
-    datatest.validation.ValidationError: does not satisfy 'uppercase' condition (1 diffe
-    rence): [
+    datatest.ValidationError: does not satisfy 'uppercase' condition (1 difference): [
         Invalid('y'),
     ]
 
@@ -203,13 +202,12 @@ value is ``'bar'``. The test fails with a dictionary of this
 :class:`Invalid <datatest.Invalid>` difference:
 
 .. code-block:: none
-    :emphasize-lines: 3,6
+    :emphasize-lines: 4-6
 
     Traceback (most recent call last):
       File "docs/_static/test_errors.py", line 42, in test_mapping1
         self.assertValid(data, required_values)
-    datatest.validation.ValidationError: does not satisfy mapping requirement (1 differe
-    nce): {
+    datatest.ValidationError: does not satisfy mapping requirement (1 difference): {
         'y': Invalid('BAZ', 'bar'),
     }
 
@@ -234,13 +232,12 @@ A :class:`Deviation <datatest.Deviation>` shows the numeric difference
 between the value under test and the expected value:
 
 .. code-block:: none
-    :emphasize-lines: 3,6-7
+    :emphasize-lines: 4-7
 
     Traceback (most recent call last):
       File "docs/_static/test_errors.py", line 53, in test_mapping2
         self.assertValid(data, required_values)
-    datatest.validation.ValidationError: does not satisfy mapping requirement (2 differe
-    nces): {
+    datatest.ValidationError: does not satisfy mapping requirement (2 differences): {
         'x': Deviation(+1, 10),
         'y': Deviation(-2, 15),
     }
@@ -337,9 +334,9 @@ solution is to allow a single specified difference:
             'z': 20,
         }
 
-        known_outliers = {
+        known_outliers = self.allowedSpecific({
             'z': Deviation(+980, 20),
-        }
+        })
 
-        with self.allowedSpecific(known_outliers):
+        with known_outliers:
             self.assertValid(data, required_values)
