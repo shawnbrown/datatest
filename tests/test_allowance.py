@@ -3,6 +3,7 @@ import inspect
 from . import _unittest as unittest
 from datatest.utils import collections
 from datatest.utils import contextlib
+from datatest.utils import itertools
 
 from datatest.allowance import BaseAllowance
 from datatest.allowance import ElementAllowance
@@ -959,6 +960,54 @@ class TestAllowedPercentDeviation(unittest.TestCase):
         with self.assertRaises(ValidationError):  # <- NaN values should not be caught!
             with allowed_percent_deviation(0):
                 raise ValidationError('example error', [Deviation(0, float('nan'))])
+
+
+class TestUniversalComposability(unittest.TestCase):
+    """Test that allowances are composable with allowances of the
+    same type as well as all other allowance types.
+    """
+    def setUp(self):
+        """Build pairs representing all possible combinations of
+        allowance types.
+        """
+        allow1 = [
+            allowed_missing(),
+            allowed_extra(),
+            allowed_invalid(),
+            allowed_deviation(5),
+            allowed_percent_deviation(0.05),
+            allowed_specific([Invalid('A')]),
+            allowed_key(lambda *args: True),
+            allowed_args(lambda *args: True),
+            allowed_limit(3),
+        ]
+        allow2 = [                             # Define a second list
+            allowed_missing(),                 # of allowances so we
+            allowed_extra(),                   # have two lists with
+            allowed_invalid(),                 # unique instances (not
+            allowed_deviation(5),              # just two lists of
+            allowed_percent_deviation(0.05),   # pointers to the same
+            allowed_specific([Invalid('A')]),  # set of objects).
+            allowed_key(lambda *args: True),
+            allowed_args(lambda *args: True),
+            allowed_limit(3),
+        ]
+        # Make sure all of the allowances are unique instances.
+        for a, b in zip(allow1, allow2):
+            assert a is not b, 'must be different instances'
+
+        combinations = itertools.product(allow1, allow2)
+        self.combinations = list(combinations)
+
+    def test_bitwise_or(self):
+        for a, b in self.combinations:
+            combined = a | b  # Compose using "bitwise or".
+            self.assertIsInstance(combined, BaseAllowance)
+
+    def test_bitwise_and(self):
+        for a, b in self.combinations:
+            combined = a & b  # Compose using "bitwise and".
+            self.assertIsInstance(combined, BaseAllowance)
 
 
 class TestMsgIntegration(unittest.TestCase):
