@@ -131,13 +131,11 @@ class BaseAllowance(abc.ABC):
 
         # Verify type compatibility.
         if mappable_in != mappable_out:
-            message = ('{0} received {1!r} collection but '
-                       'returned incompatible {2!r} collection')
-            filter_name = getattr(self.group_filterfalse, '__name__',
-                                  repr(self.group_filterfalse))
+            message = ('received {0!r} collection but returned '
+                       'incompatible {1!r} collection')
             output_cls = differences.__class__.__name__
             input_cls = exc_value.differences.__class__.__name__
-            raise TypeError(message.format(filter_name, input_cls, output_cls))
+            raise TypeError(message.format(input_cls, output_cls))
 
         # Extend message with allowance message.
         message = getattr(exc_value, 'message', '')
