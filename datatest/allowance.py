@@ -73,7 +73,7 @@ class BaseAllowance(abc.ABC):
     def filterfalse(self, iterable):
         """Filter iterable and yield elements that are not allowed."""
 
-    def apply_filterfalse(self, iterable):
+    def all_filterfalse(self, iterable):
         if isinstance(iterable, collections.Mapping):
             iterable = getattr(iterable, 'iteritems', iterable.items)()
 
@@ -108,7 +108,7 @@ class BaseAllowance(abc.ABC):
         if exc_type and not issubclass(exc_type, ValidationError):
             raise exc_value
         differences = getattr(exc_value, 'differences', [])
-        differences = self.apply_filterfalse(differences)
+        differences = self.all_filterfalse(differences)
 
         # Check container types.
         mappable_in = _is_mapping_type(getattr(exc_value, 'differences', None))
@@ -173,12 +173,12 @@ class ElementAllowance(BaseAllowance):
             if not predicate(key, difference):
                 yield key, difference
 
-    def apply_filterfalse(self, iterable):
+    def all_filterfalse(self, iterable):
         if _is_mapping_type(iterable):
-            return super(ElementAllowance, self).apply_filterfalse(iterable)  # <- EXIT!
+            return super(ElementAllowance, self).all_filterfalse(iterable)  # <- EXIT!
 
         iterable = ((None, difference) for difference in iterable)
-        filtered = super(ElementAllowance, self).apply_filterfalse(iterable)
+        filtered = super(ElementAllowance, self).all_filterfalse(iterable)
         return (diff for key, diff in filtered)  # 'key' intentionally discarded
 
     def __or__(self, other):
@@ -318,9 +318,9 @@ class allowed_specific(BaseAllowance):
             except ValueError:
                 yield key, difference
 
-    def apply_filterfalse(self, iterable):
+    def all_filterfalse(self, iterable):
         if _is_mapping_type(iterable):
-            return super(allowed_specific, self).apply_filterfalse(iterable)  # <- EXIT!
+            return super(allowed_specific, self).all_filterfalse(iterable)  # <- EXIT!
 
         if _is_mapping_type(self.differences):
             message = ('{0!r} of differences cannot be matched using a '
@@ -330,7 +330,7 @@ class allowed_specific(BaseAllowance):
             raise ValueError(message)
 
         iterable = ((None, diff) for diff in iterable)
-        filtered = super(allowed_specific, self).apply_filterfalse(iterable)
+        filtered = super(allowed_specific, self).all_filterfalse(iterable)
         return (diff for key, diff in filtered)  # 'key' intentionally discarded
 
     def _or_combine_diffs(self, self_diffs, other_diffs):
@@ -481,12 +481,12 @@ class allowed_limit(BaseAllowance):
             for key, diff in itertools.chain(matching, iterable):
                 yield key, diff
 
-    def apply_filterfalse(self, iterable):
+    def all_filterfalse(self, iterable):
         if _is_mapping_type(iterable):
-            return super(allowed_limit, self).apply_filterfalse(iterable)  # <- EXIT!
+            return super(allowed_limit, self).all_filterfalse(iterable)  # <- EXIT!
 
         iterable = ((None, diff) for diff in iterable)
-        filtered = super(allowed_limit, self).apply_filterfalse(iterable)
+        filtered = super(allowed_limit, self).all_filterfalse(iterable)
         return (diff for key, diff in filtered)  # 'key' intentionally discarded
 
     def __or__(self, other):

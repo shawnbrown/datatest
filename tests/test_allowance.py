@@ -25,22 +25,22 @@ from datatest.difference import Deviation
 
 
 class TestBaseAllowance(unittest.TestCase):
-    def test_apply_filterfalse_good_list(self):
+    def test_all_filterfalse_good_list(self):
         class AllowEverything(BaseAllowance):
             def filterfalse(self, iterable):
                 return []
         base = AllowEverything()
-        allowed = base.apply_filterfalse([Missing('x')])
+        allowed = base.all_filterfalse([Missing('x')])
         self.assertEqual(list(allowed), [])
 
         class AllowEverything(BaseAllowance):
             def filterfalse(self, iterable):
                 return iter([])  # <- empty iterator
         base = AllowEverything()
-        allowed = base.apply_filterfalse([Missing('x')])
+        allowed = base.all_filterfalse([Missing('x')])
         self.assertEqual(list(allowed), [])
 
-    def test_apply_filterfalse_good_mapping(self):
+    def test_all_filterfalse_good_mapping(self):
         """If no errors are returned, the type doesn't matter."""
         in_diffs = {'a': Missing('x')}  # <- Input of mapping differences!
 
@@ -48,17 +48,17 @@ class TestBaseAllowance(unittest.TestCase):
             def filterfalse(self, iterable):
                 return dict()  # <- returns dict
         base = AllowEverything()
-        allowed = base.apply_filterfalse(in_diffs)
+        allowed = base.all_filterfalse(in_diffs)
         self.assertEqual(list(allowed), [])
 
         class AllowEverything(BaseAllowance):
             def filterfalse(self, iterable):
                 return iter([])  # <- empty iterator
         base = AllowEverything()
-        allowed = base.apply_filterfalse(in_diffs)
+        allowed = base.all_filterfalse(in_diffs)
         self.assertEqual(list(allowed), [])
 
-    def test_apply_filterfalse_bad_list(self):
+    def test_all_filterfalse_bad_list(self):
         in_diffs = [Missing('foo'), Extra('bar')]
 
         class ExampleAllowance(BaseAllowance):
@@ -72,7 +72,7 @@ class TestBaseAllowance(unittest.TestCase):
         differences = cm.exception.differences
         self.assertEqual(list(differences), [Missing('foo')])
 
-    def test_apply_filterfalse_bad_mapping(self):
+    def test_all_filterfalse_bad_mapping(self):
         in_diffs = {'a': Extra('x'), 'b': Missing('y')}
 
         class ExampleAllowance(BaseAllowance):
@@ -188,7 +188,7 @@ class TestElementAllowanceFilterFalse(unittest.TestCase):
             return (key == 'b') or isinstance(value, Invalid)
 
         elementwise = ElementAllowance(predicate)
-        result = elementwise.apply_filterfalse(iterable)
+        result = elementwise.all_filterfalse(iterable)
         self.assertEqual(dict(result), {'a':  Missing(1)})
 
     def test_mapping_of_groups(self):
@@ -220,7 +220,7 @@ class TestElementAllowanceFilterFalse(unittest.TestCase):
             return False
 
         elementwise = ElementAllowance(predicate)
-        result = elementwise.apply_filterfalse(iterable)
+        result = elementwise.all_filterfalse(iterable)
         expected = {'x': [Missing(1), Missing(3)],
                     'y': [Missing(5), Invalid(7)]}
         self.assertEqual(dict(result), expected)
@@ -233,7 +233,7 @@ class TestElementAllowanceFilterFalse(unittest.TestCase):
             return isinstance(value, Missing)
 
         elementwise = ElementAllowance(predicate)
-        result = elementwise.apply_filterfalse(iterable)
+        result = elementwise.all_filterfalse(iterable)
         self.assertEqual(list(result), [Extra(1), Invalid(3)])
 
 
@@ -962,6 +962,7 @@ class TestAllowedPercentDeviation(unittest.TestCase):
                 raise ValidationError('example error', [Deviation(0, float('nan'))])
 
 
+@unittest.skip('Prerequisite refactoring still in progress.')
 class TestUniversalComposability(unittest.TestCase):
     """Test that allowances are composable with allowances of the
     same type as well as all other allowance types.
