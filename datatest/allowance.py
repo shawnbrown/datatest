@@ -52,9 +52,9 @@ def _is_mapping_type(obj):
 
 class BaseAllowance(abc.ABC):
     """Context manager to allow certain differences without
-    triggering a test failure. *filterfalse* should accept an
-    iterable of difference and return an iterable of only
-    those differences which are **not** allowed.
+    triggering a test failure. *group_filterfalse* should
+    accept an iterable of difference and return an iterable
+    of only those differences which are **not** allowed.
     """
     def __init__(self, msg=None):
         """Initialize object values."""
@@ -70,7 +70,7 @@ class BaseAllowance(abc.ABC):
         return self
 
     @abc.abstractmethod
-    def filterfalse(self, iterable):
+    def group_filterfalse(self, iterable):
         """Filter iterable and yield elements that are not allowed."""
 
     def all_filterfalse(self, iterable):
@@ -81,7 +81,7 @@ class BaseAllowance(abc.ABC):
             for key, diff in iterable:
                 if isinstance(diff, (BaseElement, Exception)):
                     # Error is a single element.
-                    filtered = self.filterfalse(iter([(key, diff)]))
+                    filtered = self.group_filterfalse(iter([(key, diff)]))
                     if isinstance(filtered, collections.Mapping):
                         filtered = filtered.items()
                     filtered = list(filtered)
@@ -89,12 +89,12 @@ class BaseAllowance(abc.ABC):
                         yield filtered[0]
                 else:
                     # Error is a container of multiple elements.
-                    diff = self.filterfalse((key, d) for d in diff)
+                    diff = self.group_filterfalse((key, d) for d in diff)
                     diff = list(d for key, d in diff)
                     if diff:
                         yield key, diff
         else:
-            filtered = self.filterfalse(iterable)
+            filtered = self.group_filterfalse(iterable)
             if _is_mapping_type(filtered):
                 raise TypeError('returned mapping output for non-mapping input')
             for diff in filtered:
@@ -133,8 +133,8 @@ class BaseAllowance(abc.ABC):
         if mappable_in != mappable_out:
             message = ('{0} received {1!r} collection but '
                        'returned incompatible {2!r} collection')
-            filter_name = getattr(self.filterfalse, '__name__',
-                                  repr(self.filterfalse))
+            filter_name = getattr(self.group_filterfalse, '__name__',
+                                  repr(self.group_filterfalse))
             output_cls = differences.__class__.__name__
             input_cls = exc_value.differences.__class__.__name__
             raise TypeError(message.format(filter_name, input_cls, output_cls))
@@ -167,7 +167,7 @@ class ElementAllowance(BaseAllowance):
         self.predicate = predicate
         super(ElementAllowance, self).__init__(msg)
 
-    def filterfalse(self, iterable):
+    def group_filterfalse(self, iterable):
         predicate = self.predicate
         for key, difference in iterable:
             if not predicate(key, difference):
@@ -294,7 +294,7 @@ class allowed_specific(BaseAllowance):
         self.differences = differences
         super(allowed_specific, self).__init__(msg)
 
-    def filterfalse(self, iterable):
+    def group_filterfalse(self, iterable):
         """If the data being tested is a mapping, this is called for
         every group (grouped by key). If the data is a non-mapping,
         this is called only one time for the entire iterable.
@@ -460,7 +460,7 @@ class allowed_limit(BaseAllowance):
         self.and_predicate = None
         super(allowed_limit, self).__init__(msg)
 
-    def filterfalse(self, iterable):
+    def group_filterfalse(self, iterable):
         number = self.number                # Reduce the number of
         or_predicate = self.or_predicate    # dot-lookups--these are
         and_predicate = self.and_predicate  # referenced many times.
