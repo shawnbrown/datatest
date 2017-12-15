@@ -299,11 +299,11 @@ class allowed_specific(BaseAllowance):
         """
         if isinstance(self.differences, collections.Mapping):
             iterable = iter(iterable)
-            first_key, first_diff = next(iterable)
-            iterable = itertools.chain([(first_key, first_diff)], iterable)
-            allowed = self.differences.get(first_key, [])
-        else:
-            allowed = self.differences
+            one_key, one_diff = next(iterable)
+            iterable = itertools.chain([(one_key, one_diff)], iterable)
+            allowed = self.differences.get(one_key, [])  # Key is the same
+        else:                                            # for all items in
+            allowed = self.differences                   # the same group.
 
         if isinstance(allowed, BaseDifference):
             allowed = [allowed]
