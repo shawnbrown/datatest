@@ -69,9 +69,9 @@ class BaseAllowance(abc.ABC):
     def __enter__(self):
         return self
 
-    @abc.abstractmethod
     def group_filterfalse(self, iterable):
         """Filter iterable and yield elements that are not allowed."""
+        raise NotImplementedError()
 
     def all_filterfalse(self, iterable):
         if isinstance(iterable, collections.Mapping):
