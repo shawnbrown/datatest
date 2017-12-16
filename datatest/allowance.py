@@ -69,8 +69,14 @@ class BaseAllowance(abc.ABC):
     def __enter__(self):
         return self
 
+    def item_filterfalse(self, key, value):
+        """Return key-value tuple if difference is not allowed, else
+        return None.
+        """
+        raise NotImplementedError()
+
     def group_filterfalse(self, group):
-        """Filter iterable and yield elements that are not allowed."""
+        """Filter iterable and yield items that are not allowed."""
         raise NotImplementedError()
 
     def all_filterfalse(self, iterable):
