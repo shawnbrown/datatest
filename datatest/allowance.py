@@ -171,10 +171,15 @@ class ElementAllowance(BaseAllowance):
         self.predicate = predicate
         super(ElementAllowance, self).__init__(msg)
 
+    def item_filterfalse(self, key, value):
+        if self.predicate(key, value):
+            return None
+        return key, value
+
     def group_filterfalse(self, group):
-        predicate = self.predicate
-        for key, difference in group:
-            if not predicate(key, difference):
+        predicate = self.predicate              # Using predicate() directly
+        for key, difference in group:           # is more efficient than
+            if not predicate(key, difference):  # calling item_filterfalse().
                 yield key, difference
 
     def all_filterfalse(self, iterable):
