@@ -69,7 +69,7 @@ class BaseAllowance(abc.ABC):
     def __enter__(self):
         return self
 
-    def group_filterfalse(self, iterable):
+    def group_filterfalse(self, group):
         """Filter iterable and yield elements that are not allowed."""
         raise NotImplementedError()
 
@@ -165,9 +165,9 @@ class ElementAllowance(BaseAllowance):
         self.predicate = predicate
         super(ElementAllowance, self).__init__(msg)
 
-    def group_filterfalse(self, iterable):
+    def group_filterfalse(self, group):
         predicate = self.predicate
-        for key, difference in iterable:
+        for key, difference in group:
             if not predicate(key, difference):
                 yield key, difference
 
@@ -292,15 +292,15 @@ class allowed_specific(BaseAllowance):
         self.differences = differences
         super(allowed_specific, self).__init__(msg)
 
-    def group_filterfalse(self, iterable):
+    def group_filterfalse(self, group):
         """If the data being tested is a mapping, this is called for
         every group (grouped by key). If the data is a non-mapping,
         this is called only one time for the entire iterable.
         """
         if isinstance(self.differences, collections.Mapping):
-            iterable = iter(iterable)
-            one_key, one_diff = next(iterable)
-            iterable = itertools.chain([(one_key, one_diff)], iterable)
+            group = iter(group)
+            one_key, one_diff = next(group)
+            group = itertools.chain([(one_key, one_diff)], group)
             allowed = self.differences.get(one_key, [])  # Key is the same
         else:                                            # for all items in
             allowed = self.differences                   # the same group.
@@ -310,7 +310,7 @@ class allowed_specific(BaseAllowance):
         else:
             allowed = list(allowed)  # Make list or copy existing list.
 
-        for key, difference in iterable:
+        for key, difference in group:
             try:
                 allowed.remove(difference)
             except ValueError:
@@ -458,14 +458,14 @@ class allowed_limit(BaseAllowance):
         self.and_predicate = None
         super(allowed_limit, self).__init__(msg)
 
-    def group_filterfalse(self, iterable):
+    def group_filterfalse(self, group):
         number = self.number                # Reduce the number of
         or_predicate = self.or_predicate    # dot-lookups--these are
         and_predicate = self.and_predicate  # referenced many times.
 
-        iterable = iter(iterable)  # Must be consumable.
+        group = iter(group)  # Must be consumable.
         matching = []
-        for key, diff in iterable:
+        for key, diff in group:
             if or_predicate and or_predicate(key, diff):
                 continue
             if and_predicate and not and_predicate(key, diff):
@@ -476,7 +476,7 @@ class allowed_limit(BaseAllowance):
                 break
 
         if len(matching) > number:
-            for key, diff in itertools.chain(matching, iterable):
+            for key, diff in itertools.chain(matching, group):
                 yield key, diff
 
     def all_filterfalse(self, iterable):

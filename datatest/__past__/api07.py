@@ -434,8 +434,8 @@ class allow_each(allow_iter):
     """
     def __init__(self, function, msg=None, **kwds):
         @functools.wraps(function)
-        def group_filterfalse(iterable):  # Returns elements where function evals to False.
-            return (x for x in iterable if not function(x))
+        def group_filterfalse(group):  # Returns elements where function evals to False.
+            return (x for x in group if not function(x))
         super(allow_each, self).__init__(group_filterfalse, msg, **kwds)
 datatest.allow_each = allow_each
 

@@ -27,14 +27,14 @@ from datatest.difference import Deviation
 class TestBaseAllowance(unittest.TestCase):
     def test_all_filterfalse_good_list(self):
         class AllowEverything(BaseAllowance):
-            def group_filterfalse(self, iterable):
+            def group_filterfalse(self, group):
                 return []
         base = AllowEverything()
         allowed = base.all_filterfalse([Missing('x')])
         self.assertEqual(list(allowed), [])
 
         class AllowEverything(BaseAllowance):
-            def group_filterfalse(self, iterable):
+            def group_filterfalse(self, group):
                 return iter([])  # <- empty iterator
         base = AllowEverything()
         allowed = base.all_filterfalse([Missing('x')])
@@ -45,14 +45,14 @@ class TestBaseAllowance(unittest.TestCase):
         in_diffs = {'a': Missing('x')}  # <- Input of mapping differences!
 
         class AllowEverything(BaseAllowance):
-            def group_filterfalse(self, iterable):
+            def group_filterfalse(self, group):
                 return dict()  # <- returns dict
         base = AllowEverything()
         allowed = base.all_filterfalse(in_diffs)
         self.assertEqual(list(allowed), [])
 
         class AllowEverything(BaseAllowance):
-            def group_filterfalse(self, iterable):
+            def group_filterfalse(self, group):
                 return iter([])  # <- empty iterator
         base = AllowEverything()
         allowed = base.all_filterfalse(in_diffs)
@@ -62,8 +62,8 @@ class TestBaseAllowance(unittest.TestCase):
         in_diffs = [Missing('foo'), Extra('bar')]
 
         class ExampleAllowance(BaseAllowance):
-            def group_filterfalse(self, iterable):
-                return (x for x in iterable if not isinstance(x, Extra))
+            def group_filterfalse(self, group):
+                return (x for x in group if not isinstance(x, Extra))
 
         with self.assertRaises(ValidationError) as cm:
             with ExampleAllowance():
@@ -76,9 +76,9 @@ class TestBaseAllowance(unittest.TestCase):
         in_diffs = {'a': Extra('x'), 'b': Missing('y')}
 
         class ExampleAllowance(BaseAllowance):
-            def group_filterfalse(self, iterable):
+            def group_filterfalse(self, group):
                 differences = {}
-                for key, diff in iterable:
+                for key, diff in group:
                     if not isinstance(diff, Extra):
                         differences[key] = diff
                 return differences
@@ -100,7 +100,7 @@ class TestBaseAllowance(unittest.TestCase):
         # List input and dict output.
         list_input =  [Missing('foo'), Missing('bar')]
         class DictOutput(BaseAllowance):
-            def group_filterfalse(self, iterable):
+            def group_filterfalse(self, group):
                 return {'a': Missing('foo')}  # <- dict type
 
         with self.assertRaises(TypeError):
@@ -110,7 +110,7 @@ class TestBaseAllowance(unittest.TestCase):
         # Dict input and list output.
         dict_input =  {'a': Missing('foo'), 'b': Missing('bar')}
         class ListOutput(BaseAllowance):
-            def group_filterfalse(self, iterable):
+            def group_filterfalse(self, group):
                 return [Missing('foo')]  # <- list type
 
         with self.assertRaises(TypeError):
@@ -120,7 +120,7 @@ class TestBaseAllowance(unittest.TestCase):
         # Dict input and list-item output.
         dict_input =  {'a': Missing('foo'), 'b': Missing('bar')}
         class ItemOutput(BaseAllowance):
-            def group_filterfalse(self, iterable):
+            def group_filterfalse(self, group):
                 return [('a', Missing('foo'))]  # <- list of items
 
         with self.assertRaises(ValidationError) as cm:
@@ -135,8 +135,8 @@ class TestBaseAllowance(unittest.TestCase):
         error = ValidationError('original message', [Missing('foo')])
 
         class AllowedNothing(BaseAllowance):
-            def group_filterfalse(self, iterable):
-                return iterable
+            def group_filterfalse(self, group):
+                return group
 
         # No message.
         with self.assertRaises(ValidationError) as cm:
@@ -166,8 +166,8 @@ class TestBaseAllowance(unittest.TestCase):
         parent._truncation_notice = 'Message truncated.'
 
         class AllowedNothing(BaseAllowance):
-            def group_filterfalse(self, iterable):
-                return iterable
+            def group_filterfalse(self, group):
+                return group
 
         with self.assertRaises(ValidationError) as cm:
             with AllowedNothing(msg='allowance message'):  # <- Uses keyword.
