@@ -26,7 +26,21 @@ from datatest.difference import Deviation
 
 
 class TestBaseAllowance2(unittest.TestCase):
-    pass
+    def test_serialized_items(self):
+        item_list = [1, 2]
+        actual = BaseAllowance2._serialized_items(item_list)
+        expected = [(None, 1), (None, 2)]
+        self.assertEqual(list(actual), expected, 'serialize list of elements')
+
+        item_dict = {'A': 'x', 'B': 'y'}
+        actual = BaseAllowance2._serialized_items(item_dict)
+        expected = [('A', 'x'), ('B', 'y')]
+        self.assertEqual(sorted(actual), expected, 'serialize mapping of elements')
+
+        item_dict = {'A': ['x', 'y'], 'B': ['x', 'y']}
+        actual = BaseAllowance2._serialized_items(item_dict)
+        expected = [('A', 'x'), ('A', 'y'), ('B', 'x'), ('B', 'y')]
+        self.assertEqual(sorted(actual), expected, 'serialize mapping of lists')
 
 
 class TestBaseAllowance(unittest.TestCase):

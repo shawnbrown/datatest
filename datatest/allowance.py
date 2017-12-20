@@ -162,7 +162,19 @@ class BaseAllowance(abc.ABC):
 
 
 class BaseAllowance2(abc.ABC):  # Refactoring to simplify internals.
-    pass
+    @staticmethod
+    def _serialized_items(iterable):
+        if isinstance(iterable, collections.Mapping):
+            for key in iterable:
+                value = iterable[key]
+                if isinstance(value, (BaseElement, Exception)):
+                    yield (key, value)
+                else:
+                    for subvalue in value:
+                        yield (key, subvalue)
+        else:
+            for value in iterable:
+                yield (None, value)
 
 
 class ElementAllowance(BaseAllowance):
