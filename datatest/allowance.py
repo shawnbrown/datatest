@@ -161,6 +161,10 @@ class BaseAllowance(abc.ABC):
                               #    effect as "raise ... from None").
 
 
+class BaseAllowance2(abc.ABC):  # Refactoring to simplify internals.
+    pass
+
+
 class ElementAllowance(BaseAllowance):
     """Allow differences where *predicate* returns True. For each
     difference, *predicate* will receive two arguments---a **key**

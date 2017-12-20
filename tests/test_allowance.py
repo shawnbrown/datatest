@@ -5,6 +5,7 @@ from datatest.utils import collections
 from datatest.utils import contextlib
 from datatest.utils import itertools
 
+from datatest.allowance import BaseAllowance2
 from datatest.allowance import BaseAllowance
 from datatest.allowance import ElementAllowance
 from datatest.allowance import allowed_missing
@@ -22,6 +23,10 @@ from datatest.difference import Missing
 from datatest.difference import Extra
 from datatest.difference import Invalid
 from datatest.difference import Deviation
+
+
+class TestBaseAllowance2(unittest.TestCase):
+    pass
 
 
 class TestBaseAllowance(unittest.TestCase):
