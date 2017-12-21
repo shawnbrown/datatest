@@ -42,6 +42,22 @@ class TestBaseAllowance2(unittest.TestCase):
         expected = [('A', 'x'), ('A', 'y'), ('B', 'x'), ('B', 'y')]
         self.assertEqual(sorted(actual), expected, 'serialize mapping of lists')
 
+    def test_deserialized_items(self):
+        stream = [(None, 1), (None, 2)]
+        actual = BaseAllowance2._deserialized_items(stream)
+        expected = {None: [1, 2]}
+        self.assertEqual(actual, expected)
+
+        stream = [('A', 'x'), ('B', 'y')]
+        actual = BaseAllowance2._deserialized_items(stream)
+        expected = {'A': 'x', 'B': 'y'}
+        self.assertEqual(actual, expected)
+
+        stream = [('A', 'x'), ('A', 'y'), ('B', 'x'), ('B', 'y')]
+        actual = BaseAllowance2._deserialized_items(stream)
+        expected = {'A': ['x', 'y'], 'B': ['x', 'y']}
+        self.assertEqual(actual, expected)
+
 
 class TestBaseAllowance(unittest.TestCase):
     def test_all_filterfalse_good_list(self):

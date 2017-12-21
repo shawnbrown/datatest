@@ -176,6 +176,21 @@ class BaseAllowance2(abc.ABC):  # Refactoring to simplify internals.
             for value in iterable:
                 yield (None, value)
 
+    @staticmethod
+    def _deserialized_items(iterable):
+        def make_key(item):
+            return item[0]
+
+        grouped = itertools.groupby(iterable, key=make_key)
+
+        def make_value(group):
+            value = [item[1] for item in group]
+            if len(value) == 1:
+                return value.pop()
+            return value
+
+        return dict((key, make_value(group)) for key, group in grouped)
+
 
 class ElementAllowance(BaseAllowance):
     """Allow differences where *predicate* returns True. For each
