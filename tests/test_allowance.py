@@ -128,16 +128,25 @@ class TestAllowanceProtocol(unittest.TestCase):
 
         allowed = allowed_missing()
         result = allowed._filterfalse([
-            (None, Missing('A')),
-            (None, Extra('B')),
+            ('foo', Missing('A')),
+            ('foo', Extra('B')),
+            ('bar', Missing('C')),
         ])
         list(result)  # Evaluate entire iterator, discarding result.
 
         expected = [
-            "predicate((None, Missing('A')))",
-            "predicate_true((None, Missing('A')))",
-            "predicate((None, Extra('B')))",
-            "predicate_false((None, Extra('B')))",
+            'start_filterfalse()',
+            "start_group('foo')",
+            "predicate(('foo', Missing('A')))",
+            "predicate_true(('foo', Missing('A')))",
+            "predicate(('foo', Extra('B')))",
+            "predicate_false(('foo', Extra('B')))",
+            "end_group('foo')",
+            "start_group('bar')",
+            "predicate(('bar', Missing('C')))",
+            "predicate_true(('bar', Missing('C')))",
+            "end_group('bar')",
+            'end_filterfalse()',
         ]
         self.assertEqual(allowed.log, expected)
 

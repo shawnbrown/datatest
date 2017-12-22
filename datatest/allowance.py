@@ -191,23 +191,46 @@ class BaseAllowance2(abc.ABC):  # Refactoring to simplify internals.
 
         return dict((key, make_value(group)) for key, group in grouped)
 
+    def start_filterfalse(self):
+        """Called first before any groups or predicate checking."""
+
+    def start_group(self, key):
+        """Called before processing each group."""
+
     def predicate(self, item):
         """Call once for each item."""
         return False
 
     def predicate_true(self, item):
-        """Called when ``predicate(item)`` returns True."""
+        """Called after ``predicate(item)`` returns True."""
 
     def predicate_false(self, item):
-        """Called when ``predicate(item)`` returns False."""
+        """Called after ``predicate(item)`` returns False."""
+
+    def end_group(self, key):
+        """Called after processing each group."""
+
+    def end_filterfalse(self):
+        """Called last after all items have been checked."""
 
     def _filterfalse(self, serialized):
-        for item in serialized:
-            if self.predicate(item):
-                self.predicate_true(item)
-            else:
-                self.predicate_false(item)
-                yield item
+        self.start_filterfalse()
+
+        def make_key(item):
+            return item[0]
+        grouped = itertools.groupby(serialized, key=make_key)
+
+        for key, group in grouped:
+            self.start_group(key)
+            for item in group:
+                if self.predicate(item):
+                    self.predicate_true(item)
+                else:
+                    self.predicate_false(item)
+                    yield item
+            self.end_group(key)
+
+        self.end_filterfalse()
 
     def __enter__(self):
         return self
