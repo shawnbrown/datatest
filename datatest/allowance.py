@@ -161,7 +161,10 @@ class BaseAllowance(abc.ABC):
                               #    effect as "raise ... from None").
 
 
-class BaseAllowance2(abc.ABC):  # Refactoring to simplify internals.
+class BaseAllowance2(abc.ABC):
+    ######################################
+    # Hook methods for allowance protocol.
+    ######################################
     def start_filterfalse(self):
         """Called first before any groups or predicate checking."""
 
@@ -184,6 +187,9 @@ class BaseAllowance2(abc.ABC):  # Refactoring to simplify internals.
     def end_filterfalse(self):
         """Called last after all items have been checked."""
 
+    ###############################################
+    # Data handling methods for context management.
+    ###############################################
     def _filterfalse(self, serialized):
         self.start_filterfalse()
 
