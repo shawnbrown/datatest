@@ -191,6 +191,24 @@ class BaseAllowance2(abc.ABC):  # Refactoring to simplify internals.
 
         return dict((key, make_value(group)) for key, group in grouped)
 
+    def predicate(self, item):
+        """Call once for each item."""
+        return False
+
+    def predicate_true(self, item):
+        """Called when ``predicate(item)`` returns True."""
+
+    def predicate_false(self, item):
+        """Called when ``predicate(item)`` returns False."""
+
+    def _filterfalse(self, serialized):
+        for item in serialized:
+            if self.predicate(item):
+                self.predicate_true(item)
+            else:
+                self.predicate_false(item)
+                yield item
+
     def __enter__(self):
         return self
 

@@ -2,6 +2,7 @@
 import inspect
 import sys
 from . import _unittest as unittest
+from datatest.utils.builtins import *
 from datatest.utils import collections
 from datatest.utils import contextlib
 from datatest.utils import itertools
@@ -59,6 +60,18 @@ class TestBaseAllowance2(unittest.TestCase):
         expected = {'A': ['x', 'y'], 'B': ['x', 'y']}
         self.assertEqual(actual, expected)
 
+    def test_filterfalse(self):
+        class allowed_missing(BaseAllowance2):
+            def predicate(_self, item):
+                return isinstance(item[1], Missing)  # Allowed missing.
+
+        allowed = allowed_missing()
+        result = allowed._filterfalse([
+            (None, Missing('A')),
+            (None, Extra('B')),
+        ])
+        self.assertEqual(list(result), [(None, Extra('B'))])
+
     def test_enter_context(self):
         """The __enter__() method should return the object itself
         (see PEP 343 for context manager protocol).
@@ -81,6 +94,52 @@ class TestBaseAllowance2(unittest.TestCase):
         with self.assertRaises(ValidationError):
             allowance = BaseAllowance2()
             allowance.__exit__(type, value, traceback)
+
+
+class TestAllowanceProtocol(unittest.TestCase):
+    def setUp(self):
+        class LoggingAllowance(BaseAllowance2):
+            def __init__(_self):
+                _self.log = []
+
+            def __getattribute__(_self, name):
+                attr = object.__getattribute__(_self, name)
+                if name in ('log', '_filterfalse'):
+                    return attr  # <- EXIT!
+
+                if callable(attr):
+                    def wrapper(*args, **kwds):
+                        args_repr = [repr(arg) for arg in args]
+                        for key, value in kwds.items():
+                            args_repr.append('{0}={1!r}'.format(key, value))
+                        args_repr = ', '.join(args_repr)
+                        _self.log.append('{0}({1})'.format(name, args_repr))
+                        return attr(*args, **kwds)
+                    return wrapper  # <- EXIT!
+                _self.log.append(name)
+                return attr
+
+        self.LoggingAllowance = LoggingAllowance
+
+    def test_allowance_protocol(self):
+        class allowed_missing(self.LoggingAllowance):
+            def predicate(_self, item):
+                return isinstance(item[1], Missing)  # Allowed missing.
+
+        allowed = allowed_missing()
+        result = allowed._filterfalse([
+            (None, Missing('A')),
+            (None, Extra('B')),
+        ])
+        list(result)  # Evaluate entire iterator, discarding result.
+
+        expected = [
+            "predicate((None, Missing('A')))",
+            "predicate_true((None, Missing('A')))",
+            "predicate((None, Extra('B')))",
+            "predicate_false((None, Extra('B')))",
+        ]
+        self.assertEqual(allowed.log, expected)
 
 
 class TestBaseAllowance(unittest.TestCase):
