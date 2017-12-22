@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import inspect
+import sys
 from . import _unittest as unittest
 from datatest.utils import collections
 from datatest.utils import contextlib
@@ -57,6 +58,29 @@ class TestBaseAllowance2(unittest.TestCase):
         actual = BaseAllowance2._deserialized_items(stream)
         expected = {'A': ['x', 'y'], 'B': ['x', 'y']}
         self.assertEqual(actual, expected)
+
+    def test_enter_context(self):
+        """The __enter__() method should return the object itself
+        (see PEP 343 for context manager protocol).
+        """
+        allowance = BaseAllowance2()
+        result = allowance.__enter__()
+        self.assertIs(result, allowance)
+
+    def test_exit_context(self):
+        """The __exit__() method should re-raise exceptions that are
+        not allowed and it should return True when there are no errors
+        or if all differences have been allowed (see PEP 343 for
+        context manager protocol).
+        """
+        try:
+            raise ValidationError('invalid data', [Missing('A'), Extra('B')])
+        except ValidationError:
+            type, value, traceback = sys.exc_info()  # Get exception info.
+
+        with self.assertRaises(ValidationError):
+            allowance = BaseAllowance2()
+            allowance.__exit__(type, value, traceback)
 
 
 class TestBaseAllowance(unittest.TestCase):

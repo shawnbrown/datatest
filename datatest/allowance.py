@@ -191,6 +191,14 @@ class BaseAllowance2(abc.ABC):  # Refactoring to simplify internals.
 
         return dict((key, make_value(group)) for key, group in grouped)
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, tb):
+        if exc_type:
+            raise exc_value
+        return True
+
 
 class ElementAllowance(BaseAllowance):
     """Allow differences where *predicate* returns True. For each
