@@ -162,35 +162,6 @@ class BaseAllowance(abc.ABC):
 
 
 class BaseAllowance2(abc.ABC):  # Refactoring to simplify internals.
-    @staticmethod
-    def _serialized_items(iterable):
-        if isinstance(iterable, collections.Mapping):
-            for key in iterable:
-                value = iterable[key]
-                if isinstance(value, (BaseElement, Exception)):
-                    yield (key, value)
-                else:
-                    for subvalue in value:
-                        yield (key, subvalue)
-        else:
-            for value in iterable:
-                yield (None, value)
-
-    @staticmethod
-    def _deserialized_items(iterable):
-        def make_key(item):
-            return item[0]
-
-        grouped = itertools.groupby(iterable, key=make_key)
-
-        def make_value(group):
-            value = [item[1] for item in group]
-            if len(value) == 1:
-                return value.pop()
-            return value
-
-        return dict((key, make_value(group)) for key, group in grouped)
-
     def start_filterfalse(self):
         """Called first before any groups or predicate checking."""
 
@@ -231,6 +202,35 @@ class BaseAllowance2(abc.ABC):  # Refactoring to simplify internals.
             self.end_group(key)
 
         self.end_filterfalse()
+
+    @staticmethod
+    def _serialized_items(iterable):
+        if isinstance(iterable, collections.Mapping):
+            for key in iterable:
+                value = iterable[key]
+                if isinstance(value, (BaseElement, Exception)):
+                    yield (key, value)
+                else:
+                    for subvalue in value:
+                        yield (key, subvalue)
+        else:
+            for value in iterable:
+                yield (None, value)
+
+    @staticmethod
+    def _deserialized_items(iterable):
+        def make_key(item):
+            return item[0]
+
+        grouped = itertools.groupby(iterable, key=make_key)
+
+        def make_value(group):
+            value = [item[1] for item in group]
+            if len(value) == 1:
+                return value.pop()
+            return value
+
+        return dict((key, make_value(group)) for key, group in grouped)
 
     def __enter__(self):
         return self
