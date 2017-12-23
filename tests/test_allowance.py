@@ -159,11 +159,11 @@ class TestBaseAllowance2Integration(unittest.TestCase):
                 return isinstance(item[1], Missing)
 
         with self.assertRaises(ValidationError) as cm:
-            with allowed_missing():
+            with allowed_missing('example allowance'):
                 raise ValidationError('example error', [Missing('A'), Extra('B')])
 
-        differences = cm.exception.differences
-        self.assertEqual(list(differences), [Extra('B')])
+        self.assertEqual(cm.exception.message, 'example allowance: example error')
+        self.assertEqual(list(cm.exception.differences), [Extra('B')])
 
 
 class TestCombinedAllowance(unittest.TestCase):

@@ -162,6 +162,10 @@ class BaseAllowance(abc.ABC):
 
 
 class BaseAllowance2(abc.ABC):
+    def __init__(self, msg=None):
+        """Initialize object values."""
+        self.msg = msg
+
     ######################################
     # Hook methods for allowance protocol.
     ######################################
@@ -261,8 +265,12 @@ class BaseAllowance2(abc.ABC):
             if isinstance(differences, BaseDifference):
                 differences = [differences]
 
-        # Build new ValidationError with remaining differences.
+        # Extend message with allowance message.
         message = getattr(exc_value, 'message', '')
+        if self.msg:
+            message = '{0}: {1}'.format(self.msg, message)
+
+        # Build new ValidationError with remaining differences.
         exc = ValidationError(message, differences)
 
         # Re-raised error inherits truncation behavior of original.
@@ -276,12 +284,13 @@ class BaseAllowance2(abc.ABC):
 
 
 class CombinedAllowance(BaseAllowance2):
-    def __init__(self, left, right, operator='and'):
+    def __init__(self, left, right, operator='and', msg=None):
         if operator not in ('and', 'or'):
             raise ValueError("operator must be 'and' or 'or'")
         self.left = left
         self.right = right
         self.operator = operator
+        self.msg = msg
 
     def start_filterfalse(self):
         self.left.start_filterfalse()
