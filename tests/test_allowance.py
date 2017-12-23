@@ -165,6 +165,34 @@ class TestBaseAllowance2Integration(unittest.TestCase):
         self.assertEqual(cm.exception.message, 'example allowance: example error')
         self.assertEqual(list(cm.exception.differences), [Extra('B')])
 
+    def test_composition(self):
+        class allowed_missing(BaseAllowance2):
+            def predicate(_self, item):
+                return isinstance(item[1], Missing)
+
+        class allowed_extra(BaseAllowance2):
+            def predicate(_self, item):
+                return isinstance(item[1], Extra)
+
+        left = allowed_missing()
+        right = allowed_extra()
+
+        # Compose with bitwise-and operator.
+        combined = left & right
+        self.assertIsInstance(combined, CombinedAllowance)
+        self.assertIs(combined.left, left)
+        self.assertIs(combined.right, right)
+        self.assertEqual(combined.operator, 'and')
+        self.assertEqual(combined.msg, '(allowed_missing <and> allowed_extra)')
+
+        # Compose with bitwise-or operator.
+        combined = left | right
+        self.assertIsInstance(combined, CombinedAllowance)
+        self.assertIs(combined.left, left)
+        self.assertIs(combined.right, right)
+        self.assertEqual(combined.operator, 'or')
+        self.assertEqual(combined.msg, '(allowed_missing <or> allowed_extra)')
+
 
 class TestCombinedAllowance(unittest.TestCase):
     def setUp(self):

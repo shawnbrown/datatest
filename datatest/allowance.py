@@ -282,6 +282,29 @@ class BaseAllowance2(abc.ABC):
                               #    versions--see PEP 415 (same as
                               #    effect as "raise ... from None").
 
+    ####################################
+    # Operators for boolean composition.
+    ####################################
+    def __or__(self, other):
+        if not isinstance(other, BaseAllowance2):
+            return NotImplemented
+
+        message = '({0} <or> {1})'.format(
+            self.msg or self.__class__.__name__,
+            other.msg or other.__class__.__name__,
+        )
+        return CombinedAllowance(self, other, operator='or', msg=message)
+
+    def __and__(self, other):
+        if not isinstance(other, BaseAllowance2):
+            return NotImplemented
+
+        message = '({0} <and> {1})'.format(
+            self.msg or self.__class__.__name__,
+            other.msg or other.__class__.__name__,
+        )
+        return CombinedAllowance(self, other, operator='and', msg=message)
+
 
 class CombinedAllowance(BaseAllowance2):
     def __init__(self, left, right, operator='and', msg=None):
