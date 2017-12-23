@@ -275,6 +275,46 @@ class BaseAllowance2(abc.ABC):
                               #    effect as "raise ... from None").
 
 
+class CombinedAllowance(BaseAllowance2):
+    def __init__(self, left, right, operator='and'):
+        if operator not in ('and', 'or'):
+            raise ValueError("operator must be 'and' or 'or'")
+        self.left = left
+        self.right = right
+        self.operator = operator
+
+    def start_filterfalse(self):
+        self.left.start_filterfalse()
+        self.right.start_filterfalse()
+
+    def start_group(self, key):
+        self.left.start_group(key)
+        self.right.start_group(key)
+
+    def predicate(self, item):
+        if self.operator == 'and':
+            return self.left.predicate(item) and self.right.predicate(item)
+        elif self.operator == 'or':
+            return self.left.predicate(item) or self.right.predicate(item)
+        raise ValueError("operator must be 'and' or 'or'")
+
+    def predicate_true(self, item):
+        self.left.predicate_true(item)
+        self.right.predicate_true(item)
+
+    def predicate_false(self, item):
+        self.left.predicate_false(item)
+        self.right.predicate_false(item)
+
+    def end_group(self, key):
+        self.left.end_group(key)
+        self.right.end_group(key)
+
+    def end_filterfalse(self):
+        self.left.end_filterfalse()
+        self.right.end_filterfalse()
+
+
 class ElementAllowance(BaseAllowance):
     """Allow differences where *predicate* returns True. For each
     difference, *predicate* will receive two arguments---a **key**

@@ -8,6 +8,7 @@ from datatest.utils import contextlib
 from datatest.utils import itertools
 
 from datatest.allowance import BaseAllowance2
+from datatest.allowance import CombinedAllowance
 from datatest.allowance import BaseAllowance
 from datatest.allowance import ElementAllowance
 from datatest.allowance import allowed_missing
@@ -161,6 +162,50 @@ class TestBaseAllowance2Integration(unittest.TestCase):
             with allowed_missing():
                 raise ValidationError('example error', [Missing('A'), Extra('B')])
 
+        differences = cm.exception.differences
+        self.assertEqual(list(differences), [Extra('B')])
+
+
+class TestCombinedAllowance(unittest.TestCase):
+    def setUp(self):
+        class allowed_missing(BaseAllowance2):
+            def predicate(_self, item):
+                return isinstance(item[1], Missing)
+
+        class allowed_value_A(BaseAllowance2):
+            def predicate(_self, item):
+                return item[1].args == ('A',)
+
+        self.allowed_missing = allowed_missing
+        self.allowed_value_A = allowed_value_A
+
+    def test_logical_and(self):
+        left_and_right = CombinedAllowance(
+            left=self.allowed_missing(),
+            right=self.allowed_value_A(),
+            operator='and',
+        )
+        with self.assertRaises(ValidationError) as cm:
+            with left_and_right:
+                raise ValidationError(
+                    'example error',
+                    [Missing('A'), Extra('A'), Missing('B'), Extra('B')],
+                )
+        differences = cm.exception.differences
+        self.assertEqual(list(differences), [Extra('A'), Missing('B'), Extra('B')])
+
+    def test_logical_or(self):
+        left_or_right = CombinedAllowance(
+            left=self.allowed_missing(),
+            right=self.allowed_value_A(),
+            operator='or',
+        )
+        with self.assertRaises(ValidationError) as cm:
+            with left_or_right:
+                raise ValidationError(
+                    'example error',
+                    [Missing('A'), Extra('A'), Missing('B'), Extra('B')],
+                )
         differences = cm.exception.differences
         self.assertEqual(list(differences), [Extra('B')])
 
