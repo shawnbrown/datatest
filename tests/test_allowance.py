@@ -77,7 +77,11 @@ class TestBaseAllowance2(unittest.TestCase):
         """The __enter__() method should return the object itself
         (see PEP 343 for context manager protocol).
         """
-        allowance = BaseAllowance2()
+        class MinimalAllowance(BaseAllowance2):
+            def predicate(self, item):
+                return False
+
+        allowance = MinimalAllowance()
         result = allowance.__enter__()
         self.assertIs(result, allowance)
 
@@ -92,8 +96,12 @@ class TestBaseAllowance2(unittest.TestCase):
         except ValidationError:
             type, value, traceback = sys.exc_info()  # Get exception info.
 
+        class MinimalAllowance(BaseAllowance2):
+            def predicate(self, item):
+                return False
+
         with self.assertRaises(ValidationError):
-            allowance = BaseAllowance2()
+            allowance = MinimalAllowance()
             allowance.__exit__(type, value, traceback)
 
 

@@ -175,6 +175,7 @@ class BaseAllowance2(abc.ABC):
     def start_group(self, key):
         """Called before processing each group."""
 
+    @abc.abstractmethod
     def predicate(self, item):
         """Call once for each item."""
         return False
