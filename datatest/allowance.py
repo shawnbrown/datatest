@@ -242,9 +242,37 @@ class BaseAllowance2(abc.ABC):
         return self
 
     def __exit__(self, exc_type, exc_value, tb):
-        if exc_type:
+        if exc_type and not issubclass(exc_type, ValidationError):
             raise exc_value
-        return True
+
+        differences = getattr(exc_value, 'differences', [])
+        is_not_mapping = not isinstance(differences, collections.Mapping)
+
+        stream = self._serialized_items(differences)
+        stream = self._filterfalse(stream)
+        differences = self._deserialized_items(stream)
+
+        if not differences:
+            return True  # <- EXIT!
+
+        if is_not_mapping:
+            assert len(differences) == 1
+            differences = differences.popitem()[1]
+            if isinstance(differences, BaseDifference):
+                differences = [differences]
+
+        # Build new ValidationError with remaining differences.
+        message = getattr(exc_value, 'message', '')
+        exc = ValidationError(message, differences)
+
+        # Re-raised error inherits truncation behavior of original.
+        exc._should_truncate = exc_value._should_truncate
+        exc._truncation_notice = exc_value._truncation_notice
+
+        exc.__cause__ = None  # <- Suppress context using verbose
+        raise exc             #    alternative to support older Python
+                              #    versions--see PEP 415 (same as
+                              #    effect as "raise ... from None").
 
 
 class ElementAllowance(BaseAllowance):

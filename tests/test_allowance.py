@@ -151,6 +151,20 @@ class TestAllowanceProtocol(unittest.TestCase):
         self.assertEqual(allowed.log, expected)
 
 
+class TestBaseAllowance2Integration(unittest.TestCase):
+    def test_allowance(self):
+        class allowed_missing(BaseAllowance2):
+            def predicate(_self, item):
+                return isinstance(item[1], Missing)
+
+        with self.assertRaises(ValidationError) as cm:
+            with allowed_missing():
+                raise ValidationError('example error', [Missing('A'), Extra('B')])
+
+        differences = cm.exception.differences
+        self.assertEqual(list(differences), [Extra('B')])
+
+
 class TestBaseAllowance(unittest.TestCase):
     def test_all_filterfalse_good_list(self):
         class AllowEverything(BaseAllowance):
