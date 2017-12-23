@@ -300,7 +300,7 @@ class BaseAllowance2(abc.ABC):
 
 
 class CombinedAllowance(BaseAllowance2):
-    def __init__(self, left, right, operator='and', msg=None):
+    def __init__(self, left, right, operator, msg=None):
         if operator not in ('and', 'or'):
             raise ValueError("operator must be 'and' or 'or'")
         self.left = left
