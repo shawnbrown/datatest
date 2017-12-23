@@ -186,6 +186,31 @@ class BaseAllowance2(abc.ABC):
     def end_collection(self):
         """Called last after all items have been checked."""
 
+    ####################################
+    # Operators for boolean composition.
+    ####################################
+    @abc.abstractmethod
+    def __or__(self, other):
+        if not isinstance(other, BaseAllowance2):
+            return NotImplemented
+
+        message = '({0} <or> {1})'.format(
+            self.msg or self.__class__.__name__,
+            other.msg or other.__class__.__name__,
+        )
+        return CombinedAllowance(self, other, operator='or', msg=message)
+
+    @abc.abstractmethod
+    def __and__(self, other):
+        if not isinstance(other, BaseAllowance2):
+            return NotImplemented
+
+        message = '({0} <and> {1})'.format(
+            self.msg or self.__class__.__name__,
+            other.msg or other.__class__.__name__,
+        )
+        return CombinedAllowance(self, other, operator='and', msg=message)
+
     ###############################################
     # Data handling methods for context management.
     ###############################################
@@ -274,31 +299,6 @@ class BaseAllowance2(abc.ABC):
         raise exc             #    alternative to support older Python
                               #    versions--see PEP 415 (same as
                               #    effect as "raise ... from None").
-
-    ####################################
-    # Operators for boolean composition.
-    ####################################
-    @abc.abstractmethod
-    def __or__(self, other):
-        if not isinstance(other, BaseAllowance2):
-            return NotImplemented
-
-        message = '({0} <or> {1})'.format(
-            self.msg or self.__class__.__name__,
-            other.msg or other.__class__.__name__,
-        )
-        return CombinedAllowance(self, other, operator='or', msg=message)
-
-    @abc.abstractmethod
-    def __and__(self, other):
-        if not isinstance(other, BaseAllowance2):
-            return NotImplemented
-
-        message = '({0} <and> {1})'.format(
-            self.msg or self.__class__.__name__,
-            other.msg or other.__class__.__name__,
-        )
-        return CombinedAllowance(self, other, operator='and', msg=message)
 
 
 class CombinedAllowance(BaseAllowance2):
