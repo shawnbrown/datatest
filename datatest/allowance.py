@@ -176,15 +176,9 @@ class BaseAllowance2(abc.ABC):
         """Called before processing each group."""
 
     @abc.abstractmethod
-    def predicate(self, item):
+    def call_predicate(self, item):
         """Call once for each item."""
         return False
-
-    def predicate_true(self, item):
-        """Called after ``predicate(item)`` returns True."""
-
-    def predicate_false(self, item):
-        """Called after ``predicate(item)`` returns False."""
 
     def end_group(self, key):
         """Called after processing each group."""
@@ -205,11 +199,9 @@ class BaseAllowance2(abc.ABC):
         for key, group in grouped:
             self.start_group(key)
             for item in group:
-                if self.predicate(item):
-                    self.predicate_true(item)
-                else:
-                    self.predicate_false(item)
-                    yield item
+                if self.call_predicate(item):
+                    continue
+                yield item
             self.end_group(key)
 
         self.end_collection()
@@ -324,20 +316,14 @@ class CombinedAllowance(BaseAllowance2):
         self.left.start_group(key)
         self.right.start_group(key)
 
-    def predicate(self, item):
+    def call_predicate(self, item):
         if self.operator == 'and':
-            return self.left.predicate(item) and self.right.predicate(item)
+            return (self.left.call_predicate(item)
+                    and self.right.call_predicate(item))
         elif self.operator == 'or':
-            return self.left.predicate(item) or self.right.predicate(item)
+            return (self.left.call_predicate(item)
+                    or self.right.call_predicate(item))
         raise ValueError("operator must be 'and' or 'or'")
-
-    def predicate_true(self, item):
-        self.left.predicate_true(item)
-        self.right.predicate_true(item)
-
-    def predicate_false(self, item):
-        self.left.predicate_false(item)
-        self.right.predicate_false(item)
 
     def end_group(self, key):
         self.left.end_group(key)

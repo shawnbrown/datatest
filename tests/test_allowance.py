@@ -63,8 +63,8 @@ class TestBaseAllowance2(unittest.TestCase):
 
     def test_filterfalse(self):
         class allowed_missing(BaseAllowance2):
-            def predicate(_self, item):
-                return isinstance(item[1], Missing)  # Allowed missing.
+            def call_predicate(_self, item):
+                return isinstance(item[1], Missing)
 
         allowed = allowed_missing()
         result = allowed._filterfalse([
@@ -78,7 +78,7 @@ class TestBaseAllowance2(unittest.TestCase):
         (see PEP 343 for context manager protocol).
         """
         class MinimalAllowance(BaseAllowance2):
-            def predicate(self, item):
+            def call_predicate(self, item):
                 return False
 
         allowance = MinimalAllowance()
@@ -97,7 +97,7 @@ class TestBaseAllowance2(unittest.TestCase):
             type, value, traceback = sys.exc_info()  # Get exception info.
 
         class MinimalAllowance(BaseAllowance2):
-            def predicate(self, item):
+            def call_predicate(self, item):
                 return False
 
         with self.assertRaises(ValidationError):
@@ -132,7 +132,7 @@ class TestAllowanceProtocol(unittest.TestCase):
 
     def test_allowance_protocol(self):
         class allowed_missing(self.LoggingAllowance):
-            def predicate(_self, item):
+            def call_predicate(_self, item):
                 return isinstance(item[1], Missing)  # Allowed missing.
 
         allowed = allowed_missing()
@@ -146,14 +146,11 @@ class TestAllowanceProtocol(unittest.TestCase):
         expected = [
             'start_collection()',
             "start_group('foo')",
-            "predicate(('foo', Missing('A')))",
-            "predicate_true(('foo', Missing('A')))",
-            "predicate(('foo', Extra('B')))",
-            "predicate_false(('foo', Extra('B')))",
+            "call_predicate(('foo', Missing('A')))",
+            "call_predicate(('foo', Extra('B')))",
             "end_group('foo')",
             "start_group('bar')",
-            "predicate(('bar', Missing('C')))",
-            "predicate_true(('bar', Missing('C')))",
+            "call_predicate(('bar', Missing('C')))",
             "end_group('bar')",
             'end_collection()',
         ]
@@ -163,7 +160,7 @@ class TestAllowanceProtocol(unittest.TestCase):
 class TestBaseAllowance2Integration(unittest.TestCase):
     def test_allowance(self):
         class allowed_missing(BaseAllowance2):
-            def predicate(_self, item):
+            def call_predicate(_self, item):
                 return isinstance(item[1], Missing)
 
         with self.assertRaises(ValidationError) as cm:
@@ -175,11 +172,11 @@ class TestBaseAllowance2Integration(unittest.TestCase):
 
     def test_composition(self):
         class allowed_missing(BaseAllowance2):
-            def predicate(_self, item):
+            def call_predicate(_self, item):
                 return isinstance(item[1], Missing)
 
         class allowed_extra(BaseAllowance2):
-            def predicate(_self, item):
+            def call_predicate(_self, item):
                 return isinstance(item[1], Extra)
 
         left = allowed_missing()
@@ -205,11 +202,11 @@ class TestBaseAllowance2Integration(unittest.TestCase):
 class TestCombinedAllowance(unittest.TestCase):
     def setUp(self):
         class allowed_missing(BaseAllowance2):
-            def predicate(_self, item):
+            def call_predicate(_self, item):
                 return isinstance(item[1], Missing)
 
         class allowed_value_A(BaseAllowance2):
-            def predicate(_self, item):
+            def call_predicate(_self, item):
                 return item[1].args == ('A',)
 
         self.allowed_missing = allowed_missing
