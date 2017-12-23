@@ -28,6 +28,17 @@ from datatest.difference import Invalid
 from datatest.difference import Deviation
 
 
+class MinimalAllowance(BaseAllowance2):  # Minimal subclass for testing.
+    def call_predicate(self, item):
+        return False
+
+    def __and__(self, other):
+        return super(MinimalAllowance, self).__and__(other)
+
+    def __or__(self, other):
+        return super(MinimalAllowance, self).__or__(other)
+
+
 class TestBaseAllowance2(unittest.TestCase):
     def test_serialized_items(self):
         item_list = [1, 2]
@@ -62,7 +73,7 @@ class TestBaseAllowance2(unittest.TestCase):
         self.assertEqual(actual, expected)
 
     def test_filterfalse(self):
-        class allowed_missing(BaseAllowance2):
+        class allowed_missing(MinimalAllowance):
             def call_predicate(_self, item):
                 return isinstance(item[1], Missing)
 
@@ -77,10 +88,6 @@ class TestBaseAllowance2(unittest.TestCase):
         """The __enter__() method should return the object itself
         (see PEP 343 for context manager protocol).
         """
-        class MinimalAllowance(BaseAllowance2):
-            def call_predicate(self, item):
-                return False
-
         allowance = MinimalAllowance()
         result = allowance.__enter__()
         self.assertIs(result, allowance)
@@ -96,10 +103,6 @@ class TestBaseAllowance2(unittest.TestCase):
         except ValidationError:
             type, value, traceback = sys.exc_info()  # Get exception info.
 
-        class MinimalAllowance(BaseAllowance2):
-            def call_predicate(self, item):
-                return False
-
         with self.assertRaises(ValidationError):
             allowance = MinimalAllowance()
             allowance.__exit__(type, value, traceback)
@@ -107,7 +110,7 @@ class TestBaseAllowance2(unittest.TestCase):
 
 class TestAllowanceProtocol(unittest.TestCase):
     def setUp(self):
-        class LoggingAllowance(BaseAllowance2):
+        class LoggingAllowance(MinimalAllowance):
             def __init__(_self):
                 _self.log = []
 
@@ -159,7 +162,7 @@ class TestAllowanceProtocol(unittest.TestCase):
 
 class TestBaseAllowance2Integration(unittest.TestCase):
     def test_allowance(self):
-        class allowed_missing(BaseAllowance2):
+        class allowed_missing(MinimalAllowance):
             def call_predicate(_self, item):
                 return isinstance(item[1], Missing)
 
@@ -171,11 +174,11 @@ class TestBaseAllowance2Integration(unittest.TestCase):
         self.assertEqual(list(cm.exception.differences), [Extra('B')])
 
     def test_composition(self):
-        class allowed_missing(BaseAllowance2):
+        class allowed_missing(MinimalAllowance):
             def call_predicate(_self, item):
                 return isinstance(item[1], Missing)
 
-        class allowed_extra(BaseAllowance2):
+        class allowed_extra(MinimalAllowance):
             def call_predicate(_self, item):
                 return isinstance(item[1], Extra)
 
@@ -201,11 +204,11 @@ class TestBaseAllowance2Integration(unittest.TestCase):
 
 class TestCombinedAllowance(unittest.TestCase):
     def setUp(self):
-        class allowed_missing(BaseAllowance2):
+        class allowed_missing(MinimalAllowance):
             def call_predicate(_self, item):
                 return isinstance(item[1], Missing)
 
-        class allowed_value_A(BaseAllowance2):
+        class allowed_value_A(MinimalAllowance):
             def call_predicate(_self, item):
                 return item[1].args == ('A',)
 

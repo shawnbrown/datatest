@@ -278,6 +278,7 @@ class BaseAllowance2(abc.ABC):
     ####################################
     # Operators for boolean composition.
     ####################################
+    @abc.abstractmethod
     def __or__(self, other):
         if not isinstance(other, BaseAllowance2):
             return NotImplemented
@@ -288,6 +289,7 @@ class BaseAllowance2(abc.ABC):
         )
         return CombinedAllowance(self, other, operator='or', msg=message)
 
+    @abc.abstractmethod
     def __and__(self, other):
         if not isinstance(other, BaseAllowance2):
             return NotImplemented
@@ -332,6 +334,12 @@ class CombinedAllowance(BaseAllowance2):
     def end_collection(self):
         self.left.end_collection()
         self.right.end_collection()
+
+    def __and__(self, other):
+        return super(CombinedAllowance, self).__and__(other)
+
+    def __or__(self, other):
+        return super(CombinedAllowance, self).__or__(other)
 
 
 class ElementAllowance(BaseAllowance):
