@@ -169,8 +169,8 @@ class BaseAllowance2(abc.ABC):
     ######################################
     # Hook methods for allowance protocol.
     ######################################
-    def start_filterfalse(self):
-        """Called first before any groups or predicate checking."""
+    def start_collection(self):
+        """Called first before any group or predicate checking."""
 
     def start_group(self, key):
         """Called before processing each group."""
@@ -189,14 +189,14 @@ class BaseAllowance2(abc.ABC):
     def end_group(self, key):
         """Called after processing each group."""
 
-    def end_filterfalse(self):
+    def end_collection(self):
         """Called last after all items have been checked."""
 
     ###############################################
     # Data handling methods for context management.
     ###############################################
     def _filterfalse(self, serialized):
-        self.start_filterfalse()
+        self.start_collection()
 
         def make_key(item):
             return item[0]
@@ -212,7 +212,7 @@ class BaseAllowance2(abc.ABC):
                     yield item
             self.end_group(key)
 
-        self.end_filterfalse()
+        self.end_collection()
 
     @staticmethod
     def _serialized_items(iterable):
@@ -316,9 +316,9 @@ class CombinedAllowance(BaseAllowance2):
         self.operator = operator
         self.msg = msg
 
-    def start_filterfalse(self):
-        self.left.start_filterfalse()
-        self.right.start_filterfalse()
+    def start_collection(self):
+        self.left.start_collection()
+        self.right.start_collection()
 
     def start_group(self, key):
         self.left.start_group(key)
@@ -343,9 +343,9 @@ class CombinedAllowance(BaseAllowance2):
         self.left.end_group(key)
         self.right.end_group(key)
 
-    def end_filterfalse(self):
-        self.left.end_filterfalse()
-        self.right.end_filterfalse()
+    def end_collection(self):
+        self.left.end_collection()
+        self.right.end_collection()
 
 
 class ElementAllowance(BaseAllowance):

@@ -144,7 +144,7 @@ class TestAllowanceProtocol(unittest.TestCase):
         list(result)  # Evaluate entire iterator, discarding result.
 
         expected = [
-            'start_filterfalse()',
+            'start_collection()',
             "start_group('foo')",
             "predicate(('foo', Missing('A')))",
             "predicate_true(('foo', Missing('A')))",
@@ -155,7 +155,7 @@ class TestAllowanceProtocol(unittest.TestCase):
             "predicate(('bar', Missing('C')))",
             "predicate_true(('bar', Missing('C')))",
             "end_group('bar')",
-            'end_filterfalse()',
+            'end_collection()',
         ]
         self.assertEqual(allowed.log, expected)
 
