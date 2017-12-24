@@ -162,6 +162,9 @@ class BaseAllowance(abc.ABC):
 
 
 class BaseAllowance2(abc.ABC):
+    """Context manager to allow certain differences without
+    triggering a test failure.
+    """
     def __init__(self, msg=None):
         """Initialize object values."""
         self.msg = msg
@@ -190,26 +193,12 @@ class BaseAllowance2(abc.ABC):
     # Operators for boolean composition.
     ####################################
     @abc.abstractmethod
-    def __or__(self, other):
-        if not isinstance(other, BaseAllowance2):
-            return NotImplemented
-
-        message = '({0} <or> {1})'.format(
-            self.msg or self.__class__.__name__,
-            other.msg or other.__class__.__name__,
-        )
-        return CombinedAllowance(self, other, operator='or', msg=message)
+    def __and__(self, other):
+        return NotImplemented
 
     @abc.abstractmethod
-    def __and__(self, other):
-        if not isinstance(other, BaseAllowance2):
-            return NotImplemented
-
-        message = '({0} <and> {1})'.format(
-            self.msg or self.__class__.__name__,
-            other.msg or other.__class__.__name__,
-        )
-        return CombinedAllowance(self, other, operator='and', msg=message)
+    def __or__(self, other):
+        return NotImplemented
 
     ###############################################
     # Data handling methods for context management.
@@ -301,13 +290,11 @@ class BaseAllowance2(abc.ABC):
                               #    effect as "raise ... from None").
 
 
-class CombinedAllowance(BaseAllowance2):
-    def __init__(self, left, right, operator, msg=None):
-        if operator not in ('and', 'or'):
-            raise ValueError("operator must be 'and' or 'or'")
+class BaseMixin(BaseAllowance2):
+    """Base class for mixins to support composition of allowances."""
+    def __init__(self, left, right, msg=None):
         self.left = left
         self.right = right
-        self.operator = operator
         self.msg = msg
 
     def start_collection(self):
@@ -318,15 +305,6 @@ class CombinedAllowance(BaseAllowance2):
         self.left.start_group(key)
         self.right.start_group(key)
 
-    def call_predicate(self, item):
-        if self.operator == 'and':
-            return (self.left.call_predicate(item)
-                    and self.right.call_predicate(item))
-        elif self.operator == 'or':
-            return (self.left.call_predicate(item)
-                    or self.right.call_predicate(item))
-        raise ValueError("operator must be 'and' or 'or'")
-
     def end_group(self, key):
         self.left.end_group(key)
         self.right.end_group(key)
@@ -335,11 +313,35 @@ class CombinedAllowance(BaseAllowance2):
         self.left.end_collection()
         self.right.end_collection()
 
-    def __and__(self, other):
-        return super(CombinedAllowance, self).__and__(other)
 
-    def __or__(self, other):
-        return super(CombinedAllowance, self).__or__(other)
+class LogicalAndMixin(BaseMixin):
+    """Mixin class to combine allowances using logical AND condition."""
+    def __init__(self, left, right, msg=None):
+        if not msg:
+            msg = '({0} <and> {1})'.format(
+                left.msg or left.__class__.__name__,
+                right.msg or right.__class__.__name__,
+            )
+        super(LogicalAndMixin, self).__init__(left, right, msg)
+
+    def call_predicate(self, item):
+        return (self.left.call_predicate(item)
+                and self.right.call_predicate(item))
+
+
+class LogicalOrMixin(BaseMixin):
+    """Mixin class to combine allowances using logical OR condition."""
+    def __init__(self, left, right, msg=None):
+        if not msg:
+            msg = '({0} <or> {1})'.format(
+                left.msg or left.__class__.__name__,
+                right.msg or right.__class__.__name__,
+            )
+        super(LogicalOrMixin, self).__init__(left, right, msg)
+
+    def call_predicate(self, item):
+        return (self.left.call_predicate(item)
+                or self.right.call_predicate(item))
 
 
 class ElementAllowance(BaseAllowance):

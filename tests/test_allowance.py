@@ -8,7 +8,8 @@ from datatest.utils import contextlib
 from datatest.utils import itertools
 
 from datatest.allowance import BaseAllowance2
-from datatest.allowance import CombinedAllowance
+from datatest.allowance import LogicalAndMixin
+from datatest.allowance import LogicalOrMixin
 from datatest.allowance import BaseAllowance
 from datatest.allowance import ElementAllowance
 from datatest.allowance import allowed_missing
@@ -28,15 +29,15 @@ from datatest.difference import Invalid
 from datatest.difference import Deviation
 
 
-class MinimalAllowance(BaseAllowance2):  # Minimal subclass for testing.
-    def call_predicate(self, item):
-        return False
-
-    def __and__(self, other):
-        return super(MinimalAllowance, self).__and__(other)
+class MinimalAllowance(BaseAllowance2):  # A minimal subclass for
+    def call_predicate(self, item):      # testing--defines three
+        return False                     # concrete stubs to satisfy
+                                         # abstract method requirement
+    def __and__(self, other):            # of the base class.
+        return NotImplemented
 
     def __or__(self, other):
-        return super(MinimalAllowance, self).__or__(other)
+        return NotImplemented
 
 
 class TestBaseAllowance2(unittest.TestCase):
@@ -111,8 +112,9 @@ class TestBaseAllowance2(unittest.TestCase):
 class TestAllowanceProtocol(unittest.TestCase):
     def setUp(self):
         class LoggingAllowance(MinimalAllowance):
-            def __init__(_self):
+            def __init__(_self, msg=None):
                 _self.log = []
+                super(LoggingAllowance, _self).__init__(msg)
 
             def __getattribute__(_self, name):
                 attr = object.__getattribute__(_self, name)
@@ -134,11 +136,7 @@ class TestAllowanceProtocol(unittest.TestCase):
         self.LoggingAllowance = LoggingAllowance
 
     def test_allowance_protocol(self):
-        class allowed_missing(self.LoggingAllowance):
-            def call_predicate(_self, item):
-                return isinstance(item[1], Missing)  # Allowed missing.
-
-        allowed = allowed_missing()
+        allowed = self.LoggingAllowance()
         result = allowed._filterfalse([
             ('foo', Missing('A')),
             ('foo', Extra('B')),
@@ -160,49 +158,7 @@ class TestAllowanceProtocol(unittest.TestCase):
         self.assertEqual(allowed.log, expected)
 
 
-class TestBaseAllowance2Integration(unittest.TestCase):
-    def test_allowance(self):
-        class allowed_missing(MinimalAllowance):
-            def call_predicate(_self, item):
-                return isinstance(item[1], Missing)
-
-        with self.assertRaises(ValidationError) as cm:
-            with allowed_missing('example allowance'):
-                raise ValidationError('example error', [Missing('A'), Extra('B')])
-
-        self.assertEqual(cm.exception.message, 'example allowance: example error')
-        self.assertEqual(list(cm.exception.differences), [Extra('B')])
-
-    def test_composition(self):
-        class allowed_missing(MinimalAllowance):
-            def call_predicate(_self, item):
-                return isinstance(item[1], Missing)
-
-        class allowed_extra(MinimalAllowance):
-            def call_predicate(_self, item):
-                return isinstance(item[1], Extra)
-
-        left = allowed_missing()
-        right = allowed_extra()
-
-        # Compose with bitwise-and operator.
-        combined = left & right
-        self.assertIsInstance(combined, CombinedAllowance)
-        self.assertIs(combined.left, left)
-        self.assertIs(combined.right, right)
-        self.assertEqual(combined.operator, 'and')
-        self.assertEqual(combined.msg, '(allowed_missing <and> allowed_extra)')
-
-        # Compose with bitwise-or operator.
-        combined = left | right
-        self.assertIsInstance(combined, CombinedAllowance)
-        self.assertIs(combined.left, left)
-        self.assertIs(combined.right, right)
-        self.assertEqual(combined.operator, 'or')
-        self.assertEqual(combined.msg, '(allowed_missing <or> allowed_extra)')
-
-
-class TestCombinedAllowance(unittest.TestCase):
+class TestLogicalMixins(unittest.TestCase):
     def setUp(self):
         class allowed_missing(MinimalAllowance):
             def call_predicate(_self, item):
@@ -212,17 +168,16 @@ class TestCombinedAllowance(unittest.TestCase):
             def call_predicate(_self, item):
                 return item[1].args == ('A',)
 
-        self.allowed_missing = allowed_missing
-        self.allowed_value_A = allowed_value_A
+        self.allowed_missing = allowed_missing()
+        self.allowed_value_A = allowed_value_A()
 
-    def test_logical_and(self):
-        left_and_right = CombinedAllowance(
-            left=self.allowed_missing(),
-            right=self.allowed_value_A(),
-            operator='and',
-        )
+    def test_LogicalAndMixin(self):
+        class LeftAndRight(LogicalAndMixin, MinimalAllowance):
+            pass
+
         with self.assertRaises(ValidationError) as cm:
-            with left_and_right:
+            with LeftAndRight(left=self.allowed_missing,
+                              right=self.allowed_value_A):
                 raise ValidationError(
                     'example error',
                     [Missing('A'), Extra('A'), Missing('B'), Extra('B')],
@@ -230,14 +185,13 @@ class TestCombinedAllowance(unittest.TestCase):
         differences = cm.exception.differences
         self.assertEqual(list(differences), [Extra('A'), Missing('B'), Extra('B')])
 
-    def test_logical_or(self):
-        left_or_right = CombinedAllowance(
-            left=self.allowed_missing(),
-            right=self.allowed_value_A(),
-            operator='or',
-        )
+    def test_LogicalOrMixin(self):
+        class LeftOrRight(LogicalOrMixin, MinimalAllowance):
+            pass
+
         with self.assertRaises(ValidationError) as cm:
-            with left_or_right:
+            with LeftOrRight(left=self.allowed_missing,
+                             right=self.allowed_value_A):
                 raise ValidationError(
                     'example error',
                     [Missing('A'), Extra('A'), Missing('B'), Extra('B')],
