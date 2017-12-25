@@ -10,6 +10,7 @@ from datatest.utils import itertools
 from datatest.allowance import BaseAllowance2
 from datatest.allowance import LogicalAndMixin
 from datatest.allowance import LogicalOrMixin
+from datatest.allowance import ElementAllowance2
 from datatest.allowance import BaseAllowance
 from datatest.allowance import ElementAllowance
 from datatest.allowance import allowed_missing
@@ -198,6 +199,38 @@ class TestLogicalMixins(unittest.TestCase):
                 )
         differences = cm.exception.differences
         self.assertEqual(list(differences), [Extra('B')])
+
+
+class TestElementAllowance2(unittest.TestCase):
+    def setUp(self):
+        class allowed_nothing(ElementAllowance2):
+            def call_predicate(_self, item):
+                return False
+        self.allowed_nothing = allowed_nothing
+
+    def test_bitwise_and(self):
+        left = self.allowed_nothing()
+        right = self.allowed_nothing()
+        composed = left & right  # <- Bitwise-and.
+
+        self.assertIsInstance(composed, ElementAllowance2)
+        self.assertIsInstance(composed, LogicalAndMixin)
+        self.assertIs(composed.left, left)
+        self.assertIs(composed.right, right)
+        self.assertEqual(composed.msg, '(allowed_nothing <and> allowed_nothing)')
+        self.assertEqual(composed.__class__.__name__, 'ComposedElementAllowance')
+
+    def test_bitwise_or(self):
+        left = self.allowed_nothing()
+        right = self.allowed_nothing()
+        composed = left | right  # <- Bitwise-or.
+
+        self.assertIsInstance(composed, ElementAllowance2)
+        self.assertIsInstance(composed, LogicalOrMixin)
+        self.assertIs(composed.left, left)
+        self.assertIs(composed.right, right)
+        self.assertEqual(composed.msg, '(allowed_nothing <or> allowed_nothing)')
+        self.assertEqual(composed.__class__.__name__, 'ComposedElementAllowance')
 
 
 class TestBaseAllowance(unittest.TestCase):

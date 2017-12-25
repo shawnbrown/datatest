@@ -344,6 +344,22 @@ class LogicalOrMixin(BaseMixin):
                 or self.right.call_predicate(item))
 
 
+class ElementAllowance2(BaseAllowance2):
+    def __and__(self, other):
+        if not isinstance(other, ElementAllowance2):
+            return NotImplemented
+        new_cls = type('ComposedElementAllowance',
+                       (LogicalAndMixin, ElementAllowance2), {})
+        return new_cls(left=self, right=other)
+
+    def __or__(self, other):
+        if not isinstance(other, ElementAllowance2):
+            return NotImplemented
+        new_cls = type('ComposedElementAllowance',
+                       (LogicalOrMixin, ElementAllowance2), {})
+        return new_cls(left=self, right=other)
+
+
 class ElementAllowance(BaseAllowance):
     """Allow differences where *predicate* returns True. For each
     difference, *predicate* will receive two arguments---a **key**
