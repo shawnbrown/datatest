@@ -360,6 +360,42 @@ class ElementAllowance2(BaseAllowance2):
         return new_cls(left=self, right=other)
 
 
+class GroupAllowance(BaseAllowance2):
+    def __and__(self, other):
+        if isinstance(other, GroupAllowance):
+            left = self
+            right = other
+        elif isinstance(other, ElementAllowance2):
+            left = other           # By putting the ElementAllowance on the
+            right = self           # left, a logical short-circuit skips the
+        else:                      # GroupAllowance's call_predicate() on the
+            return NotImplemented  # right--which is the desired behavior.
+
+        new_cls = type('ComposedGroupAllowance',
+                       (LogicalAndMixin, GroupAllowance), {})
+        return new_cls(left, right)
+
+    def __rand__(self, other):
+        return self.__and__(other)
+
+    def __or__(self, other):
+        if isinstance(other, GroupAllowance):
+            left = self
+            right = other
+        elif isinstance(other, ElementAllowance2):
+            left = other           # By putting the ElementAllowance on the
+            right = self           # left, a logical short-circuit skips the
+        else:                      # GroupAllowance's call_predicate() on the
+            return NotImplemented  # right--which is the desired behavior.
+
+        new_cls = type('ComposedGroupAllowance',
+                       (LogicalOrMixin, GroupAllowance), {})
+        return new_cls(left, right)
+
+    def __ror__(self, other):
+        return self.__or__(other)
+
+
 class allowed_missing(ElementAllowance2):
     def call_predicate(self, item):
         return isinstance(item[1], Missing)
@@ -481,6 +517,36 @@ with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
     ])
 
 
+class allowed_specific(GroupAllowance):
+    def __init__(self, differences, msg=None):
+        if isinstance(differences, collections.Mapping):
+            differences = dict(differences)
+        self.differences = differences
+        self._allowed = None  # Property to hold diffs during processing.
+        super(allowed_specific, self).__init__(msg)
+
+    def start_group(self, key):
+        try:
+            allowed = self.differences.get(key, [])
+        except AttributeError:
+            allowed = self.differences
+
+        if isinstance(allowed, BaseElement):
+            self._allowed = [allowed]
+        else:
+            self._allowed = list(allowed)
+
+    def call_predicate(self, item):
+        diff = item[1]
+        if diff in self._allowed:
+            self._allowed.remove(diff)
+            return True
+        return False
+
+    def end_collection(self):
+        self._allowed = None
+
+
 class ElementAllowance(BaseAllowance):
     """Allow differences where *predicate* returns True. For each
     difference, *predicate* will receive two arguments---a **key**
@@ -529,141 +595,6 @@ class ElementAllowance(BaseAllowance):
         def predicate(*args, **kwds):
             return pred1(*args, **kwds) and pred2(*args, **kwds)
         return ElementAllowance(predicate)
-
-
-class allowed_specific(BaseAllowance):
-    def __init__(self, differences, msg=None):
-        if _is_collection_of_items(differences):
-            differences = dict(differences)
-        self.differences = differences
-        super(allowed_specific, self).__init__(msg)
-
-    def group_filterfalse(self, group):
-        """If the data being tested is a mapping, this is called for
-        every group (grouped by key). If the data is a non-mapping,
-        this is called only one time for the entire iterable.
-        """
-        if isinstance(self.differences, collections.Mapping):
-            group = iter(group)
-            one_key, one_diff = next(group)
-            group = itertools.chain([(one_key, one_diff)], group)
-            allowed = self.differences.get(one_key, [])  # Key is the same
-        else:                                            # for all items in
-            allowed = self.differences                   # the same group.
-
-        if isinstance(allowed, BaseDifference):
-            allowed = [allowed]
-        else:
-            allowed = list(allowed)  # Make list or copy existing list.
-
-        for key, difference in group:
-            try:
-                allowed.remove(difference)
-            except ValueError:
-                yield key, difference
-
-    def all_filterfalse(self, iterable):
-        if _is_mapping_type(iterable):
-            return super(allowed_specific, self).all_filterfalse(iterable)  # <- EXIT!
-
-        if _is_mapping_type(self.differences):
-            message = ('{0!r} of differences cannot be matched using a '
-                       'specified {1!r}, requires non-mapping container')
-            message = message.format(iterable.__class__.__name__,
-                                     self.differences.__class__.__name__)
-            raise ValueError(message)
-
-        iterable = ((None, diff) for diff in iterable)
-        filtered = super(allowed_specific, self).all_filterfalse(iterable)
-        return (diff for key, diff in filtered)  # 'key' intentionally discarded
-
-    def _or_combine_diffs(self, self_diffs, other_diffs):
-        if isinstance(self_diffs, BaseDifference):
-            self_diffs = [self_diffs]
-        if isinstance(other_diffs, BaseDifference):
-            other_diffs = [other_diffs]
-
-        differences = []
-        for diff in self_diffs:
-            if self_diffs.count(diff) >= other_diffs.count(diff):
-                differences.append(diff)
-
-        for diff in other_diffs:
-            if other_diffs.count(diff) > self_diffs.count(diff):
-                differences.append(diff)
-        return differences
-
-    def __or__(self, other):
-        if not isinstance(other, allowed_specific):
-            return NotImplemented
-
-        self_diffs = self.differences
-        other_diffs = other.differences
-
-        if isinstance(self_diffs, collections.Mapping) != \
-                isinstance(other_diffs, collections.Mapping):
-            self_type = self_diffs.__class__.__name__
-            other_type = other_diffs.__class__.__name__
-            msg = ('cannot combine mapping with non-mapping differences: '
-                   '{0!r} and {1!r}').format(self_type, other_type)
-            raise ValueError(msg)
-
-        if not isinstance(self_diffs, collections.Mapping):
-            differences = self._or_combine_diffs(self_diffs, other_diffs)
-            return allowed_specific(differences)  # <- EXIT!
-
-        all_keys = set(self_diffs.keys()) | set(other_diffs.keys())
-        differences = {}
-        for key in all_keys:
-            diff1 = self_diffs.get(key, [])
-            diff2 = other_diffs.get(key, [])
-            differences[key] = self._or_combine_diffs(diff1, diff2)
-        return allowed_specific(differences)
-
-    def _and_combine_diffs(self, self_diffs, other_diffs):
-        if isinstance(self_diffs, BaseDifference):
-            self_diffs = [self_diffs]
-        if isinstance(other_diffs, BaseDifference):
-            other_diffs = [other_diffs]
-
-        differences = []
-        for diff in self_diffs:
-            if self_diffs.count(diff) <= other_diffs.count(diff):
-                differences.append(diff)
-
-        for diff in other_diffs:
-            if other_diffs.count(diff) < self_diffs.count(diff):
-                differences.append(diff)
-        return differences
-
-    def __and__(self, other):
-        if not isinstance(other, allowed_specific):
-            return NotImplemented
-
-        self_diffs = self.differences
-        other_diffs = other.differences
-
-        if isinstance(self_diffs, collections.Mapping) != \
-                isinstance(other_diffs, collections.Mapping):
-            self_type = self_diffs.__class__.__name__
-            other_type = other_diffs.__class__.__name__
-            msg = ('cannot combine mapping with non-mapping differences: '
-                   '{0!r} and {1!r}').format(self_type, other_type)
-            raise ValueError(msg)
-
-        if not isinstance(self_diffs, collections.Mapping):
-            differences = self._and_combine_diffs(self_diffs, other_diffs)
-            return allowed_specific(differences)  # <- EXIT!
-
-        all_keys = set(self_diffs.keys()) & set(other_diffs.keys())
-        differences = {}
-        for key in all_keys:
-            diff1 = self_diffs[key]
-            diff2 = other_diffs[key]
-            combined = self._and_combine_diffs(diff1, diff2)
-            if combined:
-                differences[key] = combined
-        return allowed_specific(differences)
 
 
 class allowed_limit(BaseAllowance):

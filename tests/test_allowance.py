@@ -11,6 +11,7 @@ from datatest.allowance import BaseAllowance2
 from datatest.allowance import LogicalAndMixin
 from datatest.allowance import LogicalOrMixin
 from datatest.allowance import ElementAllowance2
+from datatest.allowance import GroupAllowance
 from datatest.allowance import allowed_missing
 from datatest.allowance import allowed_extra
 from datatest.allowance import allowed_invalid
@@ -18,9 +19,9 @@ from datatest.allowance import allowed_key
 from datatest.allowance import allowed_args
 from datatest.allowance import allowed_deviation
 from datatest.allowance import allowed_percent_deviation
+from datatest.allowance import allowed_specific
 from datatest.allowance import BaseAllowance
 from datatest.allowance import ElementAllowance
-from datatest.allowance import allowed_specific
 from datatest.allowance import allowed_limit
 
 from datatest.validation import ValidationError
@@ -233,6 +234,67 @@ class TestElementAllowance2(unittest.TestCase):
         self.assertEqual(composed.__class__.__name__, 'ComposedElementAllowance')
 
 
+class TestGroupAllowance(unittest.TestCase):
+    def setUp(self):
+        class group_allowance(GroupAllowance):
+            def call_predicate(_self, item):
+                return False
+        self.group_allowance = group_allowance
+
+        class element_allowance(ElementAllowance2):
+            def call_predicate(_self, item):
+                return False
+        self.element_allowance = element_allowance
+
+    def test_bitwise_and(self):
+        group_allowance1 = self.group_allowance()
+        group_allowance2 = self.group_allowance()
+        element_allowance = self.element_allowance()
+
+        composed = group_allowance1 & group_allowance2
+        self.assertIsInstance(composed, GroupAllowance)
+        self.assertIsInstance(composed, LogicalAndMixin)
+        self.assertIs(composed.left, group_allowance1)
+        self.assertIs(composed.right, group_allowance2)
+        self.assertEqual(composed.__class__.__name__, 'ComposedGroupAllowance')
+
+        # Check group-and-element composition.
+        composed = group_allowance1 & element_allowance  # <- Group starts on left.
+        self.assertIsInstance(composed, GroupAllowance)
+        self.assertIs(composed.left, element_allowance)
+        self.assertIs(composed.right, group_allowance1)  # <- Moves to right side.
+
+        # Check __rand__() handling.
+        composed = element_allowance & group_allowance1  # <- Group starts on right.
+        self.assertIsInstance(composed, GroupAllowance)
+        self.assertIs(composed.left, element_allowance)
+        self.assertIs(composed.right, group_allowance1)  # <- Stays on right side.
+
+    def test_bitwise_or(self):
+        group_allowance1 = self.group_allowance()
+        group_allowance2 = self.group_allowance()
+        element_allowance = self.element_allowance()
+
+        composed = group_allowance1 | group_allowance2
+        self.assertIsInstance(composed, GroupAllowance)
+        self.assertIsInstance(composed, LogicalOrMixin)
+        self.assertIs(composed.left, group_allowance1)
+        self.assertIs(composed.right, group_allowance2)
+        self.assertEqual(composed.__class__.__name__, 'ComposedGroupAllowance')
+
+        # Check group-or-element composition.
+        composed = group_allowance1 | element_allowance  # <- Group starts on left.
+        self.assertIsInstance(composed, GroupAllowance)
+        self.assertIs(composed.left, element_allowance)
+        self.assertIs(composed.right, group_allowance1)  # <- Moves to right side.
+
+        # Check __ror__() handling.
+        composed = element_allowance | group_allowance1  # <- Group starts on right.
+        self.assertIsInstance(composed, GroupAllowance)
+        self.assertIs(composed.left, element_allowance)
+        self.assertIs(composed.right, group_allowance1)  # <- Stays on right side.
+
+
 class TestAllowedMissing(unittest.TestCase):
     def test_allowed_missing(self):
         differences =  [Missing('X'), Missing('Y'), Extra('X')]
@@ -426,6 +488,113 @@ class TestAllowedPercentDeviation(unittest.TestCase):
                 raise ValidationError('example error', self.differences)
         result_diffs = cm.exception.differences
         self.assertEqual({'aaa': Deviation(-1, 10), 'ccc': Deviation(+2, 10)}, result_diffs)
+
+
+class TestAllowedSpecific(unittest.TestCase):
+    def test_list_containers(self):
+        allowed = [Extra('xxx')]
+
+        with self.assertRaises(ValidationError) as cm:
+            with allowed_specific(allowed):
+                raise ValidationError('example error',
+                                      [Extra('xxx'), Missing('yyy')])
+
+        actual = list(cm.exception.differences)
+        expected = [Missing('yyy')]
+        self.assertEqual(actual, expected)
+
+    def test_diff_without_container(self):
+        differences = [Extra('xxx'), Missing('yyy')]
+        allowed = Extra('xxx')  # <- Single diff, not in a container.
+
+        with self.assertRaises(ValidationError) as cm:
+            with allowed_specific(allowed):
+                raise ValidationError('example error', differences)
+
+        actual = list(cm.exception.differences)
+        expected = [Missing('yyy')]
+        self.assertEqual(actual, expected)
+
+    def test_excess_allowed(self):
+        diffs = [Extra('xxx')]
+        allowed = [Extra('xxx'), Missing('yyy')]  # <- More allowed than
+        with allowed_specific(allowed):           #    are actually found.
+            raise ValidationError('example error', diffs)
+
+    def test_duplicates(self):
+        # Three of the exact-same differences.
+        differences = [Extra('xxx'), Extra('xxx'), Extra('xxx')]
+
+        # Only allow one of them.
+        with self.assertRaises(ValidationError) as cm:
+            allowed = [Extra('xxx')]
+            with allowed_specific(allowed):
+                raise ValidationError('example error', differences)
+
+        actual = list(cm.exception.differences)
+        expected = [Extra('xxx'), Extra('xxx')]  # Expect two remaining.
+        self.assertEqual(actual, expected)
+
+        # Only allow two of them.
+        with self.assertRaises(ValidationError) as cm:
+            allowed = [Extra('xxx'), Extra('xxx')]
+            with allowed_specific(allowed):
+                raise ValidationError('example error', differences)
+
+        actual = list(cm.exception.differences)
+        expected = [Extra('xxx')]  # Expect one remaining.
+        self.assertEqual(actual, expected)
+
+        # Allow all three.
+        allowed = [Extra('xxx'), Extra('xxx'), Extra('xxx')]
+        with allowed_specific(allowed):
+            raise ValidationError('example error', differences)
+
+    def test_mapping_of_differences(self):
+        differences = {'foo': Extra('xxx'), 'bar': [Extra('xxx'), Missing('yyy')]}
+        allowed = [Extra('xxx')]
+
+        with self.assertRaises(ValidationError) as cm:
+            with allowed_specific(allowed):
+                raise ValidationError('example error', differences)
+
+        actual = cm.exception.differences
+        expected = {'bar': Missing('yyy')}
+        self.assertEqual(actual, expected)
+
+    def test_mapping_of_differences_and_allowances(self):
+        differences = {'foo': Extra('xxx'), 'bar': [Extra('xxx'), Missing('yyy')]}
+        allowed = {'bar': Extra('xxx')}
+
+        with self.assertRaises(ValidationError) as cm:
+            with allowed_specific(allowed):
+                raise ValidationError('example error', differences)
+
+        actual = cm.exception.differences
+        expected = {'foo': Extra('xxx'), 'bar': Missing('yyy')}
+        self.assertEqual(actual, expected)
+
+    def test_all_allowed(self):
+        differences = {'foo': Extra('xxx'), 'bar': Missing('yyy')}
+        allowed = {'foo': Extra('xxx'), 'bar': Missing('yyy')}
+
+        with allowed_specific(allowed):  # <- Allows all differences, no error!
+            raise ValidationError('example error', differences)
+
+    def test_combination_of_cases(self):
+        """This is a bit of an integration test."""
+        differences = {
+            'foo': [Extra('xxx'), Missing('yyy')],
+            'bar': [Extra('xxx')],
+            'baz': [Extra('xxx'), Missing('yyy'), Extra('zzz')],
+        }
+        allowed = [Extra('xxx'), Missing('yyy')]
+        with self.assertRaises(ValidationError) as cm:
+            with allowed_specific(allowed):
+                raise ValidationError('example error', differences)
+
+        actual = cm.exception.differences
+        self.assertEqual(actual, {'baz': Extra('zzz')})
 
 
 class TestBaseAllowance(unittest.TestCase):
@@ -691,236 +860,6 @@ class TestComposability(unittest.TestCase):
                 raise ValidationError('some message', differences)
         remaining_diffs = cm.exception.differences
         self.assertEqual(list(remaining_diffs), [Extra('Y'), Missing('Z')])
-
-
-class TestAllowedSpecific(unittest.TestCase):
-    def test_some_allowed(self):
-        differences = [Extra('xxx'), Missing('yyy')]
-        allowed = [Extra('xxx')]
-
-        with self.assertRaises(ValidationError) as cm:
-            with allowed_specific(allowed):
-                raise ValidationError('example error', differences)
-
-        expected = [Missing('yyy')]
-        actual = list(cm.exception.differences)
-        self.assertEqual(expected, actual)
-
-    def test_single_diff_without_container(self):
-        differences = [Extra('xxx'), Missing('yyy')]
-        allowed = Extra('xxx')  # <- Single diff, not in list.
-
-        with self.assertRaises(ValidationError) as cm:
-            with allowed_specific(allowed):
-                raise ValidationError('example error', differences)
-
-        expected = [Missing('yyy')]
-        actual = list(cm.exception.differences)
-        self.assertEqual(expected, actual)
-
-    def test_all_allowed(self):
-        diffs = [Extra('xxx'), Missing('yyy')]
-        allowed = [Extra('xxx'), Missing('yyy')]
-        with allowed_specific(allowed):
-            raise ValidationError('example error', diffs)
-
-    def test_excess_allowed(self):
-        diffs = [Extra('xxx')]
-        allowed = [Extra('xxx'), Missing('yyy'), Invalid('zzz', 'ZZZ')]
-        with allowed_specific(allowed):
-            raise ValidationError('example error', diffs)
-
-    def test_duplicates(self):
-        # Three of the exact-same differences.
-        differences = [Extra('xxx'), Extra('xxx'), Extra('xxx')]
-
-        # Only allow one of them.
-        with self.assertRaises(ValidationError) as cm:
-            allowed = [Extra('xxx')]
-            with allowed_specific(allowed):
-                raise ValidationError('example error', differences)
-
-        expected = [Extra('xxx'), Extra('xxx')]  # Expect two remaining.
-        actual = list(cm.exception.differences)
-        self.assertEqual(expected, actual)
-
-        # Only allow two of them.
-        with self.assertRaises(ValidationError) as cm:
-            allowed = [Extra('xxx'), Extra('xxx')]
-            with allowed_specific(allowed):
-                raise ValidationError('example error', differences)
-
-        expected = [Extra('xxx')]  # Expect one remaining.
-        actual = list(cm.exception.differences)
-        self.assertEqual(expected, actual)
-
-        # Allow all three.
-        allowed = [Extra('xxx'), Extra('xxx'), Extra('xxx')]
-        with allowed_specific(allowed):
-            raise ValidationError('example error', differences)
-
-    def test_error_mapping_allowance_list(self):
-        differences = {'foo': [Extra('xxx')], 'bar': [Extra('xxx'), Missing('yyy')]}
-        allowed = [Extra('xxx')]
-
-        with self.assertRaises(ValidationError) as cm:
-            with allowed_specific(allowed):
-                raise ValidationError('example error', differences)
-
-        expected = {'bar': [Missing('yyy')]}
-        actual = cm.exception.differences
-        self.assertEqual(expected, actual)
-
-    def test_mapping_some_allowed(self):
-        differences = {'foo': Extra('xxx'), 'bar': Missing('yyy')}
-        allowed = {'foo': Extra('xxx')}
-
-        with self.assertRaises(ValidationError) as cm:
-            with allowed_specific(allowed):
-                raise ValidationError('example error', differences)
-
-        expected = {'bar': Missing('yyy')}
-        actual = cm.exception.differences
-        self.assertEqual(expected, actual)
-
-    def test_mapping_none_allowed(self):
-        differences = {'foo': Extra('xxx'), 'bar': Missing('yyy')}
-        allowed = {}
-
-        with self.assertRaises(ValidationError) as cm:
-            with allowed_specific(allowed):
-                raise ValidationError('example error', differences)
-
-        actual = cm.exception.differences
-        self.assertEqual(differences, actual)
-
-    def test_mapping_all_allowed(self):
-        differences = {'foo': Extra('xxx'), 'bar': Missing('yyy')}
-        allowed = differences
-
-        with allowed_specific(allowed):  # <- Catches all differences, no error!
-            raise ValidationError('example error', differences)
-
-    def test_mapping_mismatched_types(self):
-        diff_list = [Extra('xxx'), Missing('yyy')]
-        allowed_dict = {'foo': Extra('xxx'), 'bar': Missing('yyy')}
-
-        regex = "'list' of differences cannot be matched.*requires non-mapping container"
-
-        with self.assertRaisesRegex(ValueError, regex):
-            with allowed_specific(allowed_dict):
-                raise ValidationError('example error', diff_list)
-
-    def test_integration(self):
-        """This is a bit of an integration test."""
-        differences = {
-            'foo': [Extra('xxx'), Missing('yyy')],
-            'bar': [Extra('xxx')],
-            'baz': [Extra('xxx'), Missing('yyy'), Extra('zzz')],
-        }
-        allowed = [Extra('xxx'), Missing('yyy')]
-        with self.assertRaises(ValidationError) as cm:
-            with allowed_specific(allowed):
-                raise ValidationError('example error', differences)
-
-        actual = cm.exception.differences
-        self.assertEqual(actual, {'baz': [Extra('zzz')]})
-
-    def test_composition_bitwise_or(self):
-        # One shared element.
-        allowed1 = [Extra('xxx'), Missing('yyy')]
-        allowed2 = [Missing('yyy'), Invalid('zzz')]
-        specific = allowed_specific(allowed1) | allowed_specific(allowed2)
-        self.assertEqual(specific.differences, [Extra('xxx'), Missing('yyy'), Invalid('zzz')])
-
-        # Duplicate shared element.
-        allowed1 = [Extra('xxx'), Extra('xxx')]
-        allowed2 = [Missing('yyy'), Extra('xxx')]
-        specific = allowed_specific(allowed1) | allowed_specific(allowed2)
-        self.assertEqual(specific.differences, [Extra('xxx'), Extra('xxx'), Missing('yyy')])
-
-        # Mismatched types (list and dict)
-        allowed1 = [Extra('xxx'), Missing('yyy')]
-        allowed2 = {'a': Missing('yyy'), 'b': Extra('zzz')}
-        regex = r"cannot combine .* 'list' and 'dict'"
-        with self.assertRaisesRegex(ValueError, regex):
-            allowed_specific(allowed1) | allowed_specific(allowed2)
-
-        # Mapping with one shared element.
-        allowed1 = {'a': [Extra('xxx'), Missing('yyy')]}
-        allowed2 = {'a': [Missing('yyy'), Invalid('zzz')]}
-        specific = allowed_specific(allowed1) | allowed_specific(allowed2)
-        self.assertEqual(
-            specific.differences,
-            {'a': [Extra('xxx'), Missing('yyy'), Invalid('zzz')]},
-        )
-
-        # Mapping mismatched keys.
-        allowed1 = {'a': [Extra('xxx'), Missing('yyy')]}
-        allowed2 = {'b': [Missing('yyy'), Invalid('zzz')]}
-        specific = allowed_specific(allowed1) | allowed_specific(allowed2)
-        self.assertEqual(
-            specific.differences,
-            {'a': [Extra('xxx'), Missing('yyy')],
-             'b': [Missing('yyy'), Invalid('zzz')]}
-        )
-
-        # Mapping with unwrapped differences.
-        allowed1 = {'a': Extra('xxx'),    # <- Not wrapped in container.
-                    'b': Missing('yyy')}  # <- Not wrapped in container.
-        allowed2 = {'a': Extra('xxx'),    # <- Not wrapped in container.
-                    'b': [Missing('yyy'), Invalid('zzz')]}
-        specific = allowed_specific(allowed1) | allowed_specific(allowed2)
-        self.assertEqual(
-            specific.differences,
-            {'a': [Extra('xxx')],  # <- Output is wrapped in list.
-             'b': [Missing('yyy'), Invalid('zzz')]}
-        )
-
-    def test_composition_bitwise_and(self):
-        allowed1 = [Extra('xxx'), Missing('yyy')]
-        allowed2 = [Missing('yyy'), Invalid('zzz')]
-        specific = allowed_specific(allowed1) & allowed_specific(allowed2)
-        self.assertEqual(specific.differences, [Missing('yyy')])
-
-        allowed1 = [Extra('xxx'), Extra('xxx'), Missing('yyy')]
-        allowed2 = [Missing('yyy'), Extra('xxx'), Invalid('zzz'), Extra('xxx')]
-        specific = allowed_specific(allowed1) & allowed_specific(allowed2)
-        self.assertEqual(specific.differences, [Extra('xxx'), Extra('xxx'), Missing('yyy')])
-
-        # Mismatched types (list and dict)
-        allowed1 = [Extra('xxx'), Missing('yyy')]
-        allowed2 = {'a': Missing('yyy'), 'b': Extra('zzz')}
-        regex = r"cannot combine .* 'list' and 'dict'"
-        with self.assertRaisesRegex(ValueError, regex):
-            allowed_specific(allowed1) & allowed_specific(allowed2)
-
-        # Mapping with one shared element.
-        allowed1 = {'a': [Extra('xxx'), Missing('yyy')]}
-        allowed2 = {'a': [Missing('yyy'), Invalid('zzz')]}
-        specific = allowed_specific(allowed1) & allowed_specific(allowed2)
-        self.assertEqual(specific.differences, {'a': [Missing('yyy')]})
-
-        # Mapping mismatched keys.
-        allowed1 = {'a': [Extra('xxx')]}
-        allowed2 = {'b': [Extra('xxx')]}
-        specific = allowed_specific(allowed1) & allowed_specific(allowed2)
-        self.assertEqual(specific.differences, {})
-
-        # Mapping mismatched values.
-        allowed1 = {'a': [Extra('xxx')]}
-        allowed2 = {'a': [Missing('yyy')]}
-        specific = allowed_specific(allowed1) & allowed_specific(allowed2)
-        self.assertEqual(specific.differences, {})
-
-        # Mapping with unwrapped differences.
-        allowed1 = {'a': Extra('xxx'),    # <- Not in container.
-                    'b': Missing('yyy')}  # <- Not in container.
-        allowed2 = {'a': Extra('xxx'),    # <- Not in container.
-                    'b': [Missing('yyy'), Invalid('zzz')]}
-        specific = allowed_specific(allowed1) & allowed_specific(allowed2)
-        self.assertEqual(specific.differences,
-                         {'a': [Extra('xxx')], 'b': [Missing('yyy')]})
 
 
 class TestAllowedLimit(unittest.TestCase):
