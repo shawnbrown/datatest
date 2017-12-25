@@ -14,7 +14,6 @@ from .utils.misc import _get_arg_lengths
 from .utils.misc import _expects_multiple_params
 from .utils.misc import _make_decimal
 from .utils.misc import string_types
-from .dataaccess import _is_collection_of_items
 from .dataaccess import BaseElement
 from .dataaccess import DictItems
 
@@ -31,8 +30,6 @@ __datatest = True  # Used to detect in-module stack frames (which are
 
 
 __all__ = [
-    'BaseAllowance',
-    'ElementAllowance',
     'allowed_missing',
     'allowed_extra',
     'allowed_invalid',
@@ -43,122 +40,6 @@ __all__ = [
     'allowed_args',
     'allowed_limit',
 ]
-
-
-def _is_mapping_type(obj):
-    return isinstance(obj, collections.Mapping) or \
-                _is_collection_of_items(obj)
-
-
-class BaseAllowance(abc.ABC):
-    """Context manager to allow certain differences without
-    triggering a test failure. *group_filterfalse* should
-    accept an iterable of difference and return an iterable
-    of only those differences which are **not** allowed.
-    """
-    def __init__(self, msg=None):
-        """Initialize object values."""
-        self.msg = msg
-
-    def __or__(self, other):
-        return NotImplemented
-
-    def __and__(self, other):
-        return NotImplemented
-
-    def __enter__(self):
-        return self
-
-    def item_filterfalse(self, key, value):
-        """Return key-value tuple if difference is not allowed, else
-        return None.
-        """
-        raise NotImplementedError()
-
-    def group_filterfalse(self, group):
-        """Filter iterable and yield items that are not allowed."""
-        raise NotImplementedError()
-
-    def all_filterfalse(self, iterable):
-        if isinstance(iterable, collections.Mapping):
-            iterable = getattr(iterable, 'iteritems', iterable.items)()
-
-        if _is_collection_of_items(iterable):
-            for key, diff in iterable:
-                if isinstance(diff, (BaseElement, Exception)):
-                    # Error is a single element.
-                    filtered = self.group_filterfalse(iter([(key, diff)]))
-                    if isinstance(filtered, collections.Mapping):
-                        filtered = filtered.items()
-                    filtered = list(filtered)
-                    if filtered:
-                        yield filtered[0]
-                else:
-                    # Error is a container of multiple elements.
-                    diff = self.group_filterfalse((key, d) for d in diff)
-                    diff = list(d for key, d in diff)
-                    if diff:
-                        yield key, diff
-        else:
-            filtered = self.group_filterfalse(iterable)
-            if _is_mapping_type(filtered):
-                raise TypeError('returned mapping output for non-mapping input')
-            for diff in filtered:
-                yield diff
-
-    def __exit__(self, exc_type, exc_value, tb):
-        # Setup traceback-hiding for pytest integration.
-        __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
-
-        # Apply filterfalse or reraise non-validation error.
-        if exc_type and not issubclass(exc_type, ValidationError):
-            raise exc_value
-        differences = getattr(exc_value, 'differences', [])
-        differences = self.all_filterfalse(differences)
-
-        # Check container types.
-        mappable_in = _is_mapping_type(getattr(exc_value, 'differences', None))
-        mappable_out = _is_mapping_type(differences)
-
-        # Check if any differences were returned.
-        try:
-            first_item = next(iter(differences))
-            if _is_consumable(differences):  # Rebuild if consumable.
-                differences = itertools.chain([first_item], differences)
-        except StopIteration:
-            return True  # <- EXIT!
-
-        # Handle mapping input with iterable-of-items output.
-        if (mappable_in and not mappable_out
-                and isinstance(first_item, collections.Sized)
-                and len(first_item) == 2):
-            differences = DictItems(differences)
-            mappable_out = True
-
-        # Verify type compatibility.
-        if mappable_in != mappable_out:
-            message = ('received {0!r} collection but returned '
-                       'incompatible {1!r} collection')
-            output_cls = differences.__class__.__name__
-            input_cls = exc_value.differences.__class__.__name__
-            raise TypeError(message.format(input_cls, output_cls))
-
-        # Extend message with allowance message.
-        message = getattr(exc_value, 'message', '')
-        if self.msg:
-            message = '{0}: {1}'.format(self.msg, message)
-
-        # Build new ValidationError with remaining differences.
-        exc = ValidationError(message, differences)
-
-        # Re-raised error inherits truncation behavior of original.
-        exc._should_truncate = exc_value._should_truncate
-        exc._truncation_notice = exc_value._truncation_notice
-
-        exc.__cause__ = None  # <- Suppress context using verbose
-        raise exc             #    alternative to support older Python
-                              #    versions--see PEP 415 (same as
-                              #    effect as "raise ... from None").
 
 
 class BaseAllowance2(abc.ABC):
@@ -598,53 +479,3 @@ class allowed_limit(CollectionAllowance):
 
     def end_collection(self):
         self._count = None
-
-
-class ElementAllowance(BaseAllowance):
-    """Allow differences where *predicate* returns True. For each
-    difference, *predicate* will receive two arguments---a **key**
-    and **difference**---and should return True if the difference
-    is allowed or False if it is not.
-    """
-    def __init__(self, predicate, msg=None):
-        self.predicate = predicate
-        super(ElementAllowance, self).__init__(msg)
-
-    def item_filterfalse(self, key, value):
-        if self.predicate(key, value):
-            return None
-        return key, value
-
-    def group_filterfalse(self, group):
-        predicate = self.predicate              # Using predicate() directly
-        for key, difference in group:           # is more efficient than
-            if not predicate(key, difference):  # calling item_filterfalse().
-                yield key, difference
-
-    def all_filterfalse(self, iterable):
-        if _is_mapping_type(iterable):
-            return super(ElementAllowance, self).all_filterfalse(iterable)  # <- EXIT!
-
-        iterable = ((None, difference) for difference in iterable)
-        filtered = super(ElementAllowance, self).all_filterfalse(iterable)
-        return (diff for key, diff in filtered)  # 'key' intentionally discarded
-
-    def __or__(self, other):
-        if not isinstance(other, ElementAllowance):
-            return NotImplemented
-
-        pred1 = self.predicate
-        pred2 = other.predicate
-        def predicate(*args, **kwds):
-            return pred1(*args, **kwds) or pred2(*args, **kwds)
-        return ElementAllowance(predicate)
-
-    def __and__(self, other):
-        if not isinstance(other, ElementAllowance):
-            return NotImplemented
-
-        pred1 = self.predicate
-        pred2 = other.predicate
-        def predicate(*args, **kwds):
-            return pred1(*args, **kwds) and pred2(*args, **kwds)
-        return ElementAllowance(predicate)
