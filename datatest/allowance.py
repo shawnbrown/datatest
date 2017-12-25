@@ -409,6 +409,78 @@ class allowed_args(ElementAllowance2):
         return self.function(*args)
 
 
+def _normalize_deviation_args(lower, upper, msg):
+    """Normalize deviation allowance arguments to support both
+    "tolerance" and "lower, upper" signatures. This helper function
+    is intended for internal use.
+    """
+    if isinstance(upper, str) and msg is None:
+        upper, msg = None, msg  # Shift values if using "tolerance" syntax.
+
+    if upper == None:
+        tolerance = lower
+        assert tolerance >= 0, ('tolerance should not be negative, '
+                                'for full control of lower and upper '
+                                'bounds, use "lower, upper" syntax')
+        lower, upper = -tolerance, tolerance
+    lower = _make_decimal(lower)
+    upper = _make_decimal(upper)
+    assert lower <= upper
+    return (lower, upper, msg)
+
+
+class allowed_deviation(ElementAllowance2):
+    """allowed_deviation(tolerance, /, msg=None)
+    allowed_deviation(lower, upper, msg=None)
+
+    Context manager that allows Deviations within a given tolerance
+    without triggering a test failure.
+
+    See documentation for full details.
+    """
+    def __init__(self, lower, upper=None, msg=None):
+        lower, upper, msg = _normalize_deviation_args(lower, upper, msg)
+        self.lower = lower
+        self.upper = upper
+        super(allowed_deviation, self).__init__(msg)
+
+    def call_predicate(self, item):
+        diff = item[1]
+        deviation = diff.deviation or 0
+        if isnan(deviation) or isnan(diff.expected or 0):
+            return False
+        return self.lower <= deviation <= self.upper
+
+with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
+    allowed_deviation.__init__.__signature__ = inspect.Signature([
+        inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY),
+        inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),
+        inspect.Parameter('msg', inspect.Parameter.POSITIONAL_OR_KEYWORD),
+    ])
+
+
+class allowed_percent_deviation(ElementAllowance2):
+    def __init__(self, lower, upper=None, msg=None):
+        lower, upper, msg = _normalize_deviation_args(lower, upper, msg)
+        self.lower = lower
+        self.upper = upper
+        super(allowed_percent_deviation, self).__init__(msg)
+
+    def call_predicate(self, item):
+        diff = item[1]
+        percent_deviation = diff.percent_deviation or 0
+        if isnan(percent_deviation) or isnan(diff.expected or 0):
+            return False
+        return self.lower <= percent_deviation <= self.upper
+
+with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
+    allowed_percent_deviation.__init__.__signature__ = inspect.Signature([
+        inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY),
+        inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),
+        inspect.Parameter('msg', inspect.Parameter.POSITIONAL_OR_KEYWORD),
+    ])
+
+
 class ElementAllowance(BaseAllowance):
     """Allow differences where *predicate* returns True. For each
     difference, *predicate* will receive two arguments---a **key**
@@ -457,70 +529,6 @@ class ElementAllowance(BaseAllowance):
         def predicate(*args, **kwds):
             return pred1(*args, **kwds) and pred2(*args, **kwds)
         return ElementAllowance(predicate)
-
-
-def _normalize_devargs(lower, upper, msg):
-    """Normalize deviation allowance arguments to support both
-    "tolerance" and "lower, upper" signatures. This helper function
-    is intended for internal use.
-    """
-    if isinstance(upper, str) and msg is None:
-        upper, msg = None, msg  # Shift values if using "tolerance" syntax.
-
-    if upper == None:
-        tolerance = lower
-        assert tolerance >= 0, ('tolerance should not be negative, '
-                                'for full control of lower and upper '
-                                'bounds, use "lower, upper" syntax')
-        lower, upper = -tolerance, tolerance
-    lower = _make_decimal(lower)
-    upper = _make_decimal(upper)
-    assert lower <= upper
-    return (lower, upper, msg)
-
-
-class allowed_deviation(ElementAllowance):
-    """allowed_deviation(tolerance, /, msg=None)
-    allowed_deviation(lower, upper, msg=None)
-
-    Context manager that allows Deviations within a given tolerance
-    without triggering a test failure.
-
-    See documentation for full details.
-    """
-    def __init__(self, lower, upper=None, msg=None):
-        lower, upper, msg = _normalize_devargs(lower, upper, msg)
-        def tolerance(_, diff):  # <- Closes over lower & upper.
-            deviation = diff.deviation or 0.0
-            if isnan(deviation) or isnan(diff.expected or 0.0):
-                return False
-            return lower <= deviation <= upper
-        super(allowed_deviation, self).__init__(tolerance, msg)
-
-with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
-    allowed_deviation.__init__.__signature__ = inspect.Signature([
-        inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY),
-        inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),
-        inspect.Parameter('msg', inspect.Parameter.POSITIONAL_OR_KEYWORD),
-    ])
-
-
-class allowed_percent_deviation(ElementAllowance):
-    def __init__(self, lower, upper=None, msg=None):
-        lower, upper, msg = _normalize_devargs(lower, upper, msg)
-        def percent_tolerance(_, diff):  # <- Closes over lower & upper.
-            percent_deviation = diff.percent_deviation
-            if isnan(percent_deviation) or isnan(diff.expected or 0):
-                return False
-            return lower <= percent_deviation <= upper
-        super(allowed_percent_deviation, self).__init__(percent_tolerance, msg)
-
-with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
-    allowed_percent_deviation.__init__.__signature__ = inspect.Signature([
-        inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY),
-        inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),
-        inspect.Parameter('msg', inspect.Parameter.POSITIONAL_OR_KEYWORD),
-    ])
 
 
 class allowed_specific(BaseAllowance):

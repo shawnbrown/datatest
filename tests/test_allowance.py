@@ -16,10 +16,10 @@ from datatest.allowance import allowed_extra
 from datatest.allowance import allowed_invalid
 from datatest.allowance import allowed_key
 from datatest.allowance import allowed_args
-from datatest.allowance import BaseAllowance
-from datatest.allowance import ElementAllowance
 from datatest.allowance import allowed_deviation
 from datatest.allowance import allowed_percent_deviation
+from datatest.allowance import BaseAllowance
+from datatest.allowance import ElementAllowance
 from datatest.allowance import allowed_specific
 from datatest.allowance import allowed_limit
 
@@ -233,7 +233,7 @@ class TestElementAllowance2(unittest.TestCase):
         self.assertEqual(composed.__class__.__name__, 'ComposedElementAllowance')
 
 
-class TestElementAllowanceSubclasses(unittest.TestCase):
+class TestAllowedMissing(unittest.TestCase):
     def test_allowed_missing(self):
         differences =  [Missing('X'), Missing('Y'), Extra('X')]
 
@@ -243,6 +243,8 @@ class TestElementAllowanceSubclasses(unittest.TestCase):
         remaining_diffs = cm.exception.differences
         self.assertEqual(list(remaining_diffs), [Extra('X')])
 
+
+class TestAllowedExtra(unittest.TestCase):
     def test_allowed_extra(self):
         differences =  [Extra('X'), Extra('Y'), Missing('X')]
 
@@ -252,6 +254,8 @@ class TestElementAllowanceSubclasses(unittest.TestCase):
         remaining_diffs = cm.exception.differences
         self.assertEqual(list(remaining_diffs), [Missing('X')])
 
+
+class TestAllowedInvalid(unittest.TestCase):
     def test_allowed_invalid(self):
         differences =  [Invalid('X'), Invalid('Y'), Extra('Z')]
 
@@ -261,6 +265,8 @@ class TestElementAllowanceSubclasses(unittest.TestCase):
         remaining_diffs = cm.exception.differences
         self.assertEqual(list(remaining_diffs), [Extra('Z')])
 
+
+class TestAllowedKey(unittest.TestCase):
     def test_allowed_key(self):
         # Test mapping of differences.
         differences = {'aaa': Missing(1), 'bbb': Missing(2)}
@@ -299,6 +305,8 @@ class TestElementAllowanceSubclasses(unittest.TestCase):
         remaining_diffs = cm.exception.differences
         self.assertEqual(list(remaining_diffs), [Missing(1), Extra(2)])
 
+
+class TestAllowedArgs(unittest.TestCase):
     def test_allowed_args(self):
         # Single argument.
         differences =  [Missing('aaa'), Missing('bbb'), Extra('bbb')]
@@ -323,6 +331,101 @@ class TestElementAllowanceSubclasses(unittest.TestCase):
 
         remaining_diffs = cm.exception.differences
         self.assertEqual(list(remaining_diffs), [Deviation(+2, 5)])
+
+
+class TestAllowedDeviation(unittest.TestCase):
+    def setUp(self):
+        self.differences = {
+            'aaa': Deviation(-1, 10),
+            'bbb': Deviation(+3, 10),
+            'ccc': Deviation(+2, 10),
+        }
+
+    def test_function_signature(self):
+        with contextlib.suppress(AttributeError):       # Python 3.2 and older
+            sig = inspect.signature(allowed_deviation)  # use ugly signatures.
+            parameters = list(sig.parameters)
+            self.assertEqual(parameters, ['tolerance', 'msg'])
+
+    def test_tolerance_syntax(self):
+        with self.assertRaises(ValidationError) as cm:
+            with allowed_deviation(2):  # <- Allows +/- 2.
+                raise ValidationError('example error', self.differences)
+        remaining = cm.exception.differences
+        self.assertEqual(remaining, {'bbb': Deviation(+3, 10)})
+
+    def test_lower_upper_syntax(self):
+        with self.assertRaises(ValidationError) as cm:
+            with allowed_deviation(0, 3):  # <- Allows from 0 to 3.
+                raise ValidationError('example error', self.differences)
+        result_diffs = cm.exception.differences
+        self.assertEqual({'aaa': Deviation(-1, 10)}, result_diffs)
+
+    def test_same_value_case(self):
+        with self.assertRaises(ValidationError) as cm:
+            with allowed_deviation(3, 3):  # <- Allows off-by-3 only.
+                raise ValidationError('example error', self.differences)
+        result_diffs = cm.exception.differences
+        self.assertEqual({'aaa': Deviation(-1, 10), 'ccc': Deviation(+2, 10)}, result_diffs)
+
+    def test_invalid_tolerance(self):
+        with self.assertRaises(AssertionError) as cm:
+            with allowed_deviation(-5):  # <- invalid
+                pass
+        exc = str(cm.exception)
+        self.assertTrue(exc.startswith('tolerance should not be negative'))
+
+    def test_empty_string(self):
+        with allowed_deviation(0):  # <- Pass without failure.
+            raise ValidationError('example error', [Deviation('', 0)])
+
+        with allowed_deviation(0):  # <- Pass without failure.
+            raise ValidationError('example error', [Deviation(0, '')])
+
+    def test_NaN_values(self):
+        with self.assertRaises(ValidationError):  # <- NaN values should not be caught!
+            with allowed_deviation(0):
+                raise ValidationError('example error', [Deviation(float('nan'), 0)])
+
+        with self.assertRaises(ValidationError):  # <- NaN values should not be caught!
+            with allowed_deviation(0):
+                raise ValidationError('example error', [Deviation(0, float('nan'))])
+
+
+class TestAllowedPercentDeviation(unittest.TestCase):
+    def setUp(self):
+        self.differences = {
+            'aaa': Deviation(-1, 10),
+            'bbb': Deviation(+3, 10),
+            'ccc': Deviation(+2, 10),
+        }
+
+    def test_function_signature(self):
+        with contextlib.suppress(AttributeError):       # Python 3.2 and older
+            sig = inspect.signature(allowed_percent_deviation)  # use ugly signatures.
+            parameters = list(sig.parameters)
+            self.assertEqual(parameters, ['tolerance', 'msg'])
+
+    def test_tolerance_syntax(self):
+        with self.assertRaises(ValidationError) as cm:
+            with allowed_percent_deviation(0.2):  # <- Allows +/- 20%.
+                raise ValidationError('example error', self.differences)
+        remaining = cm.exception.differences
+        self.assertEqual(remaining, {'bbb': Deviation(+3, 10)})
+
+    def test_lower_upper_syntax(self):
+        with self.assertRaises(ValidationError) as cm:
+            with allowed_percent_deviation(0.0, 0.3):  # <- Allows from 0 to 30%.
+                raise ValidationError('example error', self.differences)
+        result_diffs = cm.exception.differences
+        self.assertEqual({'aaa': Deviation(-1, 10)}, result_diffs)
+
+    def test_same_value_case(self):
+        with self.assertRaises(ValidationError) as cm:
+            with allowed_percent_deviation(0.3, 0.3):  # <- Allows +30% only.
+                raise ValidationError('example error', self.differences)
+        result_diffs = cm.exception.differences
+        self.assertEqual({'aaa': Deviation(-1, 10), 'ccc': Deviation(+2, 10)}, result_diffs)
 
 
 class TestBaseAllowance(unittest.TestCase):
@@ -962,226 +1065,6 @@ class TestAllowedLimit(unittest.TestCase):
             'baz': [Extra('ddd'), Extra('eee')],  # <- Returns everything when over limit.
         }
         self.assertEqual(dict(actual), expected)
-
-
-class TestAllowedDeviation(unittest.TestCase):
-    """Test allowed_deviation() behavior."""
-    def test_method_signature(self):
-        """Check for prettified default signature in Python 3.3 and later."""
-        with contextlib.suppress(AttributeError):       # Python 3.2 and older
-            sig = inspect.signature(allowed_deviation)  # use ugly signatures.
-            parameters = list(sig.parameters)
-            self.assertEqual(parameters, ['tolerance', 'msg'])
-
-    def test_tolerance_syntax(self):
-        differences = {
-            'aaa': Deviation(-1, 10),
-            'bbb': Deviation(+3, 10),  # <- Not in allowed range.
-        }
-        with self.assertRaises(ValidationError) as cm:
-            with allowed_deviation(2):  # <- Allows +/- 2.
-                raise ValidationError('example error', differences)
-
-        remaining = cm.exception.differences
-        self.assertEqual(remaining, {'bbb': Deviation(+3, 10)})
-
-    def test_lowerupper_syntax(self):
-        differences = {
-            'aaa': Deviation(-1, 10),  # <- Not in allowed range.
-            'bbb': Deviation(+3, 10),
-        }
-        with self.assertRaises(ValidationError) as cm:
-            with allowed_deviation(0, 3):  # <- Allows from 0 to 3.
-                raise ValidationError('example error', differences)
-
-        result_diffs = cm.exception.differences
-        self.assertEqual({'aaa': Deviation(-1, 10)}, result_diffs)
-
-    def test_single_value_allowance(self):
-        differences = [
-            Deviation(+2.9, 10),  # <- Not allowed.
-            Deviation(+3.0, 10),
-            Deviation(+3.0, 5),
-            Deviation(+3.1, 10),  # <- Not allowed.
-        ]
-        with self.assertRaises(ValidationError) as cm:
-            with allowed_deviation(3, 3):  # <- Allows +3 only.
-                raise ValidationError('example error', differences)
-
-        result_diffs = list(cm.exception.differences)
-        expected_diffs = [
-            Deviation(+2.9, 10),
-            Deviation(+3.1, 10),
-        ]
-        self.assertEqual(expected_diffs, result_diffs)
-
-    @unittest.skip('refactoring')
-    def test_allowance_composition(self):
-        with self.assertRaises(ValidationError) as cm:
-            differences = {
-                'aaa': Deviation(-1, 10),
-                'bbb': Deviation(+2, 10),
-                'ccc': Deviation(+2, 10),
-                'ddd': Deviation(+3, 10),
-            }
-
-            def fn(key):
-                return key in ('aaa', 'bbb', 'ddd')
-
-            with allowed_deviation(2) & allowed_key(fn):  # <- composed with "&"!
-                raise ValidationError('example error', differences)
-
-        actual = cm.exception.differences
-        expected = {
-            'ccc': Deviation(+2, 10),  # <- Keyword value not allowed.
-            'ddd': Deviation(+3, 10),  # <- Not in allowed range.
-        }
-        self.assertEqual(expected, actual)
-
-    def test_invalid_tolerance(self):
-        with self.assertRaises(AssertionError) as cm:
-            with allowed_deviation(-5):  # <- invalid
-                pass
-        exc = str(cm.exception)
-        self.assertTrue(exc.startswith('tolerance should not be negative'))
-
-    def test_empty_value_handling(self):
-        # Test NoneType.
-        with allowed_deviation(0):  # <- Pass without failure.
-            raise ValidationError('example error', [Deviation(None, 0)])
-
-        with allowed_deviation(0):  # <- Pass without failure.
-            raise ValidationError('example error', [Deviation(0, None)])
-
-        # Test empty string.
-        with allowed_deviation(0):  # <- Pass without failure.
-            raise ValidationError('example error', [Deviation('', 0)])
-
-        with allowed_deviation(0):  # <- Pass without failure.
-            raise ValidationError('example error', [Deviation(0, '')])
-
-        # Test NaN (not a number) values.
-        with self.assertRaises(ValidationError):  # <- NaN values should not be caught!
-            with allowed_deviation(0):
-                raise ValidationError('example error', [Deviation(float('nan'), 0)])
-
-        with self.assertRaises(ValidationError):  # <- NaN values should not be caught!
-            with allowed_deviation(0):
-                raise ValidationError('example error', [Deviation(0, float('nan'))])
-
-    # AN OPEN QUESTION: Should deviation allowances raise an error if
-    # the maximum oberved deviation is _less_ than the given tolerance?
-
-
-class TestAllowedPercentDeviation(unittest.TestCase):
-    """Test allowed_percent_deviation() behavior."""
-    def test_method_signature(self):
-        """Check for prettified default signature in Python 3.3 and later."""
-        with contextlib.suppress(AttributeError):               # Python 3.2 and
-            sig = inspect.signature(allowed_percent_deviation)  # older use the
-            parameters = list(sig.parameters)                   # ugly signature.
-            self.assertEqual(parameters, ['tolerance', 'msg'])
-
-    def test_tolerance_syntax(self):
-        differences = [
-            Deviation(-1, 10),
-            Deviation(+3, 10),  # <- Not in allowed range.
-        ]
-        with self.assertRaises(ValidationError) as cm:
-            with allowed_percent_deviation(0.2):  # <- Allows +/- 20%.
-                raise ValidationError('example error', differences)
-
-        result_string = str(cm.exception)
-        self.assertTrue(result_string.startswith('example error'))
-
-        result_diffs = list(cm.exception.differences)
-        self.assertEqual([Deviation(+3, 10)], result_diffs)
-
-    def test_lowerupper_syntax(self):
-        differences = {
-            'aaa': Deviation(-1, 10),  # <- Not in allowed range.
-            'bbb': Deviation(+3, 10),
-        }
-        with self.assertRaises(ValidationError) as cm:
-            with allowed_percent_deviation(0.0, 0.3):  # <- Allows from 0 to 30%.
-                raise ValidationError('example error', differences)
-
-        result_string = str(cm.exception)
-        self.assertTrue(result_string.startswith('example error'))
-
-        result_diffs = cm.exception.differences
-        self.assertEqual({'aaa': Deviation(-1, 10)}, result_diffs)
-
-    def test_single_value_allowance(self):
-        differences = [
-            Deviation(+2.9, 10),  # <- Not allowed.
-            Deviation(+3.0, 10),
-            Deviation(+6.0, 20),
-            Deviation(+3.1, 10),  # <- Not allowed.
-        ]
-        with self.assertRaises(ValidationError) as cm:
-            with allowed_percent_deviation(0.3, 0.3):  # <- Allows +30% only.
-                raise ValidationError('example error', differences)
-
-        result_diffs = list(cm.exception.differences)
-        expected_diffs = [
-            Deviation(+2.9, 10),
-            Deviation(+3.1, 10),
-        ]
-        self.assertEqual(expected_diffs, result_diffs)
-
-    @unittest.skip('refactoring')
-    def test_allowance_composition(self):
-        differences = {
-            'aaa': Deviation(-1, 10),
-            'bbb': Deviation(+2, 10),
-            'ccc': Deviation(+2, 10),
-            'ddd': Deviation(+3, 10),
-        }
-        with self.assertRaises(ValidationError) as cm:
-            def keyfn(key):
-                return key in ('aaa', 'bbb', 'ddd')
-
-            with allowed_percent_deviation(0.2) & allowed_key(keyfn):  # <- Allows +/- 20%.
-                raise ValidationError('example error', differences)
-
-        actual = cm.exception.differences
-        expected = {
-            'ccc': Deviation(+2, 10),  # <- Key value not 'aaa'.
-            'ddd': Deviation(+3, 10),  # <- Not in allowed range.
-        }
-        self.assertEqual(actual, expected)
-
-    def test_invalid_tolerance(self):
-        with self.assertRaises(AssertionError) as cm:
-            with allowed_percent_deviation(-0.5):  # <- invalid
-                pass
-        exc = str(cm.exception)
-        self.assertTrue(exc.startswith('tolerance should not be negative'))
-
-    def test_empty_value_handling(self):
-        # Test NoneType.
-        with allowed_percent_deviation(0):  # <- Pass without failure.
-            raise ValidationError('example error', [Deviation(None, 0)])
-
-        with allowed_percent_deviation(0):  # <- Pass without failure.
-            raise ValidationError('example error', [Deviation(0, None)])
-
-        # Test empty string.
-        with allowed_percent_deviation(0):  # <- Pass without failure.
-            raise ValidationError('example error', [Deviation('', 0)])
-
-        with allowed_percent_deviation(0):  # <- Pass without failure.
-            raise ValidationError('example error', [Deviation(0, '')])
-
-        # Test NaN (not a number) values.
-        with self.assertRaises(ValidationError):  # <- NaN values should not be caught!
-            with allowed_percent_deviation(0):
-                raise ValidationError('example error', [Deviation(float('nan'), 0)])
-
-        with self.assertRaises(ValidationError):  # <- NaN values should not be caught!
-            with allowed_percent_deviation(0):
-                raise ValidationError('example error', [Deviation(0, float('nan'))])
 
 
 @unittest.skip('Prerequisite refactoring still in progress.')
