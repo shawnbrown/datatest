@@ -360,6 +360,55 @@ class ElementAllowance2(BaseAllowance2):
         return new_cls(left=self, right=other)
 
 
+class allowed_missing(ElementAllowance2):
+    def call_predicate(self, item):
+        return isinstance(item[1], Missing)
+
+
+class allowed_extra(ElementAllowance2):
+    def call_predicate(self, item):
+        return isinstance(item[1], Extra)
+
+
+class allowed_invalid(ElementAllowance2):
+    def call_predicate(self, item):
+        return isinstance(item[1], Invalid)
+
+
+class allowed_key(ElementAllowance2):
+    """The given *function* should accept a number of arguments
+    equal the given key elements. If key is a single value (string
+    or otherwise), *function* should accept one argument. If key
+    is a three-tuple, *function* should accept three arguments.
+    """
+    def __init__(self, function, msg=None):
+        self.function = function
+        super(allowed_key, self).__init__(msg)
+
+    def call_predicate(self, item):
+        key = item[0]
+        if isinstance(key, BaseElement):
+            return self.function(key)
+        return self.function(*key)
+
+
+class allowed_args(ElementAllowance2):
+    """The given *function* should accept a number of arguments equal
+    the given elements in the 'args' attribute. If args is a single
+    value (string or otherwise), *function* should accept one argument.
+    If args is a three-tuple, *function* should accept three arguments.
+    """
+    def __init__(self, function, msg=None):
+        self.function = function
+        super(allowed_args, self).__init__(msg)
+
+    def call_predicate(self, item):
+        args = item[1].args
+        if isinstance(args, BaseElement):
+            return self.function(args)
+        return self.function(*args)
+
+
 class ElementAllowance(BaseAllowance):
     """Allow differences where *predicate* returns True. For each
     difference, *predicate* will receive two arguments---a **key**
@@ -408,27 +457,6 @@ class ElementAllowance(BaseAllowance):
         def predicate(*args, **kwds):
             return pred1(*args, **kwds) and pred2(*args, **kwds)
         return ElementAllowance(predicate)
-
-
-class allowed_missing(ElementAllowance):
-    def __init__(self, msg=None):
-        def is_missing(_, difference):  # Key argument "_" not used.
-            return isinstance(difference, Missing)
-        super(allowed_missing, self).__init__(is_missing, msg)
-
-
-class allowed_extra(ElementAllowance):
-    def __init__(self, msg=None):
-        def is_extra(_, difference):  # Key argument "_" not used.
-            return isinstance(difference, Extra)
-        super(allowed_extra, self).__init__(is_extra, msg)
-
-
-class allowed_invalid(ElementAllowance):
-    def __init__(self, msg=None):
-        def is_invalid(_, difference):  # Key argument "_" not used.
-            return isinstance(difference, Invalid)
-        super(allowed_invalid, self).__init__(is_invalid, msg)
 
 
 def _normalize_devargs(lower, upper, msg):
@@ -628,37 +656,6 @@ class allowed_specific(BaseAllowance):
             if combined:
                 differences[key] = combined
         return allowed_specific(differences)
-
-
-class allowed_key(ElementAllowance):
-    """The given *function* should accept a number of arguments
-    equal the given key elements. If key is a single value (string
-    or otherwise), *function* should accept one argument. If key
-    is a three-tuple, *function* should accept three arguments.
-    """
-    def __init__(self, function, msg=None):
-        @functools.wraps(function)
-        def wrapped(key, _):
-            if isinstance(key, BaseElement):
-                return function(key)
-            return function(*key)
-        super(allowed_key, self).__init__(wrapped, msg)
-
-
-class allowed_args(ElementAllowance):
-    """The given *function* should accept a number of arguments equal
-    the given elements in the 'args' attribute. If args is a single
-    value (string or otherwise), *function* should accept one argument.
-    If args is a three-tuple, *function* should accept three arguments.
-    """
-    def __init__(self, function, msg=None):
-        @functools.wraps(function)
-        def wrapped(_, difference):
-            args = difference.args
-            if isinstance(args, BaseElement):
-                return function(args)
-            return function(*args)
-        super(allowed_args, self).__init__(wrapped, msg)
 
 
 class allowed_limit(BaseAllowance):
