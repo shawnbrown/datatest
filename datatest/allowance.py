@@ -42,7 +42,7 @@ __all__ = [
 ]
 
 
-class BaseAllowance2(abc.ABC):
+class BaseAllowance(abc.ABC):
     """Context manager to allow certain differences without
     triggering a test failure.
     """
@@ -171,7 +171,7 @@ class BaseAllowance2(abc.ABC):
                               #    effect as "raise ... from None").
 
 
-class BaseMixin(BaseAllowance2):
+class BaseMixin(BaseAllowance):
     """Base class for mixins to support composition of allowances."""
     def __init__(self, left, right, msg=None):
         self.left = left
@@ -225,28 +225,28 @@ class LogicalOrMixin(BaseMixin):
                 or self.right.call_predicate(item))
 
 
-class ElementAllowance2(BaseAllowance2):
+class ElementAllowance(BaseAllowance):
     def __and__(self, other):
-        if not isinstance(other, ElementAllowance2):
+        if not isinstance(other, ElementAllowance):
             return NotImplemented
         new_cls = type('ComposedElementAllowance',
-                       (LogicalAndMixin, ElementAllowance2), {})
+                       (LogicalAndMixin, ElementAllowance), {})
         return new_cls(left=self, right=other)
 
     def __or__(self, other):
-        if not isinstance(other, ElementAllowance2):
+        if not isinstance(other, ElementAllowance):
             return NotImplemented
         new_cls = type('ComposedElementAllowance',
-                       (LogicalOrMixin, ElementAllowance2), {})
+                       (LogicalOrMixin, ElementAllowance), {})
         return new_cls(left=self, right=other)
 
 
-class GroupAllowance(BaseAllowance2):
+class GroupAllowance(BaseAllowance):
     def __and__(self, other):
         if isinstance(other, GroupAllowance):
             left = self
             right = other
-        elif isinstance(other, ElementAllowance2):
+        elif isinstance(other, ElementAllowance):
             left = other           # By putting the ElementAllowance on the
             right = self           # left, a logical short-circuit skips the
         else:                      # GroupAllowance's call_predicate() on the
@@ -263,7 +263,7 @@ class GroupAllowance(BaseAllowance2):
         if isinstance(other, GroupAllowance):
             left = self
             right = other
-        elif isinstance(other, ElementAllowance2):
+        elif isinstance(other, ElementAllowance):
             left = other           # By putting the ElementAllowance on the
             right = self           # left, a logical short-circuit skips the
         else:                      # GroupAllowance's call_predicate() on the
@@ -277,12 +277,12 @@ class GroupAllowance(BaseAllowance2):
         return self.__or__(other)
 
 
-class CollectionAllowance(BaseAllowance2):
+class CollectionAllowance(BaseAllowance):
     def __and__(self, other):
         if isinstance(other, CollectionAllowance):
             left = self
             right = other
-        elif isinstance(other, (GroupAllowance, ElementAllowance2)):
+        elif isinstance(other, (GroupAllowance, ElementAllowance)):
             left = other           # By putting the element/group on the left,
             right = self           # a logical short-circuit skips the
         else:                      # CollectionAllowance's call_predicate() on
@@ -299,7 +299,7 @@ class CollectionAllowance(BaseAllowance2):
         if isinstance(other, CollectionAllowance):
             left = self
             right = other
-        elif isinstance(other, (GroupAllowance, ElementAllowance2)):
+        elif isinstance(other, (GroupAllowance, ElementAllowance)):
             left = other
             right = self
         else:
@@ -313,22 +313,22 @@ class CollectionAllowance(BaseAllowance2):
         return self.__or__(other)
 
 
-class allowed_missing(ElementAllowance2):
+class allowed_missing(ElementAllowance):
     def call_predicate(self, item):
         return isinstance(item[1], Missing)
 
 
-class allowed_extra(ElementAllowance2):
+class allowed_extra(ElementAllowance):
     def call_predicate(self, item):
         return isinstance(item[1], Extra)
 
 
-class allowed_invalid(ElementAllowance2):
+class allowed_invalid(ElementAllowance):
     def call_predicate(self, item):
         return isinstance(item[1], Invalid)
 
 
-class allowed_key(ElementAllowance2):
+class allowed_key(ElementAllowance):
     """The given *function* should accept a number of arguments
     equal the given key elements. If key is a single value (string
     or otherwise), *function* should accept one argument. If key
@@ -345,7 +345,7 @@ class allowed_key(ElementAllowance2):
         return self.function(*key)
 
 
-class allowed_args(ElementAllowance2):
+class allowed_args(ElementAllowance):
     """The given *function* should accept a number of arguments equal
     the given elements in the 'args' attribute. If args is a single
     value (string or otherwise), *function* should accept one argument.
@@ -382,7 +382,7 @@ def _normalize_deviation_args(lower, upper, msg):
     return (lower, upper, msg)
 
 
-class allowed_deviation(ElementAllowance2):
+class allowed_deviation(ElementAllowance):
     """allowed_deviation(tolerance, /, msg=None)
     allowed_deviation(lower, upper, msg=None)
 
@@ -412,7 +412,7 @@ with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
     ])
 
 
-class allowed_percent_deviation(ElementAllowance2):
+class allowed_percent_deviation(ElementAllowance):
     def __init__(self, lower, upper=None, msg=None):
         lower, upper, msg = _normalize_deviation_args(lower, upper, msg)
         self.lower = lower

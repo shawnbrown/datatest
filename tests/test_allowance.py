@@ -7,10 +7,10 @@ from datatest.utils import collections
 from datatest.utils import contextlib
 from datatest.utils import itertools
 
-from datatest.allowance import BaseAllowance2
+from datatest.allowance import BaseAllowance
 from datatest.allowance import LogicalAndMixin
 from datatest.allowance import LogicalOrMixin
-from datatest.allowance import ElementAllowance2
+from datatest.allowance import ElementAllowance
 from datatest.allowance import GroupAllowance
 from datatest.allowance import CollectionAllowance
 from datatest.allowance import allowed_missing
@@ -30,47 +30,47 @@ from datatest.difference import Invalid
 from datatest.difference import Deviation
 
 
-class MinimalAllowance(BaseAllowance2):  # A minimal subclass for
-    def call_predicate(self, item):      # testing--defines three
-        return False                     # concrete stubs to satisfy
-                                         # abstract method requirement
-    def __and__(self, other):            # of the base class.
+class MinimalAllowance(BaseAllowance):  # A minimal subclass for
+    def call_predicate(self, item):     # testing--defines three
+        return False                    # concrete stubs to satisfy
+                                        # abstract method requirement
+    def __and__(self, other):           # of the base class.
         return NotImplemented
 
     def __or__(self, other):
         return NotImplemented
 
 
-class TestBaseAllowance2(unittest.TestCase):
+class TestBaseAllowance(unittest.TestCase):
     def test_serialized_items(self):
         item_list = [1, 2]
-        actual = BaseAllowance2._serialized_items(item_list)
+        actual = BaseAllowance._serialized_items(item_list)
         expected = [(None, 1), (None, 2)]
         self.assertEqual(list(actual), expected, 'serialize list of elements')
 
         item_dict = {'A': 'x', 'B': 'y'}
-        actual = BaseAllowance2._serialized_items(item_dict)
+        actual = BaseAllowance._serialized_items(item_dict)
         expected = [('A', 'x'), ('B', 'y')]
         self.assertEqual(sorted(actual), expected, 'serialize mapping of elements')
 
         item_dict = {'A': ['x', 'y'], 'B': ['x', 'y']}
-        actual = BaseAllowance2._serialized_items(item_dict)
+        actual = BaseAllowance._serialized_items(item_dict)
         expected = [('A', 'x'), ('A', 'y'), ('B', 'x'), ('B', 'y')]
         self.assertEqual(sorted(actual), expected, 'serialize mapping of lists')
 
     def test_deserialized_items(self):
         stream = [(None, 1), (None, 2)]
-        actual = BaseAllowance2._deserialized_items(stream)
+        actual = BaseAllowance._deserialized_items(stream)
         expected = {None: [1, 2]}
         self.assertEqual(actual, expected)
 
         stream = [('A', 'x'), ('B', 'y')]
-        actual = BaseAllowance2._deserialized_items(stream)
+        actual = BaseAllowance._deserialized_items(stream)
         expected = {'A': 'x', 'B': 'y'}
         self.assertEqual(actual, expected)
 
         stream = [('A', 'x'), ('A', 'y'), ('B', 'x'), ('B', 'y')]
-        actual = BaseAllowance2._deserialized_items(stream)
+        actual = BaseAllowance._deserialized_items(stream)
         expected = {'A': ['x', 'y'], 'B': ['x', 'y']}
         self.assertEqual(actual, expected)
 
@@ -201,9 +201,9 @@ class TestLogicalMixins(unittest.TestCase):
         self.assertEqual(list(differences), [Extra('B')])
 
 
-class TestElementAllowance2(unittest.TestCase):
+class TestElementAllowance(unittest.TestCase):
     def setUp(self):
-        class allowed_nothing(ElementAllowance2):
+        class allowed_nothing(ElementAllowance):
             def call_predicate(_self, item):
                 return False
         self.allowed_nothing = allowed_nothing
@@ -213,7 +213,7 @@ class TestElementAllowance2(unittest.TestCase):
         right = self.allowed_nothing()
         composed = left & right  # <- Bitwise-and.
 
-        self.assertIsInstance(composed, ElementAllowance2)
+        self.assertIsInstance(composed, ElementAllowance)
         self.assertIsInstance(composed, LogicalAndMixin)
         self.assertIs(composed.left, left)
         self.assertIs(composed.right, right)
@@ -225,7 +225,7 @@ class TestElementAllowance2(unittest.TestCase):
         right = self.allowed_nothing()
         composed = left | right  # <- Bitwise-or.
 
-        self.assertIsInstance(composed, ElementAllowance2)
+        self.assertIsInstance(composed, ElementAllowance)
         self.assertIsInstance(composed, LogicalOrMixin)
         self.assertIs(composed.left, left)
         self.assertIs(composed.right, right)
@@ -240,7 +240,7 @@ class TestGroupAllowance(unittest.TestCase):
                 return False
         self.group_allowance = group_allowance
 
-        class element_allowance(ElementAllowance2):
+        class element_allowance(ElementAllowance):
             def call_predicate(_self, item):
                 return False
         self.element_allowance = element_allowance
@@ -306,7 +306,7 @@ class TestCollectionAllowance(unittest.TestCase):
                 return False
         self.group_allowance = group_allowance
 
-        class element_allowance(ElementAllowance2):
+        class element_allowance(ElementAllowance):
             def call_predicate(_self, item):
                 return False
         self.element_allowance = element_allowance
@@ -742,12 +742,12 @@ class TestUniversalComposability(unittest.TestCase):
     def test_bitwise_or(self):
         for a, b in self.combinations:
             combined = a | b  # Compose using "bitwise or".
-            self.assertIsInstance(combined, BaseAllowance2)
+            self.assertIsInstance(combined, BaseAllowance)
 
     def test_bitwise_and(self):
         for a, b in self.combinations:
             combined = a & b  # Compose using "bitwise and".
-            self.assertIsInstance(combined, BaseAllowance2)
+            self.assertIsInstance(combined, BaseAllowance)
 
 
 class TestMsgIntegration(unittest.TestCase):
