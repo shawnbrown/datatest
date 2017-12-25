@@ -702,31 +702,6 @@ class TestAllowedLimit(unittest.TestCase):
         self.assertEqual(len(remaining), 1)
 
 
-class TestComposability(unittest.TestCase):
-    """Most allowances should support being combined using the
-    "&" and "|" (bitwise-and and bitwise-or operators).
-    """
-    @unittest.skip('refactoring')
-    def test_or_operator(self):
-        differences =  [Extra('X'), Missing('Y'), Invalid('Z')]
-        with self.assertRaises(ValidationError) as cm:
-            with allowed_extra() | allowed_missing():  # <- Compose with "|"!
-                raise ValidationError('some message', differences)
-        remaining_diffs = cm.exception.differences
-        self.assertEqual(list(remaining_diffs), [Invalid('Z')])
-
-    @unittest.skip('refactoring')
-    def test_and_operator(self):
-        differences =  [Missing('X'), Extra('Y'), Missing('Z')]
-        with self.assertRaises(ValidationError) as cm:
-            is_x = lambda arg: arg == 'X'
-            with allowed_missing() & allowed_args(is_x):  # <- Compose with "&"!
-                raise ValidationError('some message', differences)
-        remaining_diffs = cm.exception.differences
-        self.assertEqual(list(remaining_diffs), [Extra('Y'), Missing('Z')])
-
-
-@unittest.skip('Prerequisite refactoring still in progress.')
 class TestUniversalComposability(unittest.TestCase):
     """Test that allowances are composable with allowances of the
     same type as well as all other allowance types.
@@ -767,12 +742,12 @@ class TestUniversalComposability(unittest.TestCase):
     def test_bitwise_or(self):
         for a, b in self.combinations:
             combined = a | b  # Compose using "bitwise or".
-            self.assertIsInstance(combined, BaseAllowance)
+            self.assertIsInstance(combined, BaseAllowance2)
 
     def test_bitwise_and(self):
         for a, b in self.combinations:
             combined = a & b  # Compose using "bitwise and".
-            self.assertIsInstance(combined, BaseAllowance)
+            self.assertIsInstance(combined, BaseAllowance2)
 
 
 class TestMsgIntegration(unittest.TestCase):
