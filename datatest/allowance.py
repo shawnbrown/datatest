@@ -396,6 +396,42 @@ class GroupAllowance(BaseAllowance2):
         return self.__or__(other)
 
 
+class CollectionAllowance(BaseAllowance2):
+    def __and__(self, other):
+        if isinstance(other, CollectionAllowance):
+            left = self
+            right = other
+        elif isinstance(other, (GroupAllowance, ElementAllowance2)):
+            left = other           # By putting the element/group on the left,
+            right = self           # a logical short-circuit skips the
+        else:                      # CollectionAllowance's call_predicate() on
+            return NotImplemented  # the right--which is the desired behavior.
+
+        new_cls = type('ComposedCollectionAllowance',
+                       (LogicalAndMixin, CollectionAllowance), {})
+        return new_cls(left, right)
+
+    def __rand__(self, other):
+        return self.__and__(other)
+
+    def __or__(self, other):
+        if isinstance(other, CollectionAllowance):
+            left = self
+            right = other
+        elif isinstance(other, (GroupAllowance, ElementAllowance2)):
+            left = other
+            right = self
+        else:
+            return NotImplemented
+
+        new_cls = type('ComposedCollectionAllowance',
+                       (LogicalOrMixin, CollectionAllowance), {})
+        return new_cls(left, right)
+
+    def __ror__(self, other):
+        return self.__or__(other)
+
+
 class allowed_missing(ElementAllowance2):
     def call_predicate(self, item):
         return isinstance(item[1], Missing)

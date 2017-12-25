@@ -12,6 +12,7 @@ from datatest.allowance import LogicalAndMixin
 from datatest.allowance import LogicalOrMixin
 from datatest.allowance import ElementAllowance2
 from datatest.allowance import GroupAllowance
+from datatest.allowance import CollectionAllowance
 from datatest.allowance import allowed_missing
 from datatest.allowance import allowed_extra
 from datatest.allowance import allowed_invalid
@@ -293,6 +294,74 @@ class TestGroupAllowance(unittest.TestCase):
         self.assertIsInstance(composed, GroupAllowance)
         self.assertIs(composed.left, element_allowance)
         self.assertIs(composed.right, group_allowance1)  # <- Stays on right side.
+
+
+class TestCollectionAllowance(unittest.TestCase):
+    def setUp(self):
+        class collection_allowance(CollectionAllowance):
+            def call_predicate(_self, item):
+                return False
+        self.collection_allowance = collection_allowance
+
+        class group_allowance(GroupAllowance):
+            def call_predicate(_self, item):
+                return False
+        self.group_allowance = group_allowance
+
+        class element_allowance(ElementAllowance2):
+            def call_predicate(_self, item):
+                return False
+        self.element_allowance = element_allowance
+
+    def test_bitwise_and(self):
+        collection_allowance1 = self.collection_allowance()
+        collection_allowance2 = self.collection_allowance()
+        group_allowance = self.group_allowance()
+        element_allowance = self.element_allowance()
+
+        composed = collection_allowance1 & collection_allowance2
+        self.assertIsInstance(composed, CollectionAllowance)
+        self.assertIsInstance(composed, LogicalAndMixin)
+        self.assertIs(composed.left, collection_allowance1)
+        self.assertIs(composed.right, collection_allowance2)
+        self.assertEqual(composed.__class__.__name__, 'ComposedCollectionAllowance')
+
+        # Check collection-and-group composition.
+        composed = collection_allowance1 & group_allowance  # <- Collection starts on left.
+        self.assertIsInstance(composed, CollectionAllowance)
+        self.assertIs(composed.left, group_allowance)
+        self.assertIs(composed.right, collection_allowance1)  # <- Moves to right side.
+
+        # Check __rand__() handling (using collection-and-element).
+        composed = element_allowance & collection_allowance1  # <- Collection starts on right.
+        self.assertIsInstance(composed, CollectionAllowance)
+        self.assertIs(composed.left, element_allowance)
+        self.assertIs(composed.right, collection_allowance1)  # <- Stays on right side.
+
+    def test_bitwise_or(self):
+        collection_allowance1 = self.collection_allowance()
+        collection_allowance2 = self.collection_allowance()
+        group_allowance = self.group_allowance()
+        element_allowance = self.element_allowance()
+
+        composed = collection_allowance1 | collection_allowance2
+        self.assertIsInstance(composed, CollectionAllowance)
+        self.assertIsInstance(composed, LogicalOrMixin)
+        self.assertIs(composed.left, collection_allowance1)
+        self.assertIs(composed.right, collection_allowance2)
+        self.assertEqual(composed.__class__.__name__, 'ComposedCollectionAllowance')
+
+        # Check collection-or-group composition.
+        composed = collection_allowance1 | group_allowance  # <- Collection starts on left.
+        self.assertIsInstance(composed, CollectionAllowance)
+        self.assertIs(composed.left, group_allowance)
+        self.assertIs(composed.right, collection_allowance1)  # <- Moves to right side.
+
+        # Check __rand__() handling (using collection-or-element).
+        composed = element_allowance | collection_allowance1  # <- Collection starts on right.
+        self.assertIsInstance(composed, CollectionAllowance)
+        self.assertIs(composed.left, element_allowance)
+        self.assertIs(composed.right, collection_allowance1)  # <- Stays on right side.
 
 
 class TestAllowedMissing(unittest.TestCase):
