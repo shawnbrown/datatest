@@ -666,6 +666,44 @@ class TestAllowedSpecific(unittest.TestCase):
         self.assertEqual(actual, {'baz': Extra('zzz')})
 
 
+class TestAllowedLimit(unittest.TestCase):
+    def test_under_limit(self):
+        with allowed_limit(3):  # <- Allows 3 and there are only 2.
+            raise ValidationError('example error',
+                                  [Extra('xxx'), Missing('yyy')])
+
+        with allowed_limit(3):  # <- Allows 3 and there are only 2.
+            raise ValidationError('example error',
+                                  {'foo': Extra('xxx'), 'bar': Missing('yyy')})
+
+    def test_at_limit(self):
+        with allowed_limit(2):  # <- Allows 2 and there are 2.
+            raise ValidationError('example error',
+                                  [Extra('xxx'), Missing('yyy')])
+
+        with allowed_limit(3):  # <- Allows 2 and there are 2.
+            raise ValidationError('example error',
+                                  {'foo': Extra('xxx'), 'bar': Missing('yyy')})
+
+    def test_over_limit(self):
+        with self.assertRaises(ValidationError) as cm:
+            with allowed_limit(1):  # <- Allows 1 but there are 2.
+                raise ValidationError('example error',
+                                      [Extra('xxx'), Missing('yyy')])
+
+        remaining = list(cm.exception.differences)
+        self.assertEqual(remaining, [Missing('yyy')])
+
+        with self.assertRaises(ValidationError) as cm:
+            with allowed_limit(1):  # <- Allows 1 and there are 2.
+                raise ValidationError('example error',
+                                      {'foo': Extra('xxx'), 'bar': Missing('yyy')})
+
+        remaining = cm.exception.differences
+        self.assertIsInstance(remaining, collections.Mapping)
+        self.assertEqual(len(remaining), 1)
+
+
 class TestBaseAllowance(unittest.TestCase):
     def test_all_filterfalse_good_list(self):
         class AllowEverything(BaseAllowance):
@@ -929,150 +967,6 @@ class TestComposability(unittest.TestCase):
                 raise ValidationError('some message', differences)
         remaining_diffs = cm.exception.differences
         self.assertEqual(list(remaining_diffs), [Extra('Y'), Missing('Z')])
-
-
-class TestAllowedLimit(unittest.TestCase):
-    """Test allowed_limit() behavior."""
-    def test_exceeds_limit(self):
-        differences = [Extra('xxx'), Missing('yyy')]
-        with self.assertRaises(ValidationError) as cm:
-            with allowed_limit(1):  # <- Allows only 1 but there are 2!
-                raise ValidationError('example error', differences)
-
-        remaining = list(cm.exception.differences)
-        self.assertEqual(remaining, differences)
-
-    def test_matches_limit(self):
-        differences = [Extra('xxx'), Missing('yyy')]
-        with allowed_limit(2):  # <- Allows 2 and there are only 2.
-            raise ValidationError('example error', differences)
-
-    def test_under_limit(self):
-        differences = [Extra('xxx'), Missing('yyy')]
-        with allowed_limit(3):  # <- Allows 3 and there are only 2.
-            raise ValidationError('example error', differences)
-
-    def test_dict_of_diffs_exceeds_and_match(self):
-        differences = {
-            'foo': [Extra('xxx'), Missing('yyy')],
-            'bar': [Extra('zzz')],
-        }
-        with self.assertRaises(ValidationError) as cm:
-            with allowed_limit(1):  # <- Allows only 1 but there are 2!
-                raise ValidationError('example error', differences)
-
-        actual = cm.exception.differences
-        expected = {'foo': [Extra('xxx'), Missing('yyy')]}
-        self.assertEqual(dict(actual), expected)
-
-    @unittest.skip('refactoring')
-    def test_bitwise_or_composition_under_limit(self):
-        differences = [
-            Extra('aaa'),
-            Extra('bbb'),
-            Missing('ccc'),
-            Missing('ddd'),
-            Missing('eee'),
-        ]
-        with allowed_limit(2) | allowed_missing():  # <- Limit of 2 or Missing.
-            raise ValidationError('example error', differences)
-
-    @unittest.skip('refactoring')
-    def test_bitwise_ror(self):
-        """The right-side-or/__ror__ should be wired up to __or__."""
-        differences = [
-            Extra('aaa'),
-            Extra('bbb'),
-            Missing('ccc'),
-            Missing('ddd'),
-            Missing('eee'),
-        ]
-        with allowed_missing() | allowed_limit(2):  # <- On right-hand side!
-            raise ValidationError('example error', differences)
-
-    @unittest.skip('refactoring')
-    def test_bitwise_or_composition_over_limit(self):
-        differences = [
-            Extra('aaa'),
-            Extra('bbb'),
-            Extra('ccc'),
-            Missing('ddd'),
-            Missing('eee'),
-        ]
-        with self.assertRaises(ValidationError) as cm:
-            with allowed_limit(2) | allowed_missing():
-                raise ValidationError('example error', differences)
-
-        # Returned differences *may* not be in the same order.
-        actual = list(cm.exception.differences)
-        self.assertEqual(actual, differences)
-
-        # Test __ror__().
-        with self.assertRaises(ValidationError) as cm:
-            with allowed_missing() | allowed_limit(2):  # <- On right-hand side!
-                raise ValidationError('example error', differences)
-
-        # Returned differences *may* not be in the same order.
-        actual = list(cm.exception.differences)
-        self.assertEqual(actual, differences)
-
-    @unittest.skip('refactoring')
-    def test_bitwise_and_composition_under_limit(self):
-        differences = [Extra('xxx'), Missing('yyy'), Extra('zzz')]
-
-        with self.assertRaises(ValidationError) as cm:
-            is_extra = lambda x: isinstance(x, Extra)
-            with allowed_limit(4) & allowed_extra():
-                raise ValidationError('example error', differences)
-
-        actual = list(cm.exception.differences)
-        self.assertEqual(actual, [Missing('yyy')])
-
-    @unittest.skip('refactoring')
-    def test_bitwise_rand(self):
-        """The right-side-and/__rand__ should be wired up to __and__."""
-        differences = [Extra('xxx'), Missing('yyy'), Extra('zzz')]
-
-        # Make sure __rand__ (right-and) is wired-up to __and__.
-        with self.assertRaises(ValidationError) as cm:
-            is_extra = lambda x: isinstance(x, Extra)
-            with allowed_extra() & allowed_limit(4):  # <- On right-hand side!
-                raise ValidationError('example error', differences)
-
-        actual = list(cm.exception.differences)
-        self.assertEqual(actual, [Missing('yyy')])
-
-    @unittest.skip('refactoring')
-    def test_bitwise_and_composition_over_limit(self):
-        differences = [Extra('xxx'), Missing('yyy'), Extra('zzz')]
-        with self.assertRaises(ValidationError) as cm:
-            is_extra = lambda x: isinstance(x, Extra)
-            with allowed_limit(1) & allowed_extra():  # <- Limit of 1 and is_extra().
-                raise ValidationError('example error', differences)
-
-        # Returned errors can be in different order.
-        actual = list(cm.exception.differences)
-        expected = [Missing('yyy'), Extra('xxx'), Extra('zzz')]
-        self.assertEqual(actual, expected)
-
-    @unittest.skip('refactoring')
-    def test_bitwise_and_composition_with_dict(self):
-        differences = {
-            'foo': [Extra('aaa'), Missing('bbb')],
-            'bar': [Extra('ccc')],
-            'baz': [Extra('ddd'), Extra('eee')],
-        }
-        with self.assertRaises(ValidationError) as cm:
-            is_extra = lambda x: isinstance(x, Extra)
-            with allowed_limit(1) & allowed_extra():
-                raise ValidationError('example error', differences)
-
-        actual = cm.exception.differences
-        expected = {
-            'foo': [Missing('bbb')],              # <- Missing not allowed at all.
-            'baz': [Extra('ddd'), Extra('eee')],  # <- Returns everything when over limit.
-        }
-        self.assertEqual(dict(actual), expected)
 
 
 @unittest.skip('Prerequisite refactoring still in progress.')

@@ -583,6 +583,23 @@ class allowed_specific(GroupAllowance):
         self._allowed = None
 
 
+class allowed_limit(CollectionAllowance):
+    def __init__(self, number, msg=None):
+        self.number = number
+        self._count = None  # Property to hold count of diffs during processing.
+        super(allowed_limit, self).__init__(msg)
+
+    def start_collection(self):
+        self._count = 0
+
+    def call_predicate(self, item):
+        self._count += 1
+        return self._count <= self.number
+
+    def end_collection(self):
+        self._count = None
+
+
 class ElementAllowance(BaseAllowance):
     """Allow differences where *predicate* returns True. For each
     difference, *predicate* will receive two arguments---a **key**
@@ -631,78 +648,3 @@ class ElementAllowance(BaseAllowance):
         def predicate(*args, **kwds):
             return pred1(*args, **kwds) and pred2(*args, **kwds)
         return ElementAllowance(predicate)
-
-
-class allowed_limit(BaseAllowance):
-    def __init__(self, number, msg=None):
-        self.number = number
-        self.or_predicate = None
-        self.and_predicate = None
-        super(allowed_limit, self).__init__(msg)
-
-    def group_filterfalse(self, group):
-        number = self.number                # Reduce the number of
-        or_predicate = self.or_predicate    # dot-lookups--these are
-        and_predicate = self.and_predicate  # referenced many times.
-
-        group = iter(group)  # Must be consumable.
-        matching = []
-        for key, diff in group:
-            if or_predicate and or_predicate(key, diff):
-                continue
-            if and_predicate and not and_predicate(key, diff):
-                yield key, diff
-                continue
-            matching.append((key, diff))
-            if len(matching) > number:
-                break
-
-        if len(matching) > number:
-            for key, diff in itertools.chain(matching, group):
-                yield key, diff
-
-    def all_filterfalse(self, iterable):
-        if _is_mapping_type(iterable):
-            return super(allowed_limit, self).all_filterfalse(iterable)  # <- EXIT!
-
-        iterable = ((None, diff) for diff in iterable)
-        filtered = super(allowed_limit, self).all_filterfalse(iterable)
-        return (diff for key, diff in filtered)  # 'key' intentionally discarded
-
-    def __or__(self, other):
-        if not isinstance(other, ElementAllowance):
-            return NotImplemented
-
-        allowance = allowed_limit(self.number, self.msg)
-        allowance.and_predicate = self.and_predicate  # Copy 'and' as-is.
-        if not self.or_predicate:
-            allowance.or_predicate = other.predicate
-        else:
-            pred1 = self.or_predicate
-            pred2 = other.predicate
-            def predicate(*args, **kwds):
-                return pred1(*args, **kwds) or pred2(*args, **kwds)
-            allowance.or_predicate = predicate
-        return allowance
-
-    def __ror__(self, other):
-        return self.__or__(other)
-
-    def __and__(self, other):
-        if not isinstance(other, ElementAllowance):
-            return NotImplemented
-
-        allowance = allowed_limit(self.number, self.msg)
-        allowance.or_predicate = self.or_predicate  # Copy 'or' as-is.
-        if not self.and_predicate:
-            allowance.and_predicate = other.predicate
-        else:
-            pred1 = self.and_predicate
-            pred2 = other.predicate
-            def predicate(*args, **kwds):
-                return pred1(*args, **kwds) and pred2(*args, **kwds)
-            allowance.and_predicate = predicate
-        return allowance
-
-    def __rand__(self, other):
-        return self.__and__(other)
