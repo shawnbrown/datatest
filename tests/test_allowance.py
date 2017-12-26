@@ -101,13 +101,16 @@ class TestBaseAllowance(unittest.TestCase):
         context manager protocol).
         """
         try:
-            raise ValidationError('invalid data', [Missing('A'), Extra('B')])
+            raise ValidationError('error message', [Missing('A'), Extra('B')])
         except ValidationError:
             type, value, traceback = sys.exc_info()  # Get exception info.
 
-        with self.assertRaises(ValidationError):
-            allowance = MinimalAllowance()
+        with self.assertRaises(ValidationError) as cm:
+            allowance = MinimalAllowance('allowance message')
             allowance.__exit__(type, value, traceback)
+
+        message = cm.exception.message
+        self.assertEqual(message, 'allowance message: error message')
 
 
 class TestAllowanceProtocol(unittest.TestCase):
@@ -748,18 +751,3 @@ class TestUniversalComposability(unittest.TestCase):
         for a, b in self.combinations:
             combined = a & b  # Compose using "bitwise and".
             self.assertIsInstance(combined, BaseAllowance)
-
-
-class TestMsgIntegration(unittest.TestCase):
-    """The 'msg' keyword is passed to to each parent class and
-    eventually handled in the allow_iter base class. These tests
-    do some sanity checking to make sure that 'msg' values are
-    passed through the inheritance chain.
-    """
-    def test_allowed_missing(self):
-        # Check for modified message.
-        with self.assertRaises(ValidationError) as cm:
-            with allowed_missing(msg='modified'):  # <- No msg!
-                raise ValidationError('original', [Extra('X')])
-        message = cm.exception.message
-        self.assertEqual(message, 'modified: original')
