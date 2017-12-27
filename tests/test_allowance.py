@@ -751,3 +751,57 @@ class TestUniversalComposability(unittest.TestCase):
         for a, b in self.combinations:
             combined = a & b  # Compose using "bitwise and".
             self.assertIsInstance(combined, BaseAllowance)
+
+    def test_integration_examples(self):
+        # Test allowance of +/- 2 OR +/- 6%.
+        with self.assertRaises(ValidationError) as cm:
+            differences = [
+                Deviation(+2, 1),
+                Deviation(+4, 10),
+                Deviation(+8, 100),
+            ]
+            with allowed_deviation(2) | allowed_percent_deviation(0.08):
+                raise ValidationError('example error', differences)
+
+        remaining = cm.exception.differences
+        self.assertEqual(remaining, [Deviation(+4, 10)])
+
+        # Test missing-type AND matching-value.
+        with self.assertRaises(ValidationError) as cm:
+            differences = [
+                Missing('A'),
+                Missing('B'),
+                Extra('C'),
+            ]
+            with allowed_missing() & allowed_args(lambda x: x == 'A'):
+                raise ValidationError('example error', differences)
+
+        remaining = cm.exception.differences
+        self.assertEqual(remaining, [Missing('B'), Extra('C')])
+
+        # Test missing-type OR allowed-limit.
+        with self.assertRaises(ValidationError) as cm:
+            differences = [
+                Extra('A'),
+                Missing('B'),
+                Extra('C'),
+                Missing('D'),
+            ]
+            with allowed_limit(1) | allowed_missing():
+                raise ValidationError('example error', differences)
+
+        remaining = cm.exception.differences
+        self.assertEqual(remaining, [Extra('C')])
+
+        # Test missing-type AND allowed-limit.
+        with self.assertRaises(ValidationError) as cm:
+            differences = [
+                Extra('A'),
+                Missing('B'),
+                Missing('C'),
+            ]
+            with allowed_limit(1) & allowed_missing():  # Allows only 1 missing.
+                raise ValidationError('example error', differences)
+
+        remaining = cm.exception.differences
+        self.assertEqual(remaining, [Extra('A'), Missing('C')])
