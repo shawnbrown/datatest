@@ -460,9 +460,6 @@ class allowed_specific(GroupAllowance):
             return True
         return False
 
-    def end_collection(self):
-        self._allowed = None
-
 
 class allowed_limit(CollectionAllowance):
     def __init__(self, number, msg=None):
@@ -476,6 +473,3 @@ class allowed_limit(CollectionAllowance):
     def call_predicate(self, item):
         self._count += 1
         return self._count <= self.number
-
-    def end_collection(self):
-        self._count = None
