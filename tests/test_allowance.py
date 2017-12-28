@@ -8,6 +8,9 @@ from datatest.utils import contextlib
 from datatest.utils import itertools
 
 from datatest.allowance import BaseAllowance
+from datatest.allowance import CompositionAllowance
+from datatest.allowance import LogicalAndAllowance
+from datatest.allowance import LogicalOrAllowance
 from datatest.allowance import LogicalAndMixin
 from datatest.allowance import LogicalOrMixin
 from datatest.allowance import ElementAllowance
@@ -42,6 +45,29 @@ class MinimalAllowance(BaseAllowance):  # A minimal subclass for
 
 
 class TestBaseAllowance(unittest.TestCase):
+    def test_default_priority(self):
+        class allowed_nothing(MinimalAllowance):
+            def call_predicate(_self, item):
+                return False
+
+        allowance = allowed_nothing()
+        self.assertEqual(allowance.priority, 1)
+
+    def test_preserve_priority(self):
+        # Calling the superclass' __init__() should not overwrite
+        # the `priority` attribute if it has been previously set by
+        # a subclass.
+        class allowed_nothing(MinimalAllowance):
+            def __init__(_self, msg=None):
+                _self.priority = 2
+                super(allowed_nothing, _self).__init__(msg)
+
+            def call_predicate(_self, item):
+                return False
+
+        allowance = allowed_nothing()
+        self.assertEqual(allowance.priority, 2, 'should not overwrite existing `priority`')
+
     def test_serialized_items(self):
         item_list = [1, 2]
         actual = BaseAllowance._serialized_items(item_list)
@@ -160,6 +186,62 @@ class TestAllowanceProtocol(unittest.TestCase):
             'end_collection()',
         ]
         self.assertEqual(allowed.log, expected)
+
+
+class TestLogicalComposition(unittest.TestCase):
+    def setUp(self):
+        class allowed_missing(BaseAllowance):
+            def call_predicate(_self, item):
+                return isinstance(item[1], Missing)
+
+        class allowed_letter_a(BaseAllowance):
+            def call_predicate(_self, item):
+                return item[1].args[0] == 'a'
+
+        self.allowed_missing = allowed_missing()
+        self.allowed_letter_a = allowed_letter_a()
+
+    def test_CompositionAllowance(self):
+        class LogicalAnd(CompositionAllowance):
+            def call_predicate(_self, item):
+                return (_self.left.call_predicate(item)
+                        and _self.right.call_predicate(item))
+
+            def __repr__(_self):
+                return super(LogicalAnd, _self).__repr__()
+
+        allowance = LogicalAnd(left=self.allowed_missing,
+                               right=self.allowed_letter_a)
+        self.assertIs(allowance.left, self.allowed_missing)
+        self.assertIs(allowance.right, self.allowed_letter_a)
+
+        msg = 'Higher priority number should always move to the right-hand side.'
+        self.allowed_missing.priority = 3   # <- Change priority.
+        self.allowed_letter_a.priority = 2  # <- Change priority.
+        allowance = LogicalAnd(left=self.allowed_missing,  # <- Given as `left`.
+                               right=self.allowed_letter_a)
+        self.assertIs(allowance.left, self.allowed_letter_a, msg=msg)
+        self.assertIs(allowance.right, self.allowed_missing, msg=msg)  # <- Moved to `right`.
+
+    def test_LogicalAndAllowance(self):
+        with self.assertRaises(ValidationError) as cm:
+            with LogicalAndAllowance(self.allowed_missing, self.allowed_letter_a):
+                raise ValidationError(
+                    'example error',
+                    [Missing('a'), Extra('a'), Missing('b'), Extra('b')],
+                )
+        differences = cm.exception.differences
+        self.assertEqual(list(differences), [Extra('a'), Missing('b'), Extra('b')])
+
+    def test_LogicalOrAllowance(self):
+        with self.assertRaises(ValidationError) as cm:
+            with LogicalOrAllowance(self.allowed_missing, self.allowed_letter_a):
+                raise ValidationError(
+                    'example error',
+                    [Missing('a'), Extra('a'), Missing('b'), Extra('b')],
+                )
+        differences = cm.exception.differences
+        self.assertEqual(list(differences), [Extra('b')])
 
 
 class TestLogicalMixins(unittest.TestCase):

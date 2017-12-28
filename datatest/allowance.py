@@ -43,12 +43,19 @@ __all__ = [
 
 
 class BaseAllowance(abc.ABC):
-    """Context manager to allow certain differences without
+    """Context manager base class to allow certain differences without
     triggering a test failure.
     """
     def __init__(self, msg=None):
         """Initialize object values."""
         self.msg = msg
+        self.priority = getattr(self, 'priority', 1)  # If priority is defined
+                                                      # in a subclass, keep it.
+
+    def __repr__(self):
+        cls_name = self.__class__.__name__
+        msg_part = ', msg={0!r}'.format(self.msg) if self.msg else ''
+        return '{0}({1})'.format(cls_name, msg_part)
 
     ######################################
     # Hook methods for allowance protocol.
@@ -73,13 +80,15 @@ class BaseAllowance(abc.ABC):
     ####################################
     # Operators for boolean composition.
     ####################################
-    @abc.abstractmethod
     def __and__(self, other):
-        return NotImplemented
+        if not isinstance(other, BaseAllowance):
+            return NotImplemented
+        return LogicalAndAllowance(self, other)
 
-    @abc.abstractmethod
     def __or__(self, other):
-        return NotImplemented
+        if not isinstance(other, BaseAllowance):
+            return NotImplemented
+        return LogicalOrAllowance(self, other)
 
     ###############################################
     # Data handling methods for context management.
@@ -169,6 +178,60 @@ class BaseAllowance(abc.ABC):
         raise exc             #    alternative to support older Python
                               #    versions--see PEP 415 (same as
                               #    effect as "raise ... from None").
+
+
+class CompositionAllowance(BaseAllowance):
+    """Base class for combining allowances using Boolean composition."""
+    def __init__(self, left, right, msg=None):
+        if left.priority > right.priority:
+            left, right = right, left
+        self.left = left
+        self.right = right
+        self.msg = msg
+        self.priority = max(left.priority, right.priority)
+
+    @abc.abstractmethod
+    def __repr__(self):
+        cls_name = self.__class__.__name__
+        msg_part = ', msg={0!r}'.format(self.msg) if self.msg else ''
+        return '{0}({1!r}, {2!r}{3})'.format(cls_name, self.left, self.right,
+                                             msg_part)
+
+    def start_collection(self):
+        self.left.start_collection()
+        self.right.start_collection()
+
+    def start_group(self, key):
+        self.left.start_group(key)
+        self.right.start_group(key)
+
+    def end_group(self, key):
+        self.left.end_group(key)
+        self.right.end_group(key)
+
+    def end_collection(self):
+        self.left.end_collection()
+        self.right.end_collection()
+
+
+class LogicalAndAllowance(CompositionAllowance):
+    """Base class to combine allowances using logical AND condition."""
+    def call_predicate(self, item):
+        return (self.left.call_predicate(item)
+                and self.right.call_predicate(item))
+
+    def __repr__(self):
+        return '({0!r} and {1!r})'.format(self.left, self.right)
+
+
+class LogicalOrAllowance(CompositionAllowance):
+    """Base class to combine allowances using logical OR condition."""
+    def call_predicate(self, item):
+        return (self.left.call_predicate(item)
+                or self.right.call_predicate(item))
+
+    def __repr__(self):
+        return '({0!r} or {1!r})'.format(self.left, self.right)
 
 
 class BaseMixin(BaseAllowance):
