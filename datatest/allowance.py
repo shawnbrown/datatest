@@ -49,12 +49,12 @@ class BaseAllowance(abc.ABC):
     def __init__(self, msg=None):
         """Initialize object values."""
         self.msg = msg
-        self.priority = getattr(self, 'priority', 1)  # If priority is defined
-                                                      # in a subclass, keep it.
-
+        self.priority = getattr(self, 'priority', 1)  # Use existing priority
+                                                      # if already defined.
+    @abc.abstractmethod
     def __repr__(self):
         cls_name = self.__class__.__name__
-        msg_part = ', msg={0!r}'.format(self.msg) if self.msg else ''
+        msg_part = 'msg={0!r}'.format(self.msg) if self.msg else ''
         return '{0}({1})'.format(cls_name, msg_part)
 
     ######################################
@@ -190,13 +190,6 @@ class CompositionAllowance(BaseAllowance):
         self.msg = msg
         self.priority = max(left.priority, right.priority)
 
-    @abc.abstractmethod
-    def __repr__(self):
-        cls_name = self.__class__.__name__
-        msg_part = ', msg={0!r}'.format(self.msg) if self.msg else ''
-        return '{0}({1!r}, {2!r}{3})'.format(cls_name, self.left, self.right,
-                                             msg_part)
-
     def start_collection(self):
         self.left.start_collection()
         self.right.start_collection()
@@ -216,35 +209,44 @@ class CompositionAllowance(BaseAllowance):
 
 class LogicalAndAllowance(CompositionAllowance):
     """Base class to combine allowances using logical AND condition."""
+    def __repr__(self):
+        return '({0!r} & {1!r})'.format(self.left, self.right)
+
     def call_predicate(self, item):
         return (self.left.call_predicate(item)
                 and self.right.call_predicate(item))
 
-    def __repr__(self):
-        return '({0!r} and {1!r})'.format(self.left, self.right)
-
 
 class LogicalOrAllowance(CompositionAllowance):
     """Base class to combine allowances using logical OR condition."""
+    def __repr__(self):
+        return '({0!r} | {1!r})'.format(self.left, self.right)
+
     def call_predicate(self, item):
         return (self.left.call_predicate(item)
                 or self.right.call_predicate(item))
 
-    def __repr__(self):
-        return '({0!r} or {1!r})'.format(self.left, self.right)
-
 
 class allowed_missing(BaseAllowance):
+    def __repr__(self):
+        return super(allowed_missing, self).__repr__()
+
     def call_predicate(self, item):
         return isinstance(item[1], Missing)
 
 
 class allowed_extra(BaseAllowance):
+    def __repr__(self):
+        return super(allowed_extra, self).__repr__()
+
     def call_predicate(self, item):
         return isinstance(item[1], Extra)
 
 
 class allowed_invalid(BaseAllowance):
+    def __repr__(self):
+        return super(allowed_invalid, self).__repr__()
+
     def call_predicate(self, item):
         return isinstance(item[1], Invalid)
 
@@ -258,6 +260,11 @@ class allowed_key(BaseAllowance):
     def __init__(self, function, msg=None):
         super(allowed_key, self).__init__(msg)
         self.function = function
+
+    def __repr__(self):
+        cls_name = self.__class__.__name__
+        msg_part = ', msg={0!r}'.format(self.msg) if self.msg else ''
+        return '{0}({1!r}{2})'.format(cls_name, self.function, msg_part)
 
     def call_predicate(self, item):
         key = item[0]
@@ -275,6 +282,11 @@ class allowed_args(BaseAllowance):
     def __init__(self, function, msg=None):
         super(allowed_args, self).__init__(msg)
         self.function = function
+
+    def __repr__(self):
+        cls_name = self.__class__.__name__
+        msg_part = ', msg={0!r}'.format(self.msg) if self.msg else ''
+        return '{0}({1!r}{2})'.format(cls_name, self.function, msg_part)
 
     def call_predicate(self, item):
         args = item[1].args
@@ -318,6 +330,16 @@ class allowed_deviation(BaseAllowance):
         self.upper = upper
         super(allowed_deviation, self).__init__(msg)
 
+    def __repr__(self):
+        cls_name = self.__class__.__name__
+        msg_part = ', msg={0!r}'.format(self.msg) if self.msg else ''
+        if -self.lower ==  self.upper:
+            return '{0}({1!r}{2})'.format(cls_name, self.upper, msg_part)
+        return '{0}(lower={1!r}, upper={2!r}{3})'.format(cls_name,
+                                                         self.lower,
+                                                         self.upper,
+                                                         msg_part)
+
     def call_predicate(self, item):
         diff = item[1]
         deviation = diff.deviation or 0
@@ -339,6 +361,16 @@ class allowed_percent_deviation(BaseAllowance):
         self.lower = lower
         self.upper = upper
         super(allowed_percent_deviation, self).__init__(msg)
+
+    def __repr__(self):
+        cls_name = self.__class__.__name__
+        msg_part = ', msg={0!r}'.format(self.msg) if self.msg else ''
+        if -self.lower ==  self.upper:
+            return '{0}({1!r}{2})'.format(cls_name, self.upper, msg_part)
+        return '{0}(lower={1!r}, upper={2!r}{3})'.format(cls_name,
+                                                         self.lower,
+                                                         self.upper,
+                                                         msg_part)
 
     def call_predicate(self, item):
         diff = item[1]
@@ -363,6 +395,11 @@ class allowed_specific(BaseAllowance):
         self.differences = differences
         self.priority = 2
         self._allowed = None  # Property to hold diffs during processing.
+
+    def __repr__(self):
+        cls_name = self.__class__.__name__
+        msg_part = ', msg={0!r}'.format(self.msg) if self.msg else ''
+        return '{0}({1!r}{2})'.format(cls_name, self.differences, msg_part)
 
     def start_group(self, key):
         try:
@@ -389,6 +426,11 @@ class allowed_limit(BaseAllowance):
         self.number = number
         self.priority = 3
         self._count = None  # Property to hold count of diffs during processing.
+
+    def __repr__(self):
+        cls_name = self.__class__.__name__
+        msg_part = ', msg={0!r}'.format(self.msg) if self.msg else ''
+        return '{0}({1!r}{2})'.format(cls_name, self.number, msg_part)
 
     def start_collection(self):
         self._count = 0

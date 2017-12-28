@@ -32,11 +32,8 @@ class MinimalAllowance(BaseAllowance):  # A minimal subclass for
     def call_predicate(self, item):     # testing--defines three
         return False                    # concrete stubs to satisfy
                                         # abstract method requirement
-    def __and__(self, other):           # of the base class.
-        return NotImplemented
-
-    def __or__(self, other):
-        return NotImplemented
+    def __repr__(self):                 # of the base class.
+        return super(MinimalAllowance, self).__repr__()
 
 
 class TestBaseAllowance(unittest.TestCase):
@@ -141,6 +138,9 @@ class TestAllowanceProtocol(unittest.TestCase):
                 _self.log = []
                 super(LoggingAllowance, _self).__init__(msg)
 
+            def __repr__(self):
+                return super(LoggingAllowance, _self).__repr__()
+
             def __getattribute__(_self, name):
                 attr = object.__getattribute__(_self, name)
                 if name in ('log', '_filterfalse'):
@@ -185,11 +185,11 @@ class TestAllowanceProtocol(unittest.TestCase):
 
 class TestLogicalComposition(unittest.TestCase):
     def setUp(self):
-        class allowed_missing(BaseAllowance):
+        class allowed_missing(MinimalAllowance):
             def call_predicate(_self, item):
                 return isinstance(item[1], Missing)
 
-        class allowed_letter_a(BaseAllowance):
+        class allowed_letter_a(MinimalAllowance):
             def call_predicate(_self, item):
                 return item[1].args[0] == 'a'
 
