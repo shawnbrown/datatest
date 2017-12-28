@@ -33,11 +33,11 @@ __all__ = [
     'allowed_missing',
     'allowed_extra',
     'allowed_invalid',
+    'allowed_key',
+    'allowed_args',
     'allowed_deviation',
     'allowed_percent_deviation',
     'allowed_specific',
-    'allowed_key',
-    'allowed_args',
     'allowed_limit',
 ]
 
