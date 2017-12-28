@@ -234,172 +234,30 @@ class LogicalOrAllowance(CompositionAllowance):
         return '({0!r} or {1!r})'.format(self.left, self.right)
 
 
-class BaseMixin(BaseAllowance):
-    """Base class for mixins to support composition of allowances."""
-    def __init__(self, left, right, msg=None):
-        self.left = left
-        self.right = right
-        self.msg = msg
-
-    def start_collection(self):
-        self.left.start_collection()
-        self.right.start_collection()
-
-    def start_group(self, key):
-        self.left.start_group(key)
-        self.right.start_group(key)
-
-    def end_group(self, key):
-        self.left.end_group(key)
-        self.right.end_group(key)
-
-    def end_collection(self):
-        self.left.end_collection()
-        self.right.end_collection()
-
-
-class LogicalAndMixin(BaseMixin):
-    """Mixin class to combine allowances using logical AND condition."""
-    def __init__(self, left, right, msg=None):
-        if not msg:
-            msg = '({0} <and> {1})'.format(
-                left.msg or left.__class__.__name__,
-                right.msg or right.__class__.__name__,
-            )
-        super(LogicalAndMixin, self).__init__(left, right, msg)
-
-    def call_predicate(self, item):
-        return (self.left.call_predicate(item)
-                and self.right.call_predicate(item))
-
-
-class LogicalOrMixin(BaseMixin):
-    """Mixin class to combine allowances using logical OR condition."""
-    def __init__(self, left, right, msg=None):
-        if not msg:
-            msg = '({0} <or> {1})'.format(
-                left.msg or left.__class__.__name__,
-                right.msg or right.__class__.__name__,
-            )
-        super(LogicalOrMixin, self).__init__(left, right, msg)
-
-    def call_predicate(self, item):
-        return (self.left.call_predicate(item)
-                or self.right.call_predicate(item))
-
-
-class ElementAllowance(BaseAllowance):
-    def __and__(self, other):
-        if not isinstance(other, ElementAllowance):
-            return NotImplemented
-        new_cls = type('ComposedElementAllowance',
-                       (LogicalAndMixin, ElementAllowance), {})
-        return new_cls(left=self, right=other)
-
-    def __or__(self, other):
-        if not isinstance(other, ElementAllowance):
-            return NotImplemented
-        new_cls = type('ComposedElementAllowance',
-                       (LogicalOrMixin, ElementAllowance), {})
-        return new_cls(left=self, right=other)
-
-
-class GroupAllowance(BaseAllowance):
-    def __and__(self, other):
-        if isinstance(other, GroupAllowance):
-            left = self
-            right = other
-        elif isinstance(other, ElementAllowance):
-            left = other           # By putting the ElementAllowance on the
-            right = self           # left, a logical short-circuit skips the
-        else:                      # GroupAllowance's call_predicate() on the
-            return NotImplemented  # right--which is the desired behavior.
-
-        new_cls = type('ComposedGroupAllowance',
-                       (LogicalAndMixin, GroupAllowance), {})
-        return new_cls(left, right)
-
-    def __rand__(self, other):
-        return self.__and__(other)
-
-    def __or__(self, other):
-        if isinstance(other, GroupAllowance):
-            left = self
-            right = other
-        elif isinstance(other, ElementAllowance):
-            left = other           # By putting the ElementAllowance on the
-            right = self           # left, a logical short-circuit skips the
-        else:                      # GroupAllowance's call_predicate() on the
-            return NotImplemented  # right--which is the desired behavior.
-
-        new_cls = type('ComposedGroupAllowance',
-                       (LogicalOrMixin, GroupAllowance), {})
-        return new_cls(left, right)
-
-    def __ror__(self, other):
-        return self.__or__(other)
-
-
-class CollectionAllowance(BaseAllowance):
-    def __and__(self, other):
-        if isinstance(other, CollectionAllowance):
-            left = self
-            right = other
-        elif isinstance(other, (GroupAllowance, ElementAllowance)):
-            left = other           # By putting the element/group on the left,
-            right = self           # a logical short-circuit skips the
-        else:                      # CollectionAllowance's call_predicate() on
-            return NotImplemented  # the right--which is the desired behavior.
-
-        new_cls = type('ComposedCollectionAllowance',
-                       (LogicalAndMixin, CollectionAllowance), {})
-        return new_cls(left, right)
-
-    def __rand__(self, other):
-        return self.__and__(other)
-
-    def __or__(self, other):
-        if isinstance(other, CollectionAllowance):
-            left = self
-            right = other
-        elif isinstance(other, (GroupAllowance, ElementAllowance)):
-            left = other
-            right = self
-        else:
-            return NotImplemented
-
-        new_cls = type('ComposedCollectionAllowance',
-                       (LogicalOrMixin, CollectionAllowance), {})
-        return new_cls(left, right)
-
-    def __ror__(self, other):
-        return self.__or__(other)
-
-
-class allowed_missing(ElementAllowance):
+class allowed_missing(BaseAllowance):
     def call_predicate(self, item):
         return isinstance(item[1], Missing)
 
 
-class allowed_extra(ElementAllowance):
+class allowed_extra(BaseAllowance):
     def call_predicate(self, item):
         return isinstance(item[1], Extra)
 
 
-class allowed_invalid(ElementAllowance):
+class allowed_invalid(BaseAllowance):
     def call_predicate(self, item):
         return isinstance(item[1], Invalid)
 
 
-class allowed_key(ElementAllowance):
+class allowed_key(BaseAllowance):
     """The given *function* should accept a number of arguments
     equal the given key elements. If key is a single value (string
     or otherwise), *function* should accept one argument. If key
     is a three-tuple, *function* should accept three arguments.
     """
     def __init__(self, function, msg=None):
-        self.function = function
         super(allowed_key, self).__init__(msg)
+        self.function = function
 
     def call_predicate(self, item):
         key = item[0]
@@ -408,15 +266,15 @@ class allowed_key(ElementAllowance):
         return self.function(*key)
 
 
-class allowed_args(ElementAllowance):
+class allowed_args(BaseAllowance):
     """The given *function* should accept a number of arguments equal
     the given elements in the 'args' attribute. If args is a single
     value (string or otherwise), *function* should accept one argument.
     If args is a three-tuple, *function* should accept three arguments.
     """
     def __init__(self, function, msg=None):
-        self.function = function
         super(allowed_args, self).__init__(msg)
+        self.function = function
 
     def call_predicate(self, item):
         args = item[1].args
@@ -445,7 +303,7 @@ def _normalize_deviation_args(lower, upper, msg):
     return (lower, upper, msg)
 
 
-class allowed_deviation(ElementAllowance):
+class allowed_deviation(BaseAllowance):
     """allowed_deviation(tolerance, /, msg=None)
     allowed_deviation(lower, upper, msg=None)
 
@@ -475,7 +333,7 @@ with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
     ])
 
 
-class allowed_percent_deviation(ElementAllowance):
+class allowed_percent_deviation(BaseAllowance):
     def __init__(self, lower, upper=None, msg=None):
         lower, upper, msg = _normalize_deviation_args(lower, upper, msg)
         self.lower = lower
@@ -497,13 +355,14 @@ with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
     ])
 
 
-class allowed_specific(GroupAllowance):
+class allowed_specific(BaseAllowance):
     def __init__(self, differences, msg=None):
+        super(allowed_specific, self).__init__(msg)
         if isinstance(differences, collections.Mapping):
             differences = dict(differences)
         self.differences = differences
+        self.priority = 2
         self._allowed = None  # Property to hold diffs during processing.
-        super(allowed_specific, self).__init__(msg)
 
     def start_group(self, key):
         try:
@@ -524,11 +383,12 @@ class allowed_specific(GroupAllowance):
         return False
 
 
-class allowed_limit(CollectionAllowance):
+class allowed_limit(BaseAllowance):
     def __init__(self, number, msg=None):
-        self.number = number
-        self._count = None  # Property to hold count of diffs during processing.
         super(allowed_limit, self).__init__(msg)
+        self.number = number
+        self.priority = 3
+        self._count = None  # Property to hold count of diffs during processing.
 
     def start_collection(self):
         self._count = 0

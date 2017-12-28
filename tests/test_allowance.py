@@ -11,11 +11,6 @@ from datatest.allowance import BaseAllowance
 from datatest.allowance import CompositionAllowance
 from datatest.allowance import LogicalAndAllowance
 from datatest.allowance import LogicalOrAllowance
-from datatest.allowance import LogicalAndMixin
-from datatest.allowance import LogicalOrMixin
-from datatest.allowance import ElementAllowance
-from datatest.allowance import GroupAllowance
-from datatest.allowance import CollectionAllowance
 from datatest.allowance import allowed_missing
 from datatest.allowance import allowed_extra
 from datatest.allowance import allowed_invalid
@@ -242,209 +237,6 @@ class TestLogicalComposition(unittest.TestCase):
                 )
         differences = cm.exception.differences
         self.assertEqual(list(differences), [Extra('b')])
-
-
-class TestLogicalMixins(unittest.TestCase):
-    def setUp(self):
-        class allowed_missing(MinimalAllowance):
-            def call_predicate(_self, item):
-                return isinstance(item[1], Missing)
-
-        class allowed_value_A(MinimalAllowance):
-            def call_predicate(_self, item):
-                return item[1].args == ('A',)
-
-        self.allowed_missing = allowed_missing()
-        self.allowed_value_A = allowed_value_A()
-
-    def test_LogicalAndMixin(self):
-        class LeftAndRight(LogicalAndMixin, MinimalAllowance):
-            pass
-
-        with self.assertRaises(ValidationError) as cm:
-            with LeftAndRight(left=self.allowed_missing,
-                              right=self.allowed_value_A):
-                raise ValidationError(
-                    'example error',
-                    [Missing('A'), Extra('A'), Missing('B'), Extra('B')],
-                )
-        differences = cm.exception.differences
-        self.assertEqual(list(differences), [Extra('A'), Missing('B'), Extra('B')])
-
-    def test_LogicalOrMixin(self):
-        class LeftOrRight(LogicalOrMixin, MinimalAllowance):
-            pass
-
-        with self.assertRaises(ValidationError) as cm:
-            with LeftOrRight(left=self.allowed_missing,
-                             right=self.allowed_value_A):
-                raise ValidationError(
-                    'example error',
-                    [Missing('A'), Extra('A'), Missing('B'), Extra('B')],
-                )
-        differences = cm.exception.differences
-        self.assertEqual(list(differences), [Extra('B')])
-
-
-class TestElementAllowance(unittest.TestCase):
-    def setUp(self):
-        class allowed_nothing(ElementAllowance):
-            def call_predicate(_self, item):
-                return False
-        self.allowed_nothing = allowed_nothing
-
-    def test_bitwise_and(self):
-        left = self.allowed_nothing()
-        right = self.allowed_nothing()
-        composed = left & right  # <- Bitwise-and.
-
-        self.assertIsInstance(composed, ElementAllowance)
-        self.assertIsInstance(composed, LogicalAndMixin)
-        self.assertIs(composed.left, left)
-        self.assertIs(composed.right, right)
-        self.assertEqual(composed.msg, '(allowed_nothing <and> allowed_nothing)')
-        self.assertEqual(composed.__class__.__name__, 'ComposedElementAllowance')
-
-    def test_bitwise_or(self):
-        left = self.allowed_nothing()
-        right = self.allowed_nothing()
-        composed = left | right  # <- Bitwise-or.
-
-        self.assertIsInstance(composed, ElementAllowance)
-        self.assertIsInstance(composed, LogicalOrMixin)
-        self.assertIs(composed.left, left)
-        self.assertIs(composed.right, right)
-        self.assertEqual(composed.msg, '(allowed_nothing <or> allowed_nothing)')
-        self.assertEqual(composed.__class__.__name__, 'ComposedElementAllowance')
-
-
-class TestGroupAllowance(unittest.TestCase):
-    def setUp(self):
-        class group_allowance(GroupAllowance):
-            def call_predicate(_self, item):
-                return False
-        self.group_allowance = group_allowance
-
-        class element_allowance(ElementAllowance):
-            def call_predicate(_self, item):
-                return False
-        self.element_allowance = element_allowance
-
-    def test_bitwise_and(self):
-        group_allowance1 = self.group_allowance()
-        group_allowance2 = self.group_allowance()
-        element_allowance = self.element_allowance()
-
-        composed = group_allowance1 & group_allowance2
-        self.assertIsInstance(composed, GroupAllowance)
-        self.assertIsInstance(composed, LogicalAndMixin)
-        self.assertIs(composed.left, group_allowance1)
-        self.assertIs(composed.right, group_allowance2)
-        self.assertEqual(composed.__class__.__name__, 'ComposedGroupAllowance')
-
-        # Check group-and-element composition.
-        composed = group_allowance1 & element_allowance  # <- Group starts on left.
-        self.assertIsInstance(composed, GroupAllowance)
-        self.assertIs(composed.left, element_allowance)
-        self.assertIs(composed.right, group_allowance1)  # <- Moves to right side.
-
-        # Check __rand__() handling.
-        composed = element_allowance & group_allowance1  # <- Group starts on right.
-        self.assertIsInstance(composed, GroupAllowance)
-        self.assertIs(composed.left, element_allowance)
-        self.assertIs(composed.right, group_allowance1)  # <- Stays on right side.
-
-    def test_bitwise_or(self):
-        group_allowance1 = self.group_allowance()
-        group_allowance2 = self.group_allowance()
-        element_allowance = self.element_allowance()
-
-        composed = group_allowance1 | group_allowance2
-        self.assertIsInstance(composed, GroupAllowance)
-        self.assertIsInstance(composed, LogicalOrMixin)
-        self.assertIs(composed.left, group_allowance1)
-        self.assertIs(composed.right, group_allowance2)
-        self.assertEqual(composed.__class__.__name__, 'ComposedGroupAllowance')
-
-        # Check group-or-element composition.
-        composed = group_allowance1 | element_allowance  # <- Group starts on left.
-        self.assertIsInstance(composed, GroupAllowance)
-        self.assertIs(composed.left, element_allowance)
-        self.assertIs(composed.right, group_allowance1)  # <- Moves to right side.
-
-        # Check __ror__() handling.
-        composed = element_allowance | group_allowance1  # <- Group starts on right.
-        self.assertIsInstance(composed, GroupAllowance)
-        self.assertIs(composed.left, element_allowance)
-        self.assertIs(composed.right, group_allowance1)  # <- Stays on right side.
-
-
-class TestCollectionAllowance(unittest.TestCase):
-    def setUp(self):
-        class collection_allowance(CollectionAllowance):
-            def call_predicate(_self, item):
-                return False
-        self.collection_allowance = collection_allowance
-
-        class group_allowance(GroupAllowance):
-            def call_predicate(_self, item):
-                return False
-        self.group_allowance = group_allowance
-
-        class element_allowance(ElementAllowance):
-            def call_predicate(_self, item):
-                return False
-        self.element_allowance = element_allowance
-
-    def test_bitwise_and(self):
-        collection_allowance1 = self.collection_allowance()
-        collection_allowance2 = self.collection_allowance()
-        group_allowance = self.group_allowance()
-        element_allowance = self.element_allowance()
-
-        composed = collection_allowance1 & collection_allowance2
-        self.assertIsInstance(composed, CollectionAllowance)
-        self.assertIsInstance(composed, LogicalAndMixin)
-        self.assertIs(composed.left, collection_allowance1)
-        self.assertIs(composed.right, collection_allowance2)
-        self.assertEqual(composed.__class__.__name__, 'ComposedCollectionAllowance')
-
-        # Check collection-and-group composition.
-        composed = collection_allowance1 & group_allowance  # <- Collection starts on left.
-        self.assertIsInstance(composed, CollectionAllowance)
-        self.assertIs(composed.left, group_allowance)
-        self.assertIs(composed.right, collection_allowance1)  # <- Moves to right side.
-
-        # Check __rand__() handling (using collection-and-element).
-        composed = element_allowance & collection_allowance1  # <- Collection starts on right.
-        self.assertIsInstance(composed, CollectionAllowance)
-        self.assertIs(composed.left, element_allowance)
-        self.assertIs(composed.right, collection_allowance1)  # <- Stays on right side.
-
-    def test_bitwise_or(self):
-        collection_allowance1 = self.collection_allowance()
-        collection_allowance2 = self.collection_allowance()
-        group_allowance = self.group_allowance()
-        element_allowance = self.element_allowance()
-
-        composed = collection_allowance1 | collection_allowance2
-        self.assertIsInstance(composed, CollectionAllowance)
-        self.assertIsInstance(composed, LogicalOrMixin)
-        self.assertIs(composed.left, collection_allowance1)
-        self.assertIs(composed.right, collection_allowance2)
-        self.assertEqual(composed.__class__.__name__, 'ComposedCollectionAllowance')
-
-        # Check collection-or-group composition.
-        composed = collection_allowance1 | group_allowance  # <- Collection starts on left.
-        self.assertIsInstance(composed, CollectionAllowance)
-        self.assertIs(composed.left, group_allowance)
-        self.assertIs(composed.right, collection_allowance1)  # <- Moves to right side.
-
-        # Check __rand__() handling (using collection-or-element).
-        composed = element_allowance | collection_allowance1  # <- Collection starts on right.
-        self.assertIsInstance(composed, CollectionAllowance)
-        self.assertIs(composed.left, element_allowance)
-        self.assertIs(composed.right, collection_allowance1)  # <- Stays on right side.
 
 
 class TestAllowedMissing(unittest.TestCase):
@@ -792,47 +584,54 @@ class TestUniversalComposability(unittest.TestCase):
     same type as well as all other allowance types.
     """
     def setUp(self):
-        """Build pairs representing all possible combinations of
-        allowance types.
+        ntup = collections.namedtuple('ntup', ('cls', 'args', 'priority'))
+        self.expected_allowances = [
+            ntup(cls=allowed_missing,           args=tuple(),               priority=1),
+            ntup(cls=allowed_extra,             args=tuple(),               priority=1),
+            ntup(cls=allowed_invalid,           args=tuple(),               priority=1),
+            ntup(cls=allowed_deviation,         args=(5,),                  priority=1),
+            ntup(cls=allowed_percent_deviation, args=(0.05,),               priority=1),
+            ntup(cls=allowed_key,               args=(lambda *args: True,), priority=1),
+            ntup(cls=allowed_args,              args=(lambda *args: True,), priority=1),
+            ntup(cls=allowed_specific,          args=([Invalid('A')],),     priority=2),
+            ntup(cls=allowed_limit,             args=(3,),                  priority=3),
+        ]
+
+    def test_completeness(self):
+        """Check that self.expected_allowances contains all of the
+        allowances defined in datatest.
         """
-        allow1 = [
-            allowed_missing(),
-            allowed_extra(),
-            allowed_invalid(),
-            allowed_deviation(5),
-            allowed_percent_deviation(0.05),
-            allowed_specific([Invalid('A')]),
-            allowed_key(lambda *args: True),
-            allowed_args(lambda *args: True),
-            allowed_limit(3),
-        ]
-        allow2 = [                             # Define a second list
-            allowed_missing(),                 # of allowances so we
-            allowed_extra(),                   # have two lists with
-            allowed_invalid(),                 # unique instances (not
-            allowed_deviation(5),              # just two lists of
-            allowed_percent_deviation(0.05),   # pointers to the same
-            allowed_specific([Invalid('A')]),  # set of objects).
-            allowed_key(lambda *args: True),
-            allowed_args(lambda *args: True),
-            allowed_limit(3),
-        ]
-        # Make sure all of the allowances are unique instances.
-        for a, b in zip(allow1, allow2):
-            assert a is not b, 'must be different instances'
+        import datatest
+        actual = datatest.allowance.__all__
+        expected = (x.cls.__name__ for x in self.expected_allowances)
+        self.assertEqual(set(actual), set(expected))
 
-        combinations = itertools.product(allow1, allow2)
-        self.combinations = list(combinations)
+    def test_priority_values(self):
+        instances = list(x.cls(*x.args) for x in self.expected_allowances)
+        actual = dict((x.__class__, x.priority) for x in instances)
+        expected = dict((ntup.cls, ntup.priority) for ntup in self.expected_allowances)
+        self.assertEqual(actual, expected)
 
-    def test_bitwise_or(self):
-        for a, b in self.combinations:
-            combined = a | b  # Compose using "bitwise or".
-            self.assertIsInstance(combined, BaseAllowance)
+    def test_bitwise_composition(self):
+        """Check that all allowance types can be composed with each
+        other without exception.
+        """
+        # Create two lists of identical allowances. Even though
+        # the lists are the same, they should contain separate
+        # instances--not simply pointers to the same instances.
+        allow1 = list(x.cls(*x.args) for x in self.expected_allowances)
+        allow2 = list(x.cls(*x.args) for x in self.expected_allowances)
+        combinations = list(itertools.product(allow1, allow2))
 
-    def test_bitwise_and(self):
-        for a, b in self.combinations:
-            combined = a & b  # Compose using "bitwise and".
-            self.assertIsInstance(combined, BaseAllowance)
+        for a, b in combinations:
+            composed = a | b
+            self.assertIsInstance(composed, LogicalOrAllowance)
+            self.assertEqual(composed.priority, max(a.priority, b.priority))
+
+        for a, b in combinations:
+            composed = a & b
+            self.assertIsInstance(composed, LogicalAndAllowance)
+            self.assertEqual(composed.priority, max(a.priority, b.priority))
 
     def test_integration_examples(self):
         # Test allowance of +/- 2 OR +/- 6%.
@@ -887,3 +686,17 @@ class TestUniversalComposability(unittest.TestCase):
 
         remaining = cm.exception.differences
         self.assertEqual(remaining, [Extra('A'), Missing('C')])
+
+        # Test missing-type OR allowed-limit.
+        with self.assertRaises(ValidationError) as cm:
+            differences = [
+                Extra('A'),
+                Missing('B'),
+                Extra('C'),
+                Missing('D'),
+            ]
+            with allowed_limit(1) | allowed_specific(Extra('A')):
+                raise ValidationError('example error', differences)
+
+        remaining = cm.exception.differences
+        self.assertEqual(remaining, [Extra('C'), Missing('D')])
