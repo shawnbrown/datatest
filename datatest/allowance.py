@@ -389,10 +389,16 @@ with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
 
 class allowed_specific(BaseAllowance):
     def __init__(self, differences, msg=None):
-        super(allowed_specific, self).__init__(msg)
-        if isinstance(differences, collections.Mapping):
-            differences = dict(differences)
-        self.differences = differences
+        if isinstance(differences, BaseDifference):
+            self.differences = [differences]
+        elif not _is_consumable(differences):
+            self.differences = differences
+        else:
+            raise TypeError(
+                'expected a single difference or non-exhaustable collection, '
+                'got {0} type instead'.format(differences.__class__.__name__)
+            )
+        self.msg = msg
         self.priority = 2
         self._allowed = None  # Property to hold diffs during processing.
 
@@ -404,13 +410,12 @@ class allowed_specific(BaseAllowance):
     def start_group(self, key):
         try:
             allowed = self.differences.get(key, [])
+            if isinstance(allowed, BaseDifference):
+                self._allowed = [allowed]
+            else:
+                self._allowed = list(allowed)
         except AttributeError:
-            allowed = self.differences
-
-        if isinstance(allowed, BaseElement):
-            self._allowed = [allowed]
-        else:
-            self._allowed = list(allowed)
+            self._allowed = list(self.differences)
 
     def call_predicate(self, item):
         diff = item[1]
