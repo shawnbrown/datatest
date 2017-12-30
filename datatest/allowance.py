@@ -228,6 +228,12 @@ class LogicalOrAllowance(CompositionAllowance):
 
 
 class allowed_missing(BaseAllowance):
+    """Allows :class:`Missing` values without triggering a test
+    failure::
+
+        with datatest.allowed_missing():
+            datatest.validate(..., ...)
+    """
     def __repr__(self):
         return super(allowed_missing, self).__repr__()
 
@@ -236,6 +242,12 @@ class allowed_missing(BaseAllowance):
 
 
 class allowed_extra(BaseAllowance):
+    """Allows :class:`Extra` values without triggering a test
+    failure::
+
+        with datatest.allowed_extra():
+            datatest.validate(..., ...)
+    """
     def __repr__(self):
         return super(allowed_extra, self).__repr__()
 
@@ -244,6 +256,12 @@ class allowed_extra(BaseAllowance):
 
 
 class allowed_invalid(BaseAllowance):
+    """Allows :class:`Invalid` values without triggering a test
+    failure::
+
+        with datatest.allowed_invalid():
+            datatest.validate(..., ...)
+    """
     def __repr__(self):
         return super(allowed_invalid, self).__repr__()
 
@@ -356,6 +374,14 @@ with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
 
 
 class allowed_percent_deviation(BaseAllowance):
+    """allowed_percent_deviation(tolerance, /, msg=None)
+    allowed_percent_deviation(lower, upper, msg=None)
+
+    Context manager that allows Deviations within a given percent
+    tolerance without triggering a test failure.
+
+    See documentation for full details.
+    """
     def __init__(self, lower, upper=None, msg=None):
         lower, upper, msg = _normalize_deviation_args(lower, upper, msg)
         self.lower = lower
@@ -388,6 +414,17 @@ with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
 
 
 class allowed_specific(BaseAllowance):
+    """Allows specific *differences* without triggering a test failure.
+    If there are differences that have not been specified, a
+    :class:`ValidationError` is raised with the remaining differences::
+
+        known_issues = datatest.allowed_specific([
+            Extra('foo'),
+            Missing('bar'),
+        ])
+        with known_issues:
+            datatest.validate(..., ...)
+    """
     def __init__(self, differences, msg=None):
         if isinstance(differences, BaseDifference):
             self.differences = [differences]
@@ -426,6 +463,16 @@ class allowed_specific(BaseAllowance):
 
 
 class allowed_limit(BaseAllowance):
+    """Allows a limited *number* of differences without triggering a
+    test failure::
+
+        with datatest.allowed_limit(5):  # Allow up to 5 differences.
+            datatest.validate(..., ...)
+
+    If the count of differences exceeds the given *number*, the test
+    case will fail with a :class:`ValidationError` containing the
+    remaining differences.
+    """
     def __init__(self, number, msg=None):
         super(allowed_limit, self).__init__(msg)
         self.number = number
