@@ -585,7 +585,7 @@ class TestUniversalComposability(unittest.TestCase):
     """
     def setUp(self):
         ntup = collections.namedtuple('ntup', ('cls', 'args', 'priority'))
-        self.expected_allowances = [
+        self.allowances = [
             ntup(cls=allowed_missing,           args=tuple(),               priority=1),
             ntup(cls=allowed_extra,             args=tuple(),               priority=1),
             ntup(cls=allowed_invalid,           args=tuple(),               priority=1),
@@ -598,19 +598,20 @@ class TestUniversalComposability(unittest.TestCase):
         ]
 
     def test_completeness(self):
-        """Check that self.expected_allowances contains all of the
-        allowances defined in datatest.
+        """Check that self.allowances contains all of the allowances
+        defined in datatest.
         """
         import datatest
         actual = datatest.allowance.__all__
-        expected = (x.cls.__name__ for x in self.expected_allowances)
+        expected = (x.cls.__name__ for x in self.allowances)
         self.assertEqual(set(actual), set(expected))
 
     def test_priority_values(self):
-        instances = list(x.cls(*x.args) for x in self.expected_allowances)
-        actual = dict((x.__class__, x.priority) for x in instances)
-        expected = dict((ntup.cls, ntup.priority) for ntup in self.expected_allowances)
-        self.assertEqual(actual, expected)
+        for x in self.allowances:
+            instance = x.cls(*x.args)  # <- Initialize class instance.
+            actual = instance.priority
+            expected = x.priority
+            self.assertEqual(actual, expected, x.cls.__name__)
 
     def test_bitwise_composition(self):
         """Check that all allowance types can be composed with each
@@ -619,8 +620,8 @@ class TestUniversalComposability(unittest.TestCase):
         # Create two lists of identical allowances. Even though
         # the lists are the same, they should contain separate
         # instances--not simply pointers to the same instances.
-        allow1 = list(x.cls(*x.args) for x in self.expected_allowances)
-        allow2 = list(x.cls(*x.args) for x in self.expected_allowances)
+        allow1 = list(x.cls(*x.args) for x in self.allowances)
+        allow2 = list(x.cls(*x.args) for x in self.allowances)
         combinations = list(itertools.product(allow1, allow2))
 
         for a, b in combinations:
