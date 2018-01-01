@@ -578,6 +578,31 @@ class TestAllowedLimit(unittest.TestCase):
         self.assertIsInstance(remaining, collections.Mapping)
         self.assertEqual(len(remaining), 1)
 
+    def test_dict_of_limits(self):
+        with self.assertRaises(ValidationError) as cm:
+            with allowed_limit({'A': 1, 'B': 2, 'C': 2}):
+                raise ValidationError('example error',
+                                      {'A': Extra('xxx'),
+                                       'B': [Missing('yyy'), Missing('zzz')],
+                                       'C': Extra('xxx'),
+                                       'D': Extra('xxx')})
+
+        remaining = cm.exception.differences
+        self.assertIsInstance(remaining, collections.Mapping)
+        self.assertEqual(remaining, {'D': Extra('xxx')})
+
+    def test_ellipsis_wildcard_matching(self):
+        # Using an ellipsis will match any key. So you can use
+        # {...: 1} to allow 1 difference for every group.
+        with self.assertRaises(ValidationError) as cm:
+            with allowed_limit({Ellipsis: 1}):  # <- Allows 1 per group.
+                raise ValidationError('example error',
+                                      {'foo': Extra('xxx'), 'bar': [Missing('yyy'), Missing('zzz')]})
+
+        remaining = cm.exception.differences
+        self.assertIsInstance(remaining, collections.Mapping)
+        self.assertEqual(remaining, {'bar': Missing('zzz')})
+
 
 class TestUniversalComposability(unittest.TestCase):
     """Test that allowances are composable with allowances of the
@@ -594,7 +619,8 @@ class TestUniversalComposability(unittest.TestCase):
             ntup(cls=allowed_key,               args=(lambda *args: True,), priority=1),
             ntup(cls=allowed_args,              args=(lambda *args: True,), priority=1),
             ntup(cls=allowed_specific,          args=([Invalid('A')],),     priority=2),
-            ntup(cls=allowed_limit,             args=(3,),                  priority=3),
+            ntup(cls=allowed_limit,             args=({Ellipsis: 4},),      priority=3),
+            ntup(cls=allowed_limit,             args=(4,),                  priority=5),
         ]
 
     def test_completeness(self):

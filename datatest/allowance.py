@@ -472,21 +472,54 @@ class allowed_limit(BaseAllowance):
     If the count of differences exceeds the given *number*, the test
     case will fail with a :class:`ValidationError` containing the
     remaining differences.
+
+    A dictionary can be used to define individual limits per group::
+
+        with datatest.allowed_limit({'A': 3, 'B': 2}):  # Allow up to 3 diffs
+            datatest.validate(..., ...)                 # in group "A" and 2
+                                                        # diffs in group "B".
+
+    Using an ellipsis (``...``) will match any key---allowing a limited
+    number of differences for every group::
+
+        with datatest.allowed_limit({...: 5}):  # Allow up to 5 diffs
+            datatest.validate(..., ...)         # for every group.
     """
     def __init__(self, number, msg=None):
-        super(allowed_limit, self).__init__(msg)
         self.number = number
-        self.priority = 3
-        self._count = None  # Property to hold count of diffs during processing.
+        self.msg = msg
+        self._count = None        # Properties to hold
+        self._limit = None        # working values during
+        self._number_dict = None  # allowance checking.
 
     def __repr__(self):
         cls_name = self.__class__.__name__
         msg_part = ', msg={0!r}'.format(self.msg) if self.msg else ''
         return '{0}({1!r}{2})'.format(cls_name, self.number, msg_part)
 
-    def start_collection(self):
+    @property
+    def priority(self):
+        if isinstance(self.number, collections.Mapping):
+            return 3
+        return 5
+
+    def _reset_count_and_limit(self, key):
+        self._limit = self._number_dict[key]
         self._count = 0
+
+    def start_collection(self):
+        if isinstance(self.number, collections.Mapping):
+            number_dict = dict(self.number)  # Make a copy.
+            default_value = number_dict.pop(Ellipsis, 0)
+            default_factory = lambda: default_value
+            self._number_dict = collections.defaultdict(default_factory,
+                                                        number_dict)
+            self.start_group = self._reset_count_and_limit
+        else:
+            self.start_group = super(allowed_limit, self).start_group
+            self._limit = self.number
+            self._count = 0
 
     def call_predicate(self, item):
         self._count += 1
-        return self._count <= self.number
+        return self._count <= self._limit
