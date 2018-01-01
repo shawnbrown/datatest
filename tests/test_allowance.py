@@ -627,17 +627,17 @@ class TestUniversalComposability(unittest.TestCase):
     def setUp(self):
         ntup = collections.namedtuple('ntup', ('cls', 'args', 'priority'))
         self.allowances = [
-            ntup(cls=allowed_missing,           args=tuple(),               priority=1),
-            ntup(cls=allowed_extra,             args=tuple(),               priority=1),
-            ntup(cls=allowed_invalid,           args=tuple(),               priority=1),
-            ntup(cls=allowed_deviation,         args=(5,),                  priority=1),
-            ntup(cls=allowed_percent_deviation, args=(0.05,),               priority=1),
-            ntup(cls=allowed_key,               args=(lambda *args: True,), priority=1),
-            ntup(cls=allowed_args,              args=(lambda *args: True,), priority=1),
+            ntup(cls=allowed_missing,           args=tuple(),                  priority=1),
+            ntup(cls=allowed_extra,             args=tuple(),                  priority=1),
+            ntup(cls=allowed_invalid,           args=tuple(),                  priority=1),
+            ntup(cls=allowed_deviation,         args=(5,),                     priority=1),
+            ntup(cls=allowed_percent_deviation, args=(0.05,),                  priority=1),
+            ntup(cls=allowed_key,               args=(lambda *args: True,),    priority=1),
+            ntup(cls=allowed_args,              args=(lambda *args: True,),    priority=1),
             ntup(cls=allowed_specific,          args=({'X': [Invalid('A')]},), priority=2),
-            ntup(cls=allowed_limit,             args=({Ellipsis: 4},),      priority=3),
-            ntup(cls=allowed_specific,          args=([Invalid('A')],),     priority=4),
-            ntup(cls=allowed_limit,             args=(4,),                  priority=5),
+            ntup(cls=allowed_limit,             args=({Ellipsis: 4},),         priority=3),
+            ntup(cls=allowed_specific,          args=([Invalid('A')],),        priority=4),
+            ntup(cls=allowed_limit,             args=(4,),                     priority=5),
         ]
 
     def test_completeness(self):
