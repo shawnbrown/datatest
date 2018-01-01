@@ -401,9 +401,9 @@ class TestAllowedDeviation(unittest.TestCase):
 class TestAllowedPercentDeviation(unittest.TestCase):
     def setUp(self):
         self.differences = {
-            'aaa': Deviation(-1, 10),
-            'bbb': Deviation(+3, 10),
-            'ccc': Deviation(+2, 10),
+            'aaa': Deviation(-1, 16),  # -6.25%
+            'bbb': Deviation(+4, 16),  # 25.0%
+            'ccc': Deviation(+2, 16),  # 12.5%
         }
 
     def test_function_signature(self):
@@ -417,21 +417,21 @@ class TestAllowedPercentDeviation(unittest.TestCase):
             with allowed_percent_deviation(0.2):  # <- Allows +/- 20%.
                 raise ValidationError('example error', self.differences)
         remaining = cm.exception.differences
-        self.assertEqual(remaining, {'bbb': Deviation(+3, 10)})
+        self.assertEqual(remaining, {'bbb': Deviation(+4, 16)})
 
     def test_lower_upper_syntax(self):
         with self.assertRaises(ValidationError) as cm:
             with allowed_percent_deviation(0.0, 0.3):  # <- Allows from 0 to 30%.
                 raise ValidationError('example error', self.differences)
         result_diffs = cm.exception.differences
-        self.assertEqual({'aaa': Deviation(-1, 10)}, result_diffs)
+        self.assertEqual({'aaa': Deviation(-1, 16)}, result_diffs)
 
     def test_same_value_case(self):
         with self.assertRaises(ValidationError) as cm:
-            with allowed_percent_deviation(0.3, 0.3):  # <- Allows +30% only.
+            with allowed_percent_deviation(0.25, 0.25):  # <- Allows +25% only.
                 raise ValidationError('example error', self.differences)
         result_diffs = cm.exception.differences
-        self.assertEqual({'aaa': Deviation(-1, 10), 'ccc': Deviation(+2, 10)}, result_diffs)
+        self.assertEqual({'aaa': Deviation(-1, 16), 'ccc': Deviation(+2, 16)}, result_diffs)
 
 
 class TestAllowedSpecific(unittest.TestCase):
@@ -681,15 +681,15 @@ class TestUniversalComposability(unittest.TestCase):
         # Test allowance of +/- 2 OR +/- 6%.
         with self.assertRaises(ValidationError) as cm:
             differences = [
-                Deviation(+2, 1),
-                Deviation(+4, 10),
-                Deviation(+8, 100),
+                Deviation(+2, 1),   # 200%
+                Deviation(+4, 8),   #  50%
+                Deviation(+8, 32),  #  25%
             ]
-            with allowed_deviation(2) | allowed_percent_deviation(0.08):
+            with allowed_deviation(2) | allowed_percent_deviation(0.25):
                 raise ValidationError('example error', differences)
 
         remaining = cm.exception.differences
-        self.assertEqual(remaining, [Deviation(+4, 10)])
+        self.assertEqual(remaining, [Deviation(+4, 8)])
 
         # Test missing-type AND matching-value.
         with self.assertRaises(ValidationError) as cm:
