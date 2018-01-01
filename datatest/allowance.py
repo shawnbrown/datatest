@@ -419,9 +419,27 @@ class allowed_specific(BaseAllowance):
     :class:`ValidationError` is raised with the remaining differences::
 
         known_issues = datatest.allowed_specific([
-            Extra('foo'),
-            Missing('bar'),
+            Missing('foo'),
+            Extra('bar'),
         ])
+        with known_issues:
+            datatest.validate(..., ...)
+
+    A dictionary can be used to specify differences per group::
+
+        known_issues = datatest.allowed_specific({
+            'AAA': Missing('foo'),
+            'BBB': [Extra('bar'), Missing('baz')],
+        })
+        with known_issues:
+            datatest.validate(..., ...)
+
+    Using an ellipsis (``...``) will match any key---allowing the same
+    collection of differences for every group::
+
+        known_issues = datatest.allowed_specific({
+            ...: [Missing('foo'), Extra('bar')],
+        })
         with known_issues:
             datatest.validate(..., ...)
     """
@@ -432,26 +450,41 @@ class allowed_specific(BaseAllowance):
             self.differences = differences
         else:
             raise TypeError(
-                'expected a single difference or non-exhaustable collection, '
+                'expected a single difference or non-exhaustible collection, '
                 'got {0} type instead'.format(differences.__class__.__name__)
             )
         self.msg = msg
-        self.priority = 2
-        self._allowed = None  # Property to hold diffs during processing.
+        self._allowed = None       # Properties to hold working values
+        self._allowed_dict = None  # during allowance checking.
+
+    @property
+    def priority(self):
+        if isinstance(self.differences, collections.Mapping):
+            return 2
+        return 4
 
     def __repr__(self):
         cls_name = self.__class__.__name__
         msg_part = ', msg={0!r}'.format(self.msg) if self.msg else ''
         return '{0}({1!r}{2})'.format(cls_name, self.differences, msg_part)
 
-    def start_group(self, key):
-        try:
-            allowed = self.differences.get(key, [])
-            if isinstance(allowed, BaseDifference):
-                self._allowed = [allowed]
-            else:
-                self._allowed = list(allowed)
-        except AttributeError:
+    def _reset_allowed(self, key):
+        allowed = self._allowed_dict[key]
+        if isinstance(allowed, BaseDifference):
+            self._allowed = [allowed]
+        else:
+            self._allowed = list(allowed)
+
+    def start_collection(self):
+        if isinstance(self.differences, collections.Mapping):
+            allowed_dict = dict(self.differences)  # Make a copy.
+            default_value = allowed_dict.pop(Ellipsis, [])
+            default_factory = lambda: default_value
+            self._allowed_dict = collections.defaultdict(default_factory,
+                                                         allowed_dict)
+            self.start_group = self._reset_allowed
+        else:
+            self.start_group = super(allowed_specific, self).start_group
             self._allowed = list(self.differences)
 
     def call_predicate(self, item):

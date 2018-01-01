@@ -503,7 +503,11 @@ class TestAllowedSpecific(unittest.TestCase):
                 raise ValidationError('example error', differences)
 
         actual = cm.exception.differences
-        expected = {'bar': Missing('yyy')}
+        # Actual result can vary with unordered dictionaries.
+        if len(actual) == 1:
+            expected = {'bar': [Extra('xxx'), Missing('yyy')]}
+        else:
+            expected = {'foo': Extra('xxx'), 'bar': Missing('yyy')}
         self.assertEqual(actual, expected)
 
     def test_mapping_of_differences_and_allowances(self):
@@ -516,6 +520,18 @@ class TestAllowedSpecific(unittest.TestCase):
 
         actual = cm.exception.differences
         expected = {'foo': Extra('xxx'), 'bar': Missing('yyy')}
+        self.assertEqual(actual, expected)
+
+    def test_mapping_of_differences_and_wildcard_allowances(self):
+        differences = {'foo': Extra('xxx'), 'bar': [Extra('xxx'), Missing('yyy')]}
+        allowed = {Ellipsis: Extra('xxx')}
+
+        with self.assertRaises(ValidationError) as cm:
+            with allowed_specific(allowed):
+                raise ValidationError('example error', differences)
+
+        actual = cm.exception.differences
+        expected = {'bar': Missing('yyy')}
         self.assertEqual(actual, expected)
 
     def test_all_allowed(self):
@@ -532,7 +548,7 @@ class TestAllowedSpecific(unittest.TestCase):
             'bar': [Extra('xxx')],
             'baz': [Extra('xxx'), Missing('yyy'), Extra('zzz')],
         }
-        allowed = [Extra('xxx'), Missing('yyy')]
+        allowed = {Ellipsis: [Extra('xxx'), Missing('yyy')]}
         with self.assertRaises(ValidationError) as cm:
             with allowed_specific(allowed):
                 raise ValidationError('example error', differences)
@@ -618,8 +634,9 @@ class TestUniversalComposability(unittest.TestCase):
             ntup(cls=allowed_percent_deviation, args=(0.05,),               priority=1),
             ntup(cls=allowed_key,               args=(lambda *args: True,), priority=1),
             ntup(cls=allowed_args,              args=(lambda *args: True,), priority=1),
-            ntup(cls=allowed_specific,          args=([Invalid('A')],),     priority=2),
+            ntup(cls=allowed_specific,          args=({'X': [Invalid('A')]},), priority=2),
             ntup(cls=allowed_limit,             args=({Ellipsis: 4},),      priority=3),
+            ntup(cls=allowed_specific,          args=([Invalid('A')],),     priority=4),
             ntup(cls=allowed_limit,             args=(4,),                  priority=5),
         ]
 
