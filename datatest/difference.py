@@ -91,34 +91,28 @@ class Deviation(BaseDifference):
     numeric value in *requirement*.
     """
     def __init__(self, deviation, expected):
-        empty = lambda x: not x or isnan(x)
-        if ((not empty(expected) and empty(deviation)) or
-                (expected == 0 and deviation == 0)):
-            raise ValueError('numeric deviation must '
-                             'be positive or negative')
+        isempty = lambda x: x is None or x == ''
+        try:
+            if expected == 0:
+                assert deviation != 0
+                assert isinstance(deviation, Number) or isempty(deviation)
+            elif isempty(expected):
+                assert isinstance(deviation, Number)
+            elif isinstance(expected, Number):
+                assert not isnan(expected)
+                assert isinstance(deviation, Number) and deviation != 0
+            else:
+                raise AssertionError()
+        except AssertionError:
+            msg = ('invalid Deviation arguments, got deviation={0!r}, '
+                   'expected={1!r}').format(deviation, expected)
+            raise ValueError(msg)
+
         super(Deviation, self).__init__(deviation, expected)  # Set *_args*.
 
     @property
     def deviation(self):
         return self.args[0]
-
-    @property
-    def percent_deviation(self):
-        expected = self.expected
-        if isinstance(expected, float):
-            expected = Decimal.from_float(expected)
-        else:
-            expected = Decimal(expected if expected else 0)
-
-        deviation = self.deviation
-        if isinstance(deviation, float):
-            deviation = Decimal.from_float(deviation)
-        else:
-            deviation = Decimal(deviation if deviation else 0)
-
-        if isnan(expected) or isnan(deviation):
-            return Decimal('NaN')
-        return deviation / expected if expected else Decimal(0)  # % error calc.
 
     @property
     def expected(self):

@@ -393,10 +393,6 @@ class TestAllowedDeviation(unittest.TestCase):
             with allowed_deviation(0):
                 raise ValidationError('example error', [Deviation(float('nan'), 0)])
 
-        with self.assertRaises(ValidationError):  # <- NaN values should not be caught!
-            with allowed_deviation(0):
-                raise ValidationError('example error', [Deviation(0, float('nan'))])
-
 
 class TestAllowedPercentDeviation(unittest.TestCase):
     def setUp(self):
@@ -432,6 +428,31 @@ class TestAllowedPercentDeviation(unittest.TestCase):
                 raise ValidationError('example error', self.differences)
         result_diffs = cm.exception.differences
         self.assertEqual({'aaa': Deviation(-1, 16), 'ccc': Deviation(+2, 16)}, result_diffs)
+
+    def test_special_values(self):
+        # Test empty deviation cases--should pass without error.
+        with allowed_percent_deviation(0):  # <- Allows empty deviations only.
+            raise ValidationError('example error',
+                                  [Deviation(None, 0), Deviation('', 0)])
+
+        # Test diffs that can not be allowed as percentages.
+        differences = [
+            Deviation(None, 0),           # 0%
+            Deviation(0, None),           # 0%
+            Deviation(+2, 0),             # Can not be allowed by percent.
+            Deviation(+2, None),          # Can not be allowed by percent.
+            Deviation(float('nan'), 16),  # Not a number.
+        ]
+        with self.assertRaises(ValidationError) as cm:
+            with allowed_percent_deviation(2.00):  # <- Allows +/- 200%.
+                raise ValidationError('example error', differences)
+        actual = cm.exception.differences
+        expected = [
+            Deviation(+2, 0),
+            Deviation(+2, None),
+            Deviation(float('nan'), 16),
+        ]
+        self.assertEqual(actual, expected)
 
 
 class TestAllowedSpecific(unittest.TestCase):

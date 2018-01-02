@@ -96,29 +96,41 @@ class TestDeviation(unittest.TestCase):
         diff = Deviation(1, None)  # None reference.
         self.assertEqual(repr(diff), "Deviation(+1, None)")
 
-    def test_empty_value_handling(self):
+    def test_zero_and_empty_value_handling(self):
         """Empty values receive special handling."""
-        empty_values = [None, '', float('nan')]
+        # Expected 0 (pass without error).
+        Deviation(+5, 0)
+        Deviation(-5, 0)
+        Deviation(None, 0)
+        Deviation('', 0)
+        Deviation(float('nan'), 0)
+        with self.assertRaises(ValueError):
+            Deviation(0, 0)
 
-        for x in empty_values:
-            Deviation(0, x)   # <- Pass without error.
-            Deviation(+5, x)  # <- Pass without error.
-            Deviation(x, 0)   # <- Pass without error.
-            with self.assertRaises(ValueError):
-                Deviation(x, 5)  # <- Must be Deviation(-5, 5)
+        # Expected empty value (pass without error).
+        Deviation(0, None)
+        Deviation(5, None)
+        Deviation(0, '')
+        Deviation(5, '')
 
-    def test_zero_value_handling(self):
-        """Zero and False should be treated the same."""
-        zero_values = [0, 0.0, False]
+        # Expected numeric value (pass without error).
+        Deviation(+1, 5)
+        Deviation(-1, 5)
+        Deviation(float('nan'), 5)
 
-        for x in zero_values:
-            Deviation(+5, x)  # <- Pass without error.
-            with self.assertRaises(ValueError):
-                Deviation(0, x)
-            with self.assertRaises(ValueError):
-                Deviation(x, 0)
-            with self.assertRaises(ValueError):
-                Deviation(x, 5)
+        # Expected non-zero, with empty or zero deviation.
+        with self.assertRaises(ValueError):
+            Deviation(0, 5)
+        with self.assertRaises(ValueError):
+            Deviation(None, 5)
+        with self.assertRaises(ValueError):
+            Deviation('', 5)
+
+        # Expected NaN.
+        with self.assertRaises(ValueError):  # When the expected value
+            Deviation(0, float('nan'))       # is not a number, it is
+        with self.assertRaises(ValueError):  # not possible to compute
+            Deviation(5, float('nan'))       # a numeric difference.
 
     def test_repr_eval(self):
         diff = Deviation(+1, 100)

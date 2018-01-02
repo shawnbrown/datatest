@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import division
 import inspect
 from math import isnan
 from numbers import Number
@@ -400,10 +401,19 @@ class allowed_percent_deviation(BaseAllowance):
 
     def call_predicate(self, item):
         diff = item[1]
-        percent_deviation = diff.percent_deviation or 0
-        if isnan(percent_deviation) or isnan(diff.expected or 0):
+        deviation = diff.deviation
+        expected = diff.expected
+
+        if expected:
+            percent_error = (deviation or 0) / expected
+        elif not deviation:
+            percent_error = 0
+        else:
+            return False  # <- EXIT!
+
+        if isnan(percent_error):
             return False
-        return self.lower <= percent_deviation <= self.upper
+        return self.lower <= percent_error <= self.upper
 
 with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
     allowed_percent_deviation.__init__.__signature__ = inspect.Signature([
