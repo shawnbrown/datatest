@@ -81,15 +81,27 @@ class BaseAllowance(abc.ABC):
     ####################################
     # Operators for boolean composition.
     ####################################
+    def intersection(self, other):
+        """Return a new allowance that accepts only those differences
+        allowed by both the current and *other* allowances.
+        """
+        return self.__and__(other)
+
     def __and__(self, other):
         if not isinstance(other, BaseAllowance):
             return NotImplemented
-        return LogicalAndAllowance(self, other)
+        return IntersectedAllowance(self, other)
+
+    def union(self, other):
+        """Return a new allowance that accepts any difference allowed
+        by the current or *other* allowance.
+        """
+        return self.__or__(other)
 
     def __or__(self, other):
         if not isinstance(other, BaseAllowance):
             return NotImplemented
-        return LogicalOrAllowance(self, other)
+        return UnionedAllowance(self, other)
 
     ###############################################
     # Data handling methods for context management.
@@ -181,7 +193,7 @@ class BaseAllowance(abc.ABC):
                               #    effect as "raise ... from None").
 
 
-class CompositionAllowance(BaseAllowance):
+class CombinedAllowance(BaseAllowance):
     """Base class for combining allowances using Boolean composition."""
     def __init__(self, left, right, msg=None):
         if left.priority > right.priority:
@@ -208,7 +220,7 @@ class CompositionAllowance(BaseAllowance):
         self.right.end_collection()
 
 
-class LogicalAndAllowance(CompositionAllowance):
+class IntersectedAllowance(CombinedAllowance):
     """Base class to combine allowances using logical AND condition."""
     def __repr__(self):
         return '({0!r} & {1!r})'.format(self.left, self.right)
@@ -218,7 +230,7 @@ class LogicalAndAllowance(CompositionAllowance):
                 and self.right.call_predicate(item))
 
 
-class LogicalOrAllowance(CompositionAllowance):
+class UnionedAllowance(CombinedAllowance):
     """Base class to combine allowances using logical OR condition."""
     def __repr__(self):
         return '({0!r} | {1!r})'.format(self.left, self.right)

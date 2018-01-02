@@ -8,9 +8,9 @@ from datatest.utils import contextlib
 from datatest.utils import itertools
 
 from datatest.allowance import BaseAllowance
-from datatest.allowance import CompositionAllowance
-from datatest.allowance import LogicalAndAllowance
-from datatest.allowance import LogicalOrAllowance
+from datatest.allowance import CombinedAllowance
+from datatest.allowance import IntersectedAllowance
+from datatest.allowance import UnionedAllowance
 from datatest.allowance import allowed_missing
 from datatest.allowance import allowed_extra
 from datatest.allowance import allowed_invalid
@@ -196,8 +196,8 @@ class TestLogicalComposition(unittest.TestCase):
         self.allowed_missing = allowed_missing()
         self.allowed_letter_a = allowed_letter_a()
 
-    def test_CompositionAllowance(self):
-        class LogicalAnd(CompositionAllowance):
+    def test_CombinedAllowance(self):
+        class LogicalAnd(CombinedAllowance):
             def call_predicate(_self, item):
                 return (_self.left.call_predicate(item)
                         and _self.right.call_predicate(item))
@@ -218,9 +218,9 @@ class TestLogicalComposition(unittest.TestCase):
         self.assertIs(allowance.left, self.allowed_letter_a, msg=msg)
         self.assertIs(allowance.right, self.allowed_missing, msg=msg)  # <- Moved to `right`.
 
-    def test_LogicalAndAllowance(self):
+    def test_IntersectedAllowance(self):
         with self.assertRaises(ValidationError) as cm:
-            with LogicalAndAllowance(self.allowed_missing, self.allowed_letter_a):
+            with IntersectedAllowance(self.allowed_missing, self.allowed_letter_a):
                 raise ValidationError(
                     'example error',
                     [Missing('a'), Extra('a'), Missing('b'), Extra('b')],
@@ -228,9 +228,9 @@ class TestLogicalComposition(unittest.TestCase):
         differences = cm.exception.differences
         self.assertEqual(list(differences), [Extra('a'), Missing('b'), Extra('b')])
 
-    def test_LogicalOrAllowance(self):
+    def test_UnionedAllowance(self):
         with self.assertRaises(ValidationError) as cm:
-            with LogicalOrAllowance(self.allowed_missing, self.allowed_letter_a):
+            with UnionedAllowance(self.allowed_missing, self.allowed_letter_a):
                 raise ValidationError(
                     'example error',
                     [Missing('a'), Extra('a'), Missing('b'), Extra('b')],
@@ -690,12 +690,12 @@ class TestUniversalComposability(unittest.TestCase):
 
         for a, b in combinations:
             composed = a | b
-            self.assertIsInstance(composed, LogicalOrAllowance)
+            self.assertIsInstance(composed, UnionedAllowance)
             self.assertEqual(composed.priority, max(a.priority, b.priority))
 
         for a, b in combinations:
             composed = a & b
-            self.assertIsInstance(composed, LogicalAndAllowance)
+            self.assertIsInstance(composed, IntersectedAllowance)
             self.assertEqual(composed.priority, max(a.priority, b.priority))
 
     def test_integration_examples(self):
