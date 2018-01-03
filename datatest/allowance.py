@@ -169,6 +169,8 @@ class BaseAllowance(abc.ABC):
         if not differences:
             return True  # <- EXIT!
 
+        __tracebackhide__ = True  # Set pytest flag to hide traceback.
+
         if is_not_mapping:
             assert len(differences) == 1
             differences = differences.popitem()[1]
