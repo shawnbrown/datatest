@@ -19,6 +19,19 @@ except NameError:
         return any('__call__' in typ.__dict__ for typ in parent_types)
 
 
+try:
+    property.__isabstractmethod__  # New in 3.3.
+    property = property
+except AttributeError:
+    _property = property
+    class property(_property):
+        def __init__(self, fget=None, fset=None, fdel=None, doc=None):
+            super(property, self).__init__(fget, fset, fdel, doc)
+            self.__isabstractmethod__ = getattr(
+                fget, '__isabstractmethod__', False,
+            )
+
+
 # In the move to Python 3.0, map, filter, zip were replaced with their
 # iterable equivalents from the itertools module.
 try:
