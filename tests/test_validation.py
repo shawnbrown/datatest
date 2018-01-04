@@ -537,7 +537,9 @@ class TestGetDifferenceInfo(unittest.TestCase):
 # BaseDifference itself should not be instantiated
 # directly.
 class MinimalDifference(BaseDifference):
-    pass
+    @property
+    def args(self):
+        return BaseDifference.args.fget(self)
 
 
 class TestValidationError(unittest.TestCase):

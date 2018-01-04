@@ -33,12 +33,6 @@ def _nan_to_token(x):
 
 class BaseDifference(abc.ABC):
     """Base class for data differences."""
-    def __new__(cls, *args, **kwds):
-        if cls is BaseDifference:
-            raise TypeError("Can't instantiate abstract class "
-                            "BaseDifference, make a subclass instead")
-        return super(BaseDifference, cls).__new__(cls)
-
     def __init__(self, *args):
         if not args:
             msg = '{0} requires at least 1 argument, got 0'
@@ -46,6 +40,7 @@ class BaseDifference(abc.ABC):
         self._args = args
 
     @property
+    @abc.abstractmethod
     def args(self):
         """The tuple of arguments given to the exception constructor."""
         return self._args
@@ -67,12 +62,16 @@ class BaseDifference(abc.ABC):
 
 class Missing(BaseDifference):
     """A value **not found in data** that is in *requirement*."""
-    pass
+    @property
+    def args(self):
+        return BaseDifference.args.fget(self)
 
 
 class Extra(BaseDifference):
     """A value found in *data* but is **not in requirement**."""
-    pass
+    @property
+    def args(self):
+        return BaseDifference.args.fget(self)
 
 
 class Invalid(BaseDifference):
@@ -81,9 +80,13 @@ class Invalid(BaseDifference):
     """
     def __init__(self, invalid, expected=None):
         if expected is None:
-            super(Invalid, self).__init__(invalid)
+            self._args = (invalid,)
         else:
-            super(Invalid, self).__init__(invalid, expected)
+            self._args = (invalid, expected)
+
+    @property
+    def args(self):
+        return self._args
 
 
 class Deviation(BaseDifference):
@@ -108,24 +111,20 @@ class Deviation(BaseDifference):
                    'expected={1!r}').format(deviation, expected)
             raise ValueError(msg)
 
-        super(Deviation, self).__init__(deviation, expected)  # Set *_args*.
+        self.deviation = deviation
+        self.expected = expected
 
     @property
-    def deviation(self):
-        return self.args[0]
-
-    @property
-    def expected(self):
-        return self.args[1]
+    def args(self):
+        return (self.deviation, self.expected)
 
     def __repr__(self):
         cls_name = self.__class__.__name__
         try:
-            diff_repr = '{0:+}'.format(self.args[0])  # Apply +/- sign
+            devi_repr = '{0:+}'.format(self.deviation)  # Apply +/- sign
         except (TypeError, ValueError):
-            diff_repr = repr(self.args[0])
-        remaining_repr = ', '.join(repr(arg) for arg in self.args[1:])
-        return '{0}({1}, {2})'.format(cls_name, diff_repr, remaining_repr)
+            devi_repr = repr(self.deviation)
+        return '{0}({1}, {2!r})'.format(cls_name, devi_repr, self.expected)
 
 
 NOTFOUND = _make_token(

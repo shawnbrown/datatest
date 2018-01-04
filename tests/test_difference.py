@@ -16,7 +16,9 @@ from datatest.difference import NOTFOUND
 # BaseDifference itself should not be instantiated
 # directly.
 class MinimalDifference(BaseDifference):
-    pass
+    @property
+    def args(self):
+        return BaseDifference.args.fget(self)
 
 
 class TestBaseDifference(unittest.TestCase):
