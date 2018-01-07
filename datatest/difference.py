@@ -60,6 +60,10 @@ class BaseDifference(abc.ABC):
         other_args = tuple(_nan_to_token(x) for x in other.args)
         return self_args == other_args
 
+    def __ne__(self, other):           # <- For Python 2.x support. There is
+        return not self.__eq__(other)  #    no implicit relationship between
+                                       #    __eq__() and __ne__() in Python 2.
+
     def __repr__(self):
         cls_name = self.__class__.__name__
         args_repr = ', '.join(repr(arg) for arg in self.args)
