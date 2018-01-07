@@ -56,8 +56,6 @@ class BaseDifference(abc.ABC):
     def __eq__(self, other):
         if self.__class__ != other.__class__:
             return False
-            # POINT OF DISCUSSION: Should subclasses test equal
-            # if args all match (like tuples and nameduples do)?
         self_args = [_nan_to_token(x) for x in self.args]
         other_args = [_nan_to_token(x) for x in other.args]
         return self_args == other_args
