@@ -56,8 +56,8 @@ class BaseDifference(abc.ABC):
     def __eq__(self, other):
         if self.__class__ != other.__class__:
             return False
-        self_args = [_nan_to_token(x) for x in self.args]
-        other_args = [_nan_to_token(x) for x in other.args]
+        self_args = tuple(_nan_to_token(x) for x in self.args)
+        other_args = tuple(_nan_to_token(x) for x in other.args)
         return self_args == other_args
 
     def __repr__(self):
