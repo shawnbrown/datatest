@@ -33,7 +33,9 @@ def _nan_to_token(x):
 
 
 class BaseDifference(abc.ABC):
-    """Base class for data differences."""
+    """The base class for difference objects---all other difference
+    classes should be derived from this base.
+    """
     def __init__(self, *args):
         if not args:
             msg = '{0} requires at least 1 argument, got 0'
@@ -43,7 +45,12 @@ class BaseDifference(abc.ABC):
     @property
     @abc.abstractmethod
     def args(self):
-        """The tuple of arguments given to the exception constructor."""
+        """The tuple of arguments given to the difference constructor.
+        Some difference (like :class:`Deviation`) expect a certain
+        number of arguments and assign a special meaning to the
+        elements of this tuple, while others are called with only
+        a single value.
+        """
         return self._args
 
     def __eq__(self, other):
@@ -63,16 +70,22 @@ class BaseDifference(abc.ABC):
 
 class Missing(BaseDifference):
     """A value **not found in data** that is in *requirement*."""
+    def __init__(self, value):
+        self._args = (value,)
+
     @property
     def args(self):
-        return BaseDifference.args.fget(self)
+        return self._args
 
 
 class Extra(BaseDifference):
     """A value found in *data* but is **not in requirement**."""
+    def __init__(self, value):
+        self._args = (value,)
+
     @property
     def args(self):
-        return BaseDifference.args.fget(self)
+        return self._args
 
 
 class Invalid(BaseDifference):
@@ -80,14 +93,22 @@ class Invalid(BaseDifference):
     or regular expression *requirement*.
     """
     def __init__(self, invalid, expected=None):
-        if expected is None:
-            self._args = (invalid,)
-        else:
-            self._args = (invalid, expected)
+        self.invalid = invalid  #: The invalid value under test.
+        self.expected = expected  #: The expected value.
+
+    def __repr__(self):
+        cls_name = self.__class__.__name__
+        if self.expected is None:
+            return '{0}({1!r})'.format(cls_name, self.invalid)
+        return '{0}({1!r}, expected={2!r})'.format(cls_name,
+                                                   self.invalid,
+                                                   self.expected)
 
     @property
     def args(self):
-        return self._args
+        if self.expected is None:
+            return (self.invalid,)
+        return (self.invalid, self.expected)
 
 
 class Deviation(BaseDifference):
@@ -112,8 +133,8 @@ class Deviation(BaseDifference):
                    'expected={1!r}').format(deviation, expected)
             raise ValueError(msg)
 
-        self.deviation = deviation
-        self.expected = expected
+        self.deviation = deviation  #: Numeric deviation from expected value.
+        self.expected = expected  #: The expected value.
 
     @property
     def args(self):

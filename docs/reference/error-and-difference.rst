@@ -28,21 +28,30 @@ ValidationError
 Differences
 ***********
 
+.. autoclass:: BaseDifference
+
+    .. autoattribute:: args
+
+
 .. autoclass:: Missing
-    :members:
 
 
 .. autoclass:: Extra
-    :members:
 
 
 .. autoclass:: Invalid
 
+    .. autoinstanceattribute:: datatest.difference.Invalid.invalid
+       :annotation:
+
+    .. autoinstanceattribute:: datatest.difference.Invalid.expected
+       :annotation:
+
 
 .. autoclass:: Deviation
 
-    .. autoattribute:: deviation
+    .. autoinstanceattribute:: datatest.difference.Deviation.deviation
+       :annotation:
 
-    .. autoattribute:: percent_deviation
-
-    .. autoattribute:: expected
+    .. autoinstanceattribute:: datatest.difference.Deviation.expected
+       :annotation:
