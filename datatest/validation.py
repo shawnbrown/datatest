@@ -324,11 +324,26 @@ def _get_invalid_info(data, requirement):
 
 
 class ValidationError(AssertionError):
-    """Raised when a data validation fails."""
+    """Raised when validate() or DataTestCase.assertValid() fails."""
     __module__ = 'datatest'
 
     def __init__(self, message, differences):
-        self.args = message, differences
+        if not _is_nsiterable(differences):
+            msg = 'expected an iterable of differences, got {0!r}'
+            raise TypeError(msg.format(differences.__class__.__name__))
+
+        # Normalize *differences* argument.
+        if _is_collection_of_items(differences):
+            differences = dict(differences)
+        elif _is_consumable(differences):
+            differences = list(differences)
+
+        if not differences:
+            raise ValueError('differences container must not be empty')
+
+        # Initialize properties.
+        self._message = message
+        self._differences = differences
         self._should_truncate = None
         self._truncation_notice = None
 
@@ -346,33 +361,6 @@ class ValidationError(AssertionError):
     def args(self):
         """The tuple of arguments given to the exception constructor."""
         return (self._message, self._differences)
-
-    @args.setter
-    def args(self, value):
-        if not isinstance(value, tuple):
-            value_type = value.__class__.__name__
-            raise ValueError('expected tuple, got {0!r}'.format(value_type))
-
-        if not len(value) == 2:
-            raise ValueError('expected tuple of 2 items, got {0}'.format(len(value)))
-
-        message, differences = value
-        if not _is_nsiterable(differences) or isinstance(differences, Exception):
-            # Above condition checks for Exception because
-            # exceptions are iterable in Python 2.7 and 2.6.
-            msg = 'expected iterable of differences, got {0!r}'
-            raise TypeError(msg.format(differences.__class__.__name__))
-
-        if _is_collection_of_items(differences):
-            differences = dict(differences)
-        elif _is_consumable(differences):
-            differences = list(differences)
-
-        if not differences:
-            raise ValueError('differences must not be empty')
-
-        self._message = message
-        self._differences = differences
 
     def __str__(self):
         # Prepare difference-strings. These loops count lengths

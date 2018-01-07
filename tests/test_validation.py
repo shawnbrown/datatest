@@ -588,7 +588,8 @@ class TestValidationError(unittest.TestCase):
         # Assert "no cacheing"--objects that inhereit from some
         # Exceptions can cache their str--but ValidationError should
         # not do this.
-        err.args = ('changed', [MinimalDifference('B')])  # <- Change existing error.
+        err._message = 'changed'
+        err._differences = [MinimalDifference('B')]
         updated = textwrap.dedent("""
             changed (1 difference): [
                 MinimalDifference('B'),
@@ -723,7 +724,8 @@ class TestValidationError(unittest.TestCase):
 
         # Objects that inhereit from some Exceptions can cache their
         # repr--but ValidationError should not do this.
-        err.args = ('changed', [MinimalDifference('B')])
+        err._message = 'changed'
+        err._differences = [MinimalDifference('B')]
         self.assertNotEqual(repr(err), expected, 'exception should not cache repr')
 
         updated = "ValidationError('changed', [MinimalDifference('B')])"

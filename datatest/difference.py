@@ -71,7 +71,7 @@ class BaseDifference(abc.ABC):
 
 
 class Missing(BaseDifference):
-    """A value **not found in data** that is in *requirement*."""
+    """Created when *value* is missing from the data under test."""
     def __init__(self, value):
         self._args = (value,)
 
@@ -81,7 +81,7 @@ class Missing(BaseDifference):
 
 
 class Extra(BaseDifference):
-    """A value found in *data* but is **not in requirement**."""
+    """Created when *value* is unexpectedly found in the data under test."""
     def __init__(self, value):
         self._args = (value,)
 
@@ -91,8 +91,8 @@ class Extra(BaseDifference):
 
 
 class Invalid(BaseDifference):
-    """A value in *data* that does not satisfy a function, equality,
-    or regular expression *requirement*.
+    """Created when a value does not satisfy a function, equality, or
+    regular expression requirement.
     """
     def __init__(self, invalid, expected=None):
         self.invalid = invalid  #: The invalid value under test.
@@ -114,9 +114,7 @@ class Invalid(BaseDifference):
 
 
 class Deviation(BaseDifference):
-    """The difference between a numeric value in *data* and a matching
-    numeric value in *requirement*.
-    """
+    """Created when a numeric value deviates from its expected value."""
     def __init__(self, deviation, expected):
         isempty = lambda x: x is None or x == ''
         try:
