@@ -21,12 +21,10 @@ ValidationError
 
     .. autoattribute:: differences
 
-    .. autoattribute:: args
 
-
-***********
-Differences
-***********
+******************
+Difference Objects
+******************
 
 .. autoclass:: BaseDifference
 

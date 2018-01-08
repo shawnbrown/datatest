@@ -33,7 +33,7 @@ def _nan_to_token(x):
 
 
 class BaseDifference(abc.ABC):
-    """The base class for difference objects---all other difference
+    """The base class for "difference" objects---all other difference
     classes should be derived from this base.
     """
     def __init__(self, *args):

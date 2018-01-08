@@ -324,7 +324,8 @@ def _get_invalid_info(data, requirement):
 
 
 class ValidationError(AssertionError):
-    """Raised when validate() or DataTestCase.assertValid() fails."""
+    """This exception is raised when data validation fails."""
+
     __module__ = 'datatest'
 
     def __init__(self, message, differences):
@@ -349,12 +350,14 @@ class ValidationError(AssertionError):
 
     @property
     def message(self):
-        """The message given to the exception constructor."""
+        """A brief description of the failed requirement."""
         return self._message
 
     @property
     def differences(self):
-        """The differences given to the exception constructor."""
+        """A collection of "difference" objects for elements in the
+        data under test that do not satisfy the requirement.
+        """
         return self._differences
 
     @property
@@ -363,8 +366,7 @@ class ValidationError(AssertionError):
         return (self._message, self._differences)
 
     def __str__(self):
-        # Prepare difference-strings. These loops count lengths
-        # and build lists iteratively to help optimize memory use.
+        # Prepare a format-differences callable.
         if isinstance(self._differences, dict):
             begin, end = '{', '}'
             all_keys = sorted(self._differences.keys(), key=_safesort_key)
@@ -382,8 +384,9 @@ class ValidationError(AssertionError):
             iterator = iter(sorted(self._differences, key=sort_args))
             format_diff = lambda x: '    {0!r},'.format(x)
 
-        # Count lengths and build lists iteratively to help optimize memory use.
         if self._should_truncate:
+            # Count lengths and build list. This code uses a for-loop
+            # to build the list iteratively and optimize memory.
             line_count = 0
             char_count = 0
             list_of_strings = []
