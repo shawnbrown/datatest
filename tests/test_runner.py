@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from . import _unittest as unittest
 from datatest import DataTestCase
+from datatest import ValidationError
+from datatest import Missing
 
 from datatest.runner import DataTestResult
 from datatest.runner import skip
@@ -34,6 +36,17 @@ class TestDataTestResult(unittest.TestCase):
         # Check non-test-case behavior.
         not_a_testcase = object()
         self.assertFalse(testresult._is_mandatory(not_a_testcase))
+
+    def test_add_mandatory_message(self):
+        testresult = DataTestResult()
+
+        err_tuple = (ValidationError,
+                     ValidationError('example failure', [Missing('x')]),
+                     '<dummy traceback>')
+
+        new_tuple = testresult._add_mandatory_message(err_tuple)
+        _, err, _ = new_tuple
+        self.assertRegex(str(err), 'mandatory test failed, stopping early')
 
 
 class TestOrdering(unittest.TestCase):

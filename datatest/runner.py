@@ -7,6 +7,7 @@ import unittest
 import warnings
 
 from .utils import functools
+from .utils.misc import string_types
 from .validation import ValidationError
 
 try:
@@ -116,22 +117,16 @@ class DataTestResult(TextTestResult):
         exctype, value, tb = err
         stop_early_msg = 'mandatory test failed, stopping early'
 
-        try:
-            if value.msg:
-                value.msg = '{0}: {1}'.format(stop_early_msg, value.msg)
-            else:
-                value.msg = stop_early_msg
-        except AttributeError:
-            pass
-
-        try:
-            first_arg = value.args[0]
-            new_first_arg = '{0}: {1}'.format(stop_early_msg, first_arg)
-            value.args = (new_first_arg,) + value.args[1:]
-        except IndexError:
-            value.args = (stop_early_msg,)
-
-        return (exctype, value, tb)
+        args = value.args
+        if not args:
+            args = (stop_early_msg,)
+        elif isinstance(args[0], string_types):
+            new_first_arg = '{0}: {1}'.format(stop_early_msg, args[0])
+            args = (new_first_arg,) + value.args[1:]
+        else:
+            return (exctype, value, tb)  # <- EXIT using original value
+                                         #    if first arg is not a str.
+        return (exctype, exctype(*args), tb)
 
     def addError(self, test, err):
         """Called when an error has occurred. 'err' is a tuple of values as
