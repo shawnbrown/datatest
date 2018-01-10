@@ -106,6 +106,21 @@ DataTestCase
 
     .. automethod:: assertValid
 
+    .. attribute:: maxDiff
+
+        This attribute controls the maximum length of diffs output by
+        assert methods that report diffs on failure. It defaults to
+        80*8 characters.
+
+        Setting ``maxDiff`` to ``None`` means that there is no maximum
+        length for diffs::
+
+            self.maxDiff = None
+
+        This attribute affects :meth:`assertValid()` as well as any
+        inherited methods like assertSequenceEqual(), assertDictEqual()
+        and assertMultiLineEqual().
+
     .. automethod:: allowedMissing
 
     .. automethod:: allowedExtra
