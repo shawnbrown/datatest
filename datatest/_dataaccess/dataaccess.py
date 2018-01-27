@@ -7,21 +7,21 @@ from io import IOBase
 from numbers import Number
 from sqlite3 import Binary
 
-from .utils.builtins import *
-from .utils import abc
-from .utils import collections
-from .utils import contextlib
-from .utils import functools
-from .utils import itertools
-from .utils.misc import _expects_multiple_params
-from .utils.misc import _flatten
-from .utils.misc import _is_nsiterable
-from .utils.misc import _is_sortable
-from .utils.misc import _make_token
-from .utils.misc import _unique_everseen
-from .utils.misc import string_types
-from .load.sqltemp import TemporarySqliteTable
-from .load.sqltemp import _from_csv
+from ..utils.builtins import *
+from ..utils import abc
+from ..utils import collections
+from ..utils import contextlib
+from ..utils import functools
+from ..utils import itertools
+from ..utils.misc import _expects_multiple_params
+from ..utils.misc import _flatten
+from ..utils.misc import _is_nsiterable
+from ..utils.misc import _is_sortable
+from ..utils.misc import _make_token
+from ..utils.misc import _unique_everseen
+from ..utils.misc import string_types
+from ..load.sqltemp import TemporarySqliteTable
+from ..load.sqltemp import _from_csv
 
 
 class working_directory(contextlib.ContextDecorator):

@@ -13,9 +13,9 @@ from . import _unittest as unittest
 # Import code to test.
 from datatest.case import DataTestCase
 
-from datatest.dataaccess import DataSource
-from datatest.dataaccess import DataQuery
-from datatest.dataaccess import DataResult
+from datatest._dataaccess.dataaccess import DataSource
+from datatest._dataaccess.dataaccess import DataQuery
+from datatest._dataaccess.dataaccess import DataResult
 
 from datatest.validation import ValidationError
 from datatest.difference import Extra

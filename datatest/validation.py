@@ -7,18 +7,22 @@ from .utils.builtins import callable
 from .utils.misc import _is_nsiterable
 from .utils.misc import _is_consumable
 from .utils.misc import _safesort_key
-from .dataaccess import BaseElement
-from .dataaccess import DictItems
-from .dataaccess import _is_collection_of_items
-from .dataaccess import DataQuery
-from .dataaccess import DataResult
-from .difference import BaseDifference
-from .difference import Extra
-from .difference import Missing
-from .difference import Invalid
-from .difference import Deviation
-from .difference import _make_difference
-from .difference import NOTFOUND
+from ._dataaccess.dataaccess import (
+    BaseElement,
+    DictItems,
+    _is_collection_of_items,
+    DataQuery,
+    DataResult,
+)
+from .difference import (
+    BaseDifference,
+    Extra,
+    Missing,
+    Invalid,
+    Deviation,
+    _make_difference,
+    NOTFOUND,
+)
 
 
 __all__ = [

@@ -22,12 +22,14 @@ try:
 except ImportError:
     dbfread = None
 
-from datatest._get_reader import _from_csv_iterable
-from datatest._get_reader import _from_csv_path
-from datatest._get_reader import from_pandas
-from datatest._get_reader import from_excel
-from datatest._get_reader import from_dbf
-from datatest._get_reader import get_reader
+from datatest._dataaccess.get_reader import (
+    _from_csv_iterable,
+    _from_csv_path,
+    from_pandas,
+    from_excel,
+    from_dbf,
+    get_reader,
+)
 
 
 PY2 = sys.version_info[0] == 2

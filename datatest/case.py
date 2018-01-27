@@ -7,8 +7,8 @@ from .utils.builtins import *
 from .utils import collections
 from .utils import contextlib
 
-from .dataaccess import DataQuery
-from .dataaccess import DataResult
+from ._dataaccess.dataaccess import DataQuery
+from ._dataaccess.dataaccess import DataResult
 
 from .validation import _get_invalid_info
 from .validation import ValidationError

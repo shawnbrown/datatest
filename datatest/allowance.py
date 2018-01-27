@@ -15,8 +15,8 @@ from .utils.misc import _get_arg_lengths
 from .utils.misc import _expects_multiple_params
 from .utils.misc import _make_decimal
 from .utils.misc import string_types
-from .dataaccess import BaseElement
-from .dataaccess import DictItems
+from ._dataaccess.dataaccess import BaseElement
+from ._dataaccess.dataaccess import DictItems
 
 from .validation import ValidationError
 from .difference import BaseDifference

@@ -12,27 +12,29 @@ from . import _unittest as unittest
 from datatest.utils import collections
 from datatest.utils.misc import _is_nsiterable
 
-from datatest.dataaccess import working_directory
-from datatest.dataaccess import BaseElement
-from datatest.dataaccess import _is_collection_of_items
-from datatest.dataaccess import DictItems
-from datatest.dataaccess import DataResult
-from datatest.dataaccess import _map_data
-from datatest.dataaccess import _filter_data
-from datatest.dataaccess import _reduce_data
-from datatest.dataaccess import _apply_data
-from datatest.dataaccess import _apply_to_data  # <- TODO: Change function name.
-from datatest.dataaccess import _sqlite_sum
-from datatest.dataaccess import _sqlite_count
-from datatest.dataaccess import _sqlite_avg
-from datatest.dataaccess import _sqlite_min
-from datatest.dataaccess import _sqlite_max
-from datatest.dataaccess import _sqlite_distinct
-from datatest.dataaccess import _normalize_select
-from datatest.dataaccess import _parse_select
-from datatest.dataaccess import RESULT_TOKEN
-from datatest.dataaccess import DataQuery
-from datatest.dataaccess import DataSource
+from datatest._dataaccess.dataaccess import (
+    working_directory,
+    BaseElement,
+    _is_collection_of_items,
+    DictItems,
+    DataResult,
+    _map_data,
+    _filter_data,
+    _reduce_data,
+    _apply_data,
+    _apply_to_data,  # <- TODO: Change function name.
+    _sqlite_sum,
+    _sqlite_count,
+    _sqlite_avg,
+    _sqlite_min,
+    _sqlite_max,
+    _sqlite_distinct,
+    _normalize_select,
+    _parse_select,
+    RESULT_TOKEN,
+    DataQuery,
+    DataSource,
+)
 
 
 class TestWorkingDirectory(unittest.TestCase):

@@ -16,11 +16,11 @@ from .main import DataTestProgram
 from .main import main
 
 # Data Access API
-from .dataaccess import DataSource
-from .dataaccess import DataQuery
-from .dataaccess import DataResult
-from .dataaccess import working_directory
-
+from ._dataaccess.dataaccess import DataSource
+from ._dataaccess.dataaccess import DataQuery
+from ._dataaccess.dataaccess import DataResult
+from ._dataaccess.dataaccess import working_directory
+from ._dataaccess.get_reader import get_reader
 
 __version__ = '0.8.4.dev0'
 
