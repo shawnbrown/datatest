@@ -3,5 +3,5 @@ include AUTHORS
 include LICENSE
 include requirements.txt
 recursive-include datatest *.py
-recursive-include tests *.py *.xlsx
-
+include tests *.py
+include tests/sample_files *.*

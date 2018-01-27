@@ -12,7 +12,11 @@ except ImportError:
 
 from datatest.sources.excel import ExcelSource
 
-workbook_path = os.path.join(os.path.dirname(__file__), 'test_sources_excel.xlsx')
+workbook_path = os.path.join(
+    os.path.dirname(__file__),
+    'sample_files',
+    'test_sources_excel.xlsx',
+)
 
 
 @unittest.skipIf(xlrd is None, 'xlrd not found')
