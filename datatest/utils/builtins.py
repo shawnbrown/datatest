@@ -4,6 +4,12 @@ from .misc import _is_consumable
 
 
 try:
+    chr = unichr
+except NameError:
+    pass
+
+
+try:
     from io import open as _open
     assert open == _open  # Starting in 3.1
     open = open
