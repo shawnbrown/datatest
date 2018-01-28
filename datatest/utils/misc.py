@@ -2,6 +2,7 @@
 """Miscellaneous helper functions."""
 from __future__ import absolute_import
 import inspect
+from io import IOBase
 from numbers import Number
 from sys import version_info as _version_info
 from .collections import Iterable
@@ -10,9 +11,15 @@ from .itertools import filterfalse
 
 
 try:
-    string_types = basestring  # Removed in Python 3.0
+    string_types = (basestring,)  # Removed in Python 3.0
 except NameError:
-    string_types = str
+    string_types = (str,)
+
+
+try:
+    file_types = (file, IOBase) # `file` removed in Python 3.0
+except NameError:
+    file_types = (IOBase,)
 
 
 def _is_nsiterable(x):
