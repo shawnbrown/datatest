@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import collections
 import csv
 import io
 import os
@@ -23,6 +24,8 @@ except ImportError:
     dbfread = None
 
 from datatest._dataaccess.get_reader import (
+    from_dicts,
+    from_namedtuples,
     _from_csv_iterable,
     _from_csv_path,
     from_pandas,
@@ -50,6 +53,62 @@ class SampleFilesTestCase(unittest.TestCase):
         os.chdir(self.original_cwd)
         # It would be best to use addCleanup() but it is not
         # available in Python 2.6.
+
+
+class TestFromDicts(unittest.TestCase):
+    def test_dict_records(self):
+        records = [
+            {'col1': 1, 'col2': 'a'},
+            {'col1': 2, 'col2': 'b'},
+            {'col1': 3, 'col2': 'c'},
+        ]
+        reader = from_dicts(records)
+
+        reader = list(reader)
+        if reader[0][0] == 'col1':  # Check for key order
+            expected = [            # (not guaranteed in
+                ['col1', 'col2'],   # older versions of
+                [1, 'a'],           # Python).
+                [2, 'b'],
+                [3, 'c'],
+            ]
+        else:
+            expected = [
+                ['col2', 'col1'],
+                ['a', 1],
+                ['b', 2],
+                ['c', 3],
+            ]
+        self.assertEqual(reader, expected)
+
+    def test_empty_records(self):
+        records = []
+        reader = from_dicts(records)
+        self.assertEqual(list(records), [])
+
+
+class TestFromNamedtuples(unittest.TestCase):
+    def test_namedtuple_records(self):
+        ntup = collections.namedtuple('ntup', ['col1', 'col2'])
+        records = [
+            ntup(1, 'a'),
+            ntup(2, 'b'),
+            ntup(3, 'c'),
+        ]
+        reader = from_namedtuples(records)
+
+        expected = [
+            ('col1', 'col2'),
+            (1, 'a'),
+            (2, 'b'),
+            (3, 'c'),
+        ]
+        self.assertEqual(list(reader), expected)
+
+    def test_empty_records(self):
+        records = []
+        reader = from_namedtuples(records)
+        self.assertEqual(list(records), [])
 
 
 class TestFromCsvIterable(unittest.TestCase):
@@ -280,6 +339,24 @@ class TestFromDbf(SampleFilesTestCase):
 
 
 class TestFunctionDispatching(SampleFilesTestCase):
+    def test_dicts(self):
+        records = [
+            {'col1': 'first'},
+            {'col1': 'second'},
+        ]
+        reader = get_reader(records)
+        expected = [['col1'], ['first'], ['second']]
+        self.assertEqual(list(reader), expected)
+
+    def test_namedtuples(self):
+        ntup = collections.namedtuple('ntup', ['col1', 'col2'])
+
+        records = [ntup(1, 'a'), ntup(2, 'b')]
+        reader = get_reader(records)
+
+        expected = [('col1', 'col2'), (1, 'a'), (2, 'b')]
+        self.assertEqual(list(reader), expected)
+
     def test_csv(self):
         reader = get_reader('sample_text_utf8.csv', encoding='utf-8')
         expected = [
@@ -351,7 +428,20 @@ class TestFunctionDispatching(SampleFilesTestCase):
         ]
         self.assertEqual(list(reader), expected)
 
-    def test_unidentifiable_type(self):
+    def test_readerlike_wrapping(self):
+        """Reader-like lists should simply be wrapped."""
+        readerlike = [['col1', 'col2'], [1, 'a'], [2, 'b']]
+        reader = get_reader(readerlike)
+        self.assertEqual(list(reader), readerlike)
+
+        readerlike = [('col1', 'col2'), (1, 'a'), (2, 'b')]
+        reader = get_reader(readerlike)
+        self.assertEqual(list(reader), readerlike)
+
+    def test_unhandled_types(self):
+        """Should raise error, not return a generator."""
         with self.assertRaises(TypeError):
-            obj = object()
-            reader = get_reader(obj)
+            get_reader(object())
+
+        with self.assertRaises(TypeError):
+            get_reader([object(), object()])

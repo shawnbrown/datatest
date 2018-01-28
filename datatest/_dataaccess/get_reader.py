@@ -2,15 +2,38 @@
 import csv
 import io
 import sys
-from collections import Iterable
+
+from ..utils.collections import Iterable
+from ..utils.itertools import chain
+from ..utils.misc import string_types
+from ..utils.misc import file_types
 
 
-try:
-    string_types = basestring
-    file_types = (io.IOBase, file)
-except NameError:
-    string_types = str
-    file_types = io.IOBase
+########################################################################
+# From Dictionaries.
+########################################################################
+def from_dicts(records):
+    records = iter(records)
+    first_record = next(records, None)
+    header_row = list(first_record.keys())
+
+    yield header_row
+    for row in chain([first_record], records):
+        yield [row.get(key, None) for key in header_row]
+
+
+########################################################################
+# From Namedtuples.
+########################################################################
+def from_namedtuples(records):
+    records = iter(records)
+    first_record = next(records, None)
+    if first_record:
+        yield first_record._fields  # Header row.
+        yield first_record
+
+    for record in records:
+        yield record
 
 
 ########################################################################
@@ -210,6 +233,20 @@ def get_reader(obj, *args, **kwds):
             if isinstance(obj, sys.modules['pandas'].DataFrame):
                 return from_pandas(obj, *args, **kwds)
 
+        if isinstance(obj, Iterable):
+            iterator = iter(obj)
+            first_value = next(iterator, None)
+            iterator = chain([first_value], iterator)
+
+            if isinstance(first_value, dict):
+                return from_dicts(iterator, *args, **kwds)
+
+            if hasattr(first_value, '_fields'):
+                return from_namedtuples(iterator, *args, **kwds)
+
+            if isinstance(first_value, (list, tuple)):
+                return iterator  # obj already seems reader-like.
+
     msg = ('unable to determine constructor for {0!r}, specify a '
            'constructor to load - for example: get_reader.from_csv(...), '
            'get_reader.from_pandas(...), etc.')
@@ -218,6 +255,8 @@ def get_reader(obj, *args, **kwds):
 
 # Add specific constructor functions as properties of the get_reader()
 # function--this mimics how alternate constructors look on classes.
+get_reader.from_dicts = from_dicts
+get_reader.from_namedtuples = from_namedtuples
 get_reader.from_csv = from_csv
 get_reader.from_pandas = from_pandas
 get_reader.from_excel = from_excel
