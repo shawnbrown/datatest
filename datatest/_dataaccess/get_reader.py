@@ -130,7 +130,7 @@ else:
 
 
     def _from_csv_path(path, encoding, **kwds):
-        with io.open(path, 'rb') as f:
+        with open(path, 'rb') as f:
             for row in UnicodeReader(f, encoding=encoding, **kwds):
                 yield row
 

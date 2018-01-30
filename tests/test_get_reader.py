@@ -224,6 +224,11 @@ class TestFromCsvPath(SampleFilesTestCase):
         ]
         self.assertEqual(list(reader), expected)
 
+    def test_wrong_encoding(self):
+        with self.assertRaises(UnicodeDecodeError):
+            reader = _from_csv_path('sample_text_iso88591.csv', encoding='utf-8')
+            list(reader)  # Trigger evaluation.
+
     def test_file_not_found(self):
         with self.assertRaises(FileNotFoundError):
             reader = _from_csv_path('missing_file.csv', encoding='iso8859-1')
