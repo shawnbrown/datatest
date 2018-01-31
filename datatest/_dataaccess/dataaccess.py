@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import inspect
 import os
 import sys
+import warnings
 from io import IOBase
 from numbers import Number
 from sqlite3 import Binary
@@ -17,9 +18,14 @@ from ..utils.misc import _expects_multiple_params
 from ..utils.misc import _flatten
 from ..utils.misc import _is_nsiterable
 from ..utils.misc import _is_sortable
+from ..utils.misc import _is_consumable
 from ..utils.misc import _make_token
 from ..utils.misc import _unique_everseen
+from ..utils.misc import file_types
 from ..utils.misc import string_types
+from .get_reader import get_reader
+from .temptable import load_data
+from .temptable import savepoint
 from ..load.sqltemp import TemporarySqliteTable
 from ..load.sqltemp import _from_csv
 
@@ -951,6 +957,80 @@ def _register_function(connection, func_list):
             def wrapper(x):
                 return func(x)
             connection.create_function(name, 1, wrapper)  # <- Register!
+
+
+preferred_encoding = 'utf-8'
+fallback_encoding = ['latin-1']
+def _load_csv(cursor, table, csvfile, encoding=None, **kwds):
+    """Load *csvfile* and insert data into *table*."""
+    global preferred_encoding
+    global fallback_encoding
+
+    if encoding:
+        # When an encoding is specified, use it to load *csvfile* or
+        # fail if there are errors (no fallback recovery):
+        with savepoint(cursor):
+            reader = get_reader.from_csv(csvfile, encoding, **kwds)
+            load_data(cursor, table, reader)
+
+        return  # <- EXIT!
+
+    # When the encoding is unspecified, try to load *csvfile* using the
+    # preferred encoding and failing that, try the fallback encodings:
+
+    if isinstance(csvfile, file_types) and csvfile.seekable():
+        position = csvfile.tell()  # Get current position if
+    else:                          # csvfile is file-like and
+        position = None            # supports random access.
+
+    try:
+        with savepoint(cursor):
+            reader = get_reader.from_csv(csvfile, preferred_encoding, **kwds)
+            load_data(cursor, table, reader)
+
+        return  # <- EXIT!
+
+    except UnicodeDecodeError as orig_error:
+        if _is_consumable(csvfile) and position is None:
+            encoding, object_, start, end, reason = orig_error.args  # Unpack args.
+            reason = (
+                '{0}: unable to load {1!r}, cannot attempt fallback with '
+                '{2!r} type: must specify an appropriate text encoding'
+            ).format(reason, csvfile, csvfile.__class__.__name__)
+            raise UnicodeDecodeError(encoding, object_, start, end, reason)
+
+        if isinstance(fallback_encoding, list):
+            fallback_list = fallback_encoding
+        else:
+            fallback_list = [fallback_encoding]
+
+        for fallback in fallback_list:
+            if position is not None:
+                csvfile.seek(position)
+
+            try:
+                with savepoint(cursor):
+                    reader = get_reader.from_csv(csvfile, fallback, **kwds)
+                    load_data(cursor, table, reader)
+
+                msg = (
+                    '{0}: loaded {1!r} using fallback {2!r}: specify an '
+                    'appropriate text encoding to assure correct operation'
+                ).format(orig_error, csvfile, fallback)
+                warnings.warn(msg)
+
+                return  # <- EXIT!
+
+            except UnicodeDecodeError:
+                pass
+
+        # Note: DO NOT refactor this section using a for-else. I swear...
+        encoding, object_, start, end, reason = orig_error.args  # Unpack args.
+        reason = (
+            '{0}: unable to load {1!r}, fallback recovery unsuccessful: '
+            'must specify an appropriate text encoding'
+        ).format(reason, csvfile)
+        raise UnicodeDecodeError(encoding, object_, start, end, reason)
 
 
 class DataSource(object):
