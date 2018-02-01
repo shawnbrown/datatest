@@ -3,8 +3,8 @@ import csv
 import io
 import sys
 
-from ..utils.collections import Iterable
-from ..utils.itertools import chain
+from .._compatibility.collections import Iterable
+from .._compatibility.itertools import chain
 from .._utils import string_types
 from .._utils import file_types
 

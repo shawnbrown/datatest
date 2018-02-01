@@ -8,10 +8,10 @@ from numbers import Number
 import datatest
 from datatest.__past__ import api08
 
-from datatest.utils.builtins import *
-from datatest.utils import collections
-from datatest.utils import itertools
-from datatest.utils import functools
+from datatest._compatibility.builtins import *
+from datatest._compatibility import collections
+from datatest._compatibility import itertools
+from datatest._compatibility import functools
 
 from datatest._utils import _make_decimal
 

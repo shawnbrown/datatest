@@ -6,7 +6,7 @@ import sys
 import unittest
 import warnings
 
-from .utils import functools
+from ._compatibility import functools
 from ._utils import string_types
 from .validation import ValidationError
 

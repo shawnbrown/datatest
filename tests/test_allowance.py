@@ -2,10 +2,10 @@
 import inspect
 import sys
 from . import _unittest as unittest
-from datatest.utils.builtins import *
-from datatest.utils import collections
-from datatest.utils import contextlib
-from datatest.utils import itertools
+from datatest._compatibility.builtins import *
+from datatest._compatibility import collections
+from datatest._compatibility import contextlib
+from datatest._compatibility import itertools
 
 from datatest.allowance import BaseAllowance
 from datatest.allowance import CombinedAllowance

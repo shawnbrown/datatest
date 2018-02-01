@@ -1,9 +1,9 @@
 """Validation and comparison handling."""
 import difflib
 import re
-from .utils import itertools
-from .utils import collections
-from .utils.builtins import callable
+from ._compatibility import itertools
+from ._compatibility import collections
+from ._compatibility.builtins import callable
 from ._utils import nonstringiter
 from ._utils import exhaustible
 from ._utils import _safesort_key

@@ -4,7 +4,7 @@ import os
 import sys
 import warnings
 
-from ..utils.builtins import *
+from .._compatibility.builtins import *
 from ..load.csvreader import UnicodeCsvReader
 from ..load.sqltemp import TemporarySqliteTable
 

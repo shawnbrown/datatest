@@ -3,11 +3,11 @@ from math import isnan
 from numbers import Number
 from pprint import pformat
 
-from .utils.builtins import *
-from .utils import abc
-from .utils import collections
-from .utils import contextlib
-from .utils.decimal import Decimal
+from ._compatibility.builtins import *
+from ._compatibility import abc
+from ._compatibility import collections
+from ._compatibility import contextlib
+from ._compatibility.decimal import Decimal
 from ._utils import _make_token
 
 

@@ -5,9 +5,9 @@ import inspect
 from io import IOBase
 from numbers import Number
 from sys import version_info as _version_info
-from .utils.collections import Iterable
-from .utils.decimal import Decimal
-from .utils.itertools import filterfalse
+from ._compatibility.collections import Iterable
+from ._compatibility.decimal import Decimal
+from ._compatibility.itertools import filterfalse
 
 
 try:

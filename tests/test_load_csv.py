@@ -5,7 +5,7 @@ import sys
 import warnings
 from . import _io as io
 from . import _unittest as unittest
-from datatest.utils.builtins import *
+from datatest._compatibility.builtins import *
 
 from datatest._dataaccess.load_csv import load_csv
 

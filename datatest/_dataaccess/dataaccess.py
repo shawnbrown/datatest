@@ -7,12 +7,12 @@ from io import IOBase
 from numbers import Number
 from sqlite3 import Binary
 
-from ..utils.builtins import *
-from ..utils import abc
-from ..utils import collections
-from ..utils import contextlib
-from ..utils import functools
-from ..utils import itertools
+from .._compatibility.builtins import *
+from .._compatibility import abc
+from .._compatibility import collections
+from .._compatibility import contextlib
+from .._compatibility import functools
+from .._compatibility import itertools
 from .._utils import _expects_multiple_params
 from .._utils import _flatten
 from .._utils import nonstringiter

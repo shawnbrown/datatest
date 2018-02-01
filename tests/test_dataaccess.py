@@ -9,8 +9,8 @@ import textwrap
 from . import _io as io
 
 from . import _unittest as unittest
-from datatest.utils.builtins import *
-from datatest.utils import collections
+from datatest._compatibility.builtins import *
+from datatest._compatibility import collections
 from datatest._utils import nonstringiter
 
 from datatest._dataaccess.dataaccess import (

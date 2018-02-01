@@ -5,7 +5,7 @@ import inspect
 import datatest
 from datatest.__past__ import api08
 from datatest.__past__ import api07
-from datatest.utils import itertools
+from datatest._compatibility import itertools
 from datatest import DataTestCase
 
 

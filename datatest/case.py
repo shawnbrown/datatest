@@ -3,9 +3,9 @@ from __future__ import division
 import inspect
 from unittest import TestCase
 
-from .utils.builtins import *
-from .utils import collections
-from .utils import contextlib
+from ._compatibility.builtins import *
+from ._compatibility import collections
+from ._compatibility import contextlib
 
 from ._dataaccess.dataaccess import DataQuery
 from ._dataaccess.dataaccess import DataResult

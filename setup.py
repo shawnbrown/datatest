@@ -95,7 +95,8 @@ if __name__ == '__main__':
                 'datatest',
                 'datatest.load',
                 'datatest.sources',
-                'datatest.utils',
+                'ddatatest._dataaccess',
+                'datatest._compatibility',
                 'datatest.__past__',
             ],
             # Additional fields:

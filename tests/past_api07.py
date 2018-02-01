@@ -9,7 +9,7 @@ development-release API.
 import re
 from . import _io as io
 from . import _unittest as unittest
-from datatest.utils.decimal import Decimal
+from datatest._compatibility.decimal import Decimal
 
 from .common import MinimalSource
 import datatest

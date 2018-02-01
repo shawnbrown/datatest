@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import sqlite3
 
-from ..utils.builtins import *
-from ..utils import decimal
+from .._compatibility.builtins import *
+from .._compatibility import decimal
 from ..load.sqltemp import TemporarySqliteTable
 from .._utils import nonstringiter
 

@@ -3,7 +3,7 @@ import sqlite3
 
 # Import compatiblity layers and helpers.
 from . import _unittest as unittest
-from datatest.utils import collections
+from datatest._compatibility import collections
 
 # Import code to test.
 from datatest.load.sqltemp import TemporarySqliteTable

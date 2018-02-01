@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-from ..utils.builtins import *
-from ..utils import collections
-from ..utils import itertools
-from ..utils import functools
+from .._compatibility.builtins import *
+from .._compatibility import collections
+from .._compatibility import itertools
+from .._compatibility import functools
 
 from ..__past__.api07_comp import CompareDict
 from ..__past__.api07_comp import CompareSet

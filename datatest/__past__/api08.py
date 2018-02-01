@@ -3,8 +3,8 @@ from __future__ import absolute_import
 import inspect
 
 import datatest
-from datatest.utils import collections
-from datatest.utils import itertools
+from datatest._compatibility import collections
+from datatest._compatibility import itertools
 from datatest.difference import NOTFOUND
 
 

@@ -5,7 +5,7 @@ import io
 import os
 import sys
 
-from datatest.utils.builtins import *
+from datatest._compatibility.builtins import *
 from . import _unittest as unittest
 
 try:

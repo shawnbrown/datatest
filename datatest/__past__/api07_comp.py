@@ -2,10 +2,10 @@
 import re
 from numbers import Number
 
-from ..utils.builtins import *
-from ..utils import collections
-from ..utils import functools
-from ..utils import itertools
+from .._compatibility.builtins import *
+from .._compatibility import collections
+from .._compatibility import functools
+from .._compatibility import itertools
 
 from .._utils import _expects_multiple_params
 from .._utils import nonstringiter

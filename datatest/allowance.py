@@ -3,12 +3,12 @@ from __future__ import division
 import inspect
 from math import isnan
 from numbers import Number
-from .utils.builtins import *
-from .utils import abc
-from .utils import collections
-from .utils import contextlib
-from .utils import functools
-from .utils import itertools
+from ._compatibility.builtins import *
+from ._compatibility import abc
+from ._compatibility import collections
+from ._compatibility import contextlib
+from ._compatibility import functools
+from ._compatibility import itertools
 
 from ._utils import exhaustible
 from ._utils import _get_arg_lengths

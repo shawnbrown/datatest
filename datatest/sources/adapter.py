@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from ..utils.builtins import *
-from ..utils import collections
+from .._compatibility.builtins import *
+from .._compatibility import collections
 
 from ..__past__.api07_comp import CompareDict
 from ..__past__.api07_comp import CompareSet
