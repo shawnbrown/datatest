@@ -1,6 +1,6 @@
 """compatibility layer for built-in functions"""
 from __future__ import absolute_import
-from .misc import exhaustible
+from .._utils import exhaustible
 
 
 try:

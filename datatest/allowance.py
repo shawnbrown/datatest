@@ -10,11 +10,11 @@ from .utils import contextlib
 from .utils import functools
 from .utils import itertools
 
-from .utils.misc import exhaustible
-from .utils.misc import _get_arg_lengths
-from .utils.misc import _expects_multiple_params
-from .utils.misc import _make_decimal
-from .utils.misc import string_types
+from ._utils import exhaustible
+from ._utils import _get_arg_lengths
+from ._utils import _expects_multiple_params
+from ._utils import _make_decimal
+from ._utils import string_types
 from ._dataaccess.dataaccess import BaseElement
 from ._dataaccess.dataaccess import DictItems
 

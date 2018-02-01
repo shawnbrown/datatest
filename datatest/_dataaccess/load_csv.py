@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import warnings
-from ..utils.misc import exhaustible
-from ..utils.misc import file_types
+from .._utils import exhaustible
+from .._utils import file_types
 from .get_reader import get_reader
 from .temptable import load_data
 from .temptable import savepoint

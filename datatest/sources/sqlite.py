@@ -4,7 +4,7 @@ import sqlite3
 from ..utils.builtins import *
 from ..utils import decimal
 from ..load.sqltemp import TemporarySqliteTable
-from ..utils.misc import nonstringiter
+from .._utils import nonstringiter
 
 from ..__past__.api07_comp import CompareDict
 from ..__past__.api07_comp import CompareSet

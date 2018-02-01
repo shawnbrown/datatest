@@ -7,9 +7,9 @@ from ..utils import collections
 from ..utils import functools
 from ..utils import itertools
 
-from ..utils.misc import _expects_multiple_params
-from ..utils.misc import nonstringiter
-from ..utils.misc import _unique_everseen
+from .._utils import _expects_multiple_params
+from .._utils import nonstringiter
+from .._utils import _unique_everseen
 from .api07_diffs import xExtra
 from .api07_diffs import xMissing
 from .api07_diffs import xInvalid

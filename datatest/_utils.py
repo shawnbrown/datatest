@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-"""Miscellaneous helper functions."""
+"""Utility helper functions."""
 from __future__ import absolute_import
 import inspect
 from io import IOBase
 from numbers import Number
 from sys import version_info as _version_info
-from .collections import Iterable
-from .decimal import Decimal
-from .itertools import filterfalse
+from .utils.collections import Iterable
+from .utils.decimal import Decimal
+from .utils.itertools import filterfalse
 
 
 try:

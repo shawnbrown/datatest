@@ -8,7 +8,7 @@ from .utils import abc
 from .utils import collections
 from .utils import contextlib
 from .utils.decimal import Decimal
-from .utils.misc import _make_token
+from ._utils import _make_token
 
 
 __all__ = [

@@ -4,7 +4,7 @@ from __future__ import absolute_import
 import itertools
 import sqlite3
 from .csvreader import UnicodeCsvReader
-from ..utils.misc import nonstringiter
+from .._utils import nonstringiter
 
 
 # Default connection shared by TemporarySqliteTable instances.

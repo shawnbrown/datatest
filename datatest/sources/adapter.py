@@ -4,7 +4,7 @@ from ..utils import collections
 
 from ..__past__.api07_comp import CompareDict
 from ..__past__.api07_comp import CompareSet
-from ..utils.misc import nonstringiter
+from .._utils import nonstringiter
 
 from .base import BaseSource
 

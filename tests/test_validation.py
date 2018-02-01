@@ -2,7 +2,7 @@
 import re
 import textwrap
 from . import _unittest as unittest
-from datatest.utils.misc import exhaustible
+from datatest._utils import exhaustible
 
 from datatest.difference import BaseDifference
 from datatest.difference import Extra

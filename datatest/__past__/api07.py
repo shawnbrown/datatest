@@ -13,7 +13,7 @@ from datatest.utils import collections
 from datatest.utils import itertools
 from datatest.utils import functools
 
-from datatest.utils.misc import _make_decimal
+from datatest._utils import _make_decimal
 
 from datatest import DataTestCase
 

@@ -5,8 +5,8 @@ import sys
 
 from ..utils.collections import Iterable
 from ..utils.itertools import chain
-from ..utils.misc import string_types
-from ..utils.misc import file_types
+from .._utils import string_types
+from .._utils import file_types
 
 
 ########################################################################

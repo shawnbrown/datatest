@@ -7,7 +7,7 @@ import unittest
 import warnings
 
 from .utils import functools
-from .utils.misc import string_types
+from ._utils import string_types
 from .validation import ValidationError
 
 try:

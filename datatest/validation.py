@@ -4,9 +4,9 @@ import re
 from .utils import itertools
 from .utils import collections
 from .utils.builtins import callable
-from .utils.misc import nonstringiter
-from .utils.misc import exhaustible
-from .utils.misc import _safesort_key
+from ._utils import nonstringiter
+from ._utils import exhaustible
+from ._utils import _safesort_key
 from ._dataaccess.dataaccess import (
     BaseElement,
     DictItems,
