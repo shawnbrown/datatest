@@ -42,6 +42,7 @@ class TestCommand(Command):
     def _get_missing_optionals(self):
         # Returns a list of missing optional packages.
         optional_packages = [
+            'dbfread',
             'pandas',
             'xlrd',  # <- support for MS Excel files
         ]
