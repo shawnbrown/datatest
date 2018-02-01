@@ -11,7 +11,7 @@ from . import _io as io
 from . import _unittest as unittest
 from datatest.utils.builtins import *
 from datatest.utils import collections
-from datatest.utils.misc import _is_nsiterable
+from datatest.utils.misc import nonstringiter
 
 from datatest._dataaccess.dataaccess import (
     working_directory,
@@ -111,7 +111,7 @@ def convert_iter_to_type(iterable, target_type):
     else:
         lst = []
         for obj in iterable:
-            if _is_nsiterable(obj):
+            if nonstringiter(obj):
                 obj = convert_iter_to_type(obj, target_type)
             lst.append(obj)
         output = target_type(lst)

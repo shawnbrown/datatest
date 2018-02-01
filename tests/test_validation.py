@@ -2,7 +2,7 @@
 import re
 import textwrap
 from . import _unittest as unittest
-from datatest.utils.misc import _is_consumable
+from datatest.utils.misc import exhaustible
 
 from datatest.difference import BaseDifference
 from datatest.difference import Extra
@@ -501,7 +501,7 @@ class TestGetDifferenceInfo(unittest.TestCase):
         self.assertIsNone(info)
 
         msg, diffs = _get_invalid_info(mapping1, mapping2)
-        self.assertTrue(_is_consumable(diffs))
+        self.assertTrue(exhaustible(diffs))
         self.assertEqual(dict(diffs), {'b': Invalid('y', expected='z')})
 
         with self.assertRaises(TypeError):
@@ -516,11 +516,11 @@ class TestGetDifferenceInfo(unittest.TestCase):
         self.assertIsNone(result)
 
         msg, diffs = _get_invalid_info(mapping, 'x')  # <- string
-        self.assertTrue(_is_consumable(diffs))
+        self.assertTrue(exhaustible(diffs))
         self.assertEqual(dict(diffs), {'b': Invalid('y', expected='x')})
 
         msg, diffs = _get_invalid_info(mapping, set('x'))  # <- set
-        self.assertTrue(_is_consumable(diffs))
+        self.assertTrue(exhaustible(diffs))
         self.assertEqual(dict(diffs), {'b': [Missing('x'), Extra('y')]})
 
     def test_nonmapping(self):
@@ -529,7 +529,7 @@ class TestGetDifferenceInfo(unittest.TestCase):
         self.assertIsNone(result)
 
         msg, diffs = _get_invalid_info(set(['x']), set(['x', 'y']))
-        self.assertTrue(_is_consumable(diffs))
+        self.assertTrue(exhaustible(diffs))
         self.assertEqual(list(diffs), [Missing('y')])
 
 

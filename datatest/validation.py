@@ -4,8 +4,8 @@ import re
 from .utils import itertools
 from .utils import collections
 from .utils.builtins import callable
-from .utils.misc import _is_nsiterable
-from .utils.misc import _is_consumable
+from .utils.misc import nonstringiter
+from .utils.misc import exhaustible
 from .utils.misc import _safesort_key
 from ._dataaccess.dataaccess import (
     BaseElement,
@@ -333,14 +333,14 @@ class ValidationError(AssertionError):
     __module__ = 'datatest'
 
     def __init__(self, message, differences):
-        if not _is_nsiterable(differences):
+        if not nonstringiter(differences):
             msg = 'expected an iterable of differences, got {0!r}'
             raise TypeError(msg.format(differences.__class__.__name__))
 
         # Normalize *differences* argument.
         if _is_collection_of_items(differences):
             differences = dict(differences)
-        elif _is_consumable(differences):
+        elif exhaustible(differences):
             differences = list(differences)
 
         if not differences:
@@ -376,7 +376,7 @@ class ValidationError(AssertionError):
             all_keys = sorted(self._differences.keys(), key=_safesort_key)
             def sorted_value(key):
                 value = self._differences[key]
-                if _is_nsiterable(value):
+                if nonstringiter(value):
                     sort_args = lambda diff: _safesort_key(diff.args)
                     return sorted(value, key=sort_args)
                 return value

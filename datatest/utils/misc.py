@@ -22,12 +22,12 @@ except NameError:
     file_types = (IOBase,)
 
 
-def _is_nsiterable(x):
-    """Returns True if *x* is a non-string iterable object."""
-    return not isinstance(x, string_types) and isinstance(x, Iterable)
+def nonstringiter(obj):
+    """Returns True if *obj* is a non-string iterable object."""
+    return not isinstance(obj, string_types) and isinstance(obj, Iterable)
 
 
-def _is_sortable(obj):
+def sortable(obj):
     """Returns True if *obj* is sortable else returns False."""
     try:
         sorted([obj, obj])
@@ -36,9 +36,12 @@ def _is_sortable(obj):
         return False
 
 
-def _is_consumable(obj):
-    """Returns True of *obj* is a consumable iterator or generator."""
-    return iter(obj) is iter(obj)
+def exhaustible(iterable):
+    """Returns True if *iterable* is an exhaustible iterator."""
+    return iter(iterable) is iter(iterable)
+    # Above: This works because exhaustible iterators return themselves
+    # when passed to iter() but non-exhaustible iterables will return
+    # newly created iterators.
 
 
 def _safesort_key(obj):
@@ -61,7 +64,7 @@ def _safesort_key(obj):
 def _flatten(iterable):
     """Flatten an iterable of elements."""
     for element in iterable:
-        if _is_nsiterable(element):
+        if nonstringiter(element):
             for sub_element in _flatten(element):
                 yield sub_element
         else:

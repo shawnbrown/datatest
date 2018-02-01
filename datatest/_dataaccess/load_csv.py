@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import warnings
-from ..utils.misc import _is_consumable
+from ..utils.misc import exhaustible
 from ..utils.misc import file_types
 from .get_reader import get_reader
 from .temptable import load_data
@@ -41,7 +41,7 @@ def load_csv(cursor, table, csvfile, encoding=None, **kwds):
         return  # <- EXIT!
 
     except UnicodeDecodeError as orig_error:
-        if _is_consumable(csvfile) and position is None:
+        if exhaustible(csvfile) and position is None:
             encoding, object_, start, end, reason = orig_error.args  # Unpack args.
             reason = (
                 '{0}: unable to load {1!r}, cannot attempt fallback with '

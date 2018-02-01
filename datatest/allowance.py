@@ -10,7 +10,7 @@ from .utils import contextlib
 from .utils import functools
 from .utils import itertools
 
-from .utils.misc import _is_consumable
+from .utils.misc import exhaustible
 from .utils.misc import _get_arg_lengths
 from .utils.misc import _expects_multiple_params
 from .utils.misc import _make_decimal
@@ -470,7 +470,7 @@ class allowed_specific(BaseAllowance):
     def __init__(self, differences, msg=None):
         if isinstance(differences, BaseDifference):
             self.differences = [differences]
-        elif not _is_consumable(differences):
+        elif not exhaustible(differences):
             self.differences = differences
         else:
             raise TypeError(

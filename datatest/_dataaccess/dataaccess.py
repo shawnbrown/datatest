@@ -15,9 +15,9 @@ from ..utils import functools
 from ..utils import itertools
 from ..utils.misc import _expects_multiple_params
 from ..utils.misc import _flatten
-from ..utils.misc import _is_nsiterable
-from ..utils.misc import _is_sortable
-from ..utils.misc import _is_consumable
+from ..utils.misc import nonstringiter
+from ..utils.misc import sortable
+from ..utils.misc import exhaustible
 from ..utils.misc import _make_token
 from ..utils.misc import _unique_everseen
 from ..utils.misc import string_types
@@ -373,7 +373,7 @@ def _sqlite_count(iterable):
 
 
 # The SQLite BLOB/Binary type in sortable Python 2 but unsortable in Python 3.
-_unsortable_blob_type = not _is_sortable(Binary(b'0'))
+_unsortable_blob_type = not sortable(Binary(b'0'))
 
 
 def _sqlite_sortkey(value):
@@ -1143,7 +1143,7 @@ class DataSource(object):
                 func_name = 'FUNC{0}'.format(id(val))
                 clause.append('{0}({1})'.format(func_name, key))
             # If value is a collection of strings.
-            elif _is_nsiterable(val):
+            elif nonstringiter(val):
                 clause.append('{key} IN ({qmarks})'.format(
                     key=key,
                     qmarks=', '.join('?' * len(val))

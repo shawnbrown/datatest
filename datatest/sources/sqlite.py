@@ -4,7 +4,7 @@ import sqlite3
 from ..utils.builtins import *
 from ..utils import decimal
 from ..load.sqltemp import TemporarySqliteTable
-from ..utils.misc import _is_nsiterable
+from ..utils.misc import nonstringiter
 
 from ..__past__.api07_comp import CompareDict
 from ..__past__.api07_comp import CompareSet
@@ -65,7 +65,7 @@ class SqliteBase(BaseSource):
         """Return iterable of tuples containing distinct *columns*
         values.
         """
-        if not _is_nsiterable(columns):
+        if not nonstringiter(columns):
             columns = (columns,)
         self._assert_columns_exist(columns)
         select_clause = [self._normalize_column(x) for x in columns]
@@ -100,7 +100,7 @@ class SqliteBase(BaseSource):
         # TODO: _sql_aggregate has grown messy after a handful of
         # iterations look to refactor it in the future to improve
         # maintainability.
-        if not _is_nsiterable(sql_function):
+        if not nonstringiter(sql_function):
             sql_function = (sql_function,)
 
         if keys == None:
@@ -111,7 +111,7 @@ class SqliteBase(BaseSource):
                 return result[0]
             return result  # <- EXIT!
 
-        if not _is_nsiterable(keys):
+        if not nonstringiter(keys):
             keys = (keys,)
         group_clause = [self._normalize_column(x) for x in keys]
         group_clause = ', '.join(group_clause)
@@ -174,7 +174,7 @@ class SqliteBase(BaseSource):
         items = kwds_filter.items()
         items = sorted(items, key=lambda x: x[0])  # Ordered by key.
         for key, val in items:
-            if _is_nsiterable(val):
+            if nonstringiter(val):
                 clause.append(key + ' IN (%s)' % (', '.join('?' * len(val))))
                 for x in val:
                     params.append(x)

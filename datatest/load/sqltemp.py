@@ -4,7 +4,7 @@ from __future__ import absolute_import
 import itertools
 import sqlite3
 from .csvreader import UnicodeCsvReader
-from ..utils.misc import _is_nsiterable
+from ..utils.misc import nonstringiter
 
 
 # Default connection shared by TemporarySqliteTable instances.
@@ -249,7 +249,7 @@ def _from_csv(file, encoding=None, **fmtparams):
     # TODO: Need to refactor!!! Encoding fallback is included twice
     # (copied from old CsvSource class).
 
-    if not _is_nsiterable(file):
+    if not nonstringiter(file):
         file = [file]
     files = iter(file)
 
