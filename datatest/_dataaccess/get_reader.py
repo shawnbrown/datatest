@@ -12,14 +12,20 @@ from .._utils import file_types
 ########################################################################
 # From Dictionaries.
 ########################################################################
-def from_dicts(records):
-    records = iter(records)
-    first_record = next(records, None)
-    header_row = list(first_record.keys())
+def from_dicts(records, fieldnames=None):
+    if fieldnames:
+        fieldnames = list(fieldnames)  # Needs to be a sequence.
+        yield fieldnames  # Header row.
+    else:
+        records = iter(records)
+        first_record = next(records, None)
+        if first_record:
+            records = chain([first_record], records)
+            fieldnames = list(first_record.keys())
+            yield fieldnames  # Header row.
 
-    yield header_row
-    for row in chain([first_record], records):
-        yield [row.get(key, None) for key in header_row]
+    for row in records:
+        yield [row.get(key, None) for key in fieldnames]
 
 
 ########################################################################
