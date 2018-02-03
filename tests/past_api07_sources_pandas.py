@@ -3,8 +3,8 @@ from . import _unittest as unittest
 from .mixins import CountTests
 from .mixins import OtherTests
 
-from datatest.sources.pandas import PandasSource
-from datatest.sources.pandas import _version_info
+from datatest.__past__.api07_sources import PandasSource
+from datatest.__past__.api07_sources import _version_info
 
 
 ########################################################################

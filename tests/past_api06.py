@@ -12,7 +12,6 @@ from .common import MinimalSource
 
 import datatest
 from datatest.__past__ import api06  # <- MONKEY PATCH!!!
-
 from datatest.__past__.api07_error import DataError
 
 

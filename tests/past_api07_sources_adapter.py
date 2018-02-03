@@ -9,8 +9,8 @@ from .mixins import CountTests
 from .mixins import OtherTests
 
 from .common import MinimalSource
-from datatest.sources.adapter import _FilterValueError
-from datatest.sources.adapter import AdapterSource
+from datatest.__past__.api07_sources import _FilterValueError
+from datatest.__past__.api07_sources import AdapterSource
 
 
 class TestAdapterSourceBasics(OtherTests, unittest.TestCase):

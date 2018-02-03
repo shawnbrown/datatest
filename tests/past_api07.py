@@ -20,7 +20,7 @@ from datatest import Missing
 from datatest import Extra
 from datatest import Invalid
 from datatest.__past__.api07_diffs import xDeviation
-from datatest.sources.csv import CsvSource
+from datatest.__past__.api07_sources import CsvSource
 from datatest import DataTestCase
 from datatest.__past__.api07_comp import CompareSet
 from datatest import allow_iter
@@ -37,6 +37,13 @@ from datatest import allow_percent_deviation
 from .past_api07_diffs import *
 from .past_api07_comp import *
 from .past_api07_error import *
+from .past_api07_sources_base import *
+from .past_api07_sources_adapter import *
+from .past_api07_sources_multi import *
+from .past_api07_sources_sqlite import *
+from .past_api07_sources_csv import *
+from .past_api07_sources_excel import *
+from .past_api07_sources_pandas import *
 
 
 class TestNamesAndAttributes(unittest.TestCase):
