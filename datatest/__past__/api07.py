@@ -37,14 +37,14 @@ from datatest.__past__.api07_comp import CompareDict
 from datatest.__past__.api07_comp import BaseCompare
 
 # Put old data source classes into main namespace.
-from datatest.sources.adapter import AdapterSource
-from datatest.sources.base import BaseSource
-from datatest.sources.csv import CsvSource
-from datatest.sources.excel import ExcelSource
-from datatest.sources.multi import MultiSource
-from datatest.sources.pandas import PandasSource
-from datatest.sources.sqlite import SqliteBase
-from datatest.sources.sqlite import SqliteSource
+from .api07_sources import AdapterSource
+from .api07_sources import BaseSource
+from .api07_sources import CsvSource
+from .api07_sources import ExcelSource
+from .api07_sources import MultiSource
+from .api07_sources import PandasSource
+from .api07_sources import SqliteBase
+from .api07_sources import SqliteSource
 datatest.AdapterSource = AdapterSource
 datatest.BaseSource = BaseSource
 datatest.CsvSource = CsvSource
