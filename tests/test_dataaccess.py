@@ -964,8 +964,8 @@ class TestDataSource(unittest.TestCase):
         def bar(x): return x  # <- Function.
         baz = lambda x: x     # <- Lambda.
         source = DataSource(iterable, 'foo', bar, baz)
-        self.assertTrue(repr(source).startswith("DataSource(<list"))
-        self.assertTrue(repr(source).endswith(">, 'foo', bar, <lambda>)"))
+        self.assertTrue(repr(source).startswith("DataSource(<"), msg=repr(source))
+        self.assertTrue(repr(source).endswith(">, 'foo', bar, <lambda>)"), msg=repr(source))
 
         # Data and kwds.
         iterable = iter(data)
@@ -974,18 +974,20 @@ class TestDataSource(unittest.TestCase):
             return x
         source = DataSource(iterable, kwd1='foo', kwd2=bar)
         source_repr = repr(source)
-        self.assertTrue(source_repr.startswith("DataSource(<list"))
+        self.assertTrue(source_repr.startswith("DataSource(<"))
         self.assertTrue(
-            source_repr.endswith(">, kwd1='foo', kwd2=bar)")
-            or
-            source_repr.endswith(">, kwd2=bar, kwd1='foo')")
+            (
+                source_repr.endswith(">, kwd1='foo', kwd2=bar)")
+                or source_repr.endswith(">, kwd2=bar, kwd1='foo')")
+            ),
+            msg=repr(source)
         )
 
         # Data, args, and kwds.
         iterable = iter(data)
         source = DataSource(iterable, 'foo', kwd1='bar')
-        self.assertTrue(repr(source).startswith("DataSource(<list"))
-        self.assertTrue(repr(source).endswith(">, 'foo', kwd1='bar')"))
+        self.assertTrue(repr(source).startswith("DataSource(<"), msg=repr(source))
+        self.assertTrue(repr(source).endswith(">, 'foo', kwd1='bar')"), msg=repr(source))
 
     def test_build_where_clause(self):
         _build_where_clause = DataSource._build_where_clause
