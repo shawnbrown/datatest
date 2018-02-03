@@ -5,7 +5,74 @@ import inspect
 import datatest
 from datatest._compatibility import collections
 from datatest._compatibility import itertools
+from datatest._dataaccess.get_reader import get_reader
+from datatest._dataaccess.dataaccess import DEFAULT_CONNECTION
+from datatest._dataaccess.load_csv import load_csv
+from datatest._dataaccess.temptable import load_data
+from datatest._dataaccess.temptable import new_table_name
+from datatest._dataaccess.temptable import savepoint
+from datatest._dataaccess.temptable import table_exists
+from datatest._utils import file_types
+from datatest._utils import string_types
 from datatest.difference import NOTFOUND
+
+
+_DataSource = datatest.DataSource
+class DataSource(_DataSource):
+    def __init__(self, data, fieldnames=None):
+        iterator = iter(data)
+        first_value = next(iterator, None)
+        iterator = itertools.chain([first_value], iterator)
+
+        if isinstance(first_value, dict):
+            if not fieldnames:
+                fieldnames = list(first_value.keys())
+            super(DataSource, self).__init__(iterator, fieldnames)
+        else:
+            if fieldnames:
+                iterator = itertools.chain([fieldnames], iterator)
+            super(DataSource, self).__init__(iterator)
+
+    @classmethod
+    def from_csv(cls, file, encoding=None, **fmtparams):
+        if isinstance(file, string_types) or isinstance(file, file_types):
+            data_list = [file]
+        else:
+            data_list = file
+
+        new_cls = cls.__new__(cls)
+        new_cls._connection = DEFAULT_CONNECTION
+        cursor = new_cls._connection.cursor()
+        with savepoint(cursor):
+            table = new_table_name(cursor)
+            for obj in data_list:
+                load_csv(cursor, table, obj, encoding=encoding, **fmtparams)
+        new_cls._table = table if table_exists(cursor, table) else None
+        new_cls._data = file
+        new_cls._args = (encoding,)
+        new_cls._kwds = fmtparams
+        new_cls._update_list = []
+        return new_cls
+
+    @classmethod
+    def from_excel(cls, path, worksheet=0):
+        new_cls = cls.__new__(cls)
+        new_cls._connection = DEFAULT_CONNECTION
+        cursor = new_cls._connection.cursor()
+        with savepoint(cursor):
+            table = new_table_name(cursor)
+            reader = get_reader.from_excel(path, worksheet=0)
+            load_data(cursor, table, reader)
+        new_cls._table = table if table_exists(cursor, table) else None
+        new_cls._data = path
+        new_cls._args = tuple()
+        new_cls._kwds = dict()
+        if worksheet != 0:
+            new_cls._kwds['worksheet'] = worksheet
+        new_cls._update_list = []
+        return new_cls
+
+datatest.DataSource = DataSource
 
 
 def get_subject(self):
