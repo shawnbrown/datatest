@@ -156,7 +156,7 @@ class TestDictItems(unittest.TestCase):
         self.assertEqual(list(normalized), [('a', 1), ('b', 2)])
 
     def test_DataQuery(self):
-        source = DataSource([('x', 1), ('y', 2)], fieldnames=['A', 'B'])
+        source = DataSource([('A', 'B'), ('x', 1), ('y', 2)])
         query = source({'A': 'B'}).apply(lambda x: next(x))
         normalized = DictItems(query)
         self.assertEqual(list(normalized), [('x', 1), ('y', 2)])
@@ -668,14 +668,14 @@ class TestDataQuery(unittest.TestCase):
 
     def test_init_from_object(self):
         # Using DataSource object.
-        source = DataSource([(1, 2), (1, 2)], fieldnames=['A', 'B'])
+        source = DataSource([('A', 'B'), (1, 2), (1, 2)])
         query = DataQuery.from_object(source, ['A'], B=2)
         self.assertEqual(query._data_source, source)
         self.assertEqual(query._data_args, ((['A'],), {'B': 2}))
         self.assertEqual(query._query_steps, ())
 
         # Using another DataQuery object.
-        source = DataSource([(1, 2), (1, 2)], fieldnames=['A', 'B'])
+        source = DataSource([('A', 'B'), (1, 2), (1, 2)])
         query1 = DataQuery.from_object(source, ['A'], B=2)
         query2 = DataQuery.from_object(query1)
         self.assertEqual(query2._data_source, source)
@@ -698,12 +698,12 @@ class TestDataQuery(unittest.TestCase):
             DataQuery()
 
         # Bad "select" field.
-        source = DataSource([(1, 2), (1, 2)], fieldnames=['A', 'B'])
+        source = DataSource([('A', 'B'), (1, 2), (1, 2)])
         with self.assertRaises(LookupError, msg='should fail immediately when fieldname conflicts with provided source'):
             query = DataQuery.from_object(source, ['X'], B=2)
 
         # Bad "where" field.
-        source = DataSource([(1, 2), (1, 2)], fieldnames=['A', 'B'])
+        source = DataSource([('A', 'B'), (1, 2), (1, 2)])
         with self.assertRaises(LookupError, msg='should fail immediately when fieldname conflicts with provided "where" field'):
             query = DataQuery.from_object(source, ['A'], Y=2)
 
@@ -733,7 +733,7 @@ class TestDataQuery(unittest.TestCase):
         self.assertEqual(copied._query_steps, query._query_steps)
 
         # Source, select, and keyword.
-        source = DataSource([(1, 2), (1, 2)], fieldnames=['A', 'B'])
+        source = DataSource([('A', 'B'), (1, 2), (1, 2)])
         query = DataQuery.from_object(source, ['B'])
         copied = query.__copy__()
         self.assertEqual(copied._data_source, query._data_source)
@@ -748,7 +748,7 @@ class TestDataQuery(unittest.TestCase):
         self.assertEqual(copied._query_steps, query._query_steps)
 
     def test_fetch_datasource(self):
-        source = DataSource([('1', '2'), ('1', '2')], fieldnames=['A', 'B'])
+        source = DataSource([('A', 'B'), ('1', '2'), ('1', '2')])
         query = DataQuery.from_object(source, ['B'])
         query._query_steps = [
             ('map', (int,), {}),
@@ -759,7 +759,7 @@ class TestDataQuery(unittest.TestCase):
         self.assertEqual(result, 8)
 
     def test_execute_datasource(self):
-        source = DataSource([('1', '2'), ('1', '2')], fieldnames=['A', 'B'])
+        source = DataSource([('A', 'B'), ('1', '2'), ('1', '2')])
         query = DataQuery.from_object(source, ['B'])
         query._query_steps = [
             ('map', (int,), {}),
@@ -785,7 +785,7 @@ class TestDataQuery(unittest.TestCase):
         query2 = query1.map(int)
         self.assertIsNot(query1, query2, 'should return new object')
 
-        source = DataSource([('a', '2'), ('b', '2')], fieldnames=['col1', 'col2'])
+        source = DataSource([('col1', 'col2'), ('a', '2'), ('b', '2')])
         result = query2(source)
         self.assertEqual(result.fetch(), [2, 2])
 
@@ -794,12 +794,12 @@ class TestDataQuery(unittest.TestCase):
         query2 = query1.filter(lambda x: x == 'a')
         self.assertIsNot(query1, query2, 'should return new object')
 
-        source = DataSource([('a', '2'), ('b', '2')], fieldnames=['col1', 'col2'])
+        source = DataSource([('col1', 'col2'), ('a', '2'), ('b', '2')])
         result = query2(source)
         self.assertEqual(result.fetch(), ['a'])
 
         # No filter arg should default to bool()
-        source = DataSource([(1,), (2,), (0,), (3,)], fieldnames=['col1'])
+        source = DataSource([('col1',), (1,), (2,), (0,), (3,)])
         query = DataQuery(set(['col1'])).filter()  # <- No arg!
         result = query(source)
         self.assertEqual(result.fetch(), set([1, 2, 3]))
@@ -809,7 +809,7 @@ class TestDataQuery(unittest.TestCase):
         query2 = query1.reduce(lambda x, y: x + y)
         self.assertIsNot(query1, query2, 'should return new object')
 
-        source = DataSource([('a', '2'), ('b', '2')], fieldnames=['col1', 'col2'])
+        source = DataSource([('col1', 'col2'), ('a', '2'), ('b', '2')])
         result = query2(source)
         self.assertEqual(result, 'ab')
 
@@ -910,16 +910,10 @@ class TestDataQuery(unittest.TestCase):
         self.assertRegex(repr(query), regex)
 
         # Check "from_object" signature.
-        query = DataQuery.from_object(
-            DataSource([('x', 1), ('y', 2), ('z', 3)], ['A', 'B']),
-            ['A'],
-        )
-        regex = (
-            r"DataQuery\.from_object\(DataSource\(<list of records>, "
-            r"fieldnames=\(u?'A', u?'B'\)\), \[u?'A'\]\)"
-        )
-        regex = textwrap.dedent(regex).strip()
-        self.assertRegex(repr(query), regex)
+        source = DataSource([('A', 'B'), ('x', 1), ('y', 2), ('z', 3)])
+        query = DataQuery.from_object(source, ['A'])
+        expected = "DataQuery.from_object({0!r}, {1!r})".format(source, ['A'])
+        self.assertEqual(repr(query), expected)
 
         # Check query steps.
         query = DataQuery(['label1']).distinct().count()
@@ -940,119 +934,58 @@ class TestDataQuery(unittest.TestCase):
         self.assertRegex(repr(query), regex)
 
 
-class TestDataSourceConstructors(unittest.TestCase):
-    @staticmethod
-    def get_table_contents(source):
-        connection = source._connection
-        table = source._table
-        cursor = connection.cursor()
-        cursor.execute('SELECT * FROM ' + table)
-        return list(cursor)
-
-    def test_from_sequence_rows(self):
-        data = [('x', 1),
-                ('y', 2),
-                ('z', 3)]
-        fieldnames = ['A', 'B']
-
-        source = DataSource(data, fieldnames)
-        table_contents = self.get_table_contents(source)
-        self.assertEqual(set(table_contents), set(data))
-
-    def test_duplicate_fieldnames(self):
-        records = [
-            ('1', '2'),
-            ('1', '2'),
-        ]
-
-        # Should pass without error--field names are unique.
-        source = DataSource(records, fieldnames=['A', 'B'])
-
-        regex = r"data contains multiple fields named 'A' \(field names must be unique\)"
-        with self.assertRaisesRegex(Exception, regex):
-            source = DataSource(records, fieldnames=['A', 'A'])
-
-        regex = r"data contains multiple fields where the name is blank \(field names must be unique\)"
-        with self.assertRaisesRegex(Exception, regex):
-            source = DataSource(records, fieldnames=['', ''])
-
-    def test_from_dict_rows(self):
-        data = [{'A': 'x', 'B': 1},
-                {'A': 'y', 'B': 2},
-                {'A': 'z', 'B': 3}]
-
-        source = DataSource(data)
-        table_contents = self.get_table_contents(source)
-        expected = [('x', 1), ('y', 2), ('z', 3)]
-        self.assertEqual(set(table_contents), set(expected))
-
-        source = DataSource(data, fieldnames=['B', 'A'])  # <- Set field order.
-        table_contents = self.get_table_contents(source)
-        expected = [(1, 'x'), (2, 'y'), (3, 'z')]
-        self.assertEqual(set(table_contents), set(expected))
-
-    @staticmethod
-    def _get_filelike(string, encoding):
-        """Return file-like stream object."""
-        import _io as io
-        import sys
-        filelike = io.BytesIO(string)
-        if encoding and sys.version >= '3':
-            filelike = io.TextIOWrapper(filelike, encoding=encoding)
-        return filelike
-
-    def test_from_csv_file(self):
-        csv_file = self._get_filelike(b'A,B\n'
-                                      b'x,1\n'
-                                      b'y,2\n'
-                                      b'z,3\n', encoding='utf-8')
-        source = DataSource.from_csv(csv_file)
-        table_contents = self.get_table_contents(source)
-        expected = [('x', '1'), ('y', '2'), ('z', '3')]
-        self.assertEqual(set(table_contents), set(expected))
-
-    def test_from_multiple_csv_files(self):
-        file1 = self._get_filelike(b'A,B\n'
-                                   b'x,1\n'
-                                   b'y,2\n'
-                                   b'z,3\n', encoding='utf-8')
-
-        file2 = self._get_filelike(b'B,C\n'
-                                   b'4,j\n'
-                                   b'5,k\n'
-                                   b'6,l\n', encoding='ascii')
-
-        source = DataSource.from_csv([file1, file2])
-        table_contents = self.get_table_contents(source)
-
-        expected = [('x', '1', ''), ('y', '2', ''), ('z', '3', ''),
-                    ('', '4', 'j'), ('', '5', 'k'), ('', '6', 'l')]
-        self.assertEqual(set(table_contents), set(expected))
-
-
 class TestDataSource(unittest.TestCase):
     def setUp(self):
-        fieldnames = ['label1', 'label2', 'value']
-        data = [['a', 'x', '17'],
+        data = [['label1', 'label2', 'value'],
+                ['a', 'x', '17'],
                 ['a', 'x', '13'],
                 ['a', 'y', '20'],
                 ['a', 'z', '15'],
                 ['b', 'z', '5' ],
                 ['b', 'y', '40'],
                 ['b', 'x', '25']]
-        self.source = DataSource(data, fieldnames)
+        self.source = DataSource(data)
 
     def test_fieldnames(self):
         expected = ('label1', 'label2', 'value')
         self.assertEqual(self.source.fieldnames, expected)
 
     def test_repr(self):
-        data = [['x', 100], ['y', 200], ['z', 300]]
-        filednames = ['A', 'B']
-        source = DataSource(data, filednames)
+        data = [['A', 'B'], ['x', 100], ['y', 200]]
 
-        regex = r"DataSource\(<list of records>, fieldnames=\(u?'A', u?'B'\)\)"
-        self.assertRegex(repr(source), regex)
+        # Data-only (no args)
+        source = DataSource(data)
+        expected = 'DataSource({0!r})'.format(data)
+        self.assertEqual(repr(source), expected)
+
+        # Data and args.
+        iterable = iter(data)
+        foo = 'foo'           # <- String.
+        def bar(x): return x  # <- Function.
+        baz = lambda x: x     # <- Lambda.
+        source = DataSource(iterable, 'foo', bar, baz)
+        self.assertTrue(repr(source).startswith("DataSource(<list"))
+        self.assertTrue(repr(source).endswith(">, 'foo', bar, <lambda>)"))
+
+        # Data and kwds.
+        iterable = iter(data)
+        foo = 'foo'
+        def bar(x):
+            return x
+        source = DataSource(iterable, kwd1='foo', kwd2=bar)
+        source_repr = repr(source)
+        self.assertTrue(source_repr.startswith("DataSource(<list"))
+        self.assertTrue(
+            source_repr.endswith(">, kwd1='foo', kwd2=bar)")
+            or
+            source_repr.endswith(">, kwd2=bar, kwd1='foo')")
+        )
+
+        # Data, args, and kwds.
+        iterable = iter(data)
+        source = DataSource(iterable, 'foo', kwd1='bar')
+        self.assertTrue(repr(source).startswith("DataSource(<list"))
+        self.assertTrue(repr(source).endswith(">, 'foo', kwd1='bar')"))
 
     def test_build_where_clause(self):
         _build_where_clause = DataSource._build_where_clause
@@ -1071,9 +1004,11 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_execute_query(self):
-        data = [['x', 101], ['y', 202], ['z', 303]]
-        filednames = ['A', 'B']
-        source = DataSource(data, filednames)
+        #data = [['x', 101], ['y', 202], ['z', 303]]
+        #filednames = ['A', 'B']
+        #source = DataSource(data, filednames)
+        data = [['A', 'B'], ['x', 101], ['y', 202], ['z', 303]]
+        source = DataSource(data)
 
         # Test where-clause function.
         def isodd(x):

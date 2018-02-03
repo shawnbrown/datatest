@@ -154,7 +154,7 @@ class TestAssertValid(DataTestCase):
         self.assertTrue(message.endswith(']'), 'should show full diff when None')
 
     def test_query_objects(self):
-        source = DataSource([('1', '2'), ('1', '2')], fieldnames=['A', 'B'])
+        source = DataSource([('A', 'B'), ('1', '2'), ('1', '2')])
         query_obj1 = source(['B'])
         query_obj2 = source(['B'])
         self.assertValid(query_obj1, query_obj2)

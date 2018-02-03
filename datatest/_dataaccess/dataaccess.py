@@ -2,10 +2,11 @@
 from __future__ import absolute_import
 import inspect
 import os
+import sqlite3
 import sys
 from io import IOBase
+from glob import glob
 from numbers import Number
-from sqlite3 import Binary
 
 from .._compatibility.builtins import *
 from .._compatibility import abc
@@ -20,10 +21,26 @@ from .._utils import sortable
 from .._utils import exhaustible
 from .._utils import _make_token
 from .._utils import _unique_everseen
+from .._utils import file_types
 from .._utils import string_types
+from .get_reader import get_reader
 from .load_csv import load_csv
+from .temptable import load_data
+from .temptable import new_table_name
+from .temptable import savepoint
+from .temptable import table_exists
 from ..load.sqltemp import TemporarySqliteTable
 from ..load.sqltemp import _from_csv
+
+
+# For the following database connection, the synchronous flag is
+# set to "OFF" for faster insertions and commits. Since the database
+# is temporary, long-term integrity should not be a concern--in the
+# unlikely event of data corruption, it should be entirely acceptable
+# to simply rebuild the temporary tables.
+DEFAULT_CONNECTION = sqlite3.connect('')  # <- Using '' makes a temp file.
+DEFAULT_CONNECTION.execute('PRAGMA synchronous=OFF')
+DEFAULT_CONNECTION.isolation_level = None  # <- Run in 'autocommit' mode.
 
 
 class working_directory(contextlib.ContextDecorator):
@@ -373,6 +390,7 @@ def _sqlite_count(iterable):
 
 
 # The SQLite BLOB/Binary type in sortable Python 2 but unsortable in Python 3.
+Binary = sqlite3.Binary  # Pull into local namespace to eliminate dot-lookup.
 _unsortable_blob_type = not sortable(Binary(b'0'))
 
 
@@ -956,42 +974,75 @@ def _register_function(connection, func_list):
 
 
 class DataSource(object):
-    """A class to quickly load and query tabular data.
-
-    The given *data* should be an iterable of rows. The rows
-    themselves can be lists (as below), dictionaries, or other
-    sequences or mappings. *fieldnames* must be a sequence of
-    strings to use when referencing data by field::
-
-        data = [
-            ['x', 100],
-            ['y', 200],
-            ['z', 300],
-        ]
-        fieldnames = ['A', 'B']
-        source = datatest.DataSource(data, fieldnames)
-
-    If *data* is an iterable of :py:class:`dict` or
-    :py:func:`namedtuple <collections.namedtuple>` rows,
-    then *fieldnames* can be omitted::
-
-        data = [
-            {'A': 'x', 'B': 100},
-            {'A': 'y', 'B': 200},
-            {'A': 'z', 'B': 300},
-        ]
-        source = datatest.DataSource(data)
-    """
-    def __init__(self, data, fieldnames=None):
+    """A class to quickly load and query tabular data."""
+    def __init__(self, data=None, *args, **kwds):
         """Initialize self."""
-        temptable = TemporarySqliteTable(data, fieldnames)
-        self._connection = temptable.connection
-        self._table = temptable.name
+        global DEFAULT_CONNECTION
 
-        repr_string = '{0}(<{1} of records>, fieldnames={2})'
-        self._repr_string = repr_string.format(self.__class__.__name__,
-                                               data.__class__.__name__,
-                                               repr(self.fieldnames))
+        if not data:
+            data_list = []
+        elif isinstance(data, string_types):
+            data_list = glob(data)   # Get shell-style
+            if len(data_list) == 1:  # wildcard matches
+                data = data_list[0]  # and replace the
+            else:                    # original string.
+                data = data_list
+        elif not isinstance(data, list) \
+                or isinstance(data[0], (list, tuple)):  # Not a list or is a
+            data_list = [data]                          # reader-like list.
+        else:
+            data_list = data
+
+        cursor = DEFAULT_CONNECTION.cursor()
+
+        with savepoint(cursor):
+            table = new_table_name(cursor)
+            for obj in data_list:
+                self._load_data(cursor, table, obj, *args, **kwds)
+
+        self._connection = DEFAULT_CONNECTION
+
+        if table_exists(cursor, table):  # If all given data objects
+            self._table = table          # are empty, then a table is
+        else:                            # not created so we need to
+            self._table = None           # check for this case.
+        self._data = data
+        self._args = args
+        self._kwds = kwds
+
+    def _load_data(self, cursor, table, obj, *args, **kwds):
+        with savepoint(cursor):
+            if ((
+                    isinstance(obj, string_types)
+                    and obj.lower().endswith('.csv')
+                ) or (
+                    isinstance(obj, file_types)
+                    and getattr(obj, 'name', '').lower().endswith('.csv')
+                )
+            ):
+                load_csv(cursor, table, obj, *args, **kwds)
+            else:
+                reader = get_reader(obj, *args, **kwds)
+                load_data(cursor, table, reader)
+
+    def __repr__(self):
+        """Return a string representation of the data source."""
+        get_repr = lambda x: getattr(x, '__name__', repr(x))
+        get_name = lambda x: getattr(x, '__name__', str(x))
+
+        cls_name = self.__class__.__name__
+
+        args_repr = ', '.join(get_repr(x) for x in self._args)
+        if args_repr:
+            args_repr = ', ' + args_repr
+
+        kwds_repr = [(get_name(k), get_repr(v)) for k, v in self._kwds.items()]
+        kwds_repr = ['{0}={1}'.format(k, v) for k, v in kwds_repr]
+        kwds_repr = ', '.join(x for x in kwds_repr)
+        if kwds_repr:
+            kwds_repr = ', ' + kwds_repr
+
+        return '{0}({1!r}{2}{3})'.format(cls_name, self._data, args_repr, kwds_repr)
 
     @classmethod
     def from_csv(cls, file, encoding=None, **fmtparams):
@@ -1072,13 +1123,6 @@ class DataSource(object):
         cursor = self._connection.cursor()
         cursor.execute('PRAGMA table_info(' + self._table + ')')
         return tuple(x[1] for x in cursor)
-
-    def __repr__(self):
-        """Return a string representation of the data source."""
-        repr_string = getattr(self, '_repr_string', None)
-        if repr_string:
-            return repr_string
-        return super(DataSource, self).__repr__()
 
     def __iter__(self):
         """Return iterable of dictionary rows (like csv.DictReader)."""
