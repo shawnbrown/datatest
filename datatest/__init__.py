@@ -19,8 +19,8 @@ from .main import main
 from ._query.query import DataSource
 from ._query.query import DataQuery
 from ._query.query import DataResult
-from ._query.query import working_directory
 from ._load.get_reader import get_reader
+from ._load.working_directory import working_directory
 
 __version__ = '0.8.4.dev0'
 
