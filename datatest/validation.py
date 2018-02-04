@@ -11,8 +11,8 @@ from ._query.query import (
     BaseElement,
     DictItems,
     _is_collection_of_items,
-    DataQuery,
-    DataResult,
+    Query,
+    Result,
 )
 from .difference import (
     BaseDifference,
@@ -298,10 +298,10 @@ def _get_invalid_info(data, requirement):
     return None.
     """
     # Normalize *data* and *requirement* objects.
-    if isinstance(data, DataQuery):
+    if isinstance(data, Query):
         data = data()  # <- Consumable iterator (for lazy evaluation).
 
-    if isinstance(requirement, (DataQuery, DataResult)):
+    if isinstance(requirement, (Query, Result)):
         requirement = requirement.fetch()  # <- Eagerly evaluated.
 
     # Get default-message and differences (if any exist).

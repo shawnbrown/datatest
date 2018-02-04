@@ -38,7 +38,7 @@ string matching (also called fuzzy matching):
                     return matcher.ratio() >= cutoff  # <- closes over cutoff
 
             func = lambda x: FuzzyMatcher(x) if isinstance(x, str) else x
-            requirement = datatest.DataQuery.from_object(requirement).map(func)
+            requirement = datatest.Query.from_object(requirement).map(func)
 
             msg = msg or 'string similarity of {0} or higher'.format(cutoff)
             self.assertValid(data, requirement, msg)

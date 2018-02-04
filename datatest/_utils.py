@@ -97,7 +97,7 @@ def _make_token(name, description=None):
     an entity that cannot be used directly because of some logical
     reason or implementation detail.
 
-    * DataQuery uses a token for the result data when optimizing
+    * Query uses a token for the result data when optimizing
       queries because the result does not exist until the query is
       actually executed.
     * _get_error() uses a token to build an appropriate error when

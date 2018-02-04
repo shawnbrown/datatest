@@ -15,12 +15,12 @@ from .runner import DataTestRunner
 from .main import DataTestProgram
 from .main import main
 
-# Data Access API
-from ._query.query import DataSource
-from ._query.query import DataQuery
-from ._query.query import DataResult
+# Data Handling API
 from ._load.get_reader import get_reader
 from ._load.working_directory import working_directory
+from ._query.query import Selector
+from ._query.query import Query
+from ._query.query import Result
 
 __version__ = '0.8.4.dev0'
 

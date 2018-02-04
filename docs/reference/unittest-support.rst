@@ -26,7 +26,7 @@ a CSV file (:download:`mydata.csv </_static/mydata.csv>`):
     def setUpModule():
         global source
         with datatest.working_directory(__file__):
-            source = datatest.DataSource.from_csv('mydata.csv')
+            source = datatest.Selector('mydata.csv')
 
 
     class TestMyData(datatest.DataTestCase):

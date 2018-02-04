@@ -17,8 +17,11 @@ from datatest._utils import string_types
 from datatest.difference import NOTFOUND
 
 
-_DataSource = datatest.DataSource
-class DataSource(_DataSource):
+datatest.DataQuery = datatest.Query
+
+datatest.DataResult = datatest.Result
+
+class DataSource(datatest.Selector):
     def __init__(self, data, fieldnames=None):
         iterator = iter(data)
         first_value = next(iterator, None)

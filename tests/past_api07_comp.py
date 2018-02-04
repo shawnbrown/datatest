@@ -1,4 +1,4 @@
-"""Result objects for DataSource queries."""
+"""Comparison objects and differences."""
 import re
 from . import _unittest as unittest
 

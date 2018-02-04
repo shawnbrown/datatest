@@ -7,8 +7,8 @@ from ._compatibility.builtins import *
 from ._compatibility import collections
 from ._compatibility import contextlib
 
-from ._query.query import DataQuery
-from ._query.query import DataResult
+from ._query.query import Query
+from ._query.query import Result
 
 from .validation import _get_invalid_info
 from .validation import ValidationError

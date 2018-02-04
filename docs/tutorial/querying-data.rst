@@ -2,29 +2,24 @@
 .. module:: datatest
 
 .. meta::
-    :description: Use datatest's DataSource, DataQuery, and DataResult
+    :description: Use datatest's Selector, Query, and Result
                   classes to handle the data under test.
-    :keywords: datatest, DataSource, DataQuery, DataResult, working_directory
+    :keywords: datatest, Selector, Query, Result, working_directory
 
 
 #############
 Querying Data
 #############
 
-Datatest provides built-in classes for loading, querying, and
+Datatest provides built-in classes for selecting, querying, and
 iterating over the data under test. Although users familiar with
 other tools (Pandas, SQLAlchemy, etc.) should feel encouraged
 to use whatever they find to be most productive.
 
-..  To help use third-party data sources, datatest includes
-    a number of helper functions to quickly load data into
-    a variety of ORMs and DALs.
-
-The following examples demonstrate datatest's :class:`DataSource`,
-:class:`DataQuery`, and :class:`DataResult` classes. Users can
-follow along and type the commands themselves at Python's
-interactive prompt (``>>>``). For these examples, we will use
-the following data:
+The following examples demonstrate datatest's :class:`Selector`,
+:class:`Query`, and :class:`Result` classes. Users can follow along
+and type the commands themselves at Python's interactive prompt
+(``>>>``). For these examples, we will use the following data:
 
     ===  ===  ===
      A    B    C
@@ -42,25 +37,25 @@ Loading Data
 ============
 
 You can load the data from a CSV file (:download:`example.csv
-</_static/example.csv>`) with :meth:`DataSource.from_csv`::
+</_static/example.csv>`) into a :class:`Selector`::
 
     >>> import datatest
-    >>> source = datatest.DataSource.from_csv('example.csv')
+    >>> select = datatest.Selector('example.csv')
 
 
 Getting Field Names
 ===================
 
 You can get a list of field names with the :attr:`fieldnames
-<DataSource.fieldnames>` attribute::
+<Selector.fieldnames>` attribute::
 
-    >>> source.fieldnames
+    >>> select.fieldnames
     ('A', 'B', 'C')
 
 
 .. sidebar:: The fetch() Method
 
-    In the following examples, we call :meth:`fetch() <DataQuery.fetch>`
+    In the following examples, we call :meth:`fetch() <Query.fetch>`
     to eagerly evaluate the queries and display their results. In daily
     use, it's more efficient to leave off the "``.fetch()``" part and
     validate the *un-fetched* queries instead (which takes advantage of
@@ -70,22 +65,22 @@ You can get a list of field names with the :attr:`fieldnames
 Selecting Data
 ==============
 
-Calling our source like a function returns a :class:`DataQuery`
+Calling our selector like a function returns a :class:`Query`
 for the specified field or fields.
 
 Select elements from column **A**::
 
-    >>> source('A').fetch()
+    >>> select('A').fetch()
     ['x', 'x', 'y', 'y', 'z', 'z']
 
 Select elements from column **A** as a :py:class:`set`::
 
-    >>> source({'A'}).fetch()
+    >>> select({'A'}).fetch()
     {'x', 'y', 'z'}
 
 Select elements from column **A** as a :py:class:`tuple`::
 
-    >>> source(('A',)).fetch()
+    >>> select(('A',)).fetch()
     ('x', 'x', 'y', 'y', 'z', 'z')
 
 The container type used in the selection determines the container
@@ -95,7 +90,7 @@ query. When the outer container type is not specified, it defaults
 to a :py:class:`list`. In the first example we selected ``'A'``
 which is used as shorthand for ``['A']``::
 
-    >>> source(['A']).fetch()
+    >>> select(['A']).fetch()
     ['x', 'x', 'y', 'y', 'z', 'z']
 
 
@@ -104,7 +99,7 @@ Multiple Columns
 
 Select elements from columns **A** and **B** as a list of tuples::
 
-    >>> source(('A', 'B')).fetch()  # Returns a list of tuples.
+    >>> select(('A', 'B')).fetch()  # Returns a list of tuples.
     [('x', 'foo'),
      ('x', 'foo'),
      ('y', 'foo'),
@@ -114,7 +109,7 @@ Select elements from columns **A** and **B** as a list of tuples::
 
 Select elements from columns **A** and **B** as a set of tuples::
 
-    >>> source({('A', 'B')}).fetch()  # Returns a set of tuples.
+    >>> select({('A', 'B')}).fetch()  # Returns a set of tuples.
     {('x', 'foo'),
      ('y', 'foo'),
      ('y', 'bar'),
@@ -141,7 +136,7 @@ fields from which elements are selected.
 For each unique value of column **A**, we select a list of
 elements from column **B**::
 
-    >>> source({'A': 'B'}).fetch()
+    >>> select({'A': 'B'}).fetch()
     {'x': ['foo', 'foo'],
      'y': ['foo', 'bar'],
      'z': ['bar', 'bar']}
@@ -151,7 +146,7 @@ types returned in the result. For unique values of column
 **A**, we can select a :py:class:`set` of elements from
 column **B** with the following::
 
-     >>> source({'A': {'B'}}).fetch()
+     >>> select({'A': {'B'}}).fetch()
      {'x': {'foo'},
       'y': {'foo', 'bar'},
       'z': {'bar'}}
@@ -160,7 +155,7 @@ To group by multiple columns, we use a :py:class:`tuple` of
 key fields. For each unique tuple of **A** and **B**, we select
 a list of elements from column **C**::
 
-    >>> source({('A', 'B'): 'C'}).fetch()
+    >>> select({('A', 'B'): 'C'}).fetch()
     {('x', 'foo'): ['20', '30'],
      ('y', 'foo'): ['10'],
      ('y', 'bar'): ['20'],
@@ -180,17 +175,17 @@ arguments.
 
 Narrow a selection to rows where column **B** equals "foo"::
 
-    >>> source(('A', 'B'), B='foo').fetch()
+    >>> select(('A', 'B'), B='foo').fetch()
     [('x', 'foo'), ('x', 'foo'), ('y', 'foo')]
 
 The keyword column does not have to be in the selected result::
 
-    >>> source('A', B='foo').fetch()
+    >>> select('A', B='foo').fetch()
     ['x', 'x', 'y']
 
 Narrow a selection to rows where column **A** equals "x" *or* "y"::
 
-    >>> source(('A', 'B'), A=['x', 'y']).fetch()
+    >>> select(('A', 'B'), A=['x', 'y']).fetch()
     [('x', 'foo'),
      ('x', 'foo'),
      ('y', 'foo'),
@@ -199,7 +194,7 @@ Narrow a selection to rows where column **A** equals "x" *or* "y"::
 Narrow a selection to rows where column **A** equals "y" *and*
 column **B** equals "bar"::
 
-    >>> source([('A', 'B', 'C')], A='y', B='bar').fetch()
+    >>> select([('A', 'B', 'C')], A='y', B='bar').fetch()
     [('y', 'bar', '20')]
 
 Only one row matches the above keyword conditions.
@@ -208,50 +203,50 @@ Only one row matches the above keyword conditions.
 Additional Operations
 =====================
 
-:class:`DataQuery` objects also support methods for operating
+:class:`Query` objects also support methods for operating
 on selected values.
 
-:meth:`Sum <DataQuery.sum>` the elements from column **C**::
+:meth:`Sum <Query.sum>` the elements from column **C**::
 
-    >>> source('C').sum().fetch()
+    >>> select('C').sum().fetch()
     100
 
 Group by column **A** the sums of elements from column **C**::
 
-    >>> source({'A': 'C'}).sum().fetch()
+    >>> select({'A': 'C'}).sum().fetch()
     {'x': 50, 'y': 30, 'z': 20}
 
 Group by columns **A** and **B** the sums of elements from column
 **C**::
 
-    >>> source({('A', 'B'): 'C'}).sum().fetch()
+    >>> select({('A', 'B'): 'C'}).sum().fetch()
     {('x', 'foo'): 50,
      ('y', 'foo'): 10,
      ('y', 'bar'): 20,
      ('z', 'bar'): 20}
 
-Select :meth:`distinct <DataQuery.distinct>` elements::
+Select :meth:`distinct <Query.distinct>` elements::
 
-    >>> source('A').distinct().fetch()
+    >>> select('A').distinct().fetch()
     ['x', 'y', 'z']
 
-:meth:`Map <DataQuery.map>` elements with a function::
+:meth:`Map <Query.map>` elements with a function::
 
     >>> def uppercase(value):
     ...     return str(value).upper()
     ...
-    >>> source('A').map(uppercase).fetch()
+    >>> select('A').map(uppercase).fetch()
     ['X', 'X', 'Y', 'Y', 'Z', 'Z']
 
-:meth:`Filter <DataQuery.filter>` elements with a function::
+:meth:`Filter <Query.filter>` elements with a function::
 
     >>> def not_z(value):
     ...     return value != 'z'
     ...
-    >>> source('A').filter(not_z).fetch()
+    >>> select('A').filter(not_z).fetch()
     ['x', 'x', 'y', 'y']
 
-Since each method returns a new DataQuery, it's possible to
+Since each method returns a new Query, it's possible to
 chain together multiple method calls to transform the data
 as needed::
 
@@ -261,5 +256,5 @@ as needed::
     >>> def uppercase(value):
     ...     return str(value).upper()
     ...
-    >>> source('A').filter(not_z).map(uppercase).fetch()
+    >>> select('A').filter(not_z).map(uppercase).fetch()
     ['X', 'X', 'Y', 'Y']

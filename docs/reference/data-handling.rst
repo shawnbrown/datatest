@@ -3,7 +3,7 @@
 
 .. meta::
     :description: datatest API
-    :keywords: datatest, DataSource, DataQuery, DataResult, working_directory
+    :keywords: datatest, Selector, Query, Result, working_directory
 
 
 #############
@@ -18,11 +18,11 @@ working_directory
 .. autoclass:: working_directory
 
 
-**********
-DataSource
-**********
+********
+Selector
+********
 
-.. autoclass:: DataSource
+.. autoclass:: Selector
 
     .. automethod:: from_csv
 
@@ -33,28 +33,28 @@ DataSource
     .. automethod:: __call__
 
 
-*********
-DataQuery
-*********
+*****
+Query
+*****
 
-.. autoclass:: DataQuery
+.. autoclass:: Query
 
     .. classmethod:: from_object(source, select, **where)
                      from_object(object)
 
         Creates a query and associates it with the given object.
 
-        If the object is a DataSource, you must provide a *select*
+        If the object is a Selector, you must provide a *select*
         argument and may also narrow the selection with keyword
         arguments::
 
-            source = DataSource(...)
-            query = DataQuery.from_object(source, 'A')
+            source = Selector(...)
+            query = Query.from_object(source, 'A')
 
-        A non-DataSource container may also be used::
+        A non-Selector container may also be used::
 
             list_object = [1, 2, 3, 4]
-            query = DataQuery.from_object(list_object)
+            query = Query.from_object(list_object)
 
     .. automethod:: sum
 
@@ -81,16 +81,16 @@ DataQuery
     .. automethod:: __call__
 
 
-**********
-DataResult
-**********
+******
+Result
+******
 
-.. autoclass:: DataResult
+.. autoclass:: Result
 
     .. attribute:: evaluation_type
 
         The type of instance returned by the
-        :meth:`fetch <DataResult.fetch>` method.
+        :meth:`fetch <Result.fetch>` method.
 
     .. automethod:: fetch
 

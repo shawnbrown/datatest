@@ -13,9 +13,9 @@ from . import _unittest as unittest
 # Import code to test.
 from datatest.case import DataTestCase
 
-from datatest._query.query import DataSource
-from datatest._query.query import DataQuery
-from datatest._query.query import DataResult
+from datatest._query.query import Selector
+from datatest._query.query import Query
+from datatest._query.query import Result
 
 from datatest.validation import ValidationError
 from datatest.difference import Extra
@@ -154,14 +154,14 @@ class TestAssertValid(DataTestCase):
         self.assertTrue(message.endswith(']'), 'should show full diff when None')
 
     def test_query_objects(self):
-        source = DataSource([('A', 'B'), ('1', '2'), ('1', '2')])
+        source = Selector([('A', 'B'), ('1', '2'), ('1', '2')])
         query_obj1 = source(['B'])
         query_obj2 = source(['B'])
         self.assertValid(query_obj1, query_obj2)
 
     def test_result_objects(self):
-        result_obj1 = DataResult(['2', '2'], evaluation_type=list)
-        result_obj2 = DataResult(['2', '2'], evaluation_type=list)
+        result_obj1 = Result(['2', '2'], evaluation_type=list)
+        result_obj2 = Result(['2', '2'], evaluation_type=list)
         self.assertValid(result_obj1, result_obj2)
 
 

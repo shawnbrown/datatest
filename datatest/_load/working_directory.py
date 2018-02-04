@@ -14,7 +14,7 @@ class working_directory(contextlib.ContextDecorator):
     test file's current directory::
 
         with datatest.working_directory(__file__):
-            source = datatest.DataSource.from_csv('myfile.csv')
+            select = datatest.Selector('myfile.csv')
 
     This context manager can also be used as a decorator.
     """

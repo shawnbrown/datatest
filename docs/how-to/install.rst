@@ -2,8 +2,8 @@
 .. module:: datatest
 
 .. meta::
-    :description: datatest API
-    :keywords: datatest, DataSource, DataQuery, DataResult, working_directory
+    :description: installing datatest
+    :keywords: installing, datatest, python
 
 
 #######################

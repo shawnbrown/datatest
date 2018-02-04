@@ -78,7 +78,7 @@ class DictItems(collections.Iterator):
             iterable = getattr(iterable, 'iteritems', iterable.items)()
             iterable = iter(iterable)
         else:
-            if isinstance(iterable, DataQuery):
+            if isinstance(iterable, Query):
                 iterable = iterable()
 
             while hasattr(iterable, '__wrapped__'):
@@ -140,16 +140,16 @@ def _is_collection_of_items(obj):
     return isinstance(obj, _iteritem_types)
 
 
-class DataResult(collections.Iterator):
-    """A simple iterator that wraps the results of :class:`DataQuery`
+class Result(collections.Iterator):
+    """A simple iterator that wraps the results of :class:`Query`
     execution. This iterator is used to facilitate the lazy evaluation
     of data objects (where possible) when asserting data validity.
 
-    Although DataResult objects are usually constructed automatically,
+    Although Result objects are usually constructed automatically,
     it's possible to create them directly::
 
         iterable = iter([...])
-        result = DataResult(iterable, evaluation_type=list)
+        result = Result(iterable, evaluation_type=list)
 
     .. warning::
 
@@ -185,7 +185,7 @@ class DataResult(collections.Iterator):
         self.__wrapped__ = iter(iterable)
 
         #: The type of instance returned when data is evaluated
-        #: with the :meth:`fetch <DataResult.fetch>` method.
+        #: with the :meth:`fetch <Result.fetch>` method.
         self.evaluation_type = evaluation_type
 
     def __iter__(self):
@@ -207,11 +207,11 @@ class DataResult(collections.Iterator):
     def fetch(self):
         """Evaluate the entire iterator and return its result::
 
-            result = DataResult(iter([...]), evaluation_type=set)
+            result = Result(iter([...]), evaluation_type=set)
             result_set = result.fetch()  # <- Returns a set of values.
 
         When evaluating a :py:class:`dict` or other mapping type, any
-        values that are, themselves, :class:`DataResult` objects will
+        values that are, themselves, :class:`Result` objects will
         also be evaluated.
         """
         evaluation_type = self.evaluation_type
@@ -261,7 +261,7 @@ def _make_dataresult(iterable):
         iterable = DictItems(iterable)
     else:
         iterable = iter(iterable)
-    return DataResult(iterable, eval_type)
+    return Result(iterable, eval_type)
 
 
 def _apply_to_data(function, data_iterator):
@@ -270,7 +270,7 @@ def _apply_to_data(function, data_iterator):
     """
     if _is_collection_of_items(data_iterator):
         result = DictItems((k, function(v)) for k, v in data_iterator)
-        return DataResult(result, _get_evaluation_type(data_iterator))
+        return Result(result, _get_evaluation_type(data_iterator))
     return function(data_iterator)
 
 
@@ -293,7 +293,7 @@ def _map_data(function, iterable):
             else:
                 for x in itrbl:
                     yield func(x)
-        return DataResult(domap(function, iterable), evaluation_type)
+        return Result(domap(function, iterable), evaluation_type)
 
     return _apply_to_data(wrapper, iterable)
 
@@ -313,7 +313,7 @@ def _filter_data(function, iterable):
             raise TypeError(('filter expects a collection of data elements, '
                              'got 1 data element: {0}').format(iterable))
         filtered_data = filter(function, iterable)
-        return DataResult(filtered_data, _get_evaluation_type(iterable))
+        return Result(filtered_data, _get_evaluation_type(iterable))
 
     return _apply_to_data(wrapper, iterable)
 
@@ -432,11 +432,11 @@ def _sqlite_distinct(iterable):
     def dodistinct(itr):
         if isinstance(itr, BaseElement):
             return itr
-        return DataResult(_unique_everseen(itr), _get_evaluation_type(itr))
+        return Result(_unique_everseen(itr), _get_evaluation_type(itr))
 
     if _is_collection_of_items(iterable):
         result = DictItems((k, dodistinct(v)) for k, v in iterable)
-        return DataResult(result, _get_evaluation_type(iterable))
+        return Result(result, _get_evaluation_type(iterable))
     return dodistinct(iterable)
 
 
@@ -537,10 +537,10 @@ RESULT_TOKEN = _make_token(
 
 
 ########################################################
-# Main data handling classes (DataQuery and DataSource).
+# Main data handling classes (Query and Selector).
 ########################################################
 
-class DataQuery(object):
+class Query(object):
     """A class to query data from a source object. Queries can be
     created, modified, and passed around without actually computing
     the result---computation doesn't occur until the query object
@@ -551,49 +551,49 @@ class DataQuery(object):
     optional *where* keywords can narrow a selection to rows where
     fields match specified values.
 
-    Although DataQuery objects are usually created by
-    :meth:`calling <datatest.DataSource.__call__>` an existing
-    DataSource object like a function, it's possible to create
+    Although Query objects are usually created by
+    :meth:`calling <datatest.Selector.__call__>` an existing
+    Selector object like a function, it's possible to create
     them independent of any single data source::
 
-        query = DataQuery('A')
+        query = Query('A')
     """
-    def __init__(self, select, **where):
+    def __init__(self, selection, **where):
         """Initialize self."""
-        select = _normalize_select(select)
-        self._data_args = ((select,), where)
+        selection = _normalize_select(selection)
+        self._data_args = ((selection,), where)
         self._data_source = None
         self._query_steps = tuple()
 
     @classmethod
-    def from_object(cls, obj, select=None, **where):
+    def from_object(cls, obj, selection=None, **where):
         """
-        DataQuery.from_object(source, select, **where)
-        DataQuery.from_object(object)
+        Query.from_object(source, selection, **where)
+        Query.from_object(object)
 
         Creates a query and associates it with the given object.
 
         See documentation for full details.
         """
         if obj is None:
-            return  cls(select, **where)  # <- EXIT!
+            return  cls(selection, **where)  # <- EXIT!
 
-        if isinstance(obj, DataQuery):
+        if isinstance(obj, Query):
             return obj.__copy__()  # <- EXIT!
 
-        if isinstance(obj, DataSource):
-            if select is None:
+        if isinstance(obj, Selector):
+            if selection is None:
                 raise ValueError(
-                    "missing 1 required positional argument: 'select'"
+                    "missing 1 required positional argument: 'selection'"
                 )
-            select = _normalize_select(select)
-            flattened = _flatten([_parse_select(select), where.keys()])
+            selection = _normalize_select(selection)
+            flattened = _flatten([_parse_select(selection), where.keys()])
             obj._assert_fields_exist(flattened)
-            args = (select,)
+            args = (selection,)
         else:
-            if select or where:
+            if selection or where:
                 raise ValueError((
-                    "can only use 'select' and 'where' with DataSource, got {0!r}"
+                    "can only use 'selection' and 'where' with Selector, got {0!r}"
                 ).format(obj.__class__.__name__))
             args = ()
 
@@ -605,9 +605,9 @@ class DataQuery(object):
 
     @staticmethod
     def _validate_source(source):
-        if not isinstance(source, DataSource):
+        if not isinstance(source, Selector):
             raise TypeError('expected {0!r}, got {1!r}'.format(
-                DataSource.__name__,
+                Selector.__name__,
                 source.__class__.__name__,
             ))
 
@@ -726,7 +726,7 @@ class DataQuery(object):
         return _execution_step(function, args, {})
 
     def _get_execution_plan(self, source, query_steps):
-        if isinstance(source, DataSource):
+        if isinstance(source, Selector):
             args, kwds = self._data_args
             execution_plan = [
                 _execution_step(getattr, (RESULT_TOKEN, '_select'), {}),
@@ -788,17 +788,17 @@ class DataQuery(object):
     def fetch(self):
         """Executes query and returns an eagerly evaluated result."""
         result = self()
-        if isinstance(result, DataResult):
+        if isinstance(result, Result):
             return result.fetch()
         return result
 
     def __call__(self, source=None, optimize=True):
-        """A DataQuery can be called like a function to execute
-        it and return a value or :class:`DataResult` appropriate
+        """A Query can be called like a function to execute
+        it and return a value or :class:`Result` appropriate
         for lazy evaluation::
 
             query = source('A')
-            result = query()  # <- Returns DataResult (iterator)
+            result = query()  # <- Returns Result (iterator)
 
         Setting *optimize* to False turns-off query optimization.
         """
@@ -845,8 +845,8 @@ class DataQuery(object):
             if len(source_repr) > 70:
                 source_repr = source_repr[:67] + '...'
         else:
-            source = DataSource([], fieldnames=['dummy_source'])
-            source_repr = '<none given> (assuming DataSource object)'
+            source = Selector([], fieldnames=['dummy_source'])
+            source_repr = '<none given> (assuming Selector object)'
 
         execution_plan = self._get_execution_plan(source, self._query_steps)
 
@@ -942,8 +942,8 @@ def _register_function(connection, func_list):
             connection.create_function(name, 1, wrapper)  # <- Register!
 
 
-class DataSource(object):
-    """A class to quickly load and query tabular data."""
+class Selector(object):
+    """A class to quickly load and select tabular data."""
     def __init__(self, data=None, *args, **kwds):
         """Initialize self."""
         global DEFAULT_CONNECTION
@@ -1029,18 +1029,18 @@ class DataSource(object):
         dict_row = lambda x: dict(zip(fieldnames, x))
         return (dict_row(row) for row in cursor.fetchall())
 
-    def __call__(self, select, **where):
-        """Calling a DataSource like a function returns a DataQuery
-        object that is automatically associated with the source (see
-        :class:`DataQuery` for *select* and *where* syntax)::
+    def __call__(self, selection, **where):
+        """Calling a Selector like a function returns a Query object
+        that is automatically associated with the source (see
+        :class:`Query` for *selection* and *where* syntax)::
 
             query = source('A')
 
         This is a shorthand for::
 
-            query = DataQuery.from_object(source, 'A')
+            query = Query.from_object(source, 'A')
         """
-        return DataQuery.from_object(self, select, **where)
+        return Query.from_object(self, selection, **where)
 
     def _execute_query(self, select_clause, trailing_clause=None, **kwds_filter):
         """Execute query and return cursor object."""
@@ -1107,7 +1107,7 @@ class DataSource(object):
             result = (inner_type(*x) for x in cursor)  # If namedtuple.
         else:
             result = (inner_type(x) for x in cursor)
-        return DataResult(result, evaluation_type=outer_type) # <- EXIT!
+        return Result(result, evaluation_type=outer_type) # <- EXIT!
 
     def _format_results(self, select, cursor):
         """Return an iterator of results formatted by *select*
@@ -1138,7 +1138,7 @@ class DataSource(object):
             sliced = ((k, (x[-index:] for x in g)) for k, g in grouped)
             formatted = ((k, self._format_result_group(value, g)) for k, g in sliced)
             dictitems =  DictItems(formatted)
-            return DataResult(dictitems, evaluation_type=result_type) # <- EXIT!
+            return Result(dictitems, evaluation_type=result_type) # <- EXIT!
 
         raise TypeError('type {0!r} not supported'.format(type(select)))
 
@@ -1217,7 +1217,7 @@ class DataSource(object):
 
         if isinstance(select, collections.Mapping):
             results = DictItems((k, next(v)) for k, v in results)
-            return DataResult(results, evaluation_type=dict)
+            return Result(results, evaluation_type=dict)
         return next(results)
 
     def create_index(self, *columns):

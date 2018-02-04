@@ -26,8 +26,8 @@ that has a single "assertReference()" method:
     def setUpModule():
         global source_data, source_reference
         with datatest.working_directory(__file__):
-            source_data = datatest.DataSource.from_csv('mydata.csv')
-            source_reference = datatest.DataSource.from_csv('myreference.csv')
+            source_data = datatest.Selector('mydata.csv')
+            source_reference = datatest.Selector('myreference.csv')
 
 
     class ReferenceTestCase(datatest.DataTestCase):
@@ -39,10 +39,10 @@ that has a single "assertReference()" method:
             Asserts that the query results from the data under test
             match the query results from the reference data.
             """
-            if isinstance(select, datatest.DataQuery):
+            if isinstance(select, datatest.Query):
                 query = select
             else:
-                query = datatest.DataQuery(select, **where)
+                query = datatest.Query(select, **where)
             data = query(source_data)
             requirement = query(source_reference)
             self.assertValid(data, requirement)
@@ -60,7 +60,7 @@ Test-cases that inherit from this class can use "assertReference()":
             self.assertReference({('A', 'B')}, B='foo')
 
         def test_query_syntax(self):
-            query = datatest.DataQuery({'A': 'C'}).sum()
+            query = datatest.Query({'A': 'C'}).sum()
             self.assertReference(query)
 
 

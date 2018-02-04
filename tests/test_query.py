@@ -18,7 +18,6 @@ from datatest._query.query import (
     BaseElement,
     _is_collection_of_items,
     DictItems,
-    DataResult,
     _map_data,
     _filter_data,
     _reduce_data,
@@ -33,8 +32,9 @@ from datatest._query.query import (
     _normalize_select,
     _parse_select,
     RESULT_TOKEN,
-    DataQuery,
-    DataSource,
+    Query,
+    Result,
+    Selector,
 )
 
 
@@ -118,19 +118,19 @@ def convert_iter_to_type(iterable, target_type):
     return output
 
 
-class TestDataResult(unittest.TestCase):
+class TestResult(unittest.TestCase):
     def test_init(self):
         untyped = iter([1, 2, 3, 4])
 
-        typed = DataResult(untyped, list)
+        typed = Result(untyped, list)
         self.assertEqual(typed.evaluation_type, list)
 
-        typed = DataResult(iterable=untyped, evaluation_type=list)
+        typed = Result(iterable=untyped, evaluation_type=list)
         self.assertEqual(typed.evaluation_type, list)
 
         regex = 'evaluation_type must be a type, found instance of list'
         with self.assertRaisesRegex(TypeError, regex):
-            typed = DataResult(untyped, [1, 2])
+            typed = Result(untyped, [1, 2])
 
 
 class TestDictItems(unittest.TestCase):
@@ -150,13 +150,13 @@ class TestDictItems(unittest.TestCase):
         items = DictItems(iter([]))
         self.assertEqual(list(items), [])
 
-    def test_DataResult(self):
-        result = DataResult(DictItems([('a', 1), ('b', 2)]), evaluation_type=dict)
+    def test_Result(self):
+        result = Result(DictItems([('a', 1), ('b', 2)]), evaluation_type=dict)
         normalized = DictItems(result)
         self.assertEqual(list(normalized), [('a', 1), ('b', 2)])
 
-    def test_DataQuery(self):
-        source = DataSource([('A', 'B'), ('x', 1), ('y', 2)])
+    def test_Query(self):
+        source = Selector([('A', 'B'), ('x', 1), ('y', 2)])
         query = source({'A': 'B'}).apply(lambda x: next(x))
         normalized = DictItems(query)
         self.assertEqual(list(normalized), [('x', 1), ('y', 2)])
@@ -184,22 +184,22 @@ class TestIsCollectionOfItems(unittest.TestCase):
 
 class TestMapData(unittest.TestCase):
     def test_dataiter_list(self):
-        iterable = DataResult([1, 2, 3], list)
+        iterable = Result([1, 2, 3], list)
 
         function = lambda x: x * 2
         result = _map_data(function, iterable)
 
-        self.assertIsInstance(result, DataResult)
+        self.assertIsInstance(result, Result)
         self.assertEqual(result.evaluation_type, list)
         self.assertEqual(result.fetch(), [2, 4, 6])
 
     def test_settype_to_list(self):
-        iterable = DataResult([1, 2, 3], set)  # <- Starts as 'set'.
+        iterable = Result([1, 2, 3], set)  # <- Starts as 'set'.
 
         function = lambda x: x % 2
         result = _map_data(function, iterable)
 
-        self.assertIsInstance(result, DataResult)
+        self.assertIsInstance(result, Result)
         self.assertEqual(result.evaluation_type, list) # <- Now a 'list'.
         self.assertEqual(result.fetch(), [1, 0, 1])
 
@@ -209,22 +209,22 @@ class TestMapData(unittest.TestCase):
         self.assertEqual(result, 6)
 
     def test_dataiter_dict_of_containers(self):
-        iterable = DataResult({'a': [1, 2], 'b': (3, 4)}, dict)
+        iterable = Result({'a': [1, 2], 'b': (3, 4)}, dict)
 
         function = lambda x: x * 2
         result = _map_data(function, iterable)
 
-        self.assertIsInstance(result, DataResult)
+        self.assertIsInstance(result, Result)
         self.assertEqual(result.evaluation_type, dict)
         self.assertEqual(result.fetch(), {'a': [2, 4], 'b': (6, 8)})
 
     def test_dataiter_dict_of_ints(self):
-        iterable = DataResult({'a': 2, 'b': 3}, dict)
+        iterable = Result({'a': 2, 'b': 3}, dict)
 
         function = lambda x: x * 2
         result = _map_data(function, iterable)
 
-        self.assertIsInstance(result, DataResult)
+        self.assertIsInstance(result, Result)
         self.assertEqual(result.evaluation_type, dict)
         self.assertEqual(result.fetch(), {'a': 4, 'b': 6})
 
@@ -232,21 +232,21 @@ class TestMapData(unittest.TestCase):
         data = [(1, 2), (1, 4), (1, 8)]
 
         function = lambda x, y: x / y  # <- function takes 2 args
-        result = _map_data(function, DataResult(data, list))
-        self.assertIsInstance(result, DataResult)
+        result = _map_data(function, Result(data, list))
+        self.assertIsInstance(result, Result)
         self.assertEqual(result.evaluation_type, list)
         self.assertEqual(result.fetch(), [0.5, 0.25, 0.125])
 
         function = lambda z: z[0] / z[1]  # <- function takes 1 arg
-        result = _map_data(function, DataResult(data, list))
-        self.assertIsInstance(result, DataResult)
+        result = _map_data(function, Result(data, list))
+        self.assertIsInstance(result, Result)
         self.assertEqual(result.evaluation_type, list)
         self.assertEqual(result.fetch(), [0.5, 0.25, 0.125])
 
 
 class TestFilterData(unittest.TestCase):
     def test_list_iter(self):
-        iterable = DataResult([-4, -1, 2, 3], list)
+        iterable = Result([-4, -1, 2, 3], list)
 
         function = lambda x: x > 0
         result = _filter_data(function, iterable)
@@ -262,17 +262,17 @@ class TestFilterData(unittest.TestCase):
             _filter_data(function, 'b')  # <- str
 
     def test_dict_iter_of_lists(self):
-        iterable = DataResult({'a': [1, 3], 'b': [4, 5, 6]}, dict)
+        iterable = Result({'a': [1, 3], 'b': [4, 5, 6]}, dict)
 
         iseven = lambda x: x % 2 == 0
         result = _filter_data(iseven, iterable)
 
-        self.assertIsInstance(result, DataResult)
+        self.assertIsInstance(result, Result)
         self.assertEqual(result.evaluation_type, dict)
         self.assertEqual(result.fetch(), {'a': [], 'b': [4, 6]})
 
     def test_dict_iter_of_integers(self):
-        iterable = DataResult({'a': 2, 'b': 3}, dict)
+        iterable = Result({'a': 2, 'b': 3}, dict)
 
         iseven = lambda x: x % 2 == 0
         with self.assertRaises(TypeError):
@@ -282,7 +282,7 @@ class TestFilterData(unittest.TestCase):
 
 class TestReduceData(unittest.TestCase):
     def test_list_iter(self):
-        iterable = DataResult([1, 2, 3], list)
+        iterable = Result([1, 2, 3], list)
 
         function = lambda x, y: x + y
         result = _reduce_data(function, iterable)
@@ -299,29 +299,29 @@ class TestReduceData(unittest.TestCase):
         self.assertEqual(result, 'abc')
 
     def test_dict_iter_of_lists(self):
-        iterable = DataResult({'a': [1, 2], 'b': [3, 4]}, dict)
+        iterable = Result({'a': [1, 2], 'b': [3, 4]}, dict)
 
         function = lambda x, y: x + y
         result = _reduce_data(function, iterable)
 
-        self.assertIsInstance(result, DataResult)
+        self.assertIsInstance(result, Result)
         self.assertEqual(result.evaluation_type, dict)
         self.assertEqual(result.fetch(), {'a': 3, 'b': 7})
 
     def test_dict_iter_of_integers(self):
-        iterable = DataResult({'a': 2, 'b': 3}, dict)
+        iterable = Result({'a': 2, 'b': 3}, dict)
 
         function = lambda x, y: x + y
         result = _reduce_data(function, iterable)
 
-        self.assertIsInstance(result, DataResult)
+        self.assertIsInstance(result, Result)
         self.assertEqual(result.evaluation_type, dict)
         self.assertEqual(result.fetch(), {'a': 2, 'b': 3})
 
 
 class TestGroupwiseApply(unittest.TestCase):
     def test_dataiter_list(self):
-        iterable = DataResult([1, 2, 3], list)
+        iterable = Result([1, 2, 3], list)
         function = lambda itr: [x * 2 for x in itr]
         result = _apply_data(function, iterable)
         self.assertEqual(result, [2, 4, 6])
@@ -332,29 +332,29 @@ class TestGroupwiseApply(unittest.TestCase):
         self.assertEqual(result, 6)
 
     def test_dataiter_dict_of_mixed_iterables(self):
-        iterable = DataResult({'a': iter([1, 2]), 'b': (3, 4)}, dict)
+        iterable = Result({'a': iter([1, 2]), 'b': (3, 4)}, dict)
 
         function = lambda itr: [x * 2 for x in itr]
         result = _apply_data(function, iterable)
 
-        self.assertIsInstance(result, DataResult)
+        self.assertIsInstance(result, Result)
         self.assertEqual(result.evaluation_type, dict)
         self.assertEqual(result.fetch(), {'a': [2, 4], 'b': [6, 8]})
 
     def test_dataiter_dict_of_ints(self):
-        iterable = DataResult({'a': 2, 'b': 3}, dict)
+        iterable = Result({'a': 2, 'b': 3}, dict)
 
         function = lambda x: x * 2
         result = _apply_data(function, iterable)
 
-        self.assertIsInstance(result, DataResult)
+        self.assertIsInstance(result, Result)
         self.assertEqual(result.evaluation_type, dict)
         self.assertEqual(result.fetch(), {'a': 4, 'b': 6})
 
 
 class TestSumData(unittest.TestCase):
     def test_list_iter(self):
-        iterable = DataResult([1, 2, 3], list)
+        iterable = Result([1, 2, 3], list)
         result = _sqlite_sum(iterable)
         self.assertEqual(result, 6)
 
@@ -367,25 +367,25 @@ class TestSumData(unittest.TestCase):
         self.assertEqual(result, 0.0)
 
     def test_dict_iter_of_lists(self):
-        iterable = DataResult({'a': [1, 2], 'b': [3, 4]}, dict)
+        iterable = Result({'a': [1, 2], 'b': [3, 4]}, dict)
         result = _apply_to_data(_sqlite_sum, iterable)
 
-        self.assertIsInstance(result, DataResult)
+        self.assertIsInstance(result, Result)
         self.assertEqual(result.evaluation_type, dict)
         self.assertEqual(result.fetch(), {'a': 3, 'b': 7})
 
     def test_dict_iter_of_integers(self):
-        iterable = DataResult({'a': 2, 'b': 3}, dict)
+        iterable = Result({'a': 2, 'b': 3}, dict)
         result = _apply_to_data(_sqlite_sum, iterable)
 
-        self.assertIsInstance(result, DataResult)
+        self.assertIsInstance(result, Result)
         self.assertEqual(result.evaluation_type, dict)
         self.assertEqual(result.fetch(), {'a': 2, 'b': 3})
 
 
 class TestCountData(unittest.TestCase):
     def test_list_iter(self):
-        iterable = DataResult(['a', None, 3], list)
+        iterable = Result(['a', None, 3], list)
         result = _sqlite_count(iterable)
         self.assertEqual(result, 2)
 
@@ -400,25 +400,25 @@ class TestCountData(unittest.TestCase):
         self.assertEqual(result, 0)
 
     def test_dict_iter_of_lists(self):
-        iterable = DataResult({'a': [1, None], 'b': ['x', None, 0]}, dict)
+        iterable = Result({'a': [1, None], 'b': ['x', None, 0]}, dict)
         result = _apply_to_data(_sqlite_count, iterable)
 
-        self.assertIsInstance(result, DataResult)
+        self.assertIsInstance(result, Result)
         self.assertEqual(result.evaluation_type, dict)
         self.assertEqual(result.fetch(), {'a': 1, 'b': 2})
 
     def test_dict_iter_of_integers(self):
-        iterable = DataResult({'a': -5, 'b': None, 'c': 'xyz'}, dict)
+        iterable = Result({'a': -5, 'b': None, 'c': 'xyz'}, dict)
         result = _apply_to_data(_sqlite_count, iterable)
 
-        self.assertIsInstance(result, DataResult)
+        self.assertIsInstance(result, Result)
         self.assertEqual(result.evaluation_type, dict)
         self.assertEqual(result.fetch(), {'a': 1, 'b': 0, 'c': 1})
 
 
 class TestAvgData(unittest.TestCase):
     def test_list_iter(self):
-        iterable = DataResult([1, 2, 3, 4], list)
+        iterable = Result([1, 2, 3, 4], list)
         result = _sqlite_avg(iterable)
         self.assertEqual(result, 2.5)
 
@@ -431,28 +431,28 @@ class TestAvgData(unittest.TestCase):
         self.assertEqual(result, 0.0)
 
     def test_dict_iter_of_lists(self):
-        iterable = DataResult({
+        iterable = Result({
             'a': [1, 2, None],
             'b': ['xx', 1, 2, 3, None],
             'c': [None, None, None]}, dict)
         result = _apply_to_data(_sqlite_avg, iterable)
 
-        self.assertIsInstance(result, DataResult)
+        self.assertIsInstance(result, Result)
         self.assertEqual(result.evaluation_type, dict)
         self.assertEqual(result.fetch(), {'a': 1.5, 'b': 1.5, 'c': None})
 
     def test_dict_iter_of_integers(self):
-        iterable = DataResult({'a': 2, 'b': 3, 'c': None}, dict)
+        iterable = Result({'a': 2, 'b': 3, 'c': None}, dict)
         result = _apply_to_data(_sqlite_avg, iterable)
 
-        self.assertIsInstance(result, DataResult)
+        self.assertIsInstance(result, Result)
         self.assertEqual(result.evaluation_type, dict)
         self.assertEqual(result.fetch(), {'a': 2, 'b': 3, 'c': None})
 
 
 class TestMinData(unittest.TestCase):
     def test_list_iter(self):
-        iterable = DataResult([1, 2, 3, 4], list)
+        iterable = Result([1, 2, 3, 4], list)
         result = _sqlite_min(iterable)
         self.assertEqual(result, 1)
 
@@ -465,28 +465,28 @@ class TestMinData(unittest.TestCase):
         self.assertEqual(result, 'abc')
 
     def test_dict_iter_of_lists(self):
-        iterable = DataResult({
+        iterable = Result({
             'a': [1, 2, 3],
             'b': [None, 1, 2, 3, 'xx'],
             'c': [None, None]}, dict)
         result = _apply_to_data(_sqlite_min, iterable)
 
-        self.assertIsInstance(result, DataResult)
+        self.assertIsInstance(result, Result)
         self.assertEqual(result.evaluation_type, dict)
         self.assertEqual(result.fetch(), {'a': 1, 'b': 1, 'c': None})
 
     def test_dict_iter_of_integers(self):
-        iterable = DataResult({'a': 2, 'b': 3, 'c': None}, dict)
+        iterable = Result({'a': 2, 'b': 3, 'c': None}, dict)
         result = _apply_to_data(_sqlite_min, iterable)
 
-        self.assertIsInstance(result, DataResult)
+        self.assertIsInstance(result, Result)
         self.assertEqual(result.evaluation_type, dict)
         self.assertEqual(result.fetch(), {'a': 2, 'b': 3, 'c': None})
 
 
 class TestMaxData(unittest.TestCase):
     def test_list_iter(self):
-        iterable = DataResult([1, 2, 3, 4], list)
+        iterable = Result([1, 2, 3, 4], list)
         result = _sqlite_max(iterable)
         self.assertEqual(result, 4)
 
@@ -499,28 +499,28 @@ class TestMaxData(unittest.TestCase):
         self.assertEqual(result, 'abc')
 
     def test_dict_iter_of_lists(self):
-        iterable = DataResult({
+        iterable = Result({
             'a': [1, 2, 3],
             'b': [None, 1, 2, 3, 'xx'],
             'c': [None, None]}, dict)
         result = _apply_to_data(_sqlite_max, iterable)
 
-        self.assertIsInstance(result, DataResult)
+        self.assertIsInstance(result, Result)
         self.assertEqual(result.evaluation_type, dict)
         self.assertEqual(result.fetch(), {'a': 3, 'b': 'xx', 'c': None})
 
     def test_dict_iter_of_integers(self):
-        iterable = DataResult({'a': 2, 'b': 3, 'c': None}, dict)
+        iterable = Result({'a': 2, 'b': 3, 'c': None}, dict)
         result = _apply_to_data(_sqlite_max, iterable)
 
-        self.assertIsInstance(result, DataResult)
+        self.assertIsInstance(result, Result)
         self.assertEqual(result.evaluation_type, dict)
         self.assertEqual(result.fetch(), {'a': 2, 'b': 3, 'c': None})
 
 
 class TestDistinctData(unittest.TestCase):
     def test_list_iter(self):
-        iterable = DataResult([1, 2, 1, 2, 3], list)
+        iterable = Result([1, 2, 1, 2, 3], list)
         result = _sqlite_distinct(iterable)
         self.assertEqual(result.fetch(), [1, 2, 3])
 
@@ -529,18 +529,18 @@ class TestDistinctData(unittest.TestCase):
         self.assertEqual(result, 3)
 
     def test_dataiter_dict_of_containers(self):
-        iterable = DataResult({'a': [1, 2, 1, 2], 'b': (3, 4, 3)}, dict)
+        iterable = Result({'a': [1, 2, 1, 2], 'b': (3, 4, 3)}, dict)
         result = _sqlite_distinct(iterable)
 
-        self.assertIsInstance(result, DataResult)
+        self.assertIsInstance(result, Result)
         self.assertEqual(result.evaluation_type, dict)
         self.assertEqual(result.fetch(), {'a': [1, 2], 'b': (3, 4)})
 
     def test_dataiter_dict_of_ints(self):
-        iterable = DataResult({'a': 2, 'b': 3}, dict)
+        iterable = Result({'a': 2, 'b': 3}, dict)
         result = _sqlite_distinct(iterable)
 
-        self.assertIsInstance(result, DataResult)
+        self.assertIsInstance(result, Result)
         self.assertEqual(result.evaluation_type, dict)
         self.assertEqual(result.fetch(), {'a': 2, 'b': 3})
 
@@ -631,18 +631,18 @@ class Test_select_functions(unittest.TestCase):
         self.assertEqual(value, ['C'])
 
 
-class TestDataQuery(unittest.TestCase):
+class TestQuery(unittest.TestCase):
     def test_init_no_data(self):
         # Use select-only syntax.
-        query = DataQuery(['foo'], bar='baz')
+        query = Query(['foo'], bar='baz')
         self.assertEqual(query._data_source, None)
 
         # Pass empty source explicitly.
-        query = DataQuery.from_object(None, ['foo'], bar='baz')
+        query = Query.from_object(None, ['foo'], bar='baz')
         self.assertEqual(query._data_source, None)
 
         # Test query steps.
-        query = DataQuery(['foo'], bar='baz')
+        query = Query(['foo'], bar='baz')
         self.assertEqual(query._query_steps, tuple())
 
         # Adding query steps.
@@ -651,61 +651,61 @@ class TestDataQuery(unittest.TestCase):
         self.assertEqual(query._query_steps, expected)
 
         # Single-string defaults to list-of-single-string.
-        query = DataQuery('foo')
+        query = Query('foo')
         self.assertEqual(query._data_args[0][0], ['foo'], 'should be wrapped as list')
 
         # Multi-item-container defaults to list-of-container.
-        query = DataQuery(['foo', 'bar'])
+        query = Query(['foo', 'bar'])
         self.assertEqual(query._data_args[0][0], [['foo', 'bar']], 'should be wrapped as list')
 
         # Mapping with single-string defaults to list-of-single-string.
-        query = DataQuery({'foo': 'bar'})
+        query = Query({'foo': 'bar'})
         self.assertEqual(query._data_args[0][0], {'foo': ['bar']}, 'value should be wrapped as list')
 
         # Mapping with multi-item-container defaults to list-of-container.
-        query = DataQuery({'foo': ['bar', 'baz']})
+        query = Query({'foo': ['bar', 'baz']})
         self.assertEqual(query._data_args[0][0], {'foo': [['bar', 'baz']]}, 'value should be wrapped as list')
 
     def test_init_from_object(self):
-        # Using DataSource object.
-        source = DataSource([('A', 'B'), (1, 2), (1, 2)])
-        query = DataQuery.from_object(source, ['A'], B=2)
+        # Using Selector object.
+        source = Selector([('A', 'B'), (1, 2), (1, 2)])
+        query = Query.from_object(source, ['A'], B=2)
         self.assertEqual(query._data_source, source)
         self.assertEqual(query._data_args, ((['A'],), {'B': 2}))
         self.assertEqual(query._query_steps, ())
 
-        # Using another DataQuery object.
-        source = DataSource([('A', 'B'), (1, 2), (1, 2)])
-        query1 = DataQuery.from_object(source, ['A'], B=2)
-        query2 = DataQuery.from_object(query1)
+        # Using another Query object.
+        source = Selector([('A', 'B'), (1, 2), (1, 2)])
+        query1 = Query.from_object(source, ['A'], B=2)
+        query2 = Query.from_object(query1)
         self.assertEqual(query2._data_source, source)
         self.assertEqual(query2._data_args, ((['A'],), {'B': 2}))
         self.assertEqual(query2._query_steps, ())
 
-        # Using non-DataSource object.
-        query = DataQuery.from_object([1, 3, 4, 2])
+        # Using non-Selector object.
+        query = Query.from_object([1, 3, 4, 2])
         self.assertEqual(query._data_source, [1, 3, 4, 2])
         self.assertEqual(query._data_args, ((), {}))
         self.assertEqual(query._query_steps, ())
 
-        # Using non-DataSource object.
+        # Using non-Selector object.
         with self.assertRaises(ValueError):
-            query = DataQuery.from_object([1, 3, 4, 2], 'foo', bar='baz')
+            query = Query.from_object([1, 3, 4, 2], 'foo', bar='baz')
 
     def test_init_with_invalid_args(self):
         # Missing args.
         with self.assertRaises(TypeError, msg='should require select args'):
-            DataQuery()
+            Query()
 
         # Bad "select" field.
-        source = DataSource([('A', 'B'), (1, 2), (1, 2)])
+        source = Selector([('A', 'B'), (1, 2), (1, 2)])
         with self.assertRaises(LookupError, msg='should fail immediately when fieldname conflicts with provided source'):
-            query = DataQuery.from_object(source, ['X'], B=2)
+            query = Query.from_object(source, ['X'], B=2)
 
         # Bad "where" field.
-        source = DataSource([('A', 'B'), (1, 2), (1, 2)])
+        source = Selector([('A', 'B'), (1, 2), (1, 2)])
         with self.assertRaises(LookupError, msg='should fail immediately when fieldname conflicts with provided "where" field'):
-            query = DataQuery.from_object(source, ['A'], Y=2)
+            query = Query.from_object(source, ['A'], Y=2)
 
     def test_init_with_nested_dicts(self):
         """Support for nested dictionaries was removed (for now).
@@ -715,41 +715,41 @@ class TestDataQuery(unittest.TestCase):
         """
         regex = 'mappings can not be nested'
         with self.assertRaisesRegex(ValueError, regex):
-            query = DataQuery({'A': {'B': 'C'}}, D='x')
+            query = Query({'A': {'B': 'C'}}, D='x')
 
     def test__copy__(self):
         # Select-arg only.
-        query = DataQuery(['B'])
+        query = Query(['B'])
         copied = query.__copy__()
         self.assertEqual(copied._data_source, query._data_source)
         self.assertEqual(copied._data_args, query._data_args)
         self.assertEqual(copied._query_steps, query._query_steps)
 
         # Select and keyword.
-        query = DataQuery(['B'], C='x')
+        query = Query(['B'], C='x')
         copied = query.__copy__()
         self.assertEqual(copied._data_source, query._data_source)
         self.assertEqual(copied._data_args, query._data_args)
         self.assertEqual(copied._query_steps, query._query_steps)
 
         # Source, select, and keyword.
-        source = DataSource([('A', 'B'), (1, 2), (1, 2)])
-        query = DataQuery.from_object(source, ['B'])
+        source = Selector([('A', 'B'), (1, 2), (1, 2)])
+        query = Query.from_object(source, ['B'])
         copied = query.__copy__()
         self.assertEqual(copied._data_source, query._data_source)
         self.assertEqual(copied._data_args, query._data_args)
         self.assertEqual(copied._query_steps, query._query_steps)
 
         # Select and additional query methods.
-        query = DataQuery(['B']).map(lambda x: str(x).upper())
+        query = Query(['B']).map(lambda x: str(x).upper())
         copied = query.__copy__()
         self.assertEqual(copied._data_source, query._data_source)
         self.assertEqual(copied._data_args, query._data_args)
         self.assertEqual(copied._query_steps, query._query_steps)
 
     def test_fetch_datasource(self):
-        source = DataSource([('A', 'B'), ('1', '2'), ('1', '2')])
-        query = DataQuery.from_object(source, ['B'])
+        source = Selector([('A', 'B'), ('1', '2'), ('1', '2')])
+        query = Query.from_object(source, ['B'])
         query._query_steps = [
             ('map', (int,), {}),
             ('map', (lambda x: x * 2,), {}),
@@ -759,8 +759,8 @@ class TestDataQuery(unittest.TestCase):
         self.assertEqual(result, 8)
 
     def test_execute_datasource(self):
-        source = DataSource([('A', 'B'), ('1', '2'), ('1', '2')])
-        query = DataQuery.from_object(source, ['B'])
+        source = Selector([('A', 'B'), ('1', '2'), ('1', '2')])
+        query = Query.from_object(source, ['B'])
         query._query_steps = [
             ('map', (int,), {}),
             ('map', (lambda x: x * 2,), {}),
@@ -769,64 +769,64 @@ class TestDataQuery(unittest.TestCase):
         result = query()
         self.assertEqual(result, 8)
 
-        query = DataQuery(['A'])
-        regex = "expected 'DataSource', got 'list'"
+        query = Query(['A'])
+        regex = "expected 'Selector', got 'list'"
         with self.assertRaisesRegex(TypeError, regex):
-            query(['hello', 'world'])  # <- Expects None or DataQuery, not list!
+            query(['hello', 'world'])  # <- Expects None or Query, not list!
 
     def test_execute_other_source(self):
-        query = DataQuery.from_object([1, 3, 4, 2])
+        query = Query.from_object([1, 3, 4, 2])
         result = query()
-        self.assertIsInstance(result, DataResult)
+        self.assertIsInstance(result, Result)
         self.assertEqual(result.fetch(), [1, 3, 4, 2])
 
     def test_map(self):
-        query1 = DataQuery(['col2'])
+        query1 = Query(['col2'])
         query2 = query1.map(int)
         self.assertIsNot(query1, query2, 'should return new object')
 
-        source = DataSource([('col1', 'col2'), ('a', '2'), ('b', '2')])
+        source = Selector([('col1', 'col2'), ('a', '2'), ('b', '2')])
         result = query2(source)
         self.assertEqual(result.fetch(), [2, 2])
 
     def test_filter(self):
-        query1 = DataQuery(['col1'])
+        query1 = Query(['col1'])
         query2 = query1.filter(lambda x: x == 'a')
         self.assertIsNot(query1, query2, 'should return new object')
 
-        source = DataSource([('col1', 'col2'), ('a', '2'), ('b', '2')])
+        source = Selector([('col1', 'col2'), ('a', '2'), ('b', '2')])
         result = query2(source)
         self.assertEqual(result.fetch(), ['a'])
 
         # No filter arg should default to bool()
-        source = DataSource([('col1',), (1,), (2,), (0,), (3,)])
-        query = DataQuery(set(['col1'])).filter()  # <- No arg!
+        source = Selector([('col1',), (1,), (2,), (0,), (3,)])
+        query = Query(set(['col1'])).filter()  # <- No arg!
         result = query(source)
         self.assertEqual(result.fetch(), set([1, 2, 3]))
 
     def test_reduce(self):
-        query1 = DataQuery(['col1'])
+        query1 = Query(['col1'])
         query2 = query1.reduce(lambda x, y: x + y)
         self.assertIsNot(query1, query2, 'should return new object')
 
-        source = DataSource([('col1', 'col2'), ('a', '2'), ('b', '2')])
+        source = Selector([('col1', 'col2'), ('a', '2'), ('b', '2')])
         result = query2(source)
         self.assertEqual(result, 'ab')
 
     def test_optimize_aggregation(self):
         """
         Unoptimized:
-            DataSource._select({'col1': ['values']}, col2='xyz').sum()
+            Selector._select({'col1': ['values']}, col2='xyz').sum()
 
         Optimized:
-            DataSource._select_aggregate('SUM', {'col1': ['values']}, col2='xyz')
+            Selector._select_aggregate('SUM', {'col1': ['values']}, col2='xyz')
         """
         unoptimized = (
             (getattr, (RESULT_TOKEN, '_select'), {}),
             (RESULT_TOKEN, ({'col1': ['values']},), {'col2': 'xyz'}),
             (_apply_to_data, (_sqlite_sum, RESULT_TOKEN,), {}),
         )
-        optimized = DataQuery._optimize(unoptimized)
+        optimized = Query._optimize(unoptimized)
 
         expected = (
             (getattr, (RESULT_TOKEN, '_select_aggregate'), {}),
@@ -837,17 +837,17 @@ class TestDataQuery(unittest.TestCase):
     def test_optimize_distinct(self):
         """
         Unoptimized:
-            DataSource._select({'col1': ['values']}, col2='xyz').distinct()
+            Selector._select({'col1': ['values']}, col2='xyz').distinct()
 
         Optimized:
-            DataSource._select_distinct({'col1': ['values']}, col2='xyz')
+            Selector._select_distinct({'col1': ['values']}, col2='xyz')
         """
         unoptimized = (
             (getattr, (RESULT_TOKEN, '_select'), {}),
             (RESULT_TOKEN, ({'col1': ['values']},), {'col2': 'xyz'}),
             (_sqlite_distinct, (RESULT_TOKEN,), {}),
         )
-        optimized = DataQuery._optimize(unoptimized)
+        optimized = Query._optimize(unoptimized)
 
         expected = (
             (getattr, (RESULT_TOKEN, '_select_distinct'), {}),
@@ -856,10 +856,10 @@ class TestDataQuery(unittest.TestCase):
         self.assertEqual(optimized, expected)
 
     def test_explain(self):
-        query = DataQuery(['col1'])
+        query = Query(['col1'])
         expected = """
             Data Source:
-              <none given> (assuming DataSource object)
+              <none given> (assuming Selector object)
             Execution Plan:
               getattr, (<RESULT>, '_select'), {}
               <RESULT>, (['col1']), {}
@@ -870,11 +870,11 @@ class TestDataQuery(unittest.TestCase):
         # TODO: Add assert for query that can be optimized.
 
     def test_explain2(self):
-        query = DataQuery(['label1'])
+        query = Query(['label1'])
 
         expected = """
             Data Source:
-              <none given> (assuming DataSource object)
+              <none given> (assuming Selector object)
             Execution Plan:
               getattr, (<RESULT>, '_select'), {}
               <RESULT>, (['label1']), {}
@@ -895,46 +895,46 @@ class TestDataQuery(unittest.TestCase):
 
     def test_repr(self):
         # Check "select-only" signature.
-        query = DataQuery(['label1'])
-        regex = r"DataQuery\(\[u?'label1'\]\)"
+        query = Query(['label1'])
+        regex = r"Query\(\[u?'label1'\]\)"
         self.assertRegex(repr(query), regex)
 
         # Check "select-only" with keyword string.
-        query = DataQuery(['label1'], label2='x')
-        regex = r"DataQuery\(\[u?'label1'\], label2='x'\)"
+        query = Query(['label1'], label2='x')
+        regex = r"Query\(\[u?'label1'\], label2='x'\)"
         self.assertRegex(repr(query), regex)
 
         # Check "select-only" with keyword list.
-        query = DataQuery(['label1'], label2=['x', 'y'])
-        regex = r"DataQuery\(\[u?'label1'\], label2=\[u?'x', u?'y'\]\)"
+        query = Query(['label1'], label2=['x', 'y'])
+        regex = r"Query\(\[u?'label1'\], label2=\[u?'x', u?'y'\]\)"
         self.assertRegex(repr(query), regex)
 
         # Check "from_object" signature.
-        source = DataSource([('A', 'B'), ('x', 1), ('y', 2), ('z', 3)])
-        query = DataQuery.from_object(source, ['A'])
-        expected = "DataQuery.from_object({0!r}, {1!r})".format(source, ['A'])
+        source = Selector([('A', 'B'), ('x', 1), ('y', 2), ('z', 3)])
+        query = Query.from_object(source, ['A'])
+        expected = "Query.from_object({0!r}, {1!r})".format(source, ['A'])
         self.assertEqual(repr(query), expected)
 
         # Check query steps.
-        query = DataQuery(['label1']).distinct().count()
-        regex = r"DataQuery\(\[u?'label1'\]\).distinct\(\).count\(\)"
+        query = Query(['label1']).distinct().count()
+        regex = r"Query\(\[u?'label1'\]\).distinct\(\).count\(\)"
         self.assertRegex(repr(query), regex)
 
         # Check query steps with function argument.
         def upper(x):
             return str(x.upper())
-        query = DataQuery(['label1']).map(upper)
-        regex = r"DataQuery\(\[u?'label1'\]\).map\(upper\)"
+        query = Query(['label1']).map(upper)
+        regex = r"Query\(\[u?'label1'\]\).map\(upper\)"
         self.assertRegex(repr(query), regex)
 
         # Check query steps with lambda argument.
         lower = lambda x: str(x).lower()
-        query = DataQuery(['label1']).map(lower)
-        regex = r"DataQuery\(\[u?'label1'\]\).map\(<lambda>\)"
+        query = Query(['label1']).map(lower)
+        regex = r"Query\(\[u?'label1'\]\).map\(<lambda>\)"
         self.assertRegex(repr(query), regex)
 
 
-class TestDataSource(unittest.TestCase):
+class TestSelector(unittest.TestCase):
     def setUp(self):
         data = [['label1', 'label2', 'value'],
                 ['a', 'x', '17'],
@@ -944,7 +944,7 @@ class TestDataSource(unittest.TestCase):
                 ['b', 'z', '5' ],
                 ['b', 'y', '40'],
                 ['b', 'x', '25']]
-        self.source = DataSource(data)
+        self.source = Selector(data)
 
     def test_fieldnames(self):
         expected = ('label1', 'label2', 'value')
@@ -954,8 +954,8 @@ class TestDataSource(unittest.TestCase):
         data = [['A', 'B'], ['x', 100], ['y', 200]]
 
         # Data-only (no args)
-        source = DataSource(data)
-        expected = 'DataSource({0!r})'.format(data)
+        source = Selector(data)
+        expected = 'Selector({0!r})'.format(data)
         self.assertEqual(repr(source), expected)
 
         # Data and args.
@@ -963,8 +963,8 @@ class TestDataSource(unittest.TestCase):
         foo = 'foo'           # <- String.
         def bar(x): return x  # <- Function.
         baz = lambda x: x     # <- Lambda.
-        source = DataSource(iterable, 'foo', bar, baz)
-        self.assertTrue(repr(source).startswith("DataSource(<"), msg=repr(source))
+        source = Selector(iterable, 'foo', bar, baz)
+        self.assertTrue(repr(source).startswith("Selector(<"), msg=repr(source))
         self.assertTrue(repr(source).endswith(">, 'foo', bar, <lambda>)"), msg=repr(source))
 
         # Data and kwds.
@@ -972,9 +972,9 @@ class TestDataSource(unittest.TestCase):
         foo = 'foo'
         def bar(x):
             return x
-        source = DataSource(iterable, kwd1='foo', kwd2=bar)
+        source = Selector(iterable, kwd1='foo', kwd2=bar)
         source_repr = repr(source)
-        self.assertTrue(source_repr.startswith("DataSource(<"))
+        self.assertTrue(source_repr.startswith("Selector(<"))
         self.assertTrue(
             (
                 source_repr.endswith(">, kwd1='foo', kwd2=bar)")
@@ -985,12 +985,12 @@ class TestDataSource(unittest.TestCase):
 
         # Data, args, and kwds.
         iterable = iter(data)
-        source = DataSource(iterable, 'foo', kwd1='bar')
-        self.assertTrue(repr(source).startswith("DataSource(<"), msg=repr(source))
+        source = Selector(iterable, 'foo', kwd1='bar')
+        self.assertTrue(repr(source).startswith("Selector(<"), msg=repr(source))
         self.assertTrue(repr(source).endswith(">, 'foo', kwd1='bar')"), msg=repr(source))
 
     def test_build_where_clause(self):
-        _build_where_clause = DataSource._build_where_clause
+        _build_where_clause = Selector._build_where_clause
 
         result = _build_where_clause({'A': 'x'})
         expected = ('A=?', ['x'])
@@ -1008,9 +1008,9 @@ class TestDataSource(unittest.TestCase):
     def test_execute_query(self):
         #data = [['x', 101], ['y', 202], ['z', 303]]
         #filednames = ['A', 'B']
-        #source = DataSource(data, filednames)
+        #source = Selector(data, filednames)
         data = [['A', 'B'], ['x', 101], ['y', 202], ['z', 303]]
-        source = DataSource(data)
+        source = Selector(data)
 
         # Test where-clause function.
         def isodd(x):
@@ -1209,7 +1209,7 @@ class TestDataSource(unittest.TestCase):
 
         # Simple group by (grouped by keys).
         result = self.source._select_aggregate('SUM', {'label1': ['value']})
-        self.assertIsInstance(result, DataResult)
+        self.assertIsInstance(result, Result)
 
         expected = {
             'a': 65,
@@ -1236,13 +1236,13 @@ class TestDataSource(unittest.TestCase):
     def test_call(self):
         query = self.source(['label1'])
         expected = ['a', 'a', 'a', 'a', 'b', 'b', 'b']
-        self.assertIsInstance(query, DataQuery)
+        self.assertIsInstance(query, Query)
         self.assertEqual(query.fetch(), expected)
 
         query = self.source([('label1', 'label2')])
         expected = [('a', 'x'), ('a', 'x'), ('a', 'y'), ('a', 'z'),
                     ('b', 'z'), ('b', 'y'), ('b', 'x')]
-        self.assertIsInstance(query, DataQuery)
+        self.assertIsInstance(query, Query)
         self.assertEqual(query.fetch(), expected)
 
         query = self.source([set(['label1', 'label2'])])
@@ -1253,10 +1253,10 @@ class TestDataSource(unittest.TestCase):
                     set(['b', 'z']),
                     set(['b', 'y']),
                     set(['b', 'x'])]
-        self.assertIsInstance(query, DataQuery)
+        self.assertIsInstance(query, Query)
         self.assertEqual(query.fetch(), expected)
 
         query = self.source({'label1': ['label2']})
         expected = {'a': ['x', 'x', 'y', 'z'], 'b': ['z', 'y', 'x']}
-        self.assertIsInstance(query, DataQuery)
+        self.assertIsInstance(query, Query)
         self.assertEqual(query.fetch(), expected)
