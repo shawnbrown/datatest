@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
-
+from .._dataaccess.load_csv import load_csv
 from .._dataaccess.temptable import load_data
 from .._dataaccess.temptable import new_table_name
 from .._dataaccess.temptable import savepoint
@@ -903,7 +903,6 @@ import os
 import sys
 import warnings
 from .._compatibility.builtins import *
-from ..load.csvreader import UnicodeCsvReader
 
 
 class CsvSource(SqliteBase):
@@ -914,6 +913,11 @@ class CsvSource(SqliteBase):
     """
     def __init__(self, file, encoding=None, in_memory=False, **fmtparams):
         """Initialize self."""
+        # The arg *in_memory* is now unused but should be kept in signature
+        # so that old code doesn't error-out.
+
+        global DEFAULT_CONNECTION
+
         self._file_repr = repr(file)
 
         # If *file* is relative path, uses directory of calling file as base.
@@ -925,30 +929,11 @@ class CsvSource(SqliteBase):
             file = os.path.normpath(file)
 
         # Create temporary SQLite table object.
-        if encoding:
-            with UnicodeCsvReader(file, encoding=encoding, **fmtparams) as reader:
-                columns = next(reader)  # Header row.
-                connection, table = _load_temp_sqlite_table(columns, reader)
-        else:
-            try:
-                with UnicodeCsvReader(file, encoding='utf-8', **fmtparams) as reader:
-                    columns = next(reader)  # Header row.
-                    connection, table = _load_temp_sqlite_table(columns, reader)
-
-            except UnicodeDecodeError:
-                with UnicodeCsvReader(file, encoding='iso8859-1', **fmtparams) as reader:
-                    columns = next(reader)  # Header row.
-                    connection, table = _load_temp_sqlite_table(columns, reader)
-
-                # Prepare message and raise as warning.
-                try:
-                    filename = os.path.basename(file)
-                except AttributeError:
-                    filename = repr(file)
-                msg = ('\nData in file {0!r} does not appear to be encoded '
-                       'as UTF-8 (used ISO-8859-1 as fallback). To assure '
-                       'correct operation, please specify a text encoding.')
-                warnings.warn(msg.format(filename))
+        connection = DEFAULT_CONNECTION
+        cursor = connection.cursor()
+        with savepoint(cursor):
+            table = new_table_name(cursor)
+            load_csv(cursor, table, file, encoding=encoding, **fmtparams)
 
         # Calling super() with older convention to support Python 2.7 & 2.6.
         super(CsvSource, self).__init__(connection, table)
