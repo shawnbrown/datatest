@@ -4,8 +4,8 @@ import sqlite3
 import unittest
 import collections
 
-import datatest._dataaccess.temptable as temptable
-from datatest._dataaccess.temptable import (
+import datatest._load.temptable as temptable
+from datatest._load.temptable import (
     table_exists,
     new_table_name,
     normalize_names,

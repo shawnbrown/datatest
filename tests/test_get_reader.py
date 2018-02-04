@@ -23,7 +23,7 @@ try:
 except ImportError:
     dbfread = None
 
-from datatest._dataaccess.get_reader import (
+from datatest._load.get_reader import (
     from_dicts,
     from_namedtuples,
     _from_csv_iterable,

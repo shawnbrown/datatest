@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
-from .._dataaccess.load_csv import load_csv
-from .._dataaccess.temptable import load_data
-from .._dataaccess.temptable import new_table_name
-from .._dataaccess.temptable import savepoint
-from .._dataaccess.dataaccess import DEFAULT_CONNECTION
+from .._load.load_csv import load_csv
+from .._load.temptable import load_data
+from .._load.temptable import new_table_name
+from .._load.temptable import savepoint
+from .._load.dataaccess import DEFAULT_CONNECTION
 
 
 def _load_temp_sqlite_table(columns, records):

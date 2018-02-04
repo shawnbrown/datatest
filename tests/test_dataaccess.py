@@ -13,7 +13,7 @@ from datatest._compatibility.builtins import *
 from datatest._compatibility import collections
 from datatest._utils import nonstringiter
 
-from datatest._dataaccess.dataaccess import (
+from datatest._load.dataaccess import (
     working_directory,
     BaseElement,
     _is_collection_of_items,

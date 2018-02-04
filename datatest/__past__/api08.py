@@ -5,13 +5,13 @@ import inspect
 import datatest
 from datatest._compatibility import collections
 from datatest._compatibility import itertools
-from datatest._dataaccess.get_reader import get_reader
-from datatest._dataaccess.dataaccess import DEFAULT_CONNECTION
-from datatest._dataaccess.load_csv import load_csv
-from datatest._dataaccess.temptable import load_data
-from datatest._dataaccess.temptable import new_table_name
-from datatest._dataaccess.temptable import savepoint
-from datatest._dataaccess.temptable import table_exists
+from datatest._load.get_reader import get_reader
+from datatest._load.dataaccess import DEFAULT_CONNECTION
+from datatest._load.load_csv import load_csv
+from datatest._load.temptable import load_data
+from datatest._load.temptable import new_table_name
+from datatest._load.temptable import savepoint
+from datatest._load.temptable import table_exists
 from datatest._utils import file_types
 from datatest._utils import string_types
 from datatest.difference import NOTFOUND
