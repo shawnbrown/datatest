@@ -23,12 +23,12 @@ from .._utils import _make_token
 from .._utils import _unique_everseen
 from .._utils import file_types
 from .._utils import string_types
-from .get_reader import get_reader
-from .load_csv import load_csv
-from .temptable import load_data
-from .temptable import new_table_name
-from .temptable import savepoint
-from .temptable import table_exists
+from .._load.get_reader import get_reader
+from .._load.load_csv import load_csv
+from .._load.temptable import load_data
+from .._load.temptable import new_table_name
+from .._load.temptable import savepoint
+from .._load.temptable import table_exists
 
 
 # For the following database connection, the synchronous flag is

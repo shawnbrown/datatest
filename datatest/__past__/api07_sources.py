@@ -4,7 +4,7 @@ from .._load.load_csv import load_csv
 from .._load.temptable import load_data
 from .._load.temptable import new_table_name
 from .._load.temptable import savepoint
-from .._load.dataaccess import DEFAULT_CONNECTION
+from .._query.query import DEFAULT_CONNECTION
 
 
 def _load_temp_sqlite_table(columns, records):

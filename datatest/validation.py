@@ -7,7 +7,7 @@ from ._compatibility.builtins import callable
 from ._utils import nonstringiter
 from ._utils import exhaustible
 from ._utils import _safesort_key
-from ._load.dataaccess import (
+from ._query.query import (
     BaseElement,
     DictItems,
     _is_collection_of_items,
