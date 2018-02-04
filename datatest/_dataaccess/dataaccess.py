@@ -29,8 +29,6 @@ from .temptable import load_data
 from .temptable import new_table_name
 from .temptable import savepoint
 from .temptable import table_exists
-from ..load.sqltemp import TemporarySqliteTable
-from ..load.sqltemp import _from_csv
 
 
 # For the following database connection, the synchronous flag is

@@ -1,6 +1,20 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
+from .._dataaccess.temptable import load_data
+from .._dataaccess.temptable import new_table_name
+from .._dataaccess.temptable import savepoint
+from .._dataaccess.dataaccess import DEFAULT_CONNECTION
+
+
+def _load_temp_sqlite_table(columns, records):
+    global DEFAULT_CONNECTION
+    cursor = DEFAULT_CONNECTION.cursor()
+    with savepoint(cursor):
+        table = new_table_name(cursor)
+        load_data(cursor, table, columns, records)
+    return DEFAULT_CONNECTION, table
+
 
 ########################################################################
 # From sources/base.py
@@ -600,7 +614,6 @@ class MultiSource(BaseSource):
 import sqlite3
 from .._compatibility.builtins import *
 from .._compatibility import decimal
-from ..load.sqltemp import TemporarySqliteTable
 from .._utils import nonstringiter
 from .api07_comp import CompareDict
 from .api07_comp import CompareSet
@@ -739,7 +752,6 @@ class SqliteBase(BaseSource):
             if trailing_clause:
                 stmnt += '\n' + trailing_clause
             cursor = self._connection.cursor()
-            cursor.execute('PRAGMA synchronous=OFF')
             #print(stmnt, params)
             cursor.execute(stmnt, params)
         except Exception as e:
@@ -850,8 +862,8 @@ class SqliteSource(SqliteBase):
             ]
             subject = datatest.SqliteSource.from_records(dict_rows)
         """
-        temptable = TemporarySqliteTable(data, columns)
-        return cls(temptable.connection, temptable.name)
+        connection, table = _load_temp_sqlite_table(columns, data)
+        return cls(connection, table)
 
     def create_index(self, *columns):
         """Create an index for specified columns---can speed up testing
@@ -892,7 +904,6 @@ import sys
 import warnings
 from .._compatibility.builtins import *
 from ..load.csvreader import UnicodeCsvReader
-from ..load.sqltemp import TemporarySqliteTable
 
 
 class CsvSource(SqliteBase):
@@ -917,17 +928,17 @@ class CsvSource(SqliteBase):
         if encoding:
             with UnicodeCsvReader(file, encoding=encoding, **fmtparams) as reader:
                 columns = next(reader)  # Header row.
-                temptable = TemporarySqliteTable(reader, columns)
+                connection, table = _load_temp_sqlite_table(columns, reader)
         else:
             try:
                 with UnicodeCsvReader(file, encoding='utf-8', **fmtparams) as reader:
                     columns = next(reader)  # Header row.
-                    temptable = TemporarySqliteTable(reader, columns)
+                    connection, table = _load_temp_sqlite_table(columns, reader)
 
             except UnicodeDecodeError:
                 with UnicodeCsvReader(file, encoding='iso8859-1', **fmtparams) as reader:
                     columns = next(reader)  # Header row.
-                    temptable = TemporarySqliteTable(reader, columns)
+                    connection, table = _load_temp_sqlite_table(columns, reader)
 
                 # Prepare message and raise as warning.
                 try:
@@ -940,7 +951,7 @@ class CsvSource(SqliteBase):
                 warnings.warn(msg.format(filename))
 
         # Calling super() with older convention to support Python 2.7 & 2.6.
-        super(CsvSource, self).__init__(temptable.connection, temptable.name)
+        super(CsvSource, self).__init__(connection, table)
 
     def __repr__(self):
         """Return a string representation of the data source."""
@@ -952,8 +963,6 @@ class CsvSource(SqliteBase):
 ########################################################################
 # From sources/excel.py
 ########################################################################
-from ..load.sqltemp import TemporarySqliteTable
-
 
 class ExcelSource(SqliteBase):
     """Loads first worksheet from XLSX or XLS file *path*::
@@ -993,11 +1002,11 @@ class ExcelSource(SqliteBase):
         iterrows = (sheet.row(i) for i in range(sheet.nrows))
         iterrows = ([x.value for x in row] for row in iterrows)
         columns = next(iterrows)  # <- Get header row.
-        temptable = TemporarySqliteTable(iterrows, columns)
+        connection, table = _load_temp_sqlite_table(columns, iterrows)
         book.release_resources()
 
         # Calling super() with older convention to support Python 2.7 & 2.6.
-        super(ExcelSource, self).__init__(temptable.connection, temptable.name)
+        super(ExcelSource, self).__init__(connection, table)
 
 
 ########################################################################
