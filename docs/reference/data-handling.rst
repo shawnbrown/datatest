@@ -18,15 +18,30 @@ working_directory
 .. autoclass:: working_directory
 
 
+**********
+get_reader
+**********
+
+.. autoclass:: get_reader
+
+    .. automethod:: from_csv
+
+    .. automethod:: from_dicts
+
+    .. automethod:: from_namedtuples
+
+    .. automethod:: from_pandas
+
+    .. automethod:: from_excel
+
+    .. automethod:: from_dbf
+
+
 ********
 Selector
 ********
 
 .. autoclass:: Selector
-
-    .. automethod:: from_csv
-
-    .. automethod:: from_excel
 
     .. autoattribute:: fieldnames
 
