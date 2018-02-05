@@ -24,14 +24,9 @@ except ImportError:
     dbfread = None
 
 from datatest._load.get_reader import (
-    from_dicts,
-    from_namedtuples,
+    get_reader,
     _from_csv_iterable,
     _from_csv_path,
-    from_pandas,
-    from_excel,
-    from_dbf,
-    get_reader,
 )
 
 
@@ -62,7 +57,7 @@ class TestFromDicts(unittest.TestCase):
             {'col1': 2, 'col2': 'b'},
             {'col1': 3, 'col2': 'c'},
         ]
-        reader = from_dicts(records, ['col1', 'col2'])  # <- Using fieldnames!
+        reader = get_reader.from_dicts(records, ['col1', 'col2'])  # <- Using fieldnames!
 
         expected = [
             ['col1', 'col2'],
@@ -78,7 +73,7 @@ class TestFromDicts(unittest.TestCase):
             {'col1': 2, 'col2': 'b'},
             {'col1': 3, 'col2': 'c'},
         ]
-        reader = from_dicts(records)  # <- No fieldnames supplied.
+        reader = get_reader.from_dicts(records)  # <- No fieldnames supplied.
 
         reader = list(reader)
         if reader[0][0] == 'col1':  # Check for key order
@@ -100,10 +95,10 @@ class TestFromDicts(unittest.TestCase):
     def test_empty_records(self):
         records = []
 
-        reader = from_dicts(records, ['col1', 'col2'])
+        reader = get_reader.from_dicts(records, ['col1', 'col2'])
         self.assertEqual(list(records), [])
 
-        reader = from_dicts(records)
+        reader = get_reader.from_dicts(records)
         self.assertEqual(list(records), [])
 
 
@@ -115,7 +110,7 @@ class TestFromNamedtuples(unittest.TestCase):
             ntup(2, 'b'),
             ntup(3, 'c'),
         ]
-        reader = from_namedtuples(records)
+        reader = get_reader.from_namedtuples(records)
 
         expected = [
             ('col1', 'col2'),
@@ -127,7 +122,7 @@ class TestFromNamedtuples(unittest.TestCase):
 
     def test_empty_records(self):
         records = []
-        reader = from_namedtuples(records)
+        reader = get_reader.from_namedtuples(records)
         self.assertEqual(list(records), [])
 
 
@@ -264,7 +259,7 @@ class TestFromPandas(unittest.TestCase):
         })
 
     def test_automatic_indexing(self):
-        reader = from_pandas(self.df)  # <- Includes index by default.
+        reader = get_reader.from_pandas(self.df)  # <- Includes index by default.
         expected = [
             [None, 'col1', 'col2'],
             [0, 1, 'a'],
@@ -273,7 +268,7 @@ class TestFromPandas(unittest.TestCase):
         ]
         self.assertEqual(list(reader), expected)
 
-        reader = from_pandas(self.df, index=False)  # <- Omits index.
+        reader = get_reader.from_pandas(self.df, index=False)  # <- Omits index.
         expected = [
             ['col1', 'col2'],
             [1, 'a'],
@@ -285,7 +280,7 @@ class TestFromPandas(unittest.TestCase):
     def test_simple_index(self):
         self.df.index = pandas.Index(['x', 'y', 'z'], name='col0')
 
-        reader = from_pandas(self.df)
+        reader = get_reader.from_pandas(self.df)
         expected = [
             ['col0', 'col1', 'col2'],
             ['x', 1, 'a'],
@@ -294,7 +289,7 @@ class TestFromPandas(unittest.TestCase):
         ]
         self.assertEqual(list(reader), expected)
 
-        reader = from_pandas(self.df, index=False)
+        reader = get_reader.from_pandas(self.df, index=False)
         expected = [
             ['col1', 'col2'],
             [1, 'a'],
@@ -308,7 +303,7 @@ class TestFromPandas(unittest.TestCase):
         index = pandas.MultiIndex.from_tuples(index_values, names=['A', 'B'])
         self.df.index = index
 
-        reader = from_pandas(self.df)
+        reader = get_reader.from_pandas(self.df)
         expected = [
             ['A', 'B', 'col1', 'col2'],
             ['x', 'one', 1, 'a'],
@@ -317,7 +312,7 @@ class TestFromPandas(unittest.TestCase):
         ]
         self.assertEqual(list(reader), expected)
 
-        reader = from_pandas(self.df, index=False)
+        reader = get_reader.from_pandas(self.df, index=False)
         expected = [
             ['col1', 'col2'],
             [1, 'a'],
@@ -330,7 +325,7 @@ class TestFromPandas(unittest.TestCase):
 @unittest.skipIf(not xlrd, 'xlrd not found')
 class TestFromExcel(SampleFilesTestCase):
     def test_default_worksheet(self):
-        reader = from_excel('sample_multiworksheet.xlsx')  # <- Defaults to 1st worksheet.
+        reader = get_reader.from_excel('sample_multiworksheet.xlsx')  # <- Defaults to 1st worksheet.
 
         expected = [
             ['col1', 'col2'],
@@ -341,7 +336,7 @@ class TestFromExcel(SampleFilesTestCase):
         self.assertEqual(list(reader), expected)
 
     def test_specified_worksheet(self):
-        reader = from_excel('sample_multiworksheet.xlsx', 'Sheet2')  # <- Specified worksheet.
+        reader = get_reader.from_excel('sample_multiworksheet.xlsx', 'Sheet2')  # <- Specified worksheet.
 
         expected = [
             ['col1', 'col2'],
@@ -355,7 +350,7 @@ class TestFromExcel(SampleFilesTestCase):
 @unittest.skipIf(not dbfread, 'dbfread not found')
 class TestFromDbf(SampleFilesTestCase):
     def test_dbf(self):
-        reader = from_dbf('sample_dbase.dbf')
+        reader = get_reader.from_dbf('sample_dbase.dbf')
         expected = [
             ['COL1', 'COL2'],
             ['dBASE', 1],

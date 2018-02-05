@@ -10,40 +10,7 @@ from .._utils import file_types
 
 
 ########################################################################
-# From Dictionaries.
-########################################################################
-def from_dicts(records, fieldnames=None):
-    if fieldnames:
-        fieldnames = list(fieldnames)  # Needs to be a sequence.
-        yield fieldnames  # Header row.
-    else:
-        records = iter(records)
-        first_record = next(records, None)
-        if first_record:
-            records = chain([first_record], records)
-            fieldnames = list(first_record.keys())
-            yield fieldnames  # Header row.
-
-    for row in records:
-        yield [row.get(key, None) for key in fieldnames]
-
-
-########################################################################
-# From Namedtuples.
-########################################################################
-def from_namedtuples(records):
-    records = iter(records)
-    first_record = next(records, None)
-    if first_record:
-        yield first_record._fields  # Header row.
-        yield first_record
-
-    for record in records:
-        yield record
-
-
-########################################################################
-# CSV Reader.
+# Unicode Aware CSV Handling.
 ########################################################################
 if sys.version_info[0] >= 3:
 
@@ -141,129 +108,187 @@ else:
                 yield row
 
 
-def from_csv(csvfile, encoding='utf-8', **kwds):
-    if isinstance(csvfile, string_types):
-        return _from_csv_path(csvfile, encoding, **kwds)
-    return _from_csv_iterable(csvfile, encoding, **kwds)
-
-
 ########################################################################
-# Pandas DataFrame Reader.
+# Get Reader.
 ########################################################################
-def from_pandas(df, index=True):
-    if index:
-        yield list(df.index.names) + list(df.columns)
-    else:
-        yield list(df.columns)
+class get_reader(object):
+    """Return a reader object which will iterate over lines in the
+    given data---like :py:func:`csv.reader`.
+    """
+    def __new__(cls, obj, *args, **kwds):
+        if isinstance(obj, string_types):
+            lowercase = obj.lower()
 
-    records = df.to_records(index=index)
-    for record in records:
-        yield list(record)
+            if lowercase.endswith('.csv'):
+                return cls.from_csv(obj, *args, **kwds)
 
+            if lowercase.endswith('.xlsx') or lowercase.endswith('.xls'):
+                return cls.from_excel(obj, *args, **kwds)
 
-########################################################################
-# MS Excel Reader.
-########################################################################
-def from_excel(path, worksheet=0):
-    try:
-        import xlrd
-    except ImportError:
-        raise ImportError(
-            "No module named 'xlrd'\n"
-            "\n"
-            "This is an optional constructor that requires the "
-            "third-party library 'xlrd'."
-        )
-    book = xlrd.open_workbook(path, on_demand=True)
-    try:
-        if isinstance(worksheet, int):
-            sheet = book.sheet_by_index(worksheet)
+            if lowercase.endswith('.dbf'):
+                return cls.from_dbf(obj, *args, **kwds)
+
         else:
-            sheet = book.sheet_by_name(worksheet)
+            if isinstance(obj, file_types) \
+                    and getattr(obj, 'name', '').lower().endswith('.csv'):
+                return cls.from_csv(obj, *args, **kwds)
 
-        for index in range(sheet.nrows):
-            yield sheet.row_values(index)
+            if 'pandas' in sys.modules:
+                if isinstance(obj, sys.modules['pandas'].DataFrame):
+                    return cls.from_pandas(obj, *args, **kwds)
 
-    finally:
-        book.release_resources()
+            if isinstance(obj, Iterable):
+                iterator = iter(obj)
+                first_value = next(iterator, None)
+                iterator = chain([first_value], iterator)
 
+                if isinstance(first_value, dict):
+                    return cls.from_dicts(iterator, *args, **kwds)
 
-########################################################################
-# DBF Reader.
-########################################################################
-def from_dbf(filename, encoding=None, **kwds):
-    try:
-        import dbfread
-    except ImportError:
-        raise ImportError(
-            "No module named 'dbfread'\n"
-            "\n"
-            "This is an optional constructor that requires the "
-            "third-party library 'dbfread'."
-        )
-    if 'load' not in kwds:
-        kwds['load'] = False
-    def recfactory(record):
-        return [x[1] for x in record]
-    kwds['recfactory'] = recfactory
-    table = dbfread.DBF(filename, encoding, **kwds)
+                if hasattr(first_value, '_fields'):
+                    return cls.from_namedtuples(iterator, *args, **kwds)
 
-    yield table.field_names  # <- Header row.
+                if isinstance(first_value, (list, tuple)):
+                    return iterator  # Already seems reader-like.
 
-    for record in table:
-        yield record
+        msg = ('unable to determine constructor for {0!r}, specify a '
+               'constructor to load - for example: get_reader.from_csv(...), '
+               'get_reader.from_pandas(...), etc.')
+        raise TypeError(msg.format(obj))
 
+    @staticmethod
+    def from_dicts(records, fieldnames=None):
+        """Return a reader object which will iterate over the given
+        dictionary records. This can be thought of as converting a
+        :py:func:`csv.DictReader` into a plain, non-dictionary reader.
+        """
+        if fieldnames:
+            fieldnames = list(fieldnames)  # Needs to be a sequence.
+            yield fieldnames  # Header row.
+        else:
+            records = iter(records)
+            first_record = next(records, None)
+            if first_record:
+                records = chain([first_record], records)
+                fieldnames = list(first_record.keys())
+                yield fieldnames  # Header row.
 
-########################################################################
-# Function Dispatching.
-########################################################################
-def get_reader(obj, *args, **kwds):
-    if isinstance(obj, string_types):
-        lowercase = obj.lower()
+        for row in records:
+            yield [row.get(key, None) for key in fieldnames]
 
-        if lowercase.endswith('.csv'):
-            return from_csv(obj, *args, **kwds)
+    @staticmethod
+    def from_namedtuples(records):
+        """Return a reader object which will iterate over the given
+        namedtuple records.
+        """
+        records = iter(records)
+        first_record = next(records, None)
+        if first_record:
+            yield first_record._fields  # Header row.
+            yield first_record
 
-        if lowercase.endswith('.xlsx') or lowercase.endswith('.xls'):
-            return from_excel(obj, *args, **kwds)
+        for record in records:
+            yield record
 
-        if lowercase.endswith('.dbf'):
-            return from_dbf(obj, *args, **kwds)
+    @staticmethod
+    def from_csv(csvfile, encoding='utf-8', **kwds):
+        """Return a reader object which will iterate over lines in the
+        given *csvfile*. The *csvfile* can be a file path or any valid
+        :py:func:`csv.reader` input.
+        """
+        if isinstance(csvfile, string_types):
+            return _from_csv_path(csvfile, encoding, **kwds)
+        return _from_csv_iterable(csvfile, encoding, **kwds)
 
-    else:
-        if isinstance(obj, file_types) \
-                and getattr(obj, 'name', '').lower().endswith('.csv'):
-            return from_csv(obj, *args, **kwds)
+    @staticmethod
+    def from_pandas(df, index=True):
+        """Return a reader object which will iterate over records in
+        the pandas.DataFrame *df*.
 
-        if 'pandas' in sys.modules:
-            if isinstance(obj, sys.modules['pandas'].DataFrame):
-                return from_pandas(obj, *args, **kwds)
+        .. note::
 
-        if isinstance(obj, Iterable):
-            iterator = iter(obj)
-            first_value = next(iterator, None)
-            iterator = chain([first_value], iterator)
+            This constructor requires the optional, third-party
+            library pandas.
+        """
+        if index:
+            yield list(df.index.names) + list(df.columns)
+        else:
+            yield list(df.columns)
 
-            if isinstance(first_value, dict):
-                return from_dicts(iterator, *args, **kwds)
+        records = df.to_records(index=index)
+        for record in records:
+            yield list(record)
 
-            if hasattr(first_value, '_fields'):
-                return from_namedtuples(iterator, *args, **kwds)
+    @staticmethod
+    def from_excel(path, worksheet=0):
+        """Return a reader object which will iterate over lines in the
+        given Excel worksheet. *path* must specify to an XLSX or XLS
+        file and *worksheet* should specify the index or name of the
+        worksheet to load (defaults to the first worksheet).
 
-            if isinstance(first_value, (list, tuple)):
-                return iterator  # obj already seems reader-like.
+        Load first worksheet::
 
-    msg = ('unable to determine constructor for {0!r}, specify a '
-           'constructor to load - for example: get_reader.from_csv(...), '
-           'get_reader.from_pandas(...), etc.')
-    raise TypeError(msg.format(obj))
+            reader = get_reader.from_excel('mydata.xlsx')
 
+        Specific worksheets can be loaded by name (a string) or
+        index (an integer)::
 
-# Add specific constructor functions as properties of the get_reader()
-# function--this mimics how alternate constructors look on classes.
-get_reader.from_dicts = from_dicts
-get_reader.from_namedtuples = from_namedtuples
-get_reader.from_csv = from_csv
-get_reader.from_pandas = from_pandas
-get_reader.from_excel = from_excel
-get_reader.from_dbf = from_dbf
+            reader = get_reader.from_excel('mydata.xlsx', 'Sheet 2')
+
+        .. note::
+
+            This constructor requires the optional, third-party
+            library xlrd.
+        """
+        try:
+            import xlrd
+        except ImportError:
+            raise ImportError(
+                "No module named 'xlrd'\n"
+                "\n"
+                "This is an optional constructor that requires the "
+                "third-party library 'xlrd'."
+            )
+        book = xlrd.open_workbook(path, on_demand=True)
+        try:
+            if isinstance(worksheet, int):
+                sheet = book.sheet_by_index(worksheet)
+            else:
+                sheet = book.sheet_by_name(worksheet)
+
+            for index in range(sheet.nrows):
+                yield sheet.row_values(index)
+
+        finally:
+            book.release_resources()
+
+    @staticmethod
+    def from_dbf(filename, encoding=None, **kwds):
+        """Return a reader object which will iterate over lines in the
+        given DBF file (from dBase, FoxPro, etc.).
+
+        .. note::
+
+            This constructor requires the optional, third-party
+            library dbfread.
+        """
+        try:
+            import dbfread
+        except ImportError:
+            raise ImportError(
+                "No module named 'dbfread'\n"
+                "\n"
+                "This is an optional constructor that requires the "
+                "third-party library 'dbfread'."
+            )
+        if 'load' not in kwds:
+            kwds['load'] = False
+        def recfactory(record):
+            return [x[1] for x in record]
+        kwds['recfactory'] = recfactory
+        table = dbfread.DBF(filename, encoding, **kwds)
+
+        yield table.field_names  # <- Header row.
+
+        for record in table:
+            yield record
