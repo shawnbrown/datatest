@@ -813,7 +813,6 @@ class SqliteBase(BaseSource):
 
         # Create index.
         cursor = self._connection.cursor()
-        cursor.execute('PRAGMA synchronous=OFF')
         cursor.execute(statement)
 
     @staticmethod

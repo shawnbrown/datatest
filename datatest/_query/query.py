@@ -1049,7 +1049,7 @@ class Selector(object):
             func_list = [x for x in kwds_filter.values() if callable(x)]
             _register_function(self._connection, func_list)
 
-            # Build selecct-query.
+            # Build select-query.
             stmnt = 'SELECT {0} FROM {1}'.format(select_clause, self._table)
             where_clause, params = self._build_where_clause(kwds_filter)
             if where_clause:
@@ -1261,5 +1261,4 @@ class Selector(object):
 
         # Create index.
         cursor = self._connection.cursor()
-        cursor.execute('PRAGMA synchronous=OFF')
         cursor.execute(statement)
