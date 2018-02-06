@@ -546,7 +546,7 @@ class Query(object):
     the result---computation doesn't occur until the query object
     itself or its :meth:`fetch` method is called.
 
-    The *select* argument must be a container of one field name (a
+    The *columns* argument must be a container of one field name (a
     string) or of an inner-container of multiple filed names. The
     optional *where* keywords can narrow a selection to rows where
     fields match specified values.
@@ -558,17 +558,17 @@ class Query(object):
 
         query = Query('A')
     """
-    def __init__(self, selection, **where):
+    def __init__(self, columns, **where):
         """Initialize self."""
-        selection = _normalize_select(selection)
-        self._data_args = ((selection,), where)
+        columns = _normalize_select(columns)
+        self._data_args = ((columns,), where)
         self._data_source = None
         self._query_steps = tuple()
 
     @classmethod
-    def from_object(cls, obj, selection=None, **where):
+    def from_object(cls, obj, columns=None, **where):
         """
-        Query.from_object(source, selection, **where)
+        Query.from_object(select, columns, **where)
         Query.from_object(object)
 
         Creates a query and associates it with the given object.
@@ -576,24 +576,24 @@ class Query(object):
         See documentation for full details.
         """
         if obj is None:
-            return  cls(selection, **where)  # <- EXIT!
+            return  cls(columns, **where)  # <- EXIT!
 
         if isinstance(obj, Query):
             return obj.__copy__()  # <- EXIT!
 
         if isinstance(obj, Selector):
-            if selection is None:
+            if columns is None:
                 raise ValueError(
-                    "missing 1 required positional argument: 'selection'"
+                    "missing 1 required positional argument: 'columns'"
                 )
-            selection = _normalize_select(selection)
-            flattened = _flatten([_parse_select(selection), where.keys()])
+            columns = _normalize_select(columns)
+            flattened = _flatten([_parse_select(columns), where.keys()])
             obj._assert_fields_exist(flattened)
-            args = (selection,)
+            args = (columns,)
         else:
-            if selection or where:
+            if columns or where:
                 raise ValueError((
-                    "can only use 'selection' and 'where' with Selector, got {0!r}"
+                    "can only use 'columns' and 'where' with Selector, got {0!r}"
                 ).format(obj.__class__.__name__))
             args = ()
 
@@ -1038,18 +1038,18 @@ class Selector(object):
         dict_row = lambda x: dict(zip(fieldnames, x))
         return (dict_row(row) for row in cursor.fetchall())
 
-    def __call__(self, selection, **where):
+    def __call__(self, columns, **where):
         """Calling a Selector like a function returns a Query object
         that is automatically associated with the source (see
-        :class:`Query` for *selection* and *where* syntax)::
+        :class:`Query` for *columns* and *where* syntax)::
 
-            query = source('A')
+            query = select('A')
 
         This is a shorthand for::
 
-            query = Query.from_object(source, 'A')
+            query = Query.from_object(select, 'A')
         """
-        return Query.from_object(self, selection, **where)
+        return Query.from_object(self, columns, **where)
 
     def _execute_query(self, select_clause, trailing_clause=None, **kwds_filter):
         """Execute query and return cursor object."""
