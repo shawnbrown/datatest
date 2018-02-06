@@ -22,7 +22,7 @@ working_directory
 get_reader
 **********
 
-.. autoclass:: get_reader
+.. autoclass:: get_reader(obj, *args, **kwds)
 
     .. automethod:: from_csv
 

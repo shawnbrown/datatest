@@ -112,8 +112,28 @@ else:
 # Get Reader.
 ########################################################################
 class get_reader(object):
-    """Return a reader object which will iterate over lines in the
+    """Return a reader object which will iterate over records in the
     given data---like :py:func:`csv.reader`.
+
+    The *obj* type is used to automatically determine the appropriate
+    handler. If *obj* is a string, it is treated as a file path whose
+    extension determines its content type. Any *\*args* and *\*\*kwds*
+    are passed to the underlying handler::
+
+        # CSV file.
+        reader = get_reader('myfile.csv')
+
+        # Excel file.
+        reader = get_reader('myfile.xlsx', worksheet='Sheet2')
+
+        # Pandas DataFrame.
+        df = pandas.DataFrame([...])
+        reader = get_reader(df)
+
+    If the data type cannot be determined automatically, users
+    must call the appropriate handler explicitly (for example
+    :meth:`get_reader.from_csv`, :meth:`get_reader.from_pandas`,
+    etc.).
     """
     def __new__(cls, obj, *args, **kwds):
         if isinstance(obj, string_types):
@@ -151,8 +171,8 @@ class get_reader(object):
                 if isinstance(first_value, (list, tuple)):
                     return iterator  # Already seems reader-like.
 
-        msg = ('unable to determine constructor for {0!r}, specify a '
-               'constructor to load - for example: get_reader.from_csv(...), '
+        msg = ('unable to determine constructor for {0!r}: specify a '
+               'constructor to load, for example get_reader.from_csv(...), '
                'get_reader.from_pandas(...), etc.')
         raise TypeError(msg.format(obj))
 
@@ -192,9 +212,13 @@ class get_reader(object):
 
     @staticmethod
     def from_csv(csvfile, encoding='utf-8', **kwds):
-        """Return a reader object which will iterate over lines in the
-        given *csvfile*. The *csvfile* can be a file path or any valid
-        :py:func:`csv.reader` input.
+        """Return a reader object which will iterate over lines in
+        the given *csvfile*. The *csvfile* can be a string (treated
+        as a file path) or any object which supports the iterator
+        protocol and returns a string each time its __next__() method
+        is called---file objects and list objects are both suitable.
+        If *csvfile* is a file object, it should be opened with
+        ``newline=''``.
         """
         if isinstance(csvfile, string_types):
             return _from_csv_path(csvfile, encoding, **kwds)
