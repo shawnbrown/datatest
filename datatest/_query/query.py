@@ -998,6 +998,11 @@ class Selector(object):
 
         cls_name = self.__class__.__name__
 
+        if self._objs:
+            objs_repr = repr(self._objs)
+        else:
+            objs_repr = ''
+
         args_repr = ', '.join(get_repr(x) for x in self._args)
         if args_repr:
             args_repr = ', ' + args_repr
@@ -1008,13 +1013,13 @@ class Selector(object):
         if kwds_repr:
             kwds_repr = ', ' + kwds_repr
 
-        return '{0}({1!r}{2}{3})'.format(cls_name, self._objs, args_repr, kwds_repr)
+        return '{0}({1}{2}{3})'.format(cls_name, objs_repr, args_repr, kwds_repr)
 
     @property
     def fieldnames(self):
         """A tuple of field names used by the data source."""
         cursor = self._connection.cursor()
-        cursor.execute('PRAGMA table_info(' + self._table + ')')
+        cursor.execute('PRAGMA table_info({0})'.format(self._table))
         return tuple(x[1] for x in cursor)
 
     def __iter__(self):

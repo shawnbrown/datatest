@@ -946,9 +946,16 @@ class TestSelector(unittest.TestCase):
                 ['b', 'x', '25']]
         self.source = Selector(data)
 
+    def test_empty_selector(self):
+        select = Selector()
+        self.assertEqual(repr(select), 'Selector()')
+
     def test_fieldnames(self):
         expected = ('label1', 'label2', 'value')
         self.assertEqual(self.source.fieldnames, expected)
+
+        select = Selector()  # <- Empty selector.
+        self.assertEqual(select.fieldnames, (), msg='should be empty tuple')
 
     def test_repr(self):
         data = [['A', 'B'], ['x', 100], ['y', 200]]
