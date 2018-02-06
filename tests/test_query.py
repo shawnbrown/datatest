@@ -957,6 +957,18 @@ class TestSelector(unittest.TestCase):
         select = Selector()  # <- Empty selector.
         self.assertEqual(select.fieldnames, (), msg='should be empty tuple')
 
+    def test_extend(self):
+        select = Selector()  # <- Empty selector.
+        self.assertEqual(select.fieldnames, ())
+
+        readerlike1 = [['col1', 'col2'], ['a', 1], ['b', 2]]
+        select.extend(readerlike1)
+        self.assertEqual(select.fieldnames, ('col1', 'col2'))
+
+        readerlike2 = [['col1', 'col3'], ['c', 'x'], ['d', 'y']]
+        select.extend(readerlike2)
+        self.assertEqual(select.fieldnames, ('col1', 'col2', 'col3'))
+
     def test_repr(self):
         data = [['A', 'B'], ['x', 100], ['y', 200]]
 

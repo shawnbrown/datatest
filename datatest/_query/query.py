@@ -951,8 +951,15 @@ class Selector(object):
         self._objs = self._expand_wildcards(objs)
         self._args = args
         self._kwds = kwds
+        self._extend_log = []
 
         self._load_data(self._objs, *args, **kwds)
+
+    def extend(self, objs, *args, **kwds):
+        """Appends data from the given *objs* to the existing selector."""
+        objs = self._expand_wildcards(objs)
+        self._load_data(objs, *args, **kwds)
+        self._extend_log.append((objs, args, kwds))
 
     def _expand_wildcards(self, objs):
         if not isinstance(objs, string_types):
