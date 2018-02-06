@@ -197,6 +197,24 @@ class TestFromCsvIterable(unittest.TestCase):
         ]
         self.assertEqual(list(reader), expected)
 
+    def test_fmtparams(self):
+        stream = self.get_stream((
+            b'|col1| |col2|\n'
+            b'|1| |a|\n'
+            b'|2| |b|\n'
+            b'|3| |c|\n'
+        ), encoding='utf-8')
+
+        fmtparams = {'delimiter': ' ', 'quotechar': '|'}
+        reader = _from_csv_iterable(stream, encoding='utf-8', **fmtparams)
+        expected = [
+            ['col1', 'col2'],
+            ['1', 'a'],
+            ['2', 'b'],
+            ['3', 'c'],
+        ]
+        self.assertEqual(list(reader), expected)
+
     def test_bad_types(self):
         bytes_literal = (
             b'col1,col2\n'
