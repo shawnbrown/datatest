@@ -944,55 +944,52 @@ def _register_function(connection, func_list):
 
 class Selector(object):
     """A class to quickly load and select tabular data."""
-    def __init__(self, data=None, *args, **kwds):
+    def __init__(self, objs=None, *args, **kwds):
         """Initialize self."""
-        global DEFAULT_CONNECTION
-
-        if not data:
-            data_list = []
-        elif isinstance(data, string_types):
-            data_list = glob(data)   # Get shell-style
-            if len(data_list) == 1:  # wildcard matches
-                data = data_list[0]  # and replace the
-            else:                    # original string.
-                data = data_list
-        elif not isinstance(data, list) \
-                or isinstance(data[0], (list, tuple)):  # Not a list or is a
-            data_list = [data]                          # reader-like list.
-        else:
-            data_list = data
-
-        cursor = DEFAULT_CONNECTION.cursor()
-
-        with savepoint(cursor):
-            table = new_table_name(cursor)
-            for obj in data_list:
-                self._load_data(cursor, table, obj, *args, **kwds)
-
         self._connection = DEFAULT_CONNECTION
-
-        if table_exists(cursor, table):  # If all given data objects
-            self._table = table          # are empty, then a table is
-        else:                            # not created so we need to
-            self._table = None           # check for this case.
-        self._data = data
+        self._table = None
+        self._objs = self._expand_wildcards(objs)
         self._args = args
         self._kwds = kwds
 
-    def _load_data(self, cursor, table, obj, *args, **kwds):
+        self._load_data(self._objs, *args, **kwds)
+
+    def _expand_wildcards(self, objs):
+        if not isinstance(objs, string_types):
+            return objs
+        matches = glob(objs)  # Get shell-style wildcard matches.
+        if len(matches) == 1:
+            matches = matches[0]  # Keep single-item as string.
+        return matches
+
+    def _load_data(self, objs, *args, **kwds):
+        if not objs:
+            obj_list = []
+        elif not isinstance(objs, list) \
+                or isinstance(objs[0], (list, tuple)):  # Not a list or is a
+            obj_list = [objs]                           # reader-like list.
+        else:
+            obj_list = objs
+
+        cursor = self._connection.cursor()
         with savepoint(cursor):
-            if ((
-                    isinstance(obj, string_types)
-                    and obj.lower().endswith('.csv')
-                ) or (
-                    isinstance(obj, file_types)
-                    and getattr(obj, 'name', '').lower().endswith('.csv')
-                )
-            ):
-                load_csv(cursor, table, obj, *args, **kwds)
-            else:
-                reader = get_reader(obj, *args, **kwds)
-                load_data(cursor, table, reader)
+            table = self._table or new_table_name(cursor)
+            for obj in obj_list:
+                if ((
+                        isinstance(obj, string_types)
+                        and obj.lower().endswith('.csv')
+                    ) or (
+                        isinstance(obj, file_types)
+                        and getattr(obj, 'name', '').lower().endswith('.csv')
+                    )
+                ):
+                    load_csv(cursor, table, obj, *args, **kwds)
+                else:
+                    reader = get_reader(obj, *args, **kwds)
+                    load_data(cursor, table, reader)
+
+        if not self._table and table_exists(cursor, table):
+            self._table = table
 
     def __repr__(self):
         """Return a string representation of the data source."""
@@ -1011,7 +1008,7 @@ class Selector(object):
         if kwds_repr:
             kwds_repr = ', ' + kwds_repr
 
-        return '{0}({1!r}{2}{3})'.format(cls_name, self._data, args_repr, kwds_repr)
+        return '{0}({1!r}{2}{3})'.format(cls_name, self._objs, args_repr, kwds_repr)
 
     @property
     def fieldnames(self):
