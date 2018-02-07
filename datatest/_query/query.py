@@ -948,18 +948,15 @@ class Selector(object):
         """Initialize self."""
         self._connection = DEFAULT_CONNECTION
         self._table = None
-        self._objs = self._expand_wildcards(objs)
-        self._args = args
-        self._kwds = kwds
-        self._extend_log = []
+        self._obj_strings = []
 
-        self._load_data(self._objs, *args, **kwds)
+        objs = self._expand_wildcards(objs)
+        self._load_data(objs, *args, **kwds)
 
     def extend(self, objs, *args, **kwds):
         """Appends data from the given *objs* to the existing selector."""
         objs = self._expand_wildcards(objs)
         self._load_data(objs, *args, **kwds)
-        self._extend_log.append((objs, args, kwds))
 
     def _expand_wildcards(self, objs):
         if not isinstance(objs, string_types):
@@ -995,32 +992,39 @@ class Selector(object):
                     reader = get_reader(obj, *args, **kwds)
                     load_data(cursor, table, reader)
 
+                self._append_obj_string(obj)
+
         if not self._table and table_exists(cursor, table):
             self._table = table
 
+    def _append_obj_string(self, obj):
+        """Get string for *obj*, limit to one line, and append to list."""
+        if not isinstance(obj, string_types):
+            obj_str = repr(obj)
+        else:
+            obj_str = obj
+
+        obj_str = obj_str.strip().replace(r'\r\n', ' ').replace(r'\n', ' ')
+        if len(obj_str) > 72:
+            obj_str = '{0}...{1}'.format(obj_str[:64], obj_str[-5:])
+        self._obj_strings.append(obj_str)
+
     def __repr__(self):
         """Return a string representation of the data source."""
-        get_repr = lambda x: getattr(x, '__name__', repr(x))
-        get_name = lambda x: getattr(x, '__name__', str(x))
+        default_repr = super(Selector, self).__repr__()
 
-        cls_name = self.__class__.__name__
-
-        if self._objs:
-            objs_repr = repr(self._objs)
+        if self._obj_strings:
+            count_of_strings = len(self._obj_strings)
+            sorted_strings = sorted(self._obj_strings)
+            additional_info = 'Data from {0} source{1}:\n {2}'.format(
+                count_of_strings,
+                '' if count_of_strings == 1 else 's',
+                '\n '.join(sorted_strings),
+            )
         else:
-            objs_repr = ''
+            additional_info = 'Empty - contains no data.'
 
-        args_repr = ', '.join(get_repr(x) for x in self._args)
-        if args_repr:
-            args_repr = ', ' + args_repr
-
-        kwds_repr = [(get_name(k), get_repr(v)) for k, v in self._kwds.items()]
-        kwds_repr = ['{0}={1}'.format(k, v) for k, v in kwds_repr]
-        kwds_repr = ', '.join(x for x in kwds_repr)
-        if kwds_repr:
-            kwds_repr = ', ' + kwds_repr
-
-        return '{0}({1}{2}{3})'.format(cls_name, objs_repr, args_repr, kwds_repr)
+        return '{0}\n{1}'.format(default_repr, additional_info)
 
     @property
     def fieldnames(self):

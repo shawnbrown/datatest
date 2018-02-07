@@ -948,7 +948,6 @@ class TestSelector(unittest.TestCase):
 
     def test_empty_selector(self):
         select = Selector()
-        self.assertEqual(repr(select), 'Selector()')
 
     def test_fieldnames(self):
         expected = ('label1', 'label2', 'value')
@@ -972,41 +971,44 @@ class TestSelector(unittest.TestCase):
     def test_repr(self):
         data = [['A', 'B'], ['x', 100], ['y', 200]]
 
+        # Empty selector.
+        select = Selector()
+        regex = ('^<datatest.Selector object at [^\n>]+>\n'
+                 'Empty - contains no data\.$')
+        self.assertRegex(repr(select), regex)
+
         # Data-only (no args)
         source = Selector(data)
-        expected = 'Selector({0!r})'.format(data)
-        self.assertEqual(repr(source), expected)
+        regex = ("^<datatest.Selector object at [^\n>]+>\n"
+                 "Data from 1 source:\n"
+                 " {0}$".format(re.escape(repr(data))))
+        self.assertRegex(repr(source), regex)
 
-        # Data and args.
+        # Data with args and kwds.
         iterable = iter(data)
-        foo = 'foo'           # <- String.
-        def bar(x): return x  # <- Function.
-        baz = lambda x: x     # <- Lambda.
-        source = Selector(iterable, 'foo', bar, baz)
-        self.assertTrue(repr(source).startswith("Selector(<"), msg=repr(source))
-        self.assertTrue(repr(source).endswith(">, 'foo', bar, <lambda>)"), msg=repr(source))
+        source = Selector(iterable, 'foo', bar='baz')  # Args don't change repr.
+        regex = ('<datatest.Selector object at [^\n>]+>\n'
+                 'Data from 1 source:\n'
+                 ' <[a-z_]+ object at [^\n>]+>')
+        self.assertRegex(repr(source), regex)
 
-        # Data and kwds.
-        iterable = iter(data)
-        foo = 'foo'
-        def bar(x):
-            return x
-        source = Selector(iterable, kwd1='foo', kwd2=bar)
-        source_repr = repr(source)
-        self.assertTrue(source_repr.startswith("Selector(<"))
-        self.assertTrue(
-            (
-                source_repr.endswith(">, kwd1='foo', kwd2=bar)")
-                or source_repr.endswith(">, kwd2=bar, kwd1='foo')")
-            ),
-            msg=repr(source)
-        )
+        # Extended after instantiation.
+        data1 = [['A', 'B'], ['x', 100]]
+        data2 = [['A', 'B'], ['y', 200]]
+        data3 = [['A', 'B'], ['z', 300]]
+        source = Selector(data1)
+        source.extend(data2)
+        source.extend(data3)
 
-        # Data, args, and kwds.
-        iterable = iter(data)
-        source = Selector(iterable, 'foo', kwd1='bar')
-        self.assertTrue(repr(source).startswith("Selector(<"), msg=repr(source))
-        self.assertTrue(repr(source).endswith(">, 'foo', kwd1='bar')"), msg=repr(source))
+        actual_repr = repr(source)
+        self.assertTrue(actual_repr.startswith('<datatest.Selector object at'))
+        self.assertTrue(actual_repr.endswith(
+            ">\n"
+            "Data from 3 sources:\n"
+            " [['A', 'B'], ['x', 100]]\n"
+            " [['A', 'B'], ['y', 200]]\n"
+            " [['A', 'B'], ['z', 300]]"
+        ))
 
     def test_build_where_clause(self):
         _build_where_clause = Selector._build_where_clause
