@@ -956,16 +956,16 @@ class TestSelector(unittest.TestCase):
         select = Selector()  # <- Empty selector.
         self.assertEqual(select.fieldnames, (), msg='should be empty tuple')
 
-    def test_extend(self):
+    def test_load_data(self):
         select = Selector()  # <- Empty selector.
         self.assertEqual(select.fieldnames, ())
 
         readerlike1 = [['col1', 'col2'], ['a', 1], ['b', 2]]
-        select.extend(readerlike1)
+        select.load_data(readerlike1)
         self.assertEqual(select.fieldnames, ('col1', 'col2'))
 
         readerlike2 = [['col1', 'col3'], ['c', 'x'], ['d', 'y']]
-        select.extend(readerlike2)
+        select.load_data(readerlike2)
         self.assertEqual(select.fieldnames, ('col1', 'col2', 'col3'))
 
     def test_repr(self):
@@ -997,8 +997,8 @@ class TestSelector(unittest.TestCase):
         data2 = [['A', 'B'], ['y', 200]]
         data3 = [['A', 'B'], ['z', 300]]
         source = Selector(data1)
-        source.extend(data2)
-        source.extend(data3)
+        source.load_data(data2)
+        source.load_data(data3)
 
         actual_repr = repr(source)
         self.assertTrue(actual_repr.startswith('<datatest.Selector object at'))

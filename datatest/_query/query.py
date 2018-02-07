@@ -949,26 +949,15 @@ class Selector(object):
         self._connection = DEFAULT_CONNECTION
         self._table = None
         self._obj_strings = []
+        self.load_data(objs, *args, **kwds)
 
-        objs = self._expand_wildcards(objs)
-        self._load_data(objs, *args, **kwds)
-
-    def extend(self, objs, *args, **kwds):
-        """Appends data from the given *objs* to the existing selector."""
-        objs = self._expand_wildcards(objs)
-        self._load_data(objs, *args, **kwds)
-
-    def _expand_wildcards(self, objs):
-        if not isinstance(objs, string_types):
-            return objs
-        matches = glob(objs)  # Get shell-style wildcard matches.
-        if len(matches) == 1:
-            matches = matches[0]  # Keep single-item as string.
-        return matches
-
-    def _load_data(self, objs, *args, **kwds):
+    def load_data(self, objs, *args, **kwds):
+        """Load data from one or more objects into the selector."""
         if not objs:
-            obj_list = []
+            return  # <- EXIT!
+
+        if isinstance(objs, string_types):
+            obj_list = glob(objs)  # Get shell-style wildcard matches.
         elif not isinstance(objs, list) \
                 or isinstance(objs[0], (list, tuple)):  # Not a list or is a
             obj_list = [objs]                           # reader-like list.
