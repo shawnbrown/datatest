@@ -952,7 +952,7 @@ class Selector(object):
         self.load_data(objs, *args, **kwds)
 
     def load_data(self, objs, *args, **kwds):
-        """Load data from one or more objects into the selector."""
+        """Load data from one or more objects."""
         if not objs:
             return  # <- EXIT!
 
@@ -993,7 +993,7 @@ class Selector(object):
         else:
             obj_str = obj
 
-        obj_str = obj_str.strip().replace(r'\r\n', ' ').replace(r'\n', ' ')
+        obj_str = obj_str.strip().replace('\r\n', ' ').replace('\n', ' ')
         if len(obj_str) > 72:
             obj_str = '{0}...{1}'.format(obj_str[:64], obj_str[-5:])
         self._obj_strings.append(obj_str)
