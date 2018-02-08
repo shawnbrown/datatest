@@ -24,6 +24,7 @@ from .._utils import file_types
 from .._utils import string_types
 from .._load.get_reader import get_reader
 from .._load.load_csv import load_csv
+from .._load.temptable import drop_table
 from .._load.temptable import load_data
 from .._load.temptable import new_table_name
 from .._load.temptable import savepoint
@@ -1014,6 +1015,11 @@ class Selector(object):
             additional_info = 'Empty - contains no data.'
 
         return '{0}\n{1}'.format(default_repr, additional_info)
+
+    def __del__(self):
+        """Drop the underlying table when selector is garbage collected."""
+        cursor = self._connection.cursor()
+        drop_table(cursor, self._table)
 
     @property
     def fieldnames(self):
