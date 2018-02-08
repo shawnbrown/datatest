@@ -118,6 +118,7 @@ def alter_table(cursor, table, columns, default="''"):
 
 
 def drop_table(cursor, table):
+    table = normalize_names(table)
     cursor.execute('DROP TABLE IF EXISTS {0}'.format(table))
 
 
