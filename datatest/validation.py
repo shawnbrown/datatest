@@ -1,6 +1,7 @@
 """Validation and comparison handling."""
 import difflib
 import re
+import sys
 from ._compatibility import itertools
 from ._compatibility import collections
 from ._compatibility.builtins import callable
@@ -292,17 +293,57 @@ def _normalize_mapping_result(result):
     return None
 
 
+def _normalize_data(data):
+    if isinstance(data, Query):
+        return data()  # <- EXIT! (Returns Result for lazy evaluation.)
+
+    pandas = sys.modules.get('pandas', None)
+    if pandas:
+        is_series = isinstance(data, pandas.Series)
+        is_dataframe = isinstance(data, pandas.DataFrame)
+
+        if (is_series or is_dataframe) and data.index.has_duplicates:
+            cls_name = data.__class__.__name__
+            raise ValueError(('{0} index contains duplicates, must '
+                              'be unique').format(cls_name))
+
+        if is_series:
+            return DictItems(data.iteritems())  # <- EXIT!
+
+        if is_dataframe:
+            gen = ((x[0], x[1:]) for x in data.itertuples())
+            if len(data.columns) == 1:
+                gen = ((k, v[0]) for k, v in gen)  # Unwrap if 1-tuple.
+            return DictItems(gen)  # <- EXIT!
+
+    return data
+
+
+def _normalize_requirement(requirement):
+    requirement = _normalize_data(requirement)
+
+    if isinstance(requirement, Result):
+        return requirement.fetch()  # <- Eagerly evaluate.
+
+    if isinstance(requirement, DictItems):
+        return dict(requirement)
+
+    if isinstance(requirement, collections.Iterable) \
+            and exhaustible(requirement):
+        cls_name = requirement.__class__.__name__
+        raise TypeError(("exhaustible type '{0}' cannot be used "
+                         "as a requirement").format(cls_name))
+
+    return requirement
+
+
 def _get_invalid_info(data, requirement):
     """If data is invalid, return a 2-tuple containing a default-message
     string and an iterable of differences. If data is not invalid,
     return None.
     """
-    # Normalize *data* and *requirement* objects.
-    if isinstance(data, Query):
-        data = data()  # <- Consumable iterator (for lazy evaluation).
-
-    if isinstance(requirement, (Query, Result)):
-        requirement = requirement.fetch()  # <- Eagerly evaluated.
+    data = _normalize_data(data)
+    requirement = _normalize_requirement(requirement)
 
     # Get default-message and differences (if any exist).
     if isinstance(requirement, collections.Mapping):

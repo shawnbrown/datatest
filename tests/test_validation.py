@@ -19,10 +19,20 @@ from datatest.validation import _require_equality
 from datatest.validation import _require_single_equality
 from datatest.validation import _get_msg_and_func
 from datatest.validation import _apply_mapping_requirement
+from datatest.validation import _normalize_data
+from datatest.validation import _normalize_requirement
 from datatest.validation import _get_invalid_info
 from datatest.validation import ValidationError
 from datatest.validation import is_valid
 from datatest.validation import validate
+
+from datatest._query.query import DictItems
+from datatest._query.query import Result
+
+try:
+    import pandas
+except ImportError:
+    pandas = None
 
 
 class TestRequireSequence(unittest.TestCase):
@@ -486,6 +496,78 @@ class TestApplyMappingRequirement(unittest.TestCase):
 
         result = _apply_mapping_requirement(empty, nonempty)
         self.assertEqual(dict(result), {'a': [Missing('x')]})
+
+
+class TestDataRequirementNormalization(unittest.TestCase):
+    def test_normalize_data(self):
+        data = [1, 2, 3]
+        self.assertIs(_normalize_data(data), data, 'should return original object')
+
+        data = iter([1, 2, 3])
+        self.assertIs(_normalize_data(data), data, 'should return original object')
+
+    @unittest.skipIf(not pandas, 'pandas not found')
+    def test_normalize_pandas_dataframe(self):
+        df = pandas.DataFrame([(1, 'a'), (2, 'b'), (3, 'c')])
+        result = _normalize_data(df)
+        self.assertIsInstance(result, DictItems)
+        expected = {0: (1, 'a'), 1: (2, 'b'), 2: (3, 'c')}
+        self.assertEqual(dict(result), expected)
+
+        # Single column.
+        df = pandas.DataFrame([('x',), ('y',), ('z',)])
+        result = _normalize_data(df)
+        self.assertIsInstance(result, DictItems)
+        expected = {0: 'x', 1: 'y', 2: 'z'}
+        self.assertEqual(dict(result), expected, 'single column should be unwrapped')
+
+        # Multi-index.
+        df = pandas.DataFrame([('x',), ('y',), ('z',)])
+        df.index = pandas.MultiIndex.from_tuples([(0, 0), (0, 1), (1, 0)])
+        result = _normalize_data(df)
+        self.assertIsInstance(result, DictItems)
+        expected = {(0, 0): 'x', (0, 1): 'y', (1, 0): 'z'}
+        self.assertEqual(dict(result), expected, 'multi-index should be tuples')
+
+        # Indexes must contain unique values, no duplicates
+        df = pandas.DataFrame([('x',), ('y',), ('z',)])
+        df.index = pandas.Index([0, 0, 1])  # <- Duplicate values.
+        with self.assertRaises(ValueError):
+            _normalize_data(df)
+
+    @unittest.skipIf(not pandas, 'pandas not found')
+    def test_normalize_pandas_series(self):
+        s = pandas.Series(['x', 'y', 'z'])
+        result = _normalize_data(s)
+        self.assertIsInstance(result, DictItems)
+        expected = {0: 'x', 1: 'y', 2: 'z'}
+        self.assertEqual(dict(result), expected)
+
+        # Multi-index.
+        s = pandas.Series(['x', 'y', 'z'])
+        s.index = pandas.MultiIndex.from_tuples([(0, 0), (0, 1), (1, 0)])
+        result = _normalize_data(s)
+        self.assertIsInstance(result, DictItems)
+        expected = {(0, 0): 'x', (0, 1): 'y', (1, 0): 'z'}
+        self.assertEqual(dict(result), expected, 'multi-index should be tuples')
+
+    def test_normalize_requirement(self):
+        requirement = [1, 2, 3]
+        self.assertIs(_normalize_requirement(requirement), requirement,
+            msg='should return original object')
+
+        with self.assertRaises(TypeError, msg='cannot use generic iter'):
+            _normalize_requirement(iter([1, 2, 3]))
+
+        result_obj = Result(iter([1, 2, 3]), evaluation_type=tuple)
+        output = _normalize_requirement(result_obj)
+        self.assertIsInstance(output, tuple)
+        self.assertEqual(output, (1, 2, 3))
+
+        items = DictItems(iter([(0, 'x'), (1, 'y'), (2, 'z')]))
+        output = _normalize_requirement(items)
+        self.assertIsInstance(output, dict)
+        self.assertEqual(output, {0: 'x', 1: 'y', 2: 'z'})
 
 
 class TestGetDifferenceInfo(unittest.TestCase):
