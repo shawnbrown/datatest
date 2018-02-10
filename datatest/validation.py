@@ -343,6 +343,8 @@ def _get_invalid_info(data, requirement):
     return None.
     """
     data = _normalize_data(data)
+    if isinstance(data, collections.Mapping):
+        data = getattr(data, 'iteritems', data.items)()
     requirement = _normalize_requirement(requirement)
 
     # Get default-message and differences (if any exist).
@@ -350,10 +352,12 @@ def _get_invalid_info(data, requirement):
         default_msg = 'does not satisfy mapping requirement'
         diffs = _apply_mapping_requirement(data, requirement)
         diffs = _normalize_mapping_result(diffs)
-    elif isinstance(data, collections.Mapping):
-        default_msg, require_func = _get_msg_and_func(data, requirement)
-        items = getattr(data, 'iteritems', data.items)()
-        diffs = ((k, require_func(v, requirement)) for k, v in items)
+    elif _is_collection_of_items(data):
+        data = iter(data)
+        data_key, data_value = next(data)
+        data = itertools.chain([(data_key, data_value)], data)
+        default_msg, require_func = _get_msg_and_func(data_value, requirement)
+        diffs = ((k, require_func(v, requirement)) for k, v in data)
         iter_to_list = lambda x: x if isinstance(x, BaseElement) else list(x)
         diffs = ((k, iter_to_list(v)) for k, v in diffs if v)
         diffs = _normalize_mapping_result(diffs)

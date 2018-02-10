@@ -589,8 +589,29 @@ class TestGetDifferenceInfo(unittest.TestCase):
         with self.assertRaises(TypeError):
             _get_invalid_info(set(['x', 'y']), mapping2)
 
+    def test_dictitems_data(self):
+        """"When *data* is an exhaustible iterator of dict-items and
+        *requirement* is a non-mapping.
+        """
+        items = DictItems(iter([('a', 'x'), ('b', 'y')]))
+        x_or_y = lambda value: value == 'x' or value == 'y'
+        result = _get_invalid_info(items, x_or_y)
+        self.assertIsNone(result)
+
+        items = DictItems(iter([('a', 'x'), ('b', 'y')]))
+        msg, diffs = _get_invalid_info(items, 'x')  # <- string
+        self.assertTrue(exhaustible(diffs))
+        self.assertEqual(dict(diffs), {'b': Invalid('y', expected='x')})
+
+        items = DictItems(iter([('a', 'x'), ('b', 'y')]))
+        msg, diffs = _get_invalid_info(items, set('x'))  # <- set
+        self.assertTrue(exhaustible(diffs))
+        self.assertEqual(dict(diffs), {'b': [Missing('x'), Extra('y')]})
+
     def test_mapping_data(self):
-        """"When *data* is a mapping but *requirement* is a non-mapping."""
+        """"When *data* is a mapping, it should get converted into an
+        exhaustible iterator of dict-items.
+        """
         mapping = {'a': 'x', 'b': 'y'}
 
         x_or_y = lambda value: value == 'x' or value == 'y'
