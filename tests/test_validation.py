@@ -16,7 +16,9 @@ from datatest.validation import _require_set
 from datatest.validation import _require_callable
 from datatest.validation import _require_regex
 from datatest.validation import _require_equality
+from datatest.validation import _require_single_equality_base
 from datatest.validation import _require_single_equality
+from datatest.validation import _require_single_equality_show_expected
 from datatest.validation import _get_msg_and_func
 from datatest.validation import _apply_mapping_requirement
 from datatest.validation import _normalize_data
@@ -320,39 +322,39 @@ class TestRequireSingleEquality(unittest.TestCase):
                 return NotImplemented
 
         requirement = EqualsAll()
-        result = _require_single_equality('A', requirement)
+        result = _require_single_equality_base('A', requirement, True)
         self.assertEqual(requirement.times_called, 1)
 
     def test_all_true(self):
-        result = _require_single_equality('A', 'A')
+        result = _require_single_equality_base('A', 'A', True)
         self.assertIsNone(result)
 
     def test_some_invalid(self):
-        result = _require_single_equality('XX', 'A')
+        result = _require_single_equality_base('XX', 'A', True)
         self.assertEqual(result, Invalid('XX', 'A'))
 
     def test_deviation(self):
-        result = _require_single_equality(11, 10)
+        result = _require_single_equality_base(11, 10, True)
         self.assertEqual(result, Deviation(+1, 10))
 
     def test_invalid(self):
-        result = _require_single_equality('XX', 10)
+        result = _require_single_equality_base('XX', 10, True)
         self.assertEqual(result, Invalid('XX', 10))
 
     def test_dict_comparison(self):
-        result = _require_single_equality({'a': 1}, {'a': 2})
+        result = _require_single_equality_base({'a': 1}, {'a': 2}, True)
         self.assertEqual(result, Invalid({'a': 1}, {'a': 2}))
 
     def test_broken_comparison(self):
         class BadClass(object):
             def __eq__(self, other):
-                raise Exception("I have betrayed you!")
+                raise Exception('I have betrayed you!')
 
             def __hash__(self):
                 return hash((self.__class__, 101))
 
         bad_instance = BadClass()
-        result = _require_single_equality(bad_instance, 10)
+        result = _require_single_equality_base(bad_instance, 10, True)
         self.assertEqual(result, Invalid(bad_instance, 10))
 
 
@@ -582,9 +584,10 @@ class TestGetDifferenceInfo(unittest.TestCase):
         info = _get_invalid_info(mapping1, mapping1)
         self.assertIsNone(info)
 
+        # This next test uses _require_single_equality_show_expected() internally.
         msg, diffs = _get_invalid_info(mapping1, mapping2)
         self.assertTrue(exhaustible(diffs))
-        self.assertEqual(dict(diffs), {'b': Invalid('y', expected='z')})
+        self.assertEqual(dict(diffs), {'b': Invalid('y', expected='z')})  # <- SHOWS EXPECTED!
 
         with self.assertRaises(TypeError):
             _get_invalid_info(set(['x', 'y']), mapping2)
@@ -601,7 +604,7 @@ class TestGetDifferenceInfo(unittest.TestCase):
         items = DictItems(iter([('a', 'x'), ('b', 'y')]))
         msg, diffs = _get_invalid_info(items, 'x')  # <- string
         self.assertTrue(exhaustible(diffs))
-        self.assertEqual(dict(diffs), {'b': Invalid('y', expected='x')})
+        self.assertEqual(dict(diffs), {'b': Invalid('y')})
 
         items = DictItems(iter([('a', 'x'), ('b', 'y')]))
         msg, diffs = _get_invalid_info(items, set('x'))  # <- set
@@ -620,7 +623,7 @@ class TestGetDifferenceInfo(unittest.TestCase):
 
         msg, diffs = _get_invalid_info(mapping, 'x')  # <- string
         self.assertTrue(exhaustible(diffs))
-        self.assertEqual(dict(diffs), {'b': Invalid('y', expected='x')})
+        self.assertEqual(dict(diffs), {'b': Invalid('y')})
 
         msg, diffs = _get_invalid_info(mapping, set('x'))  # <- set
         self.assertTrue(exhaustible(diffs))
