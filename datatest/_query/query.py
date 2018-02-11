@@ -15,6 +15,7 @@ from .._compatibility import functools
 from .._compatibility import itertools
 from .._utils import _expects_multiple_params
 from .._utils import _flatten
+from .._utils import iterpeek
 from .._utils import nonstringiter
 from .._utils import sortable
 from .._utils import exhaustible
@@ -85,14 +86,7 @@ class DictItems(collections.Iterator):
             while hasattr(iterable, '__wrapped__'):
                 iterable = iterable.__wrapped__
 
-            # Get first item and rebuild iterable.
-            iterable = iter(iterable)
-            try:
-                first_item = next(iterable)
-                iterable = itertools.chain([first_item], iterable)
-            except StopIteration:
-                first_item = None
-                iterable = iter([])
+            first_item, iterable = iterpeek(iterable)
 
             # Assert that first item contains a suitable key-value pair.
             if first_item:
@@ -115,7 +109,7 @@ class DictItems(collections.Iterator):
                         'unhashable type {0}: {1!r}'
                     ).format(first_key.__class__.__name__, first_key))
 
-        self.__wrapped__ = iterable
+        self.__wrapped__ = iter(iterable)
 
     def __iter__(self):
         return self
@@ -960,8 +954,8 @@ class Selector(object):
         if isinstance(objs, string_types):
             obj_list = glob(objs)  # Get shell-style wildcard matches.
         elif not isinstance(objs, list) \
-                or isinstance(objs[0], (list, tuple)):  # Not a list or is a
-            obj_list = [objs]                           # reader-like list.
+                or isinstance(objs[0], (list, tuple, dict)):  # Not a list or is a
+            obj_list = [objs]                                 # reader-like list.
         else:
             obj_list = objs
 
