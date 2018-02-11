@@ -7,6 +7,7 @@ from ._compatibility import collections
 from ._compatibility.builtins import callable
 from ._utils import nonstringiter
 from ._utils import exhaustible
+from ._utils import iterpeek
 from ._utils import _safesort_key
 from ._query.query import (
     BaseElement,
@@ -180,11 +181,10 @@ def _require_callable(data, function):
 
     results = (wrapped(elem) for elem in data)
     diffs = (diff for diff in results if diff)
-    first_element = next(diffs, None)
-    if first_element:
-        return itertools.chain([first_element], diffs)  # <- EXIT!
+    first_element, diffs = iterpeek(diffs)
+    if first_element:  # If not empty, return diffs.
+        return diffs
     return None
-
 
 def _require_regex(data, regex):
     search = regex.search  # Assign locally to minimize dot-lookups.
@@ -206,9 +206,9 @@ def _require_equality(data, other):
     diffs = (func(elem) for elem in data)
     diffs = (x for x in diffs if x)
 
-    first_element = next(diffs, None)
-    if first_element:
-        return itertools.chain([first_element], diffs)  # <- EXIT!
+    first_element, diffs = iterpeek(diffs)
+    if first_element:  # If not empty, return diffs.
+        return diffs
     return None
 
 
@@ -304,10 +304,10 @@ def _normalize_mapping_result(result):
     """Accepts an iterator of dictionary items and returns a DictItems
     object or None.
     """
-    first_element = next(result, None)
+    first_element, result = iterpeek(result)
     if first_element:
         assert len(first_element) == 2, 'expects tuples of key-value pairs'
-        return DictItems(itertools.chain([first_element], result))  # <- EXIT!
+        return DictItems(result)  # <- EXIT!
     return None
 
 
@@ -372,10 +372,8 @@ def _get_invalid_info(data, requirement):
         diffs = _apply_mapping_requirement(data, requirement)
         diffs = _normalize_mapping_result(diffs)
     elif _is_collection_of_items(data):
-        data = iter(data)
-        data_key, data_value = next(data)
-        data = itertools.chain([(data_key, data_value)], data)
-        default_msg, require_func = _get_msg_and_func(data_value, requirement)
+        first_item, data = iterpeek(data)
+        default_msg, require_func = _get_msg_and_func(first_item[1], requirement)
         diffs = ((k, require_func(v, requirement)) for k, v in data)
         iter_to_list = lambda x: x if isinstance(x, BaseElement) else list(x)
         diffs = ((k, iter_to_list(v)) for k, v in diffs if v)

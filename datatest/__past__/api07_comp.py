@@ -9,6 +9,7 @@ from .._compatibility import itertools
 
 from .._utils import _expects_multiple_params
 from .._utils import nonstringiter
+from .._utils import iterpeek
 from .._utils import _unique_everseen
 from .api07_diffs import xExtra
 from .api07_diffs import xMissing
@@ -190,9 +191,7 @@ class CompareSet(BaseCompare, set):
             if isinstance(data, collections.Set):
                 first_value = next(iter(data))
             else:
-                data = iter(data)
-                first_value = next(data)
-                data = itertools.chain([first_value], data)  # Rebuild original.
+                first_value, data = iterpeek(data)
         except StopIteration:
             first_value = None
 

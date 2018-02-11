@@ -4,9 +4,9 @@ import io
 import sys
 
 from .._compatibility.collections import Iterable
-from .._compatibility.itertools import chain
 from .._utils import string_types
 from .._utils import file_types
+from .._utils import iterpeek
 
 
 ########################################################################
@@ -158,9 +158,7 @@ class get_reader(object):
                     return cls.from_pandas(obj, *args, **kwds)
 
             if isinstance(obj, Iterable):
-                iterator = iter(obj)
-                first_value = next(iterator, None)
-                iterator = chain([first_value], iterator)
+                first_value, iterator = iterpeek(obj)
 
                 if isinstance(first_value, dict):
                     return cls.from_dicts(iterator, *args, **kwds)
@@ -186,10 +184,8 @@ class get_reader(object):
             fieldnames = list(fieldnames)  # Needs to be a sequence.
             yield fieldnames  # Header row.
         else:
-            records = iter(records)
-            first_record = next(records, None)
+            first_record, records = iterpeek(records)
             if first_record:
-                records = chain([first_record], records)
                 fieldnames = list(first_record.keys())
                 yield fieldnames  # Header row.
 

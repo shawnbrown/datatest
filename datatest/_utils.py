@@ -7,6 +7,8 @@ from numbers import Number
 from sys import version_info as _version_info
 from ._compatibility.collections import Iterable
 from ._compatibility.decimal import Decimal
+from ._compatibility.itertools import chain
+from ._compatibility.itertools import islice
 from ._compatibility.itertools import filterfalse
 
 
@@ -42,6 +44,18 @@ def exhaustible(iterable):
     # Above: This works because exhaustible iterators return themselves
     # when passed to iter() but non-exhaustible iterables will return
     # newly created iterators.
+
+
+def iterpeek(iterable):
+    if exhaustible(iterable):
+        try:
+            first_item = next(iterable)
+            iterable = chain([first_item], iterable)
+        except StopIteration:
+            first_item = None
+    else:
+        first_item = next(iter(iterable), None)
+    return first_item, iterable
 
 
 def _safesort_key(obj):

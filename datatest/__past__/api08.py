@@ -14,6 +14,7 @@ from datatest._load.temptable import table_exists
 from datatest._query.query import DEFAULT_CONNECTION
 from datatest._utils import file_types
 from datatest._utils import string_types
+from datatest._utils import iterpeek
 from datatest.difference import NOTFOUND
 
 
@@ -23,10 +24,7 @@ datatest.DataResult = datatest.Result
 
 class DataSource(datatest.Selector):
     def __init__(self, data, fieldnames=None):
-        iterator = iter(data)
-        first_value = next(iterator, None)
-        iterator = itertools.chain([first_value], iterator)
-
+        first_value, iterator = iterpeek(data)
         if isinstance(first_value, dict):
             if not fieldnames:
                 fieldnames = list(first_value.keys())
