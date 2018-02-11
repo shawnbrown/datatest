@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import sqlite3
-from collections import Iterable
-from collections import Mapping
-from itertools import count
-from itertools import chain
+from .._compatibility.collections import Iterable
+from .._compatibility.collections import Mapping
+from .._compatibility.itertools import count
+from .._compatibility.itertools import chain
 
 
 try:
