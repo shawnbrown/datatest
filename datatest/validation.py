@@ -317,22 +317,22 @@ def _normalize_data(data):
 
     pandas = sys.modules.get('pandas', None)
     if pandas:
-        is_series = isinstance(data, pandas.Series)
-        is_dataframe = isinstance(data, pandas.DataFrame)
+        try:
+            if isinstance(data, pandas.Series):
+                assert data.index.is_unique
+                return DictItems(data.iteritems())  # <- EXIT!
 
-        if (is_series or is_dataframe) and data.index.has_duplicates:
+            if isinstance(data, pandas.DataFrame):
+                assert data.index.is_unique
+                gen = ((x[0], x[1:]) for x in data.itertuples())
+                if len(data.columns) == 1:
+                    gen = ((k, v[0]) for k, v in gen)  # Unwrap if 1-tuple.
+                return DictItems(gen)  # <- EXIT!
+
+        except AssertionError:
             cls_name = data.__class__.__name__
             raise ValueError(('{0} index contains duplicates, must '
                               'be unique').format(cls_name))
-
-        if is_series:
-            return DictItems(data.iteritems())  # <- EXIT!
-
-        if is_dataframe:
-            gen = ((x[0], x[1:]) for x in data.itertuples())
-            if len(data.columns) == 1:
-                gen = ((k, v[0]) for k, v in gen)  # Unwrap if 1-tuple.
-            return DictItems(gen)  # <- EXIT!
 
     numpy = sys.modules.get('numpy', None)
     if numpy and isinstance(data, numpy.ndarray):
