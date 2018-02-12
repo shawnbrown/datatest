@@ -36,6 +36,11 @@ try:
 except ImportError:
     pandas = None
 
+try:
+    import numpy
+except ImportError:
+    numpy = None
+
 
 class TestRequireSequence(unittest.TestCase):
     def test_no_difference(self):
@@ -552,6 +557,53 @@ class TestDataRequirementNormalization(unittest.TestCase):
         self.assertIsInstance(result, DictItems)
         expected = {(0, 0): 'x', (0, 1): 'y', (1, 0): 'z'}
         self.assertEqual(dict(result), expected, 'multi-index should be tuples')
+
+    @unittest.skipIf(not numpy, 'numpy not found')
+    def test_normalize_numpy(self):
+        # Two-dimentional array.
+        arr = numpy.array([['a', 'x'], ['b', 'y']])
+        lazy = _normalize_data(arr)
+        self.assertIsInstance(lazy, Result)
+        self.assertEqual(lazy.fetch(), [('a', 'x'), ('b', 'y')])
+
+        # Two-valued structured array.
+        arr = numpy.array([('a', 1), ('b', 2)],
+                          dtype=[('one', 'U10'), ('two', 'i4')])
+        lazy = _normalize_data(arr)
+        self.assertIsInstance(lazy, Result)
+        self.assertEqual(lazy.fetch(), [('a', 1), ('b', 2)])
+
+        # Two-valued recarray (record array).
+        arr = numpy.rec.array([('a', 1), ('b', 2)],
+                              dtype=[('one', 'U10'), ('two', 'i4')])
+        lazy = _normalize_data(arr)
+        self.assertIsInstance(lazy, Result)
+        self.assertEqual(lazy.fetch(), [('a', 1), ('b', 2)])
+
+        # One-dimentional array.
+        arr = numpy.array(['x', 'y', 'z'])
+        lazy = _normalize_data(arr)
+        self.assertIsInstance(lazy, Result)
+        self.assertEqual(lazy.fetch(), ['x', 'y', 'z'])
+
+        # Single-valued structured array.
+        arr = numpy.array([('x',), ('y',), ('z',)],
+                          dtype=[('one', 'U10')])
+        lazy = _normalize_data(arr)
+        self.assertIsInstance(lazy, Result)
+        self.assertEqual(lazy.fetch(), ['x', 'y', 'z'])
+
+        # Single-valued recarray (record array).
+        arr = numpy.rec.array([('x',), ('y',), ('z',)],
+                              dtype=[('one', 'U10')])
+        lazy = _normalize_data(arr)
+        self.assertIsInstance(lazy, Result)
+        self.assertEqual(lazy.fetch(), ['x', 'y', 'z'])
+
+        # Three-dimentional array--conversion is not supported.
+        arr = numpy.array([[[1, 3], ['a', 'x']], [[2, 4], ['b', 'y']]])
+        result = _normalize_data(arr)
+        self.assertIs(result, arr, msg='unsupported, returns unchanged')
 
     def test_normalize_requirement(self):
         requirement = [1, 2, 3]

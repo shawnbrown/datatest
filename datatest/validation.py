@@ -334,6 +334,21 @@ def _normalize_data(data):
                 gen = ((k, v[0]) for k, v in gen)  # Unwrap if 1-tuple.
             return DictItems(gen)  # <- EXIT!
 
+    numpy = sys.modules.get('numpy', None)
+    if numpy and isinstance(data, numpy.ndarray):
+        # Two-dimentional array, recarray, or structured array.
+        if data.ndim == 2 or (data.ndim == 1 and len(data.dtype) > 1):
+            data = (tuple(x) for x in data)
+            return Result(data, evaluation_type=list)  # <- EXIT!
+
+        # One-dimentional array, recarray, or structured array.
+        if data.ndim == 1:
+            if len(data.dtype) == 1:         # Unpack single-valued recarray
+                data = (x[0] for x in data)  # or structured array.
+            else:
+                data = iter(data)
+            return Result(data, evaluation_type=list)  # <- EXIT!
+
     return data
 
 
