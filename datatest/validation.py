@@ -186,6 +186,7 @@ def _require_callable(data, function):
         return diffs
     return None
 
+
 def _require_regex(data, regex):
     search = regex.search  # Assign locally to minimize dot-lookups.
     func = lambda element: search(element) is not None
