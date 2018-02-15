@@ -2,14 +2,16 @@
 """Utility helper functions."""
 from __future__ import absolute_import
 import inspect
+import re
 from io import IOBase
 from numbers import Number
 from sys import version_info as _version_info
+from ._compatibility.builtins import callable
 from ._compatibility.collections import Iterable
 from ._compatibility.decimal import Decimal
 from ._compatibility.itertools import chain
-from ._compatibility.itertools import islice
 from ._compatibility.itertools import filterfalse
+from ._compatibility.itertools import islice
 
 
 try:
@@ -17,11 +19,12 @@ try:
 except NameError:
     string_types = (str,)
 
-
 try:
     file_types = (file, IOBase) # `file` removed in Python 3.0
 except NameError:
     file_types = (IOBase,)
+
+regex_types = type(re.compile(''))
 
 
 def nonstringiter(obj):
@@ -56,6 +59,55 @@ def iterpeek(iterable):
     else:
         first_item = next(iter(iterable), None)
     return first_item, iterable
+
+
+class EqualityAdapter(object):  # Used by get_predicate().
+    """Wrapper to call *func* when evaluating the '==' operator."""
+    def __init__(self, func, name):
+        self._func = func
+        self._name = name
+
+    def __eq__(self, other):
+        return self._func(other)
+
+    def __repr__(self):
+        return self._name
+
+
+class get_predicate(object):
+    """Return a predicate function made from the given *obj*."""
+    def __new__(cls, obj):
+        if isinstance(obj, tuple):
+            equality_object =  tuple(cls._adapt(x) for x in obj)
+        else:
+            equality_object = cls._adapt(obj)
+
+        def predicate(x):
+            return equality_object == x
+        predicate.__name__ = repr(equality_object)
+
+        return predicate
+
+    @staticmethod
+    def _adapt(value):
+        """Return an adapter object whose behavior is triggered by
+        the '==' operator.
+        """
+        if callable(value):
+            func = lambda x: (x is value) or value(x)
+            name = getattr(value, '__name__', repr(value))
+        elif value is Ellipsis:
+            func = lambda x: True  # <- Wildcard (matches everything).
+            name = '...'
+        elif isinstance(value, regex_types):
+            func = lambda x: (x is value) or (value.search(x) is not None)
+            name = 're.compile({0!r})'.format(value.pattern)
+        elif isinstance(value, set):
+            func = lambda x: (x in value) or (x == value)
+            name = repr(value)
+        else:
+            return value  # <- EXIT!
+        return EqualityAdapter(func, name)
 
 
 def _safesort_key(obj):

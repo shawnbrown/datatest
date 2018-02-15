@@ -1,6 +1,5 @@
 """compatibility layer for built-in functions"""
 from __future__ import absolute_import
-from .._utils import exhaustible
 
 
 try:
@@ -78,7 +77,7 @@ except TypeError:
 
         try:
             first_item = next(iter(iterable))
-            if exhaustible(iterable):
+            if iter(iterable) is iterable:
                 iterable = _chain([first_item], iterable)
         except StopIteration:
             if 'default' not in kwds:
@@ -106,7 +105,7 @@ except TypeError:
 
         try:
             first_item = next(iter(iterable))
-            if exhaustible(iterable):
+            if iter(iterable) is iterable:
                 iterable = _chain([first_item], iterable)
         except StopIteration:
             if 'default' not in kwds:
