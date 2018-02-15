@@ -11,6 +11,7 @@ from ._compatibility import functools
 from ._compatibility import itertools
 
 from ._utils import exhaustible
+from ._utils import get_predicate
 from ._utils import _get_arg_lengths
 from ._utils import _expects_multiple_params
 from ._utils import _make_decimal
@@ -282,6 +283,23 @@ class allowed_invalid(BaseAllowance):
 
     def call_predicate(self, item):
         return isinstance(item[1], Invalid)
+
+
+class allowed_keys(BaseAllowance):
+    """Allows differences whose keys satisfy the given *predicate*."""
+    def __init__(self, predicate, msg=None):
+        super(allowed_keys, self).__init__(msg)
+        self.function = get_predicate(predicate)
+
+    def __repr__(self):
+        cls_name = self.__class__.__name__
+        msg_part = ', msg={0!r}'.format(self.msg) if self.msg else ''
+        obj_name = getattr(self.function, '__name__', repr(self.function))
+        return '{0}({1}{2})'.format(cls_name, obj_name, msg_part)
+
+    def call_predicate(self, item):
+        key = item[0]
+        return self.function(key)
 
 
 class allowed_key(BaseAllowance):

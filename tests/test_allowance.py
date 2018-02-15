@@ -15,6 +15,7 @@ from datatest.allowance import allowed_missing
 from datatest.allowance import allowed_extra
 from datatest.allowance import allowed_invalid
 from datatest.allowance import allowed_key
+from datatest.allowance import allowed_keys
 from datatest.allowance import allowed_args
 from datatest.allowance import allowed_deviation
 from datatest.allowance import allowed_percent_deviation
@@ -270,6 +271,74 @@ class TestAllowedInvalid(unittest.TestCase):
                 raise ValidationError('some message', differences)
         remaining_diffs = cm.exception.differences
         self.assertEqual(list(remaining_diffs), [Extra('Z')])
+
+
+class TestAllowedKeys(unittest.TestCase):
+    def test_internal_function(self):
+        """The internal function object should be a predicate created
+        by get_predicate().
+        """
+        allowance = allowed_keys('aaa')
+        self.assertEqual(allowance.function.__name__, "'aaa'",
+                         msg='predicate set to repr of string')
+
+    def test_allow_string(self):
+        with self.assertRaises(ValidationError) as cm:
+
+            with allowed_keys('aaa'):  # <- Allow by string!
+                differences = {'aaa': Missing(1), 'bbb': Missing(2)}
+                raise ValidationError('some message', differences)
+
+        remaining_diffs = cm.exception.differences
+        self.assertEqual(dict(remaining_diffs), {'bbb': Missing(2)})
+
+    def test_allow_function(self):
+        with self.assertRaises(ValidationError) as cm:
+
+            def function(key):
+                return key == 'aaa'
+
+            with allowed_keys(function):  # <- Allow by function!
+                differences = {'aaa': Missing(1), 'bbb': Missing(2)}
+                raise ValidationError('some message', differences)
+
+        remaining_diffs = cm.exception.differences
+        self.assertEqual(dict(remaining_diffs), {'bbb': Missing(2)})
+
+    def test_composite_key(self):
+        with self.assertRaises(ValidationError) as cm:
+
+            with allowed_keys(('a', 7)):  # <- Allow using tuple!
+                differences = {('a', 7): Missing(1), ('b', 7): Missing(2)}
+                raise ValidationError('some message', differences)
+
+        remaining_diffs = cm.exception.differences
+        self.assertEqual(dict(remaining_diffs), {('b', 7): Missing(2)})
+
+    def test_nonmapping_container(self):
+        """When differences container is not a mapping, the keys that
+        allowed_key() sees are all None.
+        """
+        with self.assertRaises(ValidationError) as cm:
+
+            with allowed_keys('foo'):  # <- Allow keys that equal 'foo'.
+                differences = [Missing(1), Extra(2)]  # <- List has no keys!
+                raise ValidationError('some message', differences)
+
+        remaining_diffs = cm.exception.differences
+        self.assertEqual(list(remaining_diffs), [Missing(1), Extra(2)])
+
+    def test_repr(self):
+        allowance = allowed_keys('aaa')
+        self.assertEqual(repr(allowance), "allowed_keys('aaa')")
+
+        allowance = allowed_keys(('aaa', 1))
+        self.assertEqual(repr(allowance), "allowed_keys(('aaa', 1))")
+
+        def helper(x):
+            return True
+        allowance = allowed_keys(helper)
+        self.assertEqual(repr(allowance), "allowed_keys(helper)")
 
 
 class TestAllowedKey(unittest.TestCase):
