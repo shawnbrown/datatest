@@ -35,7 +35,7 @@ __all__ = [
     'allowed_missing',
     'allowed_extra',
     'allowed_invalid',
-    'allowed_key',
+    'allowed_keys',
     'allowed_args',
     'allowed_deviation',
     'allowed_percent_deviation',
@@ -300,28 +300,6 @@ class allowed_keys(BaseAllowance):
     def call_predicate(self, item):
         key = item[0]
         return self.function(key)
-
-
-class allowed_key(BaseAllowance):
-    """The given *function* should accept a number of arguments
-    equal the given key elements. If key is a single value (string
-    or otherwise), *function* should accept one argument. If key
-    is a three-tuple, *function* should accept three arguments.
-    """
-    def __init__(self, function, msg=None):
-        super(allowed_key, self).__init__(msg)
-        self.function = function
-
-    def __repr__(self):
-        cls_name = self.__class__.__name__
-        msg_part = ', msg={0!r}'.format(self.msg) if self.msg else ''
-        return '{0}({1!r}{2})'.format(cls_name, self.function, msg_part)
-
-    def call_predicate(self, item):
-        key = item[0]
-        if isinstance(key, BaseElement):
-            return self.function(key)
-        return self.function(*key)
 
 
 class allowed_args(BaseAllowance):

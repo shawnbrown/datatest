@@ -12,14 +12,14 @@ from datatest._load.temptable import new_table_name
 from datatest._load.temptable import savepoint
 from datatest._load.temptable import table_exists
 from datatest._query.query import DEFAULT_CONNECTION
+from datatest._query.query import BaseElement
 from datatest._utils import file_types
 from datatest._utils import string_types
 from datatest._utils import iterpeek
+from datatest.allowance import BaseAllowance
 from datatest.difference import NOTFOUND
 
-
 datatest.DataQuery = datatest.Query
-
 datatest.DataResult = datatest.Result
 
 class DataSource(datatest.Selector):
@@ -73,7 +73,34 @@ class DataSource(datatest.Selector):
         new_cls._update_list = []
         return new_cls
 
+    def columns(self, type=list):  # Removed in datatest 0.8.2
+        return type(self.fieldnames)
+
 datatest.DataSource = DataSource
+
+
+class allowed_key(BaseAllowance):
+    """The given *function* should accept a number of arguments
+    equal the given key elements. If key is a single value (string
+    or otherwise), *function* should accept one argument. If key
+    is a three-tuple, *function* should accept three arguments.
+    """
+    def __init__(self, function, msg=None):
+        super(allowed_key, self).__init__(msg)
+        self.function = function
+
+    def __repr__(self):
+        cls_name = self.__class__.__name__
+        msg_part = ', msg={0!r}'.format(self.msg) if self.msg else ''
+        return '{0}({1!r}{2})'.format(cls_name, self.function, msg_part)
+
+    def call_predicate(self, item):
+        key = item[0]
+        if isinstance(key, BaseElement):
+            return self.function(key)
+        return self.function(*key)
+
+datatest.allowed_key = allowed_key
 
 
 def get_subject(self):
@@ -105,9 +132,13 @@ def _find_data_source(name):
 datatest.DataTestCase._find_data_source = staticmethod(_find_data_source)
 
 
-def _columns(self, type=list):  # Removed in datatest 0.8.2
-    return type(self.fieldnames)
-datatest.DataSource.columns = _columns
+def allowedKey(self, function, msg=None):
+    """Allows differences in a mapping where *function* returns True.
+    For each difference, function will receive the associated mapping
+    **key** unpacked into one or more arguments.
+    """
+    return allowed_key(function, msg)
+datatest.DataTestCase.allowedKey = allowedKey
 
 
 def _require_sequence(data, sequence):  # New behavior in datatest 0.8.3

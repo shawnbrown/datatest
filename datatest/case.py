@@ -22,7 +22,7 @@ from .allowance import allowed_invalid
 from .allowance import allowed_deviation
 from .allowance import allowed_percent_deviation
 from .allowance import allowed_specific
-from .allowance import allowed_key
+from .allowance import allowed_keys
 from .allowance import allowed_args
 from .allowance import allowed_limit
 
@@ -197,13 +197,11 @@ class DataTestCase(TestCase):
         """
         return allowed_specific(differences, msg)
 
-    def allowedKey(self, function, msg=None):
-        """Allows differences in a mapping where *function* returns
-        True. For each difference, *function* will receive the
-        associated mapping **key** unpacked into one or more
-        arguments.
+    def allowedKeys(self, predicate, msg=None):
+        """Allows differences in a mapping whose keys satisfy the
+        given *predicate*
         """
-        return allowed_key(function, msg)
+        return allowed_keys(predicate, msg)
 
     def allowedArgs(self, function, msg=None):
         """Allows differences where *function* returns True. For the

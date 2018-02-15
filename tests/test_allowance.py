@@ -14,7 +14,6 @@ from datatest.allowance import UnionedAllowance
 from datatest.allowance import allowed_missing
 from datatest.allowance import allowed_extra
 from datatest.allowance import allowed_invalid
-from datatest.allowance import allowed_key
 from datatest.allowance import allowed_keys
 from datatest.allowance import allowed_args
 from datatest.allowance import allowed_deviation
@@ -339,46 +338,6 @@ class TestAllowedKeys(unittest.TestCase):
             return True
         allowance = allowed_keys(helper)
         self.assertEqual(repr(allowance), "allowed_keys(helper)")
-
-
-class TestAllowedKey(unittest.TestCase):
-    def test_allowed_key(self):
-        # Test mapping of differences.
-        differences = {'aaa': Missing(1), 'bbb': Missing(2)}
-        def function(key):
-            return key == 'aaa'
-
-        with self.assertRaises(ValidationError) as cm:
-            with allowed_key(function):  # <- Apply allowance!
-                raise ValidationError('some message', differences)
-
-        remaining_diffs = cm.exception.differences
-        self.assertEqual(dict(remaining_diffs), {'bbb': Missing(2)})
-
-        # Test mapping of differences with composite keys.
-        differences = {('a', 7): Missing(1), ('b', 7): Missing(2)}
-        def function(letter, number):
-            return letter == 'a' and number == 7
-
-        with self.assertRaises(ValidationError) as cm:
-            with allowed_key(function):  # <- Apply allowance!
-                raise ValidationError('some message', differences)
-
-        remaining_diffs = cm.exception.differences
-        self.assertEqual(dict(remaining_diffs), {('b', 7): Missing(2)})
-
-        # Test non-mapping container of differences.
-        differences = [Missing(1), Extra(2)]
-        def function(key):
-            assert key is None  # <- Always Non for non-mapping differences.
-            return False  # < Don't match any differences.
-
-        with self.assertRaises(ValidationError) as cm:
-            with allowed_key(function):  # <- Apply allowance!
-                raise ValidationError('some message', differences)
-
-        remaining_diffs = cm.exception.differences
-        self.assertEqual(list(remaining_diffs), [Missing(1), Extra(2)])
 
 
 class TestAllowedArgs(unittest.TestCase):
@@ -722,7 +681,7 @@ class TestUniversalComposability(unittest.TestCase):
             ntup(cls=allowed_invalid,           args=tuple(),                  priority=1),
             ntup(cls=allowed_deviation,         args=(5,),                     priority=1),
             ntup(cls=allowed_percent_deviation, args=(0.05,),                  priority=1),
-            ntup(cls=allowed_key,               args=(lambda *args: True,),    priority=1),
+            ntup(cls=allowed_keys,              args=(lambda args: True,),     priority=1),
             ntup(cls=allowed_args,              args=(lambda *args: True,),    priority=1),
             ntup(cls=allowed_specific,          args=({'X': [Invalid('A')]},), priority=2),
             ntup(cls=allowed_limit,             args=({Ellipsis: 4},),         priority=3),

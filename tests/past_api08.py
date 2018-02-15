@@ -164,6 +164,49 @@ class TestRequireSequence(unittest.TestCase):
             _require_sequence(NOTFOUND, [1, 2, 3])
 
 
+Missing = datatest.Missing
+Extra = datatest.Extra
+ValidationError = datatest.ValidationError
+class TestAllowedKey(unittest.TestCase):
+    def test_allowed_key(self):
+        # Test mapping of differences.
+        differences = {'aaa': Missing(1), 'bbb': Missing(2)}
+        def function(key):
+            return key == 'aaa'
+
+        with self.assertRaises(ValidationError) as cm:
+            with datatest.allowed_key(function):  # <- Apply allowance!
+                raise ValidationError('some message', differences)
+
+        remaining_diffs = cm.exception.differences
+        self.assertEqual(dict(remaining_diffs), {'bbb': Missing(2)})
+
+        # Test mapping of differences with composite keys.
+        differences = {('a', 7): Missing(1), ('b', 7): Missing(2)}
+        def function(letter, number):
+            return letter == 'a' and number == 7
+
+        with self.assertRaises(ValidationError) as cm:
+            with datatest.allowed_key(function):  # <- Apply allowance!
+                raise ValidationError('some message', differences)
+
+        remaining_diffs = cm.exception.differences
+        self.assertEqual(dict(remaining_diffs), {('b', 7): Missing(2)})
+
+        # Test non-mapping container of differences.
+        differences = [Missing(1), Extra(2)]
+        def function(key):
+            assert key is None  # <- Always Non for non-mapping differences.
+            return False  # < Don't match any differences.
+
+        with self.assertRaises(ValidationError) as cm:
+            with datatest.allowed_key(function):  # <- Apply allowance!
+                raise ValidationError('some message', differences)
+
+        remaining_diffs = cm.exception.differences
+        self.assertEqual(list(remaining_diffs), [Missing(1), Extra(2)])
+
+
 if __name__ == '__main__':
     unittest.main()
 else:
