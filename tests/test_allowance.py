@@ -717,7 +717,7 @@ class TestUniversalComposability(unittest.TestCase):
             expected = x.priority
             self.assertEqual(actual, expected, x.cls.__name__)
 
-    def test_bitwise_composition(self):
+    def test_union_and_intersection(self):
         """Check that all allowance types can be composed with each
         other without exception.
         """
@@ -729,12 +729,12 @@ class TestUniversalComposability(unittest.TestCase):
         combinations = list(itertools.product(allow1, allow2))
 
         for a, b in combinations:
-            composed = a | b
+            composed = a | b  # <- Union!
             self.assertIsInstance(composed, UnionedAllowance)
             self.assertEqual(composed.priority, max(a.priority, b.priority))
 
         for a, b in combinations:
-            composed = a & b
+            composed = a & b  # <- Intersection!
             self.assertIsInstance(composed, IntersectedAllowance)
             self.assertEqual(composed.priority, max(a.priority, b.priority))
 

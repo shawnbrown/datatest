@@ -79,12 +79,13 @@ class BaseAllowance(abc.ABC):
     def end_collection(self):
         """Called last after all items have been checked."""
 
-    ####################################
-    # Operators for boolean composition.
-    ####################################
+    ##################################################
+    # Methods and operators for union and intersection
+    ##################################################
     def intersection(self, other):
         """Return a new allowance that accepts only those differences
-        allowed by both the current and *other* allowances.
+        allowed by both the current allowance and the given *other*
+        allowance.
         """
         return self.__and__(other)
 
@@ -95,7 +96,7 @@ class BaseAllowance(abc.ABC):
 
     def union(self, other):
         """Return a new allowance that accepts any difference allowed
-        by the current or *other* allowance.
+        by either the current allowance or the given *other* allowance.
         """
         return self.__or__(other)
 
