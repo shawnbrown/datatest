@@ -179,7 +179,7 @@ DataTestCase
 
     .. automethod:: allowedSpecific
 
-    .. automethod:: allowedKey
+    .. automethod:: allowedKeys
 
     .. automethod:: allowedArgs
 
