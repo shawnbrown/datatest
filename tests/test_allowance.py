@@ -16,7 +16,6 @@ from datatest.allowance import allowed_extra
 from datatest.allowance import allowed_invalid
 from datatest.allowance import allowed_keys
 from datatest.allowance import allowed_args
-from datatest.allowance import allowed_args2
 from datatest.allowance import allowed_deviation
 from datatest.allowance import allowed_percent_deviation
 from datatest.allowance import allowed_specific
@@ -341,11 +340,11 @@ class TestAllowedKeys(unittest.TestCase):
         self.assertEqual(repr(allowance), "allowed_keys(helper)")
 
 
-class TestAllowedArgs2(unittest.TestCase):
+class TestAllowedArgs(unittest.TestCase):
     def test_string_predicate(self):
         with self.assertRaises(ValidationError) as cm:
 
-            with allowed_args2('bbb'):  # <- Allowance!
+            with allowed_args('bbb'):  # <- Allowance!
                 differences =  [Missing('aaa'), Missing('bbb'), Extra('bbb')]
                 raise ValidationError('some message', differences)
 
@@ -359,7 +358,7 @@ class TestAllowedArgs2(unittest.TestCase):
                 diff, expected = args
                 return diff < 2 and expected == 5
 
-            with allowed_args2(function):  # <- Allowance!
+            with allowed_args(function):  # <- Allowance!
                 differences =  [Deviation(+1, 5), Deviation(+2, 5)]
                 raise ValidationError('some message', differences)
 
@@ -372,35 +371,8 @@ class TestAllowedArgs2(unittest.TestCase):
             def func(diff):
                 return diff < 2
 
-            with allowed_args2((func, 5)):
+            with allowed_args((func, 5)):
                 differences =  [Deviation(+1, 5), Deviation(+2, 5)]
-                raise ValidationError('some message', differences)
-
-        remaining_diffs = cm.exception.differences
-        self.assertEqual(list(remaining_diffs), [Deviation(+2, 5)])
-
-
-class TestAllowedArgs(unittest.TestCase):
-    def test_allowed_args(self):
-        # Single argument.
-        differences =  [Missing('aaa'), Missing('bbb'), Extra('bbb')]
-        def function(arg):
-            return arg == 'bbb'
-
-        with self.assertRaises(ValidationError) as cm:
-            with allowed_args(function):  # <- Apply allowance!
-                raise ValidationError('some message', differences)
-
-        remaining_diffs = cm.exception.differences
-        self.assertEqual(list(remaining_diffs), [Missing('aaa')])
-
-        # Multiple arguments.
-        differences =  [Deviation(+1, 5), Deviation(+2, 5)]
-        def function(diff, expected):
-            return diff < 2 and expected == 5
-
-        with self.assertRaises(ValidationError) as cm:
-            with allowed_args(function):  # <- Apply allowance!
                 raise ValidationError('some message', differences)
 
         remaining_diffs = cm.exception.differences

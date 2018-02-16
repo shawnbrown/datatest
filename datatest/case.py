@@ -199,16 +199,15 @@ class DataTestCase(TestCase):
 
     def allowedKeys(self, predicate, msg=None):
         """Allows differences in a mapping whose keys satisfy the
-        given *predicate*
+        given *predicate*.
         """
         return allowed_keys(predicate, msg)
 
-    def allowedArgs(self, function, msg=None):
-        """Allows differences where *function* returns True. For the
-        'args' attribute of each difference (a tuple), *function* must
-        accept the number of arguments unpacked from 'args'.
+    def allowedArgs(self, predicate, msg=None):
+        """Allows differences in a mapping whose args satisfy the
+        given *predicate*.
         """
-        return allowed_args(function, msg)
+        return allowed_args(predicate, msg)
 
     def allowedLimit(self, number, msg=None):
         """Allows a limited *number* of differences without triggering

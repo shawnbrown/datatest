@@ -166,6 +166,7 @@ class TestRequireSequence(unittest.TestCase):
 
 Missing = datatest.Missing
 Extra = datatest.Extra
+Deviation = datatest.Deviation
 ValidationError = datatest.ValidationError
 class TestAllowedKey(unittest.TestCase):
     def test_allowed_key(self):
@@ -205,6 +206,33 @@ class TestAllowedKey(unittest.TestCase):
 
         remaining_diffs = cm.exception.differences
         self.assertEqual(list(remaining_diffs), [Missing(1), Extra(2)])
+
+
+class TestAllowedArgs(unittest.TestCase):
+    def test_allowed_args(self):
+        # Single argument.
+        differences =  [Missing('aaa'), Missing('bbb'), Extra('bbb')]
+        def function(arg):
+            return arg == 'bbb'
+
+        with self.assertRaises(ValidationError) as cm:
+            with datatest.allowed_args(function):  # <- Apply allowance!
+                raise ValidationError('some message', differences)
+
+        remaining_diffs = cm.exception.differences
+        self.assertEqual(list(remaining_diffs), [Missing('aaa')])
+
+        # Multiple arguments.
+        differences =  [Deviation(+1, 5), Deviation(+2, 5)]
+        def function(diff, expected):
+            return diff < 2 and expected == 5
+
+        with self.assertRaises(ValidationError) as cm:
+            with datatest.allowed_args(function):  # <- Apply allowance!
+                raise ValidationError('some message', differences)
+
+        remaining_diffs = cm.exception.differences
+        self.assertEqual(list(remaining_diffs), [Deviation(+2, 5)])
 
 
 if __name__ == '__main__':

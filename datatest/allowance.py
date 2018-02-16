@@ -304,10 +304,10 @@ class allowed_keys(BaseAllowance):
         return self.function(key)
 
 
-class allowed_args2(BaseAllowance):
+class allowed_args(BaseAllowance):
     """Allows differences whose 'args' satisfy the given *predicate*."""
     def __init__(self, predicate, msg=None):
-        super(allowed_args2, self).__init__(msg)
+        super(allowed_args, self).__init__(msg)
         self.function = get_predicate(predicate)
 
     def __repr__(self):
@@ -321,28 +321,6 @@ class allowed_args2(BaseAllowance):
         if len(args) == 1:
             args = args[0]  # Unwrap single-item tuple.
         return self.function(args)
-
-
-class allowed_args(BaseAllowance):
-    """The given *function* should accept a number of arguments equal
-    the given elements in the 'args' attribute. If args is a single
-    value (string or otherwise), *function* should accept one argument.
-    If args is a three-tuple, *function* should accept three arguments.
-    """
-    def __init__(self, function, msg=None):
-        super(allowed_args, self).__init__(msg)
-        self.function = function
-
-    def __repr__(self):
-        cls_name = self.__class__.__name__
-        msg_part = ', msg={0!r}'.format(self.msg) if self.msg else ''
-        return '{0}({1!r}{2})'.format(cls_name, self.function, msg_part)
-
-    def call_predicate(self, item):
-        args = item[1].args
-        if isinstance(args, BaseElement):
-            return self.function(args)
-        return self.function(*args)
 
 
 def _normalize_deviation_args(lower, upper, msg):

@@ -103,6 +103,30 @@ class allowed_key(BaseAllowance):
 datatest.allowed_key = allowed_key
 
 
+class allowed_args(BaseAllowance):
+    """The given *function* should accept a number of arguments equal
+    the given elements in the 'args' attribute. If args is a single
+    value (string or otherwise), *function* should accept one argument.
+    If args is a three-tuple, *function* should accept three arguments.
+    """
+    def __init__(self, function, msg=None):
+        super(allowed_args, self).__init__(msg)
+        self.function = function
+
+    def __repr__(self):
+        cls_name = self.__class__.__name__
+        msg_part = ', msg={0!r}'.format(self.msg) if self.msg else ''
+        return '{0}({1!r}{2})'.format(cls_name, self.function, msg_part)
+
+    def call_predicate(self, item):
+        args = item[1].args
+        if isinstance(args, BaseElement):
+            return self.function(args)
+        return self.function(*args)
+
+datatest.allowed_args = allowed_args
+
+
 def get_subject(self):
     if hasattr(self, '_subject_data'):
         return self._subject_data
@@ -139,6 +163,15 @@ def allowedKey(self, function, msg=None):
     """
     return allowed_key(function, msg)
 datatest.DataTestCase.allowedKey = allowedKey
+
+
+def allowedArgs(self, function, msg=None):
+    """Allows differences where *function* returns True. For the
+    'args' attribute of each difference (a tuple), *function* must
+    accept the number of arguments unpacked from 'args'.
+    """
+    return allowed_args(function, msg)
+datatest.DataTestCase.allowedArgs = allowedArgs
 
 
 def _require_sequence(data, sequence):  # New behavior in datatest 0.8.3
