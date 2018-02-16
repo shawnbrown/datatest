@@ -16,6 +16,7 @@ from datatest.allowance import allowed_extra
 from datatest.allowance import allowed_invalid
 from datatest.allowance import allowed_keys
 from datatest.allowance import allowed_args
+from datatest.allowance import allowed_args2
 from datatest.allowance import allowed_deviation
 from datatest.allowance import allowed_percent_deviation
 from datatest.allowance import allowed_specific
@@ -338,6 +339,45 @@ class TestAllowedKeys(unittest.TestCase):
             return True
         allowance = allowed_keys(helper)
         self.assertEqual(repr(allowance), "allowed_keys(helper)")
+
+
+class TestAllowedArgs2(unittest.TestCase):
+    def test_string_predicate(self):
+        with self.assertRaises(ValidationError) as cm:
+
+            with allowed_args2('bbb'):  # <- Allowance!
+                differences =  [Missing('aaa'), Missing('bbb'), Extra('bbb')]
+                raise ValidationError('some message', differences)
+
+        remaining_diffs = cm.exception.differences
+        self.assertEqual(list(remaining_diffs), [Missing('aaa')])
+
+    def test_function_predicate(self):
+        with self.assertRaises(ValidationError) as cm:
+
+            def function(args):
+                diff, expected = args
+                return diff < 2 and expected == 5
+
+            with allowed_args2(function):  # <- Allowance!
+                differences =  [Deviation(+1, 5), Deviation(+2, 5)]
+                raise ValidationError('some message', differences)
+
+        remaining_diffs = cm.exception.differences
+        self.assertEqual(list(remaining_diffs), [Deviation(+2, 5)])
+
+    def test_multiarg_predicate(self):
+        with self.assertRaises(ValidationError) as cm:
+
+            def func(diff):
+                return diff < 2
+
+            with allowed_args2((func, 5)):
+                differences =  [Deviation(+1, 5), Deviation(+2, 5)]
+                raise ValidationError('some message', differences)
+
+        remaining_diffs = cm.exception.differences
+        self.assertEqual(list(remaining_diffs), [Deviation(+2, 5)])
 
 
 class TestAllowedArgs(unittest.TestCase):

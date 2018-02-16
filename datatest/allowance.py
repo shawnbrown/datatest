@@ -286,7 +286,9 @@ class allowed_invalid(BaseAllowance):
 
 
 class allowed_keys(BaseAllowance):
-    """Allows differences whose keys satisfy the given *predicate*."""
+    """Allows differences whose associated keys satisfy the given
+    *predicate*.
+    """
     def __init__(self, predicate, msg=None):
         super(allowed_keys, self).__init__(msg)
         self.function = get_predicate(predicate)
@@ -300,6 +302,25 @@ class allowed_keys(BaseAllowance):
     def call_predicate(self, item):
         key = item[0]
         return self.function(key)
+
+
+class allowed_args2(BaseAllowance):
+    """Allows differences whose 'args' satisfy the given *predicate*."""
+    def __init__(self, predicate, msg=None):
+        super(allowed_args2, self).__init__(msg)
+        self.function = get_predicate(predicate)
+
+    def __repr__(self):
+        cls_name = self.__class__.__name__
+        msg_part = ', msg={0!r}'.format(self.msg) if self.msg else ''
+        obj_name = getattr(self.function, '__name__', repr(self.function))
+        return '{0}({1}{2})'.format(cls_name, obj_name, msg_part)
+
+    def call_predicate(self, item):
+        args = item[1].args
+        if len(args) == 1:
+            args = args[0]  # Unwrap single-item tuple.
+        return self.function(args)
 
 
 class allowed_args(BaseAllowance):
