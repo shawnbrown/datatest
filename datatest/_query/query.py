@@ -573,7 +573,7 @@ class Query(object):
 
         columns = _normalize_select(columns)
         self._data_args = ((columns,), None)
-        self.selector = selector
+        self.source = selector
         self.kwds = where
         self._query_steps = tuple()
 
@@ -612,7 +612,7 @@ class Query(object):
         new_query = cls.__new__(cls)
         new_query._data_args = (args, None)
         new_query.kwds = where
-        new_query.selector = obj
+        new_query.source = obj
         new_query._query_steps = tuple()
         return new_query
 
@@ -630,8 +630,7 @@ class Query(object):
 
     def __copy__(self):
         args, _ = self._data_args
-        where = self.kwds
-        new_query = self.from_object(self.selector, *args, **where)
+        new_query = self.from_object(self.source, *args, **self.kwds)
         new_query._query_steps = self._query_steps
         return new_query
 
@@ -818,17 +817,17 @@ class Query(object):
         Setting *optimize* to False turns-off query optimization.
         """
         if source:
-            if self.selector:
+            if self.source:
                 raise ValueError((
                     "cannot take 'source' argument, query is "
                     "already associated with a data source: {0!r}"
-                ).format(self.selector))
+                ).format(self.source))
             self._validate_source(source)
             result = source
         else:
-            if not self.selector:
+            if not self.source:
                 raise ValueError("missing 'source' argument, none found")
-            result = self.selector
+            result = self.source
 
         execution_plan = self._get_execution_plan(result, self._query_steps)
         if optimize:
@@ -854,7 +853,7 @@ class Query(object):
 
         If *file* is set to None, returns execution plan as a string.
         """
-        source = self.selector
+        source = self.source
         if source is not None:
             source_repr = repr(source)
             if len(source_repr) > 70:
@@ -889,9 +888,9 @@ class Query(object):
 
         class_repr = self.__class__.__name__
 
-        if self.selector:
+        if self.source:
             method_repr = '.from_object'
-            source_repr = repr(self.selector)
+            source_repr = repr(self.source)
         else:
             method_repr = ''
             source_repr = ''
