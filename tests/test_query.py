@@ -652,26 +652,26 @@ class TestQuery(unittest.TestCase):
 
         # Single-string defaults to list-of-single-string.
         query = Query('foo')
-        self.assertEqual(query._data_args[0][0], ['foo'], 'should be wrapped as list')
+        self.assertEqual(query.args[0], ['foo'], 'should be wrapped as list')
 
         # Multi-item-container defaults to list-of-container.
         query = Query(['foo', 'bar'])
-        self.assertEqual(query._data_args[0][0], [['foo', 'bar']], 'should be wrapped as list')
+        self.assertEqual(query.args[0], [['foo', 'bar']], 'should be wrapped as list')
 
         # Mapping with single-string defaults to list-of-single-string.
         query = Query({'foo': 'bar'})
-        self.assertEqual(query._data_args[0][0], {'foo': ['bar']}, 'value should be wrapped as list')
+        self.assertEqual(query.args[0], {'foo': ['bar']}, 'value should be wrapped as list')
 
         # Mapping with multi-item-container defaults to list-of-container.
         query = Query({'foo': ['bar', 'baz']})
-        self.assertEqual(query._data_args[0][0], {'foo': [['bar', 'baz']]}, 'value should be wrapped as list')
+        self.assertEqual(query.args[0], {'foo': [['bar', 'baz']]}, 'value should be wrapped as list')
 
     def test_init_from_object(self):
         # Using Selector object.
         source = Selector([('A', 'B'), (1, 2), (1, 2)])
         query = Query.from_object(source, ['A'], B=2)
         self.assertEqual(query.source, source)
-        self.assertEqual(query._data_args, ((['A'],), None))
+        self.assertEqual(query.args, (['A'],))
         self.assertEqual(query.kwds, {'B': 2})
         self.assertEqual(query._query_steps, ())
 
@@ -680,14 +680,14 @@ class TestQuery(unittest.TestCase):
         query1 = Query.from_object(source, ['A'], B=2)
         query2 = Query.from_object(query1)
         self.assertEqual(query2.source, source)
-        self.assertEqual(query._data_args, ((['A'],), None))
+        self.assertEqual(query.args, (['A'],))
         self.assertEqual(query.kwds, {'B': 2})
         self.assertEqual(query2._query_steps, ())
 
         # Using non-Selector object.
         query = Query.from_object([1, 3, 4, 2])
         self.assertEqual(query.source, [1, 3, 4, 2])
-        self.assertEqual(query._data_args, ((), None))
+        self.assertEqual(query.args, ())
         self.assertEqual(query.kwds, {})
         self.assertEqual(query._query_steps, ())
 
@@ -725,14 +725,16 @@ class TestQuery(unittest.TestCase):
         query = Query(['B'])
         copied = query.__copy__()
         self.assertEqual(copied.source, query.source)
-        self.assertEqual(copied._data_args, query._data_args)
+        self.assertEqual(copied.args, query.args)
+        self.assertEqual(copied.kwds, query.kwds)
         self.assertEqual(copied._query_steps, query._query_steps)
 
         # Select and keyword.
         query = Query(['B'], C='x')
         copied = query.__copy__()
         self.assertEqual(copied.source, query.source)
-        self.assertEqual(copied._data_args, query._data_args)
+        self.assertEqual(copied.args, query.args)
+        self.assertEqual(copied.kwds, query.kwds)
         self.assertEqual(copied._query_steps, query._query_steps)
 
         # Source, select, and keyword.
@@ -740,14 +742,16 @@ class TestQuery(unittest.TestCase):
         query = Query.from_object(source, ['B'])
         copied = query.__copy__()
         self.assertEqual(copied.source, query.source)
-        self.assertEqual(copied._data_args, query._data_args)
+        self.assertEqual(copied.args, query.args)
+        self.assertEqual(copied.kwds, query.kwds)
         self.assertEqual(copied._query_steps, query._query_steps)
 
         # Select and additional query methods.
         query = Query(['B']).map(lambda x: str(x).upper())
         copied = query.__copy__()
         self.assertEqual(copied.source, query.source)
-        self.assertEqual(copied._data_args, query._data_args)
+        self.assertEqual(copied.args, query.args)
+        self.assertEqual(copied.kwds, query.kwds)
         self.assertEqual(copied._query_steps, query._query_steps)
 
     def test_fetch_datasource(self):

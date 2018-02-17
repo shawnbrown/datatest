@@ -571,9 +571,8 @@ class Query(object):
             msg = 'expects 1 or 2 positional arguments but {0} were given'
             raise TypeError(msg.format(argcount))
 
-        columns = _normalize_select(columns)
-        self._data_args = ((columns,), None)
         self.source = selector
+        self.args = (_normalize_select(columns),)
         self.kwds = where
         self._query_steps = tuple()
 
@@ -610,9 +609,9 @@ class Query(object):
             args = ()
 
         new_query = cls.__new__(cls)
-        new_query._data_args = (args, None)
-        new_query.kwds = where
         new_query.source = obj
+        new_query.args = args
+        new_query.kwds = where
         new_query._query_steps = tuple()
         return new_query
 
@@ -629,8 +628,7 @@ class Query(object):
     #    pass
 
     def __copy__(self):
-        args, _ = self._data_args
-        new_query = self.from_object(self.source, *args, **self.kwds)
+        new_query = self.from_object(self.source, *self.args, **self.kwds)
         new_query._query_steps = self._query_steps
         return new_query
 
@@ -740,12 +738,13 @@ class Query(object):
 
     def _get_execution_plan(self, source, query_steps):
         if isinstance(source, Selector):
-            args, _ = self._data_args
-            kwds = self.kwds
             execution_plan = [
                 _execution_step(getattr, (RESULT_TOKEN, '_select'), {}),
-                _execution_step(RESULT_TOKEN, args, kwds),
+                _execution_step(RESULT_TOKEN, self.args, self.kwds),
             ]
+        # TODO!!!: Investigate the idea of handling callable source objects.
+        #elif callable(source):
+        #    pass
         else:
             execution_plan = [
                 _execution_step(_make_dataresult, (RESULT_TOKEN,), {}),
@@ -895,7 +894,7 @@ class Query(object):
             method_repr = ''
             source_repr = ''
 
-        args_repr = ', '.join(repr(x) for x in self._data_args[0])
+        args_repr = ', '.join(repr(x) for x in self.args)
         if source_repr and args_repr:
             args_repr = ', ' + args_repr
 
