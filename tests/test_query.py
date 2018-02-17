@@ -635,11 +635,11 @@ class TestQuery(unittest.TestCase):
     def test_init_no_data(self):
         # Use select-only syntax.
         query = Query(['foo'], bar='baz')
-        self.assertEqual(query._data_source, None)
+        self.assertEqual(query.selector, None)
 
         # Pass empty source explicitly.
         query = Query.from_object(None, ['foo'], bar='baz')
-        self.assertEqual(query._data_source, None)
+        self.assertEqual(query.selector, None)
 
         # Test query steps.
         query = Query(['foo'], bar='baz')
@@ -670,22 +670,25 @@ class TestQuery(unittest.TestCase):
         # Using Selector object.
         source = Selector([('A', 'B'), (1, 2), (1, 2)])
         query = Query.from_object(source, ['A'], B=2)
-        self.assertEqual(query._data_source, source)
-        self.assertEqual(query._data_args, ((['A'],), {'B': 2}))
+        self.assertEqual(query.selector, source)
+        self.assertEqual(query._data_args, ((['A'],), None))
+        self.assertEqual(query.where, {'B': 2})
         self.assertEqual(query._query_steps, ())
 
         # Using another Query object.
         source = Selector([('A', 'B'), (1, 2), (1, 2)])
         query1 = Query.from_object(source, ['A'], B=2)
         query2 = Query.from_object(query1)
-        self.assertEqual(query2._data_source, source)
-        self.assertEqual(query2._data_args, ((['A'],), {'B': 2}))
+        self.assertEqual(query2.selector, source)
+        self.assertEqual(query._data_args, ((['A'],), None))
+        self.assertEqual(query.where, {'B': 2})
         self.assertEqual(query2._query_steps, ())
 
         # Using non-Selector object.
         query = Query.from_object([1, 3, 4, 2])
-        self.assertEqual(query._data_source, [1, 3, 4, 2])
-        self.assertEqual(query._data_args, ((), {}))
+        self.assertEqual(query.selector, [1, 3, 4, 2])
+        self.assertEqual(query._data_args, ((), None))
+        self.assertEqual(query.where, {})
         self.assertEqual(query._query_steps, ())
 
         # Using non-Selector object.
@@ -721,14 +724,14 @@ class TestQuery(unittest.TestCase):
         # Select-arg only.
         query = Query(['B'])
         copied = query.__copy__()
-        self.assertEqual(copied._data_source, query._data_source)
+        self.assertEqual(copied.selector, query.selector)
         self.assertEqual(copied._data_args, query._data_args)
         self.assertEqual(copied._query_steps, query._query_steps)
 
         # Select and keyword.
         query = Query(['B'], C='x')
         copied = query.__copy__()
-        self.assertEqual(copied._data_source, query._data_source)
+        self.assertEqual(copied.selector, query.selector)
         self.assertEqual(copied._data_args, query._data_args)
         self.assertEqual(copied._query_steps, query._query_steps)
 
@@ -736,14 +739,14 @@ class TestQuery(unittest.TestCase):
         source = Selector([('A', 'B'), (1, 2), (1, 2)])
         query = Query.from_object(source, ['B'])
         copied = query.__copy__()
-        self.assertEqual(copied._data_source, query._data_source)
+        self.assertEqual(copied.selector, query.selector)
         self.assertEqual(copied._data_args, query._data_args)
         self.assertEqual(copied._query_steps, query._query_steps)
 
         # Select and additional query methods.
         query = Query(['B']).map(lambda x: str(x).upper())
         copied = query.__copy__()
-        self.assertEqual(copied._data_source, query._data_source)
+        self.assertEqual(copied.selector, query.selector)
         self.assertEqual(copied._data_args, query._data_args)
         self.assertEqual(copied._query_steps, query._query_steps)
 

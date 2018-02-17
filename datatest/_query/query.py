@@ -559,21 +559,22 @@ class Query(object):
         Query(columns, **where)
         Query(selector, columns, **where)
         """
-        length = len(args)
-        if length == 2:
+        argcount = len(args)
+        if argcount == 2:
             selector, columns = args
             if not isinstance(selector, Selector):
                 msg = 'selector must be datatest.Selector object, not {0}'
                 raise TypeError(msg.format(selector.__class__.__name__))
-        elif length == 1:
+        elif argcount == 1:
             selector, columns = None, args[0]
         else:
-            msg = "expects 1 or 2 positional arguments but {0} were given"
-            raise TypeError(msg.format(length))
+            msg = 'expects 1 or 2 positional arguments but {0} were given'
+            raise TypeError(msg.format(argcount))
 
         columns = _normalize_select(columns)
-        self._data_args = ((columns,), where)
-        self._data_source = selector
+        self._data_args = ((columns,), None)
+        self.selector = selector
+        self.where = where
         self._query_steps = tuple()
 
     @classmethod
@@ -609,8 +610,9 @@ class Query(object):
             args = ()
 
         new_query = cls.__new__(cls)
-        new_query._data_args = (args, where)
-        new_query._data_source = obj
+        new_query._data_args = (args, None)
+        new_query.where = where
+        new_query.selector = obj
         new_query._query_steps = tuple()
         return new_query
 
@@ -627,8 +629,9 @@ class Query(object):
     #    pass
 
     def __copy__(self):
-        args, kwds = self._data_args
-        new_query = self.from_object(self._data_source, *args, **kwds)
+        args, _ = self._data_args
+        where = self.where
+        new_query = self.from_object(self.selector, *args, **where)
         new_query._query_steps = self._query_steps
         return new_query
 
@@ -738,7 +741,8 @@ class Query(object):
 
     def _get_execution_plan(self, source, query_steps):
         if isinstance(source, Selector):
-            args, kwds = self._data_args
+            args, _ = self._data_args
+            kwds = self.where
             execution_plan = [
                 _execution_step(getattr, (RESULT_TOKEN, '_select'), {}),
                 _execution_step(RESULT_TOKEN, args, kwds),
@@ -814,17 +818,17 @@ class Query(object):
         Setting *optimize* to False turns-off query optimization.
         """
         if source:
-            if self._data_source:
+            if self.selector:
                 raise ValueError((
                     "cannot take 'source' argument, query is "
                     "already associated with a data source: {0!r}"
-                ).format(self._data_source))
+                ).format(self.selector))
             self._validate_source(source)
             result = source
         else:
-            if not self._data_source:
+            if not self.selector:
                 raise ValueError("missing 'source' argument, none found")
-            result = self._data_source
+            result = self.selector
 
         execution_plan = self._get_execution_plan(result, self._query_steps)
         if optimize:
@@ -850,7 +854,7 @@ class Query(object):
 
         If *file* is set to None, returns execution plan as a string.
         """
-        source = self._data_source
+        source = self.selector
         if source is not None:
             source_repr = repr(source)
             if len(source_repr) > 70:
@@ -885,9 +889,9 @@ class Query(object):
 
         class_repr = self.__class__.__name__
 
-        if self._data_source:
+        if self.selector:
             method_repr = '.from_object'
-            source_repr = repr(self._data_source)
+            source_repr = repr(self.selector)
         else:
             method_repr = ''
             source_repr = ''
@@ -896,8 +900,8 @@ class Query(object):
         if source_repr and args_repr:
             args_repr = ', ' + args_repr
 
-        if self._data_args[1]:
-            kwds_repr = [(k, name_or_repr(v)) for k, v in self._data_args[1].items()]
+        if self.where:
+            kwds_repr = [(k, name_or_repr(v)) for k, v in self.where.items()]
             kwds_repr = ['{0}={1}'.format(k, v) for k, v in kwds_repr]
             kwds_repr = ', {0}'.format(', '.join(kwds_repr))
         else:
