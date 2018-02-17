@@ -672,7 +672,7 @@ class TestQuery(unittest.TestCase):
         query = Query.from_object(source, ['A'], B=2)
         self.assertEqual(query.selector, source)
         self.assertEqual(query._data_args, ((['A'],), None))
-        self.assertEqual(query.where, {'B': 2})
+        self.assertEqual(query.kwds, {'B': 2})
         self.assertEqual(query._query_steps, ())
 
         # Using another Query object.
@@ -681,14 +681,14 @@ class TestQuery(unittest.TestCase):
         query2 = Query.from_object(query1)
         self.assertEqual(query2.selector, source)
         self.assertEqual(query._data_args, ((['A'],), None))
-        self.assertEqual(query.where, {'B': 2})
+        self.assertEqual(query.kwds, {'B': 2})
         self.assertEqual(query2._query_steps, ())
 
         # Using non-Selector object.
         query = Query.from_object([1, 3, 4, 2])
         self.assertEqual(query.selector, [1, 3, 4, 2])
         self.assertEqual(query._data_args, ((), None))
-        self.assertEqual(query.where, {})
+        self.assertEqual(query.kwds, {})
         self.assertEqual(query._query_steps, ())
 
         # Using non-Selector object.

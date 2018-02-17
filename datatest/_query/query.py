@@ -574,7 +574,7 @@ class Query(object):
         columns = _normalize_select(columns)
         self._data_args = ((columns,), None)
         self.selector = selector
-        self.where = where
+        self.kwds = where
         self._query_steps = tuple()
 
     @classmethod
@@ -611,7 +611,7 @@ class Query(object):
 
         new_query = cls.__new__(cls)
         new_query._data_args = (args, None)
-        new_query.where = where
+        new_query.kwds = where
         new_query.selector = obj
         new_query._query_steps = tuple()
         return new_query
@@ -630,7 +630,7 @@ class Query(object):
 
     def __copy__(self):
         args, _ = self._data_args
-        where = self.where
+        where = self.kwds
         new_query = self.from_object(self.selector, *args, **where)
         new_query._query_steps = self._query_steps
         return new_query
@@ -742,7 +742,7 @@ class Query(object):
     def _get_execution_plan(self, source, query_steps):
         if isinstance(source, Selector):
             args, _ = self._data_args
-            kwds = self.where
+            kwds = self.kwds
             execution_plan = [
                 _execution_step(getattr, (RESULT_TOKEN, '_select'), {}),
                 _execution_step(RESULT_TOKEN, args, kwds),
@@ -900,8 +900,8 @@ class Query(object):
         if source_repr and args_repr:
             args_repr = ', ' + args_repr
 
-        if self.where:
-            kwds_repr = [(k, name_or_repr(v)) for k, v in self.where.items()]
+        if self.kwds:
+            kwds_repr = [(k, name_or_repr(v)) for k, v in self.kwds.items()]
             kwds_repr = ['{0}={1}'.format(k, v) for k, v in kwds_repr]
             kwds_repr = ', {0}'.format(', '.join(kwds_repr))
         else:
