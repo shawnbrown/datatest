@@ -553,11 +553,27 @@ class Query(object):
 
         query = Query('A')
     """
-    def __init__(self, columns, **where):
-        """Initialize self."""
+    def __init__(self, *args, **where):
+        """Initialize self.
+
+        Query(columns, **where)
+        Query(selector, columns, **where)
+        """
+        length = len(args)
+        if length == 2:
+            selector, columns = args
+            if not isinstance(selector, Selector):
+                msg = 'selector must be datatest.Selector object, not {0}'
+                raise TypeError(msg.format(selector.__class__.__name__))
+        elif length == 1:
+            selector, columns = None, args[0]
+        else:
+            msg = "expects 1 or 2 positional arguments but {0} were given"
+            raise TypeError(msg.format(length))
+
         columns = _normalize_select(columns)
         self._data_args = ((columns,), where)
-        self._data_source = None
+        self._data_source = selector
         self._query_steps = tuple()
 
     @classmethod
@@ -910,6 +926,13 @@ class Query(object):
                                              args_repr,
                                              kwds_repr,
                                              query_steps_repr)
+
+with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
+    Query.__init__.__signature__ = inspect.Signature([
+        inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY),
+        inspect.Parameter('columns', inspect.Parameter.POSITIONAL_ONLY),
+        inspect.Parameter('where', inspect.Parameter.VAR_KEYWORD),
+    ])
 
 
 _registered_function_ids = collections.defaultdict(set)
