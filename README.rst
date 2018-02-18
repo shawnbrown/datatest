@@ -141,7 +141,7 @@ packages (``pandas``, ``xlrd``, etc.).
 
 Freely licensed under the Apache License, Version 2.0
 
-Copyright 2014 - 2017 NCEC Services, LLC and contributing authors
+Copyright 2014 - 2018 NCEC Services, LLC and contributing authors
 
 
 .. |buildstatus| image:: https://travis-ci.org/shawnbrown/datatest.svg?branch=master
