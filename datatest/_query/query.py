@@ -578,7 +578,7 @@ class Query(object):
         self.source = selector
         self.args = (_normalize_select(columns),)
         self.kwds = where
-        self._query_steps = tuple()
+        self._query_steps = []
 
     @classmethod
     def from_object(cls, obj):
@@ -593,7 +593,7 @@ class Query(object):
         new_query.source = obj
         new_query.args = ()
         new_query.kwds = {}
-        new_query._query_steps = tuple()
+        new_query._query_steps = []
         return new_query
 
     @staticmethod
@@ -604,22 +604,18 @@ class Query(object):
                 source.__class__.__name__,
             ))
 
-    #@staticmethod
-    #def _validate_steps(steps):
-    #    pass
-
     def __copy__(self):
         new_query = self.__class__.__new__(self.__class__)
         new_query.source = self.source
         new_query.args = self.args
-        new_query.kwds = self.kwds
-        new_query._query_steps = self._query_steps
+        new_query.kwds = dict(self.kwds)                  # Makes copies of
+        new_query._query_steps = list(self._query_steps)  # mutable types.
         return new_query
 
     def _add_step(self, name, *args, **kwds):
+        step = _query_step(name, args, kwds)
         new_query = self.__copy__()
-        new_steps = self._query_steps + (_query_step(name, args, kwds),)
-        new_query._query_steps = new_steps
+        new_query._query_steps.append(step)
         return new_query
 
     def map(self, function):

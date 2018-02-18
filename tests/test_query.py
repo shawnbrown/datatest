@@ -639,11 +639,14 @@ class TestQuery(unittest.TestCase):
 
         # Test query steps.
         query = Query(['foo'], bar='baz')
-        self.assertEqual(query._query_steps, tuple())
+        self.assertEqual(query._query_steps, [])
 
         # Adding query steps.
         query = query.distinct().sum()
-        expected = tuple([('distinct', (), {}), ('sum', (), {})])
+        expected = [
+            ('distinct', (), {}),
+            ('sum', (), {}),
+        ]
         self.assertEqual(query._query_steps, expected)
 
         # Single-string defaults to list-of-single-string.
@@ -668,7 +671,7 @@ class TestQuery(unittest.TestCase):
         self.assertEqual(query.source, source)
         self.assertEqual(query.args, (['A'],))
         self.assertEqual(query.kwds, {'B': 2})
-        self.assertEqual(query._query_steps, ())
+        self.assertEqual(query._query_steps, [])
 
         with self.assertRaises(TypeError):
             query = Query(None, ['foo'], bar='baz')
@@ -678,7 +681,7 @@ class TestQuery(unittest.TestCase):
         self.assertEqual(query.source, [1, 3, 4, 2])
         self.assertEqual(query.args, ())
         self.assertEqual(query.kwds, {})
-        self.assertEqual(query._query_steps, ())
+        self.assertEqual(query._query_steps, [])
 
     def test_init_with_invalid_args(self):
         # Missing args.
@@ -709,15 +712,17 @@ class TestQuery(unittest.TestCase):
         # Select-arg only.
         query = Query(['B'])
         copied = query.__copy__()
-        self.assertEqual(copied.source, query.source)
+        self.assertIs(copied.source, query.source)
         self.assertEqual(copied.args, query.args)
         self.assertEqual(copied.kwds, query.kwds)
         self.assertEqual(copied._query_steps, query._query_steps)
+        self.assertIsNot(copied.kwds, query.kwds)
+        self.assertIsNot(copied._query_steps, query._query_steps)
 
         # Select and keyword.
         query = Query(['B'], C='x')
         copied = query.__copy__()
-        self.assertEqual(copied.source, query.source)
+        self.assertIs(copied.source, query.source)
         self.assertEqual(copied.args, query.args)
         self.assertEqual(copied.kwds, query.kwds)
         self.assertEqual(copied._query_steps, query._query_steps)
@@ -726,7 +731,7 @@ class TestQuery(unittest.TestCase):
         source = Selector([('A', 'B'), (1, 2), (1, 2)])
         query = Query(source, ['B'])
         copied = query.__copy__()
-        self.assertEqual(copied.source, query.source)
+        self.assertIs(copied.source, query.source)
         self.assertEqual(copied.args, query.args)
         self.assertEqual(copied.kwds, query.kwds)
         self.assertEqual(copied._query_steps, query._query_steps)
@@ -734,7 +739,7 @@ class TestQuery(unittest.TestCase):
         # Select and additional query methods.
         query = Query(['B']).map(lambda x: str(x).upper())
         copied = query.__copy__()
-        self.assertEqual(copied.source, query.source)
+        self.assertIs(copied.source, query.source)
         self.assertEqual(copied.args, query.args)
         self.assertEqual(copied.kwds, query.kwds)
         self.assertEqual(copied._query_steps, query._query_steps)
