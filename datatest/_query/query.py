@@ -490,6 +490,20 @@ def _parse_select(select):
     return key, value
 
 
+##################
+# Helper Functions
+##################
+def _make_args_repr(args):
+    func = lambda x: getattr(x, '__name__', repr(x))
+    return ', '.join(func(x) for x in args)
+
+def _make_kwds_repr(kwds):
+    func = lambda x: getattr(x, '__name__', repr(x))
+    kwds_repr = [(k, func(v)) for k, v in kwds.items()]
+    kwds_repr = ['{0}={1}'.format(k, v) for k, v in kwds_repr]
+    return ', '.join(kwds_repr)
+
+
 ##########################################
 # Functions for query and execution steps.
 ##########################################
@@ -497,21 +511,9 @@ def _parse_select(select):
 def _get_step_repr(step):
     """Helper function to return repr for a single query step."""
     func, args, kwds = step
-
-    def _callable_name_or_repr(x):            # <- Helper function for
-        with contextlib.suppress(NameError):  #    the helper function!
-            if callable(x):
-                return x.__name__
-        return repr(x)
-
-    func_repr = _callable_name_or_repr(func)
-
-    args_repr = ', '.join(_callable_name_or_repr(x) for x in args)
-
-    kwds_repr = kwds.items()
-    kwds_repr = [(k, _callable_name_or_repr(v)) for k, v in kwds_repr]
-    kwds_repr = ['{0}={1}'.format(k, v) for k, v in kwds_repr]
-    kwds_repr = ', '.join(kwds_repr)
+    func_repr = getattr(func, '__name__', repr(func))
+    args_repr = _make_args_repr(args)
+    kwds_repr = _make_kwds_repr(kwds)
     return '{0}, ({1}), {{{2}}}'.format(func_repr, args_repr, kwds_repr)
 
 
@@ -862,40 +864,33 @@ class Query(object):
             return formatted
 
     def __repr__(self):
-        name_or_repr = lambda x: getattr(x, '__name__', None) or repr(x)
-
         class_repr = self.__class__.__name__
 
         if isinstance(self.source, Selector):
-            method_repr = ''
             source_repr = super(Selector, self.source).__repr__()
+            is_from_object = False
         elif self.source:
-            method_repr = '.from_object'
             source_repr = repr(self.source)
+            is_from_object = True
         else:
-            method_repr = ''
             source_repr = ''
+            is_from_object = False
 
-        args_repr = ', '.join(repr(x) for x in self.args)
+        args_repr = _make_args_repr(self.args)
         if source_repr and args_repr:
             args_repr = ', ' + args_repr
 
-        if self.kwds:
-            kwds_repr = [(k, name_or_repr(v)) for k, v in self.kwds.items()]
-            kwds_repr = ['{0}={1}'.format(k, v) for k, v in kwds_repr]
-            kwds_repr = ', {0}'.format(', '.join(kwds_repr))
-        else:
-            kwds_repr = ''
+        kwds_repr = _make_kwds_repr(self.kwds)
+        if kwds_repr:
+            kwds_repr = ', ' + kwds_repr
 
         all_steps_repr = []
         for step_name, step_args, step_kwds in self._query_steps:
             if step_kwds:
-                step_kwds_repr = [(k, name_or_repr(v)) for k, v in step_kwds.items()]
-                step_kwds_repr = ['{0}={1}'.format(k, v) for k, v in step_kwds_repr]
-                step_kwds_repr = ', {0}'.format(', '.join(step_kwds_repr))
+                step_kwds_repr = ', ' + _make_kwds_repr(step_kwds)
             else:
                 step_kwds_repr = ''
-            step_args_repr = ', '.join(name_or_repr(arg) for arg in step_args)
+            step_args_repr = _make_args_repr(step_args)
             step_repr = '{0}({1}{2})'.format(step_name, step_args_repr, step_kwds_repr)
             all_steps_repr.append(step_repr)
 
@@ -904,19 +899,11 @@ class Query(object):
         else:
             query_steps_repr = ''
 
-        if method_repr:
-            return '{0}{1}({2}{3}{4}){5}'.format(class_repr,
-                                                 method_repr,
-                                                 source_repr,
-                                                 args_repr,
-                                                 kwds_repr,
-                                                 query_steps_repr)
-        return '{0}({1}{2}{3}){4}'.format(class_repr,
-                                          source_repr,
-                                          args_repr,
-                                          kwds_repr,
-                                          query_steps_repr)
-
+        if is_from_object:
+            return '{0}.from_object({1}){2}'.format(
+                class_repr, source_repr, query_steps_repr)
+        return '{0}({1}{2}{3}){4}'.format(
+            class_repr, source_repr, args_repr, kwds_repr, query_steps_repr)
 
 
 with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
