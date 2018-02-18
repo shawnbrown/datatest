@@ -633,12 +633,8 @@ class Test_select_functions(unittest.TestCase):
 
 class TestQuery(unittest.TestCase):
     def test_init_no_data(self):
-        # Use select-only syntax.
+        # Use column and where syntax.
         query = Query(['foo'], bar='baz')
-        self.assertEqual(query.source, None)
-
-        # Pass empty source explicitly.
-        query = Query.from_object(None, ['foo'], bar='baz')
         self.assertEqual(query.source, None)
 
         # Test query steps.
@@ -666,34 +662,23 @@ class TestQuery(unittest.TestCase):
         query = Query({'foo': ['bar', 'baz']})
         self.assertEqual(query.args[0], {'foo': [['bar', 'baz']]}, 'value should be wrapped as list')
 
-    def test_init_from_object(self):
-        # Using Selector object.
+    def test_init_with_selector(self):
         source = Selector([('A', 'B'), (1, 2), (1, 2)])
-        query = Query.from_object(source, ['A'], B=2)
+        query = Query(source, ['A'], B=2)
         self.assertEqual(query.source, source)
         self.assertEqual(query.args, (['A'],))
         self.assertEqual(query.kwds, {'B': 2})
         self.assertEqual(query._query_steps, ())
 
-        # Using another Query object.
-        source = Selector([('A', 'B'), (1, 2), (1, 2)])
-        query1 = Query.from_object(source, ['A'], B=2)
-        query2 = Query.from_object(query1)
-        self.assertEqual(query2.source, source)
-        self.assertEqual(query.args, (['A'],))
-        self.assertEqual(query.kwds, {'B': 2})
-        self.assertEqual(query2._query_steps, ())
+        with self.assertRaises(TypeError):
+            query = Query(None, ['foo'], bar='baz')
 
-        # Using non-Selector object.
+    def test_init_from_object(self):
         query = Query.from_object([1, 3, 4, 2])
         self.assertEqual(query.source, [1, 3, 4, 2])
         self.assertEqual(query.args, ())
         self.assertEqual(query.kwds, {})
         self.assertEqual(query._query_steps, ())
-
-        # Using non-Selector object.
-        with self.assertRaises(ValueError):
-            query = Query.from_object([1, 3, 4, 2], 'foo', bar='baz')
 
     def test_init_with_invalid_args(self):
         # Missing args.
@@ -703,12 +688,12 @@ class TestQuery(unittest.TestCase):
         # Bad "select" field.
         source = Selector([('A', 'B'), (1, 2), (1, 2)])
         with self.assertRaises(LookupError, msg='should fail immediately when fieldname conflicts with provided source'):
-            query = Query.from_object(source, ['X'], B=2)
+            query = Query(source, ['X'], B=2)
 
         # Bad "where" field.
         source = Selector([('A', 'B'), (1, 2), (1, 2)])
         with self.assertRaises(LookupError, msg='should fail immediately when fieldname conflicts with provided "where" field'):
-            query = Query.from_object(source, ['A'], Y=2)
+            query = Query(source, ['A'], Y=2)
 
     def test_init_with_nested_dicts(self):
         """Support for nested dictionaries was removed (for now).
@@ -739,7 +724,7 @@ class TestQuery(unittest.TestCase):
 
         # Source, select, and keyword.
         source = Selector([('A', 'B'), (1, 2), (1, 2)])
-        query = Query.from_object(source, ['B'])
+        query = Query(source, ['B'])
         copied = query.__copy__()
         self.assertEqual(copied.source, query.source)
         self.assertEqual(copied.args, query.args)
@@ -755,8 +740,8 @@ class TestQuery(unittest.TestCase):
         self.assertEqual(copied._query_steps, query._query_steps)
 
     def test_fetch_datasource(self):
-        source = Selector([('A', 'B'), ('1', '2'), ('1', '2')])
-        query = Query.from_object(source, ['B'])
+        select = Selector([('A', 'B'), ('1', '2'), ('1', '2')])
+        query = Query(select, ['B'])
         query._query_steps = [
             ('map', (int,), {}),
             ('map', (lambda x: x * 2,), {}),
@@ -766,8 +751,8 @@ class TestQuery(unittest.TestCase):
         self.assertEqual(result, 8)
 
     def test_execute_datasource(self):
-        source = Selector([('A', 'B'), ('1', '2'), ('1', '2')])
-        query = Query.from_object(source, ['B'])
+        select = Selector([('A', 'B'), ('1', '2'), ('1', '2')])
+        query = Query(select, ['B'])
         query._query_steps = [
             ('map', (int,), {}),
             ('map', (lambda x: x * 2,), {}),
@@ -901,25 +886,32 @@ class TestQuery(unittest.TestCase):
         self.assertEqual(returned_value, expected)
 
     def test_repr(self):
-        # Check "select-only" signature.
+        # Check "no selector" signature.
         query = Query(['label1'])
         regex = r"Query\(\[u?'label1'\]\)"
         self.assertRegex(repr(query), regex)
 
-        # Check "select-only" with keyword string.
+        # Check "no selector" with keyword string.
         query = Query(['label1'], label2='x')
         regex = r"Query\(\[u?'label1'\], label2='x'\)"
         self.assertRegex(repr(query), regex)
 
-        # Check "select-only" with keyword list.
+        # Check "no selector" with keyword list.
         query = Query(['label1'], label2=['x', 'y'])
         regex = r"Query\(\[u?'label1'\], label2=\[u?'x', u?'y'\]\)"
         self.assertRegex(repr(query), regex)
 
+        # Check "selector-provided" signature.
+        select = Selector([('A', 'B'), ('x', 1), ('y', 2), ('z', 3)])
+        query = Query(select, ['B'])
+        short_repr = super(Selector, select).__repr__()
+        expected = "Query({0}, {1!r})".format(short_repr, ['B'])
+        #print(repr(query))
+        self.assertEqual(repr(query), expected)
+
         # Check "from_object" signature.
-        source = Selector([('A', 'B'), ('x', 1), ('y', 2), ('z', 3)])
-        query = Query.from_object(source, ['A'])
-        expected = "Query.from_object({0!r}, {1!r})".format(source, ['A'])
+        query = Query.from_object([1, 2, 3])
+        expected = "Query.from_object([1, 2, 3])"
         self.assertEqual(repr(query), expected)
 
         # Check query steps.

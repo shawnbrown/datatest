@@ -563,8 +563,10 @@ class Query(object):
         if argcount == 2:
             selector, columns = args
             if not isinstance(selector, Selector):
-                msg = 'selector must be datatest.Selector object, not {0}'
+                msg = 'selector must be datatest.Selector object, got {0}'
                 raise TypeError(msg.format(selector.__class__.__name__))
+            flattened = _flatten([_parse_select(columns), where.keys()])
+            selector._assert_fields_exist(flattened)
         elif argcount == 1:
             selector, columns = None, args[0]
         else:
@@ -577,41 +579,18 @@ class Query(object):
         self._query_steps = tuple()
 
     @classmethod
-    def from_object(cls, obj, columns=None, **where):
+    def from_object(cls, obj):
+        """Creates a query and associates it with the given object.
+
+        .. code-block:: python
+
+            mylist = [1, 2, 3, 4]
+            query = Query.from_object(mylist)
         """
-        Query.from_object(select, columns, **where)
-        Query.from_object(object)
-
-        Creates a query and associates it with the given object.
-
-        See documentation for full details.
-        """
-        if obj is None:
-            return  cls(columns, **where)  # <- EXIT!
-
-        if isinstance(obj, Query):
-            return obj.__copy__()  # <- EXIT!
-
-        if isinstance(obj, Selector):
-            if columns is None:
-                raise ValueError(
-                    "missing 1 required positional argument: 'columns'"
-                )
-            columns = _normalize_select(columns)
-            flattened = _flatten([_parse_select(columns), where.keys()])
-            obj._assert_fields_exist(flattened)
-            args = (columns,)
-        else:
-            if columns or where:
-                raise ValueError((
-                    "can only use 'columns' and 'where' with Selector, got {0!r}"
-                ).format(obj.__class__.__name__))
-            args = ()
-
         new_query = cls.__new__(cls)
         new_query.source = obj
-        new_query.args = args
-        new_query.kwds = where
+        new_query.args = ()
+        new_query.kwds = {}
         new_query._query_steps = tuple()
         return new_query
 
@@ -628,7 +607,10 @@ class Query(object):
     #    pass
 
     def __copy__(self):
-        new_query = self.from_object(self.source, *self.args, **self.kwds)
+        new_query = self.__class__.__new__(self.__class__)
+        new_query.source = self.source
+        new_query.args = self.args
+        new_query.kwds = self.kwds
         new_query._query_steps = self._query_steps
         return new_query
 
@@ -742,9 +724,6 @@ class Query(object):
                 _execution_step(getattr, (RESULT_TOKEN, '_select'), {}),
                 _execution_step(RESULT_TOKEN, self.args, self.kwds),
             ]
-        # TODO!!!: Investigate the idea of handling callable source objects.
-        #elif callable(source):
-        #    pass
         else:
             execution_plan = [
                 _execution_step(_make_dataresult, (RESULT_TOKEN,), {}),
@@ -887,7 +866,10 @@ class Query(object):
 
         class_repr = self.__class__.__name__
 
-        if self.source:
+        if isinstance(self.source, Selector):
+            method_repr = ''
+            source_repr = super(Selector, self.source).__repr__()
+        elif self.source:
             method_repr = '.from_object'
             source_repr = repr(self.source)
         else:
@@ -922,12 +904,20 @@ class Query(object):
         else:
             query_steps_repr = ''
 
-        return '{0}{1}({2}{3}{4}){5}'.format(class_repr,
-                                             method_repr,
-                                             source_repr,
-                                             args_repr,
-                                             kwds_repr,
-                                             query_steps_repr)
+        if method_repr:
+            return '{0}{1}({2}{3}{4}){5}'.format(class_repr,
+                                                 method_repr,
+                                                 source_repr,
+                                                 args_repr,
+                                                 kwds_repr,
+                                                 query_steps_repr)
+        return '{0}({1}{2}{3}){4}'.format(class_repr,
+                                          source_repr,
+                                          args_repr,
+                                          kwds_repr,
+                                          query_steps_repr)
+
+
 
 with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
     Query.__init__.__signature__ = inspect.Signature([
@@ -1065,9 +1055,9 @@ class Selector(object):
 
         This is a shorthand for::
 
-            query = Query.from_object(select, 'A')
+            query = Query(select, 'A')
         """
-        return Query.from_object(self, columns, **where)
+        return Query(self, columns, **where)
 
     def _execute_query(self, select_clause, trailing_clause=None, **kwds_filter):
         """Execute query and return cursor object."""
