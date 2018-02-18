@@ -449,44 +449,46 @@ def _validate_fields(fields):
             raise ValueError(message.format(field))
 
 
-def _normalize_select(select):
-    """Returns normalized *select* container or raises error if unsupported."""
-    if not isinstance(select, collections.Sized):
-        raise ValueError(('unsupported select '
-                          'format, got {0!r}').format(select))
+def _normalize_columns(columns):
+    """Returns normalized *columns* selection or raise error if
+    unsupported.
+    """
+    if not isinstance(columns, collections.Sized):
+        raise ValueError(('unsupported columns '
+                          'format, got {0!r}').format(columns))
 
-    if isinstance(select, collections.Mapping):
-        if len(select) != 1:
+    if isinstance(columns, collections.Mapping):
+        if len(columns) != 1:
             raise ValueError(('expected container of 1 item, got {0} '
-                              'items: {1!r}').format(len(select), select))
+                              'items: {1!r}').format(len(columns), columns))
 
-        key, value = tuple(select.items())[0]
+        key, value = tuple(columns.items())[0]
         if isinstance(value, collections.Mapping):
             message = 'mappings can not be nested, got {0!r}'
-            raise ValueError(message.format(select))
+            raise ValueError(message.format(columns))
 
         if isinstance(value, str) or len(value) > 1:
-            select = {key: [value]}  # Rebuild with default list container.
+            columns = {key: [value]}  # Rebuild with default list container.
 
         _validate_fields(key)
         _validate_fields(tuple(value)[0])
-        return select  # <- EXIT!
+        return columns  # <- EXIT!
 
-    if isinstance(select, str) or len(select) > 1:
-        select = [select]  # Wrap with default list container.
+    if isinstance(columns, str) or len(columns) > 1:
+        columns = [columns]  # Wrap with default list container.
 
-    _validate_fields(tuple(select)[0])
-    return select
+    _validate_fields(tuple(columns)[0])
+    return columns
 
 
-def _parse_select(select):
-    """Expects a normalized *select* and returns *key* and *value*
-    components as a tuple.
+def _parse_columns(columns):
+    """Expects a normalized *columns* selection and returns its
+    *key* and *value* components as a tuple.
     """
-    if isinstance(select, collections.Mapping):
-        key, value = tuple(select.items())[0]
+    if isinstance(columns, collections.Mapping):
+        key, value = tuple(columns.items())[0]
     else:
-        key, value = tuple(), select
+        key, value = tuple(), columns
     return key, value
 
 
@@ -567,7 +569,7 @@ class Query(object):
             if not isinstance(selector, Selector):
                 msg = 'selector must be datatest.Selector object, got {0}'
                 raise TypeError(msg.format(selector.__class__.__name__))
-            flattened = _flatten([_parse_select(columns), where.keys()])
+            flattened = _flatten([_parse_columns(columns), where.keys()])
             selector._assert_fields_exist(flattened)
         elif argcount == 1:
             selector, columns = None, args[0]
@@ -576,7 +578,7 @@ class Query(object):
             raise TypeError(msg.format(argcount))
 
         self.source = selector
-        self.args = (_normalize_select(columns),)
+        self.args = (_normalize_columns(columns),)
         self.kwds = where
         self._query_steps = []
 
@@ -1098,9 +1100,9 @@ class Selector(object):
         clause = ' AND '.join(clause) if clause else ''
         return clause, params
 
-    def _format_result_group(self, select, cursor):
-        outer_type = type(select)
-        inner_type = type(next(iter(select)))
+    def _format_result_group(self, columns, cursor):
+        outer_type = type(columns)
+        inner_type = type(next(iter(columns)))
         if issubclass(inner_type, str):
             result = (row[0] for row in cursor)
         elif issubclass(inner_type, tuple) and hasattr(inner_type, '_fields'):
@@ -1109,19 +1111,19 @@ class Selector(object):
             result = (inner_type(x) for x in cursor)
         return Result(result, evaluation_type=outer_type) # <- EXIT!
 
-    def _format_results(self, select, cursor):
-        """Return an iterator of results formatted by *select*
+    def _format_results(self, columns, cursor):
+        """Return an iterator of results formatted by *columns*
         types from DBAPI2-compliant *cursor*.
 
-        The *select* can be a string, sequence, set or mapping--see
+        The *columns* can be a string, sequence, set or mapping--see
         the _select() method for details.
         """
-        if isinstance(select, (collections.Sequence, collections.Set)):
-            return self._format_result_group(select, cursor)
+        if isinstance(columns, (collections.Sequence, collections.Set)):
+            return self._format_result_group(columns, cursor)
 
-        if isinstance(select, collections.Mapping):
-            result_type = type(select)
-            key, value = tuple(select.items())[0]
+        if isinstance(columns, collections.Mapping):
+            result_type = type(columns)
+            key, value = tuple(columns.items())[0]
             key_type = type(key)
             slice_index = 1 if issubclass(key_type, str) else len(key)
 
@@ -1140,7 +1142,7 @@ class Selector(object):
             dictitems =  DictItems(formatted)
             return Result(dictitems, evaluation_type=result_type) # <- EXIT!
 
-        raise TypeError('type {0!r} not supported'.format(type(select)))
+        raise TypeError('type {0!r} not supported'.format(type(columns)))
 
     def _assert_fields_exist(self, fieldnames):
         """Assert that given fieldnames are present in data source,
@@ -1169,8 +1171,8 @@ class Selector(object):
 
         return key_columns, value_columns
 
-    def _select(self, select, **where):
-        key, value = _parse_select(select)
+    def _select(self, columns, **where):
+        key, value = _parse_columns(columns)
         key_columns, value_columns = self._parse_key_value(key, value)
 
         select_clause = ', '.join(key_columns + value_columns)
@@ -1182,23 +1184,23 @@ class Selector(object):
         else:
             order_by = None
         cursor = self._execute_query(select_clause, order_by, **where)
-        return self._format_results(select, cursor)
+        return self._format_results(columns, cursor)
 
-    def _select_distinct(self, select, **where):
-        key, value = _parse_select(select)
+    def _select_distinct(self, columns, **where):
+        key, value = _parse_columns(columns)
         key_columns, value_columns = self._parse_key_value(key, value)
 
-        columns = ', '.join(key_columns + value_columns)
-        select_clause = 'DISTINCT {0}'.format(columns)
+        all_columns = ', '.join(key_columns + value_columns)
+        select_clause = 'DISTINCT {0}'.format(all_columns)
         if key:
             order_by = 'ORDER BY {0}'.format(', '.join(key_columns))
         else:
             order_by = None
         cursor = self._execute_query(select_clause, order_by, **where)
-        return self._format_results(select, cursor)
+        return self._format_results(columns, cursor)
 
-    def _select_aggregate(self, sqlfunc, select, **where):
-        key, value = _parse_select(select)
+    def _select_aggregate(self, sqlfunc, columns, **where):
+        key, value = _parse_columns(columns)
         key_columns, value_columns = self._parse_key_value(key, value)
 
         if isinstance(value, collections.Set):
@@ -1213,9 +1215,9 @@ class Selector(object):
         else:
             group_by = None
         cursor = self._execute_query(select_clause, group_by, **where)
-        results =  self._format_results(select, cursor)
+        results =  self._format_results(columns, cursor)
 
-        if isinstance(select, collections.Mapping):
+        if isinstance(columns, collections.Mapping):
             results = DictItems((k, next(v)) for k, v in results)
             return Result(results, evaluation_type=dict)
         return next(results)

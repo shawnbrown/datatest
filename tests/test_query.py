@@ -29,8 +29,8 @@ from datatest._query.query import (
     _sqlite_min,
     _sqlite_max,
     _sqlite_distinct,
-    _normalize_select,
-    _parse_select,
+    _normalize_columns,
+    _parse_columns,
     RESULT_TOKEN,
     Query,
     Result,
@@ -546,87 +546,87 @@ class TestDistinctData(unittest.TestCase):
 
 
 class Test_select_functions(unittest.TestCase):
-    def test_normalize_select(self):
+    def test_normalize_columns(self):
         no_change = 'no change for valid containers'
 
-        self.assertEqual(_normalize_select(['A']), ['A'], msg=no_change)
+        self.assertEqual(_normalize_columns(['A']), ['A'], msg=no_change)
 
-        self.assertEqual(_normalize_select(set(['A'])), set(['A']), msg=no_change)
+        self.assertEqual(_normalize_columns(set(['A'])), set(['A']), msg=no_change)
 
         self.assertEqual(
-            _normalize_select([('A', 'B')]),
+            _normalize_columns([('A', 'B')]),
             [('A', 'B')],
             msg=no_change,
         )
 
         self.assertEqual(
-            _normalize_select({'A': ['B']}),
+            _normalize_columns({'A': ['B']}),
             {'A': ['B']},
             msg=no_change)
 
         self.assertEqual(
-            _normalize_select({'A': [('B', 'C')]}),
+            _normalize_columns({'A': [('B', 'C')]}),
             {'A': [('B', 'C')]},
             msg=no_change)
 
         self.assertEqual(
-            _normalize_select({('A', 'B'): ['C']}),
+            _normalize_columns({('A', 'B'): ['C']}),
             {('A', 'B'): ['C']},
             msg=no_change)
 
         default_list = 'unwrapped column or multi-column selects should get list wrapper'
 
-        self.assertEqual(_normalize_select('A'), ['A'], msg=no_change)
+        self.assertEqual(_normalize_columns('A'), ['A'], msg=no_change)
 
         self.assertEqual(
-            _normalize_select(('A', 'B')),
+            _normalize_columns(('A', 'B')),
             [('A', 'B')],
             msg=no_change)
 
         self.assertEqual(
-            _normalize_select({'A': 'B'}),
+            _normalize_columns({'A': 'B'}),
             {'A': ['B']},
             msg=no_change)
 
         self.assertEqual(
-            _normalize_select({('A', 'B'): 'C'}),
+            _normalize_columns({('A', 'B'): 'C'}),
             {('A', 'B'): ['C']},
             msg=no_change)
 
         self.assertEqual(
-            _normalize_select({'A': ('B', 'C')}),
+            _normalize_columns({'A': ('B', 'C')}),
             {'A': [('B', 'C')]},
             msg=no_change)
 
         unsupported = 'unsupported values should raise error'
 
         with self.assertRaises(ValueError, msg=unsupported):
-            _normalize_select(1)
+            _normalize_columns(1)
 
         with self.assertRaises(ValueError, msg=unsupported):
-            _normalize_select({'A': {'B': ['C']}})  # Nested mapping.
+            _normalize_columns({'A': {'B': ['C']}})  # Nested mapping.
 
         with self.assertRaises(ValueError, msg=unsupported):
-            _normalize_select(['A', ['B']])  # Nested list.
+            _normalize_columns(['A', ['B']])  # Nested list.
 
-    def test_parse_select(self):
-        key, value = _parse_select(['A'])  # Single column.
+    def test_parse_columns(self):
+        key, value = _parse_columns(['A'])  # Single column.
         self.assertEqual(key, tuple())
         self.assertEqual(value, ['A'])
 
-        key, value = _parse_select([('A', 'B')])  # Multiple colummns.
+        key, value = _parse_columns([('A', 'B')])  # Multiple colummns.
         self.assertEqual(key, tuple())
         self.assertEqual(value, [('A', 'B')])
 
-        key, value = _parse_select({'A': ['B']})  # Mapping.
+        key, value = _parse_columns({'A': ['B']})  # Mapping.
         self.assertEqual(key, 'A')
         self.assertEqual(value, ['B'])
 
-        key, value = _parse_select({'A': [('B', 'C')]})  # Mapping with multi-column value.
+        key, value = _parse_columns({'A': [('B', 'C')]})  # Mapping with multi-column value.
         self.assertEqual(key, 'A')
         self.assertEqual(value, [('B', 'C')])
 
-        key, value = _parse_select({('A', 'B'): ['C']})  # Mapping with multi-column key.
+        key, value = _parse_columns({('A', 'B'): ['C']})  # Mapping with multi-column key.
         self.assertEqual(key, ('A', 'B'))
         self.assertEqual(value, ['C'])
 
@@ -727,7 +727,7 @@ class TestQuery(unittest.TestCase):
         self.assertEqual(copied.kwds, query.kwds)
         self.assertEqual(copied._query_steps, query._query_steps)
 
-        # Source, select, and keyword.
+        # Source, columns, and keyword.
         source = Selector([('A', 'B'), (1, 2), (1, 2)])
         query = Query(source, ['B'])
         copied = query.__copy__()
