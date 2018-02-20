@@ -30,6 +30,8 @@ get_reader
 
     .. automethod:: from_namedtuples
 
+    .. automethod:: from_query
+
     .. automethod:: from_pandas
 
     .. automethod:: from_excel

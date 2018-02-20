@@ -157,7 +157,7 @@ class get_reader(object):
 
             if 'datatest' in sys.modules:
                 if isinstance(obj, sys.modules['datatest'].Query):
-                    return cls.from_datatest(obj, *args, **kwds)
+                    return cls.from_query(obj, *args, **kwds)
 
             if 'pandas' in sys.modules:
                 if isinstance(obj, sys.modules['pandas'].DataFrame):
@@ -227,9 +227,9 @@ class get_reader(object):
         return _from_csv_iterable(csvfile, encoding, **kwds)
 
     @staticmethod
-    def from_datatest(query, fieldnames=None):
+    def from_query(query, fieldnames=None):
         """Return a reader object which will iterate over the records
-        returned from the given datatest.Query *query*. If *fieldnames*
+        returned from the given :class:`Query` *query*. If *fieldnames*
         is not provided, this function tries to construct names using
         the values from the query's ``columns`` argument.
         """
@@ -300,6 +300,10 @@ class get_reader(object):
             yield fieldnames
             for value in result:
                 yield format_value(value)
+
+    @classmethod
+    def from_datatest(cls, query, fieldnames=None):  # Added for compatibility
+        return cls.from_query(query, fieldnames)     # with external get_reader.
 
     @staticmethod
     def from_pandas(df, index=True):
