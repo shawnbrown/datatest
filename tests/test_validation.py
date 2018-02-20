@@ -25,7 +25,7 @@ from datatest.validation import _normalize_data
 from datatest.validation import _normalize_requirement
 from datatest.validation import _get_invalid_info
 from datatest.validation import ValidationError
-from datatest.validation import is_valid
+from datatest.validation import valid
 from datatest.validation import validate
 
 from datatest._query.query import DictItems
@@ -911,12 +911,12 @@ class TestValidationError(unittest.TestCase):
 
 
 class TestIsValidAndValidate(unittest.TestCase):
-    def test_is_valid_and_validate(self):
+    def test_valid_and_validate(self):
         a = set([1, 2, 3])
         b = set([2, 3, 4])
 
-        self.assertTrue(is_valid(a, a))
-        self.assertFalse(is_valid(a, b))
+        self.assertTrue(valid(a, a))
+        self.assertFalse(valid(a, b))
 
         self.assertTrue(validate(a, a))
         with self.assertRaises(ValidationError):

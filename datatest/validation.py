@@ -28,9 +28,9 @@ from .difference import (
 
 
 __all__ = [
-    'ValidationError',
-    'is_valid',
     'validate',
+    'valid',
+    'ValidationError',
 ]
 
 
@@ -503,7 +503,7 @@ class ValidationError(AssertionError):
         return '{0}({1!r}, {2!r})'.format(class_name, self.message, self.differences)
 
 
-def is_valid(data, requirement):
+def valid(data, requirement):
     """Return True if *data* satisfies *requirement* else return False."""
     if _get_invalid_info(data, requirement):
         return False
