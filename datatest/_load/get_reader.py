@@ -6,9 +6,10 @@ import sys
 from .._compatibility.collections import Iterable
 from .._compatibility.collections import Mapping
 from .._compatibility.itertools import chain
-from .._utils import string_types
-from .._utils import file_types
 from .._utils import iterpeek
+from .._utils import file_types
+from .._utils import nonstringiter
+from .._utils import string_types
 
 
 ########################################################################
@@ -233,10 +234,6 @@ class get_reader(object):
         is not provided, this function tries to construct names using
         the values from the query's ``columns`` argument.
         """
-        def nonstringiter(obj):
-            return (not isinstance(obj, string_types)
-                    and isinstance(obj, Iterable))
-
         def getfunc(obj):
             if nonstringiter(obj):
                 return lambda x: list(x)
