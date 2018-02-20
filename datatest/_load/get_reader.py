@@ -4,6 +4,8 @@ import io
 import sys
 
 from .._compatibility.collections import Iterable
+from .._compatibility.collections import Mapping
+from .._compatibility.itertools import chain
 from .._utils import string_types
 from .._utils import file_types
 from .._utils import iterpeek
@@ -153,6 +155,10 @@ class get_reader(object):
                     and getattr(obj, 'name', '').lower().endswith('.csv'):
                 return cls.from_csv(obj, *args, **kwds)
 
+            if 'datatest' in sys.modules:
+                if isinstance(obj, sys.modules['datatest'].Query):
+                    return cls.from_datatest(obj, *args, **kwds)
+
             if 'pandas' in sys.modules:
                 if isinstance(obj, sys.modules['pandas'].DataFrame):
                     return cls.from_pandas(obj, *args, **kwds)
@@ -219,6 +225,81 @@ class get_reader(object):
         if isinstance(csvfile, string_types):
             return _from_csv_path(csvfile, encoding, **kwds)
         return _from_csv_iterable(csvfile, encoding, **kwds)
+
+    @staticmethod
+    def from_datatest(query, fieldnames=None):
+        """Return a reader object which will iterate over the records
+        returned from the given datatest.Query *query*. If *fieldnames*
+        is not provided, this function tries to construct names using
+        the values from the query's ``columns`` argument.
+        """
+        def nonstringiter(obj):
+            return (not isinstance(obj, string_types)
+                    and isinstance(obj, Iterable))
+
+        def getfunc(obj):
+            if nonstringiter(obj):
+                return lambda x: list(x)
+            return lambda x: [x]
+
+        result = query()
+        evaluation_type = result.evaluation_type
+        first_record = next(result)
+
+        if issubclass(evaluation_type, Mapping):
+            first_key, value = first_record
+            if isinstance(value, result.__class__):  # If value is also result
+                first_value = next(value)            # object, get its first
+                value = chain([first_value], value)  # value and rebuild.
+            else:
+                first_value = value
+            result = chain([(first_key, value)], result)
+
+            format_key = getfunc(first_key)
+            format_value = getfunc(first_value)
+
+            if not fieldnames:
+                try:
+                    col_key, col_val = next(iter(query.args[0].items()))
+                    col_val = next(iter(col_val))
+                    fieldnames = format_key(col_key) + format_value(col_val)
+
+                    sample_row = format_key(first_key) \
+                                 + format_value(first_value)
+                    assert len(sample_row) == len(fieldnames)
+                except Exception:
+                    msg = ('must provide fieldnames, cannot '
+                           'be determined automatically')
+                    raise TypeError(msg)
+
+            yield fieldnames
+            for k, v in result:
+                k = format_key(k)
+                if nonstringiter(v) and not isinstance(v, tuple):
+                    for subval in v:
+                        subval = format_value(subval)
+                        yield k + subval
+                else:
+                    yield k + format_value(v)
+
+        else:
+            result = chain([first_record], result)
+
+            format_value = getfunc(first_record)
+
+            if not fieldnames:
+                try:
+                    fieldnames = format_value(next(iter(query.args[0])))
+                    sample_row = format_value(first_record)
+                    assert len(fieldnames) == len(sample_row)
+                except Exception:
+                    msg = ('must provide fieldnames, cannot '
+                           'be determined automatically')
+                    raise TypeError(msg)
+
+            yield fieldnames
+            for value in result:
+                yield format_value(value)
 
     @staticmethod
     def from_pandas(df, index=True):

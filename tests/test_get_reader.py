@@ -5,6 +5,7 @@ import io
 import os
 import sys
 
+import datatest
 from datatest._compatibility.builtins import *
 from . import _unittest as unittest
 
@@ -268,6 +269,38 @@ class TestFromCsvPath(SampleFilesTestCase):
             list(reader)  # Trigger evaluation.
 
 
+class TestFromDatatest(unittest.TestCase):
+    def test_selector_source_single_column(self):
+        select = datatest.Selector([['A', 'B'], ['x', 1], ['y', 2]])
+        query = select('A')
+        reader = get_reader.from_datatest(query)
+        self.assertEqual(list(reader), [['A'], ['x'], ['y']])
+
+    def test_selector_source_multiple_columns(self):
+        select = datatest.Selector([['A', 'B'], ['x', 1], ['y', 2]])
+        query = select(('A', 'B'))
+        reader = get_reader.from_datatest(query)
+        self.assertEqual(list(reader), [['A', 'B'], ['x', 1], ['y', 2]])
+
+    def test_selector_source_column_mapping(self):
+        select = datatest.Selector([['A', 'B'], ['x', 1], ['y', 2]])
+        query = select({'A': 'B'})
+        reader = get_reader.from_datatest(query)
+        self.assertEqual(list(reader), [['A', 'B'], ['x', 1], ['y', 2]])
+
+    def test_selector_source_column_mapping2(self):
+        select = datatest.Selector([['A', 'B'], ['x', 1], ['x', 2]])
+        query = select({'A': ('A', 'B')})
+        reader = get_reader.from_datatest(query)
+        self.assertEqual(list(reader), [['A', 'A', 'B'], ['x', 'x', 1], ['x', 'x', 2]])
+
+    def test_selector_source_column_mapping3(self):
+        select = datatest.Selector([['A', 'B'], ['x', 1], ['x', 2]])
+        query = select({('A', 'A'): ('B', 'B')})
+        reader = get_reader.from_datatest(query)
+        self.assertEqual(list(reader), [['A', 'A', 'B', 'B'], ['x', 'x', 1, 1], ['x', 'x', 2, 2]])
+
+
 @unittest.skipIf(not pandas, 'pandas not found')
 class TestFromPandas(unittest.TestCase):
     def setUp(self):
@@ -425,6 +458,17 @@ class TestFunctionDispatching(SampleFilesTestCase):
                 ['utf8', chr(0x003b1)],  # chr(0x003b1) -> α
             ]
             self.assertEqual(list(reader), expected)
+
+    def test_datatest(self):
+        select = datatest.Selector([['A', 'B'], ['x', 1], ['y', 2]])
+        query = select('A')
+        reader = get_reader(query)
+        self.assertEqual(list(reader), [['A'], ['x'], ['y']])
+
+        select = datatest.Selector([['A', 'B'], ['x', 1], ['y', 2]])
+        query = select({'A': 'B'})
+        reader = get_reader(query)
+        self.assertEqual(list(reader), [['A', 'B'], ['x', 1], ['y', 2]])
 
     @unittest.skipIf(not xlrd, 'xlrd not found')
     def test_excel(self):
