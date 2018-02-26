@@ -61,55 +61,6 @@ def iterpeek(iterable):
     return first_item, iterable
 
 
-class EqualityAdapter(object):  # Used by get_predicate().
-    """Wrapper to call *func* when evaluating the '==' operator."""
-    def __init__(self, func, name):
-        self._func = func
-        self._name = name
-
-    def __eq__(self, other):
-        return self._func(other)
-
-    def __repr__(self):
-        return self._name
-
-
-class get_predicate(object):
-    """Return a predicate function made from the given *obj*."""
-    def __new__(cls, obj):
-        if isinstance(obj, tuple):
-            equality_object =  tuple(cls._adapt(x) for x in obj)
-        else:
-            equality_object = cls._adapt(obj)
-
-        def predicate(x):
-            return equality_object == x
-        predicate.__name__ = repr(equality_object)
-
-        return predicate
-
-    @staticmethod
-    def _adapt(value):
-        """Return an adapter object whose behavior is triggered by
-        the '==' operator.
-        """
-        if callable(value):
-            func = lambda x: (x is value) or value(x)
-            name = getattr(value, '__name__', repr(value))
-        elif value is Ellipsis:
-            func = lambda x: True  # <- Wildcard (matches everything).
-            name = '...'
-        elif isinstance(value, regex_types):
-            func = lambda x: (x is value) or (value.search(x) is not None)
-            name = 're.compile({0!r})'.format(value.pattern)
-        elif isinstance(value, set):
-            func = lambda x: (x in value) or (x == value)
-            name = repr(value)
-        else:
-            return value  # <- EXIT!
-        return EqualityAdapter(func, name)
-
-
 def _safesort_key(obj):
     """Return a key suitable for sorting objects of any type."""
     if obj is None:

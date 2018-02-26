@@ -11,7 +11,7 @@ from ._compatibility import functools
 from ._compatibility import itertools
 
 from ._utils import exhaustible
-from ._utils import get_predicate
+from ._predicate import get_predicate
 from ._utils import _get_arg_lengths
 from ._utils import _expects_multiple_params
 from ._utils import _make_decimal
@@ -292,7 +292,13 @@ class allowed_keys(BaseAllowance):
     """
     def __init__(self, predicate, msg=None):
         super(allowed_keys, self).__init__(msg)
-        self.function = get_predicate(predicate)
+
+        predicate = get_predicate(predicate)
+        def function(x):
+            return predicate == x
+        function.__name__ = repr(predicate)
+
+        self.function = function
 
     def __repr__(self):
         cls_name = self.__class__.__name__
@@ -309,7 +315,13 @@ class allowed_args(BaseAllowance):
     """Allows differences whose 'args' satisfy the given *predicate*."""
     def __init__(self, predicate, msg=None):
         super(allowed_args, self).__init__(msg)
-        self.function = get_predicate(predicate)
+
+        predicate = get_predicate(predicate)
+        def function(x):
+            return predicate == x
+        function.__name__ = repr(predicate)
+
+        self.function = function
 
     def __repr__(self):
         cls_name = self.__class__.__name__
