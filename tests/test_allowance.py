@@ -19,6 +19,7 @@ from datatest.allowance import allowed_args
 from datatest.allowance import allowed_deviation
 from datatest.allowance import allowed_percent_deviation
 from datatest.allowance import allowed_specific
+from datatest.allowance import allowed_specific2
 from datatest.allowance import allowed_limit
 
 from datatest.validation import ValidationError
@@ -612,6 +613,183 @@ class TestAllowedSpecific(unittest.TestCase):
         allowed = {Ellipsis: [Extra('xxx'), Missing('yyy')]}
         with self.assertRaises(ValidationError) as cm:
             with allowed_specific(allowed):
+                raise ValidationError('example error', differences)
+
+        actual = cm.exception.differences
+        self.assertEqual(actual, {'baz': Extra('zzz')})
+
+
+class TestAllowedSpecific2(unittest.TestCase):
+    def test_list_and_list(self):
+        differences = [Extra('xxx'), Missing('yyy')]
+        allowed = [Extra('xxx')]
+        expected = [Missing('yyy')]
+
+        with self.assertRaises(ValidationError) as cm:
+            with allowed_specific2(allowed):
+                raise ValidationError('example error', differences)
+
+        actual = list(cm.exception.differences)
+        self.assertEqual(actual, expected)
+
+    def test_list_and_diff(self):
+        differences = [Extra('xxx'), Missing('yyy')]
+        allowed = Extra('xxx')  # <- Single diff, not in a container.
+
+        with self.assertRaises(ValidationError) as cm:
+            with allowed_specific2(allowed):
+                raise ValidationError('example error', differences)
+
+        actual = list(cm.exception.differences)
+        expected = [Missing('yyy')]
+        self.assertEqual(actual, expected)
+
+    def test_excess_allowed(self):
+        diffs = [Extra('xxx')]
+        allowed = [Extra('xxx'), Missing('yyy')]  # <- More allowed than
+        with allowed_specific2(allowed):          #    are actually found.
+            raise ValidationError('example error', diffs)
+
+    def test_duplicates(self):
+        # Three of the exact-same differences.
+        differences = [Extra('xxx'), Extra('xxx'), Extra('xxx')]
+
+        # Only allow one of them.
+        with self.assertRaises(ValidationError) as cm:
+            allowed = [Extra('xxx')]
+            with allowed_specific2(allowed):
+                raise ValidationError('example error', differences)
+
+        actual = list(cm.exception.differences)
+        expected = [Extra('xxx'), Extra('xxx')]  # Expect two remaining.
+        self.assertEqual(actual, expected)
+
+        # Only allow two of them.
+        with self.assertRaises(ValidationError) as cm:
+            allowed = [Extra('xxx'), Extra('xxx')]
+            with allowed_specific2(allowed):
+                raise ValidationError('example error', differences)
+
+        actual = list(cm.exception.differences)
+        expected = [Extra('xxx')]  # Expect one remaining.
+        self.assertEqual(actual, expected)
+
+        # Allow all three.
+        allowed = [Extra('xxx'), Extra('xxx'), Extra('xxx')]
+        with allowed_specific2(allowed):
+            raise ValidationError('example error', differences)
+
+    def test_dict_and_list(self):
+        """List of allowed differences applied to each group separately."""
+        differences = {'foo': Extra('xxx'), 'bar': [Extra('xxx'), Missing('yyy')]}
+        allowed = [Extra('xxx')]
+
+        with self.assertRaises(ValidationError) as cm:
+            with allowed_specific2(allowed):
+                raise ValidationError('example error', differences)
+
+        actual = cm.exception.differences
+        expected = {'bar': Missing('yyy')}
+        self.assertEqual(actual, expected)
+
+    def test_dict_and_dict(self):
+        differences = {'foo': Extra('xxx'), 'bar': [Extra('xxx'), Missing('yyy')]}
+        allowed = {'bar': Extra('xxx')}
+
+        with self.assertRaises(ValidationError) as cm:
+            with allowed_specific2(allowed):
+                raise ValidationError('example error', differences)
+
+        actual = cm.exception.differences
+        expected = {'foo': Extra('xxx'), 'bar': Missing('yyy')}
+        self.assertEqual(actual, expected)
+
+    def test_dict_with_predicates(self):
+        """Ellipsis wildcard key matches all, treats as a single group."""
+        differences = {
+            'foo': Extra('xxx'),
+            'bar': [Extra('yyy'), Missing('yyy')],
+            'baz': [Extra('zzz'), Missing('zzz')],
+        }
+
+        allowed = {
+            lambda x: x.startswith('ba'): [
+                Extra('yyy'),
+                Extra('zzz'),
+            ],
+        }
+
+        with self.assertRaises(ValidationError) as cm:
+            with allowed_specific2(allowed):
+                raise ValidationError('example error', differences)
+
+        actual = cm.exception.differences
+        expected = {
+            'foo': Extra('xxx'),
+            'bar': Missing('yyy'),
+            'baz': Missing('zzz'),
+        }
+        self.assertEqual(actual, expected)
+
+    def test_predicate_collision(self):
+        """Ellipsis wildcard key matches all, treats as a single group."""
+        differences = {
+            'foo': Extra('xxx'),
+            'bar': [Extra('yyy'), Missing('yyy')],
+        }
+
+        def allow1(x):
+            return x.startswith('ba')
+
+        def allow2(x):
+            return x == 'bar'
+
+        allowed = {
+            allow1: Extra('yyy'),
+            allow2: Missing('yyy'),
+        }
+
+        regex = ("the key 'bar' matches multiple predicates: "
+                 "allow[12], allow[12]")
+        with self.assertRaisesRegex(KeyError, regex):
+            with allowed_specific2(allowed):
+                raise ValidationError('example error', differences)
+
+    def test_dict_global_wildcard_predicate(self):
+        """Ellipsis wildcard key matches all, treats as a single group."""
+        differences = {'foo': Extra('xxx'), 'bar': [Extra('xxx'), Missing('yyy')]}
+        allowed = {Ellipsis: Extra('xxx')}
+
+        with self.assertRaises(ValidationError) as cm:
+            with allowed_specific2(allowed):
+                raise ValidationError('example error', differences)
+
+        actual = cm.exception.differences
+        # Actual result can vary with unordered dictionaries.
+        if len(actual) == 1:
+            expected = {'bar': [Extra('xxx'), Missing('yyy')]}
+        else:
+            expected = {'foo': Extra('xxx'), 'bar': Missing('yyy')}
+        self.assertEqual(actual, expected)
+
+    def test_all_allowed(self):
+        differences = {'foo': Extra('xxx'), 'bar': Missing('yyy')}
+        allowed = {'foo': Extra('xxx'), 'bar': Missing('yyy')}
+
+        with allowed_specific2(allowed):  # <- Allows all differences, no error!
+            raise ValidationError('example error', differences)
+
+    def test_combination_of_cases(self):
+        """This is a bit of an integration test."""
+        differences = {
+            'foo': [Extra('xxx'), Missing('yyy')],
+            'bar': [Extra('xxx')],
+            'baz': [Extra('xxx'), Missing('yyy'), Extra('zzz')],
+        }
+        #allowed = {Ellipsis: [Extra('xxx'), Missing('yyy')]}
+        allowed = [Extra('xxx'), Missing('yyy')]
+        with self.assertRaises(ValidationError) as cm:
+            with allowed_specific2(allowed):
                 raise ValidationError('example error', differences)
 
         actual = cm.exception.differences

@@ -11,6 +11,7 @@ from ._compatibility import functools
 from ._compatibility import itertools
 
 from ._utils import exhaustible
+from ._predicate import PredicateObject
 from ._predicate import get_predicate
 from ._utils import _get_arg_lengths
 from ._utils import _expects_multiple_params
@@ -443,6 +444,114 @@ with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
         inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),
         inspect.Parameter('msg', inspect.Parameter.POSITIONAL_OR_KEYWORD),
     ])
+
+
+class allowed_specific2(BaseAllowance):
+    """Allows specific *differences* without triggering a
+    test failure::
+
+        known_issues = datatest.allowed_specific([
+            Missing('foo'),
+            Extra('bar'),
+        ])
+        with known_issues:
+            datatest.validate(..., ...)
+
+    A dictionary can be used to specify differences per group::
+
+        known_issues = datatest.allowed_specific({
+            'AAA': Missing('foo'),
+            'BBB': [Extra('bar'), Missing('baz')],
+        })
+
+        with known_issues:
+            datatest.validate(..., ...)
+
+    To treat multiple dictionary groups as a single group, use a
+    single-item dictionary with an ellipsis (``...``) for the key::
+
+        known_issues = datatest.allowed_specific({
+            ...: [Missing('foo'), Extra('bar')],
+        })
+
+        with known_issues:
+            datatest.validate(..., ...)
+    """
+    def __init__(self, differences, msg=None):
+        if not isinstance(differences, (BaseDifference, list, set, dict)):
+            raise TypeError(
+                'differences must be a list, dict, or a single difference, '
+                'got {0} type instead'.format(differences.__class__.__name__)
+            )
+        self.differences = differences
+        self.msg = msg
+        self._allowed = dict()         # Properties to hold working values
+        self._predicate_keys = dict()  # during allowance checking.
+
+    def __repr__(self):
+        cls_name = self.__class__.__name__
+        msg_part = ', msg={0!r}'.format(self.msg) if self.msg else ''
+        return '{0}({1!r}{2})'.format(cls_name, self.differences, msg_part)
+
+    def start_collection(self):
+        self._predicate_keys = dict()  # Clear _predicate_keys
+
+        # Normalize and copy mutable containers, assign to "_allowed".
+        diffs = self.differences
+        if isinstance(diffs, BaseDifference):
+            allowed = collections.defaultdict(lambda: [diffs])
+        elif isinstance(diffs, (list, set)):
+            allowed = collections.defaultdict(lambda: list(diffs))
+        elif isinstance(diffs, dict):
+            allowed = dict()
+            for key, value in diffs.items():
+                predicate = get_predicate(key)
+                if isinstance(predicate, PredicateObject):
+                    self._predicate_keys[key]= predicate
+
+                if isinstance(value, (list, set)):
+                    allowed[key] = list(value)  # Make a copy.
+                else:
+                    allowed[key] = [value]
+        else:
+            raise TypeError(
+                'differences must be a list, dict, or a single difference, '
+                'got {0} type instead'.format(allowed.__class__.__name__)
+            )
+        self._allowed = allowed
+
+    def call_predicate(self, item):
+        key, diff = item
+        try:
+            self._allowed[key].remove(diff)
+            return True
+        except KeyError:
+            matches = dict()
+
+            # See if key compares as equal to any predicate-keys.
+            for match_key, match_pred in self._predicate_keys.items():
+                if match_pred == key:
+                    matches[match_key] = match_pred
+
+            if not matches:
+                return False
+            elif len(matches) == 1:
+                try:
+                    match_key = next(iter(matches.keys()))
+                    self._allowed[match_key].remove(diff)
+                    return True
+                except ValueError:
+                    return False
+            else:
+                msg = (
+                    'the key {0!r} matches multiple predicates: {1}'
+                ).format(key, ', '.join(repr(x) for x in matches.values()))
+                exc = KeyError(msg)
+                exc.__cause__ = None
+                raise exc
+
+        except ValueError:
+            return False
 
 
 class allowed_specific(BaseAllowance):
