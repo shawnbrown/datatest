@@ -673,6 +673,14 @@ class TestAllowedSpecific(unittest.TestCase):
 
 
 class TestAllowedLimit(unittest.TestCase):
+    def test_bad_arg(self):
+        """An old version of allowed_limit() used to support dict
+        arguments but this behavior has been removed. It should now
+        raise a TypeError.
+        """
+        with self.assertRaises(TypeError):
+            allowed_limit(dict())
+
     def test_under_limit(self):
         with allowed_limit(3):  # <- Allows 3 and there are only 2.
             raise ValidationError('example error',
@@ -709,31 +717,6 @@ class TestAllowedLimit(unittest.TestCase):
         self.assertIsInstance(remaining, collections.Mapping)
         self.assertEqual(len(remaining), 1)
 
-    def test_dict_of_limits(self):
-        with self.assertRaises(ValidationError) as cm:
-            with allowed_limit({'A': 1, 'B': 2, 'C': 2}):
-                raise ValidationError('example error',
-                                      {'A': Extra('xxx'),
-                                       'B': [Missing('yyy'), Missing('zzz')],
-                                       'C': Extra('xxx'),
-                                       'D': Extra('xxx')})
-
-        remaining = cm.exception.differences
-        self.assertIsInstance(remaining, collections.Mapping)
-        self.assertEqual(remaining, {'D': Extra('xxx')})
-
-    def test_ellipsis_wildcard_matching(self):
-        # Using an ellipsis will match any key. So you can use
-        # {...: 1} to allow 1 difference for every group.
-        with self.assertRaises(ValidationError) as cm:
-            with allowed_limit({Ellipsis: 1}):  # <- Allows 1 per group.
-                raise ValidationError('example error',
-                                      {'foo': Extra('xxx'), 'bar': [Missing('yyy'), Missing('zzz')]})
-
-        remaining = cm.exception.differences
-        self.assertIsInstance(remaining, collections.Mapping)
-        self.assertEqual(remaining, {'bar': Missing('zzz')})
-
 
 class TestUniversalComposability(unittest.TestCase):
     """Test that allowances are composable with allowances of the
@@ -750,7 +733,6 @@ class TestUniversalComposability(unittest.TestCase):
             ntup(cls=allowed_keys,              args=(lambda args: True,),     priority=1),
             ntup(cls=allowed_args,              args=(lambda *args: True,),    priority=1),
             ntup(cls=allowed_specific,          args=({'X': [Invalid('A')]},), priority=2),
-            ntup(cls=allowed_limit,             args=({Ellipsis: 4},),         priority=3),
             ntup(cls=allowed_limit,             args=(4,),                     priority=5),
         ]
 
