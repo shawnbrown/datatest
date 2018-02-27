@@ -17,9 +17,8 @@ Reference
 .. toctree::
     :maxdepth: 2
 
+    Core API <core-api.rst>
     unittest-support
-    data-handling
-    error-and-difference
 
 For a full list of classes and objects, see the
 :ref:`Package Index <genindex>`.

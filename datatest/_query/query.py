@@ -540,22 +540,12 @@ RESULT_TOKEN = _make_token(
 ########################################################
 
 class Query(object):
-    """A class to query data from a source object. Queries can be
-    created, modified, and passed around without actually computing
-    the result---computation doesn't occur until the query object
-    itself or its :meth:`fetch` method is called.
+    """Query(columns, **where)
+    Query(selector, columns, **where)
 
-    The *columns* argument must be a container of one field name (a
-    string) or of an inner-container of multiple filed names. The
-    optional *where* keywords can narrow a selection to rows where
-    fields match specified values.
+    A class to query data from a source object.
 
-    Although Query objects are usually created by
-    :meth:`calling <datatest.Selector.__call__>` an existing
-    Selector object like a function, it's possible to create
-    them independent of any single data source::
-
-        query = Query('A')
+    See documentation for full details.
     """
     def __init__(self, *args, **where):
         """Initialize self.
