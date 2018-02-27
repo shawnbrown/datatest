@@ -587,7 +587,7 @@ class allowed_limit(BaseAllowance):
 
     @property
     def priority(self):
-        return 5
+        return 3
 
     def start_collection(self):
         self._limit = self.number

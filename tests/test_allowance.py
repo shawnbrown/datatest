@@ -733,7 +733,7 @@ class TestUniversalComposability(unittest.TestCase):
             ntup(cls=allowed_keys,              args=(lambda args: True,),     priority=1),
             ntup(cls=allowed_args,              args=(lambda *args: True,),    priority=1),
             ntup(cls=allowed_specific,          args=({'X': [Invalid('A')]},), priority=2),
-            ntup(cls=allowed_limit,             args=(4,),                     priority=5),
+            ntup(cls=allowed_limit,             args=(4,),                     priority=3),
         ]
 
     def test_completeness(self):
