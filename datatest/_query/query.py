@@ -31,6 +31,11 @@ from .._load.temptable import new_table_name
 from .._load.temptable import savepoint
 from .._load.temptable import table_exists
 
+try:
+    FileNotFoundError  # New in Python 3.3.
+except NameError:
+    # If not available, use as an alias for OSError.
+    FileNotFoundError = OSError
 
 # For the following database connection, the synchronous flag is
 # set to "OFF" for faster insertions and commits. Since the database
@@ -934,15 +939,15 @@ class Selector(object):
         self._connection = DEFAULT_CONNECTION
         self._table = None
         self._obj_strings = []
-        self.load_data(objs, *args, **kwds)
+        if objs:
+            self.load_data(objs, *args, **kwds)
 
     def load_data(self, objs, *args, **kwds):
         """Load data from one or more objects."""
-        if not objs:
-            return  # <- EXIT!
-
         if isinstance(objs, string_types):
             obj_list = glob(objs)  # Get shell-style wildcard matches.
+            if not obj_list:
+                raise FileNotFoundError('no files matching {0!r}'.format(objs))
         elif not isinstance(objs, list) \
                 or isinstance(objs[0], (list, tuple, dict)):  # Not a list or is a
             obj_list = [objs]                                 # reader-like list.
