@@ -224,7 +224,7 @@ as well as :class:`Deviations <datatest.Deviation>` of ±5%::
     with allowed_deviation(10) | allowed_percent(0.05):
         validate(..., ...)
 
-And composed allowances, thsemselves, can be composed to define
+And composed allowances, themselves, can be composed to define
 increasingly specific allowance criteria::
 
     five_missing = allowed_missing() & allowed_limit(5)
