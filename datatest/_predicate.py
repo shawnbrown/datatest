@@ -20,9 +20,9 @@ class PredicateTuple(PredicateObject, tuple):
 
 
 class PredicateMatcher(PredicateObject):
-    """Wrapper to call *func* when evaluating the '==' operator."""
-    def __init__(self, func, repr_string):
-        self._func = func
+    """Wrapper to call *function* when evaluating the '==' operator."""
+    def __init__(self, function, repr_string):
+        self._func = function
         self._repr = repr_string
 
     def __eq__(self, other):
@@ -41,23 +41,23 @@ def _get_matcher(value):
     needed, returns the original object unchanged.
     """
     if isinstance(value, type):
-        func = lambda x: (x is value) or isinstance(x, value)
-        name = getattr(value, '__name__', repr(value))
+        function = lambda x: (x is value) or isinstance(x, value)
+        repr_string = getattr(value, '__name__', repr(value))
     elif callable(value):
-        func = lambda x: (x is value) or value(x)
-        name = getattr(value, '__name__', repr(value))
+        function = lambda x: (x is value) or value(x)
+        repr_string = getattr(value, '__name__', repr(value))
     elif value is Ellipsis:
-        func = lambda x: True  # <- Wildcard (matches everything).
-        name = '...'
+        function = lambda x: True  # <- Wildcard (matches everything).
+        repr_string = '...'
     elif isinstance(value, regex_types):
-        func = lambda x: (x is value) or (value.search(x) is not None)
-        name = 're.compile({0!r})'.format(value.pattern)
+        function = lambda x: (x is value) or (value.search(x) is not None)
+        repr_string = 're.compile({0!r})'.format(value.pattern)
     elif isinstance(value, set):
-        func = lambda x: (x in value) or (x == value)
-        name = repr(value)
+        function = lambda x: (x in value) or (x == value)
+        repr_string = repr(value)
     else:
-        return value  # <- EXIT!
-    return PredicateMatcher(func, name)
+        return value  # <- Original reference.
+    return PredicateMatcher(function, repr_string)
 
 
 def get_predicate(obj):
