@@ -17,7 +17,7 @@ from datatest.allowance import allowed_invalid
 from datatest.allowance import allowed_keys
 from datatest.allowance import allowed_args
 from datatest.allowance import allowed_deviation
-from datatest.allowance import allowed_percent_deviation
+from datatest.allowance import allowed_percent
 from datatest.allowance import allowed_specific
 from datatest.allowance import allowed_limit
 
@@ -444,34 +444,34 @@ class TestAllowedPercentDeviation(unittest.TestCase):
 
     def test_function_signature(self):
         with contextlib.suppress(AttributeError):       # Python 3.2 and older
-            sig = inspect.signature(allowed_percent_deviation)  # use ugly signatures.
+            sig = inspect.signature(allowed_percent)  # use ugly signatures.
             parameters = list(sig.parameters)
             self.assertEqual(parameters, ['tolerance', 'msg'])
 
     def test_tolerance_syntax(self):
         with self.assertRaises(ValidationError) as cm:
-            with allowed_percent_deviation(0.2):  # <- Allows +/- 20%.
+            with allowed_percent(0.2):  # <- Allows +/- 20%.
                 raise ValidationError('example error', self.differences)
         remaining = cm.exception.differences
         self.assertEqual(remaining, {'bbb': Deviation(+4, 16)})
 
     def test_lower_upper_syntax(self):
         with self.assertRaises(ValidationError) as cm:
-            with allowed_percent_deviation(0.0, 0.3):  # <- Allows from 0 to 30%.
+            with allowed_percent(0.0, 0.3):  # <- Allows from 0 to 30%.
                 raise ValidationError('example error', self.differences)
         result_diffs = cm.exception.differences
         self.assertEqual({'aaa': Deviation(-1, 16)}, result_diffs)
 
     def test_same_value_case(self):
         with self.assertRaises(ValidationError) as cm:
-            with allowed_percent_deviation(0.25, 0.25):  # <- Allows +25% only.
+            with allowed_percent(0.25, 0.25):  # <- Allows +25% only.
                 raise ValidationError('example error', self.differences)
         result_diffs = cm.exception.differences
         self.assertEqual({'aaa': Deviation(-1, 16), 'ccc': Deviation(+2, 16)}, result_diffs)
 
     def test_special_values(self):
         # Test empty deviation cases--should pass without error.
-        with allowed_percent_deviation(0):  # <- Allows empty deviations only.
+        with allowed_percent(0):  # <- Allows empty deviations only.
             raise ValidationError('example error',
                                   [Deviation(None, 0), Deviation('', 0)])
 
@@ -484,7 +484,7 @@ class TestAllowedPercentDeviation(unittest.TestCase):
             Deviation(float('nan'), 16),  # Not a number.
         ]
         with self.assertRaises(ValidationError) as cm:
-            with allowed_percent_deviation(2.00):  # <- Allows +/- 200%.
+            with allowed_percent(2.00):  # <- Allows +/- 200%.
                 raise ValidationError('example error', differences)
         actual = cm.exception.differences
         expected = [
@@ -725,15 +725,15 @@ class TestUniversalComposability(unittest.TestCase):
     def setUp(self):
         ntup = collections.namedtuple('ntup', ('cls', 'args', 'priority'))
         self.allowances = [
-            ntup(cls=allowed_missing,           args=tuple(),                  priority=1),
-            ntup(cls=allowed_extra,             args=tuple(),                  priority=1),
-            ntup(cls=allowed_invalid,           args=tuple(),                  priority=1),
-            ntup(cls=allowed_deviation,         args=(5,),                     priority=1),
-            ntup(cls=allowed_percent_deviation, args=(0.05,),                  priority=1),
-            ntup(cls=allowed_keys,              args=(lambda args: True,),     priority=1),
-            ntup(cls=allowed_args,              args=(lambda *args: True,),    priority=1),
-            ntup(cls=allowed_specific,          args=({'X': [Invalid('A')]},), priority=2),
-            ntup(cls=allowed_limit,             args=(4,),                     priority=3),
+            ntup(cls=allowed_missing,   args=tuple(),                  priority=1),
+            ntup(cls=allowed_extra,     args=tuple(),                  priority=1),
+            ntup(cls=allowed_invalid,   args=tuple(),                  priority=1),
+            ntup(cls=allowed_deviation, args=(5,),                     priority=1),
+            ntup(cls=allowed_percent,   args=(0.05,),                  priority=1),
+            ntup(cls=allowed_keys,      args=(lambda args: True,),     priority=1),
+            ntup(cls=allowed_args,      args=(lambda *args: True,),    priority=1),
+            ntup(cls=allowed_specific,  args=({'X': [Invalid('A')]},), priority=2),
+            ntup(cls=allowed_limit,     args=(4,),                     priority=3),
         ]
 
     def test_completeness(self):
@@ -742,6 +742,8 @@ class TestUniversalComposability(unittest.TestCase):
         """
         import datatest
         actual = datatest.allowance.__all__
+        actual.remove('allowed_percent_deviation')  # This is just an alias
+                                                    # for allowed_percent().
         expected = (x.cls.__name__ for x in self.allowances)
         self.assertEqual(set(actual), set(expected))
 
@@ -781,7 +783,7 @@ class TestUniversalComposability(unittest.TestCase):
                 Deviation(+4, 8),   #  50%
                 Deviation(+8, 32),  #  25%
             ]
-            with allowed_deviation(2) | allowed_percent_deviation(0.25):
+            with allowed_deviation(2) | allowed_percent(0.25):
                 raise ValidationError('example error', differences)
 
         remaining = cm.exception.differences

@@ -20,7 +20,7 @@ from .allowance import allowed_missing
 from .allowance import allowed_extra
 from .allowance import allowed_invalid
 from .allowance import allowed_deviation
-from .allowance import allowed_percent_deviation
+from .allowance import allowed_percent
 from .allowance import allowed_specific
 from .allowance import allowed_keys
 from .allowance import allowed_args
@@ -170,14 +170,18 @@ class DataTestCase(TestCase):
         """
         return allowed_deviation(lower, upper, msg)
 
-    def allowedPercentDeviation(self, lower, upper=None, msg=None):
+    def allowedPercent(self, lower, upper=None, msg=None):
         """
-        allowedPercentDeviation(tolerance, /, msg=None)
-        allowedPercentDeviation(lower, upper, msg=None)
+        allowedPercent(tolerance, /, msg=None)
+        allowedPercent(lower, upper, msg=None)
 
         See documentation for full details.
         """
-        return allowed_percent_deviation(lower, upper, msg)
+        return allowed_percent(lower, upper, msg)
+
+    def allowedPercentDeviation(self, lower, upper=None, msg=None):
+        """alias of :meth:`DataTestCase.allowedPercent`"""
+        return self.allowedPercent(lower, upper, msg)
 
     def allowedSpecific(self, differences, msg=None):
         """Allows individually specified *differences* without

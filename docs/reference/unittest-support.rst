@@ -152,21 +152,21 @@ DataTestCase
         Empty values (None, empty string, etc.) are treated as zeros
         when performing comparisons.
 
-    .. method:: allowedPercentDeviation(tolerance, /, msg=None)
-                allowedPercentDeviation(lower, upper, msg=None)
+    .. method:: allowedPercent(tolerance, /, msg=None)
+                allowedPercent(lower, upper, msg=None)
 
         Allows :class:`Deviations <datatest.Deviation>` with
         percentages of error within a given *tolerance* without
         triggering a test failure::
 
-            with self.allowedPercentDeviation(0.03):  # tolerance of +/- 3%
+            with self.allowedPercent(0.03):  # tolerance of +/- 3%
                 data = ...
                 requirement = ...
                 self.assertValid(data, requirement)
 
         Specifying different *lower* and *upper* bounds::
 
-            with self.allowedPercentDeviation(-0.02, 0.01):  # tolerance from -2% to +1%
+            with self.allowedPercent(-0.02, 0.01):  # tolerance from -2% to +1%
                 data = ...
                 requirement = ...
                 self.assertValid(data, requirement)
@@ -176,6 +176,11 @@ DataTestCase
 
         Empty values (None, empty string, etc.) are treated as zeros
         when performing comparisons.
+
+    .. method:: allowedPercentDeviation(tolerance, /, msg=None)
+                allowedPercentDeviation(lower, upper, msg=None)
+
+        alias of :meth:`allowedPercent`
 
     .. automethod:: allowedSpecific
 

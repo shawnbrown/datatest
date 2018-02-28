@@ -39,7 +39,8 @@ __all__ = [
     'allowed_keys',
     'allowed_args',
     'allowed_deviation',
-    'allowed_percent_deviation',
+    'allowed_percent',
+    'allowed_percent_deviation',  # alias of allowed_percent
     'allowed_specific',
     'allowed_limit',
 ]
@@ -397,9 +398,9 @@ with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
     ])
 
 
-class allowed_percent_deviation(BaseAllowance):
-    """allowed_percent_deviation(tolerance, /, msg=None)
-    allowed_percent_deviation(lower, upper, msg=None)
+class allowed_percent(BaseAllowance):
+    """allowed_percent(tolerance, /, msg=None)
+    allowed_percent(lower, upper, msg=None)
 
     Context manager that allows Deviations within a given percent
     tolerance without triggering a test failure.
@@ -410,7 +411,7 @@ class allowed_percent_deviation(BaseAllowance):
         lower, upper, msg = _normalize_deviation_args(lower, upper, msg)
         self.lower = lower
         self.upper = upper
-        super(allowed_percent_deviation, self).__init__(msg)
+        super(allowed_percent, self).__init__(msg)
 
     def __repr__(self):
         cls_name = self.__class__.__name__
@@ -439,11 +440,13 @@ class allowed_percent_deviation(BaseAllowance):
         return self.lower <= percent_error <= self.upper
 
 with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
-    allowed_percent_deviation.__init__.__signature__ = inspect.Signature([
+    allowed_percent.__init__.__signature__ = inspect.Signature([
         inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY),
         inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),
         inspect.Parameter('msg', inspect.Parameter.POSITIONAL_OR_KEYWORD),
     ])
+
+allowed_percent_deviation = allowed_percent  # Set alias for full name.
 
 
 class allowed_specific(BaseAllowance):

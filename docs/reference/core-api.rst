@@ -173,19 +173,19 @@ Allowances
     when performing comparisons.
 
 
-.. class:: allowed_percent_deviation(tolerance, /, msg=None)
-           allowed_percent_deviation(lower, upper, msg=None)
+.. class:: allowed_percent(tolerance, /, msg=None)
+           allowed_percent(lower, upper, msg=None)
 
     Allows :class:`Deviations <datatest.Deviation>` with
     percentages of error within a given *tolerance* without
     triggering a test failure::
 
-        with datatest.allowed_percent_deviation(0.03):  # tolerance of +/- 3%
+        with datatest.allowed_percent(0.03):  # tolerance of +/- 3%
             datatest.validate(..., ...)
 
     Specifying different *lower* and *upper* bounds::
 
-        with datatest.allowed_percent_deviation(-0.02, 0.01):  # tolerance from -2% to +1%
+        with datatest.allowed_percent(-0.02, 0.01):  # tolerance from -2% to +1%
             datatest.validate(..., ...)
 
     Deviations within the given range are suppressed while those
@@ -193,6 +193,11 @@ Allowances
 
     Empty values (None, empty string, etc.) are treated as zeros
     when performing comparisons.
+
+
+.. class:: allowed_percent_deviation
+
+    alias of :class:`allowed_percent`
 
 
 .. autoclass:: allowed_specific
@@ -244,27 +249,27 @@ precedence. Operations with the same precedence level
 (appearing in the same cell) are evaluated from left
 to right.
 
-+-------+--------------------------------------+----------------------------+
-| Order | Operation                            | Description                |
-+=======+======================================+============================+
-|   1   | | ``()``                             | Parentheses                |
-+-------+--------------------------------------+----------------------------+
-|   2   | | ``&``                              | Bitwise AND (intersection) |
-+-------+--------------------------------------+----------------------------+
-|   3   | | ``|``                              | Bitwise OR (union)         |
-+-------+--------------------------------------+----------------------------+
-|       | | :class:`allowed_missing`,          |                            |
-|       | | :class:`allowed_extra`,            |                            |
-|       | | :class:`allowed_invalid`,          |                            |
-|   4   | | :class:`allowed_keys`,             | Element-wise allowances    |
-|       | | :class:`allowed_args`,             |                            |
-|       | | :class:`allowed_deviation`,        |                            |
-|       | | :class:`allowed_percent_deviation` |                            |
-+-------+--------------------------------------+----------------------------+
-|   5   | | :class:`allowed_specific`          | Group-wise allowances      |
-+-------+--------------------------------------+----------------------------+
-|   6   | | :class:`allowed_limit`             | Whole-error allowances     |
-+-------+--------------------------------------+----------------------------+
++-------+-------------------------------+----------------------------+
+| Order | Operation                     | Description                |
++=======+===============================+============================+
+|   1   | | ``()``                      | Parentheses                |
++-------+-------------------------------+----------------------------+
+|   2   | | ``&``                       | Bitwise AND (intersection) |
++-------+-------------------------------+----------------------------+
+|   3   | | ``|``                       | Bitwise OR (union)         |
++-------+-------------------------------+----------------------------+
+|       | | :class:`allowed_missing`,   |                            |
+|       | | :class:`allowed_extra`,     |                            |
+|       | | :class:`allowed_invalid`,   |                            |
+|   4   | | :class:`allowed_keys`,      | Element-wise allowances    |
+|       | | :class:`allowed_args`,      |                            |
+|       | | :class:`allowed_deviation`, |                            |
+|       | | :class:`allowed_percent`    |                            |
++-------+-------------------------------+----------------------------+
+|   5   | | :class:`allowed_specific`   | Group-wise allowances      |
++-------+-------------------------------+----------------------------+
+|   6   | | :class:`allowed_limit`      | Whole-error allowances     |
++-------+-------------------------------+----------------------------+
 
 
 ************

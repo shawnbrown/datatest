@@ -27,7 +27,7 @@ from datatest.allowance import allowed_missing
 from datatest.allowance import allowed_extra
 from datatest.allowance import allowed_invalid
 from datatest.allowance import allowed_deviation
-from datatest.allowance import allowed_percent_deviation
+from datatest.allowance import allowed_percent
 from datatest.allowance import allowed_limit
 from datatest.allowance import allowed_specific
 
@@ -211,9 +211,13 @@ class TestAllowanceWrappers(unittest.TestCase):
         cm = self.case.allowedDeviation(5)
         self.assertTrue(isinstance(cm, allowed_deviation))
 
+    def test_allowedPercent(self):
+        result = self.case.allowedPercent(5)
+        self.assertTrue(isinstance(result, allowed_percent))
+
     def test_allowedPercentDeviation(self):
         result = self.case.allowedPercentDeviation(5)
-        self.assertTrue(isinstance(result, allowed_percent_deviation))
+        self.assertTrue(isinstance(result, allowed_percent))
 
     def test_allowedLimit(self):
         cm = self.case.allowedLimit(10)
