@@ -15,6 +15,16 @@ class TestInheritance(unittest.TestCase):
         self.assertTrue(issubclass(PredicateMatcher, PredicateObject))
 
 
+class TestTypeMatcher(unittest.TestCase):
+    def test_isinstance(self):
+        matcher = _get_matcher(int)
+
+        self.assertTrue(matcher == 0)
+        self.assertTrue(matcher == 1)
+        self.assertFalse(matcher == 0.0)
+        self.assertFalse(matcher == 1.0)
+
+
 class TestCallableMatcher(unittest.TestCase):
     def test_equality(self):
         def divisible3or5(x):  # <- Helper function.

@@ -40,7 +40,10 @@ def _get_matcher(value):
     PredicateMatcher instance. When no special comparison is
     needed, returns the original object unchanged.
     """
-    if callable(value):
+    if isinstance(value, type):
+        func = lambda x: (x is value) or isinstance(x, value)
+        name = getattr(value, '__name__', repr(value))
+    elif callable(value):
         func = lambda x: (x is value) or value(x)
         name = getattr(value, '__name__', repr(value))
     elif value is Ellipsis:
