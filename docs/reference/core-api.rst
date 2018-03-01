@@ -20,74 +20,6 @@ Validation
 .. autofunction:: valid
 
 
-.. _predicates:
-
-**********
-Predicates
-**********
-
-Datatest uses "predicate objects" to check that values satisfy a
-certain criteria. The specific behavior of a predicate depends
-on its type:
-
-    +----------------------+------------------------------------------+
-    | Predicate type       | Checks that                              |
-    +======================+==========================================+
-    | set                  | value is a member of the set             |
-    +----------------------+------------------------------------------+
-    | function             | calling ``function(value)`` returns True |
-    +----------------------+------------------------------------------+
-    | type                 | value is an instance of the type         |
-    +----------------------+------------------------------------------+
-    | re.compile(pattern)  | value matches the regular expression     |
-    +----------------------+------------------------------------------+
-    | str or non-container | value equals predicate                   |
-    +----------------------+------------------------------------------+
-    | tuple of             | tuple of values satisfies corresponding  |
-    | predicates           | tuple of predicates                      |
-    +----------------------+------------------------------------------+
-    | "``...``" (an        | (used as a wildcard, matches any value)  |
-    | ellipsis)            |                                          |
-    +----------------------+------------------------------------------+
-
-Predicates are used as arguments when asserting validity and
-allowing differences. For some examples, see the following
-table:
-
-    +---------------------------+----------------+---------+
-    | Example Predicate         | Example Value  | Matches |
-    +===========================+================+=========+
-    | .. code-block:: python    | ``'A'``        | Yes     |
-    |                           +----------------+---------+
-    |     {'A', 'B'}            | ``'C'``        | No      |
-    +---------------------------+----------------+---------+
-    | .. code-block:: python    | ``4``          | Yes     |
-    |                           +----------------+---------+
-    |     def iseven(x):        | ``9``          | No      |
-    |         return x % 2 == 0 |                |         |
-    +---------------------------+----------------+---------+
-    | .. code-block:: python    | ``1.0``        | Yes     |
-    |                           +----------------+---------+
-    |     float                 | ``1``          | No      |
-    +---------------------------+----------------+---------+
-    | .. code-block:: python    | ``'bake'``     | Yes     |
-    |                           +----------------+---------+
-    |     re.compile('[bc]ake') | ``'cake'``     | Yes     |
-    |                           +----------------+---------+
-    |                           | ``'fake'``     | No      |
-    +---------------------------+----------------+---------+
-    | .. code-block:: python    | ``'foo'``      | Yes     |
-    |                           +----------------+---------+
-    |     'foo'                 | ``'bar'``      | No      |
-    +---------------------------+----------------+---------+
-    | .. code-block:: python    | ``('A', 'X')`` | Yes     |
-    |                           +----------------+---------+
-    |     ('A', ...)            | ``('A', 'Y')`` | Yes     |
-    |                           +----------------+---------+
-    | Uses ellipsis wildcard.   | ``('B', 'X')`` | No      |
-    +---------------------------+----------------+---------+
-
-
 ******
 Errors
 ******
@@ -270,6 +202,74 @@ to right.
 +-------+-------------------------------+----------------------------+
 |   6   | | :class:`allowed_limit`      | Whole-error allowances     |
 +-------+-------------------------------+----------------------------+
+
+
+.. _predicate-docs:
+
+**********
+Predicates
+**********
+
+Datatest uses "predicate objects" to check that values satisfy a
+certain criteria. The specific behavior of a predicate depends
+on its type:
+
+    +----------------------+------------------------------------------+
+    | Predicate type       | Checks that                              |
+    +======================+==========================================+
+    | set                  | value is a member of the set             |
+    +----------------------+------------------------------------------+
+    | function             | calling ``function(value)`` returns True |
+    +----------------------+------------------------------------------+
+    | type                 | value is an instance of the type         |
+    +----------------------+------------------------------------------+
+    | re.compile(pattern)  | value matches the regular expression     |
+    +----------------------+------------------------------------------+
+    | str or non-container | value equals predicate                   |
+    +----------------------+------------------------------------------+
+    | tuple of             | tuple of values satisfies corresponding  |
+    | predicates           | tuple of predicates                      |
+    +----------------------+------------------------------------------+
+    | "``...``" (an        | (used as a wildcard, matches any value)  |
+    | ellipsis)            |                                          |
+    +----------------------+------------------------------------------+
+
+Predicates are used as arguments when asserting validity and
+allowing differences. For some examples, see the following
+table:
+
+    +---------------------------+----------------+---------+
+    | Example Predicate         | Example Value  | Matches |
+    +===========================+================+=========+
+    | .. code-block:: python    | ``'A'``        | Yes     |
+    |                           +----------------+---------+
+    |     {'A', 'B'}            | ``'C'``        | No      |
+    +---------------------------+----------------+---------+
+    | .. code-block:: python    | ``4``          | Yes     |
+    |                           +----------------+---------+
+    |     def iseven(x):        | ``9``          | No      |
+    |         return x % 2 == 0 |                |         |
+    +---------------------------+----------------+---------+
+    | .. code-block:: python    | ``1.0``        | Yes     |
+    |                           +----------------+---------+
+    |     float                 | ``1``          | No      |
+    +---------------------------+----------------+---------+
+    | .. code-block:: python    | ``'bake'``     | Yes     |
+    |                           +----------------+---------+
+    |     re.compile('[bc]ake') | ``'cake'``     | Yes     |
+    |                           +----------------+---------+
+    |                           | ``'fake'``     | No      |
+    +---------------------------+----------------+---------+
+    | .. code-block:: python    | ``'foo'``      | Yes     |
+    |                           +----------------+---------+
+    |     'foo'                 | ``'bar'``      | No      |
+    +---------------------------+----------------+---------+
+    | .. code-block:: python    | ``('A', 'X')`` | Yes     |
+    |                           +----------------+---------+
+    |     ('A', ...)            | ``('A', 'Y')`` | Yes     |
+    |                           +----------------+---------+
+    | Uses ellipsis wildcard.   | ``('B', 'X')`` | No      |
+    +---------------------------+----------------+---------+
 
 
 ************
