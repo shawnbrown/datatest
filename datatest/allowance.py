@@ -227,7 +227,9 @@ class CombinedAllowance(BaseAllowance):
 
 
 class IntersectedAllowance(CombinedAllowance):
-    """Base class to combine allowances using logical AND condition."""
+    """Base class to allow only those differences allowed by both
+    given allowances.
+    """
     def __repr__(self):
         return '({0!r} & {1!r})'.format(self.left, self.right)
 
@@ -237,7 +239,9 @@ class IntersectedAllowance(CombinedAllowance):
 
 
 class UnionedAllowance(CombinedAllowance):
-    """Base class to combine allowances using logical OR condition."""
+    """Base class to allow differences allowed by either given
+    allowance.
+    """
     def __repr__(self):
         return '({0!r} | {1!r})'.format(self.left, self.right)
 
