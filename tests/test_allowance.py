@@ -190,8 +190,17 @@ class TestLogicalComposition(unittest.TestCase):
                 return isinstance(item[1], Missing)
 
         class allowed_letter_a(MinimalAllowance):
+            def __init__(_self):
+                _self.priority = 150
+
+            def start_collection(_self):
+                _self._not_used = True
+
             def call_predicate(_self, item):
-                return item[1].args[0] == 'a'
+                if item[1].args[0] == 'a' and _self._not_used:
+                    _self._not_used = False
+                    return True
+                return False
 
         self.allowed_missing = allowed_missing()
         self.allowed_letter_a = allowed_letter_a()
@@ -205,36 +214,42 @@ class TestLogicalComposition(unittest.TestCase):
             def __repr__(_self):
                 return super(LogicalAnd, _self).__repr__()
 
+        self.allowed_missing.priority = 222
+        self.allowed_letter_a.priority = 333
+
         allowance = LogicalAnd(left=self.allowed_missing,
                                right=self.allowed_letter_a)
-        self.assertIs(allowance.left, self.allowed_missing)
-        self.assertIs(allowance.right, self.allowed_letter_a)
-
-        msg = 'Higher priority number should always move to the right-hand side.'
-        self.allowed_missing.priority = 3   # <- Change priority.
-        self.allowed_letter_a.priority = 2  # <- Change priority.
-        allowance = LogicalAnd(left=self.allowed_missing,  # <- Given as `left`.
-                               right=self.allowed_letter_a)
-        self.assertIs(allowance.left, self.allowed_letter_a, msg=msg)
-        self.assertIs(allowance.right, self.allowed_missing, msg=msg)  # <- Moved to `right`.
+        self.assertEqual(allowance.priority, 333)
 
     def test_IntersectedAllowance(self):
+        original_diffs = [Extra('a'), Missing('a'), Missing('b'), Extra('b')]
+
         with self.assertRaises(ValidationError) as cm:
             with IntersectedAllowance(self.allowed_missing, self.allowed_letter_a):
-                raise ValidationError(
-                    'example error',
-                    [Missing('a'), Extra('a'), Missing('b'), Extra('b')],
-                )
+                raise ValidationError('example error', original_diffs)
+        differences = cm.exception.differences
+        self.assertEqual(list(differences), [Extra('a'), Missing('b'), Extra('b')])
+
+        # Test with allowances in reverse-order (should give same result).
+        with self.assertRaises(ValidationError) as cm:
+            with IntersectedAllowance(self.allowed_letter_a, self.allowed_missing):
+                raise ValidationError('example error', original_diffs)
         differences = cm.exception.differences
         self.assertEqual(list(differences), [Extra('a'), Missing('b'), Extra('b')])
 
     def test_UnionedAllowance(self):
+        original_diffs = [Missing('a'), Extra('a'), Missing('b'), Extra('b')]
+
         with self.assertRaises(ValidationError) as cm:
             with UnionedAllowance(self.allowed_missing, self.allowed_letter_a):
-                raise ValidationError(
-                    'example error',
-                    [Missing('a'), Extra('a'), Missing('b'), Extra('b')],
-                )
+                raise ValidationError('example error', original_diffs)
+        differences = cm.exception.differences
+        self.assertEqual(list(differences), [Extra('b')])
+
+        # Test with allowances in reverse-order (should give same result).
+        with self.assertRaises(ValidationError) as cm:
+            with UnionedAllowance(self.allowed_letter_a, self.allowed_missing):
+                raise ValidationError('example error', original_diffs)
         differences = cm.exception.differences
         self.assertEqual(list(differences), [Extra('b')])
 

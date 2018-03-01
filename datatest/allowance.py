@@ -202,8 +202,6 @@ class BaseAllowance(abc.ABC):
 class CombinedAllowance(BaseAllowance):
     """Base class for combining allowances using Boolean composition."""
     def __init__(self, left, right, msg=None):
-        if left.priority > right.priority:
-            left, right = right, left
         self.left = left
         self.right = right
         self.msg = msg
@@ -234,8 +232,11 @@ class IntersectedAllowance(CombinedAllowance):
         return '({0!r} & {1!r})'.format(self.left, self.right)
 
     def call_predicate(self, item):
-        return (self.left.call_predicate(item)
-                and self.right.call_predicate(item))
+        left, right = self.left, self.right
+        if left.priority > right.priority:
+            return right.call_predicate(item) and left.call_predicate(item)
+        return left.call_predicate(item) and right.call_predicate(item)
+        # Above calls rely on short-circuit evaluation for proper behavior.
 
 
 class UnionedAllowance(CombinedAllowance):
@@ -246,8 +247,11 @@ class UnionedAllowance(CombinedAllowance):
         return '({0!r} | {1!r})'.format(self.left, self.right)
 
     def call_predicate(self, item):
-        return (self.left.call_predicate(item)
-                or self.right.call_predicate(item))
+        left, right = self.left, self.right
+        if left.priority > right.priority:
+            return right.call_predicate(item) or left.call_predicate(item)
+        return left.call_predicate(item) or right.call_predicate(item)
+        # Above calls rely on short-circuit evaluation for proper behavior.
 
 
 class allowed_missing(BaseAllowance):
