@@ -43,7 +43,7 @@ class TestBaseAllowance(unittest.TestCase):
                 return False
 
         allowance = allowed_nothing()
-        self.assertEqual(allowance.priority, 1)
+        self.assertEqual(allowance.priority, 100)
 
     def test_preserve_priority(self):
         # Calling the superclass' __init__() should not overwrite
@@ -51,14 +51,14 @@ class TestBaseAllowance(unittest.TestCase):
         # a subclass.
         class allowed_nothing(MinimalAllowance):
             def __init__(_self, msg=None):
-                _self.priority = 2
+                _self.priority = 200
                 super(allowed_nothing, _self).__init__(msg)
 
             def call_predicate(_self, item):
                 return False
 
         allowance = allowed_nothing()
-        self.assertEqual(allowance.priority, 2, 'should not overwrite existing `priority`')
+        self.assertEqual(allowance.priority, 200, 'should not overwrite existing `priority`')
 
     def test_serialized_items(self):
         item_list = [1, 2]
@@ -725,15 +725,15 @@ class TestUniversalComposability(unittest.TestCase):
     def setUp(self):
         ntup = collections.namedtuple('ntup', ('cls', 'args', 'priority'))
         self.allowances = [
-            ntup(cls=allowed_missing,   args=tuple(),                  priority=1),
-            ntup(cls=allowed_extra,     args=tuple(),                  priority=1),
-            ntup(cls=allowed_invalid,   args=tuple(),                  priority=1),
-            ntup(cls=allowed_deviation, args=(5,),                     priority=1),
-            ntup(cls=allowed_percent,   args=(0.05,),                  priority=1),
-            ntup(cls=allowed_keys,      args=(lambda args: True,),     priority=1),
-            ntup(cls=allowed_args,      args=(lambda *args: True,),    priority=1),
-            ntup(cls=allowed_specific,  args=({'X': [Invalid('A')]},), priority=2),
-            ntup(cls=allowed_limit,     args=(4,),                     priority=3),
+            ntup(cls=allowed_missing,   args=tuple(),                  priority=100),
+            ntup(cls=allowed_extra,     args=tuple(),                  priority=100),
+            ntup(cls=allowed_invalid,   args=tuple(),                  priority=100),
+            ntup(cls=allowed_deviation, args=(5,),                     priority=100),
+            ntup(cls=allowed_percent,   args=(0.05,),                  priority=100),
+            ntup(cls=allowed_keys,      args=(lambda args: True,),     priority=100),
+            ntup(cls=allowed_args,      args=(lambda *args: True,),    priority=100),
+            ntup(cls=allowed_specific,  args=({'X': [Invalid('A')]},), priority=200),
+            ntup(cls=allowed_limit,     args=(4,),                     priority=300),
         ]
 
     def test_completeness(self):

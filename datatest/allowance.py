@@ -53,8 +53,8 @@ class BaseAllowance(abc.ABC):
     def __init__(self, msg=None):
         """Initialize object values."""
         self.msg = msg
-        self.priority = getattr(self, 'priority', 1)  # Use existing priority
-                                                      # if already defined.
+        self.priority = getattr(self, 'priority', 100)  # Use existing priority
+                                                        # if already defined.
     @abc.abstractmethod
     def __repr__(self):
         cls_name = self.__class__.__name__
@@ -494,7 +494,7 @@ class allowed_specific(BaseAllowance):
 
     @property
     def priority(self):
-        return 2
+        return 200
 
     def __repr__(self):
         cls_name = self.__class__.__name__
@@ -590,7 +590,7 @@ class allowed_limit(BaseAllowance):
 
     @property
     def priority(self):
-        return 3
+        return 300
 
     def start_collection(self):
         self._limit = self.number
