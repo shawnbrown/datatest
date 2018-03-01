@@ -290,7 +290,7 @@ class allowed_invalid(BaseAllowance):
 
 class allowed_keys(BaseAllowance):
     """Allows differences whose associated keys satisfy the given
-    *predicate*.
+    *predicate* (see :ref:`predicate-docs` for details).
     """
     def __init__(self, predicate, msg=None):
         super(allowed_keys, self).__init__(msg)
@@ -314,7 +314,9 @@ class allowed_keys(BaseAllowance):
 
 
 class allowed_args(BaseAllowance):
-    """Allows differences whose 'args' satisfy the given *predicate*."""
+    """Allows differences whose 'args' satisfy the given *predicate*
+    (see :ref:`predicate-docs` for details).
+    """
     def __init__(self, predicate, msg=None):
         super(allowed_args, self).__init__(msg)
 
