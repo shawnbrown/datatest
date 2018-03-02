@@ -41,7 +41,7 @@ class TestDataTestResult(unittest.TestCase):
         testresult = DataTestResult()
 
         err_tuple = (ValidationError,
-                     ValidationError('example failure', [Missing('x')]),
+                     ValidationError([Missing('x')], 'example failure'),
                      '<dummy traceback>')
 
         new_tuple = testresult._add_mandatory_message(err_tuple)

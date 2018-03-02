@@ -115,7 +115,7 @@ class TestAssertValid(DataTestCase):
             (3, 3): Invalid(3, 4),
         }
         self.assertEqual(error.differences, expected)
-        self.assertEqual(error.args[0], 'does not match sequence order')
+        self.assertEqual(error.args[1], 'does not match sequence order')
 
     def test_required_other(self):
         """When *required* is a string or other object, _compare_other()

@@ -704,37 +704,37 @@ class TestValidationError(unittest.TestCase):
     def test_error_list(self):
         error_list = [MinimalDifference('A'), MinimalDifference('B')]
 
-        err = ValidationError('invalid data', error_list)
+        err = ValidationError(error_list, 'invalid data')
         self.assertEqual(err.differences, error_list)
 
     def test_error_iter(self):
         error_list = [MinimalDifference('A'), MinimalDifference('B')]
         error_iter = iter(error_list)
 
-        err = ValidationError('invalid data', error_iter)
+        err = ValidationError(error_iter, 'invalid data')
         self.assertEqual(err.differences, error_list, 'iterable should be converted to list')
 
     def test_error_dict(self):
         error_dict = {'a': MinimalDifference('A'), 'b': MinimalDifference('B')}
 
-        err = ValidationError('invalid data', error_dict)
+        err = ValidationError(error_dict, 'invalid data')
         self.assertEqual(err.differences, error_dict)
 
     def test_error_iteritems(self):
         error_dict = {'a': MinimalDifference('A'), 'b': MinimalDifference('B')}
         error_iteritems = getattr(error_dict, 'iteritems', error_dict.items)()
 
-        err = ValidationError('invalid data', error_iteritems)
+        err = ValidationError(error_iteritems, 'invalid data')
         self.assertEqual(err.differences, error_dict)
 
     def test_bad_args(self):
         with self.assertRaises(TypeError, msg='must be iterable'):
             single_error = MinimalDifference('A')
-            ValidationError('invalid data', single_error)
+            ValidationError(single_error, 'invalid data')
 
     def test_str(self):
         # Assert basic format and trailing comma.
-        err = ValidationError('invalid data', [MinimalDifference('A')])
+        err = ValidationError([MinimalDifference('A')], 'invalid data')
         expected = """
             invalid data (1 difference): [
                 MinimalDifference('A'),
@@ -756,8 +756,9 @@ class TestValidationError(unittest.TestCase):
         self.assertEqual(str(err), updated)
 
         # Assert dict format and trailing comma.
-        err = ValidationError('invalid data', {'x': MinimalDifference('A'),
-                                               'y': MinimalDifference('B')})
+        err = ValidationError({'x': MinimalDifference('A'),
+                               'y': MinimalDifference('B')},
+                              'invalid data')
         regex = textwrap.dedent(r"""
             invalid data \(2 differences\): \{
                 '[xy]': MinimalDifference\('[AB]'\),
@@ -773,15 +774,16 @@ class TestValidationError(unittest.TestCase):
         self.maxDiff = None
 
         # Check sorting of non-mapping container.
-        err = ValidationError('invalid data', [MinimalDifference('Z', 'Z'),
-                                               MinimalDifference('Z'),
-                                               MinimalDifference(1, 'C'),
-                                               MinimalDifference('B', 'C'),
-                                               MinimalDifference('A'),
-                                               MinimalDifference(1.5),
-                                               MinimalDifference(True),
-                                               MinimalDifference(0),
-                                               MinimalDifference(None)])
+        err = ValidationError([MinimalDifference('Z', 'Z'),
+                               MinimalDifference('Z'),
+                               MinimalDifference(1, 'C'),
+                               MinimalDifference('B', 'C'),
+                               MinimalDifference('A'),
+                               MinimalDifference(1.5),
+                               MinimalDifference(True),
+                               MinimalDifference(0),
+                               MinimalDifference(None)],
+                              'invalid data')
         expected = """
             invalid data (9 differences): [
                 MinimalDifference(None),
@@ -813,14 +815,17 @@ class TestValidationError(unittest.TestCase):
         self.assertEqual(str(err), expected)
 
         # Check sorting of non-mapping container.
-        err = ValidationError('invalid data', {
-            ('C', 3): [MinimalDifference('Z', 3), MinimalDifference(1, 2)],
-            ('A', 'C'): MinimalDifference('A'),
-            'A': [MinimalDifference('C'), MinimalDifference(1)],
-            2: [MinimalDifference('B'), MinimalDifference('A')],
-            1: MinimalDifference('A'),
-            (None, 4): MinimalDifference('A'),
-        })
+        err = ValidationError(
+            {
+                ('C', 3): [MinimalDifference('Z', 3), MinimalDifference(1, 2)],
+                ('A', 'C'): MinimalDifference('A'),
+                'A': [MinimalDifference('C'), MinimalDifference(1)],
+                2: [MinimalDifference('B'), MinimalDifference('A')],
+                1: MinimalDifference('A'),
+                (None, 4): MinimalDifference('A'),
+            },
+            'invalid data'
+        )
         expected = """
             invalid data (6 differences): {
                 1: MinimalDifference('A'),
@@ -836,9 +841,10 @@ class TestValidationError(unittest.TestCase):
 
     def test_str_truncation(self):
         # Assert optional truncation behavior.
-        err = ValidationError('invalid data', [MinimalDifference('A'),
-                                               MinimalDifference('B'),
-                                               MinimalDifference('C'),])
+        err = ValidationError([MinimalDifference('A'),
+                               MinimalDifference('B'),
+                               MinimalDifference('C'),],
+                              'invalid data')
         self.assertIsNone(err._should_truncate)
         self.assertIsNone(err._truncation_notice)
         no_truncation = """
@@ -876,8 +882,8 @@ class TestValidationError(unittest.TestCase):
         self.assertEqual(str(err), truncation_plus_notice)
 
     def test_repr(self):
-        err = ValidationError('invalid data', [MinimalDifference('A')])
-        expected = "ValidationError('invalid data', [MinimalDifference('A')])"
+        err = ValidationError([MinimalDifference('A')], 'invalid data')
+        expected = "ValidationError([MinimalDifference('A')], 'invalid data')"
         self.assertEqual(repr(err), expected)
 
         # Objects that inhereit from some Exceptions can cache their
@@ -886,7 +892,7 @@ class TestValidationError(unittest.TestCase):
         err._differences = [MinimalDifference('B')]
         self.assertNotEqual(repr(err), expected, 'exception should not cache repr')
 
-        updated = "ValidationError('changed', [MinimalDifference('B')])"
+        updated = "ValidationError([MinimalDifference('B')], 'changed')"
         self.assertEqual(repr(err), updated)
 
     def test_module_property(self):
@@ -906,8 +912,8 @@ class TestValidationError(unittest.TestCase):
         self.assertEqual('datatest', ValidationError.__module__)
 
     def test_args(self):
-        err = ValidationError('invalid data', [MinimalDifference('A')])
-        self.assertEqual(err.args, ('invalid data', [MinimalDifference('A')]))
+        err = ValidationError([MinimalDifference('A')], 'invalid data')
+        self.assertEqual(err.args, ([MinimalDifference('A')], 'invalid data'))
 
 
 class TestIsValidAndValidate(unittest.TestCase):

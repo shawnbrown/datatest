@@ -119,7 +119,7 @@ class TestBaseAllowance(unittest.TestCase):
         context manager protocol).
         """
         try:
-            raise ValidationError('error message', [Missing('A'), Extra('B')])
+            raise ValidationError([Missing('A'), Extra('B')], 'error message')
         except ValidationError:
             type, value, traceback = sys.exc_info()  # Get exception info.
 
@@ -226,14 +226,14 @@ class TestLogicalComposition(unittest.TestCase):
 
         with self.assertRaises(ValidationError) as cm:
             with IntersectedAllowance(self.allowed_missing, self.allowed_letter_a):
-                raise ValidationError('example error', original_diffs)
+                raise ValidationError(original_diffs, 'example error')
         differences = cm.exception.differences
         self.assertEqual(list(differences), [Extra('a'), Missing('b'), Extra('b')])
 
         # Test with allowances in reverse-order (should give same result).
         with self.assertRaises(ValidationError) as cm:
             with IntersectedAllowance(self.allowed_letter_a, self.allowed_missing):
-                raise ValidationError('example error', original_diffs)
+                raise ValidationError(original_diffs, 'example error')
         differences = cm.exception.differences
         self.assertEqual(list(differences), [Extra('a'), Missing('b'), Extra('b')])
 
@@ -242,14 +242,14 @@ class TestLogicalComposition(unittest.TestCase):
 
         with self.assertRaises(ValidationError) as cm:
             with UnionedAllowance(self.allowed_missing, self.allowed_letter_a):
-                raise ValidationError('example error', original_diffs)
+                raise ValidationError(original_diffs, 'example error')
         differences = cm.exception.differences
         self.assertEqual(list(differences), [Extra('b')])
 
         # Test with allowances in reverse-order (should give same result).
         with self.assertRaises(ValidationError) as cm:
             with UnionedAllowance(self.allowed_letter_a, self.allowed_missing):
-                raise ValidationError('example error', original_diffs)
+                raise ValidationError(original_diffs, 'example error')
         differences = cm.exception.differences
         self.assertEqual(list(differences), [Extra('b')])
 
@@ -260,7 +260,7 @@ class TestAllowedMissing(unittest.TestCase):
 
         with self.assertRaises(ValidationError) as cm:
             with allowed_missing():  # <- Apply allowance!
-                raise ValidationError('some message', differences)
+                raise ValidationError(differences, 'some message')
         remaining_diffs = cm.exception.differences
         self.assertEqual(list(remaining_diffs), [Extra('X')])
 
@@ -271,7 +271,7 @@ class TestAllowedExtra(unittest.TestCase):
 
         with self.assertRaises(ValidationError) as cm:
             with allowed_extra():  # <- Apply allowance!
-                raise ValidationError('some message', differences)
+                raise ValidationError(differences, 'some message')
         remaining_diffs = cm.exception.differences
         self.assertEqual(list(remaining_diffs), [Missing('X')])
 
@@ -282,7 +282,7 @@ class TestAllowedInvalid(unittest.TestCase):
 
         with self.assertRaises(ValidationError) as cm:
             with allowed_invalid():  # <- Apply allowance!
-                raise ValidationError('some message', differences)
+                raise ValidationError(differences, 'some message')
         remaining_diffs = cm.exception.differences
         self.assertEqual(list(remaining_diffs), [Extra('Z')])
 
@@ -301,7 +301,7 @@ class TestAllowedKeys(unittest.TestCase):
 
             with allowed_keys('aaa'):  # <- Allow by string!
                 differences = {'aaa': Missing(1), 'bbb': Missing(2)}
-                raise ValidationError('some message', differences)
+                raise ValidationError(differences, 'some message')
 
         remaining_diffs = cm.exception.differences
         self.assertEqual(dict(remaining_diffs), {'bbb': Missing(2)})
@@ -314,7 +314,7 @@ class TestAllowedKeys(unittest.TestCase):
 
             with allowed_keys(function):  # <- Allow by function!
                 differences = {'aaa': Missing(1), 'bbb': Missing(2)}
-                raise ValidationError('some message', differences)
+                raise ValidationError(differences, 'some message')
 
         remaining_diffs = cm.exception.differences
         self.assertEqual(dict(remaining_diffs), {'bbb': Missing(2)})
@@ -324,7 +324,7 @@ class TestAllowedKeys(unittest.TestCase):
 
             with allowed_keys(('a', 7)):  # <- Allow using tuple!
                 differences = {('a', 7): Missing(1), ('b', 7): Missing(2)}
-                raise ValidationError('some message', differences)
+                raise ValidationError(differences, 'some message')
 
         remaining_diffs = cm.exception.differences
         self.assertEqual(dict(remaining_diffs), {('b', 7): Missing(2)})
@@ -337,7 +337,7 @@ class TestAllowedKeys(unittest.TestCase):
 
             with allowed_keys('foo'):  # <- Allow keys that equal 'foo'.
                 differences = [Missing(1), Extra(2)]  # <- List has no keys!
-                raise ValidationError('some message', differences)
+                raise ValidationError(differences, 'some message')
 
         remaining_diffs = cm.exception.differences
         self.assertEqual(list(remaining_diffs), [Missing(1), Extra(2)])
@@ -361,7 +361,7 @@ class TestAllowedArgs(unittest.TestCase):
 
             with allowed_args('bbb'):  # <- Allowance!
                 differences =  [Missing('aaa'), Missing('bbb'), Extra('bbb')]
-                raise ValidationError('some message', differences)
+                raise ValidationError(differences, 'some message')
 
         remaining_diffs = cm.exception.differences
         self.assertEqual(list(remaining_diffs), [Missing('aaa')])
@@ -375,7 +375,7 @@ class TestAllowedArgs(unittest.TestCase):
 
             with allowed_args(function):  # <- Allowance!
                 differences =  [Deviation(+1, 5), Deviation(+2, 5)]
-                raise ValidationError('some message', differences)
+                raise ValidationError(differences, 'some message')
 
         remaining_diffs = cm.exception.differences
         self.assertEqual(list(remaining_diffs), [Deviation(+2, 5)])
@@ -388,7 +388,7 @@ class TestAllowedArgs(unittest.TestCase):
 
             with allowed_args((func, 5)):
                 differences =  [Deviation(+1, 5), Deviation(+2, 5)]
-                raise ValidationError('some message', differences)
+                raise ValidationError(differences, 'some message')
 
         remaining_diffs = cm.exception.differences
         self.assertEqual(list(remaining_diffs), [Deviation(+2, 5)])
@@ -411,21 +411,21 @@ class TestAllowedDeviation(unittest.TestCase):
     def test_tolerance_syntax(self):
         with self.assertRaises(ValidationError) as cm:
             with allowed_deviation(2):  # <- Allows +/- 2.
-                raise ValidationError('example error', self.differences)
+                raise ValidationError(self.differences, 'example error')
         remaining = cm.exception.differences
         self.assertEqual(remaining, {'bbb': Deviation(+3, 10)})
 
     def test_lower_upper_syntax(self):
         with self.assertRaises(ValidationError) as cm:
             with allowed_deviation(0, 3):  # <- Allows from 0 to 3.
-                raise ValidationError('example error', self.differences)
+                raise ValidationError(self.differences, 'example error')
         result_diffs = cm.exception.differences
         self.assertEqual({'aaa': Deviation(-1, 10)}, result_diffs)
 
     def test_same_value_case(self):
         with self.assertRaises(ValidationError) as cm:
             with allowed_deviation(3, 3):  # <- Allows off-by-3 only.
-                raise ValidationError('example error', self.differences)
+                raise ValidationError(self.differences, 'example error')
         result_diffs = cm.exception.differences
         self.assertEqual({'aaa': Deviation(-1, 10), 'ccc': Deviation(+2, 10)}, result_diffs)
 
@@ -438,15 +438,15 @@ class TestAllowedDeviation(unittest.TestCase):
 
     def test_empty_string(self):
         with allowed_deviation(0):  # <- Pass without failure.
-            raise ValidationError('example error', [Deviation('', 0)])
+            raise ValidationError([Deviation('', 0)], 'example error')
 
         with allowed_deviation(0):  # <- Pass without failure.
-            raise ValidationError('example error', [Deviation(0, '')])
+            raise ValidationError([Deviation(0, '')], 'example error')
 
     def test_NaN_values(self):
         with self.assertRaises(ValidationError):  # <- NaN values should not be caught!
             with allowed_deviation(0):
-                raise ValidationError('example error', [Deviation(float('nan'), 0)])
+                raise ValidationError([Deviation(float('nan'), 0)], 'example error')
 
 
 class TestAllowedPercentDeviation(unittest.TestCase):
@@ -466,29 +466,29 @@ class TestAllowedPercentDeviation(unittest.TestCase):
     def test_tolerance_syntax(self):
         with self.assertRaises(ValidationError) as cm:
             with allowed_percent(0.2):  # <- Allows +/- 20%.
-                raise ValidationError('example error', self.differences)
+                raise ValidationError(self.differences, 'example error')
         remaining = cm.exception.differences
         self.assertEqual(remaining, {'bbb': Deviation(+4, 16)})
 
     def test_lower_upper_syntax(self):
         with self.assertRaises(ValidationError) as cm:
             with allowed_percent(0.0, 0.3):  # <- Allows from 0 to 30%.
-                raise ValidationError('example error', self.differences)
+                raise ValidationError(self.differences, 'example error')
         result_diffs = cm.exception.differences
         self.assertEqual({'aaa': Deviation(-1, 16)}, result_diffs)
 
     def test_same_value_case(self):
         with self.assertRaises(ValidationError) as cm:
             with allowed_percent(0.25, 0.25):  # <- Allows +25% only.
-                raise ValidationError('example error', self.differences)
+                raise ValidationError(self.differences, 'example error')
         result_diffs = cm.exception.differences
         self.assertEqual({'aaa': Deviation(-1, 16), 'ccc': Deviation(+2, 16)}, result_diffs)
 
     def test_special_values(self):
         # Test empty deviation cases--should pass without error.
         with allowed_percent(0):  # <- Allows empty deviations only.
-            raise ValidationError('example error',
-                                  [Deviation(None, 0), Deviation('', 0)])
+            raise ValidationError([Deviation(None, 0), Deviation('', 0)],
+                                  'example error')
 
         # Test diffs that can not be allowed as percentages.
         differences = [
@@ -500,7 +500,7 @@ class TestAllowedPercentDeviation(unittest.TestCase):
         ]
         with self.assertRaises(ValidationError) as cm:
             with allowed_percent(2.00):  # <- Allows +/- 200%.
-                raise ValidationError('example error', differences)
+                raise ValidationError(differences, 'example error')
         actual = cm.exception.differences
         expected = [
             Deviation(+2, 0),
@@ -518,7 +518,7 @@ class TestAllowedSpecific(unittest.TestCase):
 
         with self.assertRaises(ValidationError) as cm:
             with allowed_specific(allowed):
-                raise ValidationError('example error', differences)
+                raise ValidationError(differences, 'example error')
 
         actual = list(cm.exception.differences)
         self.assertEqual(actual, expected)
@@ -529,7 +529,7 @@ class TestAllowedSpecific(unittest.TestCase):
 
         with self.assertRaises(ValidationError) as cm:
             with allowed_specific(allowed):
-                raise ValidationError('example error', differences)
+                raise ValidationError(differences, 'example error')
 
         actual = list(cm.exception.differences)
         expected = [Missing('yyy')]
@@ -539,7 +539,7 @@ class TestAllowedSpecific(unittest.TestCase):
         diffs = [Extra('xxx')]
         allowed = [Extra('xxx'), Missing('yyy')]  # <- More allowed than
         with allowed_specific(allowed):           #    are actually found.
-            raise ValidationError('example error', diffs)
+            raise ValidationError(diffs, 'example error')
 
     def test_duplicates(self):
         # Three of the exact-same differences.
@@ -549,7 +549,7 @@ class TestAllowedSpecific(unittest.TestCase):
         with self.assertRaises(ValidationError) as cm:
             allowed = [Extra('xxx')]
             with allowed_specific(allowed):
-                raise ValidationError('example error', differences)
+                raise ValidationError(differences, 'example error')
 
         actual = list(cm.exception.differences)
         expected = [Extra('xxx'), Extra('xxx')]  # Expect two remaining.
@@ -559,7 +559,7 @@ class TestAllowedSpecific(unittest.TestCase):
         with self.assertRaises(ValidationError) as cm:
             allowed = [Extra('xxx'), Extra('xxx')]
             with allowed_specific(allowed):
-                raise ValidationError('example error', differences)
+                raise ValidationError(differences, 'example error')
 
         actual = list(cm.exception.differences)
         expected = [Extra('xxx')]  # Expect one remaining.
@@ -568,7 +568,7 @@ class TestAllowedSpecific(unittest.TestCase):
         # Allow all three.
         allowed = [Extra('xxx'), Extra('xxx'), Extra('xxx')]
         with allowed_specific(allowed):
-            raise ValidationError('example error', differences)
+            raise ValidationError(differences, 'example error')
 
     def test_dict_and_list(self):
         """List of allowed differences applied to each group separately."""
@@ -577,7 +577,7 @@ class TestAllowedSpecific(unittest.TestCase):
 
         with self.assertRaises(ValidationError) as cm:
             with allowed_specific(allowed):
-                raise ValidationError('example error', differences)
+                raise ValidationError(differences, 'example error')
 
         actual = cm.exception.differences
         expected = {'bar': Missing('yyy')}
@@ -589,7 +589,7 @@ class TestAllowedSpecific(unittest.TestCase):
 
         with self.assertRaises(ValidationError) as cm:
             with allowed_specific(allowed):
-                raise ValidationError('example error', differences)
+                raise ValidationError(differences, 'example error')
 
         actual = cm.exception.differences
         expected = {'foo': Extra('xxx'), 'bar': Missing('yyy')}
@@ -612,7 +612,7 @@ class TestAllowedSpecific(unittest.TestCase):
 
         with self.assertRaises(ValidationError) as cm:
             with allowed_specific(allowed):
-                raise ValidationError('example error', differences)
+                raise ValidationError(differences, 'example error')
 
         actual = cm.exception.differences
         expected = {
@@ -644,7 +644,7 @@ class TestAllowedSpecific(unittest.TestCase):
                  "allow[12], allow[12]")
         with self.assertRaisesRegex(KeyError, regex):
             with allowed_specific(allowed):
-                raise ValidationError('example error', differences)
+                raise ValidationError(differences, 'example error')
 
     def test_dict_global_wildcard_predicate(self):
         """Ellipsis wildcard key matches all, treats as a single group."""
@@ -653,7 +653,7 @@ class TestAllowedSpecific(unittest.TestCase):
 
         with self.assertRaises(ValidationError) as cm:
             with allowed_specific(allowed):
-                raise ValidationError('example error', differences)
+                raise ValidationError(differences, 'example error')
 
         actual = cm.exception.differences
         # Actual result can vary with unordered dictionaries.
@@ -668,7 +668,7 @@ class TestAllowedSpecific(unittest.TestCase):
         allowed = {'foo': Extra('xxx'), 'bar': Missing('yyy')}
 
         with allowed_specific(allowed):  # <- Allows all differences, no error!
-            raise ValidationError('example error', differences)
+            raise ValidationError(differences, 'example error')
 
     def test_combination_of_cases(self):
         """This is a bit of an integration test."""
@@ -681,7 +681,7 @@ class TestAllowedSpecific(unittest.TestCase):
         allowed = [Extra('xxx'), Missing('yyy')]
         with self.assertRaises(ValidationError) as cm:
             with allowed_specific(allowed):
-                raise ValidationError('example error', differences)
+                raise ValidationError(differences, 'example error')
 
         actual = cm.exception.differences
         self.assertEqual(actual, {'baz': Extra('zzz')})
@@ -698,35 +698,35 @@ class TestAllowedLimit(unittest.TestCase):
 
     def test_under_limit(self):
         with allowed_limit(3):  # <- Allows 3 and there are only 2.
-            raise ValidationError('example error',
-                                  [Extra('xxx'), Missing('yyy')])
+            raise ValidationError([Extra('xxx'), Missing('yyy')],
+                                  'example error')
 
         with allowed_limit(3):  # <- Allows 3 and there are only 2.
-            raise ValidationError('example error',
-                                  {'foo': Extra('xxx'), 'bar': Missing('yyy')})
+            raise ValidationError({'foo': Extra('xxx'), 'bar': Missing('yyy')},
+                                  'example error')
 
     def test_at_limit(self):
         with allowed_limit(2):  # <- Allows 2 and there are 2.
-            raise ValidationError('example error',
-                                  [Extra('xxx'), Missing('yyy')])
+            raise ValidationError([Extra('xxx'), Missing('yyy')],
+                                  'example error')
 
         with allowed_limit(3):  # <- Allows 2 and there are 2.
-            raise ValidationError('example error',
-                                  {'foo': Extra('xxx'), 'bar': Missing('yyy')})
+            raise ValidationError({'foo': Extra('xxx'), 'bar': Missing('yyy')},
+                                  'example error')
 
     def test_over_limit(self):
         with self.assertRaises(ValidationError) as cm:
             with allowed_limit(1):  # <- Allows 1 but there are 2.
-                raise ValidationError('example error',
-                                      [Extra('xxx'), Missing('yyy')])
+                raise ValidationError([Extra('xxx'), Missing('yyy')],
+                                      'example error')
 
         remaining = list(cm.exception.differences)
         self.assertEqual(remaining, [Missing('yyy')])
 
         with self.assertRaises(ValidationError) as cm:
             with allowed_limit(1):  # <- Allows 1 and there are 2.
-                raise ValidationError('example error',
-                                      {'foo': Extra('xxx'), 'bar': Missing('yyy')})
+                raise ValidationError({'foo': Extra('xxx'), 'bar': Missing('yyy')},
+                                      'example error')
 
         remaining = cm.exception.differences
         self.assertIsInstance(remaining, collections.Mapping)
@@ -799,7 +799,7 @@ class TestUniversalComposability(unittest.TestCase):
                 Deviation(+8, 32),  #  25%
             ]
             with allowed_deviation(2) | allowed_percent(0.25):
-                raise ValidationError('example error', differences)
+                raise ValidationError(differences, 'example error')
 
         remaining = cm.exception.differences
         self.assertEqual(remaining, [Deviation(+4, 8)])
@@ -812,7 +812,7 @@ class TestUniversalComposability(unittest.TestCase):
                 Extra('C'),
             ]
             with allowed_missing() & allowed_args(lambda x: x == 'A'):
-                raise ValidationError('example error', differences)
+                raise ValidationError(differences, 'example error')
 
         remaining = cm.exception.differences
         self.assertEqual(remaining, [Missing('B'), Extra('C')])
@@ -826,7 +826,7 @@ class TestUniversalComposability(unittest.TestCase):
                 Missing('D'),
             ]
             with allowed_limit(1) | allowed_missing():
-                raise ValidationError('example error', differences)
+                raise ValidationError(differences, 'example error')
 
         remaining = cm.exception.differences
         self.assertEqual(remaining, [Extra('C')])
@@ -839,7 +839,7 @@ class TestUniversalComposability(unittest.TestCase):
                 Missing('C'),
             ]
             with allowed_limit(1) & allowed_missing():  # Allows only 1 missing.
-                raise ValidationError('example error', differences)
+                raise ValidationError(differences, 'example error')
 
         remaining = cm.exception.differences
         self.assertEqual(remaining, [Extra('A'), Missing('C')])
@@ -853,7 +853,7 @@ class TestUniversalComposability(unittest.TestCase):
                 Missing('D'),
             ]
             with allowed_limit(1) | allowed_specific(Extra('A')):
-                raise ValidationError('example error', differences)
+                raise ValidationError(differences, 'example error')
 
         remaining = cm.exception.differences
         self.assertEqual(remaining, [Extra('C'), Missing('D')])

@@ -117,16 +117,25 @@ class DataTestResult(TextTestResult):
         exctype, value, tb = err
         stop_early_msg = 'mandatory test failed, stopping early'
 
-        args = value.args
-        if not args:
-            args = (stop_early_msg,)
-        elif isinstance(args[0], string_types):
-            new_first_arg = '{0}: {1}'.format(stop_early_msg, args[0])
-            args = (new_first_arg,) + value.args[1:]
+        if issubclass(exctype, ValidationError):
+            differences = value.differences
+            if value.message:
+                description = '{0}: {1}'.format(stop_early_msg, value.message)
+            else:
+                description = stop_early_msg
+            return (exctype, exctype(differences, description), tb)
+
         else:
-            return (exctype, value, tb)  # <- EXIT using original value
-                                         #    if first arg is not a str.
-        return (exctype, exctype(*args), tb)
+            args = value.args
+            if not args:
+                args = (stop_early_msg,)
+            elif isinstance(args[0], string_types):
+                new_first_arg = '{0}: {1}'.format(stop_early_msg, args[0])
+                args = (new_first_arg,) + value.args[1:]
+            else:
+                return (exctype, value, tb)  # <- EXIT using original value
+                                             #    if first arg is not a str.
+            return (exctype, exctype(*args), tb)
 
     def addError(self, test, err):
         """Called when an error has occurred. 'err' is a tuple of values as
@@ -176,7 +185,7 @@ class HideInternalStackFrames(object):
           File "datatest/case.py", line 274, in assertValueSet
             self.fail(msg, extra+missing)
           File "datatest/case.py", line 170, in fail
-            raise ValidationError(msg, diff)
+            raise ValidationError(diff, msg)
         datatest.case.ValidationError: different 'column1' values:
          Extra('foo'),
          Extra('bar')

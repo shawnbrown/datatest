@@ -187,7 +187,7 @@ class BaseAllowance(abc.ABC):
             message = '{0}: {1}'.format(self.msg, message)
 
         # Build new ValidationError with remaining differences.
-        exc = ValidationError(message, differences)
+        exc = ValidationError(differences, message)
 
         # Re-raised error inherits truncation behavior of original.
         exc._should_truncate = exc_value._should_truncate

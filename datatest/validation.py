@@ -410,7 +410,7 @@ class ValidationError(AssertionError):
 
     __module__ = 'datatest'
 
-    def __init__(self, message, differences):
+    def __init__(self, differences, message):
         if not nonstringiter(differences):
             msg = 'expected an iterable of differences, got {0!r}'
             raise TypeError(msg.format(differences.__class__.__name__))
@@ -425,15 +425,10 @@ class ValidationError(AssertionError):
             raise ValueError('differences container must not be empty')
 
         # Initialize properties.
-        self._message = message
         self._differences = differences
+        self._message = message
         self._should_truncate = None
         self._truncation_notice = None
-
-    @property
-    def message(self):
-        """A brief description of the failed requirement."""
-        return self._message
 
     @property
     def differences(self):
@@ -443,9 +438,14 @@ class ValidationError(AssertionError):
         return self._differences
 
     @property
+    def message(self):
+        """A brief description of the failed requirement."""
+        return self._message
+
+    @property
     def args(self):
         """The tuple of arguments given to the exception constructor."""
-        return (self._message, self._differences)
+        return (self._differences, self._message)
 
     def __str__(self):
         # Prepare a format-differences callable.
@@ -500,7 +500,7 @@ class ValidationError(AssertionError):
 
     def __repr__(self):
         class_name = self.__class__.__name__
-        return '{0}({1!r}, {2!r})'.format(class_name, self.message, self.differences)
+        return '{0}({1!r}, {2!r})'.format(class_name, self.differences, self.message)
 
 
 def valid(data, requirement):
@@ -521,5 +521,5 @@ def validate(data, requirement, msg=None):
     invalid_info = _get_invalid_info(data, requirement)
     if invalid_info:
         default_msg, differences = invalid_info  # Unpack values.
-        raise ValidationError(msg or default_msg, differences)
+        raise ValidationError(differences, msg or default_msg)
     return True

@@ -114,7 +114,7 @@ class DataTestCase(TestCase):
         invalid_info = _get_invalid_info(data, requirement)
         if invalid_info:
             default_msg, differences = invalid_info  # Unpack values.
-            err = ValidationError(msg or default_msg, differences)
+            err = ValidationError(differences, msg or default_msg)
 
             def should_truncate(line_count, char_count):
                 return self.maxDiff and (char_count > self.maxDiff)
