@@ -239,9 +239,11 @@ class IntersectedAllowance(CombinedAllowance):
         first, second = self.left, self.right
         if first.priority > second.priority:
             first, second = second, first
-        # Allowances are stateful so it's important to use short-circuit
-        # evaluation to avoid calling the second allowance unnecessarily.
-        # If `first` is False, then `second` should not be called.
+
+        # The allowance protocol is stateful so it's important to use
+        # short-circuit evaluation to avoid calling the second allowance
+        # unnecessarily. If `first` returns False, then `second` should
+        # not be called.
         return first.call_predicate(item) and second.call_predicate(item)
 
 
@@ -256,9 +258,11 @@ class UnionedAllowance(CombinedAllowance):
         first, second = self.left, self.right
         if first.priority > second.priority:
             first, second = second, first
-        # Allowances are stateful so it's important to use short-circuit
-        # evaluation to avoid calling the second allowance unnecessarily.
-        # If `first` is False, then `second` should not be called.
+
+        # The allowance protocol is stateful so it's important to use
+        # short-circuit evaluation to avoid calling the second allowance
+        # unnecessarily. If `first` returns True, then `second` should
+        # not be called.
         return first.call_predicate(item) or second.call_predicate(item)
 
 
