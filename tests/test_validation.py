@@ -704,35 +704,40 @@ class TestValidationError(unittest.TestCase):
     def test_error_list(self):
         error_list = [MinimalDifference('A'), MinimalDifference('B')]
 
-        err = ValidationError(error_list, 'invalid data')
+        err = ValidationError(error_list)
         self.assertEqual(err.differences, error_list)
 
     def test_error_iter(self):
         error_list = [MinimalDifference('A'), MinimalDifference('B')]
         error_iter = iter(error_list)
 
-        err = ValidationError(error_iter, 'invalid data')
+        err = ValidationError(error_iter)
         self.assertEqual(err.differences, error_list, 'iterable should be converted to list')
 
     def test_error_dict(self):
         error_dict = {'a': MinimalDifference('A'), 'b': MinimalDifference('B')}
 
-        err = ValidationError(error_dict, 'invalid data')
+        err = ValidationError(error_dict)
         self.assertEqual(err.differences, error_dict)
 
     def test_error_iteritems(self):
         error_dict = {'a': MinimalDifference('A'), 'b': MinimalDifference('B')}
         error_iteritems = getattr(error_dict, 'iteritems', error_dict.items)()
 
-        err = ValidationError(error_iteritems, 'invalid data')
+        err = ValidationError(error_iteritems)
         self.assertEqual(err.differences, error_dict)
+
+    def test_single_diff(self):
+        single_diff = MinimalDifference('A')
+        err = ValidationError(single_diff)
+        self.assertEqual(err.differences, [single_diff])
 
     def test_bad_args(self):
         with self.assertRaises(TypeError, msg='must be iterable'):
-            single_error = MinimalDifference('A')
-            ValidationError(single_error, 'invalid data')
+            bad_arg = object()
+            ValidationError(bad_arg, 'invalid data')
 
-    def test_str(self):
+    def test_str_method(self):
         # Assert basic format and trailing comma.
         err = ValidationError([MinimalDifference('A')], 'invalid data')
         expected = """
@@ -743,11 +748,21 @@ class TestValidationError(unittest.TestCase):
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(str(err), expected)
 
+        # Assert without description.
+        err = ValidationError([MinimalDifference('A')])  # <- No description!
+        expected = """
+            1 difference: [
+                MinimalDifference('A'),
+            ]
+        """
+        expected = textwrap.dedent(expected).strip()
+        self.assertEqual(str(err), expected)
+
         # Assert "no cacheing"--objects that inhereit from some
         # Exceptions can cache their str--but ValidationError should
         # not do this.
-        err._message = 'changed'
         err._differences = [MinimalDifference('B')]
+        err._description = 'changed'
         updated = textwrap.dedent("""
             changed (1 difference): [
                 MinimalDifference('B'),
@@ -782,10 +797,9 @@ class TestValidationError(unittest.TestCase):
                                MinimalDifference(1.5),
                                MinimalDifference(True),
                                MinimalDifference(0),
-                               MinimalDifference(None)],
-                              'invalid data')
+                               MinimalDifference(None)])
         expected = """
-            invalid data (9 differences): [
+            9 differences: [
                 MinimalDifference(None),
                 MinimalDifference(0),
                 MinimalDifference(True),
@@ -804,7 +818,7 @@ class TestValidationError(unittest.TestCase):
         # those being displayed).
         err._should_truncate = lambda lines, chars: lines > 4
         expected = """
-            invalid data (9 differences): [
+            9 differences: [
                 MinimalDifference(None),
                 MinimalDifference(0),
                 MinimalDifference(True),
@@ -824,10 +838,10 @@ class TestValidationError(unittest.TestCase):
                 1: MinimalDifference('A'),
                 (None, 4): MinimalDifference('A'),
             },
-            'invalid data'
+            'description string'
         )
         expected = """
-            invalid data (6 differences): {
+            description string (6 differences): {
                 1: MinimalDifference('A'),
                 2: [MinimalDifference('A'), MinimalDifference('B')],
                 'A': [MinimalDifference(1), MinimalDifference('C')],
@@ -882,14 +896,18 @@ class TestValidationError(unittest.TestCase):
         self.assertEqual(str(err), truncation_plus_notice)
 
     def test_repr(self):
-        err = ValidationError([MinimalDifference('A')], 'invalid data')
-        expected = "ValidationError([MinimalDifference('A')], 'invalid data')"
+        err = ValidationError([MinimalDifference('A')])  # <- No description.
+        expected = "ValidationError([MinimalDifference('A')])"
+        self.assertEqual(repr(err), expected)
+
+        err = ValidationError([MinimalDifference('A')], 'description string')
+        expected = "ValidationError([MinimalDifference('A')], 'description string')"
         self.assertEqual(repr(err), expected)
 
         # Objects that inhereit from some Exceptions can cache their
         # repr--but ValidationError should not do this.
-        err._message = 'changed'
         err._differences = [MinimalDifference('B')]
+        err._description = 'changed'
         self.assertNotEqual(repr(err), expected, 'exception should not cache repr')
 
         updated = "ValidationError([MinimalDifference('B')], 'changed')"
@@ -914,6 +932,9 @@ class TestValidationError(unittest.TestCase):
     def test_args(self):
         err = ValidationError([MinimalDifference('A')], 'invalid data')
         self.assertEqual(err.args, ([MinimalDifference('A')], 'invalid data'))
+
+        err = ValidationError([MinimalDifference('A')])
+        self.assertEqual(err.args, ([MinimalDifference('A')], None))
 
 
 class TestIsValidAndValidate(unittest.TestCase):

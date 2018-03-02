@@ -181,10 +181,14 @@ class BaseAllowance(abc.ABC):
             if isinstance(differences, BaseDifference):
                 differences = [differences]
 
-        # Extend message with allowance message.
-        message = getattr(exc_value, 'message', '')
+        # Extend description with allowance message.
         if self.msg:
-            message = '{0}: {1}'.format(self.msg, message)
+            if exc_value.description:
+                message = '{0}: {1}'.format(self.msg, exc_value.description)
+            else:
+                message = self.msg
+        else:
+            message = exc_value.description
 
         # Build new ValidationError with remaining differences.
         exc = ValidationError(differences, message)

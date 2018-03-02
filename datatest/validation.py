@@ -410,8 +410,10 @@ class ValidationError(AssertionError):
 
     __module__ = 'datatest'
 
-    def __init__(self, differences, message):
-        if not nonstringiter(differences):
+    def __init__(self, differences, description=None):
+        if isinstance(differences, BaseDifference):
+            differences = [differences]
+        elif not nonstringiter(differences):
             msg = 'expected an iterable of differences, got {0!r}'
             raise TypeError(msg.format(differences.__class__.__name__))
 
@@ -426,7 +428,7 @@ class ValidationError(AssertionError):
 
         # Initialize properties.
         self._differences = differences
-        self._message = message
+        self._description = description
         self._should_truncate = None
         self._truncation_notice = None
 
@@ -438,14 +440,14 @@ class ValidationError(AssertionError):
         return self._differences
 
     @property
-    def message(self):
+    def description(self):
         """A brief description of the failed requirement."""
-        return self._message
+        return self._description
 
     @property
     def args(self):
         """The tuple of arguments given to the exception constructor."""
-        return (self._differences, self._message)
+        return (self._differences, self._description)
 
     def __str__(self):
         # Prepare a format-differences callable.
@@ -466,16 +468,15 @@ class ValidationError(AssertionError):
             iterator = iter(sorted(self._differences, key=sort_args))
             format_diff = lambda x: '    {0!r},'.format(x)
 
+        # Format differences as a list of strings and get line count.
         if self._should_truncate:
-            # Count lengths and build list. This code uses a for-loop
-            # to build the list iteratively and optimize memory.
             line_count = 0
             char_count = 0
             list_of_strings = []
-            for x in iterator:
-                line_count += 1
-                diff_string = format_diff(x)
-                char_count += len(diff_string)
+            for x in iterator:                  # For-loop used to build list
+                line_count += 1                 # iteratively to optimize for
+                diff_string = format_diff(x)    # memory (in case the iter of
+                char_count += len(diff_string)  # diffs is extremely long).
                 if self._should_truncate(line_count, char_count):
                     line_count += sum(1 for x in iterator)
                     end = '    ...'
@@ -487,11 +488,21 @@ class ValidationError(AssertionError):
             list_of_strings = [format_diff(x) for x in iterator]
             line_count = len(list_of_strings)
 
-        # Prepare final output.
-        output = '{0} ({1} difference{2}): {3}\n{4}\n{5}'.format(
-            self._message,
+        # Prepare count-of-differences string.
+        count_message = '{0} difference{1}'.format(
             line_count,
             '' if line_count == 1 else 's',
+        )
+
+        # Prepare description string.
+        if self._description:
+            description = '{0} ({1})'.format(self._description, count_message)
+        else:
+            description = count_message
+
+        # Prepare final output.
+        output = '{0}: {1}\n{2}\n{3}'.format(
+            description,
             begin,
             '\n'.join(list_of_strings),
             end,
@@ -499,8 +510,10 @@ class ValidationError(AssertionError):
         return output
 
     def __repr__(self):
-        class_name = self.__class__.__name__
-        return '{0}({1!r}, {2!r})'.format(class_name, self.differences, self.message)
+        cls_name = self.__class__.__name__
+        if self.description:
+            return '{0}({1!r}, {2!r})'.format(cls_name, self.differences, self.description)
+        return '{0}({1!r})'.format(cls_name, self.differences)
 
 
 def valid(data, requirement):

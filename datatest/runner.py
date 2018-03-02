@@ -119,11 +119,11 @@ class DataTestResult(TextTestResult):
 
         if issubclass(exctype, ValidationError):
             differences = value.differences
-            if value.message:
-                description = '{0}: {1}'.format(stop_early_msg, value.message)
+            if value.description:
+                desc = '{0}: {1}'.format(stop_early_msg, value.description)
             else:
-                description = stop_early_msg
-            return (exctype, exctype(differences, description), tb)
+                desc = stop_early_msg
+            return (exctype, exctype(differences, desc), tb)
 
         else:
             args = value.args
