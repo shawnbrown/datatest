@@ -28,6 +28,9 @@ class PredicateMatcher(PredicateObject):
     def __eq__(self, other):
         return self._func(other)
 
+    def __ne__(self, other):  # <- For Python 2.x compatibility.
+        return not self.__eq__(other)
+
     def __repr__(self):
         return self._repr
 
