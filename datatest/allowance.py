@@ -232,11 +232,13 @@ class IntersectedAllowance(CombinedAllowance):
         return '({0!r} & {1!r})'.format(self.left, self.right)
 
     def call_predicate(self, item):
-        left, right = self.left, self.right
-        if left.priority > right.priority:
-            return right.call_predicate(item) and left.call_predicate(item)
-        return left.call_predicate(item) and right.call_predicate(item)
-        # Above calls rely on short-circuit evaluation for proper behavior.
+        first, second = self.left, self.right
+        if first.priority > second.priority:
+            first, second = second, first
+        # Allowances are stateful so it's important to use short-circuit
+        # evaluation to avoid calling the second allowance unnecessarily.
+        # If `first` is False, then `second` should not be called.
+        return first.call_predicate(item) and second.call_predicate(item)
 
 
 class UnionedAllowance(CombinedAllowance):
@@ -247,11 +249,13 @@ class UnionedAllowance(CombinedAllowance):
         return '({0!r} | {1!r})'.format(self.left, self.right)
 
     def call_predicate(self, item):
-        left, right = self.left, self.right
-        if left.priority > right.priority:
-            return right.call_predicate(item) or left.call_predicate(item)
-        return left.call_predicate(item) or right.call_predicate(item)
-        # Above calls rely on short-circuit evaluation for proper behavior.
+        first, second = self.left, self.right
+        if first.priority > second.priority:
+            first, second = second, first
+        # Allowances are stateful so it's important to use short-circuit
+        # evaluation to avoid calling the second allowance unnecessarily.
+        # If `first` is False, then `second` should not be called.
+        return first.call_predicate(item) or second.call_predicate(item)
 
 
 class allowed_missing(BaseAllowance):
