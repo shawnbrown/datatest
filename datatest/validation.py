@@ -434,14 +434,14 @@ class ValidationError(AssertionError):
 
     @property
     def differences(self):
-        """A collection of "difference" objects for elements in the
-        data under test that do not satisfy the requirement.
+        """A collection of "difference" objects to describe elements
+        in the data under test that do not satisfy the requirement.
         """
         return self._differences
 
     @property
     def description(self):
-        """A brief description of the failed requirement."""
+        """An optional description of the failed requirement."""
         return self._description
 
     @property

@@ -26,9 +26,9 @@ Errors
 
 .. autoexception:: ValidationError
 
-    .. autoattribute:: message
-
     .. autoattribute:: differences
+
+    .. autoattribute:: description
 
 
 ***********
@@ -210,33 +210,33 @@ to right.
 Predicates
 **********
 
-Datatest uses "predicate objects" to check that values satisfy a
-certain criteria. The specific behavior of a predicate depends
-on its type:
+Datatest uses "predicate objects" to define the criteria that values
+are matched against. The specific behavior of a predicate depends on
+its type:
 
-    +----------------------+------------------------------------------+
-    | Predicate type       | Checks that                              |
-    +======================+==========================================+
-    | set                  | value is a member of the set             |
-    +----------------------+------------------------------------------+
-    | function             | calling ``function(value)`` returns True |
-    +----------------------+------------------------------------------+
-    | type                 | value is an instance of the type         |
-    +----------------------+------------------------------------------+
-    | re.compile(pattern)  | value matches the regular expression     |
-    +----------------------+------------------------------------------+
-    | str or non-container | value equals predicate                   |
-    +----------------------+------------------------------------------+
-    | tuple of             | tuple of values satisfies corresponding  |
-    | predicates           | tuple of predicates                      |
-    +----------------------+------------------------------------------+
-    | "``...``" (an        | (used as a wildcard, matches any value)  |
-    | ellipsis)            |                                          |
-    +----------------------+------------------------------------------+
+    +----------------------+---------------------------------------------------+
+    | Predicate type       | | Checks that                                     |
+    +======================+===================================================+
+    | set                  | | value is a member of the set                    |
+    +----------------------+---------------------------------------------------+
+    | function             | | the result of ``function(value)`` tests as True |
+    |                      | | and is not a "difference" object                |
+    +----------------------+---------------------------------------------------+
+    | type                 | | value is an instance of the type                |
+    +----------------------+---------------------------------------------------+
+    | re.compile(pattern)  | | value matches the regular expression pattern    |
+    +----------------------+---------------------------------------------------+
+    | str or non-container | | value is equal to the predicate                 |
+    +----------------------+---------------------------------------------------+
+    | tuple of             | | tuple of values satisfies corresponding tuple   |
+    | predicates           | | of predicates---each according to their type    |
+    +----------------------+---------------------------------------------------+
+    | "``...``" (an        | | (used as a wildcard, matches any value)         |
+    | ellipsis)            |                                                   |
+    +----------------------+---------------------------------------------------+
 
-Predicates are used as arguments when asserting validity and
-allowing differences. For some examples, see the following
-table:
+Predicates can be used as arguments for asserting validity and
+for some allowances. For some examples, see the following table:
 
     +---------------------------+----------------+---------+
     | Example Predicate         | Example Value  | Matches |
