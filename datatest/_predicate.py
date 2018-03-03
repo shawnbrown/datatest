@@ -3,6 +3,7 @@ import re
 from ._compatibility.builtins import *
 from ._compatibility import abc
 from ._utils import regex_types
+from .difference import BaseDifference
 
 
 class PredicateObject(abc.ABC):
@@ -47,7 +48,13 @@ def _get_matcher(value):
         function = lambda x: (x is value) or isinstance(x, value)
         repr_string = getattr(value, '__name__', repr(value))
     elif callable(value):
-        function = lambda x: (x is value) or value(x)
+        def function(x):
+            if x is value:
+                return True
+            result = value(x)
+            if isinstance(result, BaseDifference):
+                return False
+            return result
         repr_string = getattr(value, '__name__', repr(value))
     elif value is Ellipsis:
         function = lambda x: True  # <- Wildcard (matches everything).

@@ -8,6 +8,8 @@ from datatest._predicate import PredicateObject
 from datatest._predicate import PredicateTuple
 from datatest._predicate import PredicateMatcher
 
+from datatest import Missing
+
 
 class TestInheritance(unittest.TestCase):
     def test_inheritance(self):
@@ -51,7 +53,7 @@ class TestCallableMatcher(unittest.TestCase):
             return False
         matcher = _get_matcher(always_false)
 
-        self.assertTrue(matcher ==always_false)
+        self.assertTrue(matcher == always_false)
 
     def test_identity_with_error(self):
         def fails_internally(x):  # <- Helper function.
@@ -69,6 +71,17 @@ class TestCallableMatcher(unittest.TestCase):
         userlambda = lambda x: True
         matcher = _get_matcher(userlambda)
         self.assertEqual(repr(matcher), '<lambda>')
+
+    def test_returned_difference(self):
+        """If predicate function returns a difference object, it
+        should count as False.
+        """
+        def true_or_difference(x):
+            return x == 'foo' or Missing(x)
+        matcher = _get_matcher(true_or_difference)
+
+        self.assertTrue(matcher == 'foo')
+        self.assertFalse(matcher == 'bar')
 
 
 class TestRegexMatcher(unittest.TestCase):
