@@ -16,6 +16,7 @@ from datatest.validation import _require_set
 from datatest.validation import _require_callable
 from datatest.validation import _require_regex
 from datatest.validation import _require_equality
+from datatest.validation import _require_predicate
 from datatest.validation import _require_single_equality_base
 from datatest.validation import _require_single_equality
 from datatest.validation import _require_single_equality_show_expected
@@ -249,6 +250,67 @@ class TestRequireRegex(unittest.TestCase):
     def test_notfound(self):
         result = _require_regex(NOTFOUND, self.regex)
         self.assertEqual(result, Invalid(None))
+
+
+class TestRequirePredicate(unittest.TestCase):
+    def test_eq(self):
+        """Should use __eq__() comparison, not __ne__()."""
+
+        class EqualsAll(object):
+            def __init__(_self):
+                _self.times_checked = 0
+
+            def __eq__(_self, other):
+                _self.times_checked += 1
+                return True
+
+            def __ne__(_self, other):
+                return NotImplemented
+
+        requirement = EqualsAll()
+        result = _require_predicate('A', requirement)
+        self.assertEqual(requirement.times_checked, 1)
+
+    def test_all_true(self):
+        result = _require_predicate('A', 'A', True)
+        self.assertIsNone(result)
+
+    def test_some_invalid(self):
+        result = _require_predicate('XX', 'A', True)
+        self.assertEqual(result, Invalid('XX', 'A'))
+
+    def test_deviation(self):
+        result = _require_predicate(11, 10, True)
+        self.assertEqual(result, Deviation(+1, 10))
+
+    def test_invalid(self):
+        result = _require_predicate('XX', 10, True)
+        self.assertEqual(result, Invalid('XX', 10))
+
+    def test_dict_comparison(self):
+        result = _require_predicate({'a': 1}, {'a': 2}, True)
+        self.assertEqual(result, Invalid({'a': 1}, {'a': 2}))
+
+    def test_custom_difference(self):
+        """When a predicate function returns a difference object,
+        it should be used in place of an auto-generated one.
+        """
+        pred = lambda x: Invalid('custom')
+        result = _require_predicate('A', pred, False)
+        self.assertEqual(result, Invalid('custom'))
+
+    def test_broken_comparison(self):
+        class BadClass(object):
+            def __eq__(self, other):
+                raise Exception('I have betrayed you!')
+
+            def __hash__(self):
+                return hash((self.__class__, 101))
+
+        bad_instance = BadClass()
+        msg = 'errors should bubble-up for debugging'
+        with self.assertRaises(Exception, msg=msg):
+            _require_predicate(bad_instance, 10)
 
 
 class TestRequireEquality(unittest.TestCase):

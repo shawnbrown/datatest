@@ -5,6 +5,8 @@ import sys
 from ._compatibility import itertools
 from ._compatibility import collections
 from ._compatibility.builtins import callable
+from ._predicate import PredicateObject
+from ._predicate import get_predicate
 from ._utils import nonstringiter
 from ._utils import exhaustible
 from ._utils import iterpeek
@@ -211,6 +213,26 @@ def _require_equality(data, other):
     if first_element:  # If not empty, return diffs.
         return diffs
     return None
+
+
+def _require_predicate(value, other, show_expected=False):
+    # Predicate comparisons use "==" to trigger __eq__(), not "!=".
+    if isinstance(other, PredicateObject):
+        matches = other == value
+    elif callable(other) and not isinstance(other, type):
+        matches = other(value)
+    else:
+        matches = get_predicate(other) == value
+
+    if not matches:
+        return _make_difference(value, other, show_expected)
+    elif isinstance(matches, BaseDifference):
+        return matches
+    return None
+
+
+def _require_predicate_expected(value, other):
+    return _require_predicate(value, other, show_expected=True)
 
 
 def _require_single_equality_base(data, other, show_expected):
