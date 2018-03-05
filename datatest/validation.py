@@ -175,6 +175,9 @@ def _require_predicate_from_iterable(data, other):
     if data is NOTFOUND:
         return Invalid(None)  # <- EXIT!
 
+    if isinstance(data, tuple):
+        data = [data]
+
     if callable(other) and not isinstance(other, type):
         predicate = other
     else:
@@ -196,7 +199,7 @@ def _get_msg_and_func(data, requirement):
     """
     # Check for special cases--*requirement* types
     # that trigger a particular validation method.
-    if not isinstance(requirement, str) and \
+    if not isinstance(requirement, (str, tuple)) and \
                isinstance(requirement, collections.Sequence):
         return 'does not match sequence order', _require_sequence
 
@@ -205,7 +208,7 @@ def _get_msg_and_func(data, requirement):
 
     # If *requirement* did not match any of the special cases
     # above, then return an appropriate equality function.
-    if isinstance(data, BaseElement):             # <- Based on *data* not
+    if isinstance(data, (tuple, BaseElement)):    # <- Based on *data* not
         equality_func = _require_predicate        #    *requirement* like
     else:                                         #    the rest.
         equality_func = _require_predicate_from_iterable
@@ -238,7 +241,7 @@ def _apply_mapping_requirement(data, mapping):
             require_func = _require_predicate_expected
         diff = require_func(actual, expected)
         if diff:
-            if not isinstance(diff, BaseElement):
+            if not isinstance(diff, (tuple, BaseElement)):
                 diff = list(diff)
             yield key, diff
 
@@ -249,7 +252,7 @@ def _apply_mapping_requirement(data, mapping):
             if require_func is _require_predicate:
                 require_func = _require_predicate_expected
             diff = require_func(NOTFOUND, expected)
-            if not isinstance(diff, BaseElement):
+            if not isinstance(diff, (tuple, BaseElement)):
                 diff = list(diff)
             yield key, diff
 

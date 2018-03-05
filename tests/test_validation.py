@@ -337,6 +337,23 @@ class TestRequirePredicateFromIterable(unittest.TestCase):
         self.assertEqual(result, Invalid(None))
 
 
+class TestRequirePredicateTuple(unittest.TestCase):
+    def test_all_true(self):
+        data = [('x', 'y'), ('x', 'y')]
+        result = _require_predicate_from_iterable(data, ('x', 'y'))
+        self.assertIsNone(result)
+
+    def test_some_false(self):
+        data = [('x', 'y'), ('x', 'x')]
+        result = _require_predicate_from_iterable(data, ('x', 'y'))
+        self.assertEqual(list(result), [Invalid(('x', 'x'))])
+
+    def test_wildcard(self):
+        data = [('x', 'y'), ('x', 'x')]
+        result = _require_predicate_from_iterable(data, (Ellipsis, 'y'))
+        self.assertEqual(list(result), [Invalid(('x', 'x'))])
+
+
 class TestGetMsgAndFunc(unittest.TestCase):
     def setUp(self):
         self.multiple = ['A', 'B', 'A']
@@ -346,6 +363,11 @@ class TestGetMsgAndFunc(unittest.TestCase):
         default_msg, require_func = _get_msg_and_func(['A', 'B'], ['A', 'B'])
         self.assertIsInstance(default_msg, str)
         self.assertEqual(require_func, _require_sequence)
+
+    def test_tuple(self):
+        default_msg, require_func = _get_msg_and_func([('A', 'B')], ('A', 'B'))
+        self.assertIsInstance(default_msg, str)
+        self.assertEqual(require_func, _require_predicate_from_iterable)
 
     def test_set(self):
         default_msg, require_func = _get_msg_and_func(['A', 'B'], set(['A', 'B']))
@@ -443,6 +465,20 @@ class TestApplyMappingRequirement(unittest.TestCase):
         data = {'a': ['x', 'j'], 'b': [10, 9]}
         result = _apply_mapping_requirement(data, {'a': 'j', 'b': 9})
         expected = {'a': [Invalid('x')], 'b': [Deviation(+1, 9)]}
+        self.assertEqual(dict(result), expected)
+
+        # Equality of single tuples.
+        data = {'a': (1, 'x'), 'b': (9, 10)}
+        result = _apply_mapping_requirement(data, {'a': (1, 'j'), 'b': (9, 9)})
+        expected = {'a': Invalid((1, 'x'), expected=(1, 'j')),
+                    'b': Invalid((9, 10), expected=(9, 9))}
+        self.assertEqual(dict(result), expected)
+
+        # Equality of multiple tuples.
+        data = {'a': [(1, 'j'), (1, 'x')], 'b': [(9, 9), (9, 10)]}
+        result = _apply_mapping_requirement(data, {'a': (1, 'j'), 'b': (9, 9)})
+        expected = {'a': [Invalid((1, 'x'))],
+                    'b': [Invalid((9, 10))]}
         self.assertEqual(dict(result), expected)
 
         # Equality of multiple values, missing key with single item.
