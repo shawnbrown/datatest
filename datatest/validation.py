@@ -235,23 +235,6 @@ def _require_predicate_expected(value, other):
     return _require_predicate(value, other, show_expected=True)
 
 
-def _require_single_equality_base(data, other, show_expected):
-    try:
-        if not other == data:  # Use "==" to call __eq__(), don't use "!=".
-            return _make_difference(data, other, show_expected)
-    except Exception:
-        return _make_difference(data, other, show_expected)
-    return None
-
-
-def _require_single_equality(data, other):
-    return _require_single_equality_base(data, other, False)
-
-
-def _require_single_equality_show_expected(data, other):
-    return _require_single_equality_base(data, other, True)
-
-
 def _get_msg_and_func(data, requirement):
     """
     Each validation-function must accept an iterable of differences,
@@ -277,14 +260,14 @@ def _get_msg_and_func(data, requirement):
     # If *requirement* did not match any of the special cases
     # above, then return an appropriate equality function.
     if isinstance(data, BaseElement):             # <- Based on *data* not
-        equality_func = _require_single_equality  #    *requirement* like
+        equality_func = _require_predicate        #    *requirement* like
     else:                                         #    the rest.
         equality_func = _require_equality
 
-    if isinstance(requirement, BaseElement):
-        equality_msg = 'does not equal {0!r}'.format(requirement)
+    if isinstance(requirement, (PredicateObject, BaseElement)):
+        equality_msg = 'does not satisfy {0!r}'.format(requirement)
     else:
-        equality_msg = 'does not satisfy equality comparison'
+        equality_msg = 'does not satisfy requirement'
 
     return equality_msg, equality_func
 
@@ -303,8 +286,8 @@ def _apply_mapping_requirement(data, mapping):
         expected = mapping.get(key, NOTFOUND)
 
         _, require_func = _get_msg_and_func(actual, expected)
-        if require_func is _require_single_equality:
-            require_func = _require_single_equality_show_expected
+        if require_func is _require_predicate:
+            require_func = _require_predicate_expected
         diff = require_func(actual, expected)
         if diff:
             if not isinstance(diff, BaseElement):
@@ -315,8 +298,8 @@ def _apply_mapping_requirement(data, mapping):
     for key, expected in mapping_items:
         if key not in data_keys:
             _, require_func = _get_msg_and_func(NOTFOUND, expected)
-            if require_func is _require_single_equality:
-                require_func = _require_single_equality_show_expected
+            if require_func is _require_predicate:
+                require_func = _require_predicate_expected
             diff = require_func(NOTFOUND, expected)
             if not isinstance(diff, BaseElement):
                 diff = list(diff)

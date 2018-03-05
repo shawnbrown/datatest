@@ -17,9 +17,6 @@ from datatest.validation import _require_callable
 from datatest.validation import _require_regex
 from datatest.validation import _require_equality
 from datatest.validation import _require_predicate
-from datatest.validation import _require_single_equality_base
-from datatest.validation import _require_single_equality
-from datatest.validation import _require_single_equality_show_expected
 from datatest.validation import _get_msg_and_func
 from datatest.validation import _apply_mapping_requirement
 from datatest.validation import _normalize_data
@@ -313,118 +310,6 @@ class TestRequirePredicate(unittest.TestCase):
             _require_predicate(bad_instance, 10)
 
 
-class TestRequireEquality(unittest.TestCase):
-    def test_eq(self):
-        """Should use __eq__() comparison, not __ne__()."""
-
-        class EqualsAll(object):
-            def __init__(_self):
-                _self.times_called = 0
-
-            def __eq__(_self, other):
-                _self.times_called += 1
-                return True
-
-            def __ne__(_self, other):
-                return NotImplemented
-
-        data = ['A', 'A', 'A']
-        requirement = EqualsAll()
-        result = _require_equality(data, requirement)
-        self.assertEqual(requirement.times_called, len(data))
-
-    def test_all_true(self):
-        result = _require_equality(iter(['A', 'A']), 'A')
-        self.assertIsNone(result)
-
-    def test_some_invalid(self):
-        result = _require_equality(iter(['A', 'XX']), 'A')
-        self.assertEqual(list(result), [Invalid('XX')])
-
-    def test_some_deviation(self):
-        result = _require_equality(iter([10, 11]), 10)
-        self.assertEqual(list(result), [Deviation(+1, 10)])
-
-    def test_invalid_and_deviation(self):
-        result = _require_equality(iter([10, 'XX', 11]), 10)
-
-        result = list(result)
-        self.assertEqual(len(result), 2)
-        self.assertIn(Invalid('XX'), result)
-        self.assertIn(Deviation(+1, 10), result)
-
-    def test_dict_comparison(self):
-        data = iter([{'a': 1}, {'b': 2}])
-        result = _require_equality(data, {'a': 1})
-        self.assertEqual(list(result), [Invalid({'b': 2})])
-
-    def test_broken_comparison(self):
-        class BadClass(object):
-            def __eq__(self, other):
-                raise Exception("I have betrayed you!")
-
-            def __hash__(self):
-                return hash((self.__class__, 101))
-
-        bad_instance = BadClass()
-
-        data = iter([10, bad_instance, 10])
-        result = _require_equality(data, 10)
-        self.assertEqual(list(result), [Invalid(bad_instance)])
-
-
-class TestRequireSingleEquality(unittest.TestCase):
-    def test_eq(self):
-        """Should use __eq__() comparison, not __ne__()."""
-
-        class EqualsAll(object):
-            def __init__(_self):
-                _self.times_called = 0
-
-            def __eq__(_self, other):
-                _self.times_called += 1
-                return True
-
-            def __ne__(_self, other):
-                return NotImplemented
-
-        requirement = EqualsAll()
-        result = _require_single_equality_base('A', requirement, True)
-        self.assertEqual(requirement.times_called, 1)
-
-    def test_all_true(self):
-        result = _require_single_equality_base('A', 'A', True)
-        self.assertIsNone(result)
-
-    def test_some_invalid(self):
-        result = _require_single_equality_base('XX', 'A', True)
-        self.assertEqual(result, Invalid('XX', 'A'))
-
-    def test_deviation(self):
-        result = _require_single_equality_base(11, 10, True)
-        self.assertEqual(result, Deviation(+1, 10))
-
-    def test_invalid(self):
-        result = _require_single_equality_base('XX', 10, True)
-        self.assertEqual(result, Invalid('XX', 10))
-
-    def test_dict_comparison(self):
-        result = _require_single_equality_base({'a': 1}, {'a': 2}, True)
-        self.assertEqual(result, Invalid({'a': 1}, {'a': 2}))
-
-    def test_broken_comparison(self):
-        class BadClass(object):
-            def __eq__(self, other):
-                raise Exception('I have betrayed you!')
-
-            def __hash__(self):
-                return hash((self.__class__, 101))
-
-        bad_instance = BadClass()
-        result = _require_single_equality_base(bad_instance, 10, True)
-        self.assertEqual(result, Invalid(bad_instance, 10))
-
-
 class TestGetMsgAndFunc(unittest.TestCase):
     def setUp(self):
         self.multiple = ['A', 'B', 'A']
@@ -475,14 +360,14 @@ class TestGetMsgAndFunc(unittest.TestCase):
         self.assertIsInstance(default_msg, str)
         self.assertEqual(require_func, _require_equality)
 
-    def test_single_equality(self):
+    def test_predicate_single_value(self):
         default_msg, require_func = _get_msg_and_func('A', 'A')
         self.assertIsInstance(default_msg, str)
-        self.assertEqual(require_func, _require_single_equality)
+        self.assertEqual(require_func, _require_predicate)
 
         default_msg, require_func = _get_msg_and_func({'a': 1}, {'a': 1})
         self.assertIsInstance(default_msg, str)
-        self.assertEqual(require_func, _require_single_equality)
+        self.assertEqual(require_func, _require_predicate)
 
 
 class TestApplyMappingRequirement(unittest.TestCase):
@@ -698,7 +583,7 @@ class TestGetDifferenceInfo(unittest.TestCase):
         info = _get_invalid_info(mapping1, mapping1)
         self.assertIsNone(info)
 
-        # This next test uses _require_single_equality_show_expected() internally.
+        # This next test uses _require_predicate() internally.
         msg, diffs = _get_invalid_info(mapping1, mapping2)
         self.assertTrue(exhaustible(diffs))
         self.assertEqual(dict(diffs), {'b': Invalid('y', expected='z')})  # <- SHOWS EXPECTED!
