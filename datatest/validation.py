@@ -151,70 +151,6 @@ def _require_set(data, requirement_set):
     return None
 
 
-def _require_callable(data, function):
-    if data is NOTFOUND:
-        return Invalid(None)  # <- EXIT!
-
-    def wrapped(element):
-        try:
-            if isinstance(element, BaseElement):
-                returned_value = function(element)
-            else:
-                returned_value = function(*element)
-        except Exception:
-            returned_value = False  # Raised errors count as False.
-
-        if returned_value == True:
-            return None  # <- EXIT!
-
-        if returned_value == False:
-            return Invalid(element)  # <- EXIT!
-
-        if isinstance(returned_value, BaseDifference):
-            return returned_value  # <- EXIT!
-
-        callable_name = function.__name__
-        message = \
-            '{0!r} returned {1!r}, should return True, False or a difference instance'
-        raise TypeError(message.format(callable_name, returned_value))
-
-    if isinstance(data, BaseElement):
-        return wrapped(data)  # <- EXIT!
-
-    results = (wrapped(elem) for elem in data)
-    diffs = (diff for diff in results if diff)
-    first_element, diffs = iterpeek(diffs)
-    if first_element:  # If not empty, return diffs.
-        return diffs
-    return None
-
-
-def _require_regex(data, regex):
-    search = regex.search  # Assign locally to minimize dot-lookups.
-    func = lambda element: search(element) is not None
-    return _require_callable(data, func)
-
-
-def _require_equality(data, other):
-    if data is NOTFOUND:
-        return _make_difference(data, other, show_expected=False)  # <- EXIT!
-
-    def func(element):
-        try:
-            if not other == element:  # Use "==" to call __eq__(), don't use "!=".
-                return _make_difference(element, other, show_expected=False)
-        except Exception:
-            return _make_difference(element, other, show_expected=False)
-        return None
-    diffs = (func(elem) for elem in data)
-    diffs = (x for x in diffs if x)
-
-    first_element, diffs = iterpeek(diffs)
-    if first_element:  # If not empty, return diffs.
-        return diffs
-    return None
-
-
 def _require_predicate(value, other, show_expected=False):
     # Predicate comparisons use "==" to trigger __eq__(), not "!=".
     if isinstance(other, PredicateObject):
@@ -235,6 +171,24 @@ def _require_predicate_expected(value, other):
     return _require_predicate(value, other, show_expected=True)
 
 
+def _require_predicate_from_iterable(data, other):
+    if data is NOTFOUND:
+        return Invalid(None)  # <- EXIT!
+
+    if callable(other) and not isinstance(other, type):
+        predicate = other
+    else:
+        predicate = get_predicate(other)
+
+    diffs = (_require_predicate(value, predicate) for value in data)
+    diffs = (x for x in diffs if x)
+
+    first_element, diffs = iterpeek(diffs)
+    if first_element:  # If not empty, return diffs.
+        return diffs
+    return None
+
+
 def _get_msg_and_func(data, requirement):
     """
     Each validation-function must accept an iterable of differences,
@@ -249,22 +203,16 @@ def _get_msg_and_func(data, requirement):
     if isinstance(requirement, collections.Set):
         return 'does not satisfy set membership', _require_set
 
-    if callable(requirement):
-        name = getattr(requirement, '__name__', requirement.__class__.__name__)
-        return 'does not satisfy {0!r} condition'.format(name), _require_callable
-
-    if isinstance(requirement, _regex_type):
-        pattern = requirement.pattern
-        return 'does not satisfy {0!r} regex'.format(pattern), _require_regex
-
     # If *requirement* did not match any of the special cases
     # above, then return an appropriate equality function.
     if isinstance(data, BaseElement):             # <- Based on *data* not
         equality_func = _require_predicate        #    *requirement* like
     else:                                         #    the rest.
-        equality_func = _require_equality
+        equality_func = _require_predicate_from_iterable
 
-    if isinstance(requirement, (PredicateObject, BaseElement)):
+    if isinstance(requirement, _regex_type):
+        equality_msg = 'does not satisfy regex {0!r}'.format(requirement.pattern)
+    elif isinstance(requirement, (PredicateObject, BaseElement)):
         equality_msg = 'does not satisfy {0!r}'.format(requirement)
     else:
         equality_msg = 'does not satisfy requirement'

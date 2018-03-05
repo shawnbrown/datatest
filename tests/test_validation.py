@@ -13,10 +13,8 @@ from datatest.difference import NOTFOUND
 
 from datatest.validation import _require_sequence
 from datatest.validation import _require_set
-from datatest.validation import _require_callable
-from datatest.validation import _require_regex
-from datatest.validation import _require_equality
 from datatest.validation import _require_predicate
+from datatest.validation import _require_predicate_from_iterable
 from datatest.validation import _get_msg_and_func
 from datatest.validation import _apply_mapping_requirement
 from datatest.validation import _normalize_data
@@ -170,26 +168,20 @@ class TestRequireCallable(unittest.TestCase):
 
     def test_all_true(self):
         data = ['10', '20', '30']
-        result = _require_callable(data, self.isdigit)
+        result = _require_predicate_from_iterable(data, self.isdigit)
         self.assertIsNone(result)
 
     def test_some_false(self):
         """Elements that evaluate to False are returned as Invalid() errors."""
         data = ['10', '20', 'XX']
-        result = _require_callable(data, self.isdigit)
+        result = _require_predicate_from_iterable(data, self.isdigit)
         self.assertEqual(list(result), [Invalid('XX')])
 
     def test_duplicate_false(self):
         """Should return an error for every false result (incl. duplicates)."""
         data = ['10', '20', 'XX', 'XX', 'XX']  # <- Multiple XX's.
-        result = _require_callable(data, self.isdigit)
+        result = _require_predicate_from_iterable(data, self.isdigit)
         self.assertEqual(list(result), [Invalid('XX'), Invalid('XX'), Invalid('XX')])
-
-    def test_raised_error(self):
-        """When an Exception is raised, it counts as False."""
-        data = ['10', '20', 30]  # <- Fails on 30 (int has no 'isdigit' method).
-        result = _require_callable(data, self.isdigit)
-        self.assertEqual(list(result), [Invalid(30)])
 
     def test_returned_error(self):
         """When a difference is returned, it is used in place of Invalid."""
@@ -199,22 +191,13 @@ class TestRequireCallable(unittest.TestCase):
             return True
 
         data = ['a', 'b', 'c']
-        result = _require_callable(data, func)
+        result = _require_predicate_from_iterable(data, func)
         self.assertEqual(list(result), [Invalid("Letter 'c' is no good!")])
-
-    def test_bad_return_type(self):
-        """If callable returns an unexpected type, raise a TypeError."""
-        def func(x):
-            return Exception('my error')  # <- Not True, False or difference!
-
-        with self.assertRaises(TypeError):
-            result = _require_callable(['a', 'b', 'c'], func)
-            list(result)  # Evaluate generator.
 
     def test_notfound(self):
         def func(x):
             return False
-        result = _require_callable(NOTFOUND, func)
+        result = _require_predicate_from_iterable(NOTFOUND, func)
         self.assertEqual(result, Invalid(None))
 
 
@@ -224,28 +207,22 @@ class TestRequireRegex(unittest.TestCase):
 
     def test_all_true(self):
         data = iter(['a1', 'b2', 'c3'])
-        result = _require_regex(data, self.regex)
+        result = _require_predicate_from_iterable(data, self.regex)
         self.assertIsNone(result)
 
     def test_some_false(self):
         data = iter(['a1', 'b2', 'XX'])
-        result = _require_regex(data, self.regex)
+        result = _require_predicate_from_iterable(data, self.regex)
         self.assertEqual(list(result), [Invalid('XX')])
 
     def test_duplicate_false(self):
         """Should return an error for every non-match (incl. duplicates)."""
         data = iter(['a1', 'b2', 'XX', 'XX', 'XX'])  # <- Multiple XX's.
-        result = _require_regex(data, self.regex)
+        result = _require_predicate_from_iterable(data, self.regex)
         self.assertEqual(list(result), [Invalid('XX'), Invalid('XX'), Invalid('XX')])
 
-    def test_raised_error(self):
-        """When an Exception is raised, it counts as False."""
-        data = ['a1', 'b2', 30]  # <- Fails on 30 (re.search() expects a string).
-        result = _require_regex(data, self.regex)
-        self.assertEqual(list(result), [Invalid(30)])
-
     def test_notfound(self):
-        result = _require_regex(NOTFOUND, self.regex)
+        result = _require_predicate_from_iterable(NOTFOUND, self.regex)
         self.assertEqual(result, Invalid(None))
 
 
@@ -310,6 +287,56 @@ class TestRequirePredicate(unittest.TestCase):
             _require_predicate(bad_instance, 10)
 
 
+class TestRequirePredicateFromIterable(unittest.TestCase):
+    def test_all_true(self):
+        data = ['x', 'x', 'x']
+        result = _require_predicate_from_iterable(data, 'x')
+        self.assertIsNone(result)
+
+    def test_some_false(self):
+        data = ['x', 'x', 'y']
+        result = _require_predicate_from_iterable(data, 'x')
+        self.assertEqual(list(result), [Invalid('y')])
+
+        data = [2, 2, 7]
+        result = _require_predicate_from_iterable(data, 2)
+        self.assertEqual(list(result), [Deviation(+5, 2)])
+
+    def test_duplicate_false(self):
+        """Should return an error for every false result (incl. duplicates)."""
+        data = ['x', 'x', 'y', 'y']  # <- Multiple invalid y's.
+        result = _require_predicate_from_iterable(data, 'x')
+        self.assertEqual(list(result), [Invalid('y'), Invalid('y')])
+
+    def test_raised_error(self):
+        """Exceptions should raise as normal (earlier implementation
+        coerced errors to False).
+        """
+        capital_letters = lambda x: x.isupper()
+        data = ['X', 'X', 10]  # <- Fails on 30 (int has no 'isupper' method).
+        with self.assertRaises(AttributeError):
+            result = _require_predicate_from_iterable(data, capital_letters)
+
+    def test_returned_error(self):
+        """When a difference is returned, it should be used in place of
+        an auto-generated one.
+        """
+        def func(x):
+            if x == 5:
+                return Invalid("Five is right out!")
+            return True
+
+        data = [1, 2, 5]
+        result = _require_predicate_from_iterable(data, func)
+        self.assertEqual(list(result), [Invalid("Five is right out!")])
+
+    def test_notfound(self):
+        def func(x):
+            return False
+        result = _require_predicate_from_iterable(NOTFOUND, func)
+        self.assertEqual(result, Invalid(None))
+
+
 class TestGetMsgAndFunc(unittest.TestCase):
     def setUp(self):
         self.multiple = ['A', 'B', 'A']
@@ -330,12 +357,12 @@ class TestGetMsgAndFunc(unittest.TestCase):
             return True
         default_msg, require_func = _get_msg_and_func(['A', 'B'], myfunc)
         self.assertIn(myfunc.__name__, default_msg, 'message should include function name')
-        self.assertEqual(require_func, _require_callable)
+        self.assertEqual(require_func, _require_predicate_from_iterable)
 
         mylambda = lambda x: True
         default_msg, require_func = _get_msg_and_func(['A', 'B'], mylambda)
         self.assertIn('<lambda>', default_msg, 'message should include function name')
-        self.assertEqual(require_func, _require_callable)
+        self.assertEqual(require_func, _require_predicate_from_iterable)
 
         class MyClass(object):
             def __call__(_self, x):
@@ -343,22 +370,22 @@ class TestGetMsgAndFunc(unittest.TestCase):
         myinstance = MyClass()
         default_msg, require_func = _get_msg_and_func(['A', 'B'], myinstance)
         self.assertIn('MyClass', default_msg, 'message should include class name')
-        self.assertEqual(require_func, _require_callable)
+        self.assertEqual(require_func, _require_predicate_from_iterable)
 
     def test_regex(self):
         myregex = re.compile('[AB]')
         default_msg, require_func = _get_msg_and_func(['A', 'B'], myregex)
         self.assertIn(repr(myregex.pattern), default_msg, 'message should include pattern')
-        self.assertEqual(require_func, _require_regex)
+        self.assertEqual(require_func, _require_predicate_from_iterable)
 
-    def test_equality(self):
+    def test_require_predicate_from_iterable(self):
         default_msg, require_func = _get_msg_and_func(['A', 'B'], 'A')
         self.assertIsInstance(default_msg, str)
-        self.assertEqual(require_func, _require_equality)
+        self.assertEqual(require_func, _require_predicate_from_iterable)
 
         default_msg, require_func = _get_msg_and_func([{'a': 1}, {'a': 1}], {'a': 1})
         self.assertIsInstance(default_msg, str)
-        self.assertEqual(require_func, _require_equality)
+        self.assertEqual(require_func, _require_predicate_from_iterable)
 
     def test_predicate_single_value(self):
         default_msg, require_func = _get_msg_and_func('A', 'A')
