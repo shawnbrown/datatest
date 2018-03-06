@@ -215,7 +215,7 @@ are matched against. The specific behavior of a predicate depends on
 its type:
 
     +----------------------+---------------------------------------------------+
-    | Predicate type       | | Checks that                                     |
+    | Predicate type       | Checks that                                       |
     +======================+===================================================+
     | set                  | | value is a member of the set                    |
     +----------------------+---------------------------------------------------+
