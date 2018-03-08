@@ -90,12 +90,18 @@ Allowances
     within a given *tolerance* without triggering a test
     failure::
 
-        with datatest.allowed_deviation(5):  # tolerance of +/- 5
-            datatest.validate(..., ...)
+        data = {'A': 45, 'B': 205}
+
+        requirement = {'A': 50, 'B': 200}
+
+        with datatest.allowed_deviation(5):  # <- tolerance of ±5
+            datatest.validate(data, requirement)  # raises dictionary
+                                                  # {'A': Deviation(-5, 50),
+                                                  #  'B': Deviation(+5, 200)}
 
     Specifying different *lower* and *upper* bounds::
 
-        with datatest.allowed_deviation(-2, 3):  # tolerance from -2 to +3
+        with datatest.allowed_deviation(-2, 7):  # <- tolerance from -2 to +7
             datatest.validate(..., ...)
 
     Deviations within the given range are suppressed while those
@@ -112,12 +118,18 @@ Allowances
     percentages of error within a given *tolerance* without
     triggering a test failure::
 
-        with datatest.allowed_percent(0.03):  # tolerance of +/- 3%
-            datatest.validate(..., ...)
+        data = {'A': 47, 'B': 212}
+
+        requirement = {'A': 50, 'B': 200}
+
+        with datatest.allowed_percent(0.06):  # <- tolerance of ±6%
+            datatest.validate(data, requirement)  # raises dictionary
+                                                  # {'A': Deviation(-3, 50),
+                                                  #  'B': Deviation(+12, 200)}
 
     Specifying different *lower* and *upper* bounds::
 
-        with datatest.allowed_percent(-0.02, 0.01):  # tolerance from -2% to +1%
+        with datatest.allowed_percent(-0.02, 0.01):  # <- tolerance from -2% to +1%
             datatest.validate(..., ...)
 
     Deviations within the given range are suppressed while those
