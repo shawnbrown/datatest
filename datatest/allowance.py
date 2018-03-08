@@ -270,12 +270,12 @@ class allowed_missing(BaseAllowance):
     """Allows :class:`Missing` values without triggering a test
     failure::
 
-        data = {'A', 'B'}  # <- 'C' is missing
+        data = {'A', 'B'}
 
         requirement = {'A', 'B', 'C'}
 
         with datatest.allowed_missing():
-            datatest.validate(data, requirement)
+            datatest.validate(data, requirement)  # Raises Missing('C')
     """
     def __repr__(self):
         return super(allowed_missing, self).__repr__()
@@ -288,12 +288,12 @@ class allowed_extra(BaseAllowance):
     """Allows :class:`Extra` values without triggering a test
     failure::
 
-        data = {'A', 'B', 'C'}  # <- 'C' is extra
+        data = {'A', 'B', 'C'}
 
         requirement = {'A', 'B'}
 
         with datatest.allowed_extra():
-            datatest.validate(data, requirement)
+            datatest.validate(data, requirement)  # Raises Extra('C')
     """
     def __repr__(self):
         return super(allowed_extra, self).__repr__()
@@ -306,12 +306,12 @@ class allowed_invalid(BaseAllowance):
     """Allows :class:`Invalid` values without triggering a test
     failure::
 
-        data = ['A', 'B', 'A']  # 'B' is invalid
+        data = ['A', 'B', 'A']
 
         requirement = 'A'
 
         with datatest.allowed_invalid():
-            datatest.validate(data, requirement)
+            datatest.validate(data, requirement)  # Raises Invalid('B')
     """
     def __repr__(self):
         return super(allowed_invalid, self).__repr__()
@@ -324,12 +324,13 @@ class allowed_keys(BaseAllowance):
     """Allows differences whose associated keys satisfy the given
     *predicate* (see :ref:`predicate-docs` for details)::
 
-        data = {'A': 'x', 'B': 'y'}  # <- 'y' is invalid
+        data = {'A': 'x', 'B': 'y'}
 
         requirement = 'x'
 
         with datatest.allowed_keys('B'):
-            datatest.validate(data, requirement)
+            datatest.validate(data, requirement)  # Raises dictionary
+                                                  # {'B': Invalid('y')}
     """
     def __init__(self, predicate, msg=None):
         super(allowed_keys, self).__init__(msg)
@@ -356,12 +357,13 @@ class allowed_args(BaseAllowance):
     """Allows differences whose 'args' satisfy the given *predicate*
     (see :ref:`predicate-docs` for details)::
 
-        data = {'A': 'x', 'B': 'y'}  # <- 'y' is invalid
+        data = {'A': 'x', 'B': 'y'}
 
         requirement = 'x'
 
         with datatest.allowed_args('y'):
-            datatest.validate(data, requirement)
+            datatest.validate(data, requirement)  # Raises dictionary
+                                                  # {'B': Invalid('y')}
     """
     def __init__(self, predicate, msg=None):
         super(allowed_args, self).__init__(msg)
@@ -501,7 +503,7 @@ class allowed_specific(BaseAllowance):
     """Allows specific *differences* without triggering a
     test failure::
 
-        data = {'A', 'B', 'D'}  # 'D' is extra, 'C' is missing
+        data = {'A', 'B', 'D'}
 
         requirement = {'A', 'B', 'C'}
 
@@ -516,8 +518,8 @@ class allowed_specific(BaseAllowance):
     A dictionary can be used to specify differences per group::
 
         data = {
-            'A': ['x', 'y', 'z'],  # <- 'z' is extra
-            'B': ['x'],            # <- 'y' is missing
+            'A': ['x', 'y', 'z'],
+            'B': ['x'],
         }
 
         requirement = {'x', 'y'}
@@ -534,8 +536,8 @@ class allowed_specific(BaseAllowance):
     single-item dictionary with an ellipsis (``...``) for the key::
 
         data = {
-            'A': ['x', 'y', 'z'],  # <- 'z' is extra
-            'B': ['x'],            # <- 'y' is missing
+            'A': ['x', 'y', 'z'],
+            'B': ['x'],
         }
 
         requirement = {'x', 'y'}
@@ -629,15 +631,16 @@ class allowed_specific(BaseAllowance):
 
 
 class allowed_limit(BaseAllowance):
-    """Allows a limited *number* of differences without triggering a
-    test failure::
+    """Allows up to a given *number* of differences without triggering
+    a test failure::
 
-        data = ['A', 'B', 'A', 'C']  # <- 'B' and 'C' are invalid
+        data = ['A', 'B', 'A', 'C']
 
         requirement = 'A'
 
-        with datatest.allowed_limit(2):  # Allow up to 2 differences.
-            datatest.validate(data, requirement)
+        with datatest.allowed_limit(2):
+            datatest.validate(data, requirement)  # Raises [Invalid('B'),
+                                                  #         Invalid('C')]
 
     If the count of differences exceeds the given *number*, the test
     case will fail with a :class:`ValidationError` containing the
