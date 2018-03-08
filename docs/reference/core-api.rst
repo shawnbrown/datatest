@@ -159,7 +159,7 @@ behavior.
 The ``&`` operator can be used to create an *intersection* of
 allowance criteria. In the following example, :class:`allowed_missing`
 and :class:`allowed_limit` are combined into a single allowance that
-accepts up to five :class:`Missing` differences::
+accepts up to five Missing differences::
 
     with allowed_missing() & allowed_limit(5):
         validate(..., ...)
@@ -167,14 +167,13 @@ accepts up to five :class:`Missing` differences::
 The ``|`` operator can be used to create *union* of allowance
 criteria. In the following example, :class:`allowed_deviation`
 and :class:`allowed_percent` are combined into a single allowance
-that accepts :class:`Deviations <datatest.Deviation>` of ±10
-as well as :class:`Deviations <datatest.Deviation>` of ±5%::
+that accepts Deviations of ±10 as well as Deviations of ±5%::
 
     with allowed_deviation(10) | allowed_percent(0.05):
         validate(..., ...)
 
 And composed allowances, themselves, can be composed to define
-increasingly specific allowance criteria::
+increasingly specific criteria::
 
     five_missing = allowed_missing() & allowed_limit(5)
 
