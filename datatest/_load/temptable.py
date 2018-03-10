@@ -158,16 +158,21 @@ class savepoint(object):
             self.cursor.execute('ROLLBACK TO {0}'.format(self.name))
 
 
-def load_data(cursor, table, *args, default=''):
+def load_data(cursor, table, *args, **kwds):
     """
-    load_data(cursor, table, columns, records)
-    load_data(cursor, table, records)
+    load_data(cursor, table, columns, records, default='')
+    load_data(cursor, table, records, default='')
     """
     try:
         records, = args
         columns = None
     except ValueError:
         columns, records = args
+
+    default = kwds.pop('default', '')
+    if kwds:
+        msg = 'load_data() got unexpected keyword argument {0!r}'
+        raise TypeError(msg.format(next(iter(kwds.keys()))))
 
     records = iter(records)
     first_record = next(records, None)
