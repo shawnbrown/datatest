@@ -16,12 +16,14 @@ def load_csv(cursor, table, csvfile, encoding=None, **kwds):
     global preferred_encoding
     global fallback_encoding
 
+    default = kwds.get('restval', '')  # Used for default column value.
+
     if encoding:
         # When an encoding is specified, use it to load *csvfile* or
         # fail if there are errors (no fallback recovery):
         with savepoint(cursor):
             reader = get_reader.from_csv(csvfile, encoding, **kwds)
-            load_data(cursor, table, reader)
+            load_data(cursor, table, reader, default=default)
 
         return  # <- EXIT!
 
@@ -36,7 +38,7 @@ def load_csv(cursor, table, csvfile, encoding=None, **kwds):
     try:
         with savepoint(cursor):
             reader = get_reader.from_csv(csvfile, preferred_encoding, **kwds)
-            load_data(cursor, table, reader)
+            load_data(cursor, table, reader, default=default)
 
         return  # <- EXIT!
 
@@ -61,7 +63,7 @@ def load_csv(cursor, table, csvfile, encoding=None, **kwds):
             try:
                 with savepoint(cursor):
                     reader = get_reader.from_csv(csvfile, fallback, **kwds)
-                    load_data(cursor, table, reader)
+                    load_data(cursor, table, reader, default=default)
 
                 msg = (
                     '{0}: loaded {1!r} using fallback {2!r}: specify an '

@@ -9,6 +9,7 @@ from datatest._load.temptable import (
     table_exists,
     new_table_name,
     normalize_names,
+    normalize_default,
     create_table,
     get_columns,
     insert_records,
@@ -84,6 +85,27 @@ class TestNormalizeNames(unittest.TestCase):
     def test_quote_escaping(self):
         normalized = normalize_names('Steve "The Woz" Wozniak')
         self.assertEqual(normalized, '"Steve ""The Woz"" Wozniak"')
+
+
+class TestNormalizeDefault(unittest.TestCase):
+    def test_none(self):
+        normalized = normalize_default(None)
+        self.assertEqual(normalized, 'NULL')
+
+    def test_expression(self):
+        expression = "(datetime('now'))"
+        normalized = normalize_default(expression)
+        self.assertEqual(normalized, expression)
+
+    def test_number_or_literal(self):
+        normalized = normalize_default(7)
+        self.assertEqual(normalized, '7')
+
+        normalized = normalize_default('foo')
+        self.assertEqual(normalized, "'foo'")
+
+        normalized = normalize_default('')
+        self.assertEqual(normalized, "''")
 
 
 class TestCreateTable(unittest.TestCase):
@@ -435,6 +457,19 @@ class TestLoadData(unittest.TestCase):
         load_data(self.cursor, 'testtable', records)  # <- Three args.
         self.cursor.execute('SELECT A, B FROM testtable')
         self.assertEqual(self.cursor.fetchall(), [('x', 1), ('y', 2)])
+
+    def test_column_default(self):
+        load_data(self.cursor, 'testtable1', ['A', 'B'], [('x', 1)])
+        load_data(self.cursor, 'testtable1', ['A'], [('y',)])
+        load_data(self.cursor, 'testtable1', ['B'], [(3,)])
+        self.cursor.execute('SELECT A, B FROM testtable1')
+        self.assertEqual(self.cursor.fetchall(), [('x', 1), ('y', ''), ('', 3)])
+
+        load_data(self.cursor, 'testtable2', ['A', 'B'], [('x', 1)], default=None)
+        load_data(self.cursor, 'testtable2', ['A'], [('y',)])
+        load_data(self.cursor, 'testtable2', ['B'], [(3,)])
+        self.cursor.execute('SELECT A, B FROM testtable2')
+        self.assertEqual(self.cursor.fetchall(), [('x', 1), ('y', None), (None, 3)])
 
     def test_empty_records(self):
         records = []

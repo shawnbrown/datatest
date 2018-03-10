@@ -2,8 +2,8 @@
 import sqlite3
 from .._compatibility.collections import Iterable
 from .._compatibility.collections import Mapping
-from .._compatibility.itertools import count
 from .._compatibility.itertools import chain
+from .._compatibility.itertools import count
 
 
 try:
@@ -48,7 +48,19 @@ def normalize_names(names):
     return [normalize(name) for name in names]
 
 
-def create_table(cursor, table, columns, default="''"):
+def normalize_default(value):
+    if value is None:
+        return 'NULL'
+
+    if (isinstance(value, str)
+            and value.startswith('(')
+            and value.endswith(')')):
+        return value  # Return SQLite expressions unchanged.
+
+    return repr(value)
+
+
+def create_table(cursor, table, columns, default=''):
     """Creates a temporary table using *table* and *columns* names."""
     columns = normalize_names(columns)
     if columns.count('""') > 1:
@@ -61,8 +73,7 @@ def create_table(cursor, table, columns, default="''"):
         # before execution is simpler than parsing the inevitable
         # OperationalError and re-raising it with a modified message.
 
-    if not default:
-        default = 'NULL'
+    default = normalize_default(default)
     column_defs = ['{0} DEFAULT {1}'.format(x, default) for x in columns]
     column_defs = ', '.join(column_defs)
 
@@ -102,14 +113,13 @@ def insert_records(cursor, table, columns, records):
         raise error
 
 
-def alter_table(cursor, table, columns, default="''"):
+def alter_table(cursor, table, columns, default=''):
     existing_columns = set(normalize_names(get_columns(cursor, table)))
     for column in normalize_names(columns):
         if column in existing_columns:
             continue
 
-        if not default:
-            default = 'NULL'
+        default = normalize_default(default)
         sql = 'ALTER TABLE {0} ADD COLUMN {1} DEFAULT {2}'
         sql = sql.format(table, column, default)
 
@@ -148,7 +158,7 @@ class savepoint(object):
             self.cursor.execute('ROLLBACK TO {0}'.format(self.name))
 
 
-def load_data(cursor, table, *args):
+def load_data(cursor, table, *args, default=''):
     """
     load_data(cursor, table, columns, records)
     load_data(cursor, table, records)
@@ -187,7 +197,7 @@ def load_data(cursor, table, *args):
 
     with savepoint(cursor):
         if table_exists(cursor, table):
-            alter_table(cursor, table, columns, default="''")
+            alter_table(cursor, table, columns, default=default)
         else:
-            create_table(cursor, table, columns, default="''")
+            create_table(cursor, table, columns, default=default)
         insert_records(cursor, table, columns, records)
