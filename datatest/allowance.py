@@ -503,47 +503,67 @@ class allowed_specific(BaseAllowance):
     """Allows specific *differences* without triggering a
     test failure::
 
-        data = {'A', 'B', 'D'}
+        data = {'x', 'y', 'q'}
 
-        requirement = {'A', 'B', 'C'}
+        requirement = {'x', 'y', 'z'}
 
         known_issues = datatest.allowed_specific([
-            Extra('D'),
-            Missing('C'),
+            Extra('q'),
+            Missing('z'),
         ])
 
         with known_issues:
             datatest.validate(data, requirement)
 
-    A dictionary can be used to specify differences per group::
+    When data is a mapping, the specified differences are allowed
+    from each group independently::
 
         data = {
-            'A': ['x', 'y', 'z'],
-            'B': ['x'],
+            'A': {'x', 'y', 'q'},
+            'B': {'x', 'y'},
         }
 
-        requirement = {'x', 'y'}
+        requirement = {'x', 'y', 'z'}
 
-        known_issues = datatest.allowed_specific({
-            'A': Extra('z'),
-            'B': Missing('y'),
+        known_issues = datatest.allowed_specific([  # Allows all given
+            Extra('q'),                             # differences from
+            Missing('z'),                           # both 'A' and 'B'.
+        ])
+
+        with known_issues:
+            datatest.validate(data, requirement)
+
+    A dictionary of allowances can be used to define individual sets
+    of differences per group::
+
+        data = {
+            'A': {'x', 'y', 'q'},
+            'B': {'x', 'y'},
+        }
+
+        requirement = {'x', 'y', 'z'}
+
+        known_issues = datatest.allowed_specific({  # Using dict
+            'A': [Extra('q'), Missing('z')],        # of allowed
+            'B': Missing('z'),                      # differences.
         })
 
         with known_issues:
             datatest.validate(data, requirement)
 
-    To treat multiple dictionary groups as a single group, use a
-    single-item dictionary with an ellipsis (``...``) for the key::
+    A dictionary of allowances can use predicate-keys to treat multiple
+    groups as a single group (see :ref:`predicate-docs` for details)::
 
         data = {
-            'A': ['x', 'y', 'z'],
-            'B': ['x'],
+            'A': {'x', 'y', 'q'},
+            'B': {'x', 'y'},
         }
 
-        requirement = {'x', 'y'}
+        requirement = {'x', 'y', 'z'}
 
         known_issues = datatest.allowed_specific({
-            ...: [Extra('z'), Missing('y')],
+            # Use predicate key, an ellipsis wildcard.
+            ...: [Extra('q'), Missing('z'), Missing('z')]
         })
 
         with known_issues:
