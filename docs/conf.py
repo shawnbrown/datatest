@@ -29,6 +29,7 @@ extensions = [
     'sphinx.ext.coverage',
     'sphinx.ext.todo',
     'sphinx.ext.intersphinx',
+    'sphinx_tabs.tabs',
 ]
 
 # intersphinx settins for external project references
