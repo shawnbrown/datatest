@@ -1,1 +1,14 @@
-# None: datattest requires no third-party packages.
+# ========================
+# Development Dependencies
+# ========================
+#
+# The following dependencies are required for testing, building,
+# and documentation generation---not for installing ``datatest``
+# itself.
+
+dbfread
+pandas
+xlrd
+sphinx
+sphinx-tabs
+sphinx_rtd_theme
