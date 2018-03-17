@@ -64,6 +64,8 @@ Differences
        :annotation:
 
 
+.. _allowance-docs:
+
 **********
 Allowances
 **********
