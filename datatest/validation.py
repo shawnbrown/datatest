@@ -472,13 +472,6 @@ class ValidationError(AssertionError):
         return '{0}({1!r})'.format(cls_name, self.differences)
 
 
-def valid(data, requirement):
-    """Return True if *data* satisfies *requirement* else return False."""
-    if _get_invalid_info(data, requirement):
-        return False
-    return True
-
-
 def validate(data, requirement, msg=None):
     """Raise a :exc:`ValidationError` if *data* does not satisfy
     *requirement* or pass without error if data is valid.
@@ -545,3 +538,14 @@ def validate(data, requirement, msg=None):
     # Return Value: This function should not return an explicit value.
     # If users need to test for True/False, they should use the valid()
     # function instead.
+
+
+def valid(data, requirement):
+    """Return True if *data* satisfies *requirement* else return False.
+
+    See :func:`validate` for supported *data* and *requirement* values
+    and detailed validation behavior.
+    """
+    if _get_invalid_info(data, requirement):
+        return False
+    return True
