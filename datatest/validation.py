@@ -481,7 +481,7 @@ def valid(data, requirement):
 
 def validate(data, requirement, msg=None):
     """Raise a :exc:`ValidationError` if *data* does not satisfy
-    *requirement* (or pass without error if data is valid).
+    *requirement* or pass without error if data is valid.
 
     The given *requirement* can be a single predicate, a mapping
     of predicates, or a list of predicates (see :ref:`predicate-docs`
@@ -541,4 +541,7 @@ def validate(data, requirement, msg=None):
     if invalid_info:
         default_msg, differences = invalid_info  # Unpack values.
         raise ValidationError(differences, msg or default_msg)
-    return True
+
+    # Return Value: This function should not return an explicit value.
+    # If users need to test for True/False, they should use the valid()
+    # function instead.

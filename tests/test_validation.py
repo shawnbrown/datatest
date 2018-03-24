@@ -947,14 +947,20 @@ class TestValidationError(unittest.TestCase):
         self.assertEqual(err.args, ([MinimalDifference('A')], None))
 
 
-class TestIsValidAndValidate(unittest.TestCase):
-    def test_valid_and_validate(self):
+class TestValidationIntegration(unittest.TestCase):
+    def test_valid(self):
         a = set([1, 2, 3])
         b = set([2, 3, 4])
 
         self.assertTrue(valid(a, a))
+
         self.assertFalse(valid(a, b))
 
-        self.assertTrue(validate(a, a))
+    def test_validate(self):
+        a = set([1, 2, 3])
+        b = set([2, 3, 4])
+
+        self.assertIsNone(validate(a, a))
+
         with self.assertRaises(ValidationError):
             validate(a, b)
