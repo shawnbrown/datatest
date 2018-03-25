@@ -270,12 +270,12 @@ class allowed_missing(BaseAllowance):
     """Allows :class:`Missing` values without triggering a test
     failure::
 
-        data = {'A', 'B'}
+        data = ['B', 'C']
 
         requirement = {'A', 'B', 'C'}
 
         with datatest.allowed_missing():
-            datatest.validate(data, requirement)  # Raises Missing('C')
+            datatest.validate(data, requirement)  # Raises Missing('A')
     """
     def __repr__(self):
         return super(allowed_missing, self).__repr__()
@@ -288,7 +288,7 @@ class allowed_extra(BaseAllowance):
     """Allows :class:`Extra` values without triggering a test
     failure::
 
-        data = {'A', 'B', 'C'}
+        data = ['A', 'B', 'C']
 
         requirement = {'A', 'B'}
 
@@ -503,7 +503,7 @@ class allowed_specific(BaseAllowance):
     """Allows specific *differences* without triggering a
     test failure::
 
-        data = {'x', 'y', 'q'}
+        data = ['x', 'y', 'q']
 
         requirement = {'x', 'y', 'z'}
 
@@ -519,8 +519,8 @@ class allowed_specific(BaseAllowance):
     from each group independently::
 
         data = {
-            'A': {'x', 'y', 'q'},
-            'B': {'x', 'y'},
+            'A': ['x', 'y', 'q'],
+            'B': ['x', 'y'],
         }
 
         requirement = {'x', 'y', 'z'}
@@ -537,8 +537,8 @@ class allowed_specific(BaseAllowance):
     of differences per group::
 
         data = {
-            'A': {'x', 'y', 'q'},
-            'B': {'x', 'y'},
+            'A': ['x', 'y', 'q'],
+            'B': ['x', 'y'],
         }
 
         requirement = {'x', 'y', 'z'}
@@ -555,8 +555,8 @@ class allowed_specific(BaseAllowance):
     groups as a single group (see :ref:`predicate-docs` for details)::
 
         data = {
-            'A': {'x', 'y', 'q'},
-            'B': {'x', 'y'},
+            'A': ['x', 'y', 'q'],
+            'B': ['x', 'y'],
         }
 
         requirement = {'x', 'y', 'z'}

@@ -34,7 +34,7 @@ def _nan_to_token(x):
 
 class BaseDifference(abc.ABC):
     """The base class for "difference" objects---all other difference
-    classes should be derived from this base.
+    classes are derived from this base.
     """
     def __init__(self, *args):
         if not args:
@@ -75,19 +75,19 @@ class Missing(BaseDifference):
 
     Given the following validation::
 
-        data = {'A', 'B'}
+        data = ['B', 'C']
 
         requirement = {'A', 'B', 'C'}
 
         datatest.validate(data, requirement)
 
-    The required value ``'C'`` is missing from the data under test:
+    The required value ``'A'`` is missing from the data under test:
 
     .. code-block:: none
         :emphasize-lines: 2
 
         ValidationError: does not satisfy set membership (1 difference): [
-            Missing('C'),
+            Missing('A'),
         ]
     """
     def __init__(self, value):
@@ -103,7 +103,7 @@ class Extra(BaseDifference):
 
     Given the following validation::
 
-        data = {'A', 'B', 'C'}
+        data = ['A', 'B', 'C']
 
         requirement = {'A', 'B'}
 
