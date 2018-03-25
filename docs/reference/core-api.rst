@@ -188,7 +188,7 @@ increasingly specific criteria::
 
 
 Order of Operations
--------------------
+===================
 
 Allowance composition uses the following order of
 operations---shown from highest precedence to lowest
