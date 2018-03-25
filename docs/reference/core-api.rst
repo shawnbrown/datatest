@@ -20,9 +20,9 @@ Validation
 .. autofunction:: valid
 
 
-******
-Errors
-******
+********
+Failures
+********
 
 .. autoexception:: ValidationError
 
@@ -31,14 +31,16 @@ Errors
     .. autoattribute:: description
 
 
-***********
-Differences
-***********
+Base Difference
+===============
 
 .. autoclass:: BaseDifference
 
     .. autoattribute:: args
 
+
+Concrete Differences
+====================
 
 .. autoclass:: Missing
 
@@ -285,9 +287,12 @@ for some allowances. For some examples, see the following table:
     +---------------------------+----------------+---------+
 
 
-************
+*************
+Data Handling
+*************
+
 Loading Data
-************
+============
 
 .. autoclass:: working_directory
 
@@ -309,15 +314,18 @@ Loading Data
     .. automethod:: from_dbf
 
 
-***************************
-Selecting and Querying Data
-***************************
+Selecting & Querying Data
+=========================
 
 .. autoclass:: Selector
+
+    .. automethod:: load_data
 
     .. autoattribute:: fieldnames
 
     .. automethod:: __call__
+
+    .. automethod:: create_index
 
 
 .. class:: Query(columns, **where)
