@@ -933,7 +933,16 @@ def _register_function(connection, func_list):
 
 
 class Selector(object):
-    """A class to quickly load and select tabular data."""
+    """A class to quickly load and select tabular data. The given
+    *objs*, *\*args*, and *\*\*kwds*, can be any values supported
+    by :class:`load_data()`::
+
+        select = datatest.Selector('myfile.csv')
+
+    Create an empty Selector that can be populated later::
+
+        select = datatest.Selector()
+    """
     def __init__(self, objs=None, *args, **kwds):
         """Initialize self."""
         self._connection = DEFAULT_CONNECTION
@@ -943,7 +952,37 @@ class Selector(object):
             self.load_data(objs, *args, **kwds)
 
     def load_data(self, objs, *args, **kwds):
-        """Load data from one or more objects."""
+        """Load data from one or more objects. The given *objs*,
+        *\*args*, and *\*\*kwds*, can be any values supported by
+        :class:`get_reader()`. Additionally, *objs* can be a list
+        of supported objects or a string with shell-style wildcards.
+
+        Load data from single objects of various kinds::
+
+            # CSV file.
+            select = datatest.Selector()
+            select.load_data('myfile.csv')
+
+            # Excel file.
+            select = datatest.Selector()
+            select.load_data('myfile.xlsx', worksheet='Sheet2')
+
+            # Pandas DataFrame.
+            df = pandas.DataFrame([...])
+            select = datatest.Selector()
+            select.load_data(df)
+
+        Load data from multiple sources using a list of objects::
+
+            select = datatest.Selector()
+            select.load_data(['myfile1.csv', 'myfile2.csv'])
+
+        Load data from multple sources using a string with shell-style
+        wildcards::
+
+            select = datatest.Selector()
+            select.load_data('*.csv')
+        """
         if isinstance(objs, string_types):
             obj_list = glob(objs)  # Get shell-style wildcard matches.
             if not obj_list:
@@ -1027,15 +1066,13 @@ class Selector(object):
         return (dict_row(row) for row in cursor.fetchall())
 
     def __call__(self, columns, **where):
-        """Calling a Selector like a function returns a Query object
-        that is automatically associated with the source (see
-        :class:`Query` for *columns* and *where* syntax)::
+        """After a Selector has been created, it can be called like
+        a function to return an associated Query object. The given
+        *columns* and *where* arguments can be any values supported
+        by the :class:`Query` class::
 
-            query = select('A')
-
-        This is a shorthand for::
-
-            query = Query(select, 'A')
+            select = datatest.Selector('myfile.csv')
+            query = select('A')  # <- Call to get a query object.
         """
         return Query(self, columns, **where)
 
@@ -1225,17 +1262,17 @@ class Selector(object):
         filter results, then you can often improve performance by
         adding an index for these columns::
 
-            source.create_index('town')
+            select.create_index('town')
 
         Using two or more columns creates a multi-column index::
 
-            source.create_index('town', 'postal_code')
+            select.create_index('town', 'postal_code')
 
         Calling the function multiple times will create multiple
         indexes::
 
-            source.create_index('town')
-            source.create_index('postal_code')
+            select.create_index('town')
+            select.create_index('postal_code')
 
         .. note:: Indexes should be added with discretion to tune
                   a test suite's over-all performance.  Creating
