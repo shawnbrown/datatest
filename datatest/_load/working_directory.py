@@ -16,7 +16,11 @@ class working_directory(contextlib.ContextDecorator):
         with datatest.working_directory(__file__):
             select = datatest.Selector('myfile.csv')
 
-    This context manager can also be used as a decorator.
+    This context manager can also be used as a decorator::
+
+        @datatest.working_directory(__file__)
+        def myfile():
+            return datatest.Selector('myfile.csv')
     """
     def __init__(self, path):
         if os.path.isfile(path):
