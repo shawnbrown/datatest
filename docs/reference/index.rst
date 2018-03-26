@@ -17,7 +17,8 @@ Reference
 .. toctree::
     :maxdepth: 2
 
-    Core API <core-api.rst>
+    Datatest Core <datatest-core>
+    Data Handling <data-handling>
     unittest-support
 
 For a full list of classes and objects, see the
