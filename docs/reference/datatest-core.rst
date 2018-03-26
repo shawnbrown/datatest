@@ -72,41 +72,46 @@ Concrete Differences
 Allowances
 **********
 
-.. autoclass:: allowed_missing
+.. autoclass:: allowed
 
+.. automethod:: allowed.missing
 
-.. autoclass:: allowed_extra
+.. automethod:: allowed.extra
 
+.. automethod:: allowed.invalid
 
-.. autoclass:: allowed_invalid
+.. automethod:: allowed.keys
 
+.. automethod:: allowed.args
 
-.. autoclass:: allowed_keys
-
-
-.. autoclass:: allowed_args
-
-
-.. class:: allowed_deviation(tolerance, /, msg=None)
-           allowed_deviation(lower, upper, msg=None)
+.. classmethod:: allowed.deviation(tolerance, /, msg=None)
+                 allowed.deviation(lower, upper, msg=None)
 
     Allows numeric :class:`Deviations <datatest.Deviation>`
     within a given *tolerance* without triggering a test
-    failure::
+    failure:
+
+    .. code-block:: python
+        :emphasize-lines: 7
+
+        from datatest import validate, allowed
 
         data = {'A': 45, 'B': 205}
 
         requirement = {'A': 50, 'B': 200}
 
-        with datatest.allowed_deviation(5):  # <- tolerance of ±5
-            datatest.validate(data, requirement)  # raises dictionary
-                                                  # {'A': Deviation(-5, 50),
-                                                  #  'B': Deviation(+5, 200)}
+        with allowed.deviation(5):  # <- tolerance of ±5
+            validate(data, requirement)  # raises dictionary
+                                         # {'A': Deviation(-5, 50),
+                                         #  'B': Deviation(+5, 200)}
 
-    Specifying different *lower* and *upper* bounds::
+    Specifying different *lower* and *upper* bounds:
 
-        with datatest.allowed_deviation(-2, 7):  # <- tolerance from -2 to +7
-            datatest.validate(..., ...)
+    .. code-block:: python
+        :emphasize-lines: 1
+
+        with allowed.deviation(-2, 7):  # <- tolerance from -2 to +7
+            validate(..., ...)
 
     Deviations within the given range are suppressed while those
     outside the range will trigger a test failure.
@@ -115,26 +120,34 @@ Allowances
     when performing comparisons.
 
 
-.. class:: allowed_percent(tolerance, /, msg=None)
-           allowed_percent(lower, upper, msg=None)
+.. classmethod:: allowed.percent(tolerance, /, msg=None)
+                 allowed.percent(lower, upper, msg=None)
 
     Allows :class:`Deviations <datatest.Deviation>` with
     percentages of error within a given *tolerance* without
-    triggering a test failure::
+    triggering a test failure:
+
+    .. code-block:: python
+        :emphasize-lines: 7
+
+        from datatest import validate, allowed
 
         data = {'A': 47, 'B': 212}
 
         requirement = {'A': 50, 'B': 200}
 
-        with datatest.allowed_percent(0.06):  # <- tolerance of ±6%
-            datatest.validate(data, requirement)  # raises dictionary
-                                                  # {'A': Deviation(-3, 50),
-                                                  #  'B': Deviation(+12, 200)}
+        with allowed.percent(0.06):  # <- tolerance of ±6%
+            validate(data, requirement)  # raises dictionary
+                                         # {'A': Deviation(-3, 50),
+                                         #  'B': Deviation(+12, 200)}
 
-    Specifying different *lower* and *upper* bounds::
+    Specifying different *lower* and *upper* bounds:
 
-        with datatest.allowed_percent(-0.02, 0.01):  # <- tolerance from -2% to +1%
-            datatest.validate(..., ...)
+    .. code-block:: python
+        :emphasize-lines: 1
+
+        with allowed.percent(-0.02, 0.01):  # <- tolerance from -2% to +1%
+            validate(..., ...)
 
     Deviations within the given range are suppressed while those
     outside the range will trigger a test failure.
@@ -143,15 +156,13 @@ Allowances
     when performing comparisons.
 
 
-.. class:: allowed_percent_deviation
-
-    alias of :class:`allowed_percent`
+.. automethod:: allowed.percent_deviation
 
 
-.. autoclass:: allowed_specific
+.. automethod:: allowed.specific
 
 
-.. autoclass:: allowed_limit
+.. automethod:: allowed.limit
 
 
 Composability
@@ -161,27 +172,42 @@ Allowances can be combined to create new allowances with modified
 behavior.
 
 The ``&`` operator can be used to create an *intersection* of
-allowance criteria. In the following example, :class:`allowed_missing`
-and :class:`allowed_limit` are combined into a single allowance that
-accepts up to five Missing differences::
+allowance criteria. In the following example, :meth:`allowed.missing`
+and :meth:`allowed.limit` are combined into a single allowance that
+accepts up to five Missing differences:
 
-    with allowed_missing() & allowed_limit(5):
+.. code-block:: python
+    :emphasize-lines: 3
+
+    from datatest import validate, allowed
+
+    with allowed.missing() & allowed.limit(5):
         validate(..., ...)
 
 The ``|`` operator can be used to create *union* of allowance
-criteria. In the following example, :class:`allowed_deviation`
-and :class:`allowed_percent` are combined into a single allowance
-that accepts Deviations of ±10 as well as Deviations of ±5%::
+criteria. In the following example, :meth:`allowed.deviation`
+and :meth:`allowed.percent` are combined into a single allowance
+that accepts Deviations of ±10 as well as Deviations of ±5%:
 
-    with allowed_deviation(10) | allowed_percent(0.05):
+.. code-block:: python
+    :emphasize-lines: 3
+
+    from datatest import validate, allowed
+
+    with allowed.deviation(10) | allowed.percent(0.05):
         validate(..., ...)
 
 And composed allowances, themselves, can be composed to define
-increasingly specific criteria::
+increasingly specific criteria:
 
-    five_missing = allowed_missing() & allowed_limit(5)
+.. code-block:: python
+    :emphasize-lines: 7
 
-    minor_deviations = allowed_deviation(10) | allowed_percent(0.05)
+    from datatest import validate, allowed
+
+    five_missing = allowed.missing() & allowed.limit(5)
+
+    minor_deviations = allowed.deviation(10) | allowed.percent(0.05)
 
     with five_missing | minor_deviations:
         validate(..., ...)
@@ -205,17 +231,17 @@ to right.
 +-------+-------------------------------+----------------------------+
 |   3   | | ``|``                       | Bitwise OR (union)         |
 +-------+-------------------------------+----------------------------+
-|       | | :class:`allowed_missing`,   |                            |
-|       | | :class:`allowed_extra`,     |                            |
-|       | | :class:`allowed_invalid`,   |                            |
-|   4   | | :class:`allowed_keys`,      | Element-wise allowances    |
-|       | | :class:`allowed_args`,      |                            |
-|       | | :class:`allowed_deviation`, |                            |
-|       | | :class:`allowed_percent`    |                            |
+|       | | :meth:`allowed.missing`,    |                            |
+|       | | :meth:`allowed.extra`,      |                            |
+|       | | :meth:`allowed.invalid`,    |                            |
+|   4   | | :meth:`allowed.keys`,       | Element-wise allowances    |
+|       | | :meth:`allowed.args`,       |                            |
+|       | | :meth:`allowed.deviation`,  |                            |
+|       | | :meth:`allowed.percent`     |                            |
 +-------+-------------------------------+----------------------------+
-|   5   | | :class:`allowed_specific`   | Group-wise allowances      |
+|   5   | | :meth:`allowed.specific`    | Group-wise allowances      |
 +-------+-------------------------------+----------------------------+
-|   6   | | :class:`allowed_limit`      | Whole-error allowances     |
+|   6   | | :meth:`allowed.limit`       | Whole-error allowances     |
 +-------+-------------------------------+----------------------------+
 
 

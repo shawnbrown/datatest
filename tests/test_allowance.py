@@ -780,6 +780,7 @@ class TestUniversalComposability(unittest.TestCase):
         actual = datatest.allowance.__all__
         actual.remove('allowed_percent_deviation')  # This is just an alias
                                                     # for allowed_percent().
+        actual.remove('allowed')  # Factory class.
         expected = (x.cls.__name__ for x in self.allowances)
         self.assertEqual(set(actual), set(expected))
 

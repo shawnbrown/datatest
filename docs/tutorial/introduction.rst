@@ -11,9 +11,11 @@
 A Tour of Datatest
 ##################
 
-Datatest provides support for both `pytest <https://pytest.org/>`_-style
-and :py:mod:`unittest`-style testing conventions. Users can assert
-validity and manage discrepancies using whichever framework they choose.
+Datatest provides validation tools for test driven data-wrangling.
+It supports both `pytest <https://pytest.org/>`_-style and
+:py:mod:`unittest`-style testing conventions. Users can assert
+validity and manage discrepancies using whichever framework they
+choose.
 
 
 **********
@@ -30,7 +32,7 @@ Validation
         .. code-block:: python
             :emphasize-lines: 10
 
-            import datatest
+            from datatest import validate
 
 
             def test_set_membership():
@@ -39,7 +41,7 @@ Validation
 
                 requirement = {'A', 'B'}
 
-                datatest.validate(data, requirement)
+                validate(data, requirement)
 
 
     .. group-tab:: Unittest
@@ -51,10 +53,10 @@ Validation
         .. code-block:: python
             :emphasize-lines: 12
 
-            import datatest
+            from datatest import DataTestCase
 
 
-            class MyTest(datatest.DataTestCase):
+            class MyTest(DataTestCase):
 
                 def test_set_membership(self):
 
@@ -85,7 +87,7 @@ A few examples follow:
 
         .. code-block:: python
 
-            import datatest
+            from datatest import validate
 
             ...
 
@@ -96,20 +98,20 @@ A few examples follow:
                 def iseven(x):
                     return x % 2 == 0
 
-                datatest.validate(data, iseven)
+                validate(data, iseven)
 
 
             def test_using_type():
                 """Check that values are of the given type."""
                 data = [0.0, 1.0, 2.0]
-                datatest.validate(data, float)
+                validate(data, float)
 
 
             def test_using_regex():
                 """Check that values match the given pattern."""
                 data = ['bake', 'cake', 'bake']
                 regex = re.compile('[bc]ake')
-                datatest.validate(data, regex)
+                validate(data, regex)
 
             ...
 
@@ -125,10 +127,10 @@ A few examples follow:
 
         .. code-block:: python
 
-            import datatest
+            from datatest import DataTestCase
 
 
-            class MyTests(datatest.DataTestCase):
+            class MyTests(DataTestCase):
 
                 ...
 
@@ -152,7 +154,7 @@ A few examples follow:
                     regex = re.compile('[bc]ake')
                     self.assertValid(data, regex)
 
-            ...
+                ...
 
         You can download the full set of examples
         (:download:`test_intro1unit.py </_static/test_intro1unit.py>`)
@@ -172,10 +174,6 @@ raised. A ValidationError contains a collection of
 difference objects---one difference for each element
 in *data* that fails to satisfy the *requirement*.
 
-Difference objects describe each invalid element and can
-be one of of four types: :class:`Missing`, :class:`Extra`,
-:class:`Deviation` or :class:`Invalid`.
-
 In the following test, we assert that values in the list
 ``['A', 'B', 'C']`` are members of the set ``{'A', 'B'}``.
 This test fails because the value ``'C'`` is not a member
@@ -187,7 +185,7 @@ of the set:
 
         .. code-block:: python
 
-            import datatest
+            from datatest import validate
 
 
             def test_set_membership():
@@ -196,7 +194,7 @@ of the set:
 
                 requirement = {'A', 'B'}
 
-                datatest.validate(data, requirement)
+                validate(data, requirement)
 
 
         The test fails with the following message:
@@ -212,8 +210,8 @@ of the set:
 
                     requirement = {'A', 'B'}
 
-            >       datatest.validate(data, required_elements)
-            E       datatest.ValidationError: does not satisfy set membership (1 difference): [
+            >       validate(data, required_elements)
+            E       ValidationError: does not satisfy set membership (1 difference): [
                         Extra('C'),
                     ]
 
@@ -224,10 +222,10 @@ of the set:
 
         .. code-block:: python
 
-            import datatest
+            from datatest import DataTestCase
 
 
-            class MyTest(datatest.DataTestCase):
+            class MyTest(DataTestCase):
 
                 def test_set_membership(self):
 
@@ -257,6 +255,10 @@ The error above included an :class:`Extra` difference but other
 validation methods (determined by the *requirement* type) can give
 other difference types.
 
+Difference objects describe each invalid element and can
+be one of of four types: :class:`Missing`, :class:`Extra`,
+:class:`Deviation` or :class:`Invalid`.
+
 In the following examples, a failed tuple comparison raises
 an :class:`Invalid` difference and failed numeric comparisons
 raise :class:`Deviation` differences:
@@ -266,9 +268,10 @@ raise :class:`Deviation` differences:
     .. group-tab:: Pytest
 
         .. code-block:: none
-            :emphasize-lines: 11-13,31-35
+            :emphasize-lines: 12-14,32-36
 
             ...
+
             _______________________________ test_using_tuple _______________________________
 
                 def test_using_tuple():
@@ -277,8 +280,8 @@ raise :class:`Deviation` differences:
                     """
                     data = [('A', 0.0), ('A', 1.0), ('A', 2)]
                     requirement = ('A', float)
-            >       datatest.validate(data, requirement)
-            E       datatest.ValidationError: does not satisfy requirement (1 difference): [
+            >       validate(data, requirement)
+            E       ValidationError: does not satisfy requirement (1 difference): [
                         Invalid(('A', 2)),
                     ]
 
@@ -297,14 +300,15 @@ raise :class:`Deviation` differences:
                         'B': 200,
                         'C': 300,
                     }
-            >       datatest.validate(data, requirement)
-            E       datatest.ValidationError: does not satisfy mapping requirement (3 differences): {
+            >       validate(data, requirement)
+            E       ValidationError: does not satisfy mapping requirement (3 differences): {
                         'A': Deviation(+1, 100),
                         'B': Deviation(+5, 200),
                         'C': Deviation(-3, 300),
                     }
 
             test_intro2.py:64: ValidationError
+
             ...
 
         You can download a collection of example failures
@@ -318,9 +322,10 @@ raise :class:`Deviation` differences:
     .. group-tab:: Unittest
 
         .. code-block:: none
-            :emphasize-lines: 9-11,20-24
+            :emphasize-lines: 10-12,21-25
 
             ...
+
             ======================================================================
             FAIL: test_using_tuple (test_intro2unit.ExampleTests)
             Check that tuples of values satisfy corresponding tuple of
@@ -344,6 +349,7 @@ raise :class:`Deviation` differences:
                 'B': Deviation(+5, 200),
                 'C': Deviation(-3, 300),
             }
+
             ...
 
         You can download a collection of example failures
@@ -378,14 +384,15 @@ allowance so the test will pass:
 
     .. group-tab:: Pytest
 
-        Calling :class:`allowed_extra` returns a context manager
+        Calling :meth:`allowed.extra` returns a context manager
         that allows Extra differences without triggering a test
         failure:
 
         .. code-block:: python
-            :emphasize-lines: 10
+            :emphasize-lines: 11
 
-            import datatest
+            from datatest import validate
+            from datatest import allowed
 
 
             def test_set_membership():
@@ -394,8 +401,8 @@ allowance so the test will pass:
 
                 requirement = {'A', 'B'}
 
-                with datatest.allowed_extra():
-                    datatest.validate(data, requirement)
+                with allowed.extra():
+                    validate(data, requirement)
 
     .. group-tab:: Unittest
 
@@ -406,10 +413,10 @@ allowance so the test will pass:
         .. code-block:: python
             :emphasize-lines: 12
 
-            import datatest
+            from datatest import DataTestCase
 
 
-            class MyTest(datatest.DataTestCase):
+            class MyTest(DataTestCase):
 
                 def test_set_membership(self):
 
@@ -430,14 +437,15 @@ allowed by their magnitude:
 
     .. group-tab:: Pytest
 
-        Calling :class:`allowed_deviation(5) <allowed_deviation>`
+        Calling :meth:`allowed.deviation(5) <allowed.deviation>`
         returns a context manager that allows Deviations up to
         plus-or-minus five without triggering a test failure:
 
         .. code-block:: python
-            :emphasize-lines: 17
+            :emphasize-lines: 18
 
-            import datatest
+            from datatest import validate
+            from datatest import allowed
 
             ...
 
@@ -453,8 +461,8 @@ allowed by their magnitude:
                     'B': 200,
                     'C': 300,
                 }
-                with datatest.allowed_deviation(5):  # allows ±5
-                    datatest.validate(data, requirement)
+                with allowed.deviation(5):  # allows ±5
+                    validate(data, requirement)
 
             ...
 
@@ -470,10 +478,10 @@ allowed by their magnitude:
         .. code-block:: python
             :emphasize-lines: 20
 
-            import datatest
+            from datatest import DataTestCase
 
 
-            class MyTests(datatest.DataTestCase):
+            class MyTests(DataTestCase):
 
                 ...
 
@@ -492,7 +500,7 @@ allowed by their magnitude:
                     with self.allowedDeviation(5):  # allows ±5
                         self.assertValid(data, required_values)
 
-            ...
+                ...
 
         For a list of all possible allowances see
         :meth:`allowance methods <datatest.DataTestCase.allowedMissing>`.

@@ -33,6 +33,7 @@ __datatest = True  # Used to detect in-module stack frames (which are
 
 
 __all__ = [
+    'allowed',
     'allowed_missing',
     'allowed_extra',
     'allowed_invalid',
@@ -267,16 +268,7 @@ class UnionedAllowance(CombinedAllowance):
 
 
 class allowed_missing(BaseAllowance):
-    """Allows :class:`Missing` values without triggering a test
-    failure::
-
-        data = ['B', 'C']
-
-        requirement = {'A', 'B', 'C'}
-
-        with datatest.allowed_missing():
-            datatest.validate(data, requirement)  # Raises Missing('A')
-    """
+    """Allows :class:`Missing` values without triggering a test failure."""
     def __repr__(self):
         return super(allowed_missing, self).__repr__()
 
@@ -285,16 +277,7 @@ class allowed_missing(BaseAllowance):
 
 
 class allowed_extra(BaseAllowance):
-    """Allows :class:`Extra` values without triggering a test
-    failure::
-
-        data = ['A', 'B', 'C']
-
-        requirement = {'A', 'B'}
-
-        with datatest.allowed_extra():
-            datatest.validate(data, requirement)  # Raises Extra('C')
-    """
+    """Allows :class:`Extra` values without triggering a test failure."""
     def __repr__(self):
         return super(allowed_extra, self).__repr__()
 
@@ -303,16 +286,7 @@ class allowed_extra(BaseAllowance):
 
 
 class allowed_invalid(BaseAllowance):
-    """Allows :class:`Invalid` values without triggering a test
-    failure::
-
-        data = ['A', 'B', 'A']
-
-        requirement = 'A'
-
-        with datatest.allowed_invalid():
-            datatest.validate(data, requirement)  # Raises Invalid('B')
-    """
+    """Allows :class:`Invalid` values without triggering a test failure."""
     def __repr__(self):
         return super(allowed_invalid, self).__repr__()
 
@@ -322,15 +296,7 @@ class allowed_invalid(BaseAllowance):
 
 class allowed_keys(BaseAllowance):
     """Allows differences whose associated keys satisfy the given
-    *predicate* (see :ref:`predicate-docs` for details)::
-
-        data = {'A': 'x', 'B': 'y'}
-
-        requirement = 'x'
-
-        with datatest.allowed_keys('B'):
-            datatest.validate(data, requirement)  # Raises dictionary
-                                                  # {'B': Invalid('y')}
+    *predicate* (see :ref:`predicate-docs` for details).
     """
     def __init__(self, predicate, msg=None):
         super(allowed_keys, self).__init__(msg)
@@ -355,15 +321,7 @@ class allowed_keys(BaseAllowance):
 
 class allowed_args(BaseAllowance):
     """Allows differences whose 'args' satisfy the given *predicate*
-    (see :ref:`predicate-docs` for details)::
-
-        data = {'A': 'x', 'B': 'y'}
-
-        requirement = 'x'
-
-        with datatest.allowed_args('y'):
-            datatest.validate(data, requirement)  # Raises dictionary
-                                                  # {'B': Invalid('y')}
+    (see :ref:`predicate-docs` for details).
     """
     def __init__(self, predicate, msg=None):
         super(allowed_args, self).__init__(msg)
@@ -501,73 +459,7 @@ allowed_percent_deviation = allowed_percent  # Set alias for full name.
 
 class allowed_specific(BaseAllowance):
     """Allows specific *differences* without triggering a
-    test failure::
-
-        data = ['x', 'y', 'q']
-
-        requirement = {'x', 'y', 'z'}
-
-        known_issues = datatest.allowed_specific([
-            Extra('q'),
-            Missing('z'),
-        ])
-
-        with known_issues:
-            datatest.validate(data, requirement)
-
-    When data is a mapping, the specified differences are allowed
-    from each group independently::
-
-        data = {
-            'A': ['x', 'y', 'q'],
-            'B': ['x', 'y'],
-        }
-
-        requirement = {'x', 'y', 'z'}
-
-        known_issues = datatest.allowed_specific([  # Allows all given
-            Extra('q'),                             # differences from
-            Missing('z'),                           # both 'A' and 'B'.
-        ])
-
-        with known_issues:
-            datatest.validate(data, requirement)
-
-    A dictionary of allowances can be used to define individual sets
-    of differences per group::
-
-        data = {
-            'A': ['x', 'y', 'q'],
-            'B': ['x', 'y'],
-        }
-
-        requirement = {'x', 'y', 'z'}
-
-        known_issues = datatest.allowed_specific({  # Using dict
-            'A': [Extra('q'), Missing('z')],        # of allowed
-            'B': Missing('z'),                      # differences.
-        })
-
-        with known_issues:
-            datatest.validate(data, requirement)
-
-    A dictionary of allowances can use predicate-keys to treat multiple
-    groups as a single group (see :ref:`predicate-docs` for details)::
-
-        data = {
-            'A': ['x', 'y', 'q'],
-            'B': ['x', 'y'],
-        }
-
-        requirement = {'x', 'y', 'z'}
-
-        known_issues = datatest.allowed_specific({
-            # Use predicate key, an ellipsis wildcard.
-            ...: [Extra('q'), Missing('z'), Missing('z')]
-        })
-
-        with known_issues:
-            datatest.validate(data, requirement)
+    test failure.
     """
     def __init__(self, differences, msg=None):
         if not isinstance(differences, (BaseDifference, list, set, dict)):
@@ -652,19 +544,7 @@ class allowed_specific(BaseAllowance):
 
 class allowed_limit(BaseAllowance):
     """Allows up to a given *number* of differences without triggering
-    a test failure::
-
-        data = ['A', 'B', 'A', 'C']
-
-        requirement = 'A'
-
-        with datatest.allowed_limit(2):
-            datatest.validate(data, requirement)  # Raises [Invalid('B'),
-                                                  #         Invalid('C')]
-
-    If the count of differences exceeds the given *number*, the test
-    case will fail with a :class:`ValidationError` containing the
-    remaining differences.
+    a test failure.
     """
     def __init__(self, number, msg=None):
         if not isinstance(number, Number):
@@ -692,3 +572,262 @@ class allowed_limit(BaseAllowance):
     def call_predicate(self, item):
         self._count += 1
         return self._count <= self._limit
+
+
+#########################################
+# Factory class for pytest-style testing.
+#########################################
+class allowed(abc.ABC):
+    """:class:`allowed` is an abstract class that can not be
+    instantiated directly. It contains several factory methods
+    to create allowance objects.
+    """
+    def __new__(cls, *args, **kwds):
+        msg = ("Can't instantiate abstract class allowed, use factory "
+               "methods like allowed.missing(), allowed.extra(), etc.")
+        raise TypeError(msg)
+
+    @classmethod
+    def missing(cls, msg=None):
+        """Allows :class:`Missing` values without triggering a
+        test failure:
+
+        .. code-block:: python
+            :emphasize-lines: 7
+
+            from datatest import validate, allowed
+
+            data = ['B', 'C']
+
+            requirement = {'A', 'B', 'C'}
+
+            with allowed.missing():
+                validate(data, requirement)  # Raises Missing('A')
+        """
+        return allowed_missing(msg)
+
+    @classmethod
+    def extra(cls, msg=None):
+        """Allows :class:`Extra` values without triggering a
+        test failure:
+
+        .. code-block:: python
+            :emphasize-lines: 7
+
+            from datatest import validate, allowed
+
+            data = ['A', 'B', 'C']
+
+            requirement = {'A', 'B'}
+
+            with allowed.extra():
+                validate(data, requirement)  # Raises Extra('C')
+        """
+        return allowed_extra(msg)
+
+    @classmethod
+    def invalid(cls, msg=None):
+        """Allows :class:`Invalid` values without triggering a
+        test failure:
+
+        .. code-block:: python
+            :emphasize-lines: 7
+
+            from datatest import validate, allowed
+
+            data = ['A', 'B', 'A']
+
+            requirement = 'A'
+
+            with allowed.invalid():
+                validate(data, requirement)  # Raises Invalid('B')
+        """
+        return allowed_invalid(msg)
+
+    @classmethod
+    def keys(cls, predicate, msg=None):
+        """Allows differences whose associated keys satisfy the given
+        *predicate* (see :ref:`predicate-docs` for details):
+
+        .. code-block:: python
+            :emphasize-lines: 7
+
+            from datatest import validate, allowed
+
+            data = {'A': 'x', 'B': 'y'}
+
+            requirement = 'x'
+
+            with allowed.keys('B'):
+                validate(data, requirement)  # Raises dictionary
+                                             # {'B': Invalid('y')}
+        """
+        return allowed_keys(predicate, msg)
+
+    @classmethod
+    def args(cls, predicate, msg=None):
+        """Allows differences whose :attr:`args <BaseDifference.args>`
+        satisfy the given *predicate* (see :ref:`predicate-docs` for
+        details):
+
+        .. code-block:: python
+            :emphasize-lines: 7
+
+            from datatest import validate, allowed
+
+            data = {'A': 'x', 'B': 'y'}
+
+            requirement = 'x'
+
+            with allowed.args('y'):
+                validate(data, requirement)  # Raises dictionary
+                                             # {'B': Invalid('y')}
+        """
+        return allowed_args(predicate, msg)
+
+    @classmethod
+    def deviation(cls, lower, upper=None, msg=None):
+        """allowed.deviation(tolerance, /, msg=None)
+        allowed.deviation(lower, upper, msg=None)
+
+        Context manager that allows Deviations within a given
+        tolerance without triggering a test failure.
+
+        See documentation for full details.
+        """
+        return allowed_deviation(lower, upper, msg)
+
+    @classmethod
+    def percent(cls, lower, upper=None, msg=None):
+        """allowed.percent(tolerance, /, msg=None)
+        allowed.percent(lower, upper, msg=None)
+
+        Context manager that allows Deviations within a given
+        percent tolerance without triggering a test failure.
+
+        See documentation for full details.
+        """
+        return allowed_percent(lower, upper, msg)
+
+    @classmethod
+    def percent_deviation(cls, lower, upper=None, msg=None):
+        """alias of :meth:`allowed.percent`"""
+        return cls.percent(lower, upper, msg)
+
+    @classmethod
+    def specific(cls, differences, msg=None):
+        """Allows specific *differences* without triggering a
+        test failure:
+
+        .. code-block:: python
+            :emphasize-lines: 7-10
+
+            from datatest import validate, allowed, Extra, Missing
+
+            data = ['x', 'y', 'q']
+
+            requirement = {'x', 'y', 'z'}
+
+            known_issues = allowed.specific([
+                Extra('q'),
+                Missing('z'),
+            ])
+
+            with known_issues:
+                validate(data, requirement)
+
+        When data is a mapping, the specified differences are
+        allowed from each group independently:
+
+        .. code-block:: python
+            :emphasize-lines: 10-13
+
+            from datatest import validate, allowed, Extra, Missing
+
+            data = {
+                'A': ['x', 'y', 'q'],
+                'B': ['x', 'y'],
+            }
+
+            requirement = {'x', 'y', 'z'}
+
+            known_issues = allowed.specific([  # Allows all given
+                Extra('q'),                    # differences from
+                Missing('z'),                  # both 'A' and 'B'.
+            ])
+
+            with known_issues:
+                validate(data, requirement)
+
+        A dictionary of allowances can be used to define individual
+        sets of differences per group:
+
+        .. code-block:: python
+            :emphasize-lines: 10-13
+
+            from datatest import validate, allowed, Extra, Missing
+
+            data = {
+                'A': ['x', 'y', 'q'],
+                'B': ['x', 'y'],
+            }
+
+            requirement = {'x', 'y', 'z'}
+
+            known_issues = allowed.specific({     # Using dict
+                'A': [Extra('q'), Missing('z')],  # of allowed
+                'B': Missing('z'),                # differences.
+            })
+
+            with known_issues:
+                validate(data, requirement)
+
+        A dictionary of allowances can use predicate-keys to treat
+        multiple groups as a single group (see :ref:`predicate-docs`
+        for details):
+
+        .. code-block:: python
+            :emphasize-lines: 10-13
+
+            from datatest import validate, allowed
+
+            data = {
+                'A': ['x', 'y', 'q'],
+                'B': ['x', 'y'],
+            }
+
+            requirement = {'x', 'y', 'z'}
+
+            known_issues = allowed.specific({
+                # Use predicate key, an ellipsis wildcard.
+                ...: [Extra('q'), Missing('z'), Missing('z')]
+            })
+
+            with known_issues:
+                validate(data, requirement)
+        """
+        return allowed_specific(differences, msg)
+
+    @classmethod
+    def limit(cls, number, msg=None):
+        """Allows up to a given *number* of differences without
+        triggering a test failure:
+
+        .. code-block:: python
+            :emphasize-lines: 7
+
+            from datatest import validate, allowed
+
+            data = ['A', 'B', 'A', 'C']
+
+            requirement = 'A'
+
+            with allowed.limit(2):
+                validate(data, requirement)  # Raises [Invalid('B'),
+                                             #         Invalid('C')]
+
+        If the count of differences exceeds the given *number*, the test
+        case will fail with a :class:`ValidationError` containing the
+        remaining differences.
+        """
+        return allowed_limit(number, msg)
