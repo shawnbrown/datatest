@@ -60,7 +60,14 @@ def _get_matcher(value):
         function = lambda x: True  # <- Wildcard (matches everything).
         repr_string = '...'
     elif isinstance(value, regex_types):
-        function = lambda x: (x is value) or (value.search(x) is not None)
+        def function(x):
+            try:
+                return x is value or value.search(x) is not None
+            except TypeError:
+                msg = 'expected string or bytes-like object, got {0}'
+                exc = TypeError(msg.format(x.__class__.__name__))
+                exc.__cause__ = None
+                raise exc
         repr_string = 're.compile({0!r})'.format(value.pattern)
     elif isinstance(value, set):
         function = lambda x: (x in value) or (x == value)
