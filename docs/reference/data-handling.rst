@@ -43,6 +43,14 @@ Selecting & Querying Data
 
     .. automethod:: load_data
 
+    .. figure:: /_static/multisource.svg
+       :figwidth: 75%
+       :alt: Data can be loaded from multiple files.
+
+       When multiple sources are loaded into a single Selector,
+       data is aligned by fieldname and missing fields receive
+       empty strings.
+
     .. autoattribute:: fieldnames
 
     .. automethod:: __call__
