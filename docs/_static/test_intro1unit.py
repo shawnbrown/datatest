@@ -13,7 +13,7 @@ class ExampleTests(datatest.DataTestCase):
 
     def test_using_function(self):
         """Check that function returns True."""
-        data = [2, 4, 6]
+        data = [2, 4, 6, 8]
 
         def iseven(x):
             return x % 2 == 0

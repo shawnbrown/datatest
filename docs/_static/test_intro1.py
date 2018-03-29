@@ -13,7 +13,7 @@ def test_using_set():
 
 def test_using_function():
     """Check that function returns True."""
-    data = [2, 4, 6]
+    data = [2, 4, 6, 8]
 
     def iseven(x):
         return x % 2 == 0

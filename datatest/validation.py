@@ -491,12 +491,12 @@ def validate(data, requirement, msg=None):
     criteria---*data* can be a single value (including strings),
     a mapping, or an iterable::
 
-        data = [1, 3, 5, 7]
+        data = [2, 4, 6, 8]
 
-        def isodd(x):  # <- Predicate function
-            return x % 2 == 1
+        def iseven(x):  # <- Predicate function
+            return x % 2 == 0
 
-        datatest.validate(data, isodd)
+        datatest.validate(data, iseven)
 
     **Mappings:** When *requirement* is a dictionary or other
     mapping, the values in *data* are checked against predicates
