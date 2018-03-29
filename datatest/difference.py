@@ -73,7 +73,8 @@ class BaseDifference(abc.ABC):
 class Missing(BaseDifference):
     """Created when *value* is missing from the data under test.
 
-    Given the following validation::
+    In the following example, the required value ``'A'`` is missing
+    from the data under test::
 
         data = ['B', 'C']
 
@@ -81,7 +82,7 @@ class Missing(BaseDifference):
 
         datatest.validate(data, requirement)
 
-    The required value ``'A'`` is missing from the data under test:
+    Running this example raises the following error:
 
     .. code-block:: none
         :emphasize-lines: 2
@@ -99,9 +100,12 @@ class Missing(BaseDifference):
 
 
 class Extra(BaseDifference):
-    """Created when *value* is unexpectedly found in the data under test.
+    """Created when *value* is unexpectedly found in the data under
+    test.
 
-    Given the following validation::
+    In the following example, the value ``'C'`` is found in the data
+    under test but it's not part of the required values::
+
 
         data = ['A', 'B', 'C']
 
@@ -109,7 +113,7 @@ class Extra(BaseDifference):
 
         datatest.validate(data, requirement)
 
-    The unexpected value ``'C'`` is found in the data under test:
+    Running this example raises the following error:
 
     .. code-block:: none
         :emphasize-lines: 2
@@ -130,22 +134,23 @@ class Invalid(BaseDifference):
     """Created when a value does not satisfy a function, equality, or
     regular expression requirement.
 
-    Given the following validation::
+    In the following example, the value ``9`` does not satisfy the
+    required function::
 
-        data = [2, 4, 7]
+        data = [2, 4, 6, 9]
 
         def iseven(x):
             return x % 2 == 0
 
         datatest.validate(data, iseven)
 
-    The value ``7`` does not satisfy the required function:
+    Running this example raises the following error:
 
     .. code-block:: none
         :emphasize-lines: 2
 
         ValidationError: does not satisfy iseven (1 difference): [
-            Invalid(7),
+            Invalid(9),
         ]
     """
     def __init__(self, invalid, expected=None):
@@ -170,7 +175,8 @@ class Invalid(BaseDifference):
 class Deviation(BaseDifference):
     """Created when a numeric value deviates from its expected value.
 
-    Given the following validation::
+    In the following example, the dictionary item ``'C': 33`` does
+    not satisfy the required item ``'C': 30``::
 
         data = {'A': 10, 'B': 20, 'C': 33}
 
@@ -178,7 +184,7 @@ class Deviation(BaseDifference):
 
         datatest.validate(data, requirement)
 
-    The value ``33`` does not satisfy the required value ``30``:
+    Running this example raises the following error:
 
     .. code-block:: none
         :emphasize-lines: 2
