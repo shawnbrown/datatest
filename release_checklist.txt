@@ -1,0 +1,44 @@
+
+=================
+Release Checklist
+=================
+
+1. Check that *packages* argument of setup() is correct.
+
+2. Make sure correct version number is set in:
+
+   datatest/__init__.py
+   docs/conf.py
+
+3. Make sure __past__ sub-package includes a stub module for the
+   current API version.
+
+4. Update README.rst (including "Backward Compatibility" section).
+
+5. Commit and push final changes to upstream repository.
+
+6. Remove all existing files in the dist/ folder.
+
+7. Build new distributions:
+
+   $ python setup.py sdist bdist_wheel
+
+8. Register source distribution with PyPI:
+
+   $ twine register dist/datatest.X.Y.Z.tar.gz
+
+9. Upload source and wheel distributions to PyPI:
+
+   $ twine upload dist/*
+
+10. Double check PyPI project page and test installation from PyPI.
+
+11. Add version tag to upstream repository (also used by readthedocs.org).
+
+12. Publish update announcement.
+
+13. Iterate version number in repository so that "latest" docs aren't
+    confused with the just-published "stable" docs:
+
+    datatest/__init__.py
+    docs/conf.py
