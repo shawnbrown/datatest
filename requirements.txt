@@ -12,3 +12,4 @@ xlrd
 sphinx
 sphinx-tabs
 sphinx_rtd_theme
+twine
