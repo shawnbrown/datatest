@@ -99,7 +99,8 @@ if __name__ == '__main__':
                 'datatest.__past__',
             ],
             # Additional fields:
-            description='Test driven data-wrangling.',
+            description=('Validation tools for test driven '
+                         'data-wrangling with pytest and unittest.'),
             long_description=long_description,
             author='Shawn Brown',
             license='Apache 2.0',
