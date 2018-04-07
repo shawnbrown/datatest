@@ -122,6 +122,11 @@ if __name__ == '__main__':
                 'Programming Language :: Python :: Implementation :: CPython',
                 'Programming Language :: Python :: Implementation :: PyPy',
             ],
+            entry_points={
+                'pytest11': [
+                    'datatest = datatest._pytest_plugin',
+                ],
+            },
             cmdclass={
                 'test': TestCommand,
                 # Restrict setup commands (use twine instead):
