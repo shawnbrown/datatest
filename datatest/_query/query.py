@@ -1044,11 +1044,6 @@ class Selector(object):
 
         return '{0}\n{1}'.format(default_repr, additional_info)
 
-    def __del__(self):
-        """Drop the underlying table when selector is garbage collected."""
-        cursor = self._connection.cursor()
-        drop_table(cursor, self._table)
-
     @property
     def fieldnames(self):
         """A tuple of field names used by the data source."""
