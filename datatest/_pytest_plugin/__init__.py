@@ -1,10 +1,18 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
-from .pytest_datatest import version
-from .pytest_datatest import version_info
 
 try:
-    import pytest_datatest as _  # Check if development version is installed.
+    # Check if the external development version is installed.
+    import pytest_datatest as _
+    from .pytest_datatest import version
+    from .pytest_datatest import version_info
 except ImportError:
-    # In there's no external plugin, load the bundled version.
-    from .pytest_datatest import pytest_runtest_makereport
+    try:
+        # If there's no external plugin, load the bundled version.
+        from .pytest_datatest import pytest_runtest_makereport
+        from .pytest_datatest import version
+        from .pytest_datatest import version_info
+    except ImportError:
+        # If there's no Pytest support at all, set dummy version numbers.
+        version = '0.0.0'
+        version_info = (0, 0, 0)
