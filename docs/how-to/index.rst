@@ -19,7 +19,7 @@ How-to Guide
 
     Install Datatest <install>
     Compare Two Files <compare-files>
-    Assert Data Types <assert-types>
+    Assert Data Types <data-types>
     Assert Subsets and Supersets <subset-superset>
     Assert Fuzzy Matches <fuzzy-matches>
-    Assert an Interval <assert-interval>
+    Assert an Interval <numeric-interval>
