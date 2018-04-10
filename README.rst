@@ -7,22 +7,17 @@ datatest: Test driven data-wrangling
 
 |buildstatus| |devstatus| |license| |pyversions|
 
+
 .. start-inclusion-marker-description
 
-Datatest provides validation tools for test driven data-wrangling.
-It extends Python's `unittest
-<http://docs.python.org/3/library/unittest.html>`_ package to provide
-testing tools for asserting data correctness.
+Datatest provides tools for test driven data-wrangling.
+It supports both `pytest <https://pytest.org/>`_ and
+:py:mod:`unittest` style testing.
 
-..
-    Datatest provides validation tools for test driven data-wrangling.
-    It includes tools to quickly load, query, and validate data using
-    both unittest- and pytest-style testing.
-
-Datatest can help prepare messy data that needs to be cleaned,
-integrated, formatted, and verified. It can provide structure for the
-tidying process, automate checklists, log discrepancies, and measure
-progress.
+Datatest can help prepare messy data that needs to be
+cleaned, integrated, formatted, and verified. It can
+provide structure for the tidying process, automate
+checklists, log discrepancies, and measure progress.
 
 .. end-inclusion-marker-description
 
@@ -123,7 +118,7 @@ measured and sustainable ways.
 
 All of the data used at the `National Committee for an Effective
 Congress <http://www.ncec.org/about>`_ has been checked with
-datatest for more than a year so there is, already, a large and
+datatest for several years so there is, already, a large and
 growing codebase that relies on current features and must be
 maintained into the future.
 
