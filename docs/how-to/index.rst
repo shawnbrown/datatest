@@ -22,4 +22,4 @@ How-to Guide
     Assert Data Types <data-types>
     Assert Subsets and Supersets <subset-superset>
     Assert Fuzzy Matches <fuzzy-matches>
-    Assert an Interval <numeric-interval>
+    Assert an Interval <interval-compare>
