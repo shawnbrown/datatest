@@ -14,13 +14,13 @@ How to Assert Subsets and Supersets
 A Single Check
 ==============
 
-**Subsets:** You can check for a subset relationship
-by using a :py:class:`set` *requirement* and allowing
-:class:`Missing` differences.
+You can check for a **subset** relationship by using a
+:py:class:`set` *requirement* and allowing :class:`Missing`
+differences.
 
-**Supersets:** You can check for a superset relationship
-by using a :py:class:`set` *requirement* and allowing
-:class:`Extra` differences.
+And you can check for a **superset** relationship by using
+a :py:class:`set` *requirement* and allowing :class:`Extra`
+differences.
 
 See the following examples:
 
