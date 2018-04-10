@@ -12,7 +12,8 @@ datatest: Test driven data-wrangling
 
 Datatest provides tools for test driven data-wrangling.
 It supports both `pytest <https://pytest.org/>`_ and
-:py:mod:`unittest` style testing.
+`unittest <https://docs.python.org/library/unittest.html>`_
+style testing.
 
 Datatest can help prepare messy data that needs to be
 cleaned, integrated, formatted, and verified. It can
