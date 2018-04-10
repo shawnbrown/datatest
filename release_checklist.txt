@@ -3,9 +3,12 @@
 Release Checklist
 =================
 
-1. Check that *packages* argument of setup() is correct.
+1. Check that *packages* argument of setup() is correct. Check with:
 
-2. Make sure correct version number is set in:
+   >>> import setuptools
+   >>> setuptools.find_packages('.', exclude=['tests'])
+
+2. Make sure correct version number is set in the following files:
 
    datatest/__init__.py
    docs/conf.py
@@ -21,23 +24,19 @@ Release Checklist
 
 7. Build new distributions:
 
-   $ python setup.py sdist bdist_wheel
+   python setup.py sdist bdist_wheel
 
-8. Register source distribution with PyPI:
+8. Upload source and wheel distributions to PyPI:
 
-   $ twine register dist/datatest.X.Y.Z.tar.gz
+   twine upload dist/*
 
-9. Upload source and wheel distributions to PyPI:
+9. Double check PyPI project page and test installation from PyPI.
 
-   $ twine upload dist/*
+10. Add version tag to upstream repository (also used by readthedocs.org).
 
-10. Double check PyPI project page and test installation from PyPI.
+11. Publish update announcement.
 
-11. Add version tag to upstream repository (also used by readthedocs.org).
-
-12. Publish update announcement.
-
-13. Iterate version number in repository so that "latest" docs aren't
+12. Iterate version number in repository so that "latest" docs aren't
     confused with the just-published "stable" docs:
 
     datatest/__init__.py
