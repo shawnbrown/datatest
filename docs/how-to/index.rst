@@ -21,5 +21,4 @@ How-to Guide
     Compare Two Files <compare-files>
     Assert Data Types <data-types>
     Assert Subsets and Supersets <subset-superset>
-    Assert Fuzzy Matches <fuzzy-matches>
     Assert an Interval <interval-compare>
