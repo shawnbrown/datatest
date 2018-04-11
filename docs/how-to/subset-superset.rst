@@ -2,8 +2,8 @@
 .. module:: datatest
 
 .. meta::
-    :description: How to assert set relations.
-    :keywords: datatest, reference data
+    :description: How to assert subset and superset relations.
+    :keywords: datatest, validate, subset, superset
 
 
 ###################################

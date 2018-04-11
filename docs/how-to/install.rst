@@ -2,7 +2,7 @@
 .. module:: datatest
 
 .. meta::
-    :description: installing datatest
+    :description: How to Install Datatest
     :keywords: installing, datatest, python
 
 

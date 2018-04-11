@@ -2,8 +2,8 @@
 .. module:: datatest
 
 .. meta::
-    :description: How to assert data types.
-    :keywords: reference data, compare files, datatest
+    :description: How to compare data between two files.
+    :keywords: compare files, datatest
 
 
 ########################
