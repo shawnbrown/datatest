@@ -94,13 +94,15 @@ if __name__ == '__main__':
             url='https://pypi.python.org/pypi/datatest',
             packages=[
                 'datatest',
-                'datatest._load',
                 'datatest._compatibility',
+                'datatest._load',
+                'datatest._pytest_plugin',
+                'datatest._query',
                 'datatest.__past__',
             ],
             # Additional fields:
-            description=('Validation tools for test driven '
-                         'data-wrangling with pytest and unittest.'),
+            description=('Test driven data-wrangling '
+                         'for pytest and unittest.'),
             long_description=long_description,
             author='Shawn Brown',
             license='Apache 2.0',
