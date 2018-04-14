@@ -20,6 +20,7 @@ How-to Guide
     Install Datatest <install>
     Assert Data Types <data-types>
     Assert an Interval <interval-compare>
+    Assert Date Formats <date-format>
     Assert Subsets and Supersets <subset-superset>
     Avoid Excel Automatic Formatting <excel-formatting>
     Compare Two Files <compare-files>
