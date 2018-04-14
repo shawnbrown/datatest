@@ -20,5 +20,6 @@ How-to Guide
     Install Datatest <install>
     Compare Two Files <compare-files>
     Assert Data Types <data-types>
+    Avoid Excel Automatic Formatting <excel-formatting>
     Assert Subsets and Supersets <subset-superset>
     Assert an Interval <interval-compare>
