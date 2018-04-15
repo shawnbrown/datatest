@@ -585,7 +585,13 @@ class Query(object):
 
             mylist = [1, 2, 3, 4]
             query = Query.from_object(mylist)
+
+        If *obj* is a Query itself, a copy of the original query
+        is created.
         """
+        if isinstance(obj, Query):
+            return obj.__copy__()
+
         new_query = cls.__new__(cls)
         new_query.source = obj
         new_query.args = ()

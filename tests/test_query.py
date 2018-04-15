@@ -677,11 +677,20 @@ class TestQuery(unittest.TestCase):
             query = Query(None, ['foo'], bar='baz')
 
     def test_init_from_object(self):
-        query = Query.from_object([1, 3, 4, 2])
-        self.assertEqual(query.source, [1, 3, 4, 2])
-        self.assertEqual(query.args, ())
-        self.assertEqual(query.kwds, {})
-        self.assertEqual(query._query_steps, [])
+        query1 = Query.from_object([1, 3, 4, 2])
+        self.assertEqual(query1.source, [1, 3, 4, 2])
+        self.assertEqual(query1.args, ())
+        self.assertEqual(query1.kwds, {})
+        self.assertEqual(query1._query_steps, [])
+
+        # When from_object() receives a Query, it should return
+        # a copy rather than trying to use it as a data object.
+        query2 = Query.from_object(query1)
+        self.assertIsNot(query2, query1)
+        self.assertEqual(query2.source, [1, 3, 4, 2])
+        self.assertEqual(query2.args, ())
+        self.assertEqual(query2.kwds, {})
+        self.assertEqual(query2._query_steps, [])
 
     def test_init_with_invalid_args(self):
         # Missing args.
