@@ -24,4 +24,5 @@ How-to Guide
     Assert Subsets and Supersets <subset-superset>
     Assert File Names <file-names>
     Avoid Excel Automatic Formatting <excel-formatting>
+    Control Differences <control-differences>
     Compare Two Files <compare-files>
