@@ -22,5 +22,6 @@ How-to Guide
     Assert an Interval <interval-compare>
     Assert Date Formats <date-format>
     Assert Subsets and Supersets <subset-superset>
+    Assert File Names <file-names>
     Avoid Excel Automatic Formatting <excel-formatting>
     Compare Two Files <compare-files>
