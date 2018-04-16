@@ -25,4 +25,5 @@ How-to Guide
     Assert File Names <file-names>
     Avoid Excel Automatic Formatting <excel-formatting>
     Control Differences <control-differences>
+    Detect Outliers <detect-outliers>
     Compare Two Files <compare-files>
