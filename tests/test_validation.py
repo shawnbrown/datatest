@@ -378,7 +378,7 @@ class TestGetMsgAndFunc(unittest.TestCase):
         def myfunc(x):
             return True
         default_msg, require_func = _get_msg_and_func(['A', 'B'], myfunc)
-        self.assertIn(myfunc.__name__, default_msg, 'message should include function name')
+        self.assertIn("does not satisfy 'myfunc'", default_msg, 'message should include function name')
         self.assertEqual(require_func, _require_predicate_from_iterable)
 
         mylambda = lambda x: True
