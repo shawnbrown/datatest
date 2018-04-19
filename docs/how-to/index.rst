@@ -23,6 +23,7 @@ How-to Guide
     Assert Date Formats <date-format>
     Assert Subsets and Supersets <subset-superset>
     Assert File Names <file-names>
+    Assert Column Names <column-names>
     Avoid Excel Automatic Formatting <excel-formatting>
     Control Differences <control-differences>
     Detect Outliers <detect-outliers>
