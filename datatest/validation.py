@@ -79,9 +79,10 @@ def _deephash(obj):
 
 def _require_sequence(data, sequence):
     """Compare *data* against a *sequence* of values. If differences
-    are found, a dictionary is returned with two-tuple keys that
-    contain the index positions of the difference in both the *data*
-    and *sequence* objects. If no differences are found, returns None.
+    are found, this function returns a dictionary whose keys are slice
+    indexes for the positions in *data* that don't match *sequence*
+    and whose values are lists of difference objects. If no differences
+    are found, returns None.
 
     This function uses difflib.SequenceMatcher() which requires hashable
     values. This said, _require_sequence() will make a best effort
@@ -95,7 +96,7 @@ def _require_sequence(data, sequence):
         raise ValueError(msg.format(data_type.__name__))
 
     if not isinstance(data, collections.Sequence):
-        data = tuple(data)
+        data = list(data)
 
     try:
         matcher = difflib.SequenceMatcher(a=data, b=sequence)
@@ -104,25 +105,21 @@ def _require_sequence(data, sequence):
         sequence_proxy = tuple(_deephash(x) for x in sequence)
         matcher = difflib.SequenceMatcher(a=data_proxy, b=sequence_proxy)
 
+    def getdiff(actual, expected):       # <- Use this function instead
+        if actual is NOTFOUND:           #    of _make_difference() so
+            return Missing(expected)     #    that numeric diffs do not
+        if expected is NOTFOUND:         #    return Deviation objects.
+            return Extra(actual)
+        return Invalid(actual, expected)
+
     differences = {}
-    def append_diff(i1, i2, j1, j2):
-        if j1 == j2:
-            for i in range(i1, i2):
-                differences[(i, j1)] = Extra(data[i])
-        elif i1 == i2:
-            for j in range(j1, j2):
-                differences[(i1, j)] = Missing(sequence[j])
-        else:
-            shortest = min(i2 - i1, j2 - j1)
-            for i, j in zip(range(i1, i1+shortest), range(j1, j1+shortest)):
-                differences[(i, j)] = Invalid(data[i], sequence[j])
-
-            if (i1 + shortest != i2) or (j1 + shortest != j2):
-                append_diff(i1+shortest, i2, j1+shortest, j2)
-
     for tag, i1, i2, j1, j2 in matcher.get_opcodes():
         if tag != 'equal':
-            append_diff(i1, i2, j1, j2)
+            i_vals = data[i1:i2]
+            j_vals = sequence[j1:j2]
+            zipped = itertools.zip_longest(i_vals, j_vals, fillvalue=NOTFOUND)
+            diffs = [getdiff(ival, jval) for ival, jval in zipped]
+            differences[(i1, i2)] = diffs
 
     return differences or None
 

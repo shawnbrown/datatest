@@ -111,8 +111,7 @@ class TestAssertValid(DataTestCase):
 
         error = cm.exception
         expected = {
-            (2, 2): Invalid('x', 'c'),
-            (3, 3): Invalid(3, 4),
+            (2, 4): [Invalid('x', expected='c'), Invalid(3, expected=4)],
         }
         self.assertEqual(error.differences, expected)
         self.assertEqual(error.args[1], 'does not match sequence order')
