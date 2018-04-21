@@ -683,14 +683,34 @@ class TestQuery(unittest.TestCase):
         self.assertEqual(query1.kwds, {})
         self.assertEqual(query1._query_steps, [])
 
-        # When from_object() receives a Query, it should return
-        # a copy rather than trying to use it as a data object.
-        query2 = Query.from_object(query1)
-        self.assertIsNot(query2, query1)
-        self.assertEqual(query2.source, [1, 3, 4, 2])
+        query2 = Query.from_object({'a': 1, 'b': 2})
+        self.assertEqual(query2.source, {'a': 1, 'b': 2})
         self.assertEqual(query2.args, ())
         self.assertEqual(query2.kwds, {})
         self.assertEqual(query2._query_steps, [])
+
+        # When from_object() receives a Query, it should return
+        # a copy rather than trying to use it as a data object.
+        query3 = Query.from_object(query2)
+        self.assertIsNot(query3, query2)
+        self.assertEqual(query3.source, {'a': 1, 'b': 2})
+        self.assertEqual(query3.args, ())
+        self.assertEqual(query3.kwds, {})
+        self.assertEqual(query3._query_steps, [])
+
+        query4 = Query.from_object('abc')
+        self.assertEqual(query4.source, ['abc'], msg=\
+            'Strings or non-iterables should be wrapped as a list')
+        self.assertEqual(query4.args, ())
+        self.assertEqual(query4.kwds, {})
+        self.assertEqual(query4._query_steps, [])
+
+        query5 = Query.from_object(123)
+        self.assertEqual(query5.source, [123], msg=\
+            'Strings or non-iterables should be wrapped as a list')
+        self.assertEqual(query5.args, ())
+        self.assertEqual(query5.kwds, {})
+        self.assertEqual(query5._query_steps, [])
 
     def test_init_with_invalid_args(self):
         # Missing args.

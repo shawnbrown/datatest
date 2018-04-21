@@ -592,6 +592,9 @@ class Query(object):
         if isinstance(obj, Query):
             return obj.__copy__()
 
+        if not nonstringiter(obj):
+            obj = [obj]
+
         new_query = cls.__new__(cls)
         new_query.source = obj
         new_query.args = ()
