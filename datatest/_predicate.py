@@ -12,6 +12,10 @@ class PredicateObject(abc.ABC):
     def __repr__(self):
         return super(PredicateObject, self).__repr__()
 
+    @abc.abstractmethod
+    def __eq__(self, other):
+        return super(PredicateObject, self).__eq__(other)
+
 
 class PredicateTuple(PredicateObject, tuple):
     """Wrapper to mark tuples that contain one or more PredicateMatcher
