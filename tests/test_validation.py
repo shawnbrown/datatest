@@ -209,6 +209,17 @@ class TestRequireSet(unittest.TestCase):
             msg='single strings should be treated as atomic objects',
         )
 
+        # Tuples should also be treated as an atomic objects.
+        requirement = set([('a', 'b', 'c')])
+        self.assertIsNone(
+            _require_set([('a', 'b', 'c')], requirement),
+            msg='list containing one tuple',
+        )
+        self.assertIsNone(
+            _require_set(('a', 'b', 'c'), requirement),
+            msg='single tuples should be treated as atomic objects',
+        )
+
 
 class TestRequireCallable(unittest.TestCase):
     def setUp(self):

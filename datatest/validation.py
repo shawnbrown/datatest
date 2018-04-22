@@ -128,12 +128,12 @@ def _require_set(data, requirement_set):
     """Compare *data* against a *requirement_set* of values."""
     if data is NOTFOUND:
         data = []
-    elif isinstance(data, BaseElement):
-        data = [data]
-
-    matching_elements = set()
-    extra_elements = set()
-    for element in data:
+    elif isinstance(data, (BaseElement, tuple)):  # TODO: For the future,
+        data = [data]                             # investigate the idea of
+                                                  # making tuple a BaseElement
+    matching_elements = set()                     # subclass (would require
+    extra_elements = set()                        # changes to Query handling
+    for element in data:                          # and argument unpacking).
         if element in requirement_set:
             matching_elements.add(element)
         else:
