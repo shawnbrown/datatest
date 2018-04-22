@@ -50,7 +50,7 @@ You can get a list of field names with the :attr:`fieldnames
 <Selector.fieldnames>` attribute::
 
     >>> select.fieldnames
-    ('A', 'B', 'C')
+    ['A', 'B', 'C']
 
 
 .. sidebar:: The fetch() Method
@@ -86,12 +86,12 @@ Select elements from column **A** as a :py:class:`tuple`::
 The container type used in the selection determines the container
 type returned in the result. You can think of the selection as a
 template that describes the values and data types returned by the
-query. When the outer container type is not specified, it defaults
-to a :py:class:`list`. In the first example we selected ``'A'``
-which is used as shorthand for ``['A']``::
+query.
 
-    >>> select(['A']).fetch()
-    ['x', 'x', 'y', 'y', 'z', 'z']
+When specifying an outer container type, the container must hold
+only one item. When an outer container type is not specified, it
+defaults to a :py:class:`list`. So when the first example used
+``select('A')``, that was actually shorthand for ``select(['A'])``.
 
 
 Multiple Columns
@@ -123,6 +123,18 @@ In addition to lists, tuples, and sets, users can also select
 <collections.namedtuple>`, etc. However, normal object
 limitations still apply---for example, sets can not contain
 mutable objects like lists or other sets.
+
+When only one container type is given, it is used as an outer
+container if it holds a single item and as an inner container
+if it holds multiple items (outer container selections can not
+contain multiple items). If you want to select a single-item
+inner container, you must specify both outer and inner containers
+(e.g., ``select([{'A'}])``).
+
+As before, when an outer container type is not specified, it
+defaults to a :py:class:`list`. So when the earlier example
+used ``select(('A', 'B'))``, that was shorthand for
+``select([('A', 'B')])``.
 
 
 Groups of Columns
