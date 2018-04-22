@@ -186,6 +186,29 @@ class TestRequireSet(unittest.TestCase):
         result = _require_set(NOTFOUND, set(['a']))
         self.assertEqual(list(result), [Missing('a')])
 
+    def test_atomic_object_handling(self):
+        # Non-containers are, of course, treated as atomic objects.
+        requirement = set([777])
+        self.assertIsNone(
+            _require_set([777], requirement),
+            msg='list containing one int',
+        )
+        self.assertIsNone(
+            _require_set(777, requirement),
+            msg='int, no container',
+        )
+
+        # Strings should treated as an atomic objects.
+        requirement = set(['abc'])
+        self.assertIsNone(
+            _require_set(['abc'], requirement),
+            msg='list containing one str',
+        )
+        self.assertIsNone(
+            _require_set('abc', requirement),
+            msg='single strings should be treated as atomic objects',
+        )
+
 
 class TestRequireCallable(unittest.TestCase):
     def setUp(self):
