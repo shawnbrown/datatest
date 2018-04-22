@@ -983,23 +983,23 @@ class TestSelector(unittest.TestCase):
         select = Selector()
 
     def test_fieldnames(self):
-        expected = ('label1', 'label2', 'value')
+        expected = ['label1', 'label2', 'value']
         self.assertEqual(self.source.fieldnames, expected)
 
         select = Selector()  # <- Empty selector.
-        self.assertEqual(select.fieldnames, (), msg='should be empty tuple')
+        self.assertEqual(select.fieldnames, [], msg='should be empty list')
 
     def test_load_data(self):
         select = Selector()  # <- Empty selector.
-        self.assertEqual(select.fieldnames, ())
+        self.assertEqual(select.fieldnames, [])
 
         readerlike1 = [['col1', 'col2'], ['a', 1], ['b', 2]]
         select.load_data(readerlike1)
-        self.assertEqual(select.fieldnames, ('col1', 'col2'))
+        self.assertEqual(select.fieldnames, ['col1', 'col2'])
 
         readerlike2 = [['col1', 'col3'], ['c', 'x'], ['d', 'y']]
         select.load_data(readerlike2)
-        self.assertEqual(select.fieldnames, ('col1', 'col2', 'col3'))
+        self.assertEqual(select.fieldnames, ['col1', 'col2', 'col3'])
 
     def test_repr(self):
         data = [['A', 'B'], ['x', 100], ['y', 200]]

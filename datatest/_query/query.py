@@ -1058,7 +1058,7 @@ class Selector(object):
         """A tuple of field names used by the data source."""
         cursor = self._connection.cursor()
         cursor.execute('PRAGMA table_info({0})'.format(self._table))
-        return tuple(x[1] for x in cursor)
+        return [x[1] for x in cursor]
 
     def __iter__(self):
         """Return iterable of dictionary rows (like csv.DictReader)."""
