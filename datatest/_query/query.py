@@ -1071,12 +1071,40 @@ class Selector(object):
 
     def __call__(self, columns, **where):
         """After a Selector has been created, it can be called like
-        a function to return an associated Query object. The given
-        *columns* and *where* arguments can be any values supported
-        by the :class:`Query` class::
+        a function to select fields and return an associated Query
+        object. The *columns* argument serves as a template to define
+        the values and data types selected. The *where* keywords can
+        be used to narrow the selection to matching records.
 
-            select = datatest.Selector('myfile.csv')
-            query = select('A')  # <- Call to get a query object.
+        The following call selects a :py:class:`set` of values from
+        column 'A' where values from column 'B' equal ``'foo'``::
+
+            select = datatest.Selector('example.csv')
+            query = select({'A'}, B='foo')  # <- returns a Query
+
+        All *columns* selections will be wrapped in an outer container.
+        When a container is unspecified, a :py:class:`list` is used as
+        the default::
+
+            query = select('A')  # <- list of values from 'A'
+
+        If specified, outer containers must hold only one field---when
+        a specified container holds multiple fields, it is assumed to
+        be an inner container (which uses a list as its default outer
+        container)::
+
+            query = select(('A', 'B'))  # <- list of tuple values
+                                        #    from 'A' and 'B'
+
+        When *columns* is a :py:class:`dict`, values are grouped by
+        key::
+
+            query = select({'A': 'B'})  # <- dict with keys from
+                                        #    'A' holding lists of
+                                        #    values from 'B'
+
+        See the :ref:`querying-data` tutorial for step-by-step
+        examples.
         """
         return Query(self, columns, **where)
 
