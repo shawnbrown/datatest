@@ -1055,7 +1055,7 @@ class Selector(object):
 
     @property
     def fieldnames(self):
-        """A tuple of field names used by the data source."""
+        """A list of field names used by the data source."""
         cursor = self._connection.cursor()
         cursor.execute('PRAGMA table_info({0})'.format(self._table))
         return [x[1] for x in cursor]
