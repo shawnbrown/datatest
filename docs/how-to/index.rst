@@ -24,6 +24,7 @@ How-to Guide
     Assert Subsets and Supersets <subset-superset>
     Assert File Names <file-names>
     Assert Column Names <column-names>
+    Assert Sum Totals <sum-totals>
     Assert Fuzzy Matching <fuzzy-matching>
     Avoid Excel Automatic Formatting <excel-formatting>
     Control Differences <control-differences>
