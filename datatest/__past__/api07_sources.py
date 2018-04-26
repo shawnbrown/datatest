@@ -959,7 +959,7 @@ class ExcelSource(SqliteBase):
 
     .. note::
         This data source is optional---it requires the third-party
-        library `xlrd <https://pypi.python.org/pypi/xlrd>`_.
+        library `xlrd <https://pypi.org/project/xlrd/>`_.
     """
     def __init__(self, path, worksheet=None, in_memory=False):
         """Initialize self."""
@@ -1026,7 +1026,7 @@ class PandasSource(BaseSource):
 
     .. note::
         This data source is optional---it requires the third-party
-        library `pandas <https://pypi.python.org/pypi/pandas>`_.
+        library `pandas <https://pypi.org/project/pandas/>`_.
     """
     def __init__(self, df):
         """Initialize self."""

@@ -4,7 +4,7 @@
 # Test discovery for unittest
 # Compatible with Python 2.4-2.6 and 3.0-3.1
 # Licensed under the BSD License
-# See: http://pypi.python.org/pypi/discover
+# See: https://pypi.org/project/discover/
 
 import optparse
 import os

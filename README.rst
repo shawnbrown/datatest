@@ -27,7 +27,7 @@ checklists, log discrepancies, and measure progress.
     - https://datatest.readthedocs.io/ (stable)
     - https://datatest.readthedocs.io/en/latest/ (latest)
 * Official Releases:
-   - https://pypi.python.org/pypi/datatest
+   - https://pypi.org/project/datatest/
 * Development:
    - https://github.com/shawnbrown/datatest
 
@@ -70,7 +70,7 @@ install datatest manually.
 Download the latest **source** distribution from the Python Package
 Index (PyPI):
 
-  https://pypi.python.org/pypi/datatest#downloads
+  https://pypi.org/project/datatest/ (navigate to "Download files")
 
 Unpack the file (replacing X.Y.Z with the appropriate version number)
 and review the source code::
@@ -145,7 +145,7 @@ Copyright 2014 - 2018 NCEC Services, LLC and contributing authors
     :alt: Current Build Status
 
 .. |devstatus| image:: https://img.shields.io/pypi/status/datatest.svg
-    :target: https://pypi.python.org/pypi/datatest
+    :target: https://pypi.org/project/datatest/
     :alt: Development Status
 
 .. |license| image:: https://img.shields.io/badge/license-Apache%202-blue.svg
@@ -153,7 +153,7 @@ Copyright 2014 - 2018 NCEC Services, LLC and contributing authors
     :alt: Apache 2.0 License
 
 .. |pyversions| image:: https://img.shields.io/pypi/pyversions/datatest.svg
-    :target: https://pypi.python.org/pypi/datatest#supported-versions
+    :target: https://pypi.org/project/datatest/#supported-versions
     :alt: Supported Python Versions
 
 .. |githubstars| image:: https://img.shields.io/github/stars/shawnbrown/datatest.svg
@@ -161,5 +161,5 @@ Copyright 2014 - 2018 NCEC Services, LLC and contributing authors
     :alt: GitHub users who have starred this project
 
 .. |pypiversion| image:: https://img.shields.io/pypi/v/datatest.svg
-    :target: https://pypi.python.org/pypi/datatest
+    :target: https://pypi.org/project/datatest/
     :alt: Current PyPI Version

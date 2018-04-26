@@ -91,7 +91,7 @@ if __name__ == '__main__':
             # Required meta-data:
             name='datatest',
             version=get_version('datatest/__init__.py'),
-            url='https://pypi.python.org/pypi/datatest',
+            url='https://pypi.org/project/datatest/',
             packages=[
                 'datatest',
                 'datatest._compatibility',

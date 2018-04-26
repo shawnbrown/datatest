@@ -21,7 +21,7 @@ Version |release|
     :start-after: start-inclusion-marker-description
     :end-before: end-inclusion-marker-description
 
-See the project's `README <https://pypi.python.org/pypi/datatest>`_
+See the project's `README <https://pypi.org/project/datatest/>`_
 file for supported versions, backward compatibility, and more.
 
 
