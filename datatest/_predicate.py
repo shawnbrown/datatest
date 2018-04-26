@@ -68,8 +68,11 @@ def _get_matcher(value):
             try:
                 return x is value or value.search(x) is not None
             except TypeError:
-                msg = 'expected string or bytes-like object, got {0}'
-                exc = TypeError(msg.format(x.__class__.__name__))
+                x_repr = repr(x)
+                if len(x_repr) > 45:
+                    x_repr = x_repr[:42] + '...'
+                msg = 'expected string or bytes-like object, got {0}: {1}'
+                exc = TypeError(msg.format(x.__class__.__name__, x_repr))
                 exc.__cause__ = None
                 raise exc
         repr_string = 're.compile({0!r})'.format(value.pattern)

@@ -95,8 +95,11 @@ class TestRegexMatcher(unittest.TestCase):
     def test_error(self):
         matcher = _get_matcher(re.compile('abc'))
 
-        with self.assertRaises(TypeError):
+        with self.assertRaisesRegex(TypeError, "got int: 123"):
             self.assertFalse(matcher == 123)  # Regex fails with TypeError.
+
+        with self.assertRaisesRegex(TypeError, "got tuple: \('a', 'b'\)"):
+            self.assertFalse(matcher == ('a', 'b'))
 
     def test_identity(self):
         regex = re.compile('abc')
