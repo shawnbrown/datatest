@@ -20,9 +20,11 @@ using a required set:
     .. group-tab:: Pytest
 
         .. code-block:: python
-            :emphasize-lines: 13-15
+            :emphasize-lines: 15-17
 
             import pytest
+            from datatest import working_directory
+            from datatest import Selector
             from datatest import validate
 
 
@@ -42,10 +44,11 @@ using a required set:
     .. group-tab:: Unittest
 
         .. code-block:: python
-            :emphasize-lines: 15-17
+            :emphasize-lines: 16-18
 
-            import pytest
-            from datatest import validate
+            from datatest import working_directory
+            from datatest import Selector
+            from datatest import DataTestCase
 
 
             def setUpModule():
@@ -108,9 +111,11 @@ use an allowance:
     .. group-tab:: Pytest
 
         .. code-block:: python
-            :emphasize-lines: 9
+            :emphasize-lines: 11
 
-            from datatest import validate, allowed
+            ...
+
+            from datatest import allowed
 
             ...
 
