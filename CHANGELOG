@@ -1,0 +1,103 @@
+
+==================
+Datatest Changelog
+==================
+
+
+2018-04-29 (0.9.0)
+==================
+
+* Added bundled version pytest plugin to base installation.
+* Added universal composability for all allowances (using UNION and
+  INTERSECTION via "|" and "&" operators).
+* Added ``allowed`` factory class to simplify allowance imports.
+* Changed is_valid() to valid().
+* Changed ValidationError to display differences in sorted order.
+* Added Python 2 and 3 compatible get_reader() to quickly load
+  csv.reader-like interface for Unicode CSV, MS Excel, pandas.DataFrame,
+  DBF, etc.
+* Added formal order of operations for allowance resolution.
+* Added formal predicate object handling.
+* Added Sphinx-tabs style docs for clear separation of pytest and
+  unittest style examples.
+* Changed DataSource to Selector, DataQuery to Query, and DataResult to
+  Result.
+
+
+2017-11-26 (0.8.3)
+==================
+
+* Added module-level functions: validate() and is_valid().
+* Changed DataQuery selections now default to a list type when no
+  outer-container is specified.
+* Added DataQuery.apply() method for group-wise function application.
+* Changed ValidationError repr to print a trailing comma with the last item
+  (for ease of copy-and-paste work flow).
+* Changed sequence validation behavior provides more precise differences.
+* Added truncation support for ValidationErrors with long lists of differences.
+* Changed excess differences in allowed_specific() definitions no longer
+  trigger test failures.
+* Added support for user-defined functions to narrow DataSource selections.
+* Added traceback hiding for pytest.
+* Fixed bug in DataQuery.map() method--now converts set types into lists.
+
+
+2017-06-11 (0.8.2)
+==================
+
+* Added Boolean composition for allowed_specific() context manager.
+* Added proper __repr__() support to DataSource and DataQuery.
+* Changed DataQuery so it fails early if bad "select" syntax is used or if
+  unknown columns are selected.
+* Added __copy__() method to DataQuery.
+* Changed parent class of differences so they no longer inherit from Exception
+  (this confused their intended use).
+* Changed documentation structure for ease of reference.
+
+
+2017-06-11 (0.8.1)
+==================
+
+* Changed DataQuery select behavior to fail immediately when invalid syntax is
+  used (rather than later when attempting to execute the query).
+* Changed error messages to better explain what went wrong.
+
+
+2017-05-30 (0.8.0)
+==================
+
+* Added a single, smarter assertValid() method.
+* Removed old assertion methods.
+* Added query optimization and a simpler and more expressive syntax.
+* Changed allowances and errors to be more expressive.
+* Added basic composability to some allowance classes using "&" and "|"
+  bit-wise operators.
+
+
+2016-08-02 (0.7.0.dev2)
+=======================
+
+* Removed some of the internal magic and renames data assertions to more
+  clearly indicate their intended use.
+* Changed data allowances to provide more consistent parameters and more
+  flexible usage.
+* Added new method to assert unique values.
+* Added full **fmtparams support for CSV handling.
+* Fixed comparison and allowance behavior for None vs. zero.
+
+
+2016-05-29 (0.6.0.dev1)
+=======================
+
+* First public release of rewritten code base.
+
+
+Changelog Guidelines
+====================
+
+* Begin each section with the date--in YYYY-MM-DD format--followed by the
+  version number in parenthesis.
+* The initial bullet-point may provide a one-line description of the release.
+* Following bullet-points should begin with "Added", "Changed", "Fixed", or
+  "Removed" when describing the notable changes.
+* Limit lines to 80 character width.

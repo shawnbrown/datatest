@@ -27,6 +27,6 @@ Selector.__module__ = 'datatest'
 Query.__module__ = 'datatest'
 Result.__module__ = 'datatest'
 
-__version__ = '0.8.4.dev0'
+__version__ = '0.9.0'
 
 required = mandatory  # Temporary alias for old "required" decorator.
