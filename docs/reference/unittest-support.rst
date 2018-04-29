@@ -61,6 +61,8 @@ Inside each method, a call to :meth:`self.assertValid()
 a given requirement.
 
 
+.. _unittest-style-invocation:
+
 **********************
 Command-Line Interface
 **********************

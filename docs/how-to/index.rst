@@ -18,6 +18,7 @@ How-to Guide
     :maxdepth: 1
 
     Install Datatest <install>
+    Running Tests <run-tests>
     Assert Data Types <data-types>
     Assert an Interval <interval-compare>
     Assert Date Formats <date-format>
@@ -26,7 +27,7 @@ How-to Guide
     Assert Column Names <column-names>
     Assert Sum Totals <sum-totals>
     Assert Fuzzy Matching <fuzzy-matching>
-    Avoid Excel Automatic Formatting <excel-formatting>
+    Avoid Excel Formatting <excel-formatting>
     Control Differences <control-differences>
     Detect Outliers <detect-outliers>
     Compare Two Files <compare-files>
