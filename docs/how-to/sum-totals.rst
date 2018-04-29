@@ -120,6 +120,10 @@ using datatest's :class:`Selector` class:
                     self.assertValid(summed, requirement)
 
 
+For a more complete demonstration of  datatest's :class:`Selector`
+support, see the :doc:`/tutorial/querying-data` tutorial.
+
+
 Using a Pandas DataFrame
 ========================
 
