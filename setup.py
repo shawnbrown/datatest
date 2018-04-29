@@ -101,7 +101,7 @@ if __name__ == '__main__':
                 'datatest.__past__',
             ],
             # Additional fields:
-            description=('Test driven data-wrangling '
+            description=('Test driven data-wrangling and analysis '
                          'for pytest and unittest.'),
             long_description=long_description,
             author='Shawn Brown',

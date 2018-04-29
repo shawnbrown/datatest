@@ -11,9 +11,9 @@
 .. sectionauthor:: Shawn Brown <sbrown@ncecservices.com>
 
 
-####################################
-Datatest: Test driven data-wrangling
-####################################
+#################################################
+Datatest: Test driven data-wrangling and analysis
+#################################################
 
 Version |release|
 

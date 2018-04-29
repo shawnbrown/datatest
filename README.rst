@@ -1,7 +1,7 @@
 
-*************************************
-datatest: Test driven data-wrangling
-*************************************
+*************************************************
+datatest: Test driven data-wrangling and analysis
+*************************************************
 ..
     Project badges for quick reference:
 
@@ -10,15 +10,15 @@ datatest: Test driven data-wrangling
 
 .. start-inclusion-marker-description
 
-Datatest provides tools for test driven data-wrangling.
-It supports both `pytest <https://pytest.org/>`_ and
-`unittest <https://docs.python.org/library/unittest.html>`_
+Datatest provides tools for test driven data-wrangling
+and analysis. It supports both `pytest <https://pytest.org/>`_
+and `unittest <https://docs.python.org/library/unittest.html>`_
 style testing.
 
-Datatest can help prepare messy data that needs to be
-cleaned, integrated, formatted, and verified. It can
-provide structure for the tidying process, automate
-checklists, log discrepancies, and measure progress.
+You can use datatest to automate checklists, log discrepancies,
+and measure progress. It encourages a structured approach for
+preparing messy data that needs to be cleaned, integrated,
+formatted, and verified.
 
 .. end-inclusion-marker-description
 
@@ -138,6 +138,9 @@ Freely licensed under the Apache License, Version 2.0
 
 Copyright 2014 - 2018 NCEC Services, LLC and contributing authors
 
+
+..
+  BEGIN SUBSTITUTIONS:
 
 .. |buildstatus| image:: https://travis-ci.org/shawnbrown/datatest.svg?branch=master
     :target: https://travis-ci.org/shawnbrown/datatest
