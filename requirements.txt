@@ -2,9 +2,10 @@
 # Development Dependencies
 # ========================
 #
-# The following dependencies are required for testing, building,
-# and documentation generation---not for installing ``datatest``
-# itself.
+# These are not installation requirements!
+#
+# The following dependencies are only required for
+# testing, building, and documentation generation.
 
 dbfread
 pandas
