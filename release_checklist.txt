@@ -20,23 +20,28 @@ Release Checklist
 
 5. Commit and push final changes to upstream repository.
 
-6. Remove all existing files in the dist/ folder.
+6. Perform final checks to make sure there are no CI test failures.
 
-7. Build new distributions:
+7. Remove all existing files in the dist/ folder.
+
+8. Build new distributions:
 
    python setup.py sdist bdist_wheel
 
-8. Upload source and wheel distributions to PyPI:
+9. Upload source and wheel distributions to PyPI:
 
    twine upload dist/*
 
-9. Double check PyPI project page and test installation from PyPI.
+10. Double check PyPI project page and test installation from PyPI.
 
-10. Add version tag to upstream repository (also used by readthedocs.org).
+11. Add version tag to upstream repository (also used by readthedocs.org).
 
-11. Publish update announcement.
+12. Publish update announcement to relevant mailing lists:
 
-12. Iterate version number in repository so that "latest" docs aren't
+  python-announce-list@python.org
+  testing-in-python@lists.idyll.org
+
+13. Iterate version number in repository so that "latest" docs aren't
     confused with the just-published "stable" docs:
 
     datatest/__init__.py
