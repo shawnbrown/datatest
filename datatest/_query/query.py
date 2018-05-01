@@ -1073,38 +1073,42 @@ class Selector(object):
         return (dict_row(row) for row in cursor.fetchall())
 
     def __call__(self, columns, **where):
-        """After a Selector has been created, it can be called like
-        a function to select fields and return an associated Query
-        object. The *columns* argument serves as a template to define
-        the values and data types selected. The *where* keywords can
-        be used to narrow the selection to matching records.
+        """After a Selector has been created, it can be called like a
+        function to select fields and return an associated :class:`Query`
+        object.
 
-        The following call selects a :py:class:`set` of values from
-        column 'A' where values from column 'B' equal ``'foo'``::
+        The *columns* argument serves as a template to define the values
+        and data types selected. All *columns* selections will be wrapped
+        in an outer container. When a container is unspecified, a
+        :py:class:`list` is used as the default::
 
             select = datatest.Selector('example.csv')
-            query = select({'A'}, B='foo')  # <- returns a Query
+            query = select('A')  # <- selects a list of values from 'A'
 
-        All *columns* selections will be wrapped in an outer container.
-        When a container is unspecified, a :py:class:`list` is used as
-        the default::
+        When *columns* specifies an outer container, it must hold only
+        one field---if a given container holds multiple fields, it is
+        assumed to be an inner container (which gets wrapped in the
+        default outer container)::
 
-            query = select('A')  # <- list of values from 'A'
-
-        If specified, outer containers must hold only one field---when
-        a specified container holds multiple fields, it is assumed to
-        be an inner container (which uses a list as its default outer
-        container)::
-
-            query = select(('A', 'B'))  # <- list of tuple values
-                                        #    from 'A' and 'B'
+            query = select(('A', 'B'))  # <- selects a list of tuple
+                                        #    values from 'A' and 'B'
 
         When *columns* is a :py:class:`dict`, values are grouped by
         key::
 
-            query = select({'A': 'B'})  # <- dict with keys from
-                                        #    'A' holding lists of
+            query = select({'A': 'B'})  # <- selects a dict with
+                                        #    keys from 'A' and
                                         #    values from 'B'
+
+        Optional *where* keywords can narrow the selected data to
+        matching rows. A key must specify the field to check and a
+        value must be a predicate object (see :ref:`predicate-docs`
+        for details). Rows where the predicate is a match are
+        selected and rows where it doesn't match are excluded::
+
+            select = datatest.Selector('example.csv')
+            query = select({'A'}, B='foo')  # <- selects only the rows
+                                            #    where 'B' equals 'foo'
 
         See the :ref:`querying-data` tutorial for step-by-step
         examples.
