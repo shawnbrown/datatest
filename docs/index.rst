@@ -33,3 +33,12 @@ file for supported versions, backward compatibility, and more.
     how-to/index.rst
     reference/index.rst
     Discussion <discussion/data-wrangling.rst>
+
+
+.. note::
+    This documentation is aimed at newer versions of Python. If
+    you are using an older version, you may need to convert some
+    examples into older syntax before running them:
+
+    * :py:class:`set` literals: ``{1, 2, 3}``
+    * :py:data:`Ellipsis` literals: ``...`` (for wildcard :ref:`predicate-docs`)
