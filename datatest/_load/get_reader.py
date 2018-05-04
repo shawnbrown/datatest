@@ -239,7 +239,7 @@ class get_reader(object):
                 return lambda x: list(x)
             return lambda x: [x]
 
-        result = query()
+        result = query.execute()
         evaluation_type = result.evaluation_type
         first_record = next(result)
 

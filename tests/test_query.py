@@ -792,17 +792,17 @@ class TestQuery(unittest.TestCase):
             ('map', (lambda x: x * 2,), {}),
             ('sum', (), {}),
         ]
-        result = query()
+        result = query.execute()
         self.assertEqual(result, 8)
 
         query = Query(['A'])
         regex = "expected 'Selector', got 'list'"
         with self.assertRaisesRegex(TypeError, regex):
-            query(['hello', 'world'])  # <- Expects None or Query, not list!
+            query.execute(['hello', 'world'])  # <- Expects None or Query, not list!
 
     def test_execute_other_source(self):
         query = Query.from_object([1, 3, 4, 2])
-        result = query()
+        result = query.execute()
         self.assertIsInstance(result, Result)
         self.assertEqual(result.fetch(), [1, 3, 4, 2])
 
@@ -812,7 +812,7 @@ class TestQuery(unittest.TestCase):
         self.assertIsNot(query1, query2, 'should return new object')
 
         source = Selector([('col1', 'col2'), ('a', '2'), ('b', '2')])
-        result = query2(source)
+        result = query2.execute(source)
         self.assertEqual(result.fetch(), [2, 2])
 
     def test_filter(self):
@@ -821,13 +821,13 @@ class TestQuery(unittest.TestCase):
         self.assertIsNot(query1, query2, 'should return new object')
 
         source = Selector([('col1', 'col2'), ('a', '2'), ('b', '2')])
-        result = query2(source)
+        result = query2.execute(source)
         self.assertEqual(result.fetch(), ['a'])
 
         # No filter arg should default to bool()
         source = Selector([('col1',), (1,), (2,), (0,), (3,)])
         query = Query(set(['col1'])).filter()  # <- No arg!
-        result = query(source)
+        result = query.execute(source)
         self.assertEqual(result.fetch(), set([1, 2, 3]))
 
     def test_reduce(self):
@@ -836,7 +836,7 @@ class TestQuery(unittest.TestCase):
         self.assertIsNot(query1, query2, 'should return new object')
 
         source = Selector([('col1', 'col2'), ('a', '2'), ('b', '2')])
-        result = query2(source)
+        result = query2.execute(source)
         self.assertEqual(result, 'ab')
 
     def test_optimize_aggregation(self):

@@ -89,7 +89,7 @@ class DictItems(collections.Iterator):
             iterable = iter(iterable)
         else:
             if isinstance(iterable, Query):
-                iterable = iterable()
+                iterable = iterable.execute()
 
             while hasattr(iterable, '__wrapped__'):
                 iterable = iterable.__wrapped__
@@ -784,20 +784,12 @@ class Query(object):
             return optimized_steps + remaining_steps
         return None
 
-    def fetch(self):
-        """Executes query and returns an eagerly evaluated result."""
-        result = self()
-        if isinstance(result, Result):
-            return result.fetch()
-        return result
-
-    def __call__(self, source=None, optimize=True):
-        """A Query can be called like a function to execute
-        it and return a value or :class:`Result` appropriate
-        for lazy evaluation::
+    def execute(self, source=None, optimize=True):
+        """A Query can be executed to return a single value or an
+        iterable :class:`Result` appropriate for lazy evaluation::
 
             query = source('A')
-            result = query()  # <- Returns Result (iterator)
+            result = query.execute()  # <- Returns Result (iterator)
 
         Setting *optimize* to False turns-off query optimization.
         """
@@ -826,6 +818,13 @@ class Query(object):
             keywords = dict((k, replace_token(v)) for k, v in keywords.items())
             result = function(*args, **keywords)
 
+        return result
+
+    def fetch(self):
+        """Executes query and returns an eagerly evaluated result."""
+        result = self.execute()
+        if isinstance(result, Result):
+            return result.fetch()
         return result
 
     def _explain(self, optimize=True, file=sys.stdout):

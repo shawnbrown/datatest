@@ -97,9 +97,9 @@ Selecting & Querying Data
 
     .. automethod:: reduce
 
-    .. automethod:: fetch
+    .. automethod:: execute
 
-    .. automethod:: __call__
+    .. automethod:: fetch
 
 
 .. autoclass:: Result

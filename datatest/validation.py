@@ -270,7 +270,7 @@ def _normalize_mapping_result(result):
 
 def _normalize_data(data):
     if isinstance(data, Query):
-        return data()  # <- EXIT! (Returns Result for lazy evaluation.)
+        return data.execute()  # <- EXIT! (Returns Result for lazy evaluation.)
 
     pandas = sys.modules.get('pandas', None)
     if pandas:
