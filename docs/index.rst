@@ -22,7 +22,8 @@ Version |release|
     :end-before: end-inclusion-marker-description
 
 See the project's `README <https://pypi.org/project/datatest/>`_
-file for supported versions, backward compatibility, and more.
+file for details on supported versions, backward compatibility,
+and more.
 
 
 .. toctree::

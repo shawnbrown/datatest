@@ -20,6 +20,10 @@ and measure progress. It encourages a structured approach for
 preparing messy data that needs to be cleaned, integrated,
 formatted, and verified.
 
+Datatest has no hard dependencies and supports Python 2.6, 2.7,
+3.1 through 3.6, PyPy, and PyPy3.
+
+
 .. end-inclusion-marker-description
 
 
@@ -97,7 +101,7 @@ package::
 Supported Versions
 ==================
 
-Tested on Python 2.6, 2.7, and 3.1 through 3.6; PyPy and PyPy3.
+Tested on Python 2.6, 2.7, 3.1 through 3.6, PyPy, and PyPy3.
 Datatest is pure Python and may also run on other implementations
 as well (check using "setup.py test" before installing).
 
@@ -123,8 +127,8 @@ growing codebase that relies on current features and must be
 maintained into the future.
 
 
-Dependencies
-============
+Soft Dependencies
+=================
 
 There are no hard, third-party dependencies. But if you want to
 interface with pandas DataFrames, MS Excel workbooks, or other
@@ -132,7 +136,21 @@ optional data sources, you will need to install the relevant
 packages (``pandas``, ``xlrd``, etc.).
 
 
-------------
+Older Pythons (3.1 and 2.6)
+===========================
+
+While datatest supports Python 3.1 and 2.6, some earlier builds
+of these versions were bundled with an older version of SQLite
+that is not compatible with datatest. The ``sqlite3`` package is
+part of the Python Standard Library and some features of datatest
+use it for internal data handling---though users never need to
+use the package directly.
+
+If you must use one of these older Python versions and you are
+experiencing issues, it is recommended that you upgrade to the
+latest patch release (currently Python 3.1.5 or Python 2.6.9).
+
+----------
 
 Freely licensed under the Apache License, Version 2.0
 
@@ -140,7 +158,7 @@ Copyright 2014 - 2018 NCEC Services, LLC and contributing authors
 
 
 ..
-  BEGIN SUBSTITUTIONS:
+  SUBSTITUTION DEFINITONS:
 
 .. |buildstatus| image:: https://travis-ci.org/shawnbrown/datatest.svg?branch=master
     :target: https://travis-ci.org/shawnbrown/datatest
