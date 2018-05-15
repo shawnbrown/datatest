@@ -31,8 +31,13 @@ Failures
     .. autoattribute:: description
 
 
+.. _difference-docs:
+
+Differences
+===========
+
 Base Difference
-===============
+---------------
 
 .. autoclass:: BaseDifference
 
@@ -40,7 +45,7 @@ Base Difference
 
 
 Concrete Differences
-====================
+--------------------
 
 .. autoclass:: Missing
 
