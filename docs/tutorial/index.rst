@@ -19,3 +19,5 @@ Tutorials
 
     introduction
     querying-data
+    Tidying a File <tidying-a-file.rst>
+
