@@ -72,7 +72,7 @@ using datatest's :class:`Selector` class:
 
             def test_filtered_subtotals(mydata):
 
-                summed = mydata({'A': 'C'}, 'B'='foo').sum()
+                summed = mydata({'A': 'C'}, B='foo').sum()
 
                 requirement = {'x': 50, 'y': 10}
 
@@ -113,7 +113,7 @@ using datatest's :class:`Selector` class:
 
                 def test_filtered_subtotals(self):
 
-                    summed = mydata({'A': 'C'}, 'B'='foo').sum()
+                    summed = mydata({'A': 'C'}, B='foo').sum()
 
                     requirement = {'x': 50, 'y': 10}
 
