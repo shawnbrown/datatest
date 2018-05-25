@@ -28,7 +28,6 @@ This is done for a few reasons:
 """
 
 import re
-import warnings
 from _pytest._code.code import ReprEntry
 from _pytest.assertion.truncate import _should_truncate_item
 from _pytest.assertion.truncate import DEFAULT_MAX_LINES
@@ -37,27 +36,41 @@ from _pytest.assertion.truncate import USAGE_MSG
 from pytest import hookimpl
 from datatest import ValidationError
 
-
-version = '0.1.1'
-
-version_info = (0, 1, 1)
-
-
 if __name__ == 'pytest_datatest':
-    try:
-        from datatest._pytest_plugin import version_info \
-                as bundled_version_info
-    except ImportError:
-        bundled_version_info = (0, 0, 0)
+    from datatest._pytest_plugin import version_info as _bundled_version_info
+else:
+    _bundled_version_info = (0, 0, 0)
 
-    if version_info < bundled_version_info:
-        _warning_msg = (
-            'The installed version of the "pytest_datatest" plugin is '
-            'older than the bundled version included with "datatest". '
-            'Uninstall "pytest_datatest" to automatically enable the '
-            'newer version.'
-        )
-        warnings.warn(_warning_msg)
+version = '0.1.2.dev0'
+
+version_info = (0, 1, 2)
+
+
+def pytest_configure(config):
+    """Register 'mandatory' marker."""
+    config.addinivalue_line(
+        'markers',
+        'mandatory: test is mandatory, stops session early on failure.',
+    )
+
+
+def pytest_addoption(parser):
+    group = parser.getgroup('Datatest')
+    group.addoption(
+        '--ignore-mandatory',
+        action='store_true',
+        help=(
+            "ignore 'mandatory' marker (continues testing "
+            "even when a mandatory test fails)."
+        ),
+    )
+
+
+_diff_start_regex = re.compile(
+    '^E\s+(?:datatest.)?ValidationError:.+\d+ difference[s]?.*: [\[{]$'
+)
+
+_diff_stop_regex = re.compile('^E\s+(?:\}|\]|\.\.\.)$')
 
 
 class DatatestReprEntry(ReprEntry):
@@ -78,9 +91,8 @@ class DatatestReprEntry(ReprEntry):
     @staticmethod
     def _find_diff_start(lines):
         """Returns index of line where ValidationError differences begin."""
-        regex = re.compile('^E   .+\(\d+ difference[s]?\): [\[{]$')
         for index, line in enumerate(lines):
-            if regex.search(line) is not None:
+            if _diff_start_regex.search(line) is not None:
                 return index
         return None
 
@@ -89,9 +101,8 @@ class DatatestReprEntry(ReprEntry):
         """Returns index of line after ValidationError differences have
         ended.
         """
-        regex = re.compile('^E   \s*(?:\}|\]|\.\.\.)$')
         for index, line in enumerate(reversed(lines)):
-            if regex.search(line) is not None:
+            if _diff_stop_regex.search(line) is not None:
                 return len(lines) - index
         return None
 
@@ -173,5 +184,46 @@ def pytest_runtest_makereport(item, call):
             new_entries = [DatatestReprEntry(entry) for entry in entries]
             result.longrepr.reprtraceback.reprentries = new_entries
 
+        # If test was mandatory, session should fail immediately.
+        if (call.excinfo and item.get_marker('mandatory')
+                and not item.config.getoption('--ignore-mandatory')):
+            shouldfail = 'mandatory {0!r} failed'.format(item.name)
+            item.session.shouldfail = shouldfail
+
     else:
         outcome = yield
+
+
+def pytest_terminal_summary(terminalreporter, exitstatus):
+    """Add a section to terminal summary reporting."""
+    shouldfail = str(terminalreporter._session.shouldfail or '')
+
+    if shouldfail.startswith('mandatory') and shouldfail.endswith('failed'):
+        markup = {'yellow': True}
+        terminalreporter.write_sep('_', **markup)
+        terminalreporter.write(
+            (
+                "\n"
+                "stopping early, {0}\n"
+                "use '--ignore-mandatory' to continue testing\n"
+                "\n"
+            ).format(shouldfail),
+            **markup
+        )
+
+    if _bundled_version_info > version_info:
+        markup = {'yellow': True, 'bold': True}
+        terminalreporter.section('NOTICE', **markup)
+        terminalreporter.write(
+            (
+                "\n"
+                "The installed version of the 'pytest_datatest' plugin "
+                "is older than the bundled version included with datatest "
+                "itself.\n"
+                "\n"
+                "Uninstall 'pytest_datatest' to automatically enable the "
+                "newer version.\n"
+                "\n"
+            ),
+            **markup
+        )

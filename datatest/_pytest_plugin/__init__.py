@@ -9,9 +9,7 @@ try:
 except ImportError:
     try:
         # If there's no external plugin, load the bundled version.
-        from ._pytest_datatest import pytest_runtest_makereport
-        from ._pytest_datatest import version
-        from ._pytest_datatest import version_info
+        from ._pytest_datatest import *
     except ImportError:
         # If there's no Pytest support at all, set dummy version numbers.
         version = '0.0.0'
