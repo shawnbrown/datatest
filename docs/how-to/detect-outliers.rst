@@ -11,8 +11,8 @@ How to Detect Outliers
 ######################
 
 To detect outliers, we can use a "factory function" to build appropriate
-predicates for validating *data*. The following code uses this approach
-to implement the Tukey fence method for outlier labeling:
+predicates for validating data. The following code uses this approach to
+implement the *Tukey fence* method for outlier labeling:
 
 
 .. tabs::
