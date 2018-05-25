@@ -3,7 +3,7 @@
     :description: Test driven data-wrangling can provide much-needed
                   structure to guide the workflow of data preparation,
                   itself.
-    :keywords: test driven, data-wrangling
+    :keywords: test driven data-wrangling, structured data-wrangling
 
 
 ##########################
