@@ -96,7 +96,6 @@ if __name__ == '__main__':
                 'datatest',
                 'datatest._compatibility',
                 'datatest._load',
-                'datatest._pytest_plugin',
                 'datatest._query',
                 'datatest.__past__',
             ],
