@@ -4,6 +4,17 @@ Datatest Changelog
 ==================
 
 
+COMING SOON (0.9.1)
+===================
+
+* Added impoved docstrings and other documentation.
+* Update bundled pytest plugin to 0.1.2:
+* * Added handling for a 'mandatory' marker to support incremental testing
+    (stops session early when a mandatory test fails).
+* * Added '--ignore-mandatory' option to continue tests even when a mandatory
+    test fails.
+
+
 2018-04-29 (0.9.0)
 ==================
 
@@ -95,8 +106,8 @@ Datatest Changelog
 Changelog Guidelines
 ====================
 
-* Begin each section with the date--in YYYY-MM-DD format--followed by the
-  version number in parenthesis.
+* Begin each section with the date followed by the version number in
+  parenthesis. Use the following format: "YYYY-MM-DD (x.y.z)".
 * The initial bullet-point may provide a one-line description of the release.
 * Following bullet-points should begin with "Added", "Changed", "Fixed", or
   "Removed" when describing the notable changes.
