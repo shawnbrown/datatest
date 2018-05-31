@@ -19,6 +19,7 @@ How-to Guide
 
     Install Datatest <install>
     Running Tests <run-tests>
+    Use Relative File Paths <relative-paths>
     Assert Data Types <data-types>
     Assert an Interval <interval-compare>
     Assert Date Formats <date-format>
