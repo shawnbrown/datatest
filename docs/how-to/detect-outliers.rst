@@ -15,46 +15,52 @@ predicates for validating data. The following code uses this approach to
 implement the *Tukey fence* method for outlier labeling:
 
 
+.. code-block:: python
+
+    from statistics import median
+    import datatest
+
+
+    def make_outlier_check(obj, multiplier=2.2):
+        """Makes outlier check using Tukey fence/interquartile method.
+
+        Default multiplier of 2.2 based on "Fine-Tuning Some Resistant
+        Rules for Outlier Labeling" by Hoaglin and Iglewicz (1987).
+        """
+        def predicate_factory(values):
+            values = sorted(values)
+            midpoint = int(round(len(values) / 2.0))
+            q1 = median(values[:midpoint])
+            q3 = median(values[midpoint:])
+            kprime = (q3 - q1) * multiplier
+            lower_fence = q1 - kprime
+            upper_fence = q3 + kprime
+            def outlier_predicate(value):
+                return lower_fence <= value <= upper_fence
+            return outlier_predicate
+
+        query = datatest.Query.from_object(obj)
+        return query.apply(predicate_factory)
+
+
+
+
+
+
 .. tabs::
 
     .. group-tab:: Pytest
 
         .. code-block:: python
-            :emphasize-lines: 33,41
+            :emphasize-lines: 6,16
 
-            from statistics import median
-            from datatest import validate, Query
-
-
-            def check_for_outliers(data, multiplier=2.2):
-                """Check for outliers using Tukey fence/interquartile method.
-
-                Default multiplier of 2.2 based on "Fine-Tuning Some Resistant
-                Rules for Outlier Labeling" by Hoaglin and Iglewicz (1987).
-                """
-                def predicate_factory(values):
-                    values = sorted(values)
-                    midpoint = int(round(len(values) / 2.0))
-                    q1 = median(values[:midpoint])
-                    q3 = median(values[midpoint:])
-                    kprime = (q3 - q1) * multiplier
-                    lower_fence = q1 - kprime
-                    upper_fence = q3 + kprime
-                    def predicate(value):
-                        return lower_fence <= value <= upper_fence
-                    return predicate
-
-                query = Query.from_object(data)
-                requirement = query.apply(predicate_factory)
-
-                __tracebackhide__ = True
-                msg = 'outliers beyond interquartile range * {0}'.format(multiplier)
-                validate(data, requirement, msg)
-
+            ...
 
             def test_outliers1():
                 data = [12, 5, 8, 5, 76, 7, 20]  # <- 76 is an outlier
-                check_for_outliers(data)
+
+                outlier_check = make_outlier_check(data)
+                datatest.validate(data, outlier_check)
 
 
             def test_outliers2():
@@ -62,57 +68,37 @@ implement the *Tukey fence* method for outlier labeling:
                     'A': [12, 5, 8, 5, 76, 7, 20],  # <- 76 is an outlier
                     'B': [81, 74, 77, 74, 8, 76, 89],  # <- 8 is an outlier
                 }
-                check_for_outliers(data)
+
+                outlier_check = make_outlier_check(data)
+                datatest.validate(data, outlier_check)
 
 
     .. group-tab:: Unittest
 
         .. code-block:: python
-            :emphasize-lines: 33,40
+            :emphasize-lines: 8,17
 
-            from statistics import median
-            from datatest import DataTestCase, Query
+            ...
 
-
-            class MyTest(DataTestCase):
-
-                def checkForOutliers(self, data, multiplier=2.2):
-                    """Check for outliers using Tukey fence/interquartile method.
-
-                    Default multiplier of 2.2 based on "Fine-Tuning Some Resistant
-                    Rules for Outlier Labeling" by Hoaglin and Iglewicz (1987).
-                    """
-                    def predicate_factory(values):
-                        values = sorted(values)
-                        midpoint = int(round(len(values) / 2.0))
-                        q1 = median(values[:midpoint])
-                        q3 = median(values[midpoint:])
-                        kprime = (q3 - q1) * multiplier
-                        lower_fence = q1 - kprime
-                        upper_fence = q3 + kprime
-                        def predicate(value):
-                            return lower_fence <= value <= upper_fence
-                        return predicate
-
-                    query = Query.from_object(data)
-                    requirement = query.apply(predicate_factory)
-
-                    msg = 'outliers beyond interquartile range * {0}'.format(multiplier)
-                    self.assertValid(data, requirement, msg)
+            class MyTest(datatest.DataTestCase):
 
                 def test_outliers1(self):
                     data = [12, 5, 8, 5, 76, 7, 20]  # <- 76 is an outlier
-                    self.checkForOutliers(data)
+
+                    outlier_check = make_outlier_check(data)
+                    self.assertValid(data, outlier_check)
 
                 def test_outliers2(self):
                     data = {
                         'A': [12, 5, 8, 5, 76, 7, 20],  # <- 76 is an outlier
                         'B': [81, 74, 77, 74, 8, 76, 89],  # <- 8 is an outlier
                     }
-                    self.checkForOutliers(data)
+
+                    outlier_check = make_outlier_check(data)
+                    self.assertValid(data, outlier_check)
 
 
-In the code above, we use :meth:`Query.apply` to build a separate
+In ``make_outlier_check()``, we use :meth:`Query.apply` to build a separate
 predicate for each group of values. In the case of ``test_outliers1()``,
 there is only one group so this creates one predicate function. But
 in ``test_outliers2()``, this creates two separate predicates---with
