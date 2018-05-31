@@ -27,13 +27,15 @@ Datatest has no hard dependencies and supports Python 2.6, 2.7,
 .. end-inclusion-marker-description
 
 
-* Documentation:
-    - https://datatest.readthedocs.io/ (stable)
-    - https://datatest.readthedocs.io/en/latest/ (latest)
-* Official Releases:
-   - https://pypi.org/project/datatest/
-* Development:
-   - https://github.com/shawnbrown/datatest
+:Documentation:
+    | https://datatest.readthedocs.io/ (stable)
+    | https://datatest.readthedocs.io/en/latest/ (latest)
+
+:Official:
+    | https://pypi.org/project/datatest/
+
+:Development:
+    | https://github.com/shawnbrown/datatest
 
 
 Installation
