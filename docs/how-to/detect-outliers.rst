@@ -43,10 +43,6 @@ implement the *Tukey fence* method for outlier labeling:
         return query.apply(predicate_factory)
 
 
-
-
-
-
 .. tabs::
 
     .. group-tab:: Pytest
