@@ -2,16 +2,16 @@
 .. module:: datatest
 
 .. meta::
-    :description: How to control difference objects.
-    :keywords: datatest, differences
+    :description: How to customize error differences.
+    :keywords: datatest, differences, custom
 
 
-###################################
-How to Control "Difference" Objects
-###################################
+#######################
+How to Customize Errors
+#######################
 
 When using a predicate function (see :ref:`predicate-docs`),
-datatest will generate a "difference" object each time the
+a ValidationError contains one "difference" for each time the
 function returns ``False``. By default, an :class:`Invalid`
 instance is generated but it's possible to customize this
 behavior.

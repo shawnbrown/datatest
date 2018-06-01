@@ -29,6 +29,6 @@ How-to Guide
     Assert Sum Totals <sum-totals>
     Assert Fuzzy Matching <fuzzy-matching>
     Avoid Excel Formatting <excel-formatting>
-    Control Differences <control-differences>
+    Customize Errors <customize-errors>
     Detect Outliers <detect-outliers>
     Compare Two Files <compare-files>
