@@ -70,3 +70,14 @@ of returning ``False``):
                         return Deviation(x - 100, 100)
 
                     self.assertValid(data, max100)
+
+
+Running the above test will now raise an error with customized
+difference objects:
+
+.. code-block:: none
+
+    ValidationError: does not satisfy 'max100' (2 differences): [
+        Deviation(+1, 100),
+        Deviation(+2, 100),
+    ]
