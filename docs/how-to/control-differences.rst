@@ -25,12 +25,13 @@ when values are less than or equal to 100 but it returns a
 :class:`Deviation` when values are greater than 100 (instead
 of returning ``False``):
 
+
 .. tabs::
 
     .. group-tab:: Pytest
 
         .. code-block:: python
-            :emphasize-lines: 10
+            :emphasize-lines: 12
 
             from datatest import validate
             from datatest import Deviation
@@ -41,7 +42,9 @@ of returning ``False``):
                 data = [98, 99, 100, 101, 102]
 
                 def max100(x):  # <- Helper (predicate function).
-                    return x <= 100 or Deviation(x - 100, 100)
+                    if x <= 100:
+                        return True
+                    return Deviation(x - 100, 100)
 
                 validate(data, max100)
 
@@ -49,7 +52,7 @@ of returning ``False``):
     .. group-tab:: Unittest
 
         .. code-block:: python
-            :emphasize-lines: 12
+            :emphasize-lines: 14
 
             from datatest import DataTestCase
             from datatest import Deviation
@@ -62,7 +65,8 @@ of returning ``False``):
                     data = [98, 99, 100, 101, 102]
 
                     def max100(x):  # <- Helper (predicate function).
-                        return x <= 100 or Deviation(x - 100, 100)
+                        if x <= 100:
+                            return True
+                        return Deviation(x - 100, 100)
 
                     self.assertValid(data, max100)
-
