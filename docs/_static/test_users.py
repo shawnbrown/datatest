@@ -10,6 +10,7 @@ def users():
     return Selector('users.csv')
 
 
+@pytest.mark.mandatory
 def test_columns(users):
     validate(users.fieldnames, {'user_id', 'active'})
 

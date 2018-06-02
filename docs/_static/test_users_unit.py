@@ -1,6 +1,7 @@
 from datatest import working_directory
 from datatest import Selector
 from datatest import DataTestCase
+from datatest import mandatory
 
 
 def setUpModule():
@@ -11,6 +12,7 @@ def setUpModule():
 
 class TestUserData(DataTestCase):
 
+    @mandatory
     def test_columns(self):
         self.assertValid(users.fieldnames, {'user_id', 'active'})
 

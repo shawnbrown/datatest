@@ -9,7 +9,7 @@
 
 
 #######################################
-Tidying a File (A Test Driven Approach)
+Tidying a File (a Test Driven Approach)
 #######################################
 
 This example will demonstrate how datatest can structure the
@@ -140,6 +140,7 @@ To check the column names of our file we will compare the :attr:`fieldnames
 
             ...
 
+            @pytest.mark.mandatory
             def test_columns(users):
                 validate(users.fieldnames, {'user_id', 'active'})
 
@@ -148,14 +149,15 @@ To check the column names of our file we will compare the :attr:`fieldnames
         When running the script, the test above raises the following failure:
 
         .. code-block:: none
-            :emphasize-lines: 10-13
+            :emphasize-lines: 11-14
 
             _________________________________ test_columns _________________________________
 
-            users = <datatest.Selector object at 0x7f55ec9c82b0>
+            users = <datatest.Selector object at 0x7fdca2983c18>
             Data from 1 source:
              users.csv
 
+                @pytest.mark.mandatory
                 def test_columns(users):
             >       validate(users.fieldnames, {'user_id', 'active'})
             E       ValidationError: does not satisfy set membership (4 differences): [
@@ -165,7 +167,7 @@ To check the column names of our file we will compare the :attr:`fieldnames
                         Missing('user_id'),
                     ]
 
-            test_users.py:14: ValidationError
+            test_users.py:15: ValidationError
 
 
     .. group-tab:: Unittest
@@ -174,6 +176,7 @@ To check the column names of our file we will compare the :attr:`fieldnames
 
             ...
 
+                @mandatory
                 def test_columns(self):
                     self.assertValid(users.fieldnames, {'user_id', 'active'})
 
@@ -188,7 +191,7 @@ To check the column names of our file we will compare the :attr:`fieldnames
             FAIL: test_columns (test_users_unit.TestUserData)
             ----------------------------------------------------------------------
             Traceback (most recent call last):
-              File "test_users_unit.py", line 16, in test_columns
+              File "test_users_unit.py", line 17, in test_columns
                 self.assertValid(users.fieldnames, {'user_id', 'active'})
             ValidationError: does not satisfy set membership (4 differences): [
                 Extra('ACTIVE'),
@@ -258,7 +261,7 @@ values and ``False`` for malformed values.
                         Invalid('1099b'),
                     ]
 
-            test_users.py:22: ValidationError
+            test_users.py:23: ValidationError
 
 
     .. group-tab:: Unittest
@@ -284,7 +287,7 @@ values and ``False`` for malformed values.
             FAIL: test_user_id (test_users_unit.TestUserData)
             ----------------------------------------------------------------------
             Traceback (most recent call last):
-              File "test_users_unit.py", line 22, in test_user_id
+              File "test_users_unit.py", line 24, in test_user_id
                 self.assertValid(users('user_id'), is_wellformed)
             ValidationError: does not satisfy 'is_wellformed' (2 differences): [
                 Invalid('1056a'),
@@ -338,7 +341,7 @@ For the "active" field, we will check that it contains the values
                         Extra('y'),
                     ]
 
-            test_users.py:26: ValidationError
+            test_users.py:27: ValidationError
 
 
     .. group-tab:: Unittest
@@ -360,7 +363,7 @@ For the "active" field, we will check that it contains the values
             FAIL: test_active (test_users_unit.TestUserData)
             ----------------------------------------------------------------------
             Traceback (most recent call last):
-              File "test_users_unit.py", line 25, in test_active
+              File "test_users_unit.py", line 27, in test_active
                 self.assertValid(users({'active'}), {'Y', 'N'})
             ValidationError: does not satisfy set membership (5 differences): [
                 Missing('N'),
