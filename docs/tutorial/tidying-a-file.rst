@@ -101,29 +101,16 @@ data from the **users.csv** file as our fixture:
 
     .. group-tab:: Pytest
 
-        .. code-block:: python
+        .. literalinclude:: /_static/test_users.py
+            :pyobject: users
+            :lineno-match:
 
-            ...
-
-            @pytest.fixture(scope='module')
-            @working_directory(__file__)
-            def users():
-                return Selector('users.csv')
-
-            ...
 
     .. group-tab:: Unittest
 
-        .. code-block:: python
-
-            ...
-
-            def setUpModule():
-                global users
-                with working_directory(__file__):
-                    users = Selector('users.csv')
-
-            ...
+        .. literalinclude:: /_static/test_users_unit.py
+            :pyobject: setUpModule
+            :lineno-match:
 
 
 1. Check Column Names
@@ -136,15 +123,10 @@ To check the column names of our file we will compare the :attr:`fieldnames
 
     .. group-tab:: Pytest
 
-        .. code-block:: python
+        .. literalinclude:: /_static/test_users.py
+            :pyobject: test_columns
+            :lineno-match:
 
-            ...
-
-            @pytest.mark.mandatory
-            def test_columns(users):
-                validate(users.fieldnames, {'user_id', 'active'})
-
-            ...
 
         When running the script, the test above raises the following failure:
 
@@ -172,15 +154,10 @@ To check the column names of our file we will compare the :attr:`fieldnames
 
     .. group-tab:: Unittest
 
-        .. code-block:: python
+        .. literalinclude:: /_static/test_users_unit.py
+            :pyobject: TestUserData.test_columns
+            :lineno-match:
 
-            ...
-
-                @mandatory
-                def test_columns(self):
-                    self.assertValid(users.fieldnames, {'user_id', 'active'})
-
-            ...
 
         When running the script, the test above raises the following failure:
 
@@ -226,18 +203,10 @@ values and ``False`` for malformed values.
 
     .. group-tab:: Pytest
 
-        .. code-block:: python
+        .. literalinclude:: /_static/test_users.py
+            :pyobject: test_user_id
+            :lineno-match:
 
-            ...
-
-            def test_user_id(users):
-
-                def is_wellformed(x):  # <- Helper function.
-                    return x[:-1].isdigit() and x[-1:].isupper()
-
-                validate(users('user_id'), is_wellformed)
-
-            ...
 
         The test above raises the following failure:
 
@@ -266,17 +235,10 @@ values and ``False`` for malformed values.
 
     .. group-tab:: Unittest
 
-        .. code-block:: python
+        .. literalinclude:: /_static/test_users_unit.py
+            :pyobject: TestUserData.test_user_id
+            :lineno-match:
 
-            ...
-
-                def test_user_id(self):
-
-                    def is_wellformed(x):  # <- Helper function.
-                        return x[:-1].isdigit() and x[-1:].isupper()
-
-                    self.assertValid(users('user_id'), is_wellformed)
-            ...
 
         The test above raises the following failure:
 
@@ -312,12 +274,9 @@ For the "active" field, we will check that it contains the values
 
     .. group-tab:: Pytest
 
-        .. code-block:: python
-
-            ...
-
-            def test_active(users):
-                validate(users({'active'}), {'Y', 'N'})
+        .. literalinclude:: /_static/test_users.py
+            :pyobject: test_active
+            :lineno-match:
 
 
         The test above raises the following failure:
@@ -346,12 +305,9 @@ For the "active" field, we will check that it contains the values
 
     .. group-tab:: Unittest
 
-        .. code-block:: python
-
-            ...
-
-                def test_active(self):
-                    self.assertValid(users({'active'}), {'Y', 'N'})
+        .. literalinclude:: /_static/test_users_unit.py
+            :pyobject: TestUserData.test_active
+            :lineno-match:
 
 
         The test above raises the following failure:
