@@ -6,6 +6,7 @@
                   classes to handle the data under test.
     :keywords: datatest, Selector, Query, Result, working_directory
 
+.. highlight:: pycon
 
 .. _querying-data:
 
