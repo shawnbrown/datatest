@@ -1,24 +1,24 @@
 
-==================
 Datatest Changelog
 ==================
 
 
 COMING SOON (0.9.1)
-===================
+-------------------
 
 * Added impoved docstrings and other documentation.
-* Update bundled pytest plugin to 0.1.2:
-* * Added handling for a 'mandatory' marker to support incremental testing
-    (stops session early when a mandatory test fails).
-* * Added '--ignore-mandatory' option to continue tests even when a mandatory
-    test fails.
+* Changed bundled pytest plugin to version 0.1.2:
+    * Added handling for a 'mandatory' marker to support
+      incremental testing (stops session early when a mandatory
+      test fails).
+    * Added '--ignore-mandatory' option to continue tests
+      even when a mandatory test fails.
 
 
 2018-04-29 (0.9.0)
-==================
+------------------
 
-* Added bundled version pytest plugin to base installation.
+* Added a bundled version of the pytest plugin to the base installation.
 * Added universal composability for all allowances (using UNION and
   INTERSECTION via "|" and "&" operators).
 * Added ``allowed`` factory class to simplify allowance imports.
@@ -36,7 +36,7 @@ COMING SOON (0.9.1)
 
 
 2017-11-26 (0.8.3)
-==================
+------------------
 
 * Added module-level functions: validate() and is_valid().
 * Changed DataQuery selections now default to a list type when no
@@ -54,7 +54,7 @@ COMING SOON (0.9.1)
 
 
 2017-06-11 (0.8.2)
-==================
+------------------
 
 * Added Boolean composition for allowed_specific() context manager.
 * Added proper __repr__() support to DataSource and DataQuery.
@@ -67,7 +67,7 @@ COMING SOON (0.9.1)
 
 
 2017-06-11 (0.8.1)
-==================
+------------------
 
 * Changed DataQuery select behavior to fail immediately when invalid syntax is
   used (rather than later when attempting to execute the query).
@@ -75,7 +75,7 @@ COMING SOON (0.9.1)
 
 
 2017-05-30 (0.8.0)
-==================
+------------------
 
 * Added a single, smarter assertValid() method.
 * Removed old assertion methods.
@@ -86,7 +86,7 @@ COMING SOON (0.9.1)
 
 
 2016-08-02 (0.7.0.dev2)
-=======================
+-----------------------
 
 * Removed some of the internal magic and renames data assertions to more
   clearly indicate their intended use.
@@ -98,7 +98,7 @@ COMING SOON (0.9.1)
 
 
 2016-05-29 (0.6.0.dev1)
-=======================
+-----------------------
 
 * First public release of rewritten code base.
 
