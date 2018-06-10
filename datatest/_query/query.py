@@ -568,7 +568,11 @@ class Query(object):
                 msg = 'selector must be datatest.Selector object, got {0}'
                 raise TypeError(msg.format(selector.__class__.__name__))
             flattened = _flatten([_parse_columns(columns), where.keys()])
-            selector._assert_fields_exist(flattened)
+            try:
+                selector._assert_fields_exist(flattened)
+            except LookupError:
+                __tracebackhide__ = True
+                raise
         elif argcount == 1:
             selector, columns = None, args[0]
         else:
@@ -960,7 +964,11 @@ class Selector(object):
         self._table = None
         self._obj_strings = []
         if objs:
-            self.load_data(objs, *args, **kwds)
+            try:
+                self.load_data(objs, *args, **kwds)
+            except FileNotFoundError:
+                __tracebackhide__ = True
+                raise
 
     def load_data(self, objs, *args, **kwds):
         """Load data from one or more objects. The given *objs*,
@@ -997,6 +1005,7 @@ class Selector(object):
         if isinstance(objs, string_types):
             obj_list = glob(objs)  # Get shell-style wildcard matches.
             if not obj_list:
+                __tracebackhide__ = True
                 raise FileNotFoundError('no files matching {0!r}'.format(objs))
         elif not isinstance(objs, list) \
                 or isinstance(objs[0], (list, tuple, dict)):  # Not a list or is a
@@ -1112,7 +1121,11 @@ class Selector(object):
         See the :ref:`querying-data` tutorial for step-by-step
         examples.
         """
-        return Query(self, columns, **where)
+        try:
+            return Query(self, columns, **where)
+        except LookupError:
+            __tracebackhide__ = True
+            raise
 
     def _execute_query(self, select_clause, trailing_clause=None, **kwds_filter):
         """Execute query and return cursor object."""
@@ -1223,6 +1236,7 @@ class Selector(object):
         for name in fieldnames:
             if name not in available:
                 msg = '{0!r} not in {1!r}'.format(name, self)
+                __tracebackhide__ = True
                 raise LookupError(msg)
 
     def _escape_field_name(self, name):
