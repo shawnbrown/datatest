@@ -1006,42 +1006,32 @@ class TestSelector(unittest.TestCase):
 
         # Empty selector.
         select = Selector()
-        regex = ('^<datatest.Selector object at [^\n>]+>\n'
-                 'Empty - contains no data\.$')
-        self.assertRegex(repr(select), regex)
+        self.assertEqual(repr(select), '<Selector (no data loaded)>')
 
         # Data-only (no args)
-        source = Selector(data)
-        regex = ("^<datatest.Selector object at [^\n>]+>\n"
-                 "Data from 1 source:\n"
-                 " {0}$".format(re.escape(repr(data))))
-        self.assertRegex(repr(source), regex)
+        select = Selector(data)
+        expected = "<Selector [['A', 'B'], ['x', 100], ['y', 200]]>"
+        self.assertEqual(repr(select), expected)
 
-        # Data with args and kwds.
+        # Data with args (args don't affect repr)
         iterable = iter(data)
-        source = Selector(iterable, 'foo', bar='baz')  # Args don't change repr.
-        regex = ('<datatest.Selector object at [^\n>]+>\n'
-                 'Data from 1 source:\n'
-                 ' <[a-z_]+ object at [^\n>]+>')
-        self.assertRegex(repr(source), regex)
+        select = Selector(iterable, 'foo', bar='baz')
+        regex = '<Selector <[a-z_]+ object at [^\n>]+>>'
+        self.assertRegex(repr(select), regex)
 
         # Extended after instantiation.
-        data1 = [['A', 'B'], ['x', 100]]
-        data2 = [['A', 'B'], ['y', 200]]
-        data3 = [['A', 'B'], ['z', 300]]
-        source = Selector(data1)
-        source.load_data(data2)
-        source.load_data(data3)
+        select = Selector()
+        select.load_data([['A', 'B'], ['z', 300]])
+        select.load_data([['A', 'B'], ['y', 200]])
+        select.load_data([['A', 'B'], ['x', 100]])
 
-        actual_repr = repr(source)
-        self.assertTrue(actual_repr.startswith('<datatest.Selector object at'))
-        self.assertTrue(actual_repr.endswith(
-            ">\n"
-            "Data from 3 sources:\n"
-            " [['A', 'B'], ['x', 100]]\n"
-            " [['A', 'B'], ['y', 200]]\n"
-            " [['A', 'B'], ['z', 300]]"
-        ))
+        expected = (
+            "<Selector (3 sources):\n"
+            "    [['A', 'B'], ['x', 100]]\n"
+            "    [['A', 'B'], ['y', 200]]\n"
+            "    [['A', 'B'], ['z', 300]]>"
+        )
+        self.assertEqual(repr(select), expected)
 
     def test_build_where_clause(self):
         _build_where_clause = Selector._build_where_clause
@@ -1060,9 +1050,6 @@ class TestSelector(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_execute_query(self):
-        #data = [['x', 101], ['y', 202], ['z', 303]]
-        #filednames = ['A', 'B']
-        #source = Selector(data, filednames)
         data = [['A', 'B'], ['x', 101], ['y', 202], ['z', 303]]
         source = Selector(data)
 

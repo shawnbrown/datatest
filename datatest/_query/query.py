@@ -1037,10 +1037,7 @@ class Selector(object):
 
     def _append_obj_string(self, obj):
         """Get string for *obj*, limit to one line, and append to list."""
-        if not isinstance(obj, string_types):
-            obj_str = repr(obj)
-        else:
-            obj_str = obj
+        obj_str = repr(obj)
 
         obj_str = obj_str.strip().replace('\r\n', ' ').replace('\n', ' ')
         if len(obj_str) > 72:
@@ -1049,20 +1046,16 @@ class Selector(object):
 
     def __repr__(self):
         """Return a string representation of the data source."""
-        default_repr = super(Selector, self).__repr__()
+        if not self._obj_strings:
+            return '<Selector (no data loaded)>'
 
-        if self._obj_strings:
-            count_of_strings = len(self._obj_strings)
-            sorted_strings = sorted(self._obj_strings)
-            additional_info = 'Data from {0} source{1}:\n {2}'.format(
-                count_of_strings,
-                '' if count_of_strings == 1 else 's',
-                '\n '.join(sorted_strings),
-            )
-        else:
-            additional_info = 'Empty - contains no data.'
+        if len(self._obj_strings) == 1:
+            return '<Selector {0}>'.format(self._obj_strings[0])
 
-        return '{0}\n{1}'.format(default_repr, additional_info)
+        return '<Selector ({0} sources):\n    {1}>'.format(
+            len(self._obj_strings),
+            '\n    '.join(sorted(self._obj_strings)),
+        )
 
     @property
     def fieldnames(self):
