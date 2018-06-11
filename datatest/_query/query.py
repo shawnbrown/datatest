@@ -1038,10 +1038,14 @@ class Selector(object):
     def _append_obj_string(self, obj):
         """Get string for *obj*, limit to one line, and append to list."""
         obj_str = repr(obj)
+        obj_str = ' '.join(obj_str.split())  # Normalize whitespace.
 
-        obj_str = obj_str.strip().replace('\r\n', ' ').replace('\n', ' ')
-        if len(obj_str) > 72:
-            obj_str = '{0}...{1}'.format(obj_str[:64], obj_str[-5:])
+        # Truncate to 61 characters. The limit of 61 was chosen
+        # so that the repr for a single-source Selector will never
+        # exceed 72 characters (61 + len of other repr parts = 72).
+        if len(obj_str) > 61:
+            obj_str = '{0}...{1}'.format(obj_str[:50], obj_str[-8:])
+
         self._obj_strings.append(obj_str)
 
     def __repr__(self):

@@ -1033,6 +1033,17 @@ class TestSelector(unittest.TestCase):
         )
         self.assertEqual(repr(select), expected)
 
+        # Test long repr truncation.
+        select = Selector([
+            ['xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'],
+            ['yyyyyyyyyyyyyyyyyyyyyyyyyyyyyy'],
+        ])
+
+        self.assertEqual(len(repr(select)), 72)
+
+        expected = "<Selector [['xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'], ['yyyyyyyyyyy...yyyyy']]>"
+        self.assertEqual(repr(select), expected)
+
     def test_build_where_clause(self):
         _build_where_clause = Selector._build_where_clause
 
