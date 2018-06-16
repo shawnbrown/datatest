@@ -1,40 +1,40 @@
 state/territory,country_of_birth,pop
-Australian Capital Territory,Australia ,270033
+Australian Capital Territory,Australia,270033
 Australian Capital Territory,China,11351
 Australian Capital Territory,England,12757
 Australian Capital Territory,India,10414
 Australian Capital Territory,New Zealand,4734
 Australian Capital Territory,other/unknown,84310
 Australian Capital Territory,Philippines,3798
-New South Wales,Australia ,4899090
+New South Wales,Australia,4899090
 New South Wales,China,234508
 New South Wales,England,226564
 New South Wales,India,143459
 New South Wales,New Zealand,117136
 New South Wales,other/unknown,1772722
 New South Wales,Philippines,86749
-Northern Territory,Australia ,157531
+Northern Territory,Australia,157531
 Northern Territory,England,5583
 Northern Territory,Greece,1268
 Northern Territory,India,3598
 Northern Territory,New Zealand,4636
 Northern Territory,other/unknown,50303
 Northern Territory,Philippines,5914
-Queensland,Australia ,3343657
+Queensland,Australia,3343657
 Queensland,China,47114
 Queensland,England,180775
 Queensland,India,49145
 Queensland,New Zealand,201206
 Queensland,other/unknown,841165
 Queensland,South Africa,40131
-South Australia,Australia ,1192546
+South Australia,Australia,1192546
 South Australia,China,24610
 South Australia,England,97392
 South Australia,India,27594
 South Australia,Italy,18544
 South Australia,other/unknown,301630
 South Australia,Vietnam,14337
-Tasmania,Australia ,411490
+Tasmania,Australia,411490
 Tasmania,China,3036
 Tasmania,England,18776
 Tasmania,Netherlands,2193
@@ -42,14 +42,14 @@ Tasmania,New Zealand,4977
 Tasmania,other/unknown,67210
 Tasmania,Scotland,2283
 Tasmania,SUBTOTAL,509965
-Victoria,Australia ,3845493
+Victoria,Australia,3845493
 Victoria,China,160652
 Victoria,England,171443
 Victoria,India,169802
 Victoria,New Zealand,93253
 Victoria,other/unknown,1405194
 Victoria,Vietnam,80787
-Western Australia,Australia ,1492842
+Western Australia,Australia,1492842
 Western Australia,England,194163
 Western Australia,India,49385
 Western Australia,New Zealand,79221
