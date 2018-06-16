@@ -90,17 +90,18 @@ the following data files and one of the tests scripts:
     * :download:`test_country_of_birth.py </_static/tutorial/test_country_of_birth.py>` (for Pytest)
     * :download:`test_country_of_birth_unit.py </_static/tutorial/test_country_of_birth_unit.py>` (for Unittest)
 
+
 To run the tests, use the following command:
 
 .. tabs::
 
     .. code-tab:: none Pytest
 
-        pytest test_country_of_birth.py
+        pytest test_country_of_birth.py -x
 
     .. code-tab:: none Unittest
 
-        python -m datatest test_country_of_birth_unit.py
+        python -m datatest test_country_of_birth_unit.py -f
 
 
 ************************
