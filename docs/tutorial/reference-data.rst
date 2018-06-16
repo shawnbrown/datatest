@@ -88,7 +88,7 @@ the following data files and one of the tests scripts:
 * **Summary File:** :download:`estimated_totals.csv </_static/tutorial/estimated_totals.csv>`
 * **Test Script (download one):**
     * :download:`test_country_of_birth.py </_static/tutorial/test_country_of_birth.py>` (for Pytest)
-    * TODO: test_country_of_birth_unit.py (for Unittest)
+    * :download:`test_country_of_birth_unit.py </_static/tutorial/test_country_of_birth_unit.py>` (for Unittest)
 
 To run the tests, use the following command:
 
@@ -128,9 +128,9 @@ for each CSV file):
 
     .. group-tab:: Unittest
 
-        .. code-block:: python
-
-            TODO
+        .. literalinclude:: /_static/tutorial/test_country_of_birth_unit.py
+            :pyobject: setUpModule
+            :lineno-match:
 
 
 1. Field Names
@@ -151,9 +151,10 @@ detailed file against a :py:class:`set` of :attr:`fieldnames
 
     .. group-tab:: Unittest
 
-        .. code-block:: python
+        .. literalinclude:: /_static/tutorial/test_country_of_birth_unit.py
+            :pyobject: TestPopulation.test_columns
+            :lineno-match:
 
-            TODO
 
     .. note::
 
@@ -194,8 +195,19 @@ message:
     .. group-tab:: Unittest
 
         .. code-block:: none
+            :emphasize-lines: 8-10
 
-            TODO
+            ======================================================================
+            FAIL: test_columns (test_country_of_birth_unit.TestPopulation)
+            ----------------------------------------------------------------------
+            Traceback (most recent call last):
+              File "~/Projects/australian_population/test_country_of_birth_unit.py", line 29, in test_columns
+                self.assertValid(detail.fieldnames, required_set)
+            ValidationError: mandatory test failed, stopping early: does not satisfy set membership (3 differences): [
+                Extra('country_of_birth'),
+                Extra('pop'),
+                Missing('population'),
+            ]
 
     The error above indicates that our detailed file is missing the
     column "``population``" and includes some other extra columns.
@@ -244,8 +256,17 @@ Now when we run our tests, we get the following message:
     .. group-tab:: Unittest
 
         .. code-block:: none
+            :emphasize-lines: 8
 
-            TODO
+            ======================================================================
+            FAIL: test_columns (test_country_of_birth_unit.TestPopulation)
+            ----------------------------------------------------------------------
+            Traceback (most recent call last):
+              File "~/Projects/australian_population/test_country_of_birth_unit.py", line 29, in test_columns
+                self.assertValid(detail.fieldnames, required_set)
+            ValidationError: mandatory test failed, stopping early: does not satisfy set membership (1 difference): [
+                Extra('country_of_birth'),
+            ]
 
     The "``country_of_birth``" column is listed as extra but, in this
     case, the difference is valid---a detailed file *should* contain
@@ -266,9 +287,10 @@ a test failure:
 
     .. group-tab:: Unittest
 
-        .. code-block:: python
-
-            TODO
+        .. literalinclude:: /_static/tutorial/modified_test_country_of_birth_unit.py
+            :pyobject: TestPopulation.test_columns
+            :lineno-match:
+            :emphasize-lines: 5
 
 
 2. State/Territory Values
@@ -289,7 +311,10 @@ in our detailed file match the values in the summary file:
 
     .. group-tab:: Unittest
 
-        TODO
+        .. literalinclude:: /_static/tutorial/test_country_of_birth_unit.py
+            :pyobject: TestPopulation.test_states
+            :lineno-match:
+
 
 
 Running our script now gives the folowing message:
@@ -319,7 +344,19 @@ Running our script now gives the folowing message:
 
     .. group-tab:: Unittest
 
-        TODO
+        .. code-block:: none
+            :emphasize-lines: 8
+
+            ======================================================================
+            FAIL: test_states (modified_test_country_of_birth_unit.TestPopulation)
+            ----------------------------------------------------------------------
+            Traceback (most recent call last):
+              File "~/Projects/australian_population/test_country_of_birth_unit.py", line 36, in test_states
+                self.assertValid(data, requirement)
+            ValidationError: does not satisfy set membership (1 difference): [
+                Missing('Jervis Bay Territory'),
+            ]
+
 
     Above, we can see that our detailed file is missing
     "``Jervis Bay Territory``". Jervis Bay Territory is a very
@@ -343,7 +380,10 @@ going to allow this omission with the following change:
 
     .. group-tab:: Unittest
 
-        TODO
+        .. literalinclude:: /_static/tutorial/modified_test_country_of_birth_unit.py
+            :pyobject: TestPopulation.test_states
+            :lineno-match:
+            :emphasize-lines: 5-7,9
 
 
 3. Population Sums
@@ -364,7 +404,9 @@ file:
 
     .. group-tab:: Unittest
 
-        TODO
+        .. literalinclude:: /_static/tutorial/test_country_of_birth_unit.py
+            :pyobject: TestPopulation.test_population
+            :lineno-start: 46
 
 
 Running this test gives the following message:
@@ -403,7 +445,26 @@ Running this test gives the following message:
 
     .. group-tab:: Unittest
 
-        TODO
+        .. code-block:: none
+            :emphasize-lines: 8-16
+
+            ======================================================================
+            FAIL: test_population (modified_test_country_of_birth_unit.TestPopulation)
+            ----------------------------------------------------------------------
+            Traceback (most recent call last):
+              File "~/Projects/australian_population/test_country_of_birth_unit.py", line 47, in test_population
+                self.assertValid(data, requirement)
+            ValidationError: does not satisfy mapping requirement (9 differences): {
+                'Australian Capital Territory': Deviation(+7612, 389785),
+                'Jervis Bay Territory': Deviation(-388, 388),
+                'New South Wales': Deviation(-27122, 7507350),
+                'Northern Territory': Deviation(+2421, 226412),
+                'Queensland': Deviation(-18310, 4721503),
+                'South Australia': Deviation(+39328, 1637325),
+                'Tasmania': Deviation(+505685, 514245),
+                'Victoria': Deviation(+77294, 5849330),
+                'Western Australia': Deviation(+23030, 2451380),
+            }
 
     Above, we see the deviations between the values in our detailed
     file and values in the summary file. Because these two files were
@@ -439,7 +500,16 @@ in our tests, we will allow a percent error of ±3%:
 
     .. group-tab:: Unittest
 
-        TODO
+        .. code-block:: python
+            :lineno-start: 43
+            :emphasize-lines: 5
+
+            def test_population(self):
+                data = detail({'state/territory': 'population'}).sum()
+                requirement = summary({'state/territory': 'population'}).sum()
+
+                with self.allowedPercent(0.03):  # <- Allow +/- 3%
+                    self.assertValid(data, requirement)
 
 
 Rerunning our script with this new allowance gives the following message:
@@ -471,7 +541,19 @@ Rerunning our script with this new allowance gives the following message:
 
     .. group-tab:: Unittest
 
-        TODO
+        .. code-block:: none
+            :emphasize-lines: 8-9
+
+            ======================================================================
+            FAIL: test_population (test_country_of_birth_unit.TestPopulation)
+            ----------------------------------------------------------------------
+            Traceback (most recent call last):
+              File "~/Projects/australian_population/test_country_of_birth_unit.py", line 48, in test_population
+                self.assertValid(data, requirement)
+            ValidationError: does not satisfy mapping requirement (2 differences): {
+                'Jervis Bay Territory': Deviation(-388, 388),
+                'Tasmania': Deviation(+505685, 514245),
+            }
 
 
 In a previous test, we established that Jervis Bay Territory is
@@ -489,9 +571,10 @@ explicitly:
 
     .. group-tab:: Unittest
 
-        .. code-block:: python
-
-            TODO
+        .. literalinclude:: /_static/tutorial/modified_test_country_of_birth_unit.py
+            :pyobject: TestPopulation.test_population
+            :lineno-match:
+            :emphasize-lines: 5-7,9
 
 
 Running the test script again gives us one final difference to address:
@@ -527,9 +610,18 @@ Running the test script again gives us one final difference to address:
 
     .. group-tab:: Unittest
 
-        .. code-block:: python
+        .. code-block:: none
+            :emphasize-lines: 8
 
-            TODO
+            ======================================================================
+            FAIL: test_population (test_country_of_birth_unit.TestPopulation)
+            ----------------------------------------------------------------------
+            Traceback (most recent call last):
+              File "~/Projects/australian_population/test_country_of_birth_unit.py", line 52, in test_population
+                self.assertValid(data, requirement)
+            ValidationError: does not satisfy mapping requirement (1 difference): {
+                'Tasmania': Deviation(+505685, 514245),
+            }
 
 
 In our detailed file, the population for Tasmania exceeds the expected
@@ -566,7 +658,7 @@ the tests as passing:
 
             ============================= test session starts ==============================
             platform linux -- Python 3.6.5, pytest-3.6.0, py-1.5.3, pluggy-0.6.0
-            rootdir: ~/Projects/australian_demographics, inifile:
+            rootdir: ~/Projects/australian_population, inifile:
             plugins: datatest-0.1.2
             collected 3 items
 
@@ -576,7 +668,16 @@ the tests as passing:
 
     .. group-tab:: Unittest
 
-        TODO
+        .. code-block:: none
+
+            ======================================================================
+            ~/Projects/australian_population/test_country_of_birth_unit.py
+            ...
+            ----------------------------------------------------------------------
+            Ran 3 tests in 0.042s
+
+            OK
+
 
 If you're having trouble replicating the steps above, you can check
 your work against the following files:
@@ -584,4 +685,4 @@ your work against the following files:
 * **Detailed File (cleaned):** :download:`modified_country_of_birth.csv </_static/tutorial/modified_country_of_birth.csv>`
 * **Test Script (with allowances):**
     * :download:`modified_test_country_of_birth.py </_static/tutorial/modified_test_country_of_birth.py>` (for Pytest)
-    * TODO: modified_test_country_of_birth_unit.py (for Unittest)
+    * :download:`modified_test_country_of_birth_unit.py </_static/tutorial/modified_test_country_of_birth_unit.py>` (for Unittest)
