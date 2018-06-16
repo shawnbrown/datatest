@@ -201,7 +201,7 @@ message:
             FAIL: test_columns (test_country_of_birth_unit.TestPopulation)
             ----------------------------------------------------------------------
             Traceback (most recent call last):
-              File "~/Projects/australian_population/test_country_of_birth_unit.py", line 29, in test_columns
+              File "~/australian_population/test_country_of_birth_unit.py", line 29, in test_columns
                 self.assertValid(detail.fieldnames, required_set)
             ValidationError: mandatory test failed, stopping early: does not satisfy set membership (3 differences): [
                 Extra('country_of_birth'),
@@ -262,7 +262,7 @@ Now when we run our tests, we get the following message:
             FAIL: test_columns (test_country_of_birth_unit.TestPopulation)
             ----------------------------------------------------------------------
             Traceback (most recent call last):
-              File "~/Projects/australian_population/test_country_of_birth_unit.py", line 29, in test_columns
+              File "~/australian_population/test_country_of_birth_unit.py", line 29, in test_columns
                 self.assertValid(detail.fieldnames, required_set)
             ValidationError: mandatory test failed, stopping early: does not satisfy set membership (1 difference): [
                 Extra('country_of_birth'),
@@ -351,7 +351,7 @@ Running our script now gives the folowing message:
             FAIL: test_states (modified_test_country_of_birth_unit.TestPopulation)
             ----------------------------------------------------------------------
             Traceback (most recent call last):
-              File "~/Projects/australian_population/test_country_of_birth_unit.py", line 36, in test_states
+              File "~/australian_population/test_country_of_birth_unit.py", line 36, in test_states
                 self.assertValid(data, requirement)
             ValidationError: does not satisfy set membership (1 difference): [
                 Missing('Jervis Bay Territory'),
@@ -452,7 +452,7 @@ Running this test gives the following message:
             FAIL: test_population (modified_test_country_of_birth_unit.TestPopulation)
             ----------------------------------------------------------------------
             Traceback (most recent call last):
-              File "~/Projects/australian_population/test_country_of_birth_unit.py", line 47, in test_population
+              File "~/australian_population/test_country_of_birth_unit.py", line 47, in test_population
                 self.assertValid(data, requirement)
             ValidationError: does not satisfy mapping requirement (9 differences): {
                 'Australian Capital Territory': Deviation(+7612, 389785),
@@ -548,7 +548,7 @@ Rerunning our script with this new allowance gives the following message:
             FAIL: test_population (test_country_of_birth_unit.TestPopulation)
             ----------------------------------------------------------------------
             Traceback (most recent call last):
-              File "~/Projects/australian_population/test_country_of_birth_unit.py", line 48, in test_population
+              File "~/australian_population/test_country_of_birth_unit.py", line 48, in test_population
                 self.assertValid(data, requirement)
             ValidationError: does not satisfy mapping requirement (2 differences): {
                 'Jervis Bay Territory': Deviation(-388, 388),
@@ -617,7 +617,7 @@ Running the test script again gives us one final difference to address:
             FAIL: test_population (test_country_of_birth_unit.TestPopulation)
             ----------------------------------------------------------------------
             Traceback (most recent call last):
-              File "~/Projects/australian_population/test_country_of_birth_unit.py", line 52, in test_population
+              File "~/australian_population/test_country_of_birth_unit.py", line 52, in test_population
                 self.assertValid(data, requirement)
             ValidationError: does not satisfy mapping requirement (1 difference): {
                 'Tasmania': Deviation(+505685, 514245),
@@ -658,7 +658,7 @@ the tests as passing:
 
             ============================= test session starts ==============================
             platform linux -- Python 3.6.5, pytest-3.6.0, py-1.5.3, pluggy-0.6.0
-            rootdir: ~/Projects/australian_population, inifile:
+            rootdir: ~/australian_population, inifile:
             plugins: datatest-0.1.2
             collected 3 items
 
@@ -671,7 +671,7 @@ the tests as passing:
         .. code-block:: none
 
             ======================================================================
-            ~/Projects/australian_population/test_country_of_birth_unit.py
+            ~/australian_population/test_country_of_birth_unit.py
             ...
             ----------------------------------------------------------------------
             Ran 3 tests in 0.042s
