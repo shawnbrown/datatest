@@ -105,10 +105,9 @@ exclude_patterns = ['_build']
 #show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'default'
+#pygments_style = 'default'
 #pygments_style = 'sphinx'
-#pygments_style = 'perldoc'
-#pygments_style = 'trac'
+pygments_style = 'trac'
 
 # A list of ignored prefixes for module index sorting.
 #modindex_common_prefix = []
