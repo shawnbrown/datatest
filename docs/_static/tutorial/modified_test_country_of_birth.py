@@ -31,7 +31,7 @@ def test_columns(detail, summary):
         validate(detail.fieldnames, required_set)
 
 
-def test_states(detail, summary):
+def test_state_labels(detail, summary):
     data = detail({'state/territory'})
     requirement = summary({'state/territory'})
 
@@ -43,7 +43,16 @@ def test_states(detail, summary):
         validate(data, requirement)
 
 
-def test_population(detail, summary):
+def test_population_format(detail):
+    data = detail({'population'})
+
+    def integer_format(x):  # <- Helper function.
+        return str(x).isdecimal()
+
+    validate(data, integer_format)
+
+
+def test_population_sums(detail, summary):
     data = detail({'state/territory': 'population'}).sum()
     requirement = summary({'state/territory': 'population'}).sum()
 

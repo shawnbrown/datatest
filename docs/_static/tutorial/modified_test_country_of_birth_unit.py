@@ -29,7 +29,7 @@ class TestPopulation(DataTestCase):
         with self.allowedExtra():
             self.assertValid(detail.fieldnames, required_set)
 
-    def test_states(self):
+    def test_state_labels(self):
         data = detail({'state/territory'})
         requirement = summary({'state/territory'})
 
@@ -40,7 +40,15 @@ class TestPopulation(DataTestCase):
         with omitted_territory:
             self.assertValid(data, requirement)
 
-    def test_population(self):
+    def test_population_format(self):
+        data = detail({'population'})
+
+        def integer_format(x):  # <- Helper function.
+            return str(x).isdecimal()
+
+        self.assertValid(data, integer_format)
+
+    def test_population_sums(self):
         data = detail({'state/territory': 'population'}).sum()
         requirement = summary({'state/territory': 'population'}).sum()
 

@@ -225,7 +225,13 @@ that the column "``pop``" is obviously the population column:
 
 
 We fix this by replacing "``pop``" with "``population``" and saving
-our changes.
+our changes:
+
+.. literalinclude:: /_static/tutorial/modified_country_of_birth.csv
+    :language: none
+    :lineno-match:
+    :lines: 1-4
+    :emphasize-lines: 1
 
 
 Now when we run our tests, we get the following message:
@@ -247,7 +253,7 @@ Now when we run our tests, we get the following message:
                     required_set = set(summary.fieldnames)
 
             >       validate(detail.fieldnames, required_set)
-            E       ValidationError: does not satisfy set membership (2 differences): [
+            E       ValidationError: does not satisfy set membership (1 difference): [
                         Extra('country_of_birth'),
                     ]
 
@@ -270,8 +276,8 @@ Now when we run our tests, we get the following message:
             ]
 
     The "``country_of_birth``" column is listed as extra but, in this
-    case, the difference is valid---a detailed file *should* contain
-    more columns than a summary file.
+    case, the difference is not a problem---a detailed file *should*
+    contain more columns than a summary file.
 
 
 To handle this, we add an "allowance" so the extra column won't trigger
@@ -294,7 +300,7 @@ a test failure:
             :emphasize-lines: 5
 
 
-2. State/Territory Values
+2. State/Territory Labels
 =========================
 
 Now that the column names have been fixed, we can start
@@ -307,15 +313,14 @@ in our detailed file match the values in the summary file:
     .. group-tab:: Pytest
 
         .. literalinclude:: /_static/tutorial/test_country_of_birth.py
-            :pyobject: test_states
+            :pyobject: test_state_labels
             :lineno-match:
 
     .. group-tab:: Unittest
 
         .. literalinclude:: /_static/tutorial/test_country_of_birth_unit.py
-            :pyobject: TestPopulation.test_states
+            :pyobject: TestPopulation.test_state_labels
             :lineno-match:
-
 
 
 Running our script now gives the folowing message:
@@ -327,12 +332,12 @@ Running our script now gives the folowing message:
         .. code-block:: none
             :emphasize-lines: 12
 
-            _________________________________ test_states __________________________________
+            ______________________________ test_state_labels _______________________________
 
             detail = <Selector 'country_of_birth.csv'>
             summary = <Selector 'estimated_totals.csv'>
 
-                def test_states(detail, summary):
+                def test_state_labels(detail, summary):
                     data = detail({'state/territory'})
                     requirement = summary({'state/territory'})
 
@@ -349,10 +354,10 @@ Running our script now gives the folowing message:
             :emphasize-lines: 8
 
             ======================================================================
-            FAIL: test_states (modified_test_country_of_birth_unit.TestPopulation)
+            FAIL: test_state_labels (test_country_of_birth_unit.TestPopulation)
             ----------------------------------------------------------------------
             Traceback (most recent call last):
-              File "~/australian_population/test_country_of_birth_unit.py", line 36, in test_states
+              File "~/australian_population/test_country_of_birth_unit.py", line 36, in test_state_labels
                 self.assertValid(data, requirement)
             ValidationError: does not satisfy set membership (1 difference): [
                 Missing('Jervis Bay Territory'),
@@ -375,19 +380,102 @@ going to allow this omission with the following change:
     .. group-tab:: Pytest
 
         .. literalinclude:: /_static/tutorial/modified_test_country_of_birth.py
-            :pyobject: test_states
+            :pyobject: test_state_labels
             :lineno-match:
             :emphasize-lines: 5-7,9
 
     .. group-tab:: Unittest
 
         .. literalinclude:: /_static/tutorial/modified_test_country_of_birth_unit.py
-            :pyobject: TestPopulation.test_states
+            :pyobject: TestPopulation.test_state_labels
             :lineno-match:
             :emphasize-lines: 5-7,9
 
 
-3. Population Sums
+3. Population Format
+====================
+
+Before comparing sums, we will make sure that the population values
+in our file are well-formed:
+
+.. tabs::
+
+    .. group-tab:: Pytest
+
+        .. literalinclude:: /_static/tutorial/modified_test_country_of_birth.py
+            :pyobject: test_population_format
+            :lineno-match:
+
+    .. group-tab:: Unittest
+
+        .. literalinclude:: /_static/tutorial/modified_test_country_of_birth_unit.py
+            :pyobject: TestPopulation.test_population_format
+            :lineno-match:
+
+
+This test raises the following message:
+
+.. tabs::
+
+    .. group-tab:: Pytest
+
+        .. code-block:: none
+            :emphasize-lines: 13
+
+            ____________________________ test_population_format ____________________________
+
+            detail = <Selector 'country_of_birth.csv'>
+
+                def test_population_format(detail):
+                    data = detail({'population'})
+
+                    def integer_format(x):  # <- Helper function.
+                        return str(x).isdecimal()
+
+            >       validate(data, integer_format)
+            E       ValidationError: does not satisfy 'integer_format' (1 difference): [
+                        Invalid('England,97392'),
+                    ]
+
+            test_country_of_birth.py:52: ValidationError
+
+    .. group-tab:: Unittest
+
+        .. code-block:: none
+            :emphasize-lines: 8
+
+            ======================================================================
+            FAIL: test_population_format (test_country_of_birth_unit.TestPopulation)
+            ----------------------------------------------------------------------
+            Traceback (most recent call last):
+              File "~/australian_population/test_country_of_birth_unit.py", line 49, in test_population_format
+                self.assertValid(data, integer_format)
+            ValidationError: does not satisfy 'integer_format' (1 difference): [
+                Invalid('England,97392'),
+            ]
+
+
+In our **country_of_birth.csv** file, we can see that the "population"
+column contains a value that reads ``"England,97392"``:
+
+.. literalinclude:: /_static/tutorial/country_of_birth.csv
+    :language: none
+    :lineno-match:
+    :lines: 30-34
+    :emphasize-lines: 3
+
+
+We can correct this by changing the value to ``97392`` and saving
+our changes:
+
+.. literalinclude:: /_static/tutorial/modified_country_of_birth.csv
+    :language: none
+    :lineno-match:
+    :lines: 30-34
+    :emphasize-lines: 3
+
+
+4. Population Sums
 ==================
 
 To check the totals, we sum the population values by state for
@@ -400,14 +488,14 @@ file:
     .. group-tab:: Pytest
 
         .. literalinclude:: /_static/tutorial/test_country_of_birth.py
-            :pyobject: test_population
-            :lineno-start: 46
+            :pyobject: test_population_sums
+            :lineno-start: 55
 
     .. group-tab:: Unittest
 
         .. literalinclude:: /_static/tutorial/test_country_of_birth_unit.py
-            :pyobject: TestPopulation.test_population
-            :lineno-start: 46
+            :pyobject: TestPopulation.test_population_sums
+            :lineno-start: 51
 
 
 Running this test gives the following message:
@@ -419,12 +507,12 @@ Running this test gives the following message:
         .. code-block:: none
             :emphasize-lines: 12-20
 
-            _______________________________ test_population ________________________________
+            _____________________________ test_population_sums _____________________________
 
             detail = <Selector 'country_of_birth.csv'>
             summary = <Selector 'estimated_totals.csv'>
 
-                def test_population(detail, summary):
+                def test_population_sums(detail, summary):
                     data = detail({'state/territory': 'population'}).sum()
                     requirement = summary({'state/territory': 'population'}).sum()
 
@@ -442,7 +530,7 @@ Running this test gives the following message:
             E
             E       ...Full output truncated, use '-vv' to show
 
-            test_country_of_birth.py:50: ValidationError
+            test_country_of_birth.py:59: ValidationError
 
     .. group-tab:: Unittest
 
@@ -450,10 +538,10 @@ Running this test gives the following message:
             :emphasize-lines: 8-16
 
             ======================================================================
-            FAIL: test_population (modified_test_country_of_birth_unit.TestPopulation)
+            FAIL: test_population_sums (test_country_of_birth_unit.TestPopulation)
             ----------------------------------------------------------------------
             Traceback (most recent call last):
-              File "~/australian_population/test_country_of_birth_unit.py", line 47, in test_population
+              File "~/australian_population/test_country_of_birth_unit.py", line 55, in test_population_sums
                 self.assertValid(data, requirement)
             ValidationError: does not satisfy mapping requirement (9 differences): {
                 'Australian Capital Territory': Deviation(+7612, 389785),
@@ -489,10 +577,10 @@ in our tests, we will allow a percent error of ±3%:
     .. group-tab:: Pytest
 
         .. code-block:: python
-            :lineno-start: 46
+            :lineno-start: 55
             :emphasize-lines: 5
 
-            def test_population(detail, summary):
+            def test_population_sums(detail, summary):
                 data = detail({'state/territory': 'population'}).sum()
                 requirement = summary({'state/territory': 'population'}).sum()
 
@@ -502,10 +590,10 @@ in our tests, we will allow a percent error of ±3%:
     .. group-tab:: Unittest
 
         .. code-block:: python
-            :lineno-start: 43
+            :lineno-start: 51
             :emphasize-lines: 5
 
-            def test_population(self):
+            def test_population_sums(self):
                 data = detail({'state/territory': 'population'}).sum()
                 requirement = summary({'state/territory': 'population'}).sum()
 
@@ -522,12 +610,12 @@ Rerunning our script with this new allowance gives the following message:
         .. code-block:: none
             :emphasize-lines: 13-14
 
-            _______________________________ test_population ________________________________
+            _____________________________ test_population_sums _____________________________
 
             detail = <Selector 'country_of_birth.csv'>
             summary = <Selector 'estimated_totals.csv'>
 
-                def test_population(detail, summary):
+                def test_population_sums(detail, summary):
                     data = detail({'state/territory': 'population'}).sum()
                     requirement = summary({'state/territory': 'population'}).sum()
 
@@ -538,7 +626,7 @@ Rerunning our script with this new allowance gives the following message:
                             'Tasmania': Deviation(+505685, 514245),
                         }
 
-            test_country_of_birth.py:51: ValidationError
+            test_country_of_birth.py:60: ValidationError
 
     .. group-tab:: Unittest
 
@@ -546,10 +634,10 @@ Rerunning our script with this new allowance gives the following message:
             :emphasize-lines: 8-9
 
             ======================================================================
-            FAIL: test_population (test_country_of_birth_unit.TestPopulation)
+            FAIL: test_population_sums (test_country_of_birth_unit.TestPopulation)
             ----------------------------------------------------------------------
             Traceback (most recent call last):
-              File "~/australian_population/test_country_of_birth_unit.py", line 48, in test_population
+              File "~/australian_population/test_country_of_birth_unit.py", line 56, in test_population_sums
                 self.assertValid(data, requirement)
             ValidationError: does not satisfy mapping requirement (2 differences): {
                 'Jervis Bay Territory': Deviation(-388, 388),
@@ -566,14 +654,14 @@ explicitly:
     .. group-tab:: Pytest
 
         .. literalinclude:: /_static/tutorial/modified_test_country_of_birth.py
-            :pyobject: test_population
+            :pyobject: test_population_sums
             :lineno-match:
             :emphasize-lines: 5-7,9
 
     .. group-tab:: Unittest
 
         .. literalinclude:: /_static/tutorial/modified_test_country_of_birth_unit.py
-            :pyobject: TestPopulation.test_population
+            :pyobject: TestPopulation.test_population_sums
             :lineno-match:
             :emphasize-lines: 5-7,9
 
@@ -587,12 +675,12 @@ Running the test script again gives us one final difference to address:
         .. code-block:: none
             :emphasize-lines: 17
 
-            _______________________________ test_population ________________________________
+            _____________________________ test_population_sums _____________________________
 
             detail = <Selector 'country_of_birth.csv'>
             summary = <Selector 'estimated_totals.csv'>
 
-                def test_population(detail, summary):
+                def test_population_sums(detail, summary):
                     data = detail({'state/territory': 'population'}).sum()
                     requirement = summary({'state/territory': 'population'}).sum()
 
@@ -600,14 +688,13 @@ Running the test script again gives us one final difference to address:
                         'Jervis Bay Territory': Deviation(-388, 388),
                     })
 
-                    with allowed.percent(0.05) | omitted_territory:
+                    with allowed.percent(0.03) | omitted_territory:
             >           validate(data, requirement)
             E           ValidationError: does not satisfy mapping requirement (1 difference): {
                             'Tasmania': Deviation(+505685, 514245),
                         }
 
-            test_country_of_birth.py:55: ValidationError
-
+            test_country_of_birth.py:64: ValidationError
 
     .. group-tab:: Unittest
 
@@ -615,10 +702,10 @@ Running the test script again gives us one final difference to address:
             :emphasize-lines: 8
 
             ======================================================================
-            FAIL: test_population (test_country_of_birth_unit.TestPopulation)
+            FAIL: test_population_sums (test_country_of_birth_unit.TestPopulation)
             ----------------------------------------------------------------------
             Traceback (most recent call last):
-              File "~/australian_population/test_country_of_birth_unit.py", line 52, in test_population
+              File "~/australian_population/test_country_of_birth_unit.py", line 60, in test_population_sums
                 self.assertValid(data, requirement)
             ValidationError: does not satisfy mapping requirement (1 difference): {
                 'Tasmania': Deviation(+505685, 514245),
@@ -630,8 +717,9 @@ count by 505,685. Since the expected value is 514,245, this means that
 the total count in our detailed file is almost *twice* as large as it
 should be (505,685 + 514,245 = 1,019,930).
 
-Looking in our **country_of_birth.csv** file, we can see that
-the records for Tasmania include a row with a "SUBTOTAL":
+Looking at the rows for Tasmania in our **country_of_birth.csv**
+file, we can see that there's an extra "``SUBTOTAL``" record. With this
+extra record, our file is double-counting the population in Tasmania:
 
 .. literalinclude:: /_static/tutorial/country_of_birth.csv
     :language: none
@@ -639,12 +727,15 @@ the records for Tasmania include a row with a "SUBTOTAL":
     :lines: 36-45
     :emphasize-lines: 9
 
-With this "SUBTOTAL" row, our file is double-counting the population
-in Tasmania. To correct the issue, we simply delete this row and
-save our changes.
+To correct the issue, we simply delete this row and save our changes:
+
+.. literalinclude:: /_static/tutorial/modified_country_of_birth.csv
+    :language: none
+    :lineno-match:
+    :lines: 36-44
 
 
-4. Clean Data
+5. Clean Data
 =============
 
 By stepping through our tests one failure at a time, we have
@@ -657,15 +748,15 @@ the tests as passing:
 
         .. code-block:: none
 
-            ============================= test session starts ==============================
+            =========================== test session starts ============================
             platform linux -- Python 3.6.5, pytest-3.6.0, py-1.5.3, pluggy-0.6.0
-            rootdir: ~/australian_population, inifile:
+            rootdir: /home/sbrown/Projects/datatest_project, inifile:
             plugins: datatest-0.1.2
-            collected 3 items
+            collected 4 items
 
-            test_country_of_birth.py ...                                          [100%]
+            test_country_of_birth.py ....                                        [100%]
 
-            =========================== 3 passed in 0.15 seconds ===========================
+            ========================= 4 passed in 0.14 seconds =========================
 
     .. group-tab:: Unittest
 
@@ -673,9 +764,9 @@ the tests as passing:
 
             ======================================================================
             ~/australian_population/test_country_of_birth_unit.py
-            ...
+            ....
             ----------------------------------------------------------------------
-            Ran 3 tests in 0.042s
+            Ran 4 tests in 0.045s
 
             OK
 
