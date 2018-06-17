@@ -593,12 +593,12 @@ in our tests, we will allow a percent error of ±3%:
             :lineno-start: 51
             :emphasize-lines: 5
 
-            def test_population_sums(self):
-                data = detail({'state/territory': 'population'}).sum()
-                requirement = summary({'state/territory': 'population'}).sum()
+                def test_population_sums(self):
+                    data = detail({'state/territory': 'population'}).sum()
+                    requirement = summary({'state/territory': 'population'}).sum()
 
-                with self.allowedPercent(0.03):  # <- Allow +/- 3%
-                    self.assertValid(data, requirement)
+                    with self.allowedPercent(0.03):  # <- Allow +/- 3%
+                        self.assertValid(data, requirement)
 
 
 Rerunning our script with this new allowance gives the following message:
