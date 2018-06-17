@@ -31,4 +31,3 @@ How-to Guide
     Avoid Excel Formatting <excel-formatting>
     Customize Errors <customize-errors>
     Detect Outliers <detect-outliers>
-    Compare Two Files <compare-files>
