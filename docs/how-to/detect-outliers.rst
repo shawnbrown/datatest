@@ -11,9 +11,10 @@ How to Detect Outliers
 ######################
 
 To detect outliers, we can use a "factory function" to build appropriate
-predicates for validating data. The following code uses this approach to
-implement the *Tukey fence* method for outlier labeling:
+predicates for testing. The code below uses this approach to implement
+the *Tukey fence* method for outlier labeling.
 
+You can copy the following function to use in your own tests:
 
 .. code-block:: python
 
@@ -22,7 +23,7 @@ implement the *Tukey fence* method for outlier labeling:
 
 
     def make_outlier_check(obj, multiplier=2.2):
-        """Makes outlier check using Tukey fence/interquartile method.
+        """Makes outlier detector using Tukey fence/interquartile method.
 
         Default multiplier of 2.2 based on "Fine-Tuning Some Resistant
         Rules for Outlier Labeling" by Hoaglin and Iglewicz (1987).
@@ -42,6 +43,29 @@ implement the *Tukey fence* method for outlier labeling:
         query = datatest.Query.from_object(obj)
         return query.apply(predicate_factory)
 
+
+.. note::
+
+    The code above relies on :py:func:`statistics.median` which is new
+    in Python 3.4. If you are running an older version of Python, you
+    can use the following ``median()`` function instead:
+
+    .. code-block:: python
+
+        def median(iterable):
+            values = sorted(iterable)
+            index = (len(values) - 1) / 2.0
+            if index % 1:
+                lower = int(index - 0.5)
+                upper = int(index + 0.5)
+                return (values[lower] + values[upper]) / 2.0
+            return values[int(index)]
+
+
+Example Usage
+=============
+
+Use of ``make_outlier_check()`` is demonstrated below:
 
 .. tabs::
 
@@ -94,29 +118,12 @@ implement the *Tukey fence* method for outlier labeling:
                     self.assertValid(data, outlier_check)
 
 
-In ``make_outlier_check()``, we use :meth:`Query.apply` to build a separate
-predicate for each group of values. In the case of ``test_outliers1()``,
-there is only one group so this creates one predicate function. But
-in ``test_outliers2()``, this creates two separate predicates---with
-lower and upper fences appropriate to each group of values.
+The function builds separate predicates for each group of values. In
+the case of ``test_outliers1()``, there is only one group so it builds
+one predicate function. But in ``test_outliers2()``, it builds two
+separate predicates---with lower and upper fences appropriate to each
+group of values.
 
-
-.. note::
-
-    The previous code relies on :py:func:`statistics.median` which
-    is new in Python 3.4. But if you are running an older version of
-    Python, you can use the following ``median()`` function instead:
-
-    .. code-block:: python
-
-        def median(iterable):
-            values = sorted(iterable)
-            index = (len(values) - 1) / 2.0
-            if index % 1:
-                lower = int(index - 0.5)
-                upper = int(index + 0.5)
-                return (values[lower] + values[upper]) / 2.0
-            return values[int(index)]
 
 ..
     https://www.itl.nist.gov/div898/handbook/eda/section3/eda35h.htm
