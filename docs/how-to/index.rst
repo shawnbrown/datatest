@@ -23,6 +23,7 @@ How-to Guide
     Assert Data Types <data-types>
     Assert an Interval <interval-compare>
     Assert Date Formats <date-format>
+    Assert Phone Numbers <phone-format>
     Assert Subsets and Supersets <subset-superset>
     Assert File Names <file-names>
     Assert Column Names <column-names>
