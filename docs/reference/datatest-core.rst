@@ -20,6 +20,8 @@ Validation
 .. autofunction:: valid
 
 
+.. _failure-docs:
+
 ********
 Failures
 ********

@@ -29,20 +29,10 @@ Validation
         The :func:`validate` function checks that the *data* under
         test satisfies a given *requirement*:
 
-        .. code-block:: python
+        .. literalinclude:: /_static/tutorial/test_intro1.py
+            :lines: 4-13
+            :lineno-match:
             :emphasize-lines: 10
-
-            from datatest import validate
-
-
-            def test_set_membership():
-
-                data = ['A', 'B', 'A']
-
-                requirement = {'A', 'B'}
-
-                validate(data, requirement)
-
 
     .. group-tab:: Unittest
 
@@ -50,119 +40,102 @@ Validation
         method checks that the *data* under test satisfies a given
         *requirement*:
 
-        .. code-block:: python
+        .. literalinclude:: /_static/tutorial/test_intro1_unit.py
+            :lines: 4-15
+            :lineno-match:
             :emphasize-lines: 12
 
-            from datatest import DataTestCase
+    In the example above, the requirement is a :py:class:`set`, so the
+    data is validated by checking for membership in this set.
 
 
-            class MyTest(DataTestCase):
-
-                def test_set_membership(self):
-
-                    data = ['A', 'B', 'A']
-
-                    requirement = {'A', 'B'}
-
-                    self.assertValid(data, requirement)
+**The requirement's type determines how the data is validated---changing
+the type will change the method of validation.**
 
 
-In the example above, the requirement is a :py:class:`set`, so the data
-is validated by checking for membership in this set.
+When *requirement* is a **function**, data is valid when the function
+returns True:
 
-The requirement's type determines how the data is validated---changing
-the type will change the method of validation.
+.. tabs::
 
-When *requirement* is a function, data is valid when the function
-returns True. When *requirement* is a regular expression pattern, data
-is valid when it matches the given pattern. For a complete list of
-available types and behaviors, see :ref:`predicate-docs`.
+    .. group-tab:: Pytest
 
-A few examples follow:
+        .. literalinclude:: /_static/tutorial/test_intro1.py
+            :pyobject: test_using_function
+            :lineno-match:
+
+    .. group-tab:: Unittest
+
+        .. literalinclude:: /_static/tutorial/test_intro1_unit.py
+            :pyobject: ExampleTests.test_using_function
+            :lineno-match:
+
+
+When *requirement* is a **type**, data is valid when values are
+instances of the given type:
+
+.. tabs::
+
+    .. group-tab:: Pytest
+
+        .. literalinclude:: /_static/tutorial/test_intro1.py
+            :pyobject: test_using_type
+            :lineno-match:
+
+    .. group-tab:: Unittest
+
+        .. literalinclude:: /_static/tutorial/test_intro1_unit.py
+            :pyobject: ExampleTests.test_using_type
+            :lineno-match:
+
+
+When *requirement* is a **regular expression** pattern, data
+is valid when it matches the given pattern:
+
+.. tabs::
+
+    .. group-tab:: Pytest
+
+        .. literalinclude:: /_static/tutorial/test_intro1.py
+            :pyobject: test_using_regex
+            :lineno-match:
+
+    .. group-tab:: Unittest
+
+        .. literalinclude:: /_static/tutorial/test_intro1_unit.py
+            :pyobject: ExampleTests.test_using_regex
+            :lineno-match:
+
+
+For a complete list of available types and behaviors, see :ref:`predicate-docs`.
 
 
 .. tabs::
 
     .. group-tab:: Pytest
 
-        .. code-block:: python
+        Download a collection of examples:
 
-            from datatest import validate
+            :download:`test_intro1.py </_static/tutorial/test_intro1.py>`
 
-            ...
-
-            def test_using_function():
-                """Check that function returns True."""
-                data = [2, 4, 6, 8]
-
-                def iseven(x):
-                    return x % 2 == 0
-
-                validate(data, iseven)
-
-
-            def test_using_type():
-                """Check that values are of the given type."""
-                data = [0.0, 1.0, 2.0]
-                validate(data, float)
-
-
-            def test_using_regex():
-                """Check that values match the given pattern."""
-                data = ['bake', 'cake', 'bake']
-                regex = re.compile('[bc]ake')
-                validate(data, regex)
-
-            ...
-
-        You can download the full set of examples
-        (:download:`test_intro1.py </_static/test_intro1.py>`)
-        and run them with the following command:
+        Run them with the following command:
 
         .. code-block:: none
 
             pytest test_intro1.py
 
+
     .. group-tab:: Unittest
 
-        .. code-block:: python
+        Download a collection of examples:
 
-            from datatest import DataTestCase
+            :download:`test_intro1_unit.py </_static/tutorial/test_intro1_unit.py>`
 
+        Run them with the following command:
 
-            class MyTests(DataTestCase):
+            .. code-block:: none
 
-                ...
-
-                def test_using_function(self):
-                    """Check that function returns True."""
-                    data = [2, 4, 6, 8]
-
-                    def iseven(x):
-                        return x % 2 == 0
-
-                    self.assertValid(data, iseven)
-
-                def test_using_type(self):
-                    """Check that values are of the given type."""
-                    data = [0.0, 1.0, 2.0]
-                    self.assertValid(data, float)
-
-                def test_using_regex(self):
-                    """Check that values match the given pattern."""
-                    data = ['bake', 'cake', 'bake']
-                    regex = re.compile('[bc]ake')
-                    self.assertValid(data, regex)
-
-                ...
-
-        You can download the full set of examples
-        (:download:`test_intro1unit.py </_static/test_intro1unit.py>`)
-        and run them with the following command:
-
-        .. code-block:: none
-
-            python -m datatest test_intro1unit.py
+                python -m datatest test_intro1_unit.py
 
 
 ********
@@ -183,19 +156,9 @@ of the set:
 
     .. group-tab:: Pytest
 
-        .. code-block:: python
-
-            from datatest import validate
-
-
-            def test_set_membership():
-
-                data = ['A', 'B', 'C']
-
-                requirement = {'A', 'B'}
-
-                validate(data, requirement)
-
+        .. literalinclude:: /_static/tutorial/test_intro2.py
+            :lines: 4-14
+            :lineno-match:
 
         The test fails with the following message:
 
@@ -205,7 +168,7 @@ of the set:
             _____________________________ test_set_membership ______________________________
 
                 def test_set_membership():
-
+                    """Check for set membership."""
                     data = ['A', 'B', 'C']
 
                     requirement = {'A', 'B'}
@@ -215,26 +178,14 @@ of the set:
                         Extra('C'),
                     ]
 
-            test_example.py:11: ValidationError
+            test_example.py:14: ValidationError
 
 
     .. group-tab:: Unittest
 
-        .. code-block:: python
-
-            from datatest import DataTestCase
-
-
-            class MyTest(DataTestCase):
-
-                def test_set_membership(self):
-
-                    data = ['A', 'B', 'C']
-
-                    requirement = {'A', 'B'}
-
-                    self.assertValid(data, requirement)
-
+        .. literalinclude:: /_static/tutorial/test_intro2_unit.py
+            :lines: 4-14
+            :lineno-match:
 
         The test fails with the following message:
 
@@ -245,32 +196,34 @@ of the set:
             FAIL: test_set_membership (test_unittesting.MyTest)
             ----------------------------------------------------------------------
             Traceback (most recent call last):
-              File "/my/projects/folder/test_example.py", line 12, in test_set_membership
+              File "/my/projects/folder/test_example.py", line 14, in test_set_membership
                 self.assertValid(data, requirement)
             datatest.ValidationError: does not satisfy set membership (1 difference): [
                 Extra('C'),
             ]
 
-The error above included an :class:`Extra` difference but other
-validation methods (determined by the *requirement* type) can give
-other difference types.
+    The error above included an :class:`Extra` difference but other
+    validation methods (determined by the *requirement* type) can
+    give other difference types.
+
 
 Difference objects describe each invalid element and can
 be one of of four types: :class:`Missing`, :class:`Extra`,
 :class:`Deviation` or :class:`Invalid`.
 
-In the following examples, a failed tuple comparison raises
-an :class:`Invalid` difference and failed numeric comparisons
-raise :class:`Deviation` differences:
+In the following example, a failed tuple comparison raises
+an :class:`Invalid` difference:
 
 .. tabs::
 
     .. group-tab:: Pytest
 
-        .. code-block:: none
-            :emphasize-lines: 12-14,32-36
+        .. literalinclude:: /_static/tutorial/test_intro2.py
+            :pyobject: test_using_tuple
+            :lineno-match:
 
-            ...
+        .. code-block:: none
+            :emphasize-lines: 12-14
 
             _______________________________ test_using_tuple _______________________________
 
@@ -279,13 +232,51 @@ raise :class:`Deviation` differences:
                     requirements.
                     """
                     data = [('A', 0.0), ('A', 1.0), ('A', 2)]
+
                     requirement = ('A', float)
+
             >       validate(data, requirement)
             E       ValidationError: does not satisfy requirement (1 difference): [
                         Invalid(('A', 2)),
                     ]
 
-            test_intro2.py:49: ValidationError
+            test_intro2.py:58: ValidationError
+
+
+    .. group-tab:: Unittest
+
+        .. literalinclude:: /_static/tutorial/test_intro2_unit.py
+            :pyobject: ExampleTests.test_using_tuple
+            :lineno-match:
+
+        .. code-block:: none
+            :emphasize-lines: 8-10
+
+            ======================================================================
+            FAIL: test_using_tuple (test_intro2_unit.ExampleTests)
+            Check that tuples of values satisfy corresponding tuple of
+            ----------------------------------------------------------------------
+            Traceback (most recent call last):
+              File "/my/projects/folder/test_intro2_unit.py", line 53, in test_using_tuple
+                self.assertValid(data, requirement)
+            datatest.ValidationError: does not satisfy requirement (1 difference): [
+                Invalid(('A', 2)),
+            ]
+
+
+Failed numeric comparisons raise :class:`Deviation` differences:
+
+.. tabs::
+
+    .. group-tab:: Pytest
+
+        .. literalinclude:: /_static/tutorial/test_intro2.py
+            :pyobject: test_using_dict
+            :lineno-match:
+
+        .. code-block:: none
+            :emphasize-lines: 16-20
+
             _______________________________ test_using_dict ________________________________
 
                 def test_using_dict():
@@ -307,42 +298,24 @@ raise :class:`Deviation` differences:
                         'C': Deviation(-3, 300),
                     }
 
-            test_intro2.py:64: ValidationError
+            test_intro2.py:73: ValidationError
 
-            ...
-
-        You can download a collection of example failures
-        (:download:`test_intro2.py </_static/test_intro2.py>`)
-        and run them with the following command:
-
-        .. code-block:: none
-
-            pytest test_intro2.py
 
     .. group-tab:: Unittest
 
+        .. literalinclude:: /_static/tutorial/test_intro2_unit.py
+            :pyobject: ExampleTests.test_using_dict
+            :lineno-match:
+
         .. code-block:: none
-            :emphasize-lines: 10-12,21-25
-
-            ...
+            :emphasize-lines: 8-12
 
             ======================================================================
-            FAIL: test_using_tuple (test_intro2unit.ExampleTests)
-            Check that tuples of values satisfy corresponding tuple of
-            ----------------------------------------------------------------------
-            Traceback (most recent call last):
-              File "/my/projects/folder/test_intro2unit.py", line 45, in test_using_tuple
-                self.assertValid(data, requirement)
-            datatest.ValidationError: does not satisfy requirement (1 difference): [
-                Invalid(('A', 2)),
-            ]
-
-            ======================================================================
-            FAIL: test_using_dict (test_intro2unit.ExampleTests)
+            FAIL: test_using_dict (test_intro2_unit.ExampleTests)
             Check that values satisfy requirements of matching keys.
             ----------------------------------------------------------------------
             Traceback (most recent call last):
-              File "/my/projects/folder/test_intro2unit.py", line 59, in test_using_dict
+              File "/my/projects/folder/test_intro2_unit.py", line 67, in test_using_dict
                 self.assertValid(data, requirement)
             datatest.ValidationError: does not satisfy mapping requirement (3 differences): {
                 'A': Deviation(+1, 100),
@@ -350,15 +323,36 @@ raise :class:`Deviation` differences:
                 'C': Deviation(-3, 300),
             }
 
-            ...
 
-        You can download a collection of example failures
-        (:download:`test_intro2unit.py </_static/test_intro2unit.py>`)
-        and run them with the following command:
+For more information on errors and differences, see :ref:`failure-docs`.
+
+
+.. tabs::
+
+    .. group-tab:: Pytest
+
+        Download a collection of failure examples:
+
+            :download:`test_intro2.py </_static/tutorial/test_intro2.py>`
+
+        Run them with the following command:
 
         .. code-block:: none
 
-            python -m datatest test_intro2unit.py
+            pytest test_intro2.py
+
+
+    .. group-tab:: Unittest
+
+        Download a collection of failure examples:
+
+            :download:`test_intro2_unit.py </_static/tutorial/test_intro2_unit.py>`
+
+        Run them with the following command:
+
+            .. code-block:: none
+
+                python -m datatest test_intro2_unit.py
 
 
 **********
@@ -390,13 +384,14 @@ allowance so the test will pass:
 
         .. code-block:: python
             :emphasize-lines: 11
+            :lineno-start: 4
 
             from datatest import validate
             from datatest import allowed
 
 
-            def test_set_membership():
-
+            def test_using_set():
+                """Check for set membership."""
                 data = ['A', 'B', 'C']
 
                 requirement = {'A', 'B'}
@@ -411,15 +406,15 @@ allowance so the test will pass:
         triggering a test failure:
 
         .. code-block:: python
-            :emphasize-lines: 12
+            :emphasize-lines: 11
+            :lineno-start: 4
 
-            from datatest import DataTestCase
+            import datatest
 
 
-            class MyTest(DataTestCase):
-
-                def test_set_membership(self):
-
+            class ExampleTests(datatest.DataTestCase):
+                def test_using_set(self):
+                    """Check for set membership."""
                     data = ['A', 'B', 'C']
 
                     requirement = {'A', 'B'}
@@ -442,12 +437,8 @@ allowed by their magnitude:
         plus-or-minus five without triggering a test failure:
 
         .. code-block:: python
-            :emphasize-lines: 18
-
-            from datatest import validate
-            from datatest import allowed
-
-            ...
+            :emphasize-lines: 13
+            :lineno-start: 61
 
             def test_using_dict():
                 """Check that values satisfy requirements of matching keys."""
@@ -464,11 +455,6 @@ allowed by their magnitude:
                 with allowed.deviation(5):  # allows ±5
                     validate(data, requirement)
 
-            ...
-
-        For a list of all possible allowances see :ref:`allowance-docs`.
-
-
     .. group-tab:: Unittest
 
         Calling :meth:`self.allowedDeviation(5) <DataTestCase.allowedDeviation>`
@@ -476,14 +462,8 @@ allowed by their magnitude:
         plus-or-minus five without triggering a test failure:
 
         .. code-block:: python
-            :emphasize-lines: 20
-
-            from datatest import DataTestCase
-
-
-            class MyTests(DataTestCase):
-
-                ...
+            :emphasize-lines: 13
+            :lineno-start: 55
 
                 def test_using_dict(self):
                     """Check that values satisfy requirements of matching keys."""
@@ -498,12 +478,9 @@ allowed by their magnitude:
                         'C': 300,
                     }
                     with self.allowedDeviation(5):  # allows ±5
-                        self.assertValid(data, required_values)
+                        self.assertValid(data, requirement)
 
-                ...
-
-        For a list of all possible allowances see
-        :meth:`allowance methods <datatest.DataTestCase.allowedMissing>`.
+    For a list of all possible allowances see :ref:`allowance-docs`.
 
 
 ***********
