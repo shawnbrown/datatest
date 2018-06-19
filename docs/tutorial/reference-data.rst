@@ -750,7 +750,7 @@ the tests as passing:
 
             =========================== test session starts ============================
             platform linux -- Python 3.6.5, pytest-3.6.0, py-1.5.3, pluggy-0.6.0
-            rootdir: /home/sbrown/Projects/datatest_project, inifile:
+            rootdir: ~/australian_population, inifile:
             plugins: datatest-0.1.2
             collected 4 items
 
