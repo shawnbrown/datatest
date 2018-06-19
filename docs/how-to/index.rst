@@ -24,6 +24,7 @@ How-to Guide
     Assert an Interval <interval-compare>
     Assert Date Formats <date-format>
     Assert Phone Numbers <phone-format>
+    Assert Unique Values <unique-values>
     Assert Subsets and Supersets <subset-superset>
     Assert File Names <file-names>
     Assert Column Names <column-names>
