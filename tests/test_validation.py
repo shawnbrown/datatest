@@ -434,10 +434,17 @@ class TestGetMsgAndFunc(unittest.TestCase):
         self.assertEqual(require_func, _require_set)
 
     def test_callable(self):
+        def mydocstr_func(x):
+            """helper docstring"""
+            return True
+        default_msg, require_func = _get_msg_and_func(['A', 'B'], mydocstr_func)
+        self.assertIn('helper docstring', default_msg, 'message should include docstring')
+        self.assertEqual(require_func, _require_predicate_from_iterable)
+
         def myfunc(x):
             return True
         default_msg, require_func = _get_msg_and_func(['A', 'B'], myfunc)
-        self.assertIn("does not satisfy 'myfunc'", default_msg, 'message should include function name')
+        self.assertIn("does not satisfy 'myfunc'", default_msg, 'when no docstring, message should include name')
         self.assertEqual(require_func, _require_predicate_from_iterable)
 
         mylambda = lambda x: True

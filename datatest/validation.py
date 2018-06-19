@@ -213,8 +213,12 @@ def _get_msg_and_func(data, requirement):
     if isinstance(requirement, _regex_type):
         equality_msg = 'does not satisfy regex {0!r}'.format(requirement.pattern)
     elif callable(requirement) and not isinstance(requirement, type):
-        func_name = getattr(requirement, '__name__', repr(requirement))
-        equality_msg = 'does not satisfy {0!r}'.format(func_name)
+        docstring = getattr(requirement, '__doc__', None)
+        if docstring:
+            equality_msg = docstring.splitlines()[0]
+        else:
+            func_name = getattr(requirement, '__name__', repr(requirement))
+            equality_msg = 'does not satisfy {0!r}'.format(func_name)
     elif isinstance(requirement, (PredicateObject, BaseElement)):
         equality_msg = 'does not satisfy {0!r}'.format(requirement)
     else:
