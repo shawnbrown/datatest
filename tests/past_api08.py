@@ -102,6 +102,13 @@ class TestDataSourceConstructors(unittest.TestCase):
         self.assertEqual(set(table_contents), set(expected))
 
 
+class TestDataQuery(unittest.TestCase):
+    def test_callable(self):
+        """In 0.9, __call__() was changed to execute()."""
+        query = datatest.DataQuery('foo')
+        self.assertTrue(hasattr(query, '__call__'), 'should be callable')
+
+
 class TestRequireSequence(unittest.TestCase):
     def test_return_object(self):
         first = ['aaa', 'bbb', 'ccc']

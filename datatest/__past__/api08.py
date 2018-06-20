@@ -19,8 +19,14 @@ from datatest._utils import iterpeek
 from datatest.allowance import BaseAllowance
 from datatest.difference import NOTFOUND
 
-datatest.DataQuery = datatest.Query
 datatest.DataResult = datatest.Result
+
+
+class DataQuery(datatest.Query):
+    def __call__(self, *args, **kwds):
+        self.execute(*args, **kwds)
+datatest.DataQuery = DataQuery
+
 
 class DataSource(datatest.Selector):
     def __init__(self, data, fieldnames=None):
