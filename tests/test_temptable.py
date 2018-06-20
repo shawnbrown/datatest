@@ -278,10 +278,10 @@ class TestAlterTable(unittest.TestCase):
 
     def test_new_columns(self):
         self.cursor.execute('CREATE TEMPORARY TABLE test_table ("A", "B")')
-        alter_table(self.cursor, 'test_table', ['C', 'D'])
+        alter_table(self.cursor, 'test_table', ['C', 'D', 'E'])
 
         columns = get_columns(self.cursor, 'test_table')
-        self.assertEqual(columns, ['A', 'B', 'C', 'D'])
+        self.assertEqual(columns, ['A', 'B', 'C', 'D', 'E'])
 
     def test_existing_columns(self):
         self.cursor.execute('CREATE TEMPORARY TABLE test_table ("A", "B")')

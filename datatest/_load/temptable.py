@@ -115,11 +115,12 @@ def insert_records(cursor, table, columns, records):
 
 def alter_table(cursor, table, columns, default=''):
     existing_columns = set(normalize_names(get_columns(cursor, table)))
+    default = normalize_default(default)
+
     for column in normalize_names(columns):
         if column in existing_columns:
             continue
 
-        default = normalize_default(default)
         sql = 'ALTER TABLE {0} ADD COLUMN {1} DEFAULT {2}'
         sql = sql.format(table, column, default)
 
