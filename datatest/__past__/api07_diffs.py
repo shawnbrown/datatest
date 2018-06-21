@@ -3,6 +3,10 @@ from math import isnan
 from numbers import Number
 from .._utils import _make_decimal
 
+import datatest
+from datatest.difference import NANTOKEN
+from datatest.difference import _nan_to_token
+
 
 class xBaseDifference(object):
     """The base class from which all differences must inherit."""
@@ -44,7 +48,36 @@ class xBaseDifference(object):
         return hash((self.__class__, self.__repr__()))
 
     def __eq__(self, other):
-        return hash(self) == hash(other)
+        diff_lookup = {
+            xMissing: datatest.Missing,
+            xExtra: datatest.Extra,
+            xDeviation: datatest.Deviation,
+            xInvalid: datatest.Invalid,
+        }
+        self_class = self.__class__
+        self_class = diff_lookup.get(self_class, self_class)
+
+        other_class = other.__class__
+        other_class = diff_lookup.get(other_class, other_class)
+
+        if self_class != other_class:
+            return False
+
+        try:
+            self_args = tuple(_nan_to_token(x) for x in self.args)
+        except AttributeError:
+            self_args = (_nan_to_token(self._value),)
+            if self._required:
+                self_args += (_nan_to_token(self._required),)
+
+        try:
+            other_args = tuple(_nan_to_token(x) for x in other.args)
+        except AttributeError:
+            other_args = (_nan_to_token(other._value),)
+            if other._required:
+                other_args += (_nan_to_token(other._required),)
+
+        return self_args == other_args
 
     @staticmethod
     def _format_kwds(kwds):

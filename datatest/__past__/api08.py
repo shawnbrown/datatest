@@ -255,3 +255,50 @@ def _require_sequence(data, sequence):  # New behavior in datatest 0.8.3
                                                     message_suffix)
     return AssertionError(message)
 datatest.validation._require_sequence = _require_sequence
+
+
+def _require_callable(data, function):
+    if data is NOTFOUND:
+        return Invalid(None)  # <- EXIT!
+
+    def wrapped(element):
+        try:
+            if isinstance(element, BaseElement):
+                returned_value = function(element)
+            else:
+                returned_value = function(*element)
+        except Exception:
+            returned_value = False  # Raised errors count as False.
+
+        if returned_value == True:
+            return None  # <- EXIT!
+
+        if returned_value == False:
+            return Invalid(element)  # <- EXIT!
+
+        if isinstance(returned_value, BaseDifference):
+            return returned_value  # <- EXIT!
+
+        callable_name = function.__name__
+        message = \
+            '{0!r} returned {1!r}, should return True, False or a difference instance'
+        raise TypeError(message.format(callable_name, returned_value))
+
+    if isinstance(data, BaseElement):
+        return wrapped(data)  # <- EXIT!
+
+    results = (wrapped(elem) for elem in data)
+    diffs = (diff for diff in results if diff)
+    first_element, diffs = iterpeek(diffs)
+    if first_element:  # If not empty, return diffs.
+        return diffs
+    return None
+
+
+_orig_get_msg_and_func = datatest.validation._get_msg_and_func
+def _get_msg_and_func(data, requirement):
+    if callable(requirement):
+        name = getattr(requirement, '__name__', requirement.__class__.__name__)
+        return 'does not satisfy {0!r} condition'.format(name), _require_callable
+    return _orig_get_msg_and_func(data, requirement)
+datatest.validation._get_msg_and_func = _get_msg_and_func
