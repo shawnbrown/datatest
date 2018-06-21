@@ -17,6 +17,7 @@ from datatest._utils import file_types
 from datatest._utils import string_types
 from datatest._utils import iterpeek
 from datatest.allowance import BaseAllowance
+from datatest import Invalid
 from datatest.difference import NOTFOUND
 
 datatest.DataResult = datatest.Result
