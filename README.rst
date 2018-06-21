@@ -156,7 +156,7 @@ latest patch release (currently Python 3.1.5 or Python 2.6.9).
 
 Freely licensed under the Apache License, Version 2.0
 
-Copyright 2014 - 2018 NCEC Services, LLC and contributing authors
+Copyright 2014 - 2018 National Committee for an Effective Congress, et al.
 
 
 ..
