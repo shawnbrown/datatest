@@ -41,9 +41,37 @@ if __name__ == 'pytest_datatest':
 else:
     _bundled_version_info = (0, 0, 0)
 
-version = '0.1.2.dev0'
 
+version = '0.1.2'
 version_info = (0, 1, 2)
+
+_idconfig_session_dict = {}  # Dictionary to store ``session`` reference.
+
+
+def pytest_addoption(parser):
+    """Add the '--ignore-mandatory' command line option."""
+    # The following try/except block is needed because this hook
+    # runs before we have a chance to turn-off the bundled plugin,
+    # so this option might have already been added.
+    group = parser.getgroup('Datatest')
+    try:
+        group.addoption(
+            '--ignore-mandatory',
+            action='store_true',
+            help=(
+                "ignore 'mandatory' marker (continues testing "
+                "even when a mandatory test fails)."
+            ),
+        )
+    except ValueError as exc:
+        assert 'already added' in str(exc)
+
+
+def pytest_plugin_registered(plugin, manager):
+    """If running the development version, turn-off the bundled plugin."""
+    development_plugin = __name__ == 'pytest_datatest'
+    if development_plugin:
+        manager.set_blocked(name='datatest')  # Block bundled plugin.
 
 
 def pytest_configure(config):
@@ -54,22 +82,15 @@ def pytest_configure(config):
     )
 
 
-def pytest_addoption(parser):
-    group = parser.getgroup('Datatest')
-    group.addoption(
-        '--ignore-mandatory',
-        action='store_true',
-        help=(
-            "ignore 'mandatory' marker (continues testing "
-            "even when a mandatory test fails)."
-        ),
-    )
+def pytest_collection_modifyitems(session, config, items):
+    """Store ``session`` reference to use in pytest_terminal_summary()."""
+    global _idconfig_session_dict
+    _idconfig_session_dict[id(config)] = session
 
 
+# Compile regex patterns to match error message text.
 _diff_start_regex = re.compile(
-    '^E\s+(?:datatest.)?ValidationError:.+\d+ difference[s]?.*: [\[{]$'
-)
-
+    '^E\s+(?:datatest.)?ValidationError:.+\d+ difference[s]?.*: [\[{]$')
 _diff_stop_regex = re.compile('^E\s+(?:\}|\]|\.\.\.)$')
 
 
@@ -160,7 +181,7 @@ _truncation_notice = '...Full output truncated, {0}'.format(USAGE_MSG)
 @hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_runtest_makereport(item, call):
     """Hook wrapper to replace ReprEntry instances for ValidationError
-    exceptons.
+    exceptons and to handle when 'mandatory' tests fail.
     """
     if call.when == 'call':
 
@@ -195,9 +216,10 @@ def pytest_runtest_makereport(item, call):
 
 
 def pytest_terminal_summary(terminalreporter, exitstatus):
-    """Add a section to terminal summary reporting."""
-    shouldfail = str(terminalreporter._session.shouldfail or '')
+    """Add sections to terminal summary report when appropriate."""
 
+    session = _idconfig_session_dict.get(id(terminalreporter.config), None)
+    shouldfail = str(getattr(session, 'shouldfail', ''))
     if shouldfail.startswith('mandatory') and shouldfail.endswith('failed'):
         markup = {'yellow': True}
         terminalreporter.write_sep('_', **markup)
