@@ -55,14 +55,16 @@ class ExampleTests(datatest.DataTestCase):
     def test_using_dict(self):
         """Check that values satisfy requirements of matching keys."""
         data = {
-            'A': 101,
-            'B': 205,
-            'C': 297,
+            'A': 100,
+            'B': 200,
+            'C': 299,
+            'D': 405,
         }
         requirement = {
             'A': 100,
             'B': 200,
             'C': 300,
+            'D': 400,
         }
         self.assertValid(data, requirement)
 

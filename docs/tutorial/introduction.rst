@@ -11,16 +11,16 @@
 A Tour of Datatest
 ##################
 
-Datatest provides validation tools for test driven data-wrangling.
-It supports both `pytest <https://pytest.org/>`_-style and
-:py:mod:`unittest`-style testing conventions. Users can assert
-validity and manage discrepancies using whichever framework they
-choose.
+This document introduces :doc:`datatest </index>`'s support for
+validation, error reporting, and allowance declarations.
 
 
 **********
 Validation
 **********
+
+In this example, we assert that the data values are members of
+the *requirement* **set**:
 
 .. tabs::
 
@@ -45,12 +45,10 @@ Validation
             :lineno-match:
             :emphasize-lines: 12
 
-    In the example above, the requirement is a :py:class:`set`, so the
-    data is validated by checking for membership in this set.
-
 
 **The requirement's type determines how the data is validated---changing
-the type will change the method of validation.**
+the type will change the method of validation.** Above, we checked for
+set membership by providing a :py:class:`set` requirement.
 
 
 When *requirement* is a **function**, data is valid when the function
@@ -202,17 +200,17 @@ of the set:
                 Extra('C'),
             ]
 
-    The error above included an :class:`Extra` difference but other
-    validation methods (determined by the *requirement* type) can
-    give other difference types.
+
+**Difference objects describe each invalid element and can
+be one of of four types:** :class:`Missing`, :class:`Extra`,
+:class:`Deviation` or :class:`Invalid`. The error above included
+an Extra difference but other validation methods (determined by
+the *requirement* type) can give other differences.
 
 
-Difference objects describe each invalid element and can
-be one of of four types: :class:`Missing`, :class:`Extra`,
-:class:`Deviation` or :class:`Invalid`.
-
-In the following example, a failed tuple comparison raises
-an :class:`Invalid` difference:
+The following test performs a tuple comparison but it fails on
+``('A', 2)`` because the ``2`` is not a float type. This failure
+raises an :class:`Invalid` difference:
 
 .. tabs::
 
@@ -264,7 +262,10 @@ an :class:`Invalid` difference:
             ]
 
 
-Failed numeric comparisons raise :class:`Deviation` differences:
+The following test compares numeric values by matching dictionary key. It
+fails because some of the values do not match (for "C": ``299`` ≠ ``300``
+and "D": ``405`` ≠ ``400``). Failed numeric comparisons raise
+:class:`Deviation` differences:
 
 .. tabs::
 
@@ -275,30 +276,31 @@ Failed numeric comparisons raise :class:`Deviation` differences:
             :lineno-match:
 
         .. code-block:: none
-            :emphasize-lines: 16-20
+            :emphasize-lines: 18-21
 
             _______________________________ test_using_dict ________________________________
 
                 def test_using_dict():
                     """Check that values satisfy requirements of matching keys."""
                     data = {
-                        'A': 101,
-                        'B': 205,
-                        'C': 297,
+                        'A': 100,
+                        'B': 200,
+                        'C': 299,
+                        'D': 405,
                     }
                     requirement = {
                         'A': 100,
                         'B': 200,
                         'C': 300,
+                        'D': 400,
                     }
             >       validate(data, requirement)
-            E       ValidationError: does not satisfy mapping requirement (3 differences): {
-                        'A': Deviation(+1, 100),
-                        'B': Deviation(+5, 200),
-                        'C': Deviation(-3, 300),
+            E       ValidationError: does not satisfy mapping requirement (2 differences): {
+                        'C': Deviation(-1, 300),
+                        'D': Deviation(+5, 400),
                     }
 
-            test_intro2.py:73: ValidationError
+            test_intro2.py:75: ValidationError
 
 
     .. group-tab:: Unittest
@@ -315,12 +317,11 @@ Failed numeric comparisons raise :class:`Deviation` differences:
             Check that values satisfy requirements of matching keys.
             ----------------------------------------------------------------------
             Traceback (most recent call last):
-              File "/my/projects/folder/test_intro2_unit.py", line 67, in test_using_dict
+              File "/my/projects/folder/test_intro2_unit.py", line 69, in test_using_dict
                 self.assertValid(data, requirement)
-            datatest.ValidationError: does not satisfy mapping requirement (3 differences): {
-                'A': Deviation(+1, 100),
-                'B': Deviation(+5, 200),
-                'C': Deviation(-3, 300),
+            ValidationError: does not satisfy mapping requirement (2 differences): {
+                'C': Deviation(-1, 300),
+                'D': Deviation(+5, 400),
             }
 
 
@@ -437,20 +438,22 @@ allowed by their magnitude:
         plus-or-minus five without triggering a test failure:
 
         .. code-block:: python
-            :emphasize-lines: 13
+            :emphasize-lines: 15
             :lineno-start: 61
 
             def test_using_dict():
                 """Check that values satisfy requirements of matching keys."""
                 data = {
-                    'A': 101,
-                    'B': 205,
-                    'C': 297,
+                    'A': 100,
+                    'B': 200,
+                    'C': 299,
+                    'D': 405,
                 }
                 requirement = {
                     'A': 100,
                     'B': 200,
                     'C': 300,
+                    'D': 400,
                 }
                 with allowed.deviation(5):  # allows ±5
                     validate(data, requirement)
@@ -462,20 +465,22 @@ allowed by their magnitude:
         plus-or-minus five without triggering a test failure:
 
         .. code-block:: python
-            :emphasize-lines: 13
+            :emphasize-lines: 15
             :lineno-start: 55
 
                 def test_using_dict(self):
                     """Check that values satisfy requirements of matching keys."""
                     data = {
-                        'A': 101,
-                        'B': 205,
-                        'C': 297,
+                        'A': 100,
+                        'B': 200,
+                        'C': 299,
+                        'D': 405,
                     }
                     requirement = {
                         'A': 100,
                         'B': 200,
                         'C': 300,
+                        'D': 400,
                     }
                     with self.allowedDeviation(5):  # allows ±5
                         self.assertValid(data, requirement)
