@@ -49,10 +49,10 @@ class xBaseDifference(object):
 
     def __eq__(self, other):
         diff_lookup = {
-            xMissing: datatest.Missing,
-            xExtra: datatest.Extra,
-            xDeviation: datatest.Deviation,
-            xInvalid: datatest.Invalid,
+            xMissing: datatest.difference.Missing,
+            xExtra: datatest.difference.Extra,
+            xDeviation: datatest.difference.Deviation,
+            xInvalid: datatest.difference.Invalid,
         }
         self_class = self.__class__
         self_class = diff_lookup.get(self_class, self_class)
