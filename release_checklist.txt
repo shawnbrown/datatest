@@ -18,7 +18,9 @@ Release Checklist
 
 4. Update README.rst (including "Backward Compatibility" section).
 
-5. Commit and push final changes to upstream repository.
+5. Commit and push final changes to upstream repository:
+
+     Prepare version info, CHANGELOG, and README for version X.X.X release.
 
 6. Perform final checks to make sure there are no CI test failures.
 
