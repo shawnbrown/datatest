@@ -2,9 +2,8 @@
 Datatest Changelog
 ==================
 
-
-COMING SOON (0.9.1)
--------------------
+2018-06-21 (0.9.1)
+------------------
 
 * Added impoved docstrings and other documentation.
 * Changed bundled pytest plugin to version 0.1.2:
