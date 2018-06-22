@@ -48,3 +48,8 @@ Release Checklist
 
     datatest/__init__.py
     docs/conf.py
+
+    Commit these changes with a comment like the one below:
+
+      Iterate version number to differentiate development version
+      from latest release.
