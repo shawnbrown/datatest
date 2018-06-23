@@ -262,8 +262,8 @@ raises an :class:`Invalid` difference:
             ]
 
 
-The following test compares numeric values by matching dictionary key. It
-fails because some of the values do not match (for "C": ``299`` ≠ ``300``
+The following test compares the values of corresponding dictionary keys.
+It fails because some of the values don't match (for "C": ``299`` ≠ ``300``
 and "D": ``405`` ≠ ``400``). Failed numeric comparisons raise
 :class:`Deviation` differences:
 
