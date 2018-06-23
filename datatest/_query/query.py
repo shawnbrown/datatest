@@ -326,6 +326,31 @@ def _apply_data(function, data):
     return _apply_to_data(function, data)
 
 
+def _flatten_data(iterable):
+    if isinstance(iterable, collections.Mapping):
+        iterable = DictItems(iterable)
+
+    if isinstance(iterable, BaseElement) or not _is_collection_of_items(iterable):
+        return iterable
+
+    def combined(k, v):
+        if not isinstance(k, tuple):
+            k = (k,)
+        if not isinstance(v, tuple):
+            v = (v,)
+        return k + v
+
+    def flatten(items):
+        for k, v in items:
+            if isinstance(v, BaseElement) or isinstance(v, tuple):
+                yield combined(k, v)
+            else:
+                for x in v:
+                    yield combined(k, x)
+
+    return Result(flatten(iterable), list)
+
+
 def _sqlite_cast_as_real(value):
     """Convert value to REAL (float) or default to 0.0 to match SQLite
     behavior. See the "Conversion Processing" table in the "CAST

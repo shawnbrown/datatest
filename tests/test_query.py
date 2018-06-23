@@ -21,6 +21,7 @@ from datatest._query.query import (
     _map_data,
     _filter_data,
     _reduce_data,
+    _flatten_data,
     _apply_data,
     _apply_to_data,  # <- TODO: Change function name.
     _sqlite_sum,
@@ -278,6 +279,89 @@ class TestFilterData(unittest.TestCase):
         with self.assertRaises(TypeError):
             result = _filter_data(iseven, iterable)
             #result.fetch()
+
+
+class TestFlattenData(unittest.TestCase):
+    def test_nonmapping_iters(self):
+        """Non-mapping iterables should be returned unchanged."""
+        iterable = Result([-4, -1, 2, 3], list)
+        result = _flatten_data(iterable)
+        self.assertEqual(result.fetch(), [-4, -1, 2, 3])
+
+        iterable = Result({1, 2, 3}, set)
+        result = _flatten_data(iterable)
+        self.assertEqual(result.fetch(), {1, 2, 3})
+
+    def test_base_elements(self):
+        """Base elements should be return unchanged."""
+        result = _flatten_data(3)
+        self.assertEqual(result, 3)
+
+        result = _flatten_data('b')
+        self.assertEqual(result, 'b')
+
+    def test_dict_iter_of_lists(self):
+        iterable = Result({'a': [1, 3], 'b': [4, 5, 6]}, dict)
+
+        result = _flatten_data(iterable)
+
+        self.assertIsInstance(result, Result)
+        self.assertEqual(result.evaluation_type, list)
+        self.assertEqual(
+            result.fetch(),
+            [('a', 1), ('a', 3), ('b', 4), ('b', 5), ('b', 6)]
+        )
+
+    def test_dict_iter_of_tuples(self):
+        iterable = Result({'a': (1, 2), 'b': (3, 4)}, dict)
+
+        result = _flatten_data(iterable)
+
+        self.assertIsInstance(result, Result)
+        self.assertEqual(result.evaluation_type, list)
+        self.assertEqual(
+            result.fetch(),
+            [('a', 1, 2), ('b', 3, 4)]
+        )
+
+    def test_dict_iter_of_integers(self):
+        iterable = Result({'a': 2, 'b': 4}, dict)
+
+        result = _flatten_data(iterable)
+
+        self.assertIsInstance(result, Result)
+        self.assertEqual(result.evaluation_type, list)
+        self.assertEqual(
+            result.fetch(),
+            [('a', 2), ('b', 4)]
+        )
+
+    def test_dict_iter_of_dicts(self):
+        """Dicts should be treated as base elements (should not unpack
+        deeply nested dicts).
+        """
+        iterable = Result({'a': {'x': 2}, 'b': {'y': 4}}, dict)
+
+        result = _flatten_data(iterable)
+
+        self.assertIsInstance(result, Result)
+        self.assertEqual(result.evaluation_type, list)
+        self.assertEqual(
+            result.fetch(),
+            [('a', {'x': 2}), ('b', {'y': 4})]
+        )
+
+    def test_raw_dictionary(self):
+        iterable = {'a': [1, 3], 'b': [4, 5, 6]}
+
+        result = _flatten_data(iterable)
+
+        self.assertIsInstance(result, Result)
+        self.assertEqual(result.evaluation_type, list)
+        self.assertEqual(
+            result.fetch(),
+            [('a', 1), ('a', 3), ('b', 4), ('b', 5), ('b', 6)]
+        )
 
 
 class TestReduceData(unittest.TestCase):
