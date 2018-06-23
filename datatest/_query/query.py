@@ -710,6 +710,12 @@ class Query(object):
         """Filter elements, removing duplicate values."""
         return self._add_step('distinct')
 
+    def flatten(self):
+        """Flatten dictionary into list of tuple rows. If data is not
+        a dictionary, the original values are returned unchanged.
+        """
+        return self._add_step('flatten')
+
     @staticmethod
     def _translate_step(query_step):
         """Accept a query step and return a corresponding execution
@@ -746,6 +752,9 @@ class Query(object):
             args = (_sqlite_max, RESULT_TOKEN)
         elif name == 'distinct':
             function = _sqlite_distinct
+            args = (RESULT_TOKEN,)
+        elif name == 'flatten':
+            function = _flatten_data
             args = (RESULT_TOKEN,)
         elif name == 'select':
             raise ValueError("this method does not handle 'select' step")
