@@ -288,9 +288,9 @@ class TestFlattenData(unittest.TestCase):
         result = _flatten_data(iterable)
         self.assertEqual(result.fetch(), [-4, -1, 2, 3])
 
-        iterable = Result({1, 2, 3}, set)
+        iterable = Result(set([1, 2, 3]), set)
         result = _flatten_data(iterable)
-        self.assertEqual(result.fetch(), {1, 2, 3})
+        self.assertEqual(result.fetch(), set([1, 2, 3]))
 
     def test_base_elements(self):
         """Base elements should be return unchanged."""
