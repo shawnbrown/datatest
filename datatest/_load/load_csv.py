@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import warnings
 from .._utils import exhaustible
+from .._utils import seekable
 from .._utils import file_types
 from .get_reader import get_reader
 from .temptable import load_data
@@ -30,7 +31,7 @@ def load_csv(cursor, table, csvfile, encoding=None, **kwds):
     # When the encoding is unspecified, try to load *csvfile* using the
     # preferred encoding and failing that, try the fallback encodings:
 
-    if isinstance(csvfile, file_types) and csvfile.seekable():
+    if isinstance(csvfile, file_types) and seekable(csvfile):
         position = csvfile.tell()  # Get current position if
     else:                          # csvfile is file-like and
         position = None            # supports random access.

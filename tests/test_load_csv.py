@@ -9,6 +9,11 @@ from datatest._compatibility.builtins import *
 
 from datatest._load.load_csv import load_csv
 
+try:
+    from StringIO import StringIO
+except ImportError:
+    StringIO = None
+
 
 class TestLoadCsv(unittest.TestCase):
     def setUp(self):
@@ -87,6 +92,28 @@ class TestLoadCsv(unittest.TestCase):
         ]
         self.cursor.execute('SELECT col1, col2 FROM testtable1')
         self.assertEqual(list(self.cursor), expected)
+
+        def test_fallback_with_StringIO(self):
+            if not StringIO:  # <- Python 2.x only.
+                return
+
+            csvfile = StringIO(
+                b'col1,col2\n'
+                b'1,\xe6\n'  # '\xe6' -> æ (ash)
+                b'2,\xf0\n'  # '\xf0' -> ð (eth)
+                b'3,\xfe\n'  # '\xfe' -> þ (thorn)
+            )
+
+            with warnings.catch_warnings(record=True):
+                load_csv(self.cursor, 'testtable1', csvfile)
+
+            expected = [
+                ('1', chr(0xe6)),  # chr(0xe6) -> æ
+                ('2', chr(0xf0)),  # chr(0xf0) -> ð
+                ('3', chr(0xfe)),  # chr(0xfe) -> þ
+            ]
+            self.cursor.execute('SELECT col1, col2 FROM testtable1')
+            self.assertEqual(list(self.cursor), expected)
 
     def test_fallback_with_file(self):
         with warnings.catch_warnings(record=True) as warning_list:
