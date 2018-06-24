@@ -20,8 +20,12 @@ except NameError:
     string_types = (str,)
 
 try:
-    file_types = (file, IOBase) # `file` removed in Python 3.0
-except NameError:
+    from StringIO import StringIO
+    file_types = (IOBase, file, StringIO)
+    # Above: StringIO module and file object were removed
+    # in Python 3. Also, the old StringIO is not a subclass
+    # of io.IOBase.
+except (ImportError, NameError):
     file_types = (IOBase,)
 
 regex_types = type(re.compile(''))
@@ -30,6 +34,18 @@ regex_types = type(re.compile(''))
 def nonstringiter(obj):
     """Returns True if *obj* is a non-string iterable object."""
     return not isinstance(obj, string_types) and isinstance(obj, Iterable)
+
+
+def seekable(buf):
+    """Returns True if *buf* is a seekable file-like buffer."""
+    try:
+        return buf.seekable()
+    except AttributeError:
+        try:
+            buf.seek(buf.tell())  # <- For StringIO in Python 2.
+            return True
+        except Exception:
+            return False
 
 
 def sortable(obj):
