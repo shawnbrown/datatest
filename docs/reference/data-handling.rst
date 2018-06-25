@@ -97,9 +97,13 @@ Selecting & Querying Data
 
     .. automethod:: reduce
 
+    .. automethod:: flatten
+
     .. automethod:: execute
 
     .. automethod:: fetch
+
+    .. automethod:: to_csv
 
 
 .. autoclass:: Result
@@ -110,6 +114,8 @@ Selecting & Querying Data
         :meth:`fetch <Result.fetch>` method.
 
     .. automethod:: fetch
+
+    .. automethod:: to_csv
 
     .. attribute:: __wrapped__
 

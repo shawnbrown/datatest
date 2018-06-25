@@ -266,6 +266,15 @@ class Result(collections.Iterator):
         return evaluation_type(self)
 
     def to_csv(self, file, fieldnames=None, **fmtparams):
+        """Write the results as a CSV file (dictionaries and other
+        mappings will be seralized).
+
+        The given *file* can be a path or file-like object;
+        *fieldnames* will be printed as a header row; and *fmtparams*
+        can be any values supported by :py:func:`csv.writer`.
+
+        When *fieldnames* are not provided, no header is written.
+        """
         iterable = _flatten_data(self)
         _to_csv(iterable, file, fieldnames, **fmtparams)
 
@@ -989,6 +998,18 @@ class Query(object):
             class_repr, source_repr, args_repr, kwds_repr, query_steps_repr)
 
     def to_csv(self, file, fieldnames=None, **fmtparams):
+        """Execute the query and write the results as a CSV file
+        (dictionaries and other mappings will be seralized).
+
+        The given *file* can be a path or file-like object;
+        *fieldnames* will be printed as a header row; and
+        *fmtparams* can be any values supported by
+        :py:func:`csv.writer`.
+
+        When *fieldnames* are not provided, names from the query's
+        original *columns* argument will be used if the number of
+        selected columns matches the number of resulting columns.
+        """
         iterable = _flatten_data(self.execute())
         if not nonstringiter(iterable):
             iterable = [iterable]
