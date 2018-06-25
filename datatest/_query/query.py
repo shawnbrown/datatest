@@ -1438,6 +1438,12 @@ class Selector(object):
         cursor = self._connection.cursor()
         cursor.execute(statement)
 
+    # NOTE: Do NOT add to_csv() method to Selector. It's simple
+    # enough to use Query.to_csv() as below:
+    #
+    #     select(select.fieldnames).to_csv(...)
+    #
+
 
 # Prepare error message for old or non-standard builds of Python
 # that don't have adequate "sqlite3" support (Jython 2.7, Jython
