@@ -303,7 +303,8 @@ class TestFlattenData(unittest.TestCase):
         self.assertEqual(result, 'b')
 
     def test_dict_iter_of_lists(self):
-        iterable = Result({'a': [1, 3], 'b': [4, 5, 6]}, dict)
+        source_data = collections.OrderedDict([('a', [1, 3]), ('b', [4, 5, 6])])
+        iterable = Result(source_data, dict)
 
         result = _flatten_data(iterable)
 
@@ -315,7 +316,8 @@ class TestFlattenData(unittest.TestCase):
         )
 
     def test_dict_iter_of_tuples(self):
-        iterable = Result({'a': (1, 2), 'b': (3, 4)}, dict)
+        source_data = collections.OrderedDict([('a', (1, 2)), ('b', (3, 4))])
+        iterable = Result(source_data, dict)
 
         result = _flatten_data(iterable)
 
@@ -327,7 +329,8 @@ class TestFlattenData(unittest.TestCase):
         )
 
     def test_dict_iter_of_integers(self):
-        iterable = Result({'a': 2, 'b': 4}, dict)
+        source_data = collections.OrderedDict([('a', 2), ('b', 4)])
+        iterable = Result(source_data, dict)
 
         result = _flatten_data(iterable)
 
@@ -342,7 +345,8 @@ class TestFlattenData(unittest.TestCase):
         """Dicts should be treated as base elements (should not unpack
         deeply nested dicts).
         """
-        iterable = Result({'a': {'x': 2}, 'b': {'y': 4}}, dict)
+        source_data = collections.OrderedDict([('a', {'x': 2}), ('b', {'y': 4})])
+        iterable = Result(source_data, dict)
 
         result = _flatten_data(iterable)
 
@@ -354,7 +358,7 @@ class TestFlattenData(unittest.TestCase):
         )
 
     def test_raw_dictionary(self):
-        iterable = {'a': [1, 3], 'b': [4, 5, 6]}
+        iterable = collections.OrderedDict([('a', [1, 3]), ('b', [4, 5, 6])])
 
         result = _flatten_data(iterable)
 
