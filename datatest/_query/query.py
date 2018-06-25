@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
+import csv
 import inspect
 try:
     import sqlite3
 except ImportError:
     sqlite3 = None  # Missing from Jython and Micropython.
 import sys
-from io import IOBase
 from glob import glob
 from numbers import Number
 
@@ -48,6 +48,32 @@ except NameError:
 DEFAULT_CONNECTION = sqlite3.connect('')  # <- Using '' makes a temp file.
 DEFAULT_CONNECTION.execute('PRAGMA synchronous=OFF')
 DEFAULT_CONNECTION.isolation_level = None  # <- Run in 'autocommit' mode.
+
+
+PY2 = sys.version_info[0] == 2
+
+
+def _to_csv(iterable, path_or_buf, fieldnames=None, dialect='excel', **fmtparams):
+    """Write iterable to CSV file."""
+    if not isinstance(path_or_buf, file_types):
+        if PY2:
+            csvfile = open(path_or_buf, 'wb')
+        else:
+            csvfile = open(path_or_buf, 'w', newline='')
+        autoclose = True
+    else:
+        csvfile = path_or_buf
+        autoclose = False
+
+    try:
+        writer = csv.writer(csvfile, dialect, **fmtparams)
+        if fieldnames:
+            writer.writerow(fieldnames)
+        for row in iterable:
+            writer.writerow(row)
+    finally:
+        if autoclose:
+            csvfile.close()
 
 
 _Mapping = collections.Mapping    # Get direct reference to eliminate

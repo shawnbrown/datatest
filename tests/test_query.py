@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import division
 import os
 import re
+import shutil
 import sqlite3
 import tempfile
 import textwrap
@@ -15,6 +16,7 @@ from datatest._utils import nonstringiter
 
 from datatest._load.working_directory import working_directory
 from datatest._query.query import (
+    _to_csv,
     BaseElement,
     _is_collection_of_items,
     DictItems,
@@ -1405,3 +1407,48 @@ class TestSelector(unittest.TestCase):
         expected = {'a': ['x', 'x', 'y', 'z'], 'b': ['z', 'y', 'x']}
         self.assertIsInstance(query, Query)
         self.assertEqual(query.fetch(), expected)
+
+
+class TestToCsv(unittest.TestCase):
+    def test_iterable_of_rows(self):
+        iterable = [['a', 1], ['b', 2]]
+        csvfile = io.StringIO()
+
+        _to_csv(iterable, csvfile)
+
+        csvfile.seek(0)
+        self.assertEqual(csvfile.readlines(), ['a,1\r\n', 'b,2\r\n'])
+
+    def test_fieldnames(self):
+        fieldnames = ['A', 'B']
+        iterable = [['a', 1], ['b', 2]]
+        csvfile = io.StringIO()
+
+        _to_csv(iterable, csvfile, fieldnames)
+
+        csvfile.seek(0)
+        self.assertEqual(csvfile.readlines(), ['A,B\r\n', 'a,1\r\n', 'b,2\r\n'])
+
+    def test_fmtparams(self):
+        iterable = [['a', 1], ['b', 2]]
+        csvfile = io.StringIO()
+
+        _to_csv(iterable, csvfile, delimiter='|', lineterminator='\n')
+
+        csvfile.seek(0)
+        self.assertEqual(csvfile.readlines(), ['a|1\n', 'b|2\n'])
+
+    def test_actual_file(self):
+        try:
+            tmpdir = tempfile.mkdtemp()
+            path = os.path.join(tmpdir, 'tempfile.csv')
+
+            iterable = [['a', 1], ['b', 2]]
+
+            _to_csv(iterable, path)
+
+            with open(path) as fh:
+                self.assertEqual(fh.read(), 'a,1\nb,2\n')
+
+        finally:
+            shutil.rmtree(tmpdir)
