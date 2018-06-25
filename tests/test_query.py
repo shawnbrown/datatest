@@ -303,50 +303,46 @@ class TestFlattenData(unittest.TestCase):
         self.assertEqual(result, 'b')
 
     def test_dict_iter_of_lists(self):
-        source_data = collections.OrderedDict([('a', [1, 3]), ('b', [4, 5, 6])])
-        iterable = Result(source_data, dict)
+        iterable = Result({'a': [1, 3], 'b': [4, 5, 6]}, dict)
 
         result = _flatten_data(iterable)
 
         self.assertIsInstance(result, Result)
         self.assertEqual(result.evaluation_type, list)
         self.assertEqual(
-            result.fetch(),
-            [('a', 1), ('a', 3), ('b', 4), ('b', 5), ('b', 6)]
+            set(result.fetch()),
+            set([('a', 1), ('a', 3), ('b', 4), ('b', 5), ('b', 6)]),
         )
 
     def test_dict_iter_of_tuples(self):
-        source_data = collections.OrderedDict([('a', (1, 2)), ('b', (3, 4))])
-        iterable = Result(source_data, dict)
+        iterable = Result({'a': (1, 2), 'b': (3, 4)}, dict)
 
         result = _flatten_data(iterable)
 
         self.assertIsInstance(result, Result)
         self.assertEqual(result.evaluation_type, list)
         self.assertEqual(
-            result.fetch(),
-            [('a', 1, 2), ('b', 3, 4)]
+            set(result.fetch()),
+            set([('a', 1, 2), ('b', 3, 4)]),
         )
 
     def test_dict_iter_of_integers(self):
-        source_data = collections.OrderedDict([('a', 2), ('b', 4)])
-        iterable = Result(source_data, dict)
+        iterable = Result({'a': 2, 'b': 4}, dict)
 
         result = _flatten_data(iterable)
 
         self.assertIsInstance(result, Result)
         self.assertEqual(result.evaluation_type, list)
         self.assertEqual(
-            result.fetch(),
-            [('a', 2), ('b', 4)]
+            set(result.fetch()),
+            set([('a', 2), ('b', 4)]),
         )
 
     def test_dict_iter_of_dicts(self):
         """Dicts should be treated as base elements (should not unpack
         deeply nested dicts).
         """
-        source_data = collections.OrderedDict([('a', {'x': 2}), ('b', {'y': 4})])
-        iterable = Result(source_data, dict)
+        iterable = Result({'a': {'x': 2}}, dict)
 
         result = _flatten_data(iterable)
 
@@ -354,19 +350,19 @@ class TestFlattenData(unittest.TestCase):
         self.assertEqual(result.evaluation_type, list)
         self.assertEqual(
             result.fetch(),
-            [('a', {'x': 2}), ('b', {'y': 4})]
+            [('a', {'x': 2})],
         )
 
     def test_raw_dictionary(self):
-        iterable = collections.OrderedDict([('a', [1, 3]), ('b', [4, 5, 6])])
+        iterable = {'a': [1, 3], 'b': [4, 5, 6]}
 
         result = _flatten_data(iterable)
 
         self.assertIsInstance(result, Result)
         self.assertEqual(result.evaluation_type, list)
         self.assertEqual(
-            result.fetch(),
-            [('a', 1), ('a', 3), ('b', 4), ('b', 5), ('b', 6)]
+            set(result.fetch()),
+            set([('a', 1), ('a', 3), ('b', 4), ('b', 5), ('b', 6)]),
         )
 
 
