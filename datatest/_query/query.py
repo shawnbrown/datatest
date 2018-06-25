@@ -55,6 +55,9 @@ PY2 = sys.version_info[0] == 2
 
 def _to_csv(iterable, path_or_buf, fieldnames=None, dialect='excel', **fmtparams):
     """Write iterable to CSV file."""
+    if not nonstringiter(iterable):
+        iterable = [iterable]
+
     if not isinstance(path_or_buf, file_types):
         if PY2:
             csvfile = open(path_or_buf, 'wb')
@@ -67,10 +70,18 @@ def _to_csv(iterable, path_or_buf, fieldnames=None, dialect='excel', **fmtparams
 
     try:
         writer = csv.writer(csvfile, dialect, **fmtparams)
+
         if fieldnames:
-            writer.writerow(fieldnames)
+            if nonstringiter(fieldnames):
+                writer.writerow(fieldnames)
+            else:
+                writer.writerow([fieldnames])
+
         for row in iterable:
-            writer.writerow(row)
+            if nonstringiter(row):
+                writer.writerow(row)
+            else:
+                writer.writerow([row])
     finally:
         if autoclose:
             csvfile.close()

@@ -1410,7 +1410,7 @@ class TestSelector(unittest.TestCase):
 
 
 class TestToCsv(unittest.TestCase):
-    def test_iterable_of_rows(self):
+    def test_iterable_of_iterables(self):
         iterable = [['a', 1], ['b', 2]]
         csvfile = io.StringIO()
 
@@ -1418,6 +1418,24 @@ class TestToCsv(unittest.TestCase):
 
         csvfile.seek(0)
         self.assertEqual(csvfile.readlines(), ['a,1\r\n', 'b,2\r\n'])
+
+    def test_iterable_of_noniterables(self):
+        iterable = [1, 2]
+        csvfile = io.StringIO()
+
+        _to_csv(iterable, csvfile)
+
+        csvfile.seek(0)
+        self.assertEqual(csvfile.readlines(), ['1\r\n', '2\r\n'])
+
+    def test_noniterable(self):
+        iterable = 1
+        csvfile = io.StringIO()
+
+        _to_csv(iterable, csvfile)
+
+        csvfile.seek(0)
+        self.assertEqual(csvfile.readlines(), ['1\r\n'])
 
     def test_fieldnames(self):
         fieldnames = ['A', 'B']
