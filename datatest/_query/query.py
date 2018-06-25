@@ -988,6 +988,23 @@ class Query(object):
         return '{0}({1}{2}{3}){4}'.format(
             class_repr, source_repr, args_repr, kwds_repr, query_steps_repr)
 
+    def to_csv(self, file, fieldnames=None, **fmtparams):
+        iterable = _flatten_data(self.execute())
+        if not nonstringiter(iterable):
+            iterable = [iterable]
+
+        if not fieldnames:
+            first_row, iterable = iterpeek(iterable)
+            if not nonstringiter(first_row):
+                first_row = [first_row]
+
+            (fieldnames,) = _flatten_data(self.args[0])
+
+            if not first_row or len(first_row) != len(fieldnames):
+                fieldnames = None
+
+        _to_csv(iterable, file, fieldnames, **fmtparams)
+
 
 with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
     Query.__init__.__signature__ = inspect.Signature([

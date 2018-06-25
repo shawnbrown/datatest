@@ -1498,3 +1498,71 @@ class TestToCsv(unittest.TestCase):
 
         csvfile.seek(0)
         self.assertEqual(csvfile.readlines(), ['a,1\r\n', 'a,2\r\n', 'a,3\r\n'])
+
+
+    def test_query_to_csv(self):
+        select = Selector([['A', 'B'], ['x', 1], ['x', 2]])
+
+        # Iterable of lists.
+        query = select(['A', 'B'])
+        csvfile = io.StringIO()
+
+        query.to_csv(csvfile)
+
+        csvfile.seek(0)
+        self.assertEqual(csvfile.readlines(), ['A,B\r\n', 'x,1\r\n', 'x,2\r\n'])
+
+        # Explicit fieldnames.
+        query = select(['A', 'B'])
+        csvfile = io.StringIO()
+
+        query.to_csv(csvfile, ['C', 'D'])  # <- Fieldnames!
+
+        csvfile.seek(0)
+        self.assertEqual(csvfile.readlines(), ['C,D\r\n', 'x,1\r\n', 'x,2\r\n'])
+
+        # Because selection contains 2 items, but output has been
+        # mapped to 1 item, it should not output a header.
+        query = select(['A', 'B']).map(lambda x: '{0}_{1}'.format(x[0], x[1]))
+        csvfile = io.StringIO()
+
+        query.to_csv(csvfile)
+
+        csvfile.seek(0)
+        self.assertEqual(csvfile.readlines(), ['x_1\r\n', 'x_2\r\n'])
+
+        # Iterable of single values.
+        query = select('B')
+        csvfile = io.StringIO()
+
+        query.to_csv(csvfile)
+
+        csvfile.seek(0)
+        self.assertEqual(csvfile.readlines(), ['B\r\n', '1\r\n', '2\r\n'])
+
+        # Mapping of single values.
+        query = select({'A': 'B'})
+        csvfile = io.StringIO()
+
+        query.to_csv(csvfile)
+
+        csvfile.seek(0)
+        self.assertEqual(csvfile.readlines(), ['A,B\r\n', 'x,1\r\n', 'x,2\r\n'])
+
+        # Mapping with tuple keys and tuple values.
+        query = select({('A', 'A'): ('B', 'B')})
+        csvfile = io.StringIO()
+
+        query.to_csv(csvfile)
+
+        csvfile.seek(0)
+        self.assertEqual(csvfile.readlines(), ['A,A,B,B\r\n', 'x,x,1,1\r\n', 'x,x,2,2\r\n'])
+
+        # Summed single value.
+        query = select('B').sum()
+        csvfile = io.StringIO()
+
+        query.to_csv(csvfile)
+
+        csvfile.seek(0)
+        self.assertEqual(csvfile.readlines(), ['B\r\n', '3\r\n'])
