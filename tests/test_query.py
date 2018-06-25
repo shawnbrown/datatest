@@ -1470,3 +1470,31 @@ class TestToCsv(unittest.TestCase):
 
         finally:
             shutil.rmtree(tmpdir)
+
+    def test_result_to_csv(self):
+        # List of ints.
+        result_obj = Result([1, 2], evaluation_type=list)
+        csvfile = io.StringIO()
+
+        result_obj.to_csv(csvfile)
+
+        csvfile.seek(0)
+        self.assertEqual(csvfile.readlines(), ['1\r\n', '2\r\n'])
+
+        # List of lists.
+        result_obj = Result([['a', 1], ['b', 2]], evaluation_type=list)
+        csvfile = io.StringIO()
+
+        result_obj.to_csv(csvfile)
+
+        csvfile.seek(0)
+        self.assertEqual(csvfile.readlines(), ['a,1\r\n', 'b,2\r\n'])
+
+        # Mapping objects should be flattened.
+        result_obj = Result(DictItems([('a', [1, 2, 3])]), evaluation_type=dict)
+        csvfile = io.StringIO()
+
+        result_obj.to_csv(csvfile)
+
+        csvfile.seek(0)
+        self.assertEqual(csvfile.readlines(), ['a,1\r\n', 'a,2\r\n', 'a,3\r\n'])

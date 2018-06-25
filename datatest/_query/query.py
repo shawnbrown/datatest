@@ -265,6 +265,10 @@ class Result(collections.Iterator):
 
         return evaluation_type(self)
 
+    def to_csv(self, file, fieldnames=None, **fmtparams):
+        iterable = _flatten_data(self)
+        _to_csv(iterable, file, fieldnames, **fmtparams)
+
 
 def _get_evaluation_type(obj, default=None):
     """Return object's evaluation_type property. If the object does
