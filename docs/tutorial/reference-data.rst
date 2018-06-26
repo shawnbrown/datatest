@@ -62,19 +62,16 @@ file of estimated totals for each Australian state or territory:
 .. tip::
 
     It's important to use reference data that comes from somewhere other
-    than the data file we want to test. **The more independent the source,
-    the more confident we can be in our conclusions.** Ideally, we want
-    to use high-quality reference data from an independent organization
-    run by an independent group of people---but in many cases, such ideal
-    conditions are rare. Regardless of the situation, it helps to maximize
-    the independence of our reference data as much as we can in the given
-    circumstances.
+    than the source file we want to test. **The more independent our
+    reference data, the more confident we can be in our conclusions.**
 
     In this example, our detailed records are *Australian Census counts*
-    and our summary records are *projected population estimates* based on
-    an earlier census. While these datasets are both produced by the same
-    organization (the Australian Bureau of  Statistics), they were produced
-    at **different times** and made using **different methods**.
+    and the summary records are *projected population estimates* based
+    on an earlier census. While these datasets are both produced by the same
+    organization (the Australian Bureau of Statistics), they were produced
+    at **different times** and made using **different methods**. These
+    differences provide a degree of independence that improves the integrity
+    of our test results.
 
 
 *******************
@@ -563,8 +560,9 @@ Running this test gives the following message:
 
 
 Although the report look messy at first, the percent error for most
-of these deviations is quite small. As an example, in Victoria, the
-population from our detailed file is 77,297 counts higher than the
+of these deviations is quite small. As an example, the difference
+``'Victoria': Deviation(+77294, 5849330)`` shows that the population
+for Victoria in our detailed file is 77,297 counts higher than the
 population in the summary file. But our expected population is over
 5.8 million so the percent error is only +1.3%.
 
@@ -718,14 +716,16 @@ the total count in our detailed file is almost *twice* as large as it
 should be (505,685 + 514,245 = 1,019,930).
 
 Looking at the rows for Tasmania in our **country_of_birth.csv**
-file, we can see that there's an extra "``SUBTOTAL``" record. With this
-extra record, our file is double-counting the population in Tasmania:
+file, we can see that there's an extra "``SUBTOTAL``" record:
 
 .. literalinclude:: /_static/tutorial/country_of_birth.csv
     :language: none
     :lineno-match:
     :lines: 36-45
     :emphasize-lines: 9
+
+With this extra record, our file is double-counting the population in
+Tasmania.
 
 To correct the issue, we simply delete this row and save our changes:
 
