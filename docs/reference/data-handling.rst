@@ -115,8 +115,6 @@ Selecting & Querying Data
 
     .. automethod:: fetch
 
-    .. automethod:: to_csv
-
     .. attribute:: __wrapped__
 
         The underlying iterator---useful when introspecting

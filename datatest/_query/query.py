@@ -265,19 +265,6 @@ class Result(collections.Iterator):
 
         return evaluation_type(self)
 
-    def to_csv(self, file, fieldnames=None, **fmtparams):
-        """Write the results as a CSV file (dictionaries and other
-        mappings will be seralized).
-
-        The given *file* can be a path or file-like object;
-        *fieldnames* will be printed as a header row; and *fmtparams*
-        can be any values supported by :py:func:`csv.writer`.
-
-        When *fieldnames* are not provided, no header is written.
-        """
-        iterable = _flatten_data(self)
-        _to_csv(iterable, file, fieldnames, **fmtparams)
-
 
 def _get_evaluation_type(obj, default=None):
     """Return object's evaluation_type property. If the object does
