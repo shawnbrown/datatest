@@ -21,49 +21,54 @@ You can copy the following class to use in your own tests:
     .. group-tab:: Pytest
 
         .. code-block:: python
-            :emphasize-lines: 21
+            :emphasize-lines: 22
 
             from datatest import validate
             from datatest import Extra
 
 
-            class IsUnique(object):
-                """values should be unique"""
-                def __init__(self):
-                    self.values = set()
+            def make_is_unique():
+                previously_seen = set()
 
-                def __call__(self, value):
-                    if value in self.values:
+                def is_unique(value):
+                    """values should be unique"""
+                    if value in previously_seen:
                         return Extra(value)
-                    self.values.add(value)
+                    previously_seen.add(value)
                     return True
+
+                return is_unique
 
 
             def test_is_unique():
 
                 data = ['a', 'b', 'a', 'c']  # <- 'a' is not unique
 
-                validate(data, IsUnique())
+                is_unique = make_is_unique()
+
+                validate(data, is_unique)
+
 
     .. group-tab:: Unittest
 
         .. code-block:: python
-            :emphasize-lines: 23
+            :emphasize-lines: 24
 
             from datatest import DataTestCase
             from datatest import Extra
 
 
-            class IsUnique(object):
-                """values should be unique"""
-                def __init__(self):
-                    self.values = set()
+            def make_is_unique():
+                previously_seen = set()
 
-                def __call__(self, value):
-                    if value in self.values:
+                def is_unique(value):
+                    """values should be unique"""
+                    if value in previously_seen:
                         return Extra(value)
-                    self.values.add(value)
+                    previously_seen.add(value)
                     return True
+
+                return is_unique
 
 
             class MyTest(DataTestCase):
@@ -72,7 +77,9 @@ You can copy the following class to use in your own tests:
 
                     data = ['a', 'a', 'b', 'c']  # <- 'a' is not unique
 
-                    self.assertValid(data, IsUnique())
+                    is_unique = make_is_unique()
+
+                    self.assertValid(data, is_unique)
 
 
 Quick-and-Dirty Approach

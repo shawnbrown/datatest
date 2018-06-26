@@ -13,14 +13,14 @@ How to Assert Column Names
 
 To check that a file contains the expected column names, we can use a
 :class:`Selector` and validate its :attr:`fieldnames <Selector.fieldnames>`
-using a required set:
+using a required **set**:
 
 .. tabs::
 
     .. group-tab:: Pytest
 
         .. code-block:: python
-            :emphasize-lines: 15-17
+            :emphasize-lines: 15,17
 
             import pytest
             from datatest import working_directory
@@ -36,15 +36,15 @@ using a required set:
 
             def test_columns(mydata):
 
-                required_columns = {'A', 'B', 'C'}
+                required_set = {'A', 'B', 'C'}
 
-                validate(mydata.fieldnames, required_columns)
+                validate(mydata.fieldnames, required_set)
 
 
     .. group-tab:: Unittest
 
         .. code-block:: python
-            :emphasize-lines: 16-18
+            :emphasize-lines: 16,18
 
             from datatest import working_directory
             from datatest import Selector
@@ -61,14 +61,14 @@ using a required set:
 
                 def test_columns(self):
 
-                    required_columns = {'A', 'B', 'C'}
+                    required_set = {'A', 'B', 'C'}
 
-                    self.assertValid(mydata.fieldnames, required_columns)
+                    self.assertValid(mydata.fieldnames, required_set)
 
 
 The example above checks for column names in any order (sets are
 unordered). If we want to make sure that column names appear in a
-specific order, we can validate the fieldnames using a list:
+specific order, we can validate the fieldnames using a **list**:
 
 .. tabs::
 
@@ -81,9 +81,9 @@ specific order, we can validate the fieldnames using a list:
 
             def test_columns(mydata):
 
-                required_columns = ['A', 'B', 'C']
+                required_list = ['A', 'B', 'C']
 
-                validate(mydata.fieldnames, required_columns)
+                validate(mydata.fieldnames, required_list)
 
 
     .. group-tab:: Unittest
@@ -97,9 +97,9 @@ specific order, we can validate the fieldnames using a list:
 
                 def test_columns(self):
 
-                    required_columns = ['A', 'B', 'C']
+                    required_list = ['A', 'B', 'C']
 
-                    self.assertValid(mydata.fieldnames, required_columns)
+                    self.assertValid(mydata.fieldnames, required_list)
 
 
 If we want to assert that a file contains a minimum set of
@@ -121,10 +121,10 @@ use an allowance:
 
             def test_columns(mydata):
 
-                required_columns = {'A', 'B', 'C'}
+                required_set = {'A', 'B', 'C'}
 
                 with allowed.extra():
-                    validate(mydata.fieldnames, required_columns)
+                    validate(mydata.fieldnames, required_set)
 
 
     .. group-tab:: Unittest
@@ -138,15 +138,16 @@ use an allowance:
 
                 def test_columns(self):
 
-                    required_columns = {'A', 'B', 'C'}
+                    required_set = {'A', 'B', 'C'}
 
                     with self.allowedExtra():
-                        self.assertValid(mydata.fieldnames, required_columns)
+                        self.assertValid(mydata.fieldnames, required_set)
 
 
-If we don't care exactly what the column names are but we
-want to check that they're upper-case, we can use a predicate
-function:
+If we don't care exactly what the column names are but we want
+to check that they conform to a specific format, we can use a
+predicate **function**. Below we will check that the column
+names are all upper case:
 
 .. tabs::
 
@@ -180,4 +181,3 @@ function:
                         return value.isupper()
 
                     self.assertValid(mydata.fieldnames, uppercase)
-

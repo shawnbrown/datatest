@@ -23,7 +23,7 @@ in *data* are considered valid when our function returns ``True``:
     .. group-tab:: Pytest
 
         .. code-block:: python
-            :emphasize-lines: 8-9
+            :emphasize-lines: 8-10
 
             import datatest
 
@@ -32,16 +32,17 @@ in *data* are considered valid when our function returns ``True``:
 
                 data = [5, 7, 4, 5, 9]
 
-                def from5to10(x):
-                    return 5 <= x <= 10  # <- Interval comparison.
+                def interval(x):
+                    """from 5 to 10"""
+                    return 5 <= x <= 10
 
-                datatest.validate(data, from5to10)
+                datatest.validate(data, interval)
 
 
     .. group-tab:: Unittest
 
         .. code-block:: python
-            :emphasize-lines: 10-11
+            :emphasize-lines: 10-12
 
             import datatest
 
@@ -52,10 +53,11 @@ in *data* are considered valid when our function returns ``True``:
 
                     data = [5, 7, 4, 5, 9]
 
-                    def from5to10(x):
-                        return 5 <= x <= 10  # <- Interval comparison.
+                    def interval(x):
+                        """from 5 to 10"""
+                        return 5 <= x <= 10
 
-                    self.assertValid(data, from5to10)
+                    self.assertValid(data, interval)
 
 
 ========================
@@ -78,8 +80,7 @@ a reusable helper function:
         def interval(x):
             return op(low, x) and op(x, high)
 
-        if not inclusive:
-            interval.__name__ = 'interval_exclusive'
+        interval.__doc__ = 'from {0} to {1}'.format(low, high)
 
         return interval
 

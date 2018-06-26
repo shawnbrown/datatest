@@ -22,18 +22,17 @@ style phone numbers with various separator characters (e.g.,
     .. group-tab:: Pytest
 
         .. code-block:: python
-            :emphasize-lines: 5,12
+            :emphasize-lines: 9,11
 
             import re
             import datatest
 
 
-            phone_number = re.compile('^(1\s)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$')
-
-
             def test_phone_numbers():
 
                 data = ['(555) 123-1234', '555-123-1234', '555.123.1234']
+
+                phone_number = re.compile('^(1\s)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$')
 
                 datatest.validate(data, phone_number)
 
@@ -41,13 +40,10 @@ style phone numbers with various separator characters (e.g.,
     .. group-tab:: Unittest
 
         .. code-block:: python
-            :emphasize-lines: 5,14
+            :emphasize-lines: 11,13
 
             import re
             import datatest
-
-
-            phone_number = re.compile('^(1\s)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$')
 
 
             class MyTest(datatest.DataTestCase):
@@ -55,6 +51,8 @@ style phone numbers with various separator characters (e.g.,
                 def test_phone_numbers(self):
 
                     data = ['(555) 123-1234', '555-123-1234', '555.123.1234']
+
+                    phone_number = re.compile('^(1\s)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$')
 
                     self.assertValid(data, phone_number)
 
@@ -72,7 +70,7 @@ length:
 
 
     def phone_number(value):
-        """String appears to contain a North American phone number."""
+        """should be North American phone number"""
         digits_only = ''.join(x for x in value if x.isdigit())
         length = len(digits_only)
         return length == 10 or (length == 11 and digits_only[0] == '1')

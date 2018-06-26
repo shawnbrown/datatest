@@ -29,7 +29,7 @@ See the following examples:
     .. group-tab:: Pytest
 
         .. code-block:: python
-            :emphasize-lines: 9-11,19-21
+            :emphasize-lines: 9,11,19,21
 
             from datatest import validate
             from datatest import allowed
@@ -58,7 +58,7 @@ See the following examples:
     .. group-tab:: Unittest
 
         .. code-block:: python
-            :emphasize-lines: 10-12,19-21
+            :emphasize-lines: 10,12,19,21
 
             from datatest import DataTestCase
 
