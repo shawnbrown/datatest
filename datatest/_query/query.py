@@ -211,7 +211,7 @@ class Result(collections.Iterator):
             iterable = iterable.__wrapped__
 
         if isinstance(iterable, collections.Mapping):
-            iterable = DictItems(iterable.items())
+            iterable = DictItems(iterable)
 
         if (issubclass(evaluation_type, collections.Mapping)
                 and not _is_collection_of_items(iterable)):
