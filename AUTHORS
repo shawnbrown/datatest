@@ -1,18 +1,21 @@
 Datatest was originally created at NCEC Services, LLC in 2014
-by Shawn Brown as 'dataaudit'.  In 2015 the project was largely
+by Shawn Brown as 'dataaudit'. In 2015 the project was largely
 rewritten and renamed to 'datatest'.
 
+Work-for-hire Contributors:
 
-Contributing authors:
-
-  * Shawn Brown <shawnbrown@users.noreply.github.com> (development lead,
-    work-for-hire as well as substantial personal contribution)
+  * Shawn Brown <sbrown@ncec.org> (development lead)
   *
 
+Personal Contributors:
+
+  * Shawn Brown <shawnbrown@users.noreply.github.com>
+  *
 
 A big thank you goes out to:
 
     Heather Blum-Pastor for numerous ideas and feedback.
 
     Brian Fraher, Bilen Estephanos, and Eric Hawkins who helped spec-out
-    in initial API on our trip to New York City in the winter of 2014.
+    the initial API on our snowy train ride to New York City in February
+    of 2014.
