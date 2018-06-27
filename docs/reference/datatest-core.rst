@@ -79,6 +79,9 @@ Concrete Differences
 Allowances
 **********
 
+Allowances are context managers that operate on a :class:`ValidationError`'s
+collection of differences.
+
 .. autoclass:: allowed
 
 .. automethod:: allowed.missing

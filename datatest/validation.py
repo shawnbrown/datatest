@@ -480,9 +480,9 @@ def validate(data, requirement, msg=None):
     """Raise a :exc:`ValidationError` if *data* does not satisfy
     *requirement* or pass without error if data is valid.
 
-    The given *requirement* can be a single predicate, a mapping
-    of predicates, or a list of predicates (see :ref:`predicate-docs`
-    for details).
+    This is a rich comparison function. The given *requirement* can
+    be a single predicate, a mapping of predicates, or a list of
+    predicates (see :ref:`predicate-docs` for details).
 
     For values that fail to satisfy their predicates, "difference"
     objects are generated and used to create a :exc:`ValidationError`.

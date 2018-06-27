@@ -1,7 +1,8 @@
 
-*************************************************
-datatest: Test driven data-wrangling and analysis
-*************************************************
+********************************************************
+datatest: Testing tools for data validation and analysis
+********************************************************
+
 ..
     Project badges for quick reference:
 
@@ -10,19 +11,19 @@ datatest: Test driven data-wrangling and analysis
 
 .. start-inclusion-marker-description
 
-Datatest provides tools for test driven data-wrangling
-and analysis. It supports both `pytest <https://pytest.org/>`_
-and `unittest <https://docs.python.org/library/unittest.html>`_
-style testing.
+Datatest provides testing tools for data validation and analysis.
+It supports both pytest_ and unittest_ style testing.
 
-You can use datatest to automate checklists, log discrepancies,
-and measure progress. It encourages a structured approach for
-preparing messy data that needs to be cleaned, integrated,
-formatted, and verified.
+You can use datatest for validation, data-wrangling, auditing,
+logging discrepancies, and checklists for measuring progress.
+It encourages a structured approach for checking and tidying data.
 
-Datatest has no hard dependencies and supports Python 2.6, 2.7,
-3.1 through 3.6, PyPy, and PyPy3.
+Datatest has no hard dependencies; supports Python 2.6, 2.7,
+3.1 through 3.6, PyPy, and PyPy3; and is freely available under
+the Apache License, version 2.
 
+.. _pytest: https://pytest.org
+.. _unittest: https://docs.python.org/library/unittest.html
 
 .. end-inclusion-marker-description
 

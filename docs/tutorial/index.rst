@@ -5,7 +5,7 @@
     :title: Tutorials
 
 .. module:: datatest
-    :synopsis: Test driven data-wrangling.
+    :synopsis: Tutorials for datatest.
 .. moduleauthor:: Shawn Brown <sbrown@ncecservices.com>
 .. sectionauthor:: Shawn Brown <sbrown@ncecservices.com>
 
