@@ -110,6 +110,7 @@ if __name__ == '__main__':
                 'Topic :: Software Development :: Testing',
                 'License :: OSI Approved :: Apache Software License',
                 'Development Status :: 4 - Beta',
+                'Framework :: Pytest',
                 'Programming Language :: Python :: 2',
                 'Programming Language :: Python :: 2.6',
                 'Programming Language :: Python :: 2.7',
