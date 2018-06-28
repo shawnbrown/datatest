@@ -1182,20 +1182,6 @@ class TestSelector(unittest.TestCase):
         result = source('A', B=unhashable_iseven).fetch()
         self.assertEqual(result, ['y'])
 
-    def test_iter(self):
-        """Test __iter__."""
-        result = [row for row in self.source]
-        expected = [
-            {'label1': 'a', 'label2': 'x', 'value': '17'},
-            {'label1': 'a', 'label2': 'x', 'value': '13'},
-            {'label1': 'a', 'label2': 'y', 'value': '20'},
-            {'label1': 'a', 'label2': 'z', 'value': '15'},
-            {'label1': 'b', 'label2': 'z', 'value': '5' },
-            {'label1': 'b', 'label2': 'y', 'value': '40'},
-            {'label1': 'b', 'label2': 'x', 'value': '25'},
-        ]
-        self.assertEqual(expected, result)
-
     def test_select_list_of_strings(self):
         result = self.source._select(['label1'])
         expected = ['a', 'a', 'a', 'a', 'b', 'b', 'b']

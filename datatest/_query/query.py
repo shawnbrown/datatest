@@ -1168,15 +1168,6 @@ class Selector(object):
         cursor.execute('PRAGMA table_info({0})'.format(self._table))
         return [x[1] for x in cursor]
 
-    def __iter__(self):
-        """Return iterable of dictionary rows (like csv.DictReader)."""
-        cursor = self._connection.cursor()
-        cursor.execute('SELECT * FROM ' + self._table)
-
-        fieldnames = self.fieldnames
-        dict_row = lambda x: dict(zip(fieldnames, x))
-        return (dict_row(row) for row in cursor.fetchall())
-
     def __call__(self, columns, **where):
         """After a Selector has been created, it can be called like a
         function to select fields and return an associated :class:`Query`
