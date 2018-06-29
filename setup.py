@@ -1,8 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from __future__ import print_function
+import argparse
 import ast
 import os
+import subprocess
+import sys
+import warnings
 
 try:
     from setuptools import setup
@@ -16,13 +20,35 @@ WORKING_DIR = os.path.dirname(os.path.abspath(__file__))
 
 class TestCommand(Command):
     """Implement 'setup.py test' command."""
-    user_options = []
+    user_options = [
+        ('verbose', 'v', 'Verbose testing output'),
+        ('failfast', 'f', 'Stop testing on first fail or error'),
+    ]
+
+    boolean_options = ['verbose', 'failfast']
+
+    description = 'run test suite'
 
     def initialize_options(self):
-        pass
+        self.verbose = None
+        self.failfast = None
 
     def finalize_options(self):
-        pass
+        cmd_args = sys.argv                           # Since "verbose" is
+        cmd_args = cmd_args[cmd_args.index('test'):]  # also a global option
+                                                      # for setup.py, we need
+        parser = argparse.ArgumentParser()            # to parse only args
+        parser.add_argument(                          # after the command.
+            '--verbose', '-v', action='store_true', default=False)
+        args, _ = parser.parse_known_args(cmd_args)
+        self.verbose = args.verbose
+
+        if self.failfast is None:
+            self.failfast = False
+        elif sys.version_info[:2] in [(2, 6), (3, 1)]:
+            msg = 'failfast option not supported in this version of Python'
+            warnings.warn(msg)
+            self.failfast = False
 
     def run(self):
         # Print "skipping" notice if missing optional packages.
@@ -31,12 +57,19 @@ class TestCommand(Command):
             msg = 'optionals not installed: {0}\nskipping some tests'
             print(msg.format(', '.join(missing_optionals)))
 
-        # Run tests.
-        import subprocess, sys
+        # Prepare test command.
         if sys.version_info[:2] in [(2, 6), (3, 1)]:
             args = [sys.executable, '-B', 'tests/discover.py']
         else:
             args = [sys.executable, '-B', '-m', 'unittest', 'discover']
+
+        if self.verbose:
+            args.append('--verbose')
+
+        if self.failfast:
+            args.append('--failfast')
+
+        # Run tests.
         exit(subprocess.call(args))
 
     def _get_missing_optionals(self):
