@@ -53,40 +53,6 @@ DEFAULT_CONNECTION.isolation_level = None  # <- Run in 'autocommit' mode.
 PY2 = sys.version_info[0] == 2
 
 
-def _to_csv(iterable, path_or_buf, fieldnames=None, dialect='excel', **fmtparams):
-    """Write iterable to CSV file."""
-    if not nonstringiter(iterable):
-        iterable = [iterable]
-
-    if not isinstance(path_or_buf, file_types):
-        if PY2:
-            csvfile = open(path_or_buf, 'wb')
-        else:
-            csvfile = open(path_or_buf, 'w', newline='')
-        autoclose = True
-    else:
-        csvfile = path_or_buf
-        autoclose = False
-
-    try:
-        writer = csv.writer(csvfile, dialect, **fmtparams)
-
-        if fieldnames:
-            if nonstringiter(fieldnames):
-                writer.writerow(fieldnames)
-            else:
-                writer.writerow([fieldnames])
-
-        for row in iterable:
-            if nonstringiter(row):
-                writer.writerow(row)
-            else:
-                writer.writerow([row])
-    finally:
-        if autoclose:
-            csvfile.close()
-
-
 _Mapping = collections.Mapping    # Get direct reference to eliminate
 _Iterable = collections.Iterable  # dot-lookups (these are used a lot).
 
@@ -984,6 +950,26 @@ class Query(object):
         return '{0}({1}{2}{3}){4}'.format(
             class_repr, source_repr, args_repr, kwds_repr, query_steps_repr)
 
+    def _get_reader(self, fieldnames=None):
+        """Return a csv.reader-like iterator of the query results."""
+        iterable = _flatten_data(self.execute())
+        if not nonstringiter(iterable):
+            iterable = [iterable]
+
+        if not fieldnames:
+            first_row, iterable = iterpeek(iterable)
+            if not nonstringiter(first_row):
+                first_row = [first_row]
+
+            if self.args:
+                (fieldnames,) = _flatten_data(self.args[0])
+                if len(first_row) != len(fieldnames):
+                    fieldnames = None
+
+        if fieldnames:
+            iterable = itertools.chain([fieldnames], iterable)
+        return iterable
+
     def to_csv(self, file, fieldnames=None, **fmtparams):
         """Execute the query and write the results as a CSV file
         (dictionaries and other mappings will be seralized).
@@ -997,21 +983,29 @@ class Query(object):
         original *columns* argument will be used if the number of
         selected columns matches the number of resulting columns.
         """
-        iterable = _flatten_data(self.execute())
-        if not nonstringiter(iterable):
-            iterable = [iterable]
+        reader = self._get_reader(fieldnames)
 
-        if not fieldnames:
-            first_row, iterable = iterpeek(iterable)
-            if not nonstringiter(first_row):
-                first_row = [first_row]
+        if not isinstance(file, file_types):
+            if PY2:
+                csvfile = open(file, 'wb')
+            else:
+                csvfile = open(file, 'w', newline='')
+            autoclose = True
+        else:
+            csvfile = file
+            autoclose = False
 
-            (fieldnames,) = _flatten_data(self.args[0])
+        try:
+            writer = csv.writer(csvfile, **fmtparams)
 
-            if not first_row or len(first_row) != len(fieldnames):
-                fieldnames = None
-
-        _to_csv(iterable, file, fieldnames, **fmtparams)
+            for row in reader:
+                if nonstringiter(row):
+                    writer.writerow(row)
+                else:
+                    writer.writerow([row])
+        finally:
+            if autoclose:
+                csvfile.close()
 
 
 with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3

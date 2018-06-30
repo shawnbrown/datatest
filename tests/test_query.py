@@ -16,7 +16,6 @@ from datatest._utils import nonstringiter
 
 from datatest._load.working_directory import working_directory
 from datatest._query.query import (
-    _to_csv,
     BaseElement,
     _is_collection_of_items,
     DictItems,
@@ -1395,131 +1394,118 @@ class TestSelector(unittest.TestCase):
         self.assertEqual(query.fetch(), expected)
 
 
-class TestToCsv(unittest.TestCase):
+class TestQueryGetReader(unittest.TestCase):
     def test_iterable_of_iterables(self):
-        iterable = [['a', 1], ['b', 2]]
-        csvfile = io.StringIO()
+        query = Query.from_object([['a', 1], ['b', 2]])
 
-        _to_csv(iterable, csvfile)
+        reader = query._get_reader()
 
-        csvfile.seek(0)
-        self.assertEqual(csvfile.readlines(), ['a,1\r\n', 'b,2\r\n'])
+        self.assertEqual(list(reader), [['a', 1], ['b', 2]])
 
     def test_iterable_of_noniterables(self):
-        iterable = [1, 2]
-        csvfile = io.StringIO()
+        query = Query.from_object([1, 2])
 
-        _to_csv(iterable, csvfile)
+        reader = query._get_reader()
 
-        csvfile.seek(0)
-        self.assertEqual(csvfile.readlines(), ['1\r\n', '2\r\n'])
+        self.assertEqual(list(reader), [1, 2])
 
-    def test_noniterable(self):
-        iterable = 1
-        csvfile = io.StringIO()
+    def test_single_noniterable(self):
+        query = Query.from_object(1)
 
-        _to_csv(iterable, csvfile)
+        reader = query._get_reader()
+        self.assertEqual(list(reader), [1])
 
-        csvfile.seek(0)
-        self.assertEqual(csvfile.readlines(), ['1\r\n'])
+        reader = query._get_reader('A')
+        self.assertEqual(list(reader), ['A', 1])
 
-    def test_fieldnames(self):
-        fieldnames = ['A', 'B']
-        iterable = [['a', 1], ['b', 2]]
-        csvfile = io.StringIO()
+        # QUESTION: Should this behavior be implemented?
+        #reader = query._get_reader(['A'])
+        #self.assertEqual(list(reader), ['A', 1])
 
-        _to_csv(iterable, csvfile, fieldnames)
-
-        csvfile.seek(0)
-        self.assertEqual(csvfile.readlines(), ['A,B\r\n', 'a,1\r\n', 'b,2\r\n'])
-
-    def test_fmtparams(self):
-        iterable = [['a', 1], ['b', 2]]
-        csvfile = io.StringIO()
-
-        _to_csv(iterable, csvfile, delimiter='|', lineterminator='\n')
-
-        csvfile.seek(0)
-        self.assertEqual(csvfile.readlines(), ['a|1\n', 'b|2\n'])
-
-    def test_actual_file(self):
-        try:
-            tmpdir = tempfile.mkdtemp()
-            path = os.path.join(tmpdir, 'tempfile.csv')
-
-            iterable = [['a', 1], ['b', 2]]
-
-            _to_csv(iterable, path)
-
-            with open(path) as fh:
-                self.assertEqual(fh.read(), 'a,1\nb,2\n')
-
-        finally:
-            shutil.rmtree(tmpdir)
-
-    def test_query_to_csv(self):
-        select = Selector([['A', 'B'], ['x', 1], ['x', 2]])
-
-        # Iterable of lists.
+    def test_automatic_fieldnames(self):
+        select = Selector([['A', 'B'], ['a', 1], ['b', 2]])
         query = select(['A', 'B'])
-        csvfile = io.StringIO()
 
-        query.to_csv(csvfile)
-
-        csvfile.seek(0)
-        self.assertEqual(csvfile.readlines(), ['A,B\r\n', 'x,1\r\n', 'x,2\r\n'])
-
-        # Explicit fieldnames.
-        query = select(['A', 'B'])
-        csvfile = io.StringIO()
-
-        query.to_csv(csvfile, ['C', 'D'])  # <- Fieldnames!
-
-        csvfile.seek(0)
-        self.assertEqual(csvfile.readlines(), ['C,D\r\n', 'x,1\r\n', 'x,2\r\n'])
+        reader = query._get_reader()  # <- Automatic field names.
+        self.assertEqual(list(reader), [['A', 'B'], ['a', 1], ['b', 2]])
 
         # Because selection contains 2 items, but output has been
         # mapped to 1 item, it should not output a header.
-        query = select(['A', 'B']).map(lambda x: '{0}_{1}'.format(x[0], x[1]))
-        csvfile = io.StringIO()
+        func = lambda x: x[0] + str(x[1])
+        reader = query.map(func)._get_reader()
+        self.assertEqual(list(reader), ['a1', 'b2'])  # <- No header!
 
-        query.to_csv(csvfile)
+    def test_explicit_fieldnames(self):
+        select = Selector([['A', 'B'], ['a', 1], ['b', 2]])
 
-        csvfile.seek(0)
-        self.assertEqual(csvfile.readlines(), ['x_1\r\n', 'x_2\r\n'])
+        query = select(['A', 'B'])
 
-        # Iterable of single values.
-        query = select('B')
-        csvfile = io.StringIO()
+        reader = query._get_reader(['X', 'Y'])  # <- Explicit field names.
+        self.assertEqual(list(reader), [['X', 'Y'], ['a', 1], ['b', 2]])
 
-        query.to_csv(csvfile)
+    def test_mapping_of_single_values(self):
+        select = Selector([['A', 'B'], ['a', 1], ['b', 2]])
+        query = select({'A': 'B'})  # <- A mapping!
 
-        csvfile.seek(0)
-        self.assertEqual(csvfile.readlines(), ['B\r\n', '1\r\n', '2\r\n'])
+        reader = query._get_reader()
 
-        # Mapping of single values.
-        query = select({'A': 'B'})
-        csvfile = io.StringIO()
+        self.assertEqual(list(reader), [('A', 'B'), ('a', 1), ('b', 2)])
 
-        query.to_csv(csvfile)
+    def test_mapping_with_tup_keys_and_single_vals(self):
+        select = Selector([['A', 'B'], ['a', 1], ['b', 2]])
+        query = select({('A', 'A'): 'B'})  # <- Tuple keys and single value.
 
-        csvfile.seek(0)
-        self.assertEqual(csvfile.readlines(), ['A,B\r\n', 'x,1\r\n', 'x,2\r\n'])
+        reader = query._get_reader()
 
-        # Mapping with tuple keys and tuple values.
-        query = select({('A', 'A'): ('B', 'B')})
-        csvfile = io.StringIO()
+        self.assertEqual(
+            list(reader),
+            [('A', 'A', 'B'), ('a','a', 1), ('b', 'b', 2)]
+        )
 
-        query.to_csv(csvfile)
+    def test_mapping_with_tup_keys_and_tup_vals(self):
+        select = Selector([['A', 'B'], ['a', 1], ['b', 2]])
+        query = select({('A', 'A'): ('B', 'B')})  # <- Tuple keys and values.
 
-        csvfile.seek(0)
-        self.assertEqual(csvfile.readlines(), ['A,A,B,B\r\n', 'x,x,1,1\r\n', 'x,x,2,2\r\n'])
+        reader = query._get_reader()
 
-        # Summed single value.
+        self.assertEqual(
+            list(reader),
+            [('A', 'A', 'B', 'B'), ('a','a', 1, 1), ('b', 'b', 2, 2)]
+        )
+
+    def test_summed_single_value(self):
+        select = Selector([['A', 'B'], ['a', 1], ['b', 2]])
         query = select('B').sum()
-        csvfile = io.StringIO()
 
-        query.to_csv(csvfile)
+        reader = query._get_reader()
+
+        self.assertEqual(list(reader), ['B', 3])
+
+
+class TestQueryToCsv(unittest.TestCase):
+    def setUp(self):
+        self.select = Selector([['A', 'B'], ['x', 1], ['y', 2]])
+
+    def test_fmtparams(self):
+        query = self.select(['A', 'B'])
+
+        csvfile = io.StringIO()
+        query.to_csv(csvfile, delimiter='|', lineterminator='\n')
 
         csvfile.seek(0)
-        self.assertEqual(csvfile.readlines(), ['B\r\n', '3\r\n'])
+        self.assertEqual(csvfile.readlines(), ['A|B\n', 'x|1\n', 'y|2\n'])
+
+    def test_actual_file(self):
+        query = self.select(['A', 'B'])
+
+        try:
+            tmpdir = tempfile.mkdtemp()
+
+            path = os.path.join(tmpdir, 'tempfile.csv')
+            query.to_csv(path, lineterminator='\n')
+
+            with open(path) as fh:
+                self.assertEqual(fh.read(), 'A,B\nx,1\ny,2\n')
+
+        finally:
+            shutil.rmtree(tmpdir)
