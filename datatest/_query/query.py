@@ -1474,19 +1474,19 @@ class CompositeSelector(collections.Sequence):
                 msg = 'argument {0}: must be Selector instance, found {1!r}'
                 raise TypeError(msg.format(argnum, cls_name))
 
-        self.selectors = selectors
+        self._selectors = selectors
 
     def __getitem__(self, key):
-        return self.selectors[key]
+        return self._selectors[key]
 
     def __len__(self):
-        return len(self.selectors)
+        return len(self._selectors)
 
     def __iter__(self):
-        return iter(self.selectors)
+        return iter(self._selectors)
 
     def __reversed__(self):
-        return self.__class__(*reversed(self.selectors))
+        return self.__class__(*reversed(self._selectors))
 
     def __getattr__(self, name):
         cls_name = self.__class__.__name__
@@ -1497,13 +1497,13 @@ class CompositeSelector(collections.Sequence):
 
     @property
     def fieldnames(self):
-        return tuple(select.fieldnames for select in self.selectors)
+        return tuple(select.fieldnames for select in self._selectors)
 
     def create_index(self, *columns):
-        for select in self.selectors:
+        for select in self._selectors:
             select.create_index(*columns)
 
     def __repr__(self):
-        selector_reprs = [indent(repr(x), '    ') for x in self.selectors]
+        selector_reprs = [indent(repr(x), '    ') for x in self._selectors]
         cls_name = self.__class__.__name__
         return '{0}(\n{1}\n)'.format(cls_name, ',\n'.join(selector_reprs))
