@@ -1467,4 +1467,10 @@ class CompositeSelector(object):
     worked with like a single Selector.
     """
     def __init__(self, *selectors):
+        for argnum, select in enumerate(selectors, 1):
+            if not isinstance(select, Selector):
+                cls_name = select.__class__.__name__
+                msg = 'argument {0}: must be Selector instance, found {1!r}'
+                raise TypeError(msg.format(argnum, cls_name))
+
         self.selectors = selectors

@@ -1530,3 +1530,8 @@ class TestCompositeSelector(unittest.TestCase):
             ['z', 20],
         ])
         self.compare = CompositeSelector(self.select1, self.select2)
+
+    def test_init_failure(self):
+        regex = "argument 2: must be Selector instance, found 'str'"
+        with self.assertRaisesRegex(TypeError, regex):
+            compare = CompositeSelector(Selector(), 'bar')
