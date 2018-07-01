@@ -1653,3 +1653,14 @@ class TestCompositeSelector(unittest.TestCase):
         expected.remove('load_data')
 
         self.assertEqual(actual, expected)
+
+
+class TestCompositeQuery(unittest.TestCase):
+    def test_init(self):
+        query = Query({'A': 'C'}, A='x')
+
+        compare = CompositeQuery(query, query)  # Should pass without error.
+
+        regex = "argument 2: must be Query instance, found 'str'"
+        with self.assertRaisesRegex(TypeError, regex):
+            compare = CompositeQuery(query, 'bar')

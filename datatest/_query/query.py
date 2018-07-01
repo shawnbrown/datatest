@@ -1468,6 +1468,11 @@ class CompositeQuery(object):
     worked with like a single Query.
     """
     def __init__(self, *queries):
+        for argnum, query in enumerate(queries, 1):
+            if not isinstance(query, Query):
+                cls_name = query.__class__.__name__
+                msg = 'argument {0}: must be Query instance, found {1!r}'
+                raise TypeError(msg.format(argnum, cls_name))
         self._queries = queries
 
 
