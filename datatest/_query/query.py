@@ -9,9 +9,9 @@ except ImportError:
 import sys
 from glob import glob
 from numbers import Number
-from textwrap import indent
 
 from .._compatibility.builtins import *
+from .._compatibility.textwrap import indent
 from .._compatibility import abc
 from .._compatibility import collections
 from .._compatibility import contextlib

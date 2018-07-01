@@ -3,7 +3,7 @@
 import subprocess
 import sys
 
-from . import _textwrap as textwrap
+from datatest._compatibility import textwrap
 from . import _unittest as unittest
 
 

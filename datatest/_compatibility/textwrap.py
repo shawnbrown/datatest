@@ -4,7 +4,7 @@ from textwrap import *
 
 
 try:
-    indent
+    indent  # New in 3.3
 except NameError:
     def indent(text, prefix, predicate=None):
         if predicate is None:
