@@ -1542,3 +1542,9 @@ class TestCompositeSelector(unittest.TestCase):
 
         compare = CompositeSelector(Selector(), Selector())  # <- Empty selectors.
         self.assertEqual(compare.fieldnames, ([], []), msg='should be empty lists')
+
+    def test_create_index(self):
+        self.compare.create_index('A')
+
+        with self.assertRaises(LookupError, msg='second Selector has no column B'):
+            self.compare.create_index('A', 'B')

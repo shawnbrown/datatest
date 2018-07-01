@@ -1478,3 +1478,7 @@ class CompositeSelector(object):
     @property
     def fieldnames(self):
         return tuple(select.fieldnames for select in self.selectors)
+
+    def create_index(self, *columns):
+        for select in self.selectors:
+            select.create_index(*columns)
