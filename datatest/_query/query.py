@@ -1487,6 +1487,14 @@ class CompositeQuery(collections.Sequence):
     def __reversed__(self):
         return self.__class__(*reversed(self._queries))
 
+    def __getattr__(self, name):
+        cls_name = self.__class__.__name__
+        msg = '{0!r} object has no attribute {1!r}'.format(cls_name, name)
+        if (name  == 'from_object') or (name == 'to_csv'):
+            msg += \
+                ', must use {0}() from individual queries instead'.format(name)
+        raise AttributeError(msg)
+
 
 class CompositeSelector(collections.Sequence):
     """A class to wrap multiple Selector instances so they can be

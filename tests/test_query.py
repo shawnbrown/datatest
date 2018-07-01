@@ -1722,3 +1722,19 @@ class TestCompositeQuery(unittest.TestCase):
         # Test count() mixin method.
         self.assertEqual(self.queries.count(self.query1), 1)
         self.assertEqual(self.queries.count(self.query2), 1)
+
+    def test_missing_methods(self):
+        regex = ("'CompositeQuery' object has no attribute 'from_object', "
+                 "must use from_object\(\) from individual queries instead")
+        with self.assertRaisesRegex(AttributeError, regex):
+            query = self.queries.from_object([1, 2, 3])
+
+        regex = ("'CompositeQuery' object has no attribute 'to_csv', "
+                 "must use to_csv\(\) from individual queries instead")
+        with self.assertRaisesRegex(AttributeError, regex):
+            self.queries.to_csv('foobar.csv')
+
+        # Also, make sure standard message is given for other errors.
+        regex = "'CompositeQuery' object has no attribute 'foobar'"
+        with self.assertRaisesRegex(AttributeError, regex):
+            self.queries.foobar
