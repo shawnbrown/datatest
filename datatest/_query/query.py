@@ -1460,3 +1460,11 @@ elif sqlite3.sqlite_version_info < (3, 6, 8):
                 'version:\n\nPython {0}\nBuilt with SQLite {1}'
             ).format(sys.version, sqlite3.sqlite_version)
             raise Exception(msg)
+
+
+class CompositeSelector(object):
+    """A class to wrap multiple Selector instances so they can be
+    worked with like a single Selector.
+    """
+    def __init__(self, *selectors):
+        self.selectors = selectors

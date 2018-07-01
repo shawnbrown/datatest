@@ -37,6 +37,7 @@ from datatest._query.query import (
     Query,
     Result,
     Selector,
+    CompositeSelector,
 )
 
 
@@ -1509,3 +1510,23 @@ class TestQueryToCsv(unittest.TestCase):
 
         finally:
             shutil.rmtree(tmpdir)
+
+
+class TestCompositeSelector(unittest.TestCase):
+    def setUp(self):
+        self.select1 = Selector([
+            ['A', 'B', 'C'],
+            ['x', 'foo', 20],
+            ['x', 'foo', 30],
+            ['y', 'foo', 10],
+            ['y', 'bar', 20],
+            ['z', 'bar', 10],
+            ['z', 'bar', 10],
+        ])
+        self.select2 = Selector([
+            ['A', 'C'],
+            ['x', 50],
+            ['y', 30],
+            ['z', 20],
+        ])
+        self.compare = CompositeSelector(self.select1, self.select2)
