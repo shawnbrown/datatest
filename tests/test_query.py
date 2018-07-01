@@ -1632,3 +1632,18 @@ class TestCompositeSelector(unittest.TestCase):
             expected,
             msg='all lines of multi-line selector should be intended',
         )
+
+    def test_public_methods(self):
+        """CompositeSelector and Selector should have most of the same public
+        properties and methods--except for index(), count() and load_data().
+        """
+        getmethods = lambda obj: set([x for x in dir(obj) if not x.startswith('_')])
+
+        actual = getmethods(CompositeSelector)
+        actual.remove('index')
+        actual.remove('count')
+
+        expected = getmethods(Selector)
+        expected.remove('load_data')
+
+        self.assertEqual(actual, expected)
