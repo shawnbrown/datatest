@@ -1535,3 +1535,10 @@ class TestCompositeSelector(unittest.TestCase):
         regex = "argument 2: must be Selector instance, found 'str'"
         with self.assertRaisesRegex(TypeError, regex):
             compare = CompositeSelector(Selector(), 'bar')
+
+    def test_fieldnames(self):
+        expected = (['A', 'B', 'C'], ['A', 'C'])
+        self.assertEqual(self.compare.fieldnames, expected)
+
+        compare = CompositeSelector(Selector(), Selector())  # <- Empty selectors.
+        self.assertEqual(compare.fieldnames, ([], []), msg='should be empty lists')

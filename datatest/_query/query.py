@@ -1474,3 +1474,7 @@ class CompositeSelector(object):
                 raise TypeError(msg.format(argnum, cls_name))
 
         self.selectors = selectors
+
+    @property
+    def fieldnames(self):
+        return tuple(select.fieldnames for select in self.selectors)
