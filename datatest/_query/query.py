@@ -9,6 +9,7 @@ except ImportError:
 import sys
 from glob import glob
 from numbers import Number
+from textwrap import indent
 
 from .._compatibility.builtins import *
 from .._compatibility import abc
@@ -1501,3 +1502,8 @@ class CompositeSelector(collections.Sequence):
     def create_index(self, *columns):
         for select in self.selectors:
             select.create_index(*columns)
+
+    def __repr__(self):
+        selector_reprs = [indent(repr(x), '    ') for x in self.selectors]
+        cls_name = self.__class__.__name__
+        return '{0}(\n{1}\n)'.format(cls_name, ',\n'.join(selector_reprs))

@@ -1598,3 +1598,37 @@ class TestCompositeSelector(unittest.TestCase):
 
         with self.assertRaises(LookupError, msg='second Selector has no column B'):
             self.compare.create_index('A', 'B')
+
+    def test_repr(self):
+        compare_repr = repr(self.compare)
+        expected = textwrap.dedent("""
+            CompositeSelector(
+                <Selector [['A', 'B', 'C'], ['x', 'foo', 20], ['x', 'foo', 3...r', 10]]>,
+                <Selector [['A', 'C'], ['x', 50], ['y', 30], ['z', 20]]>
+            )
+        """).strip()
+        self.assertEqual(compare_repr, expected)
+
+        # Multi-line selector repr.
+        select3 = Selector()
+        select3.load_data([['A', 'C'], ['x', 50]])
+        select3.load_data([['A', 'C'], ['y', 30]])
+        select3.load_data([['A', 'C'], ['z', 20]])
+
+        compare = CompositeSelector(select3, self.select2)
+        compare_repr = repr(compare)
+        expected = textwrap.dedent("""
+            CompositeSelector(
+                <Selector (3 sources):
+                    [['A', 'C'], ['x', 50]]
+                    [['A', 'C'], ['y', 30]]
+                    [['A', 'C'], ['z', 20]]>,
+                <Selector [['A', 'C'], ['x', 50], ['y', 30], ['z', 20]]>
+            )
+        """).strip()
+
+        self.assertEqual(
+            compare_repr,
+            expected,
+            msg='all lines of multi-line selector should be intended',
+        )
