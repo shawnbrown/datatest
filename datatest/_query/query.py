@@ -1475,6 +1475,13 @@ class CompositeSelector(object):
 
         self.selectors = selectors
 
+    def __getattr__(self, name):
+        cls_name = self.__class__.__name__
+        msg = '{0!r} object has no attribute {1!r}'.format(cls_name, name)
+        if name == 'load_data':
+            msg += ', must use load_data() from individual selectors instead'
+        raise AttributeError(msg)
+
     @property
     def fieldnames(self):
         return tuple(select.fieldnames for select in self.selectors)

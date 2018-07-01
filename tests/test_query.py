@@ -1536,6 +1536,17 @@ class TestCompositeSelector(unittest.TestCase):
         with self.assertRaisesRegex(TypeError, regex):
             compare = CompositeSelector(Selector(), 'bar')
 
+    def test_no_load_data(self):
+        regex = ("'CompositeSelector' object has no attribute 'load_data', "
+                 "must use load_data\(\) from individual selectors instead")
+        with self.assertRaisesRegex(AttributeError, regex):
+            self.compare.load_data([['X', 'Y'], [1, 2]])
+
+        # Also, make sure standard message is given for other errors.
+        regex = "'CompositeSelector' object has no attribute 'foobar'"
+        with self.assertRaisesRegex(AttributeError, regex):
+            self.compare.foobar
+
     def test_fieldnames(self):
         expected = (['A', 'B', 'C'], ['A', 'C'])
         self.assertEqual(self.compare.fieldnames, expected)
