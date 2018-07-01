@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from __future__ import print_function
-import argparse
 import ast
+import optparse
 import os
 import subprocess
 import sys
@@ -37,11 +37,11 @@ class TestCommand(Command):
         cmd_args = sys.argv                           # Since "verbose" is
         cmd_args = cmd_args[cmd_args.index('test'):]  # also a global option
                                                       # for setup.py, we need
-        parser = argparse.ArgumentParser()            # to parse only args
-        parser.add_argument(                          # after the command.
+        parser = optparse.OptionParser()              # to parse only args
+        parser.add_option(                            # after the command.
             '--verbose', '-v', action='store_true', default=False)
-        args, _ = parser.parse_known_args(cmd_args)
-        self.verbose = args.verbose
+        opts, _ = parser.parse_args(cmd_args)
+        self.verbose = opts.verbose
 
         if self.failfast is None:
             self.failfast = False
