@@ -1463,6 +1463,14 @@ elif sqlite3.sqlite_version_info < (3, 6, 8):
             raise Exception(msg)
 
 
+class CompositeQuery(object):
+    """A class to wrap multiple Query instances so they can be
+    worked with like a single Query.
+    """
+    def __init__(self, *queries):
+        self._queries = queries
+
+
 class CompositeSelector(collections.Sequence):
     """A class to wrap multiple Selector instances so they can be
     worked with like a single Selector.
@@ -1498,6 +1506,10 @@ class CompositeSelector(collections.Sequence):
     @property
     def fieldnames(self):
         return tuple(select.fieldnames for select in self._selectors)
+
+    def __call__(self, columns, **where):
+        queries = (select(columns, **where) for select in self._selectors)
+        return CompositeQuery(*queries)
 
     def create_index(self, *columns):
         for select in self._selectors:

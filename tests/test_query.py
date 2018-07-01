@@ -38,6 +38,7 @@ from datatest._query.query import (
     Result,
     Selector,
     CompositeSelector,
+    CompositeQuery,
 )
 
 
@@ -1632,6 +1633,11 @@ class TestCompositeSelector(unittest.TestCase):
             expected,
             msg='all lines of multi-line selector should be intended',
         )
+
+    def test_call(self):
+        """Calling a CompositeSelector should return a CompositeQuery."""
+        query = self.compare({'A': 'C'}, A='x')
+        self.assertIsInstance(query, CompositeQuery)
 
     def test_public_methods(self):
         """CompositeSelector and Selector should have most of the same public
