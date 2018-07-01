@@ -1462,7 +1462,7 @@ elif sqlite3.sqlite_version_info < (3, 6, 8):
             raise Exception(msg)
 
 
-class CompositeSelector(object):
+class CompositeSelector(collections.Sequence):
     """A class to wrap multiple Selector instances so they can be
     worked with like a single Selector.
     """
@@ -1474,6 +1474,18 @@ class CompositeSelector(object):
                 raise TypeError(msg.format(argnum, cls_name))
 
         self.selectors = selectors
+
+    def __getitem__(self, key):
+        return self.selectors[key]
+
+    def __len__(self):
+        return len(self.selectors)
+
+    def __iter__(self):
+        return iter(self.selectors)
+
+    def __reversed__(self):
+        return self.__class__(*reversed(self.selectors))
 
     def __getattr__(self, name):
         cls_name = self.__class__.__name__

@@ -6,7 +6,7 @@ import sys as _sys
 
 try:
     TestCase.assertIn  # New in 2.7/3.1
-    #TestCase.assertNotIn
+    TestCase.assertNotIn
 except AttributeError:
     def _assertIn(self, member, container, msg=None):
         """Just like self.assertTrue(a in b), but with a nicer default
@@ -16,6 +16,12 @@ except AttributeError:
             standardMsg = '%r not found in %r' % (member, container)
             self.fail(self._formatMessage(msg, standardMsg))
     TestCase.assertIn = _assertIn
+
+    def _assertNotIn(self, member, container, msg=None):
+        if member in container:
+            standardMsg = '%r found in %r' % (member, container)
+            self.fail(self._formatMessage(msg, standardMsg))
+    TestCase.assertNotIn = _assertNotIn
 
 
 try:

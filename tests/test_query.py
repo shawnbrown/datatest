@@ -1536,6 +1536,45 @@ class TestCompositeSelector(unittest.TestCase):
         with self.assertRaisesRegex(TypeError, regex):
             compare = CompositeSelector(Selector(), 'bar')
 
+    def test_sequence_methods(self):
+        """CompositeSelector is a collections.Sequence subclass
+        and must implement the abstract methods __getitem__() and
+        __len__().
+        """
+        # Test __getitem__() abstract method.
+        self.assertIs(self.compare[0], self.select1)
+        self.assertIs(self.compare[1], self.select2)
+
+        # Test __len__() abstract method.
+        self.assertEqual(len(self.compare), 2)
+
+        # Test __iter__() mixin method override.
+        iterable = iter(self.compare)
+        self.assertEqual(list(iterable), [self.select1, self.select2])
+
+        # Test __reversed__() mixin method override.
+        compare = reversed(self.compare)
+        self.assertIsInstance(compare, CompositeSelector)
+        self.assertEqual(list(compare), [self.select2, self.select1], 'should be reverse order')
+
+    def test_sequence_inherited_mixins(self):
+        """CompositeSelector is a collections.Sequence subclass and
+        should automatically inherit a number of mixin methods This
+        test is a quick sanity check for these methods.
+        """
+        # Test __contains__() mixin method.
+        self.assertIn(self.select1, self.compare)
+        select3 = Selector()
+        self.assertNotIn(select3, self.compare)
+
+        # Test index() mixin method.
+        self.assertEqual(self.compare.index(self.select1), 0)
+        self.assertEqual(self.compare.index(self.select2), 1)
+
+        # Test count() mixin method.
+        self.assertEqual(self.compare.count(self.select1), 1)
+        self.assertEqual(self.compare.count(self.select2), 1)
+
     def test_no_load_data(self):
         regex = ("'CompositeSelector' object has no attribute 'load_data', "
                  "must use load_data\(\) from individual selectors instead")
