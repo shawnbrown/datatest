@@ -1463,7 +1463,7 @@ elif sqlite3.sqlite_version_info < (3, 6, 8):
             raise Exception(msg)
 
 
-class CompositeQuery(object):
+class CompositeQuery(collections.Sequence):
     """A class to wrap multiple Query instances so they can be
     worked with like a single Query.
     """
@@ -1474,6 +1474,18 @@ class CompositeQuery(object):
                 msg = 'argument {0}: must be Query instance, found {1!r}'
                 raise TypeError(msg.format(argnum, cls_name))
         self._queries = queries
+
+    def __getitem__(self, key):
+        return self._queries[key]
+
+    def __len__(self):
+        return len(self._queries)
+
+    def __iter__(self):
+        return iter(self._queries)
+
+    def __reversed__(self):
+        return self.__class__(*reversed(self._queries))
 
 
 class CompositeSelector(collections.Sequence):

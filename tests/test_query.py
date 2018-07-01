@@ -1656,6 +1656,26 @@ class TestCompositeSelector(unittest.TestCase):
 
 
 class TestCompositeQuery(unittest.TestCase):
+    def setUp(self):
+        self.select1 = Selector([
+            ['A', 'B', 'C'],
+            ['x', 'foo', 20],
+            ['x', 'foo', 30],
+            ['y', 'foo', 10],
+            ['y', 'bar', 20],
+            ['z', 'bar', 10],
+            ['z', 'bar', 10],
+        ])
+        self.select2 = Selector([
+            ['A', 'C'],
+            ['x', 50],
+            ['y', 30],
+            ['z', 20],
+        ])
+        self.query1 = Query(self.select1, {'A': 'C'}, A='x')
+        self.query2 = Query(self.select2, {'A': 'C'}, A='x')
+        self.queries = CompositeQuery(self.query1, self.query2)
+
     def test_init(self):
         query = Query({'A': 'C'}, A='x')
 
@@ -1664,3 +1684,41 @@ class TestCompositeQuery(unittest.TestCase):
         regex = "argument 2: must be Query instance, found 'str'"
         with self.assertRaisesRegex(TypeError, regex):
             compare = CompositeQuery(query, 'bar')
+
+    def test_sequence_methods(self):
+        """CompositeQuery is a collections.Sequence subclass and must
+        implement the abstract methods __getitem__() and __len__().
+        """
+        # Test __getitem__() abstract method.
+        self.assertIs(self.queries[0], self.query1)
+        self.assertIs(self.queries[1], self.query2)
+
+        # Test __len__() abstract method.
+        self.assertEqual(len(self.queries), 2)
+
+        # Test __iter__() mixin method override.
+        iterable = iter(self.queries)
+        self.assertEqual(list(iterable), [self.query1, self.query2])
+
+        # Test __reversed__() mixin method override.
+        queries = reversed(self.queries)
+        self.assertIsInstance(queries, CompositeQuery)
+        self.assertEqual(list(queries), [self.query2, self.query1], 'should be reverse order')
+
+    def test_sequence_inherited_mixins(self):
+        """CompositeQuery is a collections.Sequence subclass and should
+        automatically inherit a number of mixin methods This test is a
+        quick sanity check for these methods.
+        """
+        # Test __contains__() mixin method.
+        self.assertIn(self.query1, self.queries)
+        query3 = Query('A')
+        self.assertNotIn(query3, self.queries)
+
+        # Test index() mixin method.
+        self.assertEqual(self.queries.index(self.query1), 0)
+        self.assertEqual(self.queries.index(self.query2), 1)
+
+        # Test count() mixin method.
+        self.assertEqual(self.queries.count(self.query1), 1)
+        self.assertEqual(self.queries.count(self.query2), 1)
