@@ -1812,3 +1812,19 @@ class TestCompositeQuery(unittest.TestCase):
         second = results[1]
         self.assertIsInstance(second, Result)
         self.assertEqual(second.fetch(), {'y': 60, 'z': 40})
+
+    def test_public_methods(self):
+        """CompositeQuery and Query should have most of the same
+        public properties and methods--except for index(), to_csv(),
+        and from_object().
+        """
+        getmethods = lambda obj: set([x for x in dir(obj) if not x.startswith('_')])
+
+        actual = getmethods(CompositeQuery)
+        actual.remove('index')
+
+        expected = getmethods(Query)
+        expected.remove('to_csv')
+        expected.remove('from_object')
+
+        self.assertEqual(actual, expected)
