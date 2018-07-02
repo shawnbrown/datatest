@@ -9,6 +9,9 @@ COMING SOON (0.9.2)
 * Added Query.to_csv() to quickly save query results as a CSV file.
 * Fixed get_reader() bug that prevented encoding-fallback recovery when
   reading from StringIO buffers in Python 2.
+* Added CompositeSelector and CompositeQuery to provide a concise interface
+  for running the same query against multiple data sources (a common need
+  when comparing against reference data).
 
 
 2018-06-21 (0.9.1)
