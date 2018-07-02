@@ -1500,6 +1500,44 @@ class CompositeQuery(collections.Sequence):
         cls_name = self.__class__.__name__
         return '{0}(\n{1}\n)'.format(cls_name, ',\n'.join(query_reprs))
 
+    def _call_chain_method(self, name, *args, **kwds):
+        methods = (getattr(query, name) for query in self._queries)
+        queries = (method(*args, **kwds) for method in methods)
+        return self.__class__(*queries)
+
+    def map(self, function):
+        return self._call_chain_method('map', function)
+
+    def filter(self, function=None):
+        return self._call_chain_method('filter', function)
+
+    def reduce(self, function):
+        return self._call_chain_method('reduce', function)
+
+    def apply(self, function):
+        return self._call_chain_method('apply', function)
+
+    def sum(self):
+        return self._call_chain_method('sum')
+
+    def count(self):
+        return self._call_chain_method('count')
+
+    def avg(self):
+        return self._call_chain_method('avg')
+
+    def min(self):
+        return self._call_chain_method('min')
+
+    def max(self):
+        return self._call_chain_method('max')
+
+    def distinct(self):
+        return self._call_chain_method('distinct')
+
+    def flatten(self):
+        return self._call_chain_method('flatten')
+
 
 class CompositeSelector(collections.Sequence):
     """A class to wrap multiple Selector instances so they can be

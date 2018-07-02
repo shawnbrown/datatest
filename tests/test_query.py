@@ -1719,9 +1719,10 @@ class TestCompositeQuery(unittest.TestCase):
         self.assertEqual(self.queries.index(self.query1), 0)
         self.assertEqual(self.queries.index(self.query2), 1)
 
-        # Test count() mixin method.
-        self.assertEqual(self.queries.count(self.query1), 1)
-        self.assertEqual(self.queries.count(self.query2), 1)
+        # Test count() mixin method (this method is overridden
+        # by the proxy method for Query.count().
+        #self.assertEqual(self.queries.count(self.query1), 1)
+        #self.assertEqual(self.queries.count(self.query2), 1)
 
     def test_missing_methods(self):
         regex = ("'CompositeQuery' object has no attribute 'from_object', "
@@ -1750,3 +1751,43 @@ class TestCompositeQuery(unittest.TestCase):
         """).strip()
 
         self.assertRegex(compare_repr, regex)
+
+    def test_call_chaining_methods(self):
+        """Test methods that return Query objects."""
+        compare = CompositeSelector(self.select1, self.select2)
+
+        queries1 = compare({'A': 'C'}, A='x')
+        self.assertIsInstance(queries1, CompositeQuery)
+
+        first = queries1[0]
+        self.assertEqual(first.source, self.select1)
+        self.assertEqual(first.args, ({'A': ['C']},))
+        self.assertEqual(first.kwds, {'A': 'x'})
+        self.assertEqual(first._query_steps, [])
+
+        second = queries1[1]
+        self.assertEqual(second.source, self.select2)
+        self.assertEqual(second.args, ({'A': ['C']},))
+        self.assertEqual(second.kwds, {'A': 'x'})
+        self.assertEqual(second._query_steps, [])
+
+        # Add a query step.
+        queries2 = queries1.sum()
+        self.assertIsInstance(queries2, CompositeQuery)
+
+        first = queries2[0]
+        self.assertEqual(first._query_steps, [('sum', (), {})])
+
+        second = queries2[1]
+        self.assertEqual(second._query_steps, [('sum', (), {})])
+
+        # Add another query step.
+        times_two = lambda x: x * 2
+        queries3 = queries2.map(times_two)
+        self.assertIsInstance(queries3, CompositeQuery)
+
+        first = queries3[0]
+        self.assertEqual(first._query_steps, [('sum', (), {}), ('map', (times_two,), {})])
+
+        second = queries3[1]
+        self.assertEqual(second._query_steps, [('sum', (), {}), ('map', (times_two,), {})])
