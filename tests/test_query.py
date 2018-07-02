@@ -1738,3 +1738,15 @@ class TestCompositeQuery(unittest.TestCase):
         regex = "'CompositeQuery' object has no attribute 'foobar'"
         with self.assertRaisesRegex(AttributeError, regex):
             self.queries.foobar
+
+    def test_repr(self):
+        compare_repr = repr(self.queries)
+
+        regex = textwrap.dedent("""
+            CompositeQuery\(
+                Query\(<datatest.Selector object at [^>]+>, \{'A': \['C'\]\}, A='x'\),
+                Query\(<datatest.Selector object at [^>]+>, \{'A': \['C'\]\}, A='x'\)
+            \)
+        """).strip()
+
+        self.assertRegex(compare_repr, regex)

@@ -1495,6 +1495,11 @@ class CompositeQuery(collections.Sequence):
                 ', must use {0}() from individual queries instead'.format(name)
         raise AttributeError(msg)
 
+    def __repr__(self):
+        query_reprs = [indent(repr(x), '    ') for x in self._queries]
+        cls_name = self.__class__.__name__
+        return '{0}(\n{1}\n)'.format(cls_name, ',\n'.join(query_reprs))
+
 
 class CompositeSelector(collections.Sequence):
     """A class to wrap multiple Selector instances so they can be
