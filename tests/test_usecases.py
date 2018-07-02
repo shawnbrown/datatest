@@ -55,3 +55,10 @@ class TestSelectorIdioms(unittest.TestCase):
         # A case we want to optimize (using ordered intersection of fieldnames).
         common_fields = tuple(x for x in a.fieldnames if x in b.fieldnames)
         datatest.validate(a(common_fields), b(common_fields))
+
+    def test_concise_reference_testing(self):
+        """Should be able to use composite object to query and then compare
+        the results with sequence unpacking.
+        """
+        compare = datatest.CompositeSelector(self.selector_a, self.selector_b)
+        datatest.validate(*compare({'A': 'B'}))

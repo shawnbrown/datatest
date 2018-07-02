@@ -21,6 +21,8 @@ from ._load.working_directory import working_directory
 from ._query.query import Selector
 from ._query.query import Query
 from ._query.query import Result
+from ._query.query import CompositeSelector
+from ._query.query import CompositeQuery
 
 # Set module explicitly to cleanup reprs and error reporting.
 Selector.__module__ = 'datatest'
