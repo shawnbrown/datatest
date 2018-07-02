@@ -1538,6 +1538,13 @@ class CompositeQuery(collections.Sequence):
     def flatten(self):
         return self._call_chain_method('flatten')
 
+    def execute(self, source=None, optimize=True):
+        queries = (query.execute(source, optimize) for query in self._queries)
+        return tuple(queries)
+
+    def fetch(self):
+        return tuple(query.fetch() for query in self._queries)
+
 
 class CompositeSelector(collections.Sequence):
     """A class to wrap multiple Selector instances so they can be

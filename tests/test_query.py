@@ -1791,3 +1791,24 @@ class TestCompositeQuery(unittest.TestCase):
 
         second = queries3[1]
         self.assertEqual(second._query_steps, [('sum', (), {}), ('map', (times_two,), {})])
+
+    def test_execute_and_fetch(self):
+        times_two = lambda x: x * 2
+        compare = CompositeSelector(self.select1, self.select2)
+        queries = compare({'A': 'C'}, A=set(['y', 'z'])).sum().map(times_two)
+
+        # Test fetch() method.
+        results = queries.fetch()
+        self.assertEqual(results, ({'y': 60, 'z': 40}, {'y': 60, 'z': 40}))
+
+        # Test execute() method.
+        results = queries.execute()
+        self.assertIsInstance(results, tuple)
+
+        first = results[0]
+        self.assertIsInstance(first, Result)
+        self.assertEqual(first.fetch(), {'y': 60, 'z': 40})
+
+        second = results[1]
+        self.assertIsInstance(second, Result)
+        self.assertEqual(second.fetch(), {'y': 60, 'z': 40})
