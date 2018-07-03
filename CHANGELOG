@@ -7,6 +7,7 @@ COMING SOON (0.9.2)
 
 * Added Query.flatten() to serialize dictionaries and other mappings.
 * Added Query.to_csv() to quickly save query results as a CSV file.
+* Changed Query.reduce() to accept an optional "initializer" argument.
 * Fixed get_reader() bug that prevented encoding-fallback recovery when
   reading from StringIO buffers in Python 2.
 * Added CompositeSelector and CompositeQuery to provide a concise interface

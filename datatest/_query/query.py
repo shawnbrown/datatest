@@ -305,11 +305,13 @@ def _map_data(function, iterable):
     return _apply_to_data(wrapper, iterable)
 
 
-def _reduce_data(function, iterable):
+def _reduce_data(function, iterable, initializer=None):
     def wrapper(iterable):
         if isinstance(iterable, BaseElement):
             return iterable
-        return functools.reduce(function, iterable)
+        if initializer is None:
+            return functools.reduce(function, iterable)
+        return functools.reduce(function, iterable, initializer)
 
     return _apply_to_data(wrapper, iterable)
 
@@ -674,12 +676,16 @@ class Query(object):
         """
         return self._add_step('filter', function)
 
-    def reduce(self, function):
+    def reduce(self, function, initializer=None):
         """Reduce elements to a single value by applying a *function*
         of two arguments cumulatively to all elements from left to
-        right.
+        right. If the optional *initializer* is present, it is placed
+        before the items of the sequence in the calculation, and serves
+        as a default when the sequence is empty. If initializer is not
+        given and sequence contains only one item, the first item is
+        returned.
         """
-        return self._add_step('reduce', function)
+        return self._add_step('reduce', function, initializer)
 
     def apply(self, function):
         """Apply *function* to entire group keeping the resulting data.
@@ -735,7 +741,7 @@ class Query(object):
             args = (query_args[0], RESULT_TOKEN,)
         elif name == 'reduce':
             function = _reduce_data
-            args = (query_args[0], RESULT_TOKEN,)
+            args = (query_args[0], RESULT_TOKEN, query_args[1])
         elif name == 'apply':
             function = _apply_data
             args = (query_args[0], RESULT_TOKEN,)
@@ -1511,8 +1517,8 @@ class CompositeQuery(collections.Sequence):
     def filter(self, function=None):
         return self._call_chain_method('filter', function)
 
-    def reduce(self, function):
-        return self._call_chain_method('reduce', function)
+    def reduce(self, function, initializer=None):
+        return self._call_chain_method('reduce', function, initializer)
 
     def apply(self, function):
         return self._call_chain_method('apply', function)

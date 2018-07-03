@@ -405,6 +405,16 @@ class TestReduceData(unittest.TestCase):
         self.assertEqual(result.evaluation_type, dict)
         self.assertEqual(result.fetch(), {'a': 2, 'b': 3})
 
+    def test_initializer(self):
+        iterable = Result(['a', 'a', 'b', 'c', 'c', 'c'], list)
+
+        def simplecount(acc, upd):
+            acc[upd] = acc.get(upd, 0) + 1
+            return acc
+
+        result = _reduce_data(simplecount, iterable, initializer=dict())
+        self.assertEqual(result, {'a': 2, 'b': 1, 'c': 3})
+
 
 class TestGroupwiseApply(unittest.TestCase):
     def test_dataiter_list(self):
@@ -918,13 +928,16 @@ class TestQuery(unittest.TestCase):
         self.assertEqual(result.fetch(), set([1, 2, 3]))
 
     def test_reduce(self):
-        query1 = Query(['col1'])
+        query1 = Query.from_object(['b', 'c'])
+
         query2 = query1.reduce(lambda x, y: x + y)
         self.assertIsNot(query1, query2, 'should return new object')
+        self.assertEqual(query2.fetch(), 'bc')
 
-        source = Selector([('col1', 'col2'), ('a', '2'), ('b', '2')])
-        result = query2.execute(source)
-        self.assertEqual(result, 'ab')
+        # Test optional initializer.
+        query3 = query1.reduce(lambda x, y: x + y, initializer='a')
+        self.assertIsNot(query1, query3, 'should return new object')
+        self.assertEqual(query3.fetch(), 'abc')
 
     def test_flatten(self):
         query1 = Query({'col1': ('col2', 'col2')})
