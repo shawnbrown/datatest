@@ -412,7 +412,7 @@ class TestReduceData(unittest.TestCase):
             acc[upd] = acc.get(upd, 0) + 1
             return acc
 
-        result = _reduce_data(simplecount, iterable, initializer=dict())
+        result = _reduce_data(simplecount, iterable, initializer_factory=dict)
         self.assertEqual(result, {'a': 2, 'b': 1, 'c': 3})
 
 
@@ -928,16 +928,22 @@ class TestQuery(unittest.TestCase):
         self.assertEqual(result.fetch(), set([1, 2, 3]))
 
     def test_reduce(self):
-        query1 = Query.from_object(['b', 'c'])
+        query1 = Query.from_object({'a': [1, 3, 5], 'b': [2, 4, 6]})
 
+        # Test simple case.
         query2 = query1.reduce(lambda x, y: x + y)
-        self.assertIsNot(query1, query2, 'should return new object')
-        self.assertEqual(query2.fetch(), 'bc')
+        self.assertEqual(query2.fetch(), {'a': 9, 'b': 12})
 
-        # Test optional initializer.
-        query3 = query1.reduce(lambda x, y: x + y, initializer='a')
-        self.assertIsNot(query1, query3, 'should return new object')
-        self.assertEqual(query3.fetch(), 'abc')
+        # Test optional initializer_factory.
+        def func(acc, upd):
+            acc.append(upd)
+            return acc
+        query3 = query1.reduce(func, initializer_factory=list)
+        self.assertEqual(query3.fetch(), {'a': [1, 3, 5], 'b': [2, 4, 6]})
+
+        # Test bad initializer_factory.
+        with self.assertRaises(TypeError):
+            query4 = query1.reduce(func, initializer_factory=[])
 
     def test_flatten(self):
         query1 = Query({'col1': ('col2', 'col2')})

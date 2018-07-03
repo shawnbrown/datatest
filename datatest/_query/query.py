@@ -305,12 +305,15 @@ def _map_data(function, iterable):
     return _apply_to_data(wrapper, iterable)
 
 
-def _reduce_data(function, iterable, initializer=None):
+def _reduce_data(function, iterable, initializer_factory=None):
     def wrapper(iterable):
         if isinstance(iterable, BaseElement):
             return iterable
-        if initializer is None:
+
+        if initializer_factory is None:
             return functools.reduce(function, iterable)
+
+        initializer = initializer_factory()
         return functools.reduce(function, iterable, initializer)
 
     return _apply_to_data(wrapper, iterable)
@@ -676,16 +679,19 @@ class Query(object):
         """
         return self._add_step('filter', function)
 
-    def reduce(self, function, initializer=None):
+    def reduce(self, function, initializer_factory=None):
         """Reduce elements to a single value by applying a *function*
         of two arguments cumulatively to all elements from left to
-        right. If the optional *initializer* is present, it is placed
+        right. If the optional *initializer_factory* is present, it
+        is called without arguments to provide a value that is placed
         before the items of the sequence in the calculation, and serves
-        as a default when the sequence is empty. If initializer is not
-        given and sequence contains only one item, the first item is
-        returned.
+        as a default when the sequence is empty. If initializer_factory
+        is not given and sequence contains only one item, the first
+        item is returned.
         """
-        return self._add_step('reduce', function, initializer)
+        if initializer_factory is not None and not callable(initializer_factory):
+            raise TypeError('initializer_factory must be callable or None')
+        return self._add_step('reduce', function, initializer_factory)
 
     def apply(self, function):
         """Apply *function* to entire group keeping the resulting data.
@@ -1517,8 +1523,8 @@ class CompositeQuery(collections.Sequence):
     def filter(self, function=None):
         return self._call_chain_method('filter', function)
 
-    def reduce(self, function, initializer=None):
-        return self._call_chain_method('reduce', function, initializer)
+    def reduce(self, function, initializer_factory=None):
+        return self._call_chain_method('reduce', function, initializer_factory)
 
     def apply(self, function):
         return self._call_chain_method('apply', function)
