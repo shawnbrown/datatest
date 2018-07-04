@@ -283,24 +283,13 @@ def _apply_to_data(function, data_iterator):
 
 def _map_data(function, iterable):
     def wrapper(iterable):
-        if isinstance(iterable, BaseElement):
+        if isinstance(iterable, (BaseElement, tuple)):
             return function(iterable)  # <- EXIT!
 
         evaluation_type = _get_evaluation_type(iterable)
         if issubclass(evaluation_type, collections.Set):
             evaluation_type = list
-
-        def domap(func, itrbl):
-            if _expects_multiple_params(func):
-                for x in itrbl:
-                    if isinstance(x, BaseElement):
-                        yield func(x)
-                    else:
-                        yield func(*x)
-            else:
-                for x in itrbl:
-                    yield func(x)
-        return Result(domap(function, iterable), evaluation_type)
+        return Result(map(function, iterable), evaluation_type)
 
     return _apply_to_data(wrapper, iterable)
 

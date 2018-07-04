@@ -220,7 +220,7 @@ class TestMapData(unittest.TestCase):
 
         self.assertIsInstance(result, Result)
         self.assertEqual(result.evaluation_type, dict)
-        self.assertEqual(result.fetch(), {'a': [2, 4], 'b': (6, 8)})
+        self.assertEqual(result.fetch(), {'a': [2, 4], 'b': (3, 4, 3, 4)})
 
     def test_dataiter_dict_of_ints(self):
         iterable = Result({'a': 2, 'b': 3}, dict)
@@ -232,20 +232,22 @@ class TestMapData(unittest.TestCase):
         self.assertEqual(result.evaluation_type, dict)
         self.assertEqual(result.fetch(), {'a': 4, 'b': 6})
 
-    def test_unpacking_behavior(self):
-        data = [(1, 2), (1, 4), (1, 8)]
-
+    def test_bad_function(self):
         function = lambda x, y: x / y  # <- function takes 2 args
-        result = _map_data(function, Result(data, list))
-        self.assertIsInstance(result, Result)
-        self.assertEqual(result.evaluation_type, list)
+        with self.assertRaises(TypeError, msg=''):
+            result = _map_data(function, [1, 2, 3])
+            result.fetch()
+
+    def test_tuple_handling(self):
+        function = lambda z: z[0] / z[1]  # <- function takes 1 arg
+
+        data = [(1, 2), (1, 4), (1, 8)]
+        result = _map_data(function, data)
         self.assertEqual(result.fetch(), [0.5, 0.25, 0.125])
 
-        function = lambda z: z[0] / z[1]  # <- function takes 1 arg
-        result = _map_data(function, Result(data, list))
-        self.assertIsInstance(result, Result)
-        self.assertEqual(result.evaluation_type, list)
-        self.assertEqual(result.fetch(), [0.5, 0.25, 0.125])
+        data = (1, 8)
+        result = _map_data(function, data)
+        self.assertEqual(result, 0.125)
 
 
 class TestFilterData(unittest.TestCase):
