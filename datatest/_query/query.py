@@ -67,6 +67,7 @@ class BaseElement(abc.ABC):
     * non-iterable objects
     * strings
     * mappings
+    * tuples
     """
     @abc.abstractmethod
     def __init__(self, *args, **kwds):
@@ -75,7 +76,7 @@ class BaseElement(abc.ABC):
     @classmethod
     def __subclasshook__(cls, subclass):
         if cls is BaseElement:
-            if (issubclass(subclass, (string_types, _Mapping))
+            if (issubclass(subclass, (string_types, _Mapping, tuple))
                     or not issubclass(subclass, _Iterable)):
                 return True
         return NotImplemented
@@ -102,7 +103,8 @@ class DictItems(collections.Iterator):
 
             # Assert that first item contains a suitable key-value pair.
             if first_item:
-                if isinstance(first_item, BaseElement):
+                if not isinstance(first_item, tuple) \
+                        and isinstance(first_item, BaseElement):
                     raise TypeError((
                         'dictionary update sequence items can not be '
                         'registered BaseElement types, got {0}: {1!r}'
@@ -283,7 +285,7 @@ def _apply_to_data(function, data_iterator):
 
 def _map_data(function, iterable):
     def wrapper(iterable):
-        if isinstance(iterable, (BaseElement, tuple)):
+        if isinstance(iterable, BaseElement):
             return function(iterable)  # <- EXIT!
 
         evaluation_type = _get_evaluation_type(iterable)
@@ -340,7 +342,7 @@ def _flatten_data(iterable):
 
     def flatten(items):
         for k, v in items:
-            if isinstance(v, BaseElement) or isinstance(v, tuple):
+            if isinstance(v, BaseElement):
                 yield combined(k, v)
             else:
                 for x in v:
@@ -1315,7 +1317,6 @@ class Selector(object):
         """Assert that given fieldnames are present in data source,
         raises LookupError if fields are missing.
         """
-        #assert not isinstance(fieldnames, BaseElement)
         available = self.fieldnames
         for name in fieldnames:
             if name not in available:

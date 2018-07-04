@@ -103,7 +103,7 @@ class allowed_key(BaseAllowance):
 
     def call_predicate(self, item):
         key = item[0]
-        if isinstance(key, BaseElement):
+        if not isinstance(key, tuple) and isinstance(key, BaseElement):
             return self.function(key)
         return self.function(*key)
 
@@ -127,7 +127,7 @@ class allowed_args(BaseAllowance):
 
     def call_predicate(self, item):
         args = item[1].args
-        if isinstance(args, BaseElement):
+        if not isinstance(args, tuple) and isinstance(args, BaseElement):
             return self.function(args)
         return self.function(*args)
 

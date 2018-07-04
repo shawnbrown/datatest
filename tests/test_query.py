@@ -628,12 +628,18 @@ class TestDistinctData(unittest.TestCase):
         self.assertEqual(result, 3)
 
     def test_dataiter_dict_of_containers(self):
-        iterable = Result({'a': [1, 2, 1, 2], 'b': (3, 4, 3)}, dict)
+        iterable = Result({'a': [1, 2, 1, 2], 'b': [3, 4, 3]}, dict)
         result = _sqlite_distinct(iterable)
-
         self.assertIsInstance(result, Result)
         self.assertEqual(result.evaluation_type, dict)
-        self.assertEqual(result.fetch(), {'a': [1, 2], 'b': (3, 4)})
+        self.assertEqual(result.fetch(), {'a': [1, 2], 'b': [3, 4]})
+
+        # Check tuple handling.
+        iterable = Result({'a': [(1, 2), (1, 2)], 'b': (3, 4, 3)}, dict)
+        result = _sqlite_distinct(iterable)
+        self.assertIsInstance(result, Result)
+        self.assertEqual(result.evaluation_type, dict)
+        self.assertEqual(result.fetch(), {'a': [(1, 2)], 'b': (3, 4, 3)})
 
     def test_dataiter_dict_of_ints(self):
         iterable = Result({'a': 2, 'b': 3}, dict)
