@@ -5,10 +5,12 @@ Datatest Changelog
 COMING SOON (0.9.2)
 -------------------
 
-* Added Query.flatten() to serialize dictionaries and other mappings.
-* Added Query.to_csv() to quickly save query results as a CSV file.
-* Changed Query.reduce() to accept an optional "initializer_factory"
-  argument.
+* Added several new features for improved data handling.
+* Changed Query class:
+    * Added flatten() method to serialize dictionary results.
+    * Added to_csv() method to quickly save results as a CSV file.
+    * Changed reduce() method to accept "initializer_factory" as
+      an optional argument.
 * Fixed get_reader() bug that prevented encoding-fallback recovery when
   reading from StringIO buffers in Python 2.
 * Added CompositeSelector and CompositeQuery to provide a concise interface
