@@ -3,9 +3,9 @@ import csv
 import io
 import sys
 
-from .._compatibility.collections import Iterable
-from .._compatibility.collections import Mapping
 from .._compatibility.itertools import chain
+from .._compatibility.collections.abc import Iterable
+from .._compatibility.collections.abc import Mapping
 from .._utils import iterpeek
 from .._utils import file_types
 from .._utils import nonstringiter

@@ -32,6 +32,8 @@ REM ********************************************************************
 
 SET GLOBAL_ERRORLEVEL=0
 
+CALL :runCommand "C:\Program Files\Python37\python.exe -B -m unittest %*"
+CALL :runCommand "C:\Program Files\Python 3.6\python.exe -B -m unittest %*"
 CALL :runCommand "C:\Program Files\Python 3.5\python.exe -B -m unittest %*"
 CALL :runCommand "C:\Python34\python.exe -B -m unittest %*"
 CALL :runCommand "C:\Python33\python.exe -B -m unittest %*"

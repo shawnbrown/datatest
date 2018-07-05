@@ -3,7 +3,10 @@ import re
 from numbers import Number
 
 from .._compatibility.builtins import *
-from .._compatibility import collections
+from .._compatibility.collections.abc import Iterable
+from .._compatibility.collections.abc import Mapping
+from .._compatibility.collections.abc import Sequence
+from .._compatibility.collections.abc import Set
 from .._compatibility import functools
 from .._compatibility import itertools
 
@@ -26,12 +29,12 @@ _regex_type = type(re.compile(''))
 
 def _compare_sequence(data, required):
     """Compare *data* against sequence of *required* values."""
-    assert isinstance(required, collections.Sequence)
+    assert isinstance(required, Sequence)
 
     if isinstance(data, str):
         raise ValueError("uncomparable types: 'str' and sequence type")
 
-    if not isinstance(data, collections.Sequence):
+    if not isinstance(data, Sequence):
         type_name = type(data).__name__
         msg = "expected sequence type, but got " + repr(type_name)
         raise ValueError(msg)
@@ -46,8 +49,8 @@ def _compare_sequence(data, required):
 
 def _compare_mapping(data, required):
     """Compare *data* against mapping of *required* values."""
-    assert isinstance(required, collections.Mapping)
-    if not isinstance(data, collections.Mapping):
+    assert isinstance(required, Mapping)
+    if not isinstance(data, Mapping):
         type_name = type(data).__name__
         msg = "expected mapping type, but got " + repr(type_name)
         raise ValueError(msg)
@@ -64,12 +67,12 @@ def _compare_mapping(data, required):
 
 def _compare_set(data, required):
     """Compare *data* against set of *required* values."""
-    assert isinstance(required, collections.Set)
+    assert isinstance(required, Set)
 
-    if isinstance(data, collections.Mapping):
+    if isinstance(data, Mapping):
         data = data.values()
 
-    if not isinstance(data, collections.Set):
+    if not isinstance(data, Set):
         if isinstance(data, str):
             raise TypeError("uncomparable types: 'str' and 'set'")
 
@@ -96,7 +99,7 @@ def _compare_other(data, required):
                 try:
                     return required(*args)  # <- Unpack args.
                 except TypeError:
-                    if not isinstance(args, collections.Iterable):
+                    if not isinstance(args, Iterable):
                         args = (args,)          # If arg not iterable, rerun using
                         return required(*args)  # 1-tuple for clearer error msg.
                     else:
@@ -121,7 +124,7 @@ def _compare_other(data, required):
         def wrapper(x):
             return x == required
 
-    if isinstance(data, collections.Mapping):
+    if isinstance(data, Mapping):
         diffs = dict()
         for key, val in data.items():
             if not wrapper(val):
@@ -130,7 +133,7 @@ def _compare_other(data, required):
 
     is_not_str = not isinstance(data, str)
 
-    if isinstance(data, collections.Sequence) and is_not_str:
+    if isinstance(data, Sequence) and is_not_str:
         diffs = dict()
         for index, val in enumerate(data):
             if not wrapper(val):
@@ -138,7 +141,7 @@ def _compare_other(data, required):
         return diffs  # <- EXIT!
 
     # For Sets and other Iterables.
-    if isinstance(data, collections.Iterable) and is_not_str:
+    if isinstance(data, Iterable) and is_not_str:
         diffs = [_xgetdiff(x, required, is_common=True) for x in data if not wrapper(x)]
         return diffs  # <- EXIT!
 
@@ -184,11 +187,11 @@ class CompareSet(BaseCompare, set):
     """
     def __init__(self, data):
         """Initialize object."""
-        if isinstance(data, collections.Mapping):
+        if isinstance(data, Mapping):
             raise TypeError('cannot be mapping')
 
         try:
-            if isinstance(data, collections.Set):
+            if isinstance(data, Set):
                 first_value = next(iter(data))
             else:
                 first_value, data = iterpeek(data)
@@ -295,7 +298,7 @@ class CompareDict(BaseCompare, dict):
     """
     def __init__(self, data, key_names=None):
         """Initialize object."""
-        if not isinstance(data, collections.Mapping):
+        if not isinstance(data, Mapping):
             data = dict(data)
 
         try:

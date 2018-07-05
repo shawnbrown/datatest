@@ -7,7 +7,7 @@ from io import IOBase
 from numbers import Number
 from sys import version_info as _version_info
 from ._compatibility.builtins import callable
-from ._compatibility.collections import Iterable
+from ._compatibility.collections.abc import Iterable
 from ._compatibility.decimal import Decimal
 from ._compatibility.itertools import chain
 from ._compatibility.itertools import filterfalse

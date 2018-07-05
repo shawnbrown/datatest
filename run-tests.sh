@@ -27,6 +27,8 @@ run_command ()
 #-----------------------------------------------------------------------
 # Run test suite in all supported versions of Python.
 #-----------------------------------------------------------------------
+run_command "python3.7 -B -m unittest $*"
+run_command "python3.6 -B -m unittest $*"
 run_command "python3.5 -B -m unittest $*"
 run_command "python3.4 -B -m unittest $*"
 run_command "python3.3 -B -m unittest $*"

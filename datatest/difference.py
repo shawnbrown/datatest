@@ -5,7 +5,6 @@ from pprint import pformat
 
 from ._compatibility.builtins import *
 from ._compatibility import abc
-from ._compatibility import collections
 from ._compatibility import contextlib
 from ._compatibility.decimal import Decimal
 from ._utils import _make_token

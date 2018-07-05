@@ -20,7 +20,7 @@ def _load_temp_sqlite_table(columns, records):
 # From sources/base.py
 ########################################################################
 from .._compatibility.builtins import *
-from .._compatibility import collections
+from .._compatibility.collections.abc import Sequence
 from .._compatibility import decimal
 from .._compatibility import functools
 from .._utils import nonstringiter
@@ -129,7 +129,7 @@ class BaseSource(object):
         """
         if isinstance(columns, str):
             get_value = lambda row: row[columns]
-        elif isinstance(columns, collections.Sequence):
+        elif isinstance(columns, Sequence):
             get_value = lambda row: tuple(row[column] for column in columns)
         else:
             raise TypeError('colums must be str or sequence')
@@ -176,7 +176,7 @@ class BaseSource(object):
 # From sources/adapter.py
 ########################################################################
 from .._compatibility.builtins import *
-from .._compatibility import collections
+from .._compatibility.collections.abc import Sequence
 from .._utils import nonstringiter
 from .api07_comp import CompareDict
 from .api07_comp import CompareSet
@@ -222,7 +222,7 @@ class AdapterSource(BaseSource):
     property.
     """
     def __init__(self, source, interface, missing=''):
-        if not isinstance(interface, collections.Sequence):
+        if not isinstance(interface, Sequence):
             if isinstance(interface, dict):
                 interface = interface.items()
             interface = sorted(interface)
@@ -476,7 +476,7 @@ class AdapterSource(BaseSource):
 # From sources/multi.py
 ########################################################################
 from .._compatibility.builtins import *
-from .._compatibility import collections
+from .._compatibility.collections import defaultdict
 from .._compatibility import itertools
 from .._compatibility import functools
 from .api07_comp import CompareDict
@@ -584,7 +584,7 @@ class MultiSource(BaseSource):
         if not keys:
             return sum(results)  # <- EXIT!
 
-        total = collections.defaultdict(lambda: 0)
+        total = defaultdict(lambda: 0)
         for result in results:
             for key, val in result.items():
                 total[key] += val

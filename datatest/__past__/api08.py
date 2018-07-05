@@ -3,8 +3,8 @@ from __future__ import absolute_import
 import inspect
 
 import datatest
-from datatest._compatibility import collections
 from datatest._compatibility import itertools
+from datatest._compatibility.collections.abc import Sequence
 from datatest._load.get_reader import get_reader
 from datatest._load.load_csv import load_csv
 from datatest._load.temptable import load_data
@@ -190,7 +190,7 @@ def _require_sequence(data, sequence):  # New behavior in datatest 0.8.3
         raise ValueError("uncomparable types: 'str' and sequence type")
 
     data_type = getattr(data, 'evaluation_type', data.__class__)
-    if not issubclass(data_type, collections.Sequence):
+    if not issubclass(data_type, Sequence):
         type_name = data_type.__name__
         msg = "expected sequence type, but got " + repr(type_name)
         raise ValueError(msg)

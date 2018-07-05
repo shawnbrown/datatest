@@ -4,7 +4,6 @@ import inspect
 from unittest import TestCase
 
 from ._compatibility.builtins import *
-from ._compatibility import collections
 from ._compatibility import contextlib
 
 from ._query.query import Query

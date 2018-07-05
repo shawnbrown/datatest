@@ -87,7 +87,7 @@ class TestCaseHelper(unittest.TestCase):
 ##########################################################
 if __name__ == '__main__':
     import unittest
-    from collections import Iterator
+    from collections.abc import Iterator
 
 
     class TestA_Helper(TestCaseHelper):

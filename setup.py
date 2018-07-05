@@ -128,6 +128,7 @@ if __name__ == '__main__':
             packages=[
                 'datatest',
                 'datatest._compatibility',
+                'datatest._compatibility.collections',
                 'datatest._load',
                 'datatest._query',
                 'datatest.__past__',
@@ -153,6 +154,7 @@ if __name__ == '__main__':
                 'Programming Language :: Python :: 3.4',
                 'Programming Language :: Python :: 3.5',
                 'Programming Language :: Python :: 3.6',
+                'Programming Language :: Python :: 3.7',
                 'Programming Language :: Python :: Implementation :: CPython',
                 'Programming Language :: Python :: Implementation :: PyPy',
             ],

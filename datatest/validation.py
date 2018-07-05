@@ -3,8 +3,12 @@ import difflib
 import re
 import sys
 from ._compatibility import itertools
-from ._compatibility import collections
 from ._compatibility.builtins import callable
+from ._compatibility.collections.abc import Hashable
+from ._compatibility.collections.abc import Iterable
+from ._compatibility.collections.abc import Mapping
+from ._compatibility.collections.abc import Sequence
+from ._compatibility.collections.abc import Set
 from ._predicate import PredicateObject
 from ._predicate import get_predicate
 from ._utils import nonstringiter
@@ -47,7 +51,7 @@ def _deephash(obj):
     already_seen = {}
 
     def _hashable_proxy(obj):
-        if isinstance(obj, collections.Hashable) and not isinstance(obj, tuple):
+        if isinstance(obj, Hashable) and not isinstance(obj, tuple):
             return obj  # <- EXIT!
 
         # Guard against recursive references in compound objects.
@@ -58,11 +62,11 @@ def _deephash(obj):
             already_seen[obj_id] = object()  # Token for duplicates.
 
         # Recurse into compound object to make hashable proxies.
-        if isinstance(obj, collections.Sequence):
+        if isinstance(obj, Sequence):
             proxy = tuple(_hashable_proxy(x) for x in obj)
-        elif isinstance(obj, collections.Set):
+        elif isinstance(obj, Set):
             proxy = frozenset(_hashable_proxy(x) for x in obj)
-        elif isinstance(obj, collections.Mapping):
+        elif isinstance(obj, Mapping):
             items = getattr(obj, 'iteritems', obj.items)()
             items = ((k, _hashable_proxy(v)) for k, v in items)
             proxy = frozenset(items)
@@ -91,11 +95,11 @@ def _require_sequence(data, sequence):
     """
     data_type = getattr(data, 'evaluation_type', data.__class__)
     if issubclass(data_type, BaseElement) or \
-            not issubclass(data_type, collections.Sequence):
+            not issubclass(data_type, Sequence):
         msg = 'data type {0!r} can not be checked for sequence order'
         raise ValueError(msg.format(data_type.__name__))
 
-    if not isinstance(data, collections.Sequence):
+    if not isinstance(data, Sequence):
         data = list(data)
 
     try:
@@ -197,10 +201,10 @@ def _get_msg_and_func(data, requirement):
     # Check for special cases--*requirement* types
     # that trigger a particular validation method.
     if not isinstance(requirement, (str, tuple)) and \
-               isinstance(requirement, collections.Sequence):
+               isinstance(requirement, Sequence):
         return 'does not match sequence order', _require_sequence
 
-    if isinstance(requirement, collections.Set):
+    if isinstance(requirement, Set):
         return 'does not satisfy set membership', _require_set
 
     # If *requirement* did not match any of the special cases
@@ -228,7 +232,7 @@ def _get_msg_and_func(data, requirement):
 
 
 def _apply_mapping_requirement(data, mapping):
-    if isinstance(data, collections.Mapping):
+    if isinstance(data, Mapping):
         data_items = getattr(data, 'iteritems', data.items)()
     elif _is_collection_of_items(data):
         data_items = data
@@ -322,8 +326,7 @@ def _normalize_requirement(requirement):
     if isinstance(requirement, DictItems):
         return dict(requirement)
 
-    if isinstance(requirement, collections.Iterable) \
-            and exhaustible(requirement):
+    if isinstance(requirement, Iterable) and exhaustible(requirement):
         cls_name = requirement.__class__.__name__
         raise TypeError(("exhaustible type '{0}' cannot be used "
                          "as a requirement").format(cls_name))
@@ -337,13 +340,13 @@ def _get_invalid_info(data, requirement):
     return None.
     """
     data = _normalize_data(data)
-    if isinstance(data, collections.Mapping):
+    if isinstance(data, Mapping):
         data = getattr(data, 'iteritems', data.items)()
 
     requirement = _normalize_requirement(requirement)
 
     # Get default-message and differences (if any exist).
-    if isinstance(requirement, collections.Mapping):
+    if isinstance(requirement, Mapping):
         default_msg = 'does not satisfy mapping requirement'
         diffs = _apply_mapping_requirement(data, requirement)
         diffs = _normalize_mapping_result(diffs)

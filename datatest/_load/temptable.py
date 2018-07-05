@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import sqlite3
-from .._compatibility.collections import Iterable
-from .._compatibility.collections import Mapping
+from .._compatibility.collections.abc import Iterable
+from .._compatibility.collections.abc import Mapping
 from .._compatibility.itertools import chain
 from .._compatibility.itertools import count
 

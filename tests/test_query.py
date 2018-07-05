@@ -11,7 +11,8 @@ from . import _io as io
 
 from . import _unittest as unittest
 from datatest._compatibility.builtins import *
-from datatest._compatibility import collections
+from datatest._compatibility.collections import namedtuple
+from datatest._compatibility.collections.abc import Mapping
 from datatest._utils import nonstringiter
 
 from datatest._load.working_directory import working_directory
@@ -107,7 +108,7 @@ class TestBaseElement(unittest.TestCase):
 
 def convert_iter_to_type(iterable, target_type):
     """Helper function to convert lists-of-lists into tuple-of-tuples."""
-    if isinstance(iterable, collections.Mapping):
+    if isinstance(iterable, Mapping):
         dic = {}
         for k, v in iterable.items():
             dic[k] = convert_iter_to_type(v, target_type)
@@ -1245,7 +1246,7 @@ class TestSelector(unittest.TestCase):
         self.assertEqual(result.fetch(), expected)
 
     def test_select_list_of_namedtuples(self):
-        namedtup = collections.namedtuple('namedtup', ['label1', 'label2'])
+        namedtup = namedtuple('namedtup', ['label1', 'label2'])
         result = self.source._select([namedtup('label1', 'label2')])
         expected = [namedtup(label1='a', label2='x'),
                     namedtup(label1='a', label2='x'),
@@ -1297,7 +1298,7 @@ class TestSelector(unittest.TestCase):
         self.assertEqual(result.fetch(), expected)
 
     def test_select_dict_with_namedtuple_keys(self):
-        namedtup = collections.namedtuple('namedtup', ['x', 'y'])
+        namedtup = namedtuple('namedtup', ['x', 'y'])
         result = self.source._select({namedtup('label1', 'label2'): ['value']})
         expected = {
             namedtup(x='a', y='x'): ['17', '13'],
@@ -1565,7 +1566,7 @@ class TestCompositeSelector(unittest.TestCase):
             compare = CompositeSelector(Selector(), 'bar')
 
     def test_sequence_methods(self):
-        """CompositeSelector is a collections.Sequence subclass
+        """CompositeSelector is a collections.abc.Sequence subclass
         and must implement the abstract methods __getitem__() and
         __len__().
         """
@@ -1586,7 +1587,7 @@ class TestCompositeSelector(unittest.TestCase):
         self.assertEqual(list(compare), [self.select2, self.select1], 'should be reverse order')
 
     def test_sequence_inherited_mixins(self):
-        """CompositeSelector is a collections.Sequence subclass and
+        """CompositeSelector is a collections.abc.Sequence subclass and
         should automatically inherit a number of mixin methods This
         test is a quick sanity check for these methods.
         """
@@ -1713,7 +1714,7 @@ class TestCompositeQuery(unittest.TestCase):
             compare = CompositeQuery(query, 'bar')
 
     def test_sequence_methods(self):
-        """CompositeQuery is a collections.Sequence subclass and must
+        """CompositeQuery is a collections.abc.Sequence subclass and must
         implement the abstract methods __getitem__() and __len__().
         """
         # Test __getitem__() abstract method.
@@ -1733,7 +1734,7 @@ class TestCompositeQuery(unittest.TestCase):
         self.assertEqual(list(queries), [self.query2, self.query1], 'should be reverse order')
 
     def test_sequence_inherited_mixins(self):
-        """CompositeQuery is a collections.Sequence subclass and should
+        """CompositeQuery is a collections.abc.Sequence subclass and should
         automatically inherit a number of mixin methods This test is a
         quick sanity check for these methods.
         """

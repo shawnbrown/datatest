@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import collections
 import csv
 import io
 import os
@@ -7,6 +6,7 @@ import sys
 
 import datatest
 from datatest._compatibility.builtins import *
+from datatest._compatibility.collections import namedtuple
 from . import _unittest as unittest
 
 try:
@@ -105,7 +105,7 @@ class TestFromDicts(unittest.TestCase):
 
 class TestFromNamedtuples(unittest.TestCase):
     def test_namedtuple_records(self):
-        ntup = collections.namedtuple('ntup', ['col1', 'col2'])
+        ntup = namedtuple('ntup', ['col1', 'col2'])
         records = [
             ntup(1, 'a'),
             ntup(2, 'b'),
@@ -428,7 +428,7 @@ class TestFunctionDispatching(SampleFilesTestCase):
         self.assertEqual(list(reader), expected)
 
     def test_namedtuples(self):
-        ntup = collections.namedtuple('ntup', ['col1', 'col2'])
+        ntup = namedtuple('ntup', ['col1', 'col2'])
 
         records = [ntup(1, 'a'), ntup(2, 'b')]
         reader = get_reader(records)

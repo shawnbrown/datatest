@@ -9,7 +9,11 @@ import datatest
 from datatest.__past__ import api08
 
 from datatest._compatibility.builtins import *
-from datatest._compatibility import collections
+from datatest._compatibility.collections import Counter
+from datatest._compatibility.collections.abc import Container
+from datatest._compatibility.collections.abc import Mapping
+from datatest._compatibility.collections.abc import Sequence
+from datatest._compatibility.collections.abc import Set
 from datatest._compatibility import itertools
 from datatest._compatibility import functools
 
@@ -86,11 +90,11 @@ def assertEqual(self, first, second, msg=None):
     acceptable values.
     """
     if not isinstance(first, BaseCompare):
-        if isinstance(first, str) or not isinstance(first, collections.Container):
+        if isinstance(first, str) or not isinstance(first, Container):
             first = CompareSet([first])
-        elif isinstance(first, collections.Set):
+        elif isinstance(first, Set):
             first = CompareSet(first)
-        elif isinstance(first, collections.Mapping):
+        elif isinstance(first, Mapping):
             first = CompareDict(first)
 
     if callable(second):
@@ -203,7 +207,7 @@ def assertSubjectUnique(self, columns, msg=None, **kwds_filter):
     """
     if isinstance(columns, str):
         get_value = lambda row: row[columns]
-    elif isinstance(columns, collections.Sequence):
+    elif isinstance(columns, Sequence):
         get_value = lambda row: tuple(row[column] for column in columns)
     else:
         raise TypeError('colums must be str or sequence')
@@ -324,7 +328,7 @@ class allow_only(allow_iter):
     def __init__(self, differences, msg=None):
         def function(iterable):
             allowed = self._walk_diff(differences)  # <- Closes over *differences*.
-            allowed = collections.Counter(allowed)
+            allowed = Counter(allowed)
             not_allowed = []
             for x in iterable:
                 if allowed[x]:

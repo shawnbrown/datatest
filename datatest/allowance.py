@@ -5,7 +5,8 @@ from math import isnan
 from numbers import Number
 from ._compatibility.builtins import *
 from ._compatibility import abc
-from ._compatibility import collections
+from ._compatibility.collections import defaultdict
+from ._compatibility.collections.abc import Mapping
 from ._compatibility import contextlib
 from ._compatibility import functools
 from ._compatibility import itertools
@@ -130,7 +131,7 @@ class BaseAllowance(abc.ABC):
 
     @staticmethod
     def _serialized_items(iterable):
-        if isinstance(iterable, collections.Mapping):
+        if isinstance(iterable, Mapping):
             for key in iterable:
                 value = iterable[key]
                 if isinstance(value, (BaseElement, Exception)):
@@ -165,7 +166,7 @@ class BaseAllowance(abc.ABC):
             raise exc_value
 
         differences = getattr(exc_value, 'differences', [])
-        is_not_mapping = not isinstance(differences, collections.Mapping)
+        is_not_mapping = not isinstance(differences, Mapping)
 
         stream = self._serialized_items(differences)
         stream = self._filterfalse(stream)
@@ -487,9 +488,9 @@ class allowed_specific(BaseAllowance):
         # Normalize and copy mutable containers, assign to "_allowed".
         diffs = self.differences
         if isinstance(diffs, BaseDifference):
-            allowed = collections.defaultdict(lambda: [diffs])
+            allowed = defaultdict(lambda: [diffs])
         elif isinstance(diffs, (list, set)):
-            allowed = collections.defaultdict(lambda: list(diffs))
+            allowed = defaultdict(lambda: list(diffs))
         elif isinstance(diffs, dict):
             allowed = dict()
             for key, value in diffs.items():

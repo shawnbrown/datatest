@@ -13,7 +13,16 @@ from numbers import Number
 from .._compatibility.builtins import *
 from .._compatibility.textwrap import indent
 from .._compatibility import abc
-from .._compatibility import collections
+from .._compatibility.collections import defaultdict
+from .._compatibility.collections import namedtuple
+from .._compatibility.collections.abc import Hashable
+from .._compatibility.collections.abc import ItemsView
+from .._compatibility.collections.abc import Iterable
+from .._compatibility.collections.abc import Iterator
+from .._compatibility.collections.abc import Mapping
+from .._compatibility.collections.abc import Sequence
+from .._compatibility.collections.abc import Set
+from .._compatibility.collections.abc import Sized
 from .._compatibility import contextlib
 from .._compatibility import functools
 from .._compatibility import itertools
@@ -54,9 +63,6 @@ DEFAULT_CONNECTION.isolation_level = None  # <- Run in 'autocommit' mode.
 PY2 = sys.version_info[0] == 2
 
 
-_Mapping = collections.Mapping    # Get direct reference to eliminate
-_Iterable = collections.Iterable  # dot-lookups (these are used a lot).
-
 class BaseElement(abc.ABC):
     """An abstract base class used to determine if an object should
     be treated as a single data element or as a collection of multiple
@@ -76,20 +82,20 @@ class BaseElement(abc.ABC):
     @classmethod
     def __subclasshook__(cls, subclass):
         if cls is BaseElement:
-            if (issubclass(subclass, (string_types, _Mapping, tuple))
-                    or not issubclass(subclass, _Iterable)):
+            if (issubclass(subclass, (string_types, Mapping, tuple))
+                    or not issubclass(subclass, Iterable)):
                 return True
         return NotImplemented
 
 
-class DictItems(collections.Iterator):
+class DictItems(Iterator):
     """A wrapper used to normalize and identify iterators that
     should return a 2-tuple of key-value pairs. The underlying
     iterable should not contain duplicate keys and they should be
     appropriate for constructing a dictionary or other mapping.
     """
     def __init__(self, iterable):
-        if isinstance(iterable, collections.Mapping):
+        if isinstance(iterable, Mapping):
             iterable = getattr(iterable, 'iteritems', iterable.items)()
             iterable = iter(iterable)
         else:
@@ -118,7 +124,7 @@ class DictItems(collections.Iterator):
                     ValueError(('dictionary update sequence element #0 has length '
                                 '{0}; 2 is required').format(len(first_item)))
                 first_key = first_item[0]
-                if not isinstance(first_key, collections.Hashable):
+                if not isinstance(first_key, Hashable):
                     raise ValueError((
                         'unhashable type {0}: {1!r}'
                     ).format(first_key.__class__.__name__, first_key))
@@ -136,7 +142,7 @@ class DictItems(collections.Iterator):
 
 
 _iteritem_types = (
-    collections.ItemsView,
+    ItemsView,
     DictItems,
     type(getattr(dict(), 'iteritems', dict().items)()),  # For Python 2 compatibility.
 )
@@ -149,7 +155,7 @@ def _is_collection_of_items(obj):
     return isinstance(obj, _iteritem_types)
 
 
-class Result(collections.Iterator):
+class Result(Iterator):
     """A simple iterator that wraps the results of :class:`Query`
     execution. This iterator is used to facilitate the lazy evaluation
     of data objects (where possible) when asserting data validity.
@@ -179,10 +185,10 @@ class Result(collections.Iterator):
                    and not isinstance(iterable, DictItems)):
             iterable = iterable.__wrapped__
 
-        if isinstance(iterable, collections.Mapping):
+        if isinstance(iterable, Mapping):
             iterable = DictItems(iterable)
 
-        if (issubclass(evaluation_type, collections.Mapping)
+        if (issubclass(evaluation_type, Mapping)
                 and not _is_collection_of_items(iterable)):
             cls_name = iterable.__class__.__name__
             raise TypeError('when evaluation_type is a mapping, '
@@ -224,7 +230,7 @@ class Result(collections.Iterator):
         also be evaluated.
         """
         evaluation_type = self.evaluation_type
-        if issubclass(evaluation_type, collections.Mapping):
+        if issubclass(evaluation_type, Mapping):
             def func(obj):
                 if hasattr(obj, 'evaluation_type'):
                     return obj.evaluation_type(obj)
@@ -251,12 +257,10 @@ def _get_evaluation_type(obj, default=None):
     #if isinstance(obj, DictItems):
     #    return dict  # <- EXIT!
 
-    if issubclass(obj_cls, (collections.Mapping,
-                            collections.Sequence,
-                            collections.Set)):
+    if issubclass(obj_cls, (Mapping, Sequence, Set)):
         return obj_cls  # <- EXIT!
 
-    if default and issubclass(obj_cls, collections.Iterable):
+    if default and issubclass(obj_cls, Iterable):
         return default  # <- EXIT!
 
     err_msg = 'unable to determine target type for {0!r} instance'
@@ -265,7 +269,7 @@ def _get_evaluation_type(obj, default=None):
 
 def _make_dataresult(iterable):
     eval_type = _get_evaluation_type(iterable)
-    if issubclass(eval_type, collections.Mapping):
+    if issubclass(eval_type, Mapping):
         iterable = getattr(iterable, 'iteritems', iterable.items)()
         iterable = DictItems(iterable)
     else:
@@ -289,7 +293,7 @@ def _map_data(function, iterable):
             return function(iterable)  # <- EXIT!
 
         evaluation_type = _get_evaluation_type(iterable)
-        if issubclass(evaluation_type, collections.Set):
+        if issubclass(evaluation_type, Set):
             evaluation_type = list
         return Result(map(function, iterable), evaluation_type)
 
@@ -327,7 +331,7 @@ def _apply_data(function, data):
 
 
 def _flatten_data(iterable):
-    if isinstance(iterable, collections.Mapping):
+    if isinstance(iterable, Mapping):
         iterable = DictItems(iterable)
 
     if isinstance(iterable, BaseElement) or not _is_collection_of_items(iterable):
@@ -486,17 +490,17 @@ def _normalize_columns(columns):
     """Returns normalized *columns* selection or raise error if
     unsupported.
     """
-    if not isinstance(columns, collections.Sized):
+    if not isinstance(columns, Sized):
         raise ValueError(('unsupported columns '
                           'format, got {0!r}').format(columns))
 
-    if isinstance(columns, collections.Mapping):
+    if isinstance(columns, Mapping):
         if len(columns) != 1:
             raise ValueError(('expected container of 1 item, got {0} '
                               'items: {1!r}').format(len(columns), columns))
 
         key, value = tuple(columns.items())[0]
-        if isinstance(value, collections.Mapping):
+        if isinstance(value, Mapping):
             message = 'mappings can not be nested, got {0!r}'
             raise ValueError(message.format(columns))
 
@@ -518,7 +522,7 @@ def _parse_columns(columns):
     """Expects a normalized *columns* selection and returns its
     *key* and *value* components as a tuple.
     """
-    if isinstance(columns, collections.Mapping):
+    if isinstance(columns, Mapping):
         key, value = tuple(columns.items())[0]
     else:
         key, value = tuple(), columns
@@ -552,12 +556,12 @@ def _get_step_repr(step):
     return '{0}, ({1}), {{{2}}}'.format(func_repr, args_repr, kwds_repr)
 
 
-_query_step = collections.namedtuple(
+_query_step = namedtuple(
     typename='query_step',
     field_names=('name', 'args', 'kwds')
 )
 
-_execution_step = collections.namedtuple(
+_execution_step = namedtuple(
     typename='execution_step',
     field_names=('function', 'args', 'kwds')
 )
@@ -1020,7 +1024,7 @@ with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
     ])
 
 
-_registered_function_ids = collections.defaultdict(set)
+_registered_function_ids = defaultdict(set)
 def _register_function(connection, func_list):
     """Register user-defined functions with SQLite connection.
 
@@ -1036,7 +1040,7 @@ def _register_function(connection, func_list):
         _registered_function_ids[connection_id].add(func_id)
 
         name = 'FUNC{0}'.format(func_id)
-        if isinstance(func, collections.Hashable):
+        if isinstance(func, Hashable):
             connection.create_function(name, 1, func)  # <- Register!
         else:
             @functools.wraps(func)
@@ -1287,10 +1291,10 @@ class Selector(object):
         The *columns* can be a string, sequence, set or mapping--see
         the _select() method for details.
         """
-        if isinstance(columns, (collections.Sequence, collections.Set)):
+        if isinstance(columns, (Sequence, Set)):
             return self._format_result_group(columns, cursor)
 
-        if isinstance(columns, collections.Mapping):
+        if isinstance(columns, Mapping):
             result_type = type(columns)
             key, value = tuple(columns.items())[0]
             key_type = type(key)
@@ -1345,7 +1349,7 @@ class Selector(object):
         key_columns, value_columns = self._parse_key_value(key, value)
 
         select_clause = ', '.join(key_columns + value_columns)
-        if isinstance(value, collections.Set):
+        if isinstance(value, Set):
             select_clause = 'DISTINCT ' + select_clause
 
         if key:
@@ -1372,7 +1376,7 @@ class Selector(object):
         key, value = _parse_columns(columns)
         key_columns, value_columns = self._parse_key_value(key, value)
 
-        if isinstance(value, collections.Set):
+        if isinstance(value, Set):
             func = lambda col: 'DISTINCT {0}'.format(col)
             value_columns = tuple(func(col) for col in value_columns)
 
@@ -1386,7 +1390,7 @@ class Selector(object):
         cursor = self._execute_query(select_clause, group_by, **where)
         results =  self._format_results(columns, cursor)
 
-        if isinstance(columns, collections.Mapping):
+        if isinstance(columns, Mapping):
             results = DictItems((k, next(v)) for k, v in results)
             return Result(results, evaluation_type=dict)
         return next(results)
@@ -1465,7 +1469,7 @@ elif sqlite3.sqlite_version_info < (3, 6, 8):
             raise Exception(msg)
 
 
-class CompositeQuery(collections.Sequence):
+class CompositeQuery(Sequence):
     """A class to wrap multiple Query instances so they can be
     worked with like a single Query.
     """
@@ -1548,7 +1552,7 @@ class CompositeQuery(collections.Sequence):
         return tuple(query.fetch() for query in self._queries)
 
 
-class CompositeSelector(collections.Sequence):
+class CompositeSelector(Sequence):
     """A class to wrap multiple Selector instances so they can be
     worked with like a single Selector.
     """

@@ -3,7 +3,8 @@ import inspect
 import sys
 from . import _unittest as unittest
 from datatest._compatibility.builtins import *
-from datatest._compatibility import collections
+from datatest._compatibility.collections import namedtuple
+from datatest._compatibility.collections.abc import Mapping
 from datatest._compatibility import contextlib
 from datatest._compatibility import itertools
 
@@ -750,7 +751,7 @@ class TestAllowedLimit(unittest.TestCase):
                 raise ValidationError({'foo': Extra('xxx'), 'bar': Missing('yyy')})
 
         remaining = cm.exception.differences
-        self.assertIsInstance(remaining, collections.Mapping)
+        self.assertIsInstance(remaining, Mapping)
         self.assertEqual(len(remaining), 1)
 
 
@@ -759,7 +760,7 @@ class TestUniversalComposability(unittest.TestCase):
     same type as well as all other allowance types.
     """
     def setUp(self):
-        ntup = collections.namedtuple('ntup', ('cls', 'args', 'priority'))
+        ntup = namedtuple('ntup', ('cls', 'args', 'priority'))
         self.allowances = [
             ntup(cls=allowed_missing,   args=tuple(),                  priority=100),
             ntup(cls=allowed_extra,     args=tuple(),                  priority=100),

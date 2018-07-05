@@ -2,9 +2,10 @@
 import itertools
 import sqlite3
 import unittest
-import collections
 
 import datatest._load.temptable as temptable
+from datatest._compatibility.collections import namedtuple
+from datatest._compatibility.collections import OrderedDict
 from datatest._load.temptable import (
     table_exists,
     new_table_name,
@@ -405,7 +406,7 @@ class TestLoadData(unittest.TestCase):
         self.cursor = connection.cursor()
 
         try:
-            self.dict_constructor = collections.OrderedDict  # New in 2.7
+            self.dict_constructor = OrderedDict  # New in 2.7
         except AttributeError:
             self.dict_constructor = dict
 
@@ -449,7 +450,7 @@ class TestLoadData(unittest.TestCase):
         self.assertEqual(self.cursor.fetchall(), [('x', 1), ('y', 2)])
 
     def test_three_args_namedtuples(self):
-        ntup = collections.namedtuple('ntup', ['A', 'B'])
+        ntup = namedtuple('ntup', ['A', 'B'])
         records = [
             ntup('x', 1),
             ntup('y', 2),
