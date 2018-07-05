@@ -63,6 +63,12 @@ def _get_matcher(value):
     elif value is Ellipsis:
         function = lambda x: True  # <- Wildcard (matches everything).
         repr_string = '...'
+    elif value is True:
+        function = lambda x: bool(x)  # <- Truthy.
+        repr_string = 'True'
+    elif value is False:
+        function = lambda x: not bool(x)  # <- Falsy.
+        repr_string = 'False'
     elif isinstance(value, regex_types):
         def function(x):
             try:

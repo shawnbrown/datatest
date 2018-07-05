@@ -145,6 +145,58 @@ class TestEllipsisWildcardMatcher(unittest.TestCase):
         self.assertEqual(repr(matcher), '...')
 
 
+class TestTruthyMatcher(unittest.TestCase):
+    def test_equality(self):
+        matcher = _get_matcher(True)
+
+        self.assertTrue(matcher == 'x')
+        self.assertTrue(matcher == 1.0)
+        self.assertTrue(matcher == [1])
+        self.assertTrue(matcher == range(1))
+
+        self.assertFalse(matcher == '')
+        self.assertFalse(matcher == 0.0)
+        self.assertFalse(matcher == [])
+        self.assertFalse(matcher == range(0))
+
+    def test_number_one(self):
+        matcher = _get_matcher(1)  # <- Should not match True
+
+        self.assertTrue(matcher == 1.0)
+        self.assertFalse(matcher == 'x')
+
+    def test_repr(self):
+        matcher = _get_matcher(True)
+
+        self.assertEqual(repr(matcher), 'True')
+
+
+class TestFalsyMatcher(unittest.TestCase):
+    def test_equality(self):
+        matcher = _get_matcher(False)
+
+        self.assertFalse(matcher == 'x')
+        self.assertFalse(matcher == 1.0)
+        self.assertFalse(matcher == [1])
+        self.assertFalse(matcher == range(1))
+
+        self.assertTrue(matcher == '')
+        self.assertTrue(matcher == 0.0)
+        self.assertTrue(matcher == [])
+        self.assertTrue(matcher == range(0))
+
+    def test_number_zero(self):
+        matcher = _get_matcher(0)  # <- Should not match False
+
+        self.assertTrue(matcher == 0.0)
+        self.assertFalse(matcher == '')
+
+    def test_repr(self):
+        matcher = _get_matcher(False)
+
+        self.assertEqual(repr(matcher), 'False')
+
+
 class TestGetPredicate(unittest.TestCase):
     def test_single_value(self):
         # Check for PredicateMatcher wrapping.

@@ -282,6 +282,10 @@ its type:
     | tuple of             | | tuple of values satisfies corresponding tuple   |
     | predicates           | | of predicates---each according to their type    |
     +----------------------+---------------------------------------------------+
+    | True                 | | value is truthy (truth value is True)           |
+    +----------------------+---------------------------------------------------+
+    | False                | | value is falsy (truth value is False)           |
+    +----------------------+---------------------------------------------------+
     | "``...``" (an        | | (used as a wildcard, matches any value)         |
     | ellipsis)            |                                                   |
     +----------------------+---------------------------------------------------+
@@ -314,6 +318,14 @@ for some allowances. For some examples, see the following table:
     | .. code-block:: python    | ``'foo'``      | Yes     |
     |                           +----------------+---------+
     |     'foo'                 | ``'bar'``      | No      |
+    +---------------------------+----------------+---------+
+    | .. code-block:: python    | ``'x'``        | Yes     |
+    |                           +----------------+---------+
+    |     True                  | ``''``         | No      |
+    +---------------------------+----------------+---------+
+    | .. code-block:: python    | ``''``         | Yes     |
+    |                           +----------------+---------+
+    |     False                 | ``'x'``        | No      |
     +---------------------------+----------------+---------+
     | .. code-block:: python    | ``('A', 'X')`` | Yes     |
     |                           +----------------+---------+
