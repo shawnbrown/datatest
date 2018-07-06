@@ -1049,6 +1049,13 @@ def _register_function(connection, func_list):
             connection.create_function(name, 1, wrapper)  # <- Register!
 
 
+# Temporary functions for "where" keyword args.
+# NOTE!!!: Remove these after implementing full
+# predicate support for keyword filtering.
+_is_truthy = lambda x: bool(x)
+_is_falsy = lambda x: not bool(x)
+
+
 class Selector(object):
     """A class to quickly load and select tabular data. The given
     *objs*, *\*args*, and *\*\*kwds*, can be any values supported
@@ -1220,6 +1227,13 @@ class Selector(object):
     def _execute_query(self, select_clause, trailing_clause=None, **kwds_filter):
         """Execute query and return cursor object."""
         try:
+            for key, val in kwds_filter.items():  # Temporary partial keyword
+                if val is True:                   # handling to use until full
+                    val = _is_truthy              # predicate support is ready.
+                elif val is False:
+                    val = _is_falsy
+                kwds_filter[key] = val
+
             # Register where-clause functions with SQLite connection.
             func_list = [x for x in kwds_filter.values() if callable(x)]
             _register_function(self._connection, func_list)
