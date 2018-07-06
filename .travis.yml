@@ -20,4 +20,5 @@ install: true
 # command to run tests and check installation
 script:
   - python setup.py test
+  - python -c 'import setuptools;print(setuptools.__version__)'
   - python setup.py install
