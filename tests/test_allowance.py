@@ -475,6 +475,15 @@ class TestAllowedDeviation(unittest.TestCase):
             with allowed_deviation(0):
                 raise ValidationError(Deviation(float('nan'), 0))
 
+    def test_non_deviation_diffs(self):
+        diffs = [Missing('foo'), Extra('bar'), Invalid('baz')]
+        with self.assertRaises(ValidationError) as cm:
+            with allowed_deviation(5):
+                raise ValidationError(diffs)
+
+        uncaught_diffs = cm.exception.differences
+        self.assertEqual(diffs, uncaught_diffs)
+
 
 class TestAllowedPercentDeviation(unittest.TestCase):
     def setUp(self):
@@ -536,6 +545,15 @@ class TestAllowedPercentDeviation(unittest.TestCase):
             Deviation(float('nan'), 16),  # Not a number.
         ]
         self.assertEqual(actual, expected)
+
+    def test_non_deviation_diffs(self):
+        diffs = [Missing('foo'), Extra('bar'), Invalid('baz')]
+        with self.assertRaises(ValidationError) as cm:
+            with allowed_percent(0.05):
+                raise ValidationError(diffs)
+
+        uncaught_diffs = cm.exception.differences
+        self.assertEqual(diffs, uncaught_diffs)
 
 
 class TestAllowedSpecific(unittest.TestCase):

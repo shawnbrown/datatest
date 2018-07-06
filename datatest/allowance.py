@@ -394,7 +394,11 @@ class allowed_deviation(BaseAllowance):
 
     def call_predicate(self, item):
         diff = item[1]
-        deviation = diff.deviation or 0
+        try:
+            deviation = diff.deviation or 0
+        except AttributeError:
+            return False
+
         if isnan(deviation) or isnan(diff.expected or 0):
             return False
         return self.lower <= deviation <= self.upper
@@ -434,8 +438,12 @@ class allowed_percent(BaseAllowance):
 
     def call_predicate(self, item):
         diff = item[1]
-        deviation = diff.deviation
-        expected = diff.expected
+
+        try:
+            deviation = diff.deviation
+            expected = diff.expected
+        except AttributeError:
+            return False
 
         if expected:
             percent_error = (deviation or 0) / expected
