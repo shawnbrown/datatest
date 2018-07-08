@@ -43,6 +43,9 @@ from .._load.temptable import load_data
 from .._load.temptable import new_table_name
 from .._load.temptable import savepoint
 from .._load.temptable import table_exists
+from .._predicate import PredicateMatcher
+from .._predicate import PredicateTuple
+from .._predicate import get_predicate
 
 try:
     FileNotFoundError  # New in Python 3.3.
@@ -58,6 +61,7 @@ except NameError:
 DEFAULT_CONNECTION = sqlite3.connect('')  # <- Using '' makes a temp file.
 DEFAULT_CONNECTION.execute('PRAGMA synchronous=OFF')
 DEFAULT_CONNECTION.isolation_level = None  # <- Run in 'autocommit' mode.
+_user_function_name_gen = ('FUNC{0}'.format(x) for x in itertools.count())
 
 
 PY2 = sys.version_info[0] == 2
@@ -1070,8 +1074,9 @@ class Selector(object):
     def __init__(self, objs=None, *args, **kwds):
         """Initialize self."""
         self._connection = DEFAULT_CONNECTION
-        self._table = None
-        self._obj_strings = []
+        self._user_function_dict = dict()  # User-defined SQLite functions.
+        self._table = None  # Table name.
+        self._obj_strings = []  # Strings for repr().
         if objs:
             try:
                 self.load_data(objs, *args, **kwds)
@@ -1286,6 +1291,85 @@ class Selector(object):
 
         clause = ' AND '.join(clause) if clause else ''
         return clause, params
+
+    def _build_where_clause2(self, where_dict):
+        """Return SQL 'WHERE' clause that implements *where* keyword
+        constraints.
+        """
+        clause = []
+        params = []
+        items = where_dict.items()
+        items = sorted(items, key=lambda x: x[0])  # Ordered by key.
+        for key, val in items:
+            if isinstance(val, Set):
+                clause.append('{key} IN ({qmarks})'.format(
+                    key=key,
+                    qmarks=', '.join('?' * len(val))
+                ))
+                params.extend(val)
+            elif callable(val) and not isinstance(val, type):
+                func_name = self._get_user_function(val)
+                clause.append('{0}({1})'.format(func_name, key))
+            else:
+                pred = get_predicate(val)
+                if isinstance(pred, PredicateMatcher):
+                    func_name = self._get_user_function(pred._func, keyref=val)
+                    clause.append('{0}({1})'.format(func_name, key))
+                elif isinstance(pred, PredicateTuple):
+                    def func(x):
+                        return pred == x
+                    func_name = self._get_user_function(func, keyref=val)
+                    clause.append('{0}({1})'.format(func_name, key))
+                else:
+                    clause.append(key + '=?')
+                    params.append(val)
+
+        clause = ' AND '.join(clause) if clause else ''
+        return clause, params
+
+    def _get_user_function(self, func, keyref=None):
+        """Returns SQLite user-defined function name. If *keyref* is
+        provided, it is used to generate the lookup-key for fetching
+        (and storing) the function name from the _user_function_dict
+        property.
+        """
+        if not keyref:
+            keyref = func
+
+        try:
+            func_key = hash(keyref)
+        except TypeError:
+            func_key = id(keyref)
+
+        try:
+            return self._user_function_dict[func_key]
+        except KeyError:
+            self._create_user_function(func, func_key)
+            return self._user_function_dict[func_key]
+
+    def _create_user_function(self, func, func_key=None):
+        """Register *func* with the SQLite connection using an
+        automatically generated function name. Add the new name
+        to the _user_function_dict using the given *func_key*.
+        """
+        if not func_key:
+            try:
+                func_key = hash(func)
+            except TypeError:
+                func_key = id(func)
+
+        if func_key in self._user_function_dict:
+            raise ValueError('function {0!r} already registered'.format(func))
+
+        if not isinstance(func, Hashable):
+            _func = func
+            @functools.wraps(_func)
+            def func(x):
+                return _func(x)
+
+        func_name = next(_user_function_name_gen)
+        self._connection.create_function(func_name, 1, func)  # <- Register!
+        self._user_function_dict[func_key] = func_name
 
     def _format_result_group(self, columns, cursor):
         outer_type = type(columns)

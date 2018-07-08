@@ -1168,6 +1168,88 @@ class TestSelector(unittest.TestCase):
         expected = "<Selector [['xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'], ['yyyyyyyyyyy...yyyyy']]>"
         self.assertEqual(repr(select), expected)
 
+    def test_create_user_function(self):
+        select = Selector([['A', 'B'], ['x', 1], ['y', 2], ['z', 3]])
+
+        # Verify that "_user_function_dict" us empty.
+        self.assertEqual(select._user_function_dict, dict(), 'should be empty dict')
+
+        # Create first function using a specified id.
+        isodd = lambda x: x % 2 == 1
+        select._create_user_function(isodd, 123)
+        self.assertEqual(len(select._user_function_dict), 1)
+        self.assertIn(123, select._user_function_dict)
+
+        # Create second function using a specified id.
+        iseven = lambda x: x % 2 == 0
+        select._create_user_function(iseven, 456)
+        self.assertEqual(len(select._user_function_dict), 2)
+        self.assertIn(456, select._user_function_dict)
+
+        # Make sure they are getting new SQLite function names.
+        self.assertNotEqual(
+            select._user_function_dict[123],
+            select._user_function_dict[456],
+        )
+
+        # Create third function using a specified id.
+        grteql2 = lambda x: x >= 2
+        select._create_user_function(grteql2)
+        self.assertEqual(len(select._user_function_dict), 3)
+
+        # Attempt to recreate the third function again.
+        with self.assertRaises(ValueError, msg='can not register same function twice'):
+            select._create_user_function(grteql2)
+        self.assertEqual(len(select._user_function_dict), 3)
+
+    def test_get_user_function(self):
+        select = Selector([['A', 'B'], ['x', 1], ['y', 2], ['z', 3]])
+
+        # Verify that "_user_function_dict" us empty.
+        self.assertEqual(len(select._user_function_dict), 0, 'should be empty dict')
+
+        # Get existing function.
+        isodd = lambda x: x % 2 == 1
+        select._create_user_function(isodd)
+        func_name = select._get_user_function(isodd)
+        self.assertEqual(len(select._user_function_dict), 1)
+        self.assertRegex(func_name, r'FUNC\d+')
+
+        # Get new function.
+        iseven = lambda x: x % 2 == 0
+        func_name = select._get_user_function(iseven)
+        self.assertEqual(len(select._user_function_dict), 2, 'should be auto-created')
+        self.assertRegex(func_name, r'FUNC\d+')
+
+    def test_build_where_clause2(self):
+        select = Selector([['A', 'B'], ['x', 1], ['y', 2], ['z', 3]])
+
+        result = select._build_where_clause2({'A': 'x'})
+        expected = ('A=?', ['x'])
+        self.assertEqual(result, expected)
+
+        result = select._build_where_clause2({'A': set(['x', 'y'])})
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0], 'A IN (?, ?)')
+        self.assertEqual(set(result[1]), set(['x', 'y']))
+
+        # User-defined function.
+        userfunc = lambda x: len(x) == 1
+        result = select._build_where_clause2({'A': userfunc})
+        self.assertEqual(len(result), 2)
+        self.assertRegex(result[0], r'FUNC\d+\(A\)')
+        self.assertEqual(result[1], [])
+
+        # Predicate (a type)
+        prev_len = len(select._user_function_dict)
+        predicate = int
+        result = select._build_where_clause2({'A': predicate})
+        self.assertEqual(len(result), 2)
+        self.assertRegex(result[0], r'FUNC\d+\(A\)')
+        self.assertEqual(result[1], [])
+        self.assertEqual(len(select._user_function_dict), prev_len + 1)
+
+
     def test_build_where_clause(self):
         _build_where_clause = Selector._build_where_clause
 
