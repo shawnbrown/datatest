@@ -1221,21 +1221,21 @@ class TestSelector(unittest.TestCase):
         self.assertEqual(len(select._user_function_dict), 2, 'should be auto-created')
         self.assertRegex(func_name, r'FUNC\d+')
 
-    def test_build_where_clause2(self):
+    def test_build_where_clause(self):
         select = Selector([['A', 'B'], ['x', 1], ['y', 2], ['z', 3]])
 
-        result = select._build_where_clause2({'A': 'x'})
+        result = select._build_where_clause({'A': 'x'})
         expected = ('A=?', ['x'])
         self.assertEqual(result, expected)
 
-        result = select._build_where_clause2({'A': set(['x', 'y'])})
+        result = select._build_where_clause({'A': set(['x', 'y'])})
         self.assertEqual(len(result), 2)
         self.assertEqual(result[0], 'A IN (?, ?)')
         self.assertEqual(set(result[1]), set(['x', 'y']))
 
         # User-defined function.
         userfunc = lambda x: len(x) == 1
-        result = select._build_where_clause2({'A': userfunc})
+        result = select._build_where_clause({'A': userfunc})
         self.assertEqual(len(result), 2)
         self.assertRegex(result[0], r'FUNC\d+\(A\)')
         self.assertEqual(result[1], [])
@@ -1243,28 +1243,11 @@ class TestSelector(unittest.TestCase):
         # Predicate (a type)
         prev_len = len(select._user_function_dict)
         predicate = int
-        result = select._build_where_clause2({'A': predicate})
+        result = select._build_where_clause({'A': predicate})
         self.assertEqual(len(result), 2)
         self.assertRegex(result[0], r'FUNC\d+\(A\)')
         self.assertEqual(result[1], [])
         self.assertEqual(len(select._user_function_dict), prev_len + 1)
-
-
-    def test_build_where_clause(self):
-        _build_where_clause = Selector._build_where_clause
-
-        result = _build_where_clause({'A': 'x'})
-        expected = ('A=?', ['x'])
-        self.assertEqual(result, expected)
-
-        result = _build_where_clause({'A': ['x', 'y']})
-        expected = ('A IN (?, ?)', ['x', 'y'])
-        self.assertEqual(result, expected)
-
-        userfunc = lambda x: len(x) == 1
-        result = _build_where_clause({'A': userfunc})
-        expected = ('FUNC{0}(A)'.format(id(userfunc)), [])
-        self.assertEqual(result, expected)
 
     def test_execute_query(self):
         data = [['A', 'B'], ['x', 101], ['y', 202], ['z', 303]]

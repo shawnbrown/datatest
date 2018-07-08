@@ -1028,31 +1028,6 @@ with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
     ])
 
 
-_registered_function_ids = defaultdict(set)
-def _register_function(connection, func_list):
-    """Register user-defined functions with SQLite connection.
-
-    This uses a global defaultdict to prevent from registering
-    the same function multiple times with the same connection.
-    """
-    connection_id = id(connection)
-    for func in func_list:
-        func_id = id(func)
-        if func_id in _registered_function_ids[connection_id]:
-            return  # <- EXIT! (if already registered)
-
-        _registered_function_ids[connection_id].add(func_id)
-
-        name = 'FUNC{0}'.format(func_id)
-        if isinstance(func, Hashable):
-            connection.create_function(name, 1, func)  # <- Register!
-        else:
-            @functools.wraps(func)
-            def wrapper(x):
-                return func(x)
-            connection.create_function(name, 1, wrapper)  # <- Register!
-
-
 # Temporary functions for "where" keyword args.
 # NOTE!!!: Remove these after implementing full
 # predicate support for keyword filtering.
@@ -1239,10 +1214,6 @@ class Selector(object):
                     val = _is_falsy
                 kwds_filter[key] = val
 
-            # Register where-clause functions with SQLite connection.
-            func_list = [x for x in kwds_filter.values() if callable(x)]
-            _register_function(self._connection, func_list)
-
             # Build select-query.
             stmnt = 'SELECT {0} FROM {1}'.format(select_clause, self._table)
             where_clause, params = self._build_where_clause(kwds_filter)
@@ -1262,37 +1233,7 @@ class Selector(object):
 
         return cursor
 
-    @staticmethod
-    def _build_where_clause(where_dict):
-        """Return 'WHERE' clause that implements *where* keyword
-        constraints.
-        """
-        clause = []
-        params = []
-        items = where_dict.items()
-        items = sorted(items, key=lambda x: x[0])  # Ordered by key.
-        for key, val in items:
-            # If value is a function.
-            if callable(val):
-                func_name = 'FUNC{0}'.format(id(val))
-                clause.append('{0}({1})'.format(func_name, key))
-            # If value is a collection of strings.
-            elif nonstringiter(val):
-                clause.append('{key} IN ({qmarks})'.format(
-                    key=key,
-                    qmarks=', '.join('?' * len(val))
-                ))
-                for x in val:
-                    params.append(x)
-            # Else, treat as a single value.
-            else:
-                clause.append(key + '=?')
-                params.append(val)
-
-        clause = ' AND '.join(clause) if clause else ''
-        return clause, params
-
-    def _build_where_clause2(self, where_dict):
+    def _build_where_clause(self, where_dict):
         """Return SQL 'WHERE' clause that implements *where* keyword
         constraints.
         """
