@@ -1249,6 +1249,15 @@ class TestSelector(unittest.TestCase):
         self.assertEqual(result[1], [])
         self.assertEqual(len(select._user_function_dict), prev_len + 1)
 
+        # Predicate (a boolean)
+        prev_len = len(select._user_function_dict)
+        predicate = True
+        result = select._build_where_clause({'A': predicate})
+        self.assertEqual(len(result), 2)
+        self.assertRegex(result[0], r'FUNC\d+\(A\)')
+        self.assertEqual(result[1], [])
+        self.assertEqual(len(select._user_function_dict), prev_len + 1)
+
     def test_execute_query(self):
         data = [['A', 'B'], ['x', 101], ['y', 202], ['z', 303]]
         source = Selector(data)
