@@ -12,6 +12,7 @@ COMING SOON (0.9.2)
     * Added to_csv() method to quickly save results as a CSV file.
     * Changed reduce() method to accept "initializer_factory" as
       an optional argument.
+    * Changed filter() method to support predicate matching.
 * Added True and False as predicates to support "truth value testing" on
   arbitrary objects (to match on truthy or falsy).
 * Fixed get_reader() bug that prevented encoding-fallback recovery when

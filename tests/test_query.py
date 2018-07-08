@@ -252,11 +252,16 @@ class TestMapData(unittest.TestCase):
 
 
 class TestFilterData(unittest.TestCase):
-    def test_list_iter(self):
-        iterable = Result([-4, -1, 2, 3], list)
+    def test_return_type(self):
+        func = lambda x: True
+        result = _filter_data(func, [1, 2, 3])
+        self.assertIsInstance(result, Result)
+        self.assertEqual(result.evaluation_type, list)
+        self.assertEqual(result.fetch(), [1, 2, 3])
 
+    def test_list_iter(self):
         function = lambda x: x > 0
-        result = _filter_data(function, iterable)
+        result = _filter_data(function, [-4, -1, 2, 3])
         self.assertEqual(result.fetch(), [2, 3])
 
     def test_bad_iterable_type(self):
@@ -284,7 +289,23 @@ class TestFilterData(unittest.TestCase):
         iseven = lambda x: x % 2 == 0
         with self.assertRaises(TypeError):
             result = _filter_data(iseven, iterable)
-            #result.fetch()
+
+    def test_predicate_handling(self):
+        predicate = set([-1, 2, 9])
+        result = _filter_data(predicate, [-1, -4, 2, 3, 2])
+        self.assertEqual(result.fetch(), [-1, 2, 2])
+
+        predicate = re.compile('^[b]\w\w$')
+        result = _filter_data(predicate, ['foo', 'bar', 'baz', 'qux'])
+        self.assertEqual(result.fetch(), ['bar', 'baz'])
+
+        predicate = True
+        result = _filter_data(predicate, [1, -1, 'x', 0, '', tuple()])
+        self.assertEqual(result.fetch(), [1, -1, 'x'])
+
+        predicate = False
+        result = _filter_data(predicate, [1, -1, 'x', 0, '', tuple()])
+        self.assertEqual(result.fetch(), [0, '', tuple()])
 
 
 class TestFlattenData(unittest.TestCase):

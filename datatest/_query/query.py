@@ -318,7 +318,17 @@ def _reduce_data(function, iterable, initializer_factory=None):
     return _apply_to_data(wrapper, iterable)
 
 
-def _filter_data(function, iterable):
+def _filter_data(predicate, iterable):
+    if callable(predicate) and not isinstance(predicate, type):
+        function = predicate
+    else:
+        predicate = get_predicate(predicate)
+        if hasattr(predicate, '_func'):
+            function = predicate._func
+        else:
+            def function(x):
+                return predicate == x
+
     def wrapper(iterable):
         if isinstance(iterable, BaseElement):
             raise TypeError(('filter expects a collection of data elements, '
@@ -671,12 +681,13 @@ class Query(object):
         """
         return self._add_step('map', function)
 
-    def filter(self, function=None):
-        """Filter elements, keeping only those values for which
-        *function* returns True. If *function* is None, this method
-        keeps all elements for which :py:class:`bool` returns True.
+    def filter(self, predicate=True):
+        """Filter elements, keeping only those values that match the
+        given *predicate*. When *predicate* is True, this method keeps
+        all elements for which :py:class:`bool` returns True (see
+        :ref:`predicate-docs` for details).
         """
-        return self._add_step('filter', function)
+        return self._add_step('filter', predicate)
 
     def reduce(self, function, initializer_factory=None):
         """Reduce elements to a single value by applying a *function*
