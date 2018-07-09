@@ -76,11 +76,12 @@ class TestBaseElement(unittest.TestCase):
         # Base data elements include non-iterables, strings, and mappings.
         self.assertTrue(isinstance(123, BaseElement))
         self.assertTrue(isinstance('123', BaseElement))
-        self.assertTrue(isinstance({'abc': '123'}, BaseElement))
+        self.assertTrue(isinstance((1, 2, 3), BaseElement))
+        self.assertTrue(isinstance({'abc': [1, 2, 3]}, BaseElement))
 
         # Other iterable types are not considered base data elements.
-        self.assertFalse(isinstance(['123'], BaseElement))
-        self.assertFalse(isinstance(set(['123']), BaseElement))
+        self.assertFalse(isinstance([1, 2, 3], BaseElement))
+        self.assertFalse(isinstance(set([1, 2, 3]), BaseElement))
         self.assertFalse(isinstance(iter([1, 2, 3]), BaseElement))
 
     def test_register_method(self):
