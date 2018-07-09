@@ -272,6 +272,9 @@ def _get_evaluation_type(obj, default=None):
 
 
 def _make_dataresult(iterable):
+    if isinstance(iterable, Result):
+        return iterable
+
     eval_type = _get_evaluation_type(iterable)
     if issubclass(eval_type, Mapping):
         iterable = getattr(iterable, 'iteritems', iterable.items)()

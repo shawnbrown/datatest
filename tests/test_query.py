@@ -933,6 +933,16 @@ class TestQuery(unittest.TestCase):
         self.assertIsInstance(result, Result)
         self.assertEqual(result.fetch(), [1, 3, 4, 2])
 
+        query = Query.from_object(Result([1, 3, 4, 2], evaluation_type=list))
+        result = query.execute()
+        self.assertIsInstance(result, Result)
+        self.assertEqual(result.fetch(), [1, 3, 4, 2])
+
+        query = Query.from_object(Result({'a': 1, 'b': 2}, evaluation_type=dict))
+        result = query.execute()
+        self.assertIsInstance(result, Result)
+        self.assertEqual(result.fetch(), {'a': 1, 'b': 2})
+
     def test_map(self):
         query1 = Query(['col2'])
         query2 = query1.map(int)
