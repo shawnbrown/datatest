@@ -265,30 +265,30 @@ Datatest uses "predicate objects" to define the criteria that values
 are matched against. The specific behavior of a predicate depends on
 its type:
 
-    +----------------------+---------------------------------------------------+
-    | Predicate type       | Checks that                                       |
-    +======================+===================================================+
-    | set                  | | value is a member of the set                    |
-    +----------------------+---------------------------------------------------+
-    | function             | | the result of ``function(value)`` tests as True |
-    |                      | | and is not a "difference" object                |
-    +----------------------+---------------------------------------------------+
-    | type                 | | value is an instance of the type                |
-    +----------------------+---------------------------------------------------+
-    | re.compile(pattern)  | | value matches the regular expression pattern    |
-    +----------------------+---------------------------------------------------+
-    | str or non-container | | value is equal to the predicate                 |
-    +----------------------+---------------------------------------------------+
-    | tuple of             | | tuple of values satisfies corresponding tuple   |
-    | predicates           | | of predicates---each according to their type    |
-    +----------------------+---------------------------------------------------+
-    | True                 | | value is truthy (truth value is True)           |
-    +----------------------+---------------------------------------------------+
-    | False                | | value is falsy (truth value is False)           |
-    +----------------------+---------------------------------------------------+
-    | "``...``" (an        | | (used as a wildcard, matches any value)         |
-    | ellipsis)            |                                                   |
-    +----------------------+---------------------------------------------------+
+    +-------------------------+---------------------------------------------------+
+    | Predicate type          | Checks that                                       |
+    +=========================+===================================================+
+    | set                     | | value is a member of the set                    |
+    +-------------------------+---------------------------------------------------+
+    | function                | | the result of ``function(value)`` tests as True |
+    |                         | | and is not a "difference" object                |
+    +-------------------------+---------------------------------------------------+
+    | type                    | | value is an instance of the type                |
+    +-------------------------+---------------------------------------------------+
+    | ``re.compile(pattern)`` | | value matches the regular expression pattern    |
+    +-------------------------+---------------------------------------------------+
+    | str or non-container    | | value is equal to the predicate                 |
+    +-------------------------+---------------------------------------------------+
+    | tuple of predicates     | | tuple of values satisfies corresponding tuple   |
+    |                         | | of predicates---each according to their type    |
+    +-------------------------+---------------------------------------------------+
+    | ``True``                | | ``bool(value)`` returns True (value is truthy)  |
+    +-------------------------+---------------------------------------------------+
+    | ``False``               | | ``bool(value)`` returns False (value is falsy)  |
+    +-------------------------+---------------------------------------------------+
+    | ``...`` (Ellipsis       | | (used as a wildcard, matches any value)         |
+    | literal)                |                                                   |
+    +-------------------------+---------------------------------------------------+
 
 Predicates can be used as arguments for asserting validity and
 for some allowances. For some examples, see the following table:
