@@ -310,7 +310,7 @@ and "D": ``405`` ≠ ``400``). Failed numeric comparisons raise
             :lineno-match:
 
         .. code-block:: none
-            :emphasize-lines: 8-12
+            :emphasize-lines: 8-11
 
             ======================================================================
             FAIL: test_using_dict (test_intro2_unit.ExampleTests)
