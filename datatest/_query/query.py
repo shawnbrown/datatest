@@ -976,26 +976,6 @@ class Query(object):
         return '{0}({1}{2}{3}){4}'.format(
             class_repr, source_repr, args_repr, kwds_repr, query_steps_repr)
 
-    def _get_reader(self, fieldnames=None):
-        """Return a csv.reader-like iterator of the query results."""
-        iterable = _flatten_data(self.execute())
-        if not nonstringiter(iterable):
-            iterable = [iterable]
-
-        if not fieldnames:
-            first_row, iterable = iterpeek(iterable)
-            if not nonstringiter(first_row):
-                first_row = [first_row]
-
-            if self.args:
-                (fieldnames,) = _flatten_data(self.args[0])
-                if len(first_row) != len(fieldnames):
-                    fieldnames = None
-
-        if fieldnames:
-            iterable = itertools.chain([fieldnames], iterable)
-        return iterable
-
     def to_csv(self, file, fieldnames=None, **fmtparams):
         """Execute the query and write the results as a CSV file
         (dictionaries and other mappings will be seralized).
@@ -1009,7 +989,7 @@ class Query(object):
         original *columns* argument will be used if the number of
         selected columns matches the number of resulting columns.
         """
-        reader = self._get_reader(fieldnames)
+        reader = get_reader.from_datatest(self)
 
         if not isinstance(file, file_types):
             if PY2:
