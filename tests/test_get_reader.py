@@ -277,36 +277,99 @@ class TestFromCsvPath(SampleFilesTestCase):
             list(reader)  # Trigger evaluation.
 
 
-class TestFromDatatestQuery(unittest.TestCase):
-    def test_selector_source_single_column(self):
-        select = datatest.Selector([['A', 'B'], ['x', 1], ['y', 2]])
-        query = select('A')
-        reader = get_reader.from_query(query)
-        self.assertEqual(list(reader), [['A'], ['x'], ['y']])
+class TestFromDatatest(unittest.TestCase):
+    def setUp(self):
+        self.select = datatest.Selector([['A', 'B'], ['x', 1], ['y', 2]])
 
-    def test_selector_source_multiple_columns(self):
-        select = datatest.Selector([['A', 'B'], ['x', 1], ['y', 2]])
-        query = select(('A', 'B'))
-        reader = get_reader.from_query(query)
-        self.assertEqual(list(reader), [['A', 'B'], ['x', 1], ['y', 2]])
+    def test_query_multicolumn_implicit_fieldnames(self):
+        query = self.select(('B', 'A'))
+        reader = get_reader.from_datatest(query)  # <- No fieldnames specified.
+        self.assertEqual(list(reader), [('B', 'A'), (1, 'x'), (2, 'y')])
 
-    def test_selector_source_column_mapping(self):
-        select = datatest.Selector([['A', 'B'], ['x', 1], ['y', 2]])
-        query = select({'A': 'B'})
-        reader = get_reader.from_query(query)
-        self.assertEqual(list(reader), [['A', 'B'], ['x', 1], ['y', 2]])
+    def test_query_multicolumn_explicit_fieldnames(self):
+        query = self.select(['B', 'A'])
+        reader = get_reader.from_datatest(query, fieldnames=['foo', 'bar'])
+        self.assertEqual(list(reader), [['foo', 'bar'], [1, 'x'], [2, 'y']])
 
-    def test_selector_source_column_mapping2(self):
-        select = datatest.Selector([['A', 'B'], ['x', 1], ['x', 2]])
-        query = select({'A': ('A', 'B')})
-        reader = get_reader.from_query(query)
-        self.assertEqual(list(reader), [['A', 'A', 'B'], ['x', 'x', 1], ['x', 'x', 2]])
+    def test_query_multicolumn_non_selector(self):
+        query = datatest.Query.from_object([['x', 1], ['y', 2]])
 
-    def test_selector_source_column_mapping3(self):
-        select = datatest.Selector([['A', 'B'], ['x', 1], ['x', 2]])
-        query = select({('A', 'A'): ('B', 'B')})
-        reader = get_reader.from_query(query)
-        self.assertEqual(list(reader), [['A', 'A', 'B', 'B'], ['x', 'x', 1, 1], ['x', 'x', 2, 2]])
+        reader = get_reader.from_datatest(query)  # <- No fieldnames.
+        self.assertEqual(list(reader), [['x', 1], ['y', 2]])
+
+        reader = get_reader.from_datatest(query, fieldnames=['foo', 'bar'])
+        self.assertEqual(list(reader), [['foo', 'bar'], ['x', 1], ['y', 2]])
+
+    def test_query_singlecolumn_implicit_fieldname(self):
+        query = self.select('A')
+        reader = get_reader.from_datatest(query)
+        self.assertEqual(list(reader), [('A',), ('x',), ('y',)])
+
+    def test_query_singlecolumn_explicit_fieldname(self):
+        query = self.select('A')
+        reader = get_reader.from_datatest(query, fieldnames='foo')
+        self.assertEqual(list(reader), [('foo',), ('x',), ('y',)])
+
+    def test_query_singlecolumn_non_selector(self):
+        query = datatest.Query.from_object(['x', 'y'])
+
+        reader = get_reader.from_datatest(query)  # <- No fieldnames.
+        self.assertEqual(list(reader), [('x',), ('y',)])
+
+        reader = get_reader.from_datatest(query, fieldnames='foo')
+        self.assertEqual(list(reader), [('foo',), ('x',), ('y',)])
+
+    def test_query_summed_single_value(self):
+        query = self.select('B').sum()
+        reader = get_reader.from_datatest(query)
+        self.assertEqual(list(reader), [('B',), (3,)])
+
+    def test_query_dict_single_key_and_value(self):
+        query = self.select({'A': 'B'})
+        reader = get_reader.from_datatest(query)
+        self.assertEqual(list(reader), [('A', 'B'), ('x', 1), ('y', 2)])
+
+    def test_query_dict_tuplevalue(self):
+        query = self.select({'A': ('A', 'B')})
+        reader = get_reader.from_datatest(query)
+        self.assertEqual(list(reader), [('A', 'A', 'B'), ('x', 'x', 1), ('y', 'y', 2)])
+
+    def test_query_dict_tuplekey(self):
+        query = self.select({('A', 'A'): 'B'})
+        reader = get_reader.from_datatest(query)
+        self.assertEqual(list(reader), [('A', 'A', 'B'), ('x', 'x', 1), ('y', 'y', 2)])
+
+    def test_query_dict_tuplekey_tuplevalue(self):
+        query = self.select({('A', 'A'): ('B', 'B')})
+        reader = get_reader.from_datatest(query)
+        self.assertEqual(list(reader), [('A', 'A', 'B', 'B'), ('x', 'x', 1, 1), ('y', 'y', 2, 2)])
+
+    def test_selector_object(self):
+        reader = get_reader.from_datatest(self.select)  # <- No fieldnames specified.
+        self.assertEqual(list(reader), [('A', 'B'), ('x', 1), ('y', 2)])
+
+        reader = get_reader.from_datatest(self.select, fieldnames=('foo', 'bar'))
+        self.assertEqual(list(reader), [('foo', 'bar'), ('x', 1), ('y', 2)])
+
+    def test_result_list(self):
+        result = datatest.Result([['x', 1], ['y', 2]], evaluation_type=list)
+        reader = get_reader.from_datatest(result)  # <- No fieldnames specified.
+        self.assertEqual(list(reader), [['x', 1], ['y', 2]])
+
+        result = datatest.Result([['x', 1], ['y', 2]], evaluation_type=list)
+        reader = get_reader.from_datatest(result, fieldnames=['foo', 'bar'])
+        self.assertEqual(list(reader), [['foo', 'bar'], ['x', 1], ['y', 2]])
+
+    def test_result_dict(self):
+        source_dict = {'x': [1, 1], 'y': [2]}
+
+        result = datatest.Result(source_dict, evaluation_type=dict)
+        reader = get_reader.from_datatest(result)  # <- No fieldnames specified.
+        self.assertEqual(list(reader), [('x', 1), ('x', 1), ('y', 2)])
+
+        result = datatest.Result(source_dict, evaluation_type=dict)
+        reader = get_reader.from_datatest(result, fieldnames=('foo', 'bar'))
+        self.assertEqual(list(reader), [('foo', 'bar'), ('x', 1), ('x', 1), ('y', 2)])
 
 
 @unittest.skipIf(not pandas, 'pandas not found')
@@ -469,14 +532,17 @@ class TestFunctionDispatching(SampleFilesTestCase):
 
     def test_datatest(self):
         select = datatest.Selector([['A', 'B'], ['x', 1], ['y', 2]])
-        query = select('A')
-        reader = get_reader(query)
-        self.assertEqual(list(reader), [['A'], ['x'], ['y']])
 
-        select = datatest.Selector([['A', 'B'], ['x', 1], ['y', 2]])
-        query = select({'A': 'B'})
-        reader = get_reader(query)
-        self.assertEqual(list(reader), [['A', 'B'], ['x', 1], ['y', 2]])
+        query = select(('A', 'B'))
+        reader = get_reader(query)  # <- datatest.Query
+        self.assertEqual(list(reader), [('A', 'B'), ('x', 1), ('y', 2)])
+
+        reader = get_reader(select)  # <- datatest.Selector
+        self.assertEqual(list(reader), [('A', 'B'), ('x', 1), ('y', 2)])
+
+        result = select({'A': 'B'}).execute()
+        reader = get_reader(query)  # <- datatest.Result
+        self.assertEqual(list(reader), [('A', 'B'), ('x', 1), ('y', 2)])
 
     @unittest.skipIf(not xlrd, 'xlrd not found')
     def test_excel(self):

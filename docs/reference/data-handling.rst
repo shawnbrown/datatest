@@ -26,7 +26,7 @@ Loading Data
 
     .. automethod:: from_namedtuples
 
-    .. automethod:: from_query
+    .. automethod:: from_datatest
 
     .. automethod:: from_pandas
 

@@ -157,8 +157,10 @@ class get_reader(object):
                 return cls.from_csv(obj, *args, **kwds)
 
             if 'datatest' in sys.modules:
-                if isinstance(obj, sys.modules['datatest'].Query):
-                    return cls.from_query(obj, *args, **kwds)
+                datatest = sys.modules['datatest']
+                if isinstance(obj, (datatest.Query, datatest.Selector,
+                                    datatest.Result)):
+                    return cls.from_datatest(obj, *args, **kwds)
 
             if 'pandas' in sys.modules:
                 if isinstance(obj, sys.modules['pandas'].DataFrame):
@@ -228,79 +230,48 @@ class get_reader(object):
         return _from_csv_iterable(csvfile, encoding, **kwds)
 
     @staticmethod
-    def from_query(query, fieldnames=None):
+    def from_datatest(obj, fieldnames=None):
         """Return a reader object which will iterate over the records
-        returned from the given :class:`Query` *query*. If *fieldnames*
-        is not provided, this function tries to construct names using
-        the values from the query's ``columns`` argument.
+        returned from a datatest Selector, Query, or Result. If the
+        *fieldnames* argument is not provided, this function tries to
+        construct names using the values from the underlying object.
         """
-        def getfunc(obj):
-            if nonstringiter(obj):
-                return lambda x: list(x)
-            return lambda x: [x]
-
-        result = query.execute()
-        evaluation_type = result.evaluation_type
-        first_record = next(result)
-
-        if issubclass(evaluation_type, Mapping):
-            first_key, value = first_record
-            if isinstance(value, result.__class__):  # If value is also result
-                first_value = next(value)            # object, get its first
-                value = chain([first_value], value)  # value and rebuild.
-            else:
-                first_value = value
-            result = chain([(first_key, value)], result)
-
-            format_key = getfunc(first_key)
-            format_value = getfunc(first_value)
-
-            if not fieldnames:
-                try:
-                    col_key, col_val = next(iter(query.args[0].items()))
-                    col_val = next(iter(col_val))
-                    fieldnames = format_key(col_key) + format_value(col_val)
-
-                    sample_row = format_key(first_key) \
-                                 + format_value(first_value)
-                    assert len(sample_row) == len(fieldnames)
-                except Exception:
-                    msg = ('must provide fieldnames, cannot '
-                           'be determined automatically')
-                    raise TypeError(msg)
-
-            yield fieldnames
-            for k, v in result:
-                k = format_key(k)
-                if nonstringiter(v) and not isinstance(v, tuple):
-                    for subval in v:
-                        subval = format_value(subval)
-                        yield k + subval
-                else:
-                    yield k + format_value(v)
-
+        datatest = sys.modules['datatest']
+        if isinstance(obj, datatest.Query):
+            query = obj
+        elif isinstance(obj, datatest.Selector):
+            query = obj(tuple(obj.fieldnames))
+        elif isinstance(obj, datatest.Result):
+            query = datatest.Query.from_object(obj)
         else:
-            result = chain([first_record], result)
+            raise TypeError('must be datatest Selector, Query, or Result')
 
-            format_value = getfunc(first_record)
+        iterable = query.flatten().execute()
+        if not nonstringiter(iterable):
+            iterable = [(iterable,)]
 
-            if not fieldnames:
-                try:
-                    fieldnames = format_value(next(iter(query.args[0])))
-                    sample_row = format_value(first_record)
-                    assert len(fieldnames) == len(sample_row)
-                except Exception:
-                    msg = ('must provide fieldnames, cannot '
-                           'be determined automatically')
-                    raise TypeError(msg)
+        first_row, iterable = iterpeek(iterable)
+        if not nonstringiter(first_row):
+            first_row = (first_row,)
+            iterable = ((x,) for x in iterable)
 
+        if fieldnames:
+            if not nonstringiter(fieldnames):
+                fieldnames = (fieldnames,)
+        else:
+            if query.args:
+                fieldnames = query.__class__.from_object(query.args[0])
+                (fieldnames,) = fieldnames.flatten().fetch()
+                if not nonstringiter(fieldnames):
+                    fieldnames = (fieldnames,)
+                if len(first_row) != len(fieldnames):
+                    fieldnames = None
+
+        if fieldnames:
             yield fieldnames
-            for value in result:
-                yield format_value(value)
 
-    @classmethod
-    def from_datatest(cls, query, fieldnames=None):  # Added for compatibility
-        return cls.from_query(query, fieldnames)     # with external get_reader.
+        for value in iterable:
+            yield value
 
     @staticmethod
     def from_pandas(df, index=True):
