@@ -365,11 +365,16 @@ class TestFromDatatest(unittest.TestCase):
 
         result = datatest.Result(source_dict, evaluation_type=dict)
         reader = get_reader.from_datatest(result)  # <- No fieldnames specified.
-        self.assertEqual(list(reader), [('x', 1), ('x', 1), ('y', 2)])
+        reader_list = list(reader)
+        self.assertEqual(reader_list.count(('x', 1)), 2)
+        self.assertEqual(reader_list.count(('y', 2)), 1)
 
         result = datatest.Result(source_dict, evaluation_type=dict)
         reader = get_reader.from_datatest(result, fieldnames=('foo', 'bar'))
-        self.assertEqual(list(reader), [('foo', 'bar'), ('x', 1), ('x', 1), ('y', 2)])
+        reader_list = list(reader)
+        self.assertEqual(reader_list[0], ('foo', 'bar'))
+        self.assertEqual(reader_list.count(('x', 1)), 2)
+        self.assertEqual(reader_list.count(('y', 2)), 1)
 
 
 @unittest.skipIf(not pandas, 'pandas not found')
