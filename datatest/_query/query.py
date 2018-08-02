@@ -1489,8 +1489,8 @@ elif sqlite3.sqlite_version_info < (3, 6, 8):
 
 
 class CompositeQuery(Sequence):
-    """A class to wrap multiple Query instances so they can be
-    worked with like a single Query.
+    """A class to wrap multiple :class:`Query` instances so they can
+    be worked with like a single Query.
     """
     def __init__(self, *queries):
         for argnum, query in enumerate(queries, 1):
@@ -1572,8 +1572,39 @@ class CompositeQuery(Sequence):
 
 
 class CompositeSelector(Sequence):
-    """A class to wrap multiple Selector instances so they can be
-    worked with like a single Selector.
+    """A class to wrap multiple :class:`Selector` instances so they
+    can be worked with like a single Selector. The CompositeSelector
+    can be treated as a sequence that can be unpacked into individual
+    objects for validation:
+
+    .. code-block:: python
+        :emphasize-lines: 8
+
+        ...
+
+        compare = CompositeSelector(
+            Selector('detailed_file.csv'),
+            Selector('reference_file.csv'),
+        )
+
+        validate(*compare({'state'}))
+
+    In the example above, we selected the set of values in the "state"
+    column from each file (using ``{'state'}``) and passed the two
+    return values to :func:`validate` using *argument unpacking* (with
+    ``*``).
+
+    This is a shorthand for:
+
+    .. code-block:: python
+        :emphasize-lines: 6
+
+        ...
+
+        detailed = Select('detailed_file.csv')
+        reference = Select('reference_file.csv')
+
+        validate(detailed({'state'}), reference({'state'}))
     """
     def __init__(self, *selectors):
         for argnum, select in enumerate(selectors, 1):
