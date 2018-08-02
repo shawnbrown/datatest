@@ -23,6 +23,7 @@ from ._query.query import Query
 from ._query.query import Result
 from ._query.query import CompositeSelector
 from ._query.query import CompositeQuery
+from ._proxygroup import ProxyGroup
 
 # Set module explicitly to cleanup reprs and error reporting.
 Selector.__module__ = 'datatest'
