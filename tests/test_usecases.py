@@ -57,8 +57,8 @@ class TestSelectorIdioms(unittest.TestCase):
         datatest.validate(a(common_fields), b(common_fields))
 
     def test_concise_reference_testing(self):
-        """Should be able to use composite object to query and then compare
+        """Should be able to use grouping object to query and then compare
         the results with sequence unpacking.
         """
-        compare = datatest.CompositeSelector(self.selector_a, self.selector_b)
+        compare = datatest.ProxyGroup([self.selector_a, self.selector_b])
         datatest.validate(*compare({'A': 'B'}))

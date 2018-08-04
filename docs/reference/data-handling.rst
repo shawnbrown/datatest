@@ -169,28 +169,3 @@ ProxyGroup
 
         validate(*compare[['A', 'C']].groupby('A').sum())
 
-
-*****************
-Composite Objects
-*****************
-
-.. autoclass:: CompositeSelector
-
-.. autoclass:: CompositeQuery
-
-
-Working With Composite Objects
-==============================
-
-Composite objects are useful when you need to compare data from
-multiple sources that are similarly shaped (i.e., they have many
-of the same column names). Rather than select the same columns
-and build the same queries for each data source, you can wrap
-them in a composite object and build the query once::
-
-    select1 = Selector('detailed_data.csv')
-    select2 = Selector('summary_reference.csv')
-    compare = CompositeSelector(select1, select2)
-
-    comparison = compare({'county': 'population'}).sum()
-
