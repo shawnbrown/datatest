@@ -29,25 +29,44 @@ class ProxyGroupBase(Iterable):
 
 
 class ProxyGroup(ProxyGroupBase):
-    """
-    Method calls and property references are passed to the individual
-    objects and a new ProxyGroup is returned containing the results::
+    """A class to wrap a sequence or mapping of objects and operate on
+    them at the same time. Method calls and property references made on
+    the group are forwarded to the values inside and a new ProxyGroup
+    is returned with the results.
+
+    In the following example, a ProxyGroup with two strings is created.
+    A method call to ``upper()`` is forwarded to the individual strings
+    and a new ProxyGroup is returned that contains the uppercase
+    values::
 
         >>> group = ProxyGroup(['foo', 'bar'])
         >>> group.upper()
         ProxyGroup(['FOO', 'BAR'])
 
-    ProxyGroup is an iterable and individual items can be accessed
-    through iteration or sequence unpacking. Below, the individual
-    objects are unpacked into the variables ``x`` and ``y``::
+    A ProxyGroup is an iterable and its individual items can be
+    accessed through sequence unpacking or iteration. Below, the
+    individual objects are unpacked into the variables ``x`` and
+    ``y``::
 
         >>> group = ProxyGroup(['foo', 'bar'])
         >>> group = group.upper()
-        >>> x, y = group
+        >>> x, y = group  # <- Unpack values.
         >>> x
         'FOO'
         >>> y
         'BAR'
+
+    If the ProxyGroup was created with a dict (or other mapping),
+    then iterating over it will return a sequence of ``(key, value)``
+    tuples. This sequence can be used as-is or used to create another
+    dict::
+
+        >>> group = ProxyGroup({'a': 'foo', 'b': 'bar'})
+        >>> group = group.upper()
+        >>> list(group)
+        [('a', 'FOO'), ('b', 'BAR')]
+        >>> dict(group)
+        {'a': 'FOO', 'b': 'BAR'}
     """
     def __init__(self, iterable):
         if not isinstance(iterable, Iterable):
