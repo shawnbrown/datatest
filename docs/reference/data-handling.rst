@@ -121,6 +121,55 @@ Selecting & Querying Data
         or rewrapping.
 
 
+**********
+ProxyGroup
+**********
+
+.. autoclass:: ProxyGroup
+
+
+.. tip::
+
+    When comparing the data under test against a set of
+    similarly-shaped reference data, it's common to perform the same
+    operations on both data sources. Duplicate queries and selections
+    can grow cumbersome when working with :class:`Selector`,
+    ``pandas.DataFrame`` or other object types. This duplication can
+    be mitigated by using a :class:`ProxyGroup`.
+
+    In the following example, a ProxyGroup with two DataFrames is
+    created. Then, the operation ``...[['A', 'C']].groupby('A').sum()``
+    is forwarded to each DataFrame in the group. Finally, the results
+    are unpacked and validated::
+
+        ...
+
+        compare = ProxyGroup([
+            pandas.read_csv('data_under_test.csv'),
+            pandas.read_csv('reference_data.csv'),
+        ])
+
+        result = compare[['A', 'C']].groupby('A').sum()
+
+        data, requirement = result
+        validate(data, requirement)
+
+    The example above can be expressed even more concisely by unpacking
+    the results directly in the :func:`validate` call itself:
+
+    .. code-block:: python
+        :emphasize-lines: 8
+
+        ...
+
+        compare = ProxyGroup([
+            pandas.read_csv('data_under_test.csv'),
+            pandas.read_csv('reference_data.csv'),
+        ])
+
+        validate(*compare[['A', 'C']].groupby('A').sum())
+
+
 *****************
 Composite Objects
 *****************
