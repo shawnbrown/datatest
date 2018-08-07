@@ -567,7 +567,7 @@ population in the summary file. But our expected population is over
 5.8 million so the percent error is only +1.3%.
 
 Since we're comparing detailed *counts* against summary *estimates*,
-a small percent error is entirely acceptable. To relect this decision
+a small percent error is entirely acceptable. To reflect this decision
 in our tests, we will allow a percent error of ±3%:
 
 .. tabs::
