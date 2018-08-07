@@ -128,44 +128,95 @@ ProxyGroup
 .. autoclass:: ProxyGroup
 
 
-.. tip::
+Validating ProxyGroup Results
+=============================
 
-    When comparing the data under test against a set of
-    similarly-shaped reference data, it's common to perform the same
-    operations on both data sources. Duplicate queries and selections
-    can grow cumbersome when working with :class:`Selector`,
-    ``pandas.DataFrame`` or other object types. This duplication can
-    be mitigated by using a :class:`ProxyGroup`.
+When comparing the data-under-test against a set of similarly-shaped
+reference data, it's common to perform the same operations on both
+data sources. When queries and selections become more complex, this
+duplication can grow cumbersome. But the duplication can be mitigated
+by using a :class:`ProxyGroup`.
 
-    In the following example, a ProxyGroup with two DataFrames is
-    created. Then, the operation ``...[['A', 'C']].groupby('A').sum()``
-    is forwarded to each DataFrame in the group. Finally, the results
-    are unpacked and validated::
+A ProxyGroup can wrap many types of objects (:class:`Selector`,
+pandas ``DataFrame``, etc.). In the following example, a ProxyGroup
+is created with two objects. Then, an operation is forwarded to each
+object in the group. Finally, the results are unpacked and validated:
 
-        ...
+.. tabs::
 
-        compare = ProxyGroup([
-            pandas.read_csv('data_under_test.csv'),
-            pandas.read_csv('reference_data.csv'),
-        ])
+    .. group-tab:: Selector Example
 
-        result = compare[['A', 'C']].groupby('A').sum()
+        Below, the operation ``...({'A': 'C'}).sum()`` is forwarded to
+        each :class:`Selector` and the results are returned inside a
+        new ProxyGroup object:
 
-        data, requirement = result
-        validate(data, requirement)
+        .. code-block:: python
+            :emphasize-lines: 8
 
-    The example above can be expressed even more concisely by unpacking
-    the results directly in the :func:`validate` call itself:
+            ...
 
-    .. code-block:: python
-        :emphasize-lines: 8
+            compare = ProxyGroup([
+                Selector('data_under_test.csv'),
+                Selector('reference_data.csv'),
+            ])
 
-        ...
+            result = compare({'A': 'C'}).sum()
 
-        compare = ProxyGroup([
-            pandas.read_csv('data_under_test.csv'),
-            pandas.read_csv('reference_data.csv'),
-        ])
+            data, requirement = result
+            validate(data, requirement)
 
-        validate(*compare[['A', 'C']].groupby('A').sum())
+    .. group-tab:: DataFrame Example
+
+        Below, the operation ``...[['A', 'C']].groupby('A').sum()`` is
+        forwarded to each ``DataFrame`` and the results are returned
+        inside a new ProxyGroup object:
+
+        .. code-block:: python
+            :emphasize-lines: 8
+
+            ...
+
+            compare = ProxyGroup([
+                pandas.read_csv('data_under_test.csv'),
+                pandas.read_csv('reference_data.csv'),
+            ])
+
+            result = compare[['A', 'C']].groupby('A').sum()
+
+            data, requirement = result
+            validate(data, requirement)
+
+
+The example above can be expressed even more concisely by unpacking
+the result values directly in the :func:`validate` call itself:
+
+.. tabs::
+
+    .. group-tab:: Selector Example
+
+        .. code-block:: python
+            :emphasize-lines: 8
+
+            ...
+
+            compare = ProxyGroup([
+                Selector('data_under_test.csv'),
+                Selector('reference_data.csv'),
+            ])
+
+            validate(*compare({'A': 'C'}).sum())
+
+    .. group-tab:: DataFrame Example
+
+        .. code-block:: python
+            :emphasize-lines: 8
+
+            ...
+
+            compare = ProxyGroup([
+                pandas.read_csv('data_under_test.csv'),
+                pandas.read_csv('reference_data.csv'),
+            ])
+
+            validate(*compare[['A', 'C']].groupby('A').sum())
 

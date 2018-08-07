@@ -49,8 +49,8 @@ class ProxyGroup(ProxyGroupBase):
     ``y``::
 
         >>> group = ProxyGroup(['foo', 'bar'])
-        >>> group = group.upper()
-        >>> x, y = group  # <- Unpack values.
+        >>> result = group.upper()
+        >>> x, y = result  # <- Unpack values.
         >>> x
         'FOO'
         >>> y
@@ -62,10 +62,10 @@ class ProxyGroup(ProxyGroupBase):
     dict::
 
         >>> group = ProxyGroup({'a': 'foo', 'b': 'bar'})
-        >>> group = group.upper()
-        >>> list(group)
+        >>> result = group.upper()
+        >>> list(result)
         [('a', 'FOO'), ('b', 'BAR')]
-        >>> dict(group)
+        >>> dict(result)
         {'a': 'FOO', 'b': 'BAR'}
     """
     def __init__(self, iterable):
