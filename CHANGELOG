@@ -2,11 +2,10 @@
 Datatest Changelog
 ==================
 
-COMING SOON (0.9.2)
--------------------
+2018-08-08 (0.9.2)
+------------------
 
-* Improved data handling features and Python 3.7 support.
-* Changed Selector class keyword filtering to support predicate matching.
+* Improved data handling features and support for Python 3.7.
 * Changed Query class:
     * Added flatten() method to serialize dictionary results.
     * Added to_csv() method to quickly save results as a CSV file.
@@ -15,13 +14,14 @@ COMING SOON (0.9.2)
     * Changed filter() method to support predicate matching.
 * Added True and False as predicates to support "truth value testing" on
   arbitrary objects (to match on truthy or falsy).
-* Fixed get_reader() bug that prevented encoding-fallback recovery when
-  reading from StringIO buffers in Python 2.
+* Added ProxyGroup class for performing the same operations on groups of
+  objects at the same time (a common need when testing against reference
+  data).
+* Changed Selector class keyword filtering to support predicate matching.
 * Added handling to get_reader() to support datatest's Selector and Result
   objects.
-* Added ProxyGroup class for performing the same operations on groups of
-  objects at the same time (a common need when comparing against reference
-  data).
+* Fixed get_reader() bug that prevented encoding-fallback recovery when
+  reading from StringIO buffers in Python 2.
 
 
 2018-06-21 (0.9.1)

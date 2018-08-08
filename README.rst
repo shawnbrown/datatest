@@ -14,9 +14,10 @@ datatest: Testing tools for data validation and analysis
 Datatest provides testing tools for data validation and analysis.
 It supports both pytest_ and unittest_ style testing.
 
-You can use datatest for validation, data-wrangling, auditing,
-logging discrepancies, and checklists for measuring progress.
-It encourages a structured approach for checking and tidying data.
+You can use datatest for validation, test driven data-wrangling,
+auditing, logging discrepancies, and checklists for measuring
+progress. It encourages a structured approach for checking and
+tidying data.
 
 Datatest has no hard dependencies; supports Python 2.6, 2.7,
 3.1 through 3.7, PyPy, and PyPy3; and is freely available under
