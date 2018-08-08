@@ -38,13 +38,9 @@ Release Checklist
 
 11. Add version tag to upstream repository (also used by readthedocs.org).
 
-12. Publish update announcement to relevant mailing lists:
-
-  python-announce-list@python.org
-  testing-in-python@lists.idyll.org
-
-13. Iterate version number in repository so that "latest" docs aren't
-    confused with the just-published "stable" docs:
+12. Iterate version number in repository indicating that it is a development
+    version (e.g., X.X.X.dev0) so that "latest" docs aren't confused with the
+    just-published "stable" docs:
 
     datatest/__init__.py
     docs/conf.py
@@ -53,3 +49,8 @@ Release Checklist
 
       Iterate version number to differentiate development version
       from latest release.
+
+13. Publish update announcement to relevant mailing lists:
+
+  python-announce-list@python.org
+  testing-in-python@lists.idyll.org
