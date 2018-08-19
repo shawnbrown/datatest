@@ -24,6 +24,7 @@ from datatest._query.query import (
     _filter_data,
     _reduce_data,
     _flatten_data,
+    _unwrap_data,
     _apply_data,
     _apply_to_data,  # <- TODO: Change function name.
     _sqlite_sum,
@@ -388,6 +389,88 @@ class TestFlattenData(unittest.TestCase):
             set(result.fetch()),
             set([('a', 1), ('a', 3), ('b', 4), ('b', 5), ('b', 6)]),
         )
+
+
+class TestUnwrapData(unittest.TestCase):
+    def test_multiple_item_containers(self):
+        """Containers with multiple items should be returned unchanged."""
+        result = _unwrap_data([-4, -1, 2, 3])
+        self.assertEqual(result, [-4, -1, 2, 3])
+
+        result = _unwrap_data(set([1, 2, 3]))
+        self.assertEqual(result, set([1, 2, 3]))
+
+        iterable = Result([-4, -1, 2, 3], list)
+        result = _unwrap_data(iterable)
+        self.assertEqual(result.fetch(), [-4, -1, 2, 3])
+
+        iterable = Result(set([1, 2, 3]), set)
+        result = _unwrap_data(iterable)
+        self.assertEqual(result.fetch(), set([1, 2, 3]))
+
+    def test_noncontainer_and_string(self):
+        """Strings and non-containers should be return unchanged."""
+        result = _unwrap_data(3)
+        self.assertEqual(result, 3)
+
+        result = _unwrap_data('abc')
+        self.assertEqual(result, 'abc')
+
+    def test_single_item_containers(self):
+        """Single item sequences and sets should be unwrapped."""
+        result = _unwrap_data([1])
+        self.assertEqual(result, 1)
+
+        result = _unwrap_data(set(['abc']))
+        self.assertEqual(result, 'abc')
+
+        # Test result objects.
+        iterable = Result([1], list)
+        result = _unwrap_data(iterable)
+        self.assertEqual(result, 1)
+
+        iterable = Result(set(['abc']), set)
+        result = _unwrap_data(iterable)
+        self.assertEqual(result, 'abc')
+
+    def test_empty_containers(self):
+        """Single item sequences and sets should be unwrapped."""
+        result = _unwrap_data([])
+        self.assertEqual(result, [])
+
+        iterable = Result(set(), set)
+        result = _unwrap_data(iterable)
+        self.assertEqual(result.fetch(), set())
+
+    def test_mapping_of_values(self):
+        """A small integration test of mixed types and containers."""
+        iterable = Result(
+            {
+                'a': 1,
+                'b': [2],
+                'c': [3, 4],
+                'd': set([5]),
+                'e': set([6, 7]),
+                'f': 'abc',
+                'g': ('def',),
+                'h': ('ghi', 'jkl'),
+                'i': {'x': 8},
+            },
+            dict,
+        )
+        result = _unwrap_data(iterable)
+        expected = {
+            'a': 1,
+            'b': 2,      # <- unwrapped
+            'c': [3, 4],
+            'd': 5,      # <- unwrapped
+            'e': set([6, 7]),
+            'f': 'abc',
+            'g': 'def',  # <- unwrapped
+            'h': ('ghi', 'jkl'),
+            'i': {'x': 8},
+        }
+        self.assertEqual(result.fetch(), expected)
 
 
 class TestReduceData(unittest.TestCase):

@@ -372,6 +372,28 @@ def _flatten_data(iterable):
     return Result(flatten(iterable), list)
 
 
+def _unwrap_data(iterable):
+    """Unwrap single-item sequences or sets."""
+    def unwrap(iterable):
+        if not isinstance(iterable, (Sequence, Set, Result)):
+            return iterable  # <- EXIT!
+
+        first_values = list(itertools.islice(iterable, 2))
+
+        if len(first_values) == 1:
+            unwrapped = first_values[0]
+            return unwrapped  # <- EXIT!
+
+        if exhaustible(iterable):
+            evaluation_type = _get_evaluation_type(iterable)
+            iterable = itertools.chain(first_values, iterable)
+            return Result(iterable, evaluation_type)  # <- EXIT!
+
+        return iterable
+
+    return _apply_to_data(unwrap, iterable)
+
+
 def _sqlite_cast_as_real(value):
     """Convert value to REAL (float) or default to 0.0 to match SQLite
     behavior. See the "Conversion Processing" table in the "CAST
