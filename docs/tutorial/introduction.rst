@@ -504,3 +504,8 @@ Datatest also provides a few utilities for handling data:
 
 :class:`Selector`, :class:`Query`, and :class:`Result`
     Select and query tabular data that can be tested for validity.
+
+:class:`ProxyGroup`
+    Operate on a group of objects together instead of repeating
+    the same methods and operations on each individual object
+    (useful when comparing one source of data against another).
