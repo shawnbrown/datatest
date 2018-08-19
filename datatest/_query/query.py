@@ -26,7 +26,6 @@ from .._compatibility.collections.abc import Sized
 from .._compatibility import contextlib
 from .._compatibility import functools
 from .._compatibility import itertools
-from .._utils import _expects_multiple_params
 from .._utils import _flatten
 from .._utils import iterpeek
 from .._utils import nonstringiter
