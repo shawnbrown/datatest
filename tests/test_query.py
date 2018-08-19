@@ -1076,6 +1076,15 @@ class TestQuery(unittest.TestCase):
         result = query2.execute(source)
         self.assertEqual(result.fetch(), [('a', '2', '2'), ('b', '2', '2')])
 
+    def test_unwrap(self):
+        query1 = Query({'col1': ['col2']})
+        query2 = query1.unwrap()
+        self.assertIsNot(query1, query2, 'should return new object')
+
+        source = Selector([('col1', 'col2'), ('a', 1), ('b', 2),  ('b', 3)])
+        result = query2.execute(source)
+        self.assertEqual(result.fetch(), {'a': 1, 'b': [2, 3]})
+
     def test_optimize_aggregation(self):
         """
         Unoptimized:

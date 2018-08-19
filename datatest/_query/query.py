@@ -767,6 +767,10 @@ class Query(object):
         """
         return self._add_step('flatten')
 
+    def unwrap(self):
+        """Unwrap single-item sequences or sets."""
+        return self._add_step('unwrap')
+
     @staticmethod
     def _translate_step(query_step):
         """Accept a query step and return a corresponding execution
@@ -806,6 +810,9 @@ class Query(object):
             args = (RESULT_TOKEN,)
         elif name == 'flatten':
             function = _flatten_data
+            args = (RESULT_TOKEN,)
+        elif name == 'unwrap':
+            function = _unwrap_data
             args = (RESULT_TOKEN,)
         elif name == 'select':
             raise ValueError("this method does not handle 'select' step")
