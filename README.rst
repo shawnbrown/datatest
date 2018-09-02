@@ -1,7 +1,7 @@
 
-********************************************************
-datatest: Testing tools for data validation and analysis
-********************************************************
+********************************************************************
+datatest: Testing tools for data-wrangling, validation, and analysis
+********************************************************************
 
 ..
     Project badges for quick reference:

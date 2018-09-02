@@ -134,7 +134,8 @@ if __name__ == '__main__':
                 'datatest.__past__',
             ],
             # Additional fields:
-            description='Testing tools for data validation and analysis.',
+            description=('Testing tools for data-wrangling, validation, '
+                         'and analysis.'),
             long_description=long_description,
             author='Shawn Brown',
             license='Apache 2.0',
