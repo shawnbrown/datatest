@@ -421,11 +421,11 @@ class TestCompareSet(unittest.TestCase):
         self.assertEqual(make_set(expected), make_set(iterable))
 
         result = CompareSet(['aaa', 'bbb', 'ccc'])
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             iterable = result.make_rows(['foo', 'bar'])  # Too many *names*.
 
         result = CompareSet([('aaa', 1), ('bbb', 2), ('ccc', 3)])
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             iterable = result.make_rows(['foo'])  # Too few *names*.
 
     def test_eq(self):

@@ -256,8 +256,11 @@ class DiscoveringTestLoader(unittest.TestLoader):
         path = os.path.splitext(os.path.normpath(path))[0]
 
         _relpath = relpath(path, self._top_level_dir)
-        assert not os.path.isabs(_relpath), "Path must be within the project"
-        assert not _relpath.startswith('..'), "Path must be within the project"
+        if os.path.isabs(_relpath):
+            raise AssertionError('Path must be within the project')
+
+        if _relpath.startswith('..'):
+            raise AssertionError('Path must be within the project')
 
         name = _relpath.replace(os.path.sep, '.')
         return name

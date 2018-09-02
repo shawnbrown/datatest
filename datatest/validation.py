@@ -271,7 +271,8 @@ def _normalize_mapping_result(result):
     """
     first_element, result = iterpeek(result)
     if first_element:
-        assert len(first_element) == 2, 'expects tuples of key-value pairs'
+        if len(first_element) != 2:
+            raise ValueError('expects tuples of key-value pairs')
         return DictItems(result)  # <- EXIT!
     return None
 
@@ -282,22 +283,22 @@ def _normalize_data(data):
 
     pandas = sys.modules.get('pandas', None)
     if pandas:
-        try:
-            if isinstance(data, pandas.Series):
-                assert data.index.is_unique
-                return DictItems(data.iteritems())  # <- EXIT!
+        is_series = isinstance(data, pandas.Series)
+        is_dataframe = isinstance(data, pandas.DataFrame)
 
-            if isinstance(data, pandas.DataFrame):
-                assert data.index.is_unique
-                gen = ((x[0], x[1:]) for x in data.itertuples())
-                if len(data.columns) == 1:
-                    gen = ((k, v[0]) for k, v in gen)  # Unwrap if 1-tuple.
-                return DictItems(gen)  # <- EXIT!
-
-        except AssertionError:
+        if (is_series or is_dataframe) and not data.index.is_unique:
             cls_name = data.__class__.__name__
             raise ValueError(('{0} index contains duplicates, must '
                               'be unique').format(cls_name))
+
+        if is_series:
+            return DictItems(data.iteritems())  # <- EXIT!
+
+        if is_dataframe:
+            gen = ((x[0], x[1:]) for x in data.itertuples())
+            if len(data.columns) == 1:
+                gen = ((k, v[0]) for k, v in gen)  # Unwrap if 1-tuple.
+            return DictItems(gen)  # <- EXIT!
 
     numpy = sys.modules.get('numpy', None)
     if numpy and isinstance(data, numpy.ndarray):

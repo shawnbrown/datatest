@@ -1012,7 +1012,7 @@ class TestAllowDeviation(unittest.TestCase):
         self.assertEqual(expected_set, result_set)
 
     def test_invalid_tolerance(self):
-        with self.assertRaises(AssertionError) as cm:
+        with self.assertRaises(ValueError) as cm:
             with allow_deviation(-5):  # <- invalid
                 pass
         exc = str(cm.exception)
@@ -1112,7 +1112,7 @@ class TestAllowPercentDeviation(unittest.TestCase):
         self.assertEqual(expected_set, result_set)
 
     def test_invalid_tolerance(self):
-        with self.assertRaises(AssertionError) as cm:
+        with self.assertRaises(ValueError) as cm:
             with allow_percent_deviation(-0.5):  # <- invalid
                 pass
         exc = str(cm.exception)

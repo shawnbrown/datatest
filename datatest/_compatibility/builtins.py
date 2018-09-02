@@ -8,11 +8,10 @@ except NameError:
     pass
 
 
-try:
-    from io import open as _open
-    assert open == _open  # Starting in 3.1
-    open = open
-except AssertionError:
+from io import open as _open
+if open == _open:  # Starting in 3.1
+    open = open  # <- Declare in local namespace.
+else:
     open = _open
 
 

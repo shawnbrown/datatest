@@ -251,7 +251,8 @@ class allow_iter(object):
     allowed.
     """
     def __init__(self, function, msg=None, **kwds):
-        assert callable(function), 'must be function or other callable'
+        if not callable(function):
+            raise TypeError('must be function or other callable')
         self.function = function
         self.msg = msg
         self.kwds = kwds
@@ -493,12 +494,14 @@ def _normalize_deviation_args(lower, upper, msg):
 
     if upper == None:
         tolerance = lower
-        assert tolerance >= 0, ('tolerance should not be negative, '
-                                'for full control of lower and upper '
-                                'bounds, use "lower, upper" syntax')
+        if tolerance < 0:
+            raise ValueError('tolerance should not be negative, '
+                             'for full control of lower and upper '
+                             'bounds, use "lower, upper" syntax')
         lower, upper = -tolerance, tolerance
 
-    assert lower <= upper
+    if lower > upper:
+        raise ValueError("'lower' must be less then 'upper'")
 
     lower = _make_decimal(lower)
     upper = _make_decimal(upper)

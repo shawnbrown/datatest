@@ -82,22 +82,22 @@ else:
 
     def _from_csv_iterable(iterable, encoding, **kwds):
         # Check that iterable is expected to return bytes (not strings).
-        try:
-            if isinstance(iterable, file):
-                assert 'b' in iterable.mode
-            elif isinstance(iterable, io.IOBase):
-                assert not isinstance(iterable, io.TextIOBase)
-            else:
-                pass
-                # If *iterable* is a generic iterator, we just have to
-                # trust that the user knows what they're doing. Because
-                # in Python 2, there's no reliable way to tell the
-                # difference between encoded bytes and decoded strings:
-                #
-                #   >>> b'x' == 'x'
-                #   True
-                #
-        except AssertionError:
+        if isinstance(iterable, file):
+            using_bytes = 'b' in iterable.mode
+        elif isinstance(iterable, io.IOBase):
+            using_bytes = not isinstance(iterable, io.TextIOBase)
+        else:
+            # If *iterable* is a generic iterator, we just have to
+            # trust that the user knows what they're doing. Because
+            # in Python 2, there's no reliable way to tell the
+            # difference between encoded bytes and decoded strings:
+            #
+            #   >>> b'x' == 'x'
+            #   True
+            #
+            using_bytes = True
+
+        if not using_bytes:
             msg = ('Python 2 unicode compatibility expects bytes, not '
                    'strings (did you open the file in binary mode?)')
             raise TypeError(msg)

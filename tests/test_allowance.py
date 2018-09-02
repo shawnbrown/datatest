@@ -456,12 +456,19 @@ class TestAllowedDeviation(unittest.TestCase):
         result_diffs = cm.exception.differences
         self.assertEqual({'aaa': Deviation(-1, 10), 'ccc': Deviation(+2, 10)}, result_diffs)
 
-    def test_invalid_tolerance(self):
-        with self.assertRaises(AssertionError) as cm:
+    def test_invalid_arguments(self):
+        with self.assertRaises(ValueError) as cm:
             with allowed_deviation(-5):  # <- invalid
                 pass
         exc = str(cm.exception)
         self.assertTrue(exc.startswith('tolerance should not be negative'))
+
+        with self.assertRaises(ValueError) as cm:
+            with allowed_deviation(3, 2):  # <- invalid
+                pass
+        exc = str(cm.exception)
+        expected = 'lower must not be greater than upper, got 3 (lower) and 2 (upper)'
+        self.assertEqual(exc, expected)
 
     def test_empty_string(self):
         with allowed_deviation(0):  # <- Pass without failure.

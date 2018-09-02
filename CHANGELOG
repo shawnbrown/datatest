@@ -8,6 +8,8 @@ COMING SOON (0.9.3)
 
 * Added unwrap() method to Query class to unwrap single-item sequences
   or sets.
+* Fixed improper use of assert statements with appropriate conditional
+  checks and error behavior.
 
 
 2018-08-08 (0.9.2)

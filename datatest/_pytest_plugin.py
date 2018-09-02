@@ -64,7 +64,8 @@ def pytest_addoption(parser):
             ),
         )
     except ValueError as exc:
-        assert 'already added' in str(exc)
+        if 'already added' not in str(exc):
+            raise
 
 
 def pytest_plugin_registered(plugin, manager):

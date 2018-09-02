@@ -31,7 +31,8 @@ helper function to check that they end with ``'.csv'``.
                 def is_csv(value):  # <- Helper function.
                     return value.lower().endswith('.csv')
 
-                assert len(file_list) > 0, 'no files found'
+                if not file_list:
+                    raise Exception('no files found')
                 validate(file_list, is_csv, 'should be CSV files')
 
 

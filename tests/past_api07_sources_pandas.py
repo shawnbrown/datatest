@@ -27,10 +27,11 @@ class TestVersionInfo(unittest.TestCase):
 
 try:
     import pandas
-    assert (_version_info(pandas) >= (0, 13, 0)
-                and _version_info(pandas.np) >= (1, 7, 1))
+    if (_version_info(pandas) < (0, 13, 0)
+            or _version_info(pandas.np) < (1, 7, 1)):
+        raise ImportError
     missing_pandas = False
-except (ImportError, AssertionError):
+except ImportError:
     missing_pandas = True
 
 

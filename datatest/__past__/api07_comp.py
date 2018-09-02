@@ -29,7 +29,8 @@ _regex_type = type(re.compile(''))
 
 def _compare_sequence(data, required):
     """Compare *data* against sequence of *required* values."""
-    assert isinstance(required, Sequence)
+    if not isinstance(required, Sequence):
+        raise TypeError('data must be a sequence')
 
     if isinstance(data, str):
         raise ValueError("uncomparable types: 'str' and sequence type")
@@ -49,7 +50,9 @@ def _compare_sequence(data, required):
 
 def _compare_mapping(data, required):
     """Compare *data* against mapping of *required* values."""
-    assert isinstance(required, Mapping)
+    if not isinstance(required, Mapping):
+        raise TypeError('data must be a mapping')
+
     if not isinstance(data, Mapping):
         type_name = type(data).__name__
         msg = "expected mapping type, but got " + repr(type_name)
@@ -67,7 +70,8 @@ def _compare_mapping(data, required):
 
 def _compare_set(data, required):
     """Compare *data* against set of *required* values."""
-    assert isinstance(required, Set)
+    if not isinstance(required, Set):
+        raise TypeError('data must be a set')
 
     if isinstance(data, Mapping):
         data = data.values()
@@ -210,11 +214,13 @@ class CompareSet(BaseCompare, set):
         """
         single_value = next(iter(self))
         if nonstringiter(single_value):
-            assert len(names) == len(single_value), "length of 'names' must match data items"
+            if len(names) != len(single_value):
+                raise ValueError("length of 'names' must match data items")
             iterable = iter(dict(zip(names, values)) for values in self)
         else:
             if nonstringiter(names):
-                assert len(names) == 1, "length of 'names' must match data items"
+                if len(names) != 1:
+                    raise ValueError("length of 'names' must match data items")
                 names = names[0]  # Unwrap names value.
             iterable = iter({names: value} for value in self)
         return iterable
@@ -231,7 +237,8 @@ class CompareSet(BaseCompare, set):
         return not self.__eq__(other)
 
     def all(self, key=None):
-        assert callable(key) or key == None, 'key must be callable or None'
+        if not (callable(key) or key == None):
+            raise ValueError('key must be callable or None')
         if key == None:
             key = lambda x: x  # Default to identity function.
         elif _expects_multiple_params(key):
@@ -353,8 +360,9 @@ class CompareDict(BaseCompare, dict):
             iterable = ((k, (v,)) for k, v in iterable)
             single_value = (single_value,)
 
-        assert len(single_key) == len(key_names)
-        assert len(single_value) == len(names)
+        if (len(single_key) != len(key_names)
+                or len(single_value) != len(names)):
+            raise AssertionError
 
         def make_dictrow(k, v):
             x = dict(zip(key_names, k))
@@ -430,7 +438,8 @@ class CompareDict(BaseCompare, dict):
         return differences
 
     def all(self, key=None):
-        assert callable(key) or key == None, 'key must be callable or None'
+        if not (callable(key) or key == None):
+            raise ValueError('key must be callable or None')
         if key == None:
             key = lambda x: x  # Default to identity function.
         elif _expects_multiple_params(key):

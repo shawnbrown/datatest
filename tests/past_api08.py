@@ -204,7 +204,8 @@ class TestAllowedKey(unittest.TestCase):
         # Test non-mapping container of differences.
         differences = [Missing(1), Extra(2)]
         def function(key):
-            assert key is None  # <- Always Non for non-mapping differences.
+            if key is not None:
+                raise ValueError('key should always be None for non-mapping differences')
             return False  # < Don't match any differences.
 
         with self.assertRaises(ValidationError) as cm:

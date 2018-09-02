@@ -37,9 +37,8 @@ except AttributeError:
     Decimal.from_float = _from_float
 
 
-try:
-    assert Decimal('1.0') == 1.0  # Changed in Python 3.2
-except AssertionError:
+if Decimal('1.0') != 1.0:  # Changed in Python 3.2
+
     import numbers as _numbers
     from decimal import _dec_from_triple
 

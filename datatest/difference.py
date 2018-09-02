@@ -194,18 +194,24 @@ class Deviation(BaseDifference):
     """
     def __init__(self, deviation, expected):
         isempty = lambda x: x is None or x == ''
-        try:
-            if expected == 0:
-                assert deviation != 0
-                assert isinstance(deviation, Number) or isempty(deviation)
-            elif isempty(expected):
-                assert isinstance(deviation, Number)
-            elif isinstance(expected, Number):
-                assert not isnan(expected)
-                assert isinstance(deviation, Number) and deviation != 0
-            else:
-                raise AssertionError()
-        except AssertionError:
+
+        if expected == 0:
+            args_ok = (
+                deviation != 0
+                and (isinstance(deviation, Number) or isempty(deviation))
+            )
+        elif isempty(expected):
+            args_ok = isinstance(deviation, Number)
+        elif isinstance(expected, Number):
+            args_ok = (
+                (not isnan(expected))
+                and isinstance(deviation, Number)
+                and deviation != 0
+            )
+        else:
+            args_ok = False
+
+        if not args_ok:
             msg = ('invalid Deviation arguments, got deviation={0!r}, '
                    'expected={1!r}').format(deviation, expected)
             raise ValueError(msg)
