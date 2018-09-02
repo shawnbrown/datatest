@@ -36,9 +36,6 @@ the Apache License, version 2.
 :Official:
     | https://pypi.org/project/datatest/
 
-:Development:
-    | https://github.com/shawnbrown/datatest
-
 
 Installation
 ============
@@ -153,6 +150,14 @@ use the package directly.
 If you must use one of these older Python versions and you are
 experiencing issues, it is recommended that you upgrade to the
 latest patch release (currently Python 3.1.5 or Python 2.6.9).
+
+
+Development Repository
+======================
+
+The development repository for ``datatest`` is hosted on
+`GitHub <https://github.com/shawnbrown/datatest>`_.
+
 
 ----------
 
