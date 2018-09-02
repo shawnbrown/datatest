@@ -12,7 +12,7 @@ class TestBackwardsCompatibility(unittest.TestCase):
         """Run given *module* in separate process--fails if return code
         indicates an error.
         """
-        command = [sys.executable, '-B', '-m', module]
+        command = [sys.executable, '-B', '-O', '-m', module]
         p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout_bytes, stderr_bytes = p.communicate()  # Closes file-like object.
 

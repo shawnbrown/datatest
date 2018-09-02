@@ -59,9 +59,9 @@ class TestCommand(Command):
 
         # Prepare test command.
         if sys.version_info[:2] in [(2, 6), (3, 1)]:
-            args = [sys.executable, '-B', 'tests/discover.py']
+            args = [sys.executable, '-B', '-O', 'tests/discover.py']
         else:
-            args = [sys.executable, '-B', '-m', 'unittest', 'discover']
+            args = [sys.executable, '-B', '-O', '-m', 'unittest', 'discover']
 
         if self.verbose:
             args.append('--verbose')
