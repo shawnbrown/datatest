@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from . import _unittest as unittest
+from datatest import Missing
+from datatest import Extra
 from datatest import Invalid
 from datatest._requirement import Requirement
+from datatest._requirement import SetRequirement
 
 
 class TestRequirement(unittest.TestCase):
@@ -58,3 +61,43 @@ class TestRequirement(unittest.TestCase):
 
         result = requirement(['abc', 'abc', 'abc'])
         self.assertIsNone(result)
+
+
+class TestSetRequirement(unittest.TestCase):
+    def setUp(self):
+        self.requirement = SetRequirement(set([1, 2, 3]))
+
+    def test_no_difference(self):
+        data = iter([1, 2, 3])
+        result = self.requirement(data)
+        self.assertIsNone(result)  # No difference, returns None.
+
+    def test_missing(self):
+        data = iter([1, 2])
+        result = self.requirement(data)
+        self.assertEqual(list(result), [Missing(3)])
+
+    def test_extra(self):
+        data = iter([1, 2, 3, 4])
+        result = self.requirement(data)
+        self.assertEqual(list(result), [Extra(4)])
+
+    def test_repeat_values(self):
+        """Repeat values should not result in duplicate differences."""
+        data = iter([1, 2, 3, 4, 4, 4])  # <- Multiple 4's.
+        result = self.requirement(data)
+        self.assertEqual(list(result), [Extra(4)])
+
+    def test_missing_and_extra(self):
+        data = iter([1, 3, 4])
+        result = self.requirement(data)
+
+        result = list(result)
+        self.assertEqual(len(result), 2)
+        self.assertIn(Missing(2), result)
+        self.assertIn(Extra(4), result)
+
+    def test_empty_iterable(self):
+        requirement = SetRequirement(set([1]))
+        result = requirement([])
+        self.assertEqual(list(result), [Missing(1)])

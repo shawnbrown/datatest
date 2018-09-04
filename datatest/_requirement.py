@@ -3,6 +3,8 @@ from ._compatibility.builtins import *
 from ._compatibility import abc
 from ._compatibility.collections.abc import Iterable
 from .difference import BaseDifference
+from .difference import Extra
+from .difference import Missing
 from ._utils import iterpeek
 from ._utils import nonstringiter
 
@@ -46,3 +48,30 @@ class Requirement(abc.ABC):
         if first_element:
             return normalized
         return None
+
+
+class SetRequirement(Requirement):
+    def __init__(self, requirement):
+        self.requirement = requirement
+
+    def filterfalse(self, iterable):
+        requirement = self.requirement  # Assign locally to avoid dot-lookup.
+
+        matching_elements = set()
+        extra_elements = set()
+        for element in iterable:
+            if element in requirement:
+                matching_elements.add(element)
+            else:
+                extra_elements.add(element)
+
+        for element in requirement:
+            if element not in matching_elements:
+                yield Missing(element)
+
+        for element in extra_elements:
+            yield Extra(element)
+
+    @property
+    def msg(self):
+        return 'does not satisfy set membership'
