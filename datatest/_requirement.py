@@ -5,6 +5,7 @@ from ._compatibility.collections.abc import Iterable
 from .difference import BaseDifference
 from .difference import Extra
 from .difference import Missing
+from .difference import Invalid
 from ._utils import iterpeek
 from ._utils import nonstringiter
 
@@ -48,6 +49,25 @@ class Requirement(abc.ABC):
         if first_element:
             return normalized
         return None
+
+
+class PredicateRequirement(Requirement):
+    def __init__(self, predicate):
+        self.predicate = predicate
+
+    def filterfalse(self, iterable):
+        predicate = self.predicate  # Assign locally to avoid dot-lookups.
+
+        for element in iterable:
+            result = predicate(element)
+            if not result:
+                yield Invalid(element)
+            elif isinstance(result, BaseDifference):
+                yield result
+
+    @property
+    def msg(self):
+        return 'does not satisfy {0}'.format(self.predicate)
 
 
 class SetRequirement(Requirement):

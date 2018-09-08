@@ -5,6 +5,7 @@ from datatest import Missing
 from datatest import Extra
 from datatest import Invalid
 from datatest._requirement import Requirement
+from datatest._requirement import PredicateRequirement
 from datatest._requirement import SetRequirement
 
 
@@ -101,3 +102,58 @@ class TestSetRequirement(unittest.TestCase):
         requirement = SetRequirement(set([1]))
         result = requirement([])
         self.assertEqual(list(result), [Missing(1)])
+
+
+class TestPredicateRequirement(unittest.TestCase):
+    def setUp(self):
+        isdigit = lambda x: x.isdigit()
+        self.requirement = PredicateRequirement(isdigit)
+
+    def test_all_true(self):
+        data = iter(['10', '20', '30'])
+        result = self.requirement(data)
+        self.assertIsNone(result)  # Predicat is true for all, returns None.
+
+    def test_some_false(self):
+        """When the predicate returns Faose, values should be returned as
+        Invalid() differences.
+        """
+        data = ['10', '20', 'XX']
+        result = self.requirement(data)
+        self.assertEqual(list(result), [Invalid('XX')])
+
+    def test_duplicate_false(self):
+        """Should return one difference for every false result (including
+        duplicates).
+        """
+        data = ['10', '20', 'XX', 'XX', 'XX']  # <- Multiple XX's.
+        result = self.requirement(data)
+        self.assertEqual(list(result), [Invalid('XX'), Invalid('XX'), Invalid('XX')])
+
+    def test_returned_difference(self):
+        """When a predicate returns a difference object, it should used in
+        place of the default Invalid difference.
+        """
+        def func(x):
+            if 1 <= x <= 3:
+                return True
+            if x == 4:
+                return Invalid('four shalt thou not count')
+            if x == 5:
+                return Invalid('five is right out')
+            return False
+
+        requirement = PredicateRequirement(func)
+
+        data = [1, 2, 3, 4, 5, 6]
+        result = requirement(data)
+        expected = [
+            Invalid('four shalt thou not count'),
+            Invalid('five is right out'),
+            Invalid(6),
+        ]
+        self.assertEqual(list(result), expected)
+
+    def test_empty_iterable(self):
+        result = self.requirement([])
+        self.assertIsNone(result)
