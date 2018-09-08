@@ -157,3 +157,10 @@ class TestPredicateRequirement(unittest.TestCase):
     def test_empty_iterable(self):
         result = self.requirement([])
         self.assertIsNone(result)
+
+    def test_predicate_error(self):
+        """Errors should not be counted as False or otherwise hidden."""
+        data = ['10', '20', 'XX', 40]  # <- Predicate assumes string, int has no isdigit().
+        result = self.requirement(data)
+        with self.assertRaisesRegex(AttributeError, "no attribute 'isdigit'"):
+            list(result)
