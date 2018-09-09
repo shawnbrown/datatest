@@ -64,46 +64,6 @@ class TestRequirement(unittest.TestCase):
         self.assertIsNone(result)
 
 
-class TestSetRequirement(unittest.TestCase):
-    def setUp(self):
-        self.requirement = SetRequirement(set([1, 2, 3]))
-
-    def test_no_difference(self):
-        data = iter([1, 2, 3])
-        result = self.requirement(data)
-        self.assertIsNone(result)  # No difference, returns None.
-
-    def test_missing(self):
-        data = iter([1, 2])
-        result = self.requirement(data)
-        self.assertEqual(list(result), [Missing(3)])
-
-    def test_extra(self):
-        data = iter([1, 2, 3, 4])
-        result = self.requirement(data)
-        self.assertEqual(list(result), [Extra(4)])
-
-    def test_repeat_values(self):
-        """Repeat values should not result in duplicate differences."""
-        data = iter([1, 2, 3, 4, 4, 4])  # <- Multiple 4's.
-        result = self.requirement(data)
-        self.assertEqual(list(result), [Extra(4)])
-
-    def test_missing_and_extra(self):
-        data = iter([1, 3, 4])
-        result = self.requirement(data)
-
-        result = list(result)
-        self.assertEqual(len(result), 2)
-        self.assertIn(Missing(2), result)
-        self.assertIn(Extra(4), result)
-
-    def test_empty_iterable(self):
-        requirement = SetRequirement(set([1]))
-        result = requirement([])
-        self.assertEqual(list(result), [Missing(1)])
-
-
 class TestPredicateRequirement(unittest.TestCase):
     def setUp(self):
         isdigit = lambda x: x.isdigit()
@@ -115,7 +75,7 @@ class TestPredicateRequirement(unittest.TestCase):
         self.assertIsNone(result)  # Predicat is true for all, returns None.
 
     def test_some_false(self):
-        """When the predicate returns Faose, values should be returned as
+        """When the predicate returns False, values should be returned as
         Invalid() differences.
         """
         data = ['10', '20', 'XX']
@@ -164,3 +124,43 @@ class TestPredicateRequirement(unittest.TestCase):
         result = self.requirement(data)
         with self.assertRaisesRegex(AttributeError, "no attribute 'isdigit'"):
             list(result)
+
+
+class TestSetRequirement(unittest.TestCase):
+    def setUp(self):
+        self.requirement = SetRequirement(set([1, 2, 3]))
+
+    def test_no_difference(self):
+        data = iter([1, 2, 3])
+        result = self.requirement(data)
+        self.assertIsNone(result)  # No difference, returns None.
+
+    def test_missing(self):
+        data = iter([1, 2])
+        result = self.requirement(data)
+        self.assertEqual(list(result), [Missing(3)])
+
+    def test_extra(self):
+        data = iter([1, 2, 3, 4])
+        result = self.requirement(data)
+        self.assertEqual(list(result), [Extra(4)])
+
+    def test_repeat_values(self):
+        """Repeat values should not result in duplicate differences."""
+        data = iter([1, 2, 3, 4, 4, 4])  # <- Multiple 4's.
+        result = self.requirement(data)
+        self.assertEqual(list(result), [Extra(4)])
+
+    def test_missing_and_extra(self):
+        data = iter([1, 3, 4])
+        result = self.requirement(data)
+
+        result = list(result)
+        self.assertEqual(len(result), 2)
+        self.assertIn(Missing(2), result)
+        self.assertIn(Extra(4), result)
+
+    def test_empty_iterable(self):
+        requirement = SetRequirement(set([1]))
+        result = requirement([])
+        self.assertEqual(list(result), [Missing(1)])
