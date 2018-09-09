@@ -75,7 +75,7 @@ class SetRequirement(Requirement):
         self.requirement = requirement
 
     def filterfalse(self, iterable):
-        requirement = self.requirement  # Assign locally to avoid dot-lookup.
+        requirement = self.requirement  # Assign locally to avoid dot-lookups.
 
         matching_elements = set()
         extra_elements = set()
@@ -83,8 +83,8 @@ class SetRequirement(Requirement):
             if element in requirement:
                 matching_elements.add(element)
             else:
-                extra_elements.add(element)
-
+                extra_elements.add(element)  # <- Build set of Extras so we
+                                             #    do not return duplicates.
         for element in requirement:
             if element not in matching_elements:
                 yield Missing(element)
