@@ -65,15 +65,15 @@ def exhaustible(iterable):
     # newly created iterators.
 
 
-def iterpeek(iterable):
+def iterpeek(iterable, default=None):
     if exhaustible(iterable):
         try:
-            first_item = next(iterable)
+            first_item = next(iterable)  # <- Do not use default value here!
             iterable = chain([first_item], iterable)
         except StopIteration:
-            first_item = None
+            first_item = default
     else:
-        first_item = next(iter(iterable), None)
+        first_item = next(iter(iterable), default)
     return first_item, iterable
 
 
