@@ -11,6 +11,8 @@ from ._compatibility.collections.abc import Sequence
 from ._compatibility.collections.abc import Set
 from ._predicate import PredicateObject
 from ._predicate import get_predicate
+from ._required import Required
+from ._required import RequiredSet
 from ._utils import nonstringiter
 from ._utils import exhaustible
 from ._utils import iterpeek
@@ -367,6 +369,25 @@ def _get_invalid_info(data, requirement):
     if not diffs:
         return None
     return (default_msg, diffs)
+
+
+def _check_single_value(value, requirement):
+    """Return a difference or list of differences if *value* fails to
+    satisfy *requirement*.
+    """
+    if isinstance(requirement, Set):
+        requirement = RequiredSet(requirement)
+
+    if isinstance(requirement, Required):
+        differences = requirement([value])
+        if differences:
+            return list(differences)
+    else:
+        matcher = get_predicate(requirement)
+        if not (value == matcher):
+            return _make_difference(value, requirement, show_expected=True)
+
+    return None
 
 
 class ValidationError(AssertionError):
