@@ -10,7 +10,8 @@ from ._utils import iterpeek
 from ._utils import nonstringiter
 
 
-class Requirement(abc.ABC):
+class Required(abc.ABC):
+    """Base class for Required objects."""
     @property
     @abc.abstractmethod
     def msg(self):
@@ -51,7 +52,7 @@ class Requirement(abc.ABC):
         return None
 
 
-class PredicateRequirement(Requirement):
+class RequiredPredicate(Required):
     def __init__(self, predicate):
         self.predicate = predicate
 
@@ -70,7 +71,7 @@ class PredicateRequirement(Requirement):
         return 'does not satisfy {0}'.format(self.predicate)
 
 
-class SetRequirement(Requirement):
+class RequiredSet(Required):
     def __init__(self, requirement):
         self.requirement = requirement
 

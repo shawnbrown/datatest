@@ -4,15 +4,15 @@ from . import _unittest as unittest
 from datatest import Missing
 from datatest import Extra
 from datatest import Invalid
-from datatest._requirement import Requirement
-from datatest._requirement import PredicateRequirement
-from datatest._requirement import SetRequirement
+from datatest._required import Required
+from datatest._required import RequiredPredicate
+from datatest._required import RequiredSet
 
 
 class TestRequirement(unittest.TestCase):
     def test_incomplete_subclass(self):
         """Instantiation should fail if abstract members are not defined."""
-        class IncompleteSubclass(Requirement):
+        class IncompleteSubclass(Required):
             pass
 
         regex = "Can't instantiate abstract class"
@@ -23,7 +23,7 @@ class TestRequirement(unittest.TestCase):
         """Should raise error if filterfalse() does not return an iterable
         of differences.
         """
-        class BadFilterfalse(Requirement):
+        class BadFilterfalse(Required):
             @property
             def msg(self):
                 return 'requirement message'
@@ -44,7 +44,7 @@ class TestRequirement(unittest.TestCase):
 
     def test_simple_subclass(self):
         """Test basic subclass behavior."""
-        class RequiredValue(Requirement):
+        class RequiredValue(Required):
             def __init__(self, value):
                 self.value = value
 
@@ -64,10 +64,10 @@ class TestRequirement(unittest.TestCase):
         self.assertIsNone(result)
 
 
-class TestPredicateRequirement(unittest.TestCase):
+class TestRequiredPredicate(unittest.TestCase):
     def setUp(self):
         isdigit = lambda x: x.isdigit()
-        self.requirement = PredicateRequirement(isdigit)
+        self.requirement = RequiredPredicate(isdigit)
 
     def test_all_true(self):
         data = iter(['10', '20', '30'])
@@ -103,7 +103,7 @@ class TestPredicateRequirement(unittest.TestCase):
                 return Invalid('five is right out')
             return False
 
-        requirement = PredicateRequirement(func)
+        requirement = RequiredPredicate(func)
 
         data = [1, 2, 3, 4, 5, 6]
         result = requirement(data)
@@ -126,34 +126,34 @@ class TestPredicateRequirement(unittest.TestCase):
             list(result)
 
 
-class TestSetRequirement(unittest.TestCase):
+class TestRequiredSet(unittest.TestCase):
     def setUp(self):
-        self.requirement = SetRequirement(set([1, 2, 3]))
+        self.required = RequiredSet(set([1, 2, 3]))
 
     def test_no_difference(self):
         data = iter([1, 2, 3])
-        result = self.requirement(data)
+        result = self.required(data)
         self.assertIsNone(result)  # No difference, returns None.
 
     def test_missing(self):
         data = iter([1, 2])
-        result = self.requirement(data)
+        result = self.required(data)
         self.assertEqual(list(result), [Missing(3)])
 
     def test_extra(self):
         data = iter([1, 2, 3, 4])
-        result = self.requirement(data)
+        result = self.required(data)
         self.assertEqual(list(result), [Extra(4)])
 
     def test_repeat_values(self):
         """Repeat values should not result in duplicate differences."""
         data = iter([1, 2, 3, 4, 4, 4])  # <- Multiple 4's.
-        result = self.requirement(data)
+        result = self.required(data)
         self.assertEqual(list(result), [Extra(4)])
 
     def test_missing_and_extra(self):
         data = iter([1, 3, 4])
-        result = self.requirement(data)
+        result = self.required(data)
 
         result = list(result)
         self.assertEqual(len(result), 2)
@@ -161,6 +161,6 @@ class TestSetRequirement(unittest.TestCase):
         self.assertIn(Extra(4), result)
 
     def test_empty_iterable(self):
-        requirement = SetRequirement(set([1]))
-        result = requirement([])
+        required = RequiredSet(set([1]))
+        result = required([])
         self.assertEqual(list(result), [Missing(1)])
