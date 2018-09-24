@@ -1059,9 +1059,9 @@ class TestCheckSingleValue(unittest.TestCase):
 
     def test_set_of_values(self):
         """Should return None or list of differences."""
-        self.assertIsNone(_check_single_value('abc', {'abc'}))
+        self.assertIsNone(_check_single_value('abc', set(['abc'])))
         self.assertEqual(
-            _check_single_value('abc', {'abc', 'def'}),
+            _check_single_value('abc', set(['abc', 'def'])),
             [Missing('def')],
         )
 
