@@ -9,8 +9,8 @@ from ._compatibility.collections.abc import Iterable
 from ._compatibility.collections.abc import Mapping
 from ._compatibility.collections.abc import Sequence
 from ._compatibility.collections.abc import Set
-from ._predicate import PredicateObject
-from ._predicate import get_predicate
+from ._predicate import MatcherBase
+from ._predicate import get_matcher
 from ._required import Required
 from ._required import RequiredSet
 from ._utils import nonstringiter
@@ -155,13 +155,13 @@ def _require_set(data, requirement_set):
 
 
 def _require_predicate(value, other, show_expected=False):
-    # Predicate comparisons use "==" to trigger __eq__(), not "!=".
-    if isinstance(other, PredicateObject):
+    # Matcher comparisons use "==" to trigger __eq__(), not "!=".
+    if isinstance(other, MatcherBase):
         matches = other == value
     elif callable(other) and not isinstance(other, type):
         matches = other(value)
     else:
-        matches = get_predicate(other) == value
+        matches = get_matcher(other) == value
 
     if not matches:
         return _make_difference(value, other, show_expected)
@@ -184,7 +184,7 @@ def _require_predicate_from_iterable(data, other):
     if callable(other) and not isinstance(other, type):
         predicate = other
     else:
-        predicate = get_predicate(other)
+        predicate = get_matcher(other)
 
     diffs = (_require_predicate(value, predicate) for value in data)
     diffs = (x for x in diffs if x)
@@ -225,7 +225,7 @@ def _get_msg_and_func(data, requirement):
         else:
             func_name = getattr(requirement, '__name__', repr(requirement))
             equality_msg = 'does not satisfy {0!r}'.format(func_name)
-    elif isinstance(requirement, (PredicateObject, BaseElement)):
+    elif isinstance(requirement, (MatcherBase, BaseElement)):
         equality_msg = 'does not satisfy {0!r}'.format(requirement)
     else:
         equality_msg = 'does not satisfy requirement'
@@ -383,7 +383,7 @@ def _check_single_value(value, requirement):
         if differences:
             return list(differences)
     else:
-        matcher = get_predicate(requirement)
+        matcher = get_matcher(requirement)
         if not (value == matcher):
             return _make_difference(value, requirement, show_expected=True)
 

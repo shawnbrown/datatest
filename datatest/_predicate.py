@@ -6,25 +6,14 @@ from ._utils import regex_types
 from .difference import BaseDifference
 
 
-class PredicateObject(abc.ABC):
+class MatcherBase(abc.ABC):
     """Base class for objects that implement rich predicate matching."""
     @abc.abstractmethod
     def __repr__(self):
-        return super(PredicateObject, self).__repr__()
-
-    @abc.abstractmethod
-    def __eq__(self, other):
-        return super(PredicateObject, self).__eq__(other)
+        return super(MatcherBase, self).__repr__()
 
 
-class PredicateTuple(PredicateObject, tuple):
-    """Wrapper to mark tuples that contain one or more PredicateMatcher
-    instances.
-    """
-    pass
-
-
-class PredicateMatcher(PredicateObject):
+class MatcherObject(MatcherBase):
     """Wrapper to call *function* when evaluating the '==' operator."""
     def __init__(self, function, repr_string):
         self._func = function
@@ -40,69 +29,151 @@ class PredicateMatcher(PredicateObject):
         return self._repr
 
 
-def _get_matcher(value):
-    """Return an object suitable for comparing to other values
+class MatcherTuple(MatcherBase, tuple):
+    """Wrapper to mark tuples that contain one or more MatcherObject
+    instances.
+    """
+    pass
+
+
+def _check_type(type_, value):
+    """Return true if *value* is an instance of the specified type
+    or if *value* is the specified type.
+    """
+    return value is type_ or isinstance(value, type_)
+
+
+def _check_callable(func, value):
+    """Return true if func(value) returns is true or if *func* is
+    *value*. If *func* returns a difference, the result will count
+    as False.
+    """
+    if value is func:
+        return True  # <- EXIT!
+    result = func(value)
+    return result and not isinstance(result, BaseDifference)
+
+
+def _check_wildcard(value):
+    """Always returns true."""
+    return True
+
+
+def _check_truthy(value):
+    """Return true if *value* is truthy."""
+    return bool(value)
+
+
+def _check_falsy(value):
+    """Return true if *value* is falsy."""
+    return not bool(value)
+
+
+def _check_regex(regex, value):
+    """Return true if *value* matches regex."""
+    try:
+        return regex.search(value) is not None
+    except TypeError:
+        if value is regex:
+            return True  # <- EXIT!
+
+        value_repr = repr(value)
+        if len(value_repr) > 45:
+            value_repr = value_repr[:42] + '...'
+        msg = 'expected string or bytes-like object, got {0}: {1}'
+        exc = TypeError(msg.format(value.__class__.__name__, value_repr))
+        exc.__cause__ = None
+        raise exc
+
+
+def _check_set(set_, value):
+    """Return true if *value* is a member of the given set or if
+    the *value* is equal to the given set."""
+    return value in set_ or value == set_
+
+
+def _get_matcher_parts(obj):
+    """Return a 2-tuple containing a handler function (to check for
+    matches) and a string (to use for displaying a user-readable
+    value). Return None if *obj* can be matched with the "==" operator
+    and requires no other special handling.
+    """
+    if isinstance(obj, type):
+        pred_handler = lambda x: _check_type(obj, x)
+        repr_string = getattr(obj, '__name__', repr(obj))
+    elif callable(obj):
+        pred_handler = lambda x: _check_callable(obj, x)
+        repr_string = getattr(obj, '__name__', repr(obj))
+    elif obj is Ellipsis:
+        pred_handler = _check_wildcard  # <- Matches everything.
+        repr_string = '...'
+    elif obj is True:
+        pred_handler = _check_truthy
+        repr_string = 'True'
+    elif obj is False:
+        pred_handler = _check_falsy
+        repr_string = 'False'
+    elif isinstance(obj, regex_types):
+        pred_handler = lambda x: _check_regex(obj, x)
+        repr_string = 're.compile({0!r})'.format(obj.pattern)
+    elif isinstance(obj, set):
+        pred_handler = lambda x: _check_set(obj, x)
+        repr_string = repr(obj)
+    else:
+        return None
+
+    return pred_handler, repr_string
+
+
+def _get_matcher_or_original(obj):
+    parts = _get_matcher_parts(obj)
+    if parts:
+        return MatcherObject(*parts)
+    return obj
+
+
+def get_matcher(obj):
+    """Return an object suitable for comparing against other objects
     using the "==" operator.
 
-    When special comparison handling is required, returns a
-    PredicateMatcher instance. When no special comparison is
-    needed, returns the original object unchanged.
-    """
-    if isinstance(value, type):
-        function = lambda x: (x is value) or isinstance(x, value)
-        repr_string = getattr(value, '__name__', repr(value))
-    elif callable(value):
-        def function(x):
-            if x is value:
-                return True
-            result = value(x)
-            if isinstance(result, BaseDifference):
-                return False
-            return result
-        repr_string = getattr(value, '__name__', repr(value))
-    elif value is Ellipsis:
-        function = lambda x: True  # <- Wildcard (matches everything).
-        repr_string = '...'
-    elif value is True:
-        function = lambda x: bool(x)  # <- Truthy.
-        repr_string = 'True'
-    elif value is False:
-        function = lambda x: not bool(x)  # <- Falsy.
-        repr_string = 'False'
-    elif isinstance(value, regex_types):
-        def function(x):
-            try:
-                return x is value or value.search(x) is not None
-            except TypeError:
-                x_repr = repr(x)
-                if len(x_repr) > 45:
-                    x_repr = x_repr[:42] + '...'
-                msg = 'expected string or bytes-like object, got {0}: {1}'
-                exc = TypeError(msg.format(x.__class__.__name__, x_repr))
-                exc.__cause__ = None
-                raise exc
-        repr_string = 're.compile({0!r})'.format(value.pattern)
-    elif isinstance(value, set):
-        function = lambda x: (x in value) or (x == value)
-        repr_string = repr(value)
-    else:
-        return value  # <- Original reference.
-    return PredicateMatcher(function, repr_string)
-
-
-def get_predicate(obj):
-    """Return a predicate object suitable for comparing to other
-    objects using the "==" operator.
-
-    If the original object is already suitable for this purpose,
-    it will be returned unchanged. If special comparison handling
-    is implemented, a PredicateObject will be returned instead.
+    If special comparison handling is implemented, a MatcherObject or
+    MatcherTuple will be returned. If the object is already suitable
+    for this purpose, the original object will be returned unchanged.
     """
     if isinstance(obj, tuple):
-        predicate = tuple(_get_matcher(x) for x in obj)
-        for x in predicate:
-            if isinstance(x, PredicateObject):
-                return PredicateTuple(predicate)  # <- Wrapper.
+        matcher = tuple(_get_matcher_or_original(x) for x in obj)
+        for x in matcher:
+            if isinstance(x, MatcherBase):
+                return MatcherTuple(matcher)  # <- Wrapper.
         return obj  # <- Orignal reference.
 
-    return _get_matcher(obj)
+    return _get_matcher_or_original(obj)
+
+
+class Predicate(object):
+    """Returns a callable object that can be used as a functional
+    predicate.
+    """
+    def __init__(self, obj):
+        matcher = get_matcher(obj)
+        self._pred_handler = matcher.__eq__
+        self._repr_string = repr(matcher)
+        self._inverted = False
+
+    def __call__(self, other):
+        result = self._pred_handler(other)
+        if self._inverted:
+            return not result
+        return result
+
+    def __invert__(self):
+        new_pred = self.__class__.__new__(self.__class__)
+        new_pred._pred_handler = self._pred_handler
+        new_pred._repr_string = self._repr_string
+        new_pred._inverted = not self._inverted
+        return new_pred
+
+    def __repr__(self):
+        cls_name = self.__class__.__name__
+        inverted = '~' if self._inverted else ''
+        return '{0}{1}({2})'.format(inverted, cls_name, self._repr_string)

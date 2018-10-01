@@ -12,8 +12,8 @@ from ._compatibility import functools
 from ._compatibility import itertools
 
 from ._utils import exhaustible
-from ._predicate import PredicateObject
-from ._predicate import get_predicate
+from ._predicate import MatcherBase
+from ._predicate import get_matcher
 from ._utils import _get_arg_lengths
 from ._utils import _expects_multiple_params
 from ._utils import _make_decimal
@@ -302,10 +302,10 @@ class allowed_keys(BaseAllowance):
     def __init__(self, predicate, msg=None):
         super(allowed_keys, self).__init__(msg)
 
-        predicate = get_predicate(predicate)
+        matcher = get_matcher(predicate)
         def function(x):
-            return predicate == x
-        function.__name__ = repr(predicate)
+            return matcher == x
+        function.__name__ = repr(matcher)
 
         self.function = function
 
@@ -327,10 +327,10 @@ class allowed_args(BaseAllowance):
     def __init__(self, predicate, msg=None):
         super(allowed_args, self).__init__(msg)
 
-        predicate = get_predicate(predicate)
+        matcher = get_matcher(predicate)
         def function(x):
-            return predicate == x
-        function.__name__ = repr(predicate)
+            return matcher == x
+        function.__name__ = repr(matcher)
 
         self.function = function
 
@@ -506,9 +506,9 @@ class allowed_specific(BaseAllowance):
         elif isinstance(diffs, dict):
             allowed = dict()
             for key, value in diffs.items():
-                predicate = get_predicate(key)
-                if isinstance(predicate, PredicateObject):
-                    self._predicate_keys[key]= predicate
+                matcher = get_matcher(key)
+                if isinstance(matcher, MatcherBase):
+                    self._predicate_keys[key]= matcher
 
                 if isinstance(value, (list, set)):
                     allowed[key] = list(value)  # Make a copy.

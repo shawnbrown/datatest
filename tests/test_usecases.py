@@ -62,3 +62,22 @@ class TestSelectorIdioms(unittest.TestCase):
         """
         compare = datatest.ProxyGroup([self.selector_a, self.selector_b])
         datatest.validate(*compare({'A': 'B'}))
+
+
+class TestSpecialPredicateHandling(unittest.TestCase):
+    def test_returned_difference(self):
+        """When the Predicate class wraps a callable object
+        the resut should be considered false if the callable
+        returns a difference object.
+
+        NOTE: This test is located in this file to make sure that the
+        behavior is not reverted--if we ever re-vendor the predicate
+        sub-module with a newer version, we need to make sure that
+        this use case is not forgotten about.
+        """
+        def true_or_difference(x):
+            return x == 'foo' or datatest.Missing(x)
+
+        predicate = datatest._predicate.Predicate(true_or_difference)
+        self.assertTrue(predicate('foo'))
+        self.assertFalse(predicate('bar'))

@@ -42,9 +42,9 @@ from .._load.temptable import load_data
 from .._load.temptable import new_table_name
 from .._load.temptable import savepoint
 from .._load.temptable import table_exists
-from .._predicate import PredicateMatcher
-from .._predicate import PredicateTuple
-from .._predicate import get_predicate
+from .._predicate import MatcherObject
+from .._predicate import MatcherTuple
+from .._predicate import get_matcher
 
 try:
     FileNotFoundError  # New in Python 3.3.
@@ -324,7 +324,7 @@ def _filter_data(predicate, iterable):
     if callable(predicate) and not isinstance(predicate, type):
         function = predicate
     else:
-        predicate = get_predicate(predicate)
+        predicate = get_matcher(predicate)
         if hasattr(predicate, '_func'):
             function = predicate._func
         else:
@@ -1260,11 +1260,11 @@ class Selector(object):
                 func_name = self._get_user_function(val)
                 clause.append('{0}({1})'.format(func_name, key))
             else:
-                pred = get_predicate(val)
-                if isinstance(pred, PredicateMatcher):
+                pred = get_matcher(val)
+                if isinstance(pred, MatcherObject):
                     func_name = self._get_user_function(pred._func, keyref=val)
                     clause.append('{0}({1})'.format(func_name, key))
-                elif isinstance(pred, PredicateTuple):
+                elif isinstance(pred, MatcherTuple):
                     def func(x):
                         return pred == x
                     func_name = self._get_user_function(func, keyref=val)
