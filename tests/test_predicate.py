@@ -288,6 +288,25 @@ class TestPredicate(unittest.TestCase):
         from_inverted = Predicate(~Predicate('abc'))
         self.assertTrue(from_inverted._inverted)
 
+    def test_passthrough(self):
+        """Callable predicates should return the values provided by
+        the given function as-is--the values should not be converted
+        to True or False.
+        """
+        TOKEN = object()
+
+        def divisible_or_token(x):  # <- Helper function.
+            if x % 3 == 0:
+                return True
+            if x % 5 == 0:
+                return TOKEN
+            return False
+
+        predicate = Predicate(divisible_or_token)
+        self.assertEqual(predicate(1), False)
+        self.assertEqual(predicate(3), True)
+        self.assertIs(predicate(5), TOKEN, msg='TOKEN should be returned, not True.')
+
 
 if __name__ == '__main__':
     unittest.main()

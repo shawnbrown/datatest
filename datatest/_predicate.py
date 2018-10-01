@@ -45,13 +45,9 @@ def _check_type(type_, value):
 
 def _check_callable(func, value):
     """Return true if func(value) returns is true or if *func* is
-    *value*. If *func* returns a difference, the result will count
-    as False.
+    *value*.
     """
-    if value is func:
-        return True  # <- EXIT!
-    result = func(value)
-    return result and not isinstance(result, BaseDifference)
+    return value is func or func(value)
 
 
 def _check_wildcard(value):
