@@ -176,3 +176,7 @@ class Predicate(object):
         cls_name = self.__class__.__name__
         inverted = '~' if self._inverted else ''
         return '{0}{1}({2})'.format(inverted, cls_name, self._repr_string)
+
+    def __str__(self):
+        inverted = 'not ' if self._inverted else ''
+        return '{0}{1}'.format(inverted, self._repr_string)
