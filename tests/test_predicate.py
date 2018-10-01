@@ -277,6 +277,17 @@ class TestPredicate(unittest.TestCase):
         pred = ~Predicate('abc')
         self.assertEqual(repr(pred), "~Predicate('abc')")
 
+    def test_predicate_from_predicate(self):
+        pred1 = Predicate('abc')
+        pred2 = Predicate(pred1)
+        self.assertIsNot(pred1, pred2, msg='should be different object')
+        self.assertEqual(pred1._pred_handler, pred2._pred_handler)
+        self.assertEqual(pred1._repr_string, pred2._repr_string)
+        self.assertEqual(pred1._inverted, pred2._inverted)
+
+        from_inverted = Predicate(~Predicate('abc'))
+        self.assertTrue(from_inverted._inverted)
+
 
 if __name__ == '__main__':
     unittest.main()

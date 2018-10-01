@@ -155,10 +155,15 @@ class Predicate(object):
     predicate.
     """
     def __init__(self, obj):
-        matcher = get_matcher(obj)
-        self._pred_handler = matcher.__eq__
-        self._repr_string = repr(matcher)
-        self._inverted = False
+        if isinstance(obj, Predicate):
+            self._pred_handler = obj._pred_handler
+            self._repr_string = obj._repr_string
+            self._inverted = obj._inverted
+        else:
+            matcher = get_matcher(obj)
+            self._pred_handler = matcher.__eq__
+            self._repr_string = repr(matcher)
+            self._inverted = False
 
     def __call__(self, other):
         result = self._pred_handler(other)
@@ -167,9 +172,7 @@ class Predicate(object):
         return result
 
     def __invert__(self):
-        new_pred = self.__class__.__new__(self.__class__)
-        new_pred._pred_handler = self._pred_handler
-        new_pred._repr_string = self._repr_string
+        new_pred = self.__class__(self)
         new_pred._inverted = not self._inverted
         return new_pred
 
