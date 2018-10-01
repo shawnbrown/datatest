@@ -90,6 +90,17 @@ class TestRequiredPredicate(unittest.TestCase):
         result = self.requirement(data)
         self.assertEqual(list(result), [Invalid('XX'), Invalid('XX'), Invalid('XX')])
 
+    def test_empty_iterable(self):
+        result = self.requirement([])
+        self.assertIsNone(result)
+
+    def test_predicate_error(self):
+        """Errors should not be counted as False or otherwise hidden."""
+        data = ['10', '20', 'XX', 40]  # <- Predicate assumes string, int has no isdigit().
+        result = self.requirement(data)
+        with self.assertRaisesRegex(AttributeError, "no attribute 'isdigit'"):
+            list(result)
+
     def test_returned_difference(self):
         """When a predicate returns a difference object, it should used in
         place of the default Invalid difference.
@@ -113,17 +124,6 @@ class TestRequiredPredicate(unittest.TestCase):
             Invalid(6),
         ]
         self.assertEqual(list(result), expected)
-
-    def test_empty_iterable(self):
-        result = self.requirement([])
-        self.assertIsNone(result)
-
-    def test_predicate_error(self):
-        """Errors should not be counted as False or otherwise hidden."""
-        data = ['10', '20', 'XX', 40]  # <- Predicate assumes string, int has no isdigit().
-        result = self.requirement(data)
-        with self.assertRaisesRegex(AttributeError, "no attribute 'isdigit'"):
-            list(result)
 
 
 class TestRequiredSet(unittest.TestCase):
