@@ -4,6 +4,7 @@ from . import _unittest as unittest
 from datatest import Missing
 from datatest import Extra
 from datatest import Invalid
+from datatest._predicate import Predicate
 from datatest._required import Required
 from datatest._required import RequiredPredicate
 from datatest._required import RequiredSet
@@ -100,6 +101,18 @@ class TestRequiredPredicate(unittest.TestCase):
         result = self.requirement(data)
         with self.assertRaisesRegex(AttributeError, "no attribute 'isdigit'"):
             list(result)
+
+    def test_predicate_class(self):
+        """The "predicate" property should be a proper Predicate class,
+        not simply a function.
+        """
+        isdigit = lambda x: x.isdigit()
+
+        requirement = RequiredPredicate(isdigit)
+        self.assertIsInstance(requirement.predicate, Predicate)
+
+        requirement = RequiredPredicate(Predicate(isdigit))
+        self.assertIsInstance(requirement.predicate, Predicate)
 
     def test_returned_difference(self):
         """When a predicate returns a difference object, it should used in

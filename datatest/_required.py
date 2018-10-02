@@ -6,6 +6,7 @@ from .difference import BaseDifference
 from .difference import Extra
 from .difference import Missing
 from .difference import Invalid
+from ._predicate import Predicate
 from ._utils import iterpeek
 from ._utils import nonstringiter
 
@@ -54,6 +55,8 @@ class Required(abc.ABC):
 
 class RequiredPredicate(Required):
     def __init__(self, predicate):
+        if not isinstance(predicate, Predicate):
+            predicate = Predicate(predicate)
         self.predicate = predicate
 
     def filterfalse(self, iterable):
@@ -68,7 +71,7 @@ class RequiredPredicate(Required):
 
     @property
     def msg(self):
-        return 'does not satisfy {0}'.format(self.predicate)
+        return 'does not satisfy: {0}'.format(self.predicate)
 
 
 class RequiredSet(Required):
