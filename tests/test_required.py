@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from . import _unittest as unittest
 from datatest import Missing
 from datatest import Extra
+from datatest import Deviation
 from datatest import Invalid
 from datatest._predicate import Predicate
 from datatest._required import Required
@@ -83,6 +84,12 @@ class TestRequiredPredicate(unittest.TestCase):
         result = self.requirement(data)
         self.assertEqual(list(result), [Invalid('XX')])
 
+    def test_show_expected(self):
+        data = ['XX', 'YY']
+        requirement = RequiredPredicate('YY')
+        result = requirement(data, show_expected=True)
+        self.assertEqual(list(result), [Invalid('XX', expected='YY')])
+
     def test_duplicate_false(self):
         """Should return one difference for every false result (including
         duplicates).
@@ -94,6 +101,16 @@ class TestRequiredPredicate(unittest.TestCase):
     def test_empty_iterable(self):
         result = self.requirement([])
         self.assertIsNone(result)
+
+    def test_some_false_deviations(self):
+        """When the predicate returns False, values should be returned as
+        Invalid() differences.
+        """
+        data = [10, 10, 12]
+        requirement = RequiredPredicate(10)
+
+        result = requirement(data)
+        self.assertEqual(list(result), [Deviation(+2, 10)])
 
     def test_predicate_error(self):
         """Errors should not be counted as False or otherwise hidden."""

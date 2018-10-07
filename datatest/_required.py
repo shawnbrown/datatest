@@ -5,7 +5,7 @@ from ._compatibility.collections.abc import Iterable
 from .difference import BaseDifference
 from .difference import Extra
 from .difference import Missing
-from .difference import Invalid
+from .difference import _make_difference
 from ._predicate import Predicate
 from ._utils import iterpeek
 from ._utils import nonstringiter
@@ -59,15 +59,26 @@ class RequiredPredicate(Required):
             predicate = Predicate(predicate)
         self.predicate = predicate
 
-    def filterfalse(self, iterable):
-        predicate = self.predicate  # Assign locally to avoid dot-lookups.
+    def filterfalse(self, iterable, show_expected):
+        predicate = self.predicate  # Assign directly in local scope
+        obj = predicate.obj         # to avoid dot-lookups.
 
         for element in iterable:
             result = predicate(element)
             if not result:
-                yield Invalid(element)
+                yield _make_difference(element, obj, show_expected)
+
             elif isinstance(result, BaseDifference):
                 yield result
+
+    def __call__(self, iterable, show_expected=False):
+        # Get differences using *show_expected* argument.
+        filtered = self.filterfalse(iterable, show_expected)
+        normalized = self._verify_filterfalse(filtered)
+        first_element, normalized = iterpeek(normalized)
+        if first_element:
+            return normalized
+        return None
 
     @property
     def msg(self):
