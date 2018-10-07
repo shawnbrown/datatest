@@ -152,10 +152,12 @@ class Predicate(object):
     """
     def __init__(self, obj):
         if isinstance(obj, Predicate):
+            self.obj = obj.obj
             self._pred_handler = obj._pred_handler
             self._repr_string = obj._repr_string
             self._inverted = obj._inverted
         else:
+            self.obj = obj
             matcher = get_matcher(obj)
             self._pred_handler = matcher.__eq__
             self._repr_string = repr(matcher)
