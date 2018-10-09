@@ -11,6 +11,7 @@ from datatest.difference import Invalid
 from datatest.difference import Deviation
 from datatest.difference import NOTFOUND
 
+from datatest.validation import _apply_requirement
 from datatest.validation import _require_sequence
 from datatest.validation import _require_set
 from datatest.validation import _require_predicate
@@ -1082,3 +1083,45 @@ class TestCheckSingleValue(unittest.TestCase):
             _check_single_value('a', required_foo),
             [Invalid('Value is not foo!')],
         )
+
+
+class TestApplyRequirement(unittest.TestCase):
+    def test_set_against_container(self):
+        result = _apply_requirement(data=['foo', 'foo'], requirement=set(['foo']))
+        self.assertIsNone(result)
+
+        result = _apply_requirement(data=['foo', 'bar'], requirement=set(['foo']))
+        self.assertEqual(list(result), [Extra('bar')])
+
+    def test_set_against_single_item(self):
+        result = _apply_requirement(data='foo', requirement=set(['foo']))
+        self.assertIsNone(result)
+
+        result = _apply_requirement(data='bar', requirement=set(['foo', 'bar']))
+        self.assertEqual(result, Missing('foo'), msg='no container')
+
+        result = _apply_requirement(data='bar', requirement=set(['foo']))
+        result = list(result)
+        self.assertEqual(len(result), 2, msg='expects container if multiple diffs')
+        self.assertIn(Missing('foo'), result)
+        self.assertIn(Extra('bar'), result)
+
+    def test_predicate_against_container(self):
+        result = _apply_requirement(data=['foo', 'foo'], requirement='foo')
+        self.assertIsNone(result)
+
+        result = _apply_requirement(data=['foo', 'bar'], requirement='foo')
+        self.assertEqual(list(result), [Invalid('bar')], msg='should be iterable of diffs')
+
+        result = _apply_requirement(data=[10, 12], requirement=10)
+        self.assertEqual(list(result), [Deviation(+2, 10)], msg='should be iterable of diffs')
+
+    def test_predicate_against_single_item(self):
+        result = _apply_requirement(data='foo', requirement='foo')
+        self.assertIsNone(result)
+
+        result = _apply_requirement(data='bar', requirement='foo')
+        self.assertEqual(result, Invalid('bar', expected='foo'), msg='should have no container and include "expected"')
+
+        result = _apply_requirement(data=12, requirement=10)
+        self.assertEqual(result, Deviation(+2, 10), msg='should have no container')

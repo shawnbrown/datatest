@@ -9,10 +9,12 @@ from ._compatibility.collections.abc import Iterable
 from ._compatibility.collections.abc import Mapping
 from ._compatibility.collections.abc import Sequence
 from ._compatibility.collections.abc import Set
+from ._compatibility.functools import partial
 from ._predicate import MatcherBase
 from ._predicate import get_matcher
 from ._required import Required
 from ._required import RequiredSet
+from ._required import RequiredPredicate
 from ._utils import nonstringiter
 from ._utils import exhaustible
 from ._utils import iterpeek
@@ -578,3 +580,30 @@ def valid(data, requirement):
     if _get_invalid_info(data, requirement):
         return False
     return True
+
+
+def _apply_requirement(data, requirement):
+    """Compare *data* against *requirement* and return any differences."""
+    if not nonstringiter(data):
+        single_item = True
+        data = [data]
+    else:
+        single_item = False
+
+    if isinstance(requirement, Set):
+        validate_group = RequiredSet(requirement)
+    else:
+        validate_group = RequiredPredicate(requirement)
+        if single_item:
+            validate_group = partial(validate_group, show_expected=True)
+
+    differences = validate_group(data)
+
+    if differences:
+        if single_item:                      # If *data* is a single-item and
+            differences = list(differences)  # differences is a single-item,
+            if len(differences) == 1:        # return the single difference
+                return differences[0]        # alone, without a container.
+        return differences
+
+    return None
