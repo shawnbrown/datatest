@@ -159,7 +159,12 @@ class Predicate(object):
         else:
             self.obj = obj
             matcher = get_matcher(obj)
-            self._pred_handler = matcher.__eq__
+            try:
+                self._pred_handler = matcher.__eq__
+            except AttributeError:
+                self._pred_handler = lambda other: matcher == other
+                # Above: In Python 2, some built-in objects
+                # do not have an explicit __eq__() method.
             self._repr_string = repr(matcher)
             self._inverted = False
 

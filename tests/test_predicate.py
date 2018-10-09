@@ -261,6 +261,10 @@ class TestPredicate(unittest.TestCase):
         self.assertTrue(pred('abc'))
         self.assertFalse(pred('def'))
 
+        pred = Predicate(1)
+        self.assertTrue(pred(1))
+        self.assertFalse(pred(2))
+
         pred = Predicate(('abc', int))
         self.assertTrue(pred(('abc', 1)))
         self.assertFalse(pred(('abc', 1.0)))
