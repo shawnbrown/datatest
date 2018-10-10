@@ -1125,3 +1125,6 @@ class TestApplyRequirement(unittest.TestCase):
 
         result = _apply_requirement(data=12, requirement=10)
         self.assertEqual(result, Deviation(+2, 10), msg='should have no container')
+
+        result = _apply_requirement(data=(1, 'x'), requirement=(1, 'j'))
+        self.assertEqual(result, Invalid((1, 'x'), (1, 'j')))

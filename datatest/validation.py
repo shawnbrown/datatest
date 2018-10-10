@@ -584,7 +584,7 @@ def valid(data, requirement):
 
 def _apply_requirement(data, requirement):
     """Compare *data* against *requirement* and return any differences."""
-    if not nonstringiter(data):
+    if isinstance(data, BaseElement):
         single_item = True
         data = [data]
     else:
