@@ -11,7 +11,11 @@ from datatest.difference import Invalid
 from datatest.difference import Deviation
 from datatest.difference import NOTFOUND
 
-from datatest.validation import _apply_requirement
+from datatest._required import Required
+from datatest._required import RequiredSet
+from datatest._required import RequiredPredicate
+from datatest.validation import _get_required
+from datatest.validation import _apply_required
 from datatest.validation import _apply_mapping_requirement2
 from datatest.validation import _require_sequence
 from datatest.validation import _require_set
@@ -26,7 +30,6 @@ from datatest.validation import ValidationError
 from datatest.validation import valid
 from datatest.validation import validate
 from datatest.validation import _check_single_value
-from datatest._required import Required
 
 from datatest._query.query import DictItems
 from datatest._query.query import Result
@@ -1086,48 +1089,75 @@ class TestCheckSingleValue(unittest.TestCase):
         )
 
 
-class TestApplyRequirement(unittest.TestCase):
+class TestGetRequired(unittest.TestCase):
+    def test_set(self):
+        required = _get_required(set(['foo']))
+        self.assertIsInstance(required, RequiredSet)
+
+    def test_predicate(self):
+        required = _get_required('foo')
+        self.assertIsInstance(required, RequiredPredicate)
+
+    def test_required(self):
+        original = RequiredPredicate('foo')
+        required = _get_required(original)
+        self.assertIs(required, original)
+
+
+class TestApplyRequired(unittest.TestCase):
     def test_set_against_container(self):
-        result = _apply_requirement(data=['foo', 'foo'], requirement=set(['foo']))
+        required = RequiredSet(set(['foo']))
+
+        result = _apply_required(['foo', 'foo'], required)
         self.assertIsNone(result)
 
-        result = _apply_requirement(data=['foo', 'bar'], requirement=set(['foo']))
+        result = _apply_required(['foo', 'bar'], required)
         self.assertEqual(list(result), [Extra('bar')])
 
     def test_set_against_single_item(self):
-        result = _apply_requirement(data='foo', requirement=set(['foo']))
+        required = RequiredSet(set(['foo']))
+        result = _apply_required('foo', required)
         self.assertIsNone(result)
 
-        result = _apply_requirement(data='bar', requirement=set(['foo', 'bar']))
+        required = RequiredSet(set(['foo', 'bar']))
+        result = _apply_required('bar', required)
         self.assertEqual(result, Missing('foo'), msg='no container')
 
-        result = _apply_requirement(data='bar', requirement=set(['foo']))
+        required = RequiredSet(set(['foo']))
+        result = _apply_required('bar', required)
         result = list(result)
         self.assertEqual(len(result), 2, msg='expects container if multiple diffs')
         self.assertIn(Missing('foo'), result)
         self.assertIn(Extra('bar'), result)
 
     def test_predicate_against_container(self):
-        result = _apply_requirement(data=['foo', 'foo'], requirement='foo')
+        required = RequiredPredicate('foo')
+        result = _apply_required(['foo', 'foo'], required)
         self.assertIsNone(result)
 
-        result = _apply_requirement(data=['foo', 'bar'], requirement='foo')
+        required = RequiredPredicate('foo')
+        result = _apply_required(['foo', 'bar'], required)
         self.assertEqual(list(result), [Invalid('bar')], msg='should be iterable of diffs')
 
-        result = _apply_requirement(data=[10, 12], requirement=10)
+        required = RequiredPredicate(10)
+        result = _apply_required([10, 12], required)
         self.assertEqual(list(result), [Deviation(+2, 10)], msg='should be iterable of diffs')
 
     def test_predicate_against_single_item(self):
-        result = _apply_requirement(data='foo', requirement='foo')
+        required = RequiredPredicate('foo')
+        result = _apply_required('foo', required)
         self.assertIsNone(result)
 
-        result = _apply_requirement(data='bar', requirement='foo')
+        required = RequiredPredicate('foo')
+        result = _apply_required('bar', required)
         self.assertEqual(result, Invalid('bar', expected='foo'), msg='should have no container and include "expected"')
 
-        result = _apply_requirement(data=12, requirement=10)
+        required = RequiredPredicate(10)
+        result = _apply_required(12, required)
         self.assertEqual(result, Deviation(+2, 10), msg='should have no container')
 
-        result = _apply_requirement(data=(1, 'x'), requirement=(1, 'j'))
+        required = RequiredPredicate((1, 'j'))
+        result = _apply_required((1, 'x'), required)
         self.assertEqual(result, Invalid((1, 'x'), (1, 'j')))
 
 

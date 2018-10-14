@@ -9,7 +9,6 @@ from ._compatibility.collections.abc import Iterable
 from ._compatibility.collections.abc import Mapping
 from ._compatibility.collections.abc import Sequence
 from ._compatibility.collections.abc import Set
-from ._compatibility.functools import partial
 from ._predicate import MatcherBase
 from ._predicate import get_matcher
 from ._required import Required
@@ -582,22 +581,31 @@ def valid(data, requirement):
     return True
 
 
-def _apply_requirement(data, requirement):
-    """Compare *data* against *requirement* and return any differences."""
+def _get_required(requirement):
+    """Convert *requirement* into Required object."""
+    if isinstance(requirement, Required):
+        return requirement
+
+    if isinstance(requirement, Set):
+        return RequiredSet(requirement)
+
+    return RequiredPredicate(requirement)
+
+
+def _apply_required(data, required):
+    """Apply *required* object to *data* and return any differences.
+    The *required* argument should be a Required class instance.
+    """
     if isinstance(data, BaseElement):
         single_item = True
         data = [data]
     else:
         single_item = False
 
-    if isinstance(requirement, Set):
-        validate_group = RequiredSet(requirement)
+    if single_item and isinstance(required, RequiredPredicate):
+        differences = required(data, show_expected=True)
     else:
-        validate_group = RequiredPredicate(requirement)
-        if single_item:
-            validate_group = partial(validate_group, show_expected=True)
-
-    differences = validate_group(data)
+        differences = required(data)
 
     if differences:
         if single_item:                      # If *data* is a single-item and
@@ -605,7 +613,6 @@ def _apply_requirement(data, requirement):
             if len(differences) == 1:        # return the single difference
                 return differences[0]        # alone, without a container.
         return differences
-
     return None
 
 
@@ -628,7 +635,8 @@ def _apply_mapping_requirement2(data, requirement):
             yield key, diff
         else:
             data_keys.add(key)
-            diff = _apply_requirement(actual, expected)
+            required = _get_required(expected)
+            diff = _apply_required(actual, required)
             if diff:
                 if not isinstance(diff, BaseElement):
                     diff = list(diff)
@@ -637,7 +645,8 @@ def _apply_mapping_requirement2(data, requirement):
     requirement_items = getattr(requirement, 'iteritems', requirement.items)()
     for key, expected in requirement_items:
         if key not in data_keys:
-            diff = _apply_requirement([], expected)  # Try empty container.
+            required = _get_required(expected)
+            diff = _apply_required([], required)  # Try empty container.
             if not diff:
                 diff = _make_difference(NOTFOUND, expected, show_expected=True)
 
