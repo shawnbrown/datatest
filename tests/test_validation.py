@@ -12,6 +12,7 @@ from datatest.difference import Deviation
 from datatest.difference import NOTFOUND
 
 from datatest.validation import _apply_requirement
+from datatest.validation import _apply_mapping_requirement2
 from datatest.validation import _require_sequence
 from datatest.validation import _require_set
 from datatest.validation import _require_predicate
@@ -1128,3 +1129,94 @@ class TestApplyRequirement(unittest.TestCase):
 
         result = _apply_requirement(data=(1, 'x'), requirement=(1, 'j'))
         self.assertEqual(result, Invalid((1, 'x'), (1, 'j')))
+
+
+class TestApplyMappingRequirement2(unittest.TestCase):
+    """Calling _apply_mapping_requirement() should run the appropriate
+    comparison function (internally) for each value-group and
+    return the results as an iterable of key-value items.
+    """
+    def test_no_differences(self):
+        # Set membership.
+        data = {'a': ['x', 'y']}
+        result = _apply_mapping_requirement2(data, {'a': set(['x', 'y'])})
+        self.assertEqual(dict(result), {})
+
+        # Equality of single values.
+        data = {'a': 'x', 'b': 'y'}
+        result = _apply_mapping_requirement2(data, {'a': 'x', 'b': 'y'})
+        self.assertEqual(dict(result), {})
+
+    def test_bad_data_type(self):
+        not_a_mapping = 'abc'
+        a_mapping = {'a': 'abc'}
+
+        with self.assertRaises(TypeError):
+            result = _apply_mapping_requirement2(not_a_mapping, a_mapping)
+            dict(result)  # <- Evaluate generator.
+
+    def test_some_differences(self):
+        # Set membership.
+        data = {'a': ['x', 'x'], 'b': ['x', 'y', 'z']}
+        result = _apply_mapping_requirement2(data, {'a': set(['x', 'y']),
+                                                    'b': set(['x', 'y'])})
+        expected = {'a': [Missing('y')], 'b': [Extra('z')]}
+        self.assertEqual(dict(result), expected)
+
+        # Equality of single values.
+        data = {'a': 'x', 'b': 10}
+        result = _apply_mapping_requirement2(data, {'a': 'j', 'b': 9})
+        expected = {'a': Invalid('x', expected='j'), 'b': Deviation(+1, 9)}
+        self.assertEqual(dict(result), expected)
+
+        # Equality of multiple values.
+        data = {'a': ['x', 'j'], 'b': [10, 9]}
+        result = _apply_mapping_requirement2(data, {'a': 'j', 'b': 9})
+        expected = {'a': [Invalid('x')], 'b': [Deviation(+1, 9)]}
+        self.assertEqual(dict(result), expected)
+
+        # Equality of single tuples.
+        data = {'a': (1, 'x'), 'b': (9, 10)}
+        result = _apply_mapping_requirement2(data, {'a': (1, 'j'), 'b': (9, 9)})
+        expected = {'a': Invalid((1, 'x'), expected=(1, 'j')),
+                    'b': Invalid((9, 10), expected=(9, 9))}
+        self.assertEqual(dict(result), expected)
+
+        # Equality of multiple tuples.
+        data = {'a': [(1, 'j'), (1, 'x')], 'b': [(9, 9), (9, 10)]}
+        result = _apply_mapping_requirement2(data, {'a': (1, 'j'), 'b': (9, 9)})
+        expected = {'a': [Invalid((1, 'x'))],
+                    'b': [Invalid((9, 10))]}
+        self.assertEqual(dict(result), expected)
+
+    def test_missing_keys(self):
+        # Equality of multiple values, missing key with single item.
+        data = {'a': ['x', 'j'], 'b': [10, 9]}
+        result = _apply_mapping_requirement2(data, {'a': 'j', 'b': 9, 'c': 'z'})
+        expected = {'a': [Invalid('x')], 'b': [Deviation(+1, 9)], 'c': Missing('z')}
+        self.assertEqual(dict(result), expected)
+
+        # Equality of multiple values, missing key with single item.
+        data = {'a': ['x', 'j'], 'b': [10, 9], 'c': 'z'}
+        result = _apply_mapping_requirement2(data, {'a': 'j', 'b': 9})
+        expected = {'a': [Invalid('x')], 'b': [Deviation(+1, 9)], 'c': Extra('z')}
+        self.assertEqual(dict(result), expected)
+
+        # Missing key, set membership.
+        data = {'a': 'x'}
+        result = _apply_mapping_requirement2(data, {'a': 'x', 'b': set(['z'])})
+        expected = {'b': [Missing('z')]}
+        self.assertEqual(dict(result), expected)
+
+    def test_empty_vs_nonempty_values(self):
+        empty = {}
+        nonempty = {'a': set(['x'])}
+
+        result = _apply_mapping_requirement2(empty, empty)
+        self.assertEqual(dict(result), {})
+
+        result = _apply_mapping_requirement2(nonempty, empty)
+        self.assertEqual(dict(result), {'a': Extra(set(['x']))})
+
+        result = _apply_mapping_requirement2(empty, nonempty)
+        self.assertEqual(dict(result), {'a': [Missing('x')]})

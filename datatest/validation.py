@@ -607,3 +607,40 @@ def _apply_requirement(data, requirement):
         return differences
 
     return None
+
+
+def _apply_mapping_requirement2(data, requirement):
+    """Compare *data* mapping against *requirement* mapping and return
+    a mapping of any differences.
+    """
+    if isinstance(data, Mapping):
+        data_items = getattr(data, 'iteritems', data.items)()
+    elif _is_collection_of_items(data):
+        data_items = data
+    else:
+        raise TypeError('data must be mapping or iterable of key-value items')
+
+    data_keys = set()
+    for key, actual in data_items:
+        expected = requirement.get(key, NOTFOUND)
+        if expected is NOTFOUND:
+            diff = _make_difference(actual, NOTFOUND, show_expected=True)
+            yield key, diff
+        else:
+            data_keys.add(key)
+            diff = _apply_requirement(actual, expected)
+            if diff:
+                if not isinstance(diff, BaseElement):
+                    diff = list(diff)
+                yield key, diff
+
+    requirement_items = getattr(requirement, 'iteritems', requirement.items)()
+    for key, expected in requirement_items:
+        if key not in data_keys:
+            diff = _apply_requirement([], expected)  # Try empty container.
+            if not diff:
+                diff = _make_difference(NOTFOUND, expected, show_expected=True)
+
+            if not isinstance(diff, BaseElement):
+                diff = list(diff)
+            yield key, diff
