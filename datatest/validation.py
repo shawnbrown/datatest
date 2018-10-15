@@ -680,3 +680,40 @@ def _apply_mapping_to_mapping(data, requirement):
             if not isinstance(diff, BaseElement):
                 diff = list(diff)
             yield key, diff
+
+
+def validate2(data, requirement, msg=None):
+    """Raise a :exc:`ValidationError` if *data* does not satisfy
+    *requirement* or pass without error if data is valid.
+    """
+    # No explicit return value: This function should either
+    # raise an exception or pass without errors (returning
+    # an implicit None). To get a True/False return value,
+    # users should call the valid() function instead.
+
+    # Setup traceback-hiding for pytest integration.
+    __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
+
+    data = _normalize_data(data)
+    requirement = _normalize_requirement(requirement)
+
+    if isinstance(data, Mapping):
+        data = getattr(data, 'iteritems', data.items)()
+
+    if isinstance(requirement, Mapping):
+        differences = _apply_mapping_to_mapping(data, requirement)
+        first_item, differences = iterpeek(differences, NOTFOUND)
+        if first_item is not NOTFOUND:
+            mapping_msg = 'does not satisfy requirements'
+            raise ValidationError(dict(differences), msg or mapping_msg)
+    elif _is_collection_of_items(data):
+        required = _get_required(requirement)
+        differences = _apply_required_to_mapping(data, required)
+        first_item, differences = iterpeek(differences, NOTFOUND)
+        if first_item is not NOTFOUND:
+            raise ValidationError(dict(differences), msg or required.msg)
+    else:
+        required = _get_required(requirement)
+        differences = _apply_required_to_data(data, required)
+        if differences:
+            raise ValidationError(differences, msg or required.msg)
