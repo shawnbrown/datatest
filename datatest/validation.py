@@ -616,6 +616,33 @@ def _apply_required(data, required):
     return None
 
 
+def _apply_required_to_mapping(data, required):
+    """Apply *required* object to mapping of *data* values and return a
+    mapping of any differences.
+    """
+    if isinstance(data, Mapping):
+        data_items = getattr(data, 'iteritems', data.items)()
+    elif _is_collection_of_items(data):
+        data_items = data
+    else:
+        raise TypeError('data must be mapping or iterable of key-value items')
+
+    for key, actual in data_items:
+        if isinstance(actual, BaseElement):
+            single_item = True
+            actual = [actual]
+        else:
+            single_item = False
+
+        differences = required(actual)
+
+        if differences:
+            differences = list(differences)
+            if single_item and len(differences) == 1:
+                differences = differences[0]
+            yield key, differences
+
+
 def _apply_mapping_requirement2(data, requirement):
     """Compare *data* mapping against *requirement* mapping and return
     a mapping of any differences.

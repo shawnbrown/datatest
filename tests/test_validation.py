@@ -16,6 +16,7 @@ from datatest._required import RequiredSet
 from datatest._required import RequiredPredicate
 from datatest.validation import _get_required
 from datatest.validation import _apply_required
+from datatest.validation import _apply_required_to_mapping
 from datatest.validation import _apply_mapping_requirement2
 from datatest.validation import _require_sequence
 from datatest.validation import _require_set
@@ -1159,6 +1160,57 @@ class TestApplyRequired(unittest.TestCase):
         required = RequiredPredicate((1, 'j'))
         result = _apply_required((1, 'x'), required)
         self.assertEqual(result, Invalid((1, 'x'), (1, 'j')))
+
+
+class TestApplyRequiredToMapping(unittest.TestCase):
+    def test_no_differences(self):
+        # Set membership.
+        data = {'a': ['x', 'y'], 'b': ['x', 'y'],}
+        required = RequiredSet(set(['x', 'y']))
+        result = _apply_required_to_mapping(data, required)
+        self.assertEqual(dict(result), {})
+
+        # Equality of single value.
+        data = {'a': 'x', 'b': 'x'}
+        required = RequiredPredicate('x')
+        result = _apply_required_to_mapping(data, required)
+        self.assertEqual(dict(result), {})
+
+    def test_some_differences(self):
+        # Set membership.
+        data = {'a': ['x', 'x'], 'b': ['x', 'y', 'z']}
+        required = RequiredSet(set(['x', 'y']))
+        result = _apply_required_to_mapping(data, required)
+        expected = {'a': [Missing('y')], 'b': [Extra('z')]}
+        self.assertEqual(dict(result), expected)
+
+        # Equality of single values.
+        data = {'a': 'x', 'b': 10, 'c': 9}
+        required = RequiredPredicate(9)
+        result = _apply_required_to_mapping(data, required)
+        expected = {'a': Invalid('x'), 'b': Deviation(+1, 9)}
+        self.assertEqual(dict(result), expected)
+
+        # Equality of multiple values.
+        data = {'a': ['x', 'j'], 'b': [10, 9], 'c': [9, 9]}
+        required = RequiredPredicate(9)
+        result = _apply_required_to_mapping(data, required)
+        expected = {'a': [Invalid('x'), Invalid('j')], 'b': [Deviation(+1, 9)]}
+        self.assertEqual(dict(result), expected)
+
+        # Equality of single tuples.
+        data = {'a': ('x', 1.0), 'b': ('y', 2), 'c': ('x', 3)}
+        required = RequiredPredicate(('x', int))
+        result = _apply_required_to_mapping(data, required)
+        expected = {'a': Invalid(('x', 1.0)), 'b': Invalid(('y', 2))}
+        self.assertEqual(dict(result), expected)
+
+        # Equality of multiple tuples.
+        data = {'a': [('x', 1.0), ('x', 1)], 'b': [('y', 2), ('x', 3)]}
+        required = RequiredPredicate(('x', int))
+        result = _apply_required_to_mapping(data, required)
+        expected = {'a': [Invalid(('x', 1.0))], 'b': [Invalid(('y', 2))]}
+        self.assertEqual(dict(result), expected)
 
 
 class TestApplyMappingRequirement2(unittest.TestCase):
