@@ -592,7 +592,7 @@ def _get_required(requirement):
     return RequiredPredicate(requirement)
 
 
-def _apply_required(data, required):
+def _apply_required_to_data(data, required):
     """Apply *required* object to *data* and return any differences.
     The *required* argument should be a Required class instance.
     """
@@ -643,9 +643,9 @@ def _apply_required_to_mapping(data, required):
             yield key, differences
 
 
-def _apply_mapping_requirement2(data, requirement):
-    """Compare *data* mapping against *requirement* mapping and return
-    a mapping of any differences.
+def _apply_mapping_to_mapping(data, requirement):
+    """Apply mapping of requirements to mapping of *data* values and
+    return a mapping of any differences.
     """
     if isinstance(data, Mapping):
         data_items = getattr(data, 'iteritems', data.items)()
@@ -663,7 +663,7 @@ def _apply_mapping_requirement2(data, requirement):
         else:
             data_keys.add(key)
             required = _get_required(expected)
-            diff = _apply_required(actual, required)
+            diff = _apply_required_to_data(actual, required)
             if diff:
                 if not isinstance(diff, BaseElement):
                     diff = list(diff)
@@ -673,7 +673,7 @@ def _apply_mapping_requirement2(data, requirement):
     for key, expected in requirement_items:
         if key not in data_keys:
             required = _get_required(expected)
-            diff = _apply_required([], required)  # Try empty container.
+            diff = _apply_required_to_data([], required)  # Try empty container.
             if not diff:
                 diff = _make_difference(NOTFOUND, expected, show_expected=True)
 
