@@ -153,26 +153,17 @@ class Predicate(object):
     def __init__(self, obj):
         if isinstance(obj, Predicate):
             self.obj = obj.obj
-            self._pred_handler = obj._pred_handler
-            self._repr_string = obj._repr_string
+            self.matcher = obj.matcher
             self._inverted = obj._inverted
         else:
             self.obj = obj
-            matcher = get_matcher(obj)
-            try:
-                self._pred_handler = matcher.__eq__
-            except AttributeError:
-                self._pred_handler = lambda other: matcher == other
-                # Above: In Python 2, some built-in objects
-                # do not have an explicit __eq__() method.
-            self._repr_string = repr(matcher)
+            self.matcher = get_matcher(obj)
             self._inverted = False
 
     def __call__(self, other):
-        result = self._pred_handler(other)
         if self._inverted:
-            return not result
-        return result
+            return not self.matcher == other  # <- Do not change to "!=".
+        return self.matcher == other
 
     def __invert__(self):
         new_pred = self.__class__(self)
@@ -182,8 +173,8 @@ class Predicate(object):
     def __repr__(self):
         cls_name = self.__class__.__name__
         inverted = '~' if self._inverted else ''
-        return '{0}{1}({2})'.format(inverted, cls_name, self._repr_string)
+        return '{0}{1}({2})'.format(inverted, cls_name, repr(self.matcher))
 
     def __str__(self):
         inverted = 'not ' if self._inverted else ''
-        return '{0}{1}'.format(inverted, self._repr_string)
+        return '{0}{1}'.format(inverted, repr(self.matcher))

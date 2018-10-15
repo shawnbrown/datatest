@@ -260,10 +260,12 @@ class TestPredicate(unittest.TestCase):
         pred = Predicate('abc')
         self.assertTrue(pred('abc'))
         self.assertFalse(pred('def'))
+        self.assertFalse(pred(123))
 
         pred = Predicate(1)
         self.assertTrue(pred(1))
         self.assertFalse(pred(2))
+        self.assertFalse(pred('abc'))
 
         pred = Predicate(('abc', int))
         self.assertTrue(pred(('abc', 1)))
@@ -293,8 +295,7 @@ class TestPredicate(unittest.TestCase):
         pred2 = Predicate(pred1)
         self.assertIsNot(pred1, pred2, msg='should be different object')
         self.assertIs(pred1.obj, pred2.obj, msg='should keep original reference')
-        self.assertEqual(pred1._pred_handler, pred2._pred_handler)
-        self.assertEqual(pred1._repr_string, pred2._repr_string)
+        self.assertEqual(pred1.matcher, pred2.matcher)
         self.assertEqual(pred1._inverted, pred2._inverted)
 
         from_inverted = Predicate(~Predicate('abc'))
