@@ -26,17 +26,18 @@ class Required(abc.ABC):
         raise NotImplementedError
 
     @staticmethod
-    def _verify_filterfalse(iterable):
-        """Verify that filterfalse() returns a non-string iterable of
-        differences.
+    def _verify_filterfalse(filtered):
+        """A generator function to wrap the results of filteredfalse()
+        and verify that each item returned is a difference object. If
+        any invalid values are returned, a TypeError is raised.
         """
-        if not nonstringiter(iterable):
-            cls_name = iterable.__class__.__name__
+        if not nonstringiter(filtered):
+            cls_name = filtered.__class__.__name__
             message = ('filterfalse() must return non-string iterable, '
                        'got {0!r} instead')
             raise TypeError(message.format(cls_name))
 
-        for value in iterable:
+        for value in filtered:
             if not isinstance(value, BaseDifference):
                 cls_name = value.__class__.__name__
                 message = ('filterfalse() result must contain difference '
@@ -46,10 +47,10 @@ class Required(abc.ABC):
 
     def __call__(self, iterable):
         filtered = self.filterfalse(iterable)
-        normalized = self._verify_filterfalse(filtered)
-        first_element, normalized = iterpeek(normalized)
+        verified = self._verify_filterfalse(filtered)
+        first_element, verified = iterpeek(verified)
         if first_element:
-            return normalized
+            return verified
         return None
 
 
