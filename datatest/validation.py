@@ -596,24 +596,21 @@ def _apply_required_to_data(data, required):
     """Apply *required* object to *data* and return any differences.
     The *required* argument should be a Required class instance.
     """
-    if isinstance(data, BaseElement):
-        single_item = True
-        data = [data]
-    else:
-        single_item = False
+    # Handle iterable non-BaseElement data.
+    if not isinstance(data, BaseElement):
+        return required(data)  # <- EXIT!
 
-    if single_item and isinstance(required, RequiredPredicate):
-        differences = required(data, show_expected=True)
+    # Handle single-value BaseElement data.
+    if isinstance(required, RequiredPredicate):
+        diffs = required([data], show_expected=True)
     else:
-        differences = required(data)
+        diffs = required([data])
 
-    if differences:
-        if single_item:                      # If *data* is a single-item and
-            differences = list(differences)  # differences is a single-item,
-            if len(differences) == 1:        # return the single difference
-                return differences[0]        # alone, without a container.
-        return differences
-    return None
+    if diffs:                 # When *data* is a BaseElement
+        diffs = list(diffs)   # and diffs is a single-item,
+        if len(diffs) == 1:   # return the single difference
+            diffs = diffs[0]  # alone, without a container.
+    return diffs
 
 
 def _apply_required_to_mapping(data, required):
