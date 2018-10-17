@@ -229,6 +229,16 @@ class TestGetMatcher(unittest.TestCase):
         matcher = get_matcher(original)
         self.assertIs(matcher, original)
 
+    def test_get_matcher_from_matcher(self):
+        original = get_matcher((1, 'abc'))
+        matcher = get_matcher(original)
+        self.assertIs(matcher, original)
+
+    def test_get_matcher_from_predicate(self):
+        predicate = Predicate('abc')
+        matcher = get_matcher(predicate)
+        self.assertIs(matcher, predicate.matcher)
+
     def test_integration(self):
         """A small integration test that checks a tuple containing all
         of the different special handling cases.

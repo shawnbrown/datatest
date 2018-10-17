@@ -136,6 +136,12 @@ def get_matcher(obj):
     MatcherTuple will be returned. If the object is already suitable
     for this purpose, the original object will be returned unchanged.
     """
+    if isinstance(obj, MatcherBase):
+        return obj  # <- EXIT!
+
+    if isinstance(obj, Predicate):
+        return obj.matcher  # <- EXIT!
+
     if isinstance(obj, tuple):
         matcher = tuple(_get_matcher_or_original(x) for x in obj)
         for x in matcher:
