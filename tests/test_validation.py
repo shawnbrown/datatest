@@ -12,8 +12,9 @@ from datatest.difference import Deviation
 from datatest.difference import NOTFOUND
 
 from datatest._required import Required
-from datatest._required import RequiredSet
 from datatest._required import RequiredPredicate
+from datatest._required import RequiredSequence
+from datatest._required import RequiredSet
 from datatest.validation import _get_required
 from datatest.validation import _apply_required_to_data
 from datatest.validation import _apply_required_to_mapping
@@ -1099,6 +1100,10 @@ class TestGetRequired(unittest.TestCase):
     def test_predicate(self):
         required = _get_required('foo')
         self.assertIsInstance(required, RequiredPredicate)
+
+    def test_sequence(self):  # For base-item sequences.
+        required = _get_required(['foo'])
+        self.assertIsInstance(required, RequiredSequence)
 
     def test_required(self):
         original = RequiredPredicate('foo')

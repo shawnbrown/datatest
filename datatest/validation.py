@@ -12,8 +12,9 @@ from ._compatibility.collections.abc import Set
 from ._predicate import MatcherBase
 from ._predicate import get_matcher
 from ._required import Required
-from ._required import RequiredSet
 from ._required import RequiredPredicate
+from ._required import RequiredSequence
+from ._required import RequiredSet
 from ._utils import nonstringiter
 from ._utils import exhaustible
 from ._utils import iterpeek
@@ -588,6 +589,10 @@ def _get_required(requirement):
 
     if isinstance(requirement, Set):
         return RequiredSet(requirement)
+
+    if (not isinstance(requirement, BaseElement)
+            and isinstance(requirement, Sequence)):
+        return RequiredSequence(requirement)
 
     return RequiredPredicate(requirement)
 
