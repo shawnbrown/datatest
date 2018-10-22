@@ -4,6 +4,17 @@ from unittest import *
 import sys as _sys
 
 
+_MAX_LENGTH = 80
+def safe_repr(obj, short=False):
+    try:
+        result = repr(obj)
+    except Exception:
+        result = object.__repr__(obj)
+    if not short or len(result) < _MAX_LENGTH:
+        return result
+    return result[:_MAX_LENGTH] + ' [truncated]...'
+
+
 try:
     TestCase.assertIn  # New in 2.7/3.1
     TestCase.assertNotIn
