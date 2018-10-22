@@ -56,9 +56,35 @@ class TestSelectorIdioms(unittest.TestCase):
         common_fields = tuple(x for x in a.fieldnames if x in b.fieldnames)
         datatest.validate(a(common_fields), b(common_fields))
 
+
+class TestValidateIdioms(unittest.TestCase):
     def test_concise_reference_testing(self):
-        """Should be able to use grouping object to query and then compare
-        the results with sequence unpacking.
+        """Should be able to use a two-item ProxyGroup to easily
+        compare results by unpacking the ProxyGroup directly in to
+        the validate() function call.
         """
-        compare = datatest.ProxyGroup([self.selector_a, self.selector_b])
-        datatest.validate(*compare({'A': 'B'}))
+        compare = datatest.ProxyGroup(['foo', 'FOO'])
+        datatest.validate(*compare.lower())
+
+    def test_mappings_of_sequences(self):
+        validate = datatest.validation.validate2
+        ValidationError = datatest.ValidationError
+        Missing = datatest.Missing
+        Extra = datatest.Extra
+
+        requirement = ['a', 'b', 'c']
+        data = {
+            'foo': ['a', 'x', 'c'],
+            'bar': ['a', 'b'],
+            'baz': ['a', 'b', 'c', 'd'],
+        }
+        with self.assertRaises(ValidationError) as cm:
+            validate(data, requirement)
+
+        actual = cm.exception.differences
+        expected = {
+            'foo': [Missing((1, 'b')), Extra((1, 'x'))],
+            'bar': [Missing((2, 'c'))],
+            'baz': [Extra((3, 'd'))],
+        }
+        self.assertEqual(actual, expected)
