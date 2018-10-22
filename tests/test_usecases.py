@@ -67,24 +67,28 @@ class TestValidateIdioms(unittest.TestCase):
         datatest.validate(*compare.lower())
 
     def test_mappings_of_sequences(self):
+        """Should be able to compare mappings of sequences and
+        allow differences across keys (e.g., with allowed.extra()
+        and allowed.missing()).
+        """
+        # Pull objects into local name space to improve readability.
         validate = datatest.validation.validate2
+        allowed = datatest.allowed
         ValidationError = datatest.ValidationError
         Missing = datatest.Missing
         Extra = datatest.Extra
 
         requirement = ['a', 'b', 'c']
-        data = {
-            'foo': ['a', 'x', 'c'],
-            'bar': ['a', 'b'],
-            'baz': ['a', 'b', 'c', 'd'],
-        }
-        with self.assertRaises(ValidationError) as cm:
-            validate(data, requirement)
 
-        actual = cm.exception.differences
-        expected = {
-            'foo': [Missing((1, 'b')), Extra((1, 'x'))],
-            'bar': [Missing((2, 'c'))],
-            'baz': [Extra((3, 'd'))],
+        data = {
+            'foo': ['a', 'x', 'c'],       # -> [Missing((1, 'b')), Extra((1, 'x'))]
+            'bar': ['a', 'b'],            # -> [Missing((2, 'c'))]
+            'baz': ['a', 'b', 'c', 'd'],  # -> [Extra((3, 'd'))]
         }
-        self.assertEqual(actual, expected)
+
+        expected_extras = allowed.specific({
+            'foo': [Extra((1, 'x'))],
+            'baz': [Extra((3, 'd'))],
+        })
+        with allowed.missing() | expected_extras:
+            validate(data, requirement)
