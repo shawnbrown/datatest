@@ -154,13 +154,15 @@ can use tests like the following:
             python -m datatest test_excel_safe_unit.py
 
 
-.. warning::
+.. caution::
 
-    If you discover auto-formatted vlues that are not handled by this
-    helper function, please `file an issue`_ and we will try to improve
-    it. ``excel_safe()`` makes a best effort to detect values that
-    Excel will automatically convert but it is not guaranteed to catch
-    everything.
+    The ``excel_safe()`` function above uses a blacklist approach
+    to detect values that Excel will automatically convert. It is
+    not guaranteed to catch everything and future versions of Excel
+    could introduce new behaviors. If you discover auto-formatted
+    values that are not handled by this helper function (or if you
+    have an idea regarding a workable whitelist approach), please
+    `file an issue`_ and we will try to improve it.
 
 
 .. _`file an issue`: https://github.com/shawnbrown/datatest/issues
