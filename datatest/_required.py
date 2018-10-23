@@ -159,8 +159,8 @@ class RequiredSequence(Required):
     differences will be returned.
 
     Each difference will contain a two-tuple whose first item is the
-    starting slice-index (of the candidate) where the difference occurs
-    and whose second item is the non-matching value itself::
+    slice-index where the difference starts (in the candidate) and
+    whose second item is the non-matching value itself::
 
         >>> required = RequiredSequence(['a', 'b', 'c'])
         >>> candidate = ['a', 'b', 'x']
@@ -168,9 +168,11 @@ class RequiredSequence(Required):
         >>> list(diffs)
         [Missing((2, 'c')), Extra((2, 'x'))]
 
-    In the example above, the differences occur at slice-index 2:
+    In the example above, the differences start at slice-index 2 in
+    the candidate sequence:
 
         required sequence   ->  [ 'a', 'b', 'c', ]
+
         candidate sequence  ->  [ 'a', 'b', 'x', ]
                                  ^    ^    ^    ^
                                  |    |    |    |
