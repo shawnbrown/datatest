@@ -18,10 +18,9 @@ from ._utils import nonstringiter
 
 class Required(abc.ABC):
     """Base class for Required objects."""
-    @property
-    @abc.abstractmethod
-    def msg(self):
-        raise NotImplementedError
+    def failure_message(self):
+        """Returns a string to describe the failure."""
+        return 'does not satisfy requirement'
 
     @abc.abstractmethod
     def filterfalse(self, iterable):
@@ -65,6 +64,9 @@ class RequiredPredicate(Required):
             predicate = Predicate(predicate)
         self.predicate = predicate
 
+    def failure_message(self):
+        return 'does not satisfy: {0}'.format(self.predicate)
+
     def filterfalse(self, iterable, show_expected):
         predicate = self.predicate  # Assign directly in local scope
         obj = predicate.obj         # to avoid dot-lookups.
@@ -86,14 +88,13 @@ class RequiredPredicate(Required):
             return normalized
         return None
 
-    @property
-    def msg(self):
-        return 'does not satisfy: {0}'.format(self.predicate)
-
 
 class RequiredSet(Required):
     def __init__(self, requirement):
         self.requirement = requirement
+
+    def failure_message(self):
+        return 'does not satisfy set membership'
 
     def filterfalse(self, iterable):
         requirement = self.requirement  # Assign locally to avoid dot-lookups.
@@ -112,10 +113,6 @@ class RequiredSet(Required):
 
         for element in extra_elements:
             yield Extra(element)
-
-    @property
-    def msg(self):
-        return 'does not satisfy set membership'
 
 
 def _deephash(obj):
@@ -186,6 +183,9 @@ class RequiredSequence(Required):
             raise TypeError(message)
         self.sequence = sequence
 
+    def failure_message(self):
+        return 'does not match required sequence'
+
     def filterfalse(self, iterable):
         if not isinstance(iterable, Sequence):
             iterable = list(iterable)  # <- Needs to be subscriptable.
@@ -227,7 +227,3 @@ class RequiredSequence(Required):
                     new_start = istart + jlength
                     for index, value in enumerate(remainder, start=new_start):
                         yield Extra((index, value))
-
-    @property
-    def msg(self):
-        return 'does not match required sequence'

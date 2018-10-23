@@ -713,9 +713,13 @@ def validate2(data, requirement, msg=None):
         differences = _apply_required_to_mapping(data, required)
         first_item, differences = iterpeek(differences, NOTFOUND)
         if first_item is not NOTFOUND:
-            raise ValidationError(dict(differences), msg or required.msg)
+            if not msg:
+                msg = required.failure_message()
+            raise ValidationError(dict(differences), msg)
     else:
         required = _get_required(requirement)
         differences = _apply_required_to_data(data, required)
         if differences:
-            raise ValidationError(differences, msg or required.msg)
+            if not msg:
+                msg = required.failure_message()
+            raise ValidationError(differences, msg)
