@@ -6,10 +6,64 @@ from datatest import Extra
 from datatest import Deviation
 from datatest import Invalid
 from datatest._predicate import Predicate
+from datatest._required import FailureInfo
 from datatest._required import Required
 from datatest._required import RequiredPredicate
 from datatest._required import RequiredSet
 from datatest._required import RequiredSequence
+
+
+class TestFailureInfo(unittest.TestCase):
+    def test_init(self):
+        differences = [Missing(1)]
+        message = 'failure message'
+
+        # Standard initialization.
+        info = FailureInfo(differences, message)
+        self.assertEqual(list(info.differences), differences)
+        self.assertEqual(info.message, message)
+
+        # Default message.
+        info = FailureInfo(differences)  # <- No message provided.
+        self.assertEqual(list(info.differences), differences)
+        self.assertEqual(info.message, 'does not satisfy requirement')
+
+        # A single difference, not wrapped in container.
+        info = FailureInfo(Missing(1))
+        self.assertEqual(list(info.differences), [Missing(1)])
+
+        # Bad argument type.
+        with self.assertRaisesRegex(TypeError, 'should be a non-string iterable'):
+            FailureInfo(123)
+
+        # Iterator of differences (consumable).
+        iterator = iter(differences)
+        info = FailureInfo(iterator, message)
+        self.assertEqual(list(info.differences), differences)
+        self.assertEqual(info.message, message)
+
+    def test_wrap_differences(self):
+        diffs = [Missing(1), Missing(2), Missing(3)]
+        wrapped = FailureInfo._wrap_differences(diffs)
+        msg = 'yielding difference objects should work without issue'
+        self.assertEqual(list(wrapped), diffs, msg=msg)
+
+        diffs = [Missing(1), Missing(2), 123]
+        wrapped = FailureInfo._wrap_differences(diffs)
+        msg = 'yielding a non-difference object should fail with a useful message'
+        with self.assertRaisesRegex(TypeError, 'must contain difference objects', msg=msg):
+            list(wrapped)  # <- Fully evaluate generator.
+
+    def test_empty_attribute(self):
+        info = FailureInfo([Missing(1)], 'failure message')
+        self.assertFalse(info.empty)
+
+        info = FailureInfo([], 'failure message')
+        self.assertTrue(info.empty)
+
+        info = FailureInfo([Missing(1)], 'failure message')
+        with self.assertRaises(AttributeError, msg='should be read only'):
+            info.empty = False
 
 
 class TestRequirement(unittest.TestCase):
