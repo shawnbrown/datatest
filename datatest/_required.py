@@ -20,19 +20,28 @@ from ._utils import nonstringiter
 class FailureInfo(object):
     def __init__(self, differences, message=None):
         """Initialize instance."""
-        if not nonstringiter(differences):
-            if isinstance(differences, BaseDifference):
-                differences = [differences]
+        self.differences = differences
+        self.message = message or 'does not satisfy requirement'
+
+    @property
+    def differences(self):
+        """Iterator of difference objects."""
+        return self._differences
+
+    @differences.setter
+    def differences(self, value):
+        if not nonstringiter(value):
+            if isinstance(value, BaseDifference):
+                value = [value]
             else:
-                cls_name = differences.__class__.__name__
+                cls_name = value.__class__.__name__
                 message = ('differences should be a non-string iterable, '
                            'got {0}: {1!r}')
-                raise TypeError(message.format(cls_name, differences))
+                raise TypeError(message.format(cls_name, value))
 
-        first_item, differences = iterpeek(differences, NOTFOUND)
+        first_item, value = iterpeek(value, NOTFOUND)
         self._empty = first_item is NOTFOUND
-        self.differences = self._wrap_differences(differences)
-        self.message = message or 'does not satisfy requirement'
+        self._differences = self._wrap_differences(value)
 
     @property
     def empty(self):
