@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from . import _unittest as unittest
+from datatest._compatibility.collections.abc import Iterator
 from datatest import Missing
 from datatest import Extra
 from datatest import Deviation
@@ -14,56 +15,53 @@ from datatest._required import RequiredSequence
 
 
 class TestFailureInfo(unittest.TestCase):
-    def test_init(self):
-        differences = [Missing(1)]
-        message = 'failure message'
+    def test_iterator(self):
+        msg = 'should be iterator'
+        failure_info = FailureInfo([Missing(1)])
+        self.assertIsInstance(failure_info, Iterator)
 
-        # Standard initialization.
-        info = FailureInfo(differences, message)
-        self.assertEqual(list(info.differences), differences)
-        self.assertEqual(info.message, message)
+        msg = 'when iterated over, should return same differences'
+        differences = [Missing(1), Missing(2)]
+        failure_info = FailureInfo(differences)
+        self.assertEqual(list(failure_info), differences)
 
-        # Default message.
-        info = FailureInfo(differences)  # <- No message provided.
-        self.assertEqual(list(info.differences), differences)
-        self.assertEqual(info.message, 'does not satisfy requirement')
-
-        # A single difference, not wrapped in container.
+        msg = 'single difference should be wrapped as a single-item iterator'
         info = FailureInfo(Missing(1))
-        self.assertEqual(list(info.differences), [Missing(1)])
+        self.assertEqual(list(info), [Missing(1)], msg=msg)
 
-        # Bad argument type.
+    def test_message(self):
+        failure_info = FailureInfo([Missing(1)])  # <- No message, uses default.
+        self.assertEqual(failure_info.message, 'does not satisfy requirement')
+
+        custom_message = 'custom failure message'
+        failure_info = FailureInfo([Missing(1)], custom_message)
+        self.assertEqual(failure_info.message, custom_message)
+
+    def test_bad_argument(self):
         with self.assertRaisesRegex(TypeError, 'should be a non-string iterable'):
-            FailureInfo(123)
+            FailureInfo('abc')
 
-        # Iterator of differences (consumable).
-        iterator = iter(differences)
-        info = FailureInfo(iterator, message)
-        self.assertEqual(list(info.differences), differences)
-        self.assertEqual(info.message, message)
-
-    def test_wrap_differences(self):
-        diffs = [Missing(1), Missing(2), Missing(3)]
-        wrapped = FailureInfo._wrap_differences(diffs)
-        msg = 'yielding difference objects should work without issue'
-        self.assertEqual(list(wrapped), diffs, msg=msg)
-
-        diffs = [Missing(1), Missing(2), 123]
-        wrapped = FailureInfo._wrap_differences(diffs)
+    def test_type_check_message(self):
+        failure_info = FailureInfo([Missing(1), Missing(2), 123])
         msg = 'yielding a non-difference object should fail with a useful message'
         with self.assertRaisesRegex(TypeError, 'must contain difference objects', msg=msg):
-            list(wrapped)  # <- Fully evaluate generator.
+            list(failure_info)  # <- Fully evaluate iterator.
 
-    def test_empty_attribute(self):
-        info = FailureInfo([Missing(1)], 'failure message')
-        self.assertFalse(info.empty)
+    def test_empty_attr(self):
+        failure_info = FailureInfo([Missing(1)])
+        self.assertFalse(failure_info.empty)
 
-        info = FailureInfo([], 'failure message')
-        self.assertTrue(info.empty)
+        failure_info = FailureInfo(iter([]))
+        self.assertTrue(failure_info.empty)
 
-        info = FailureInfo([Missing(1)], 'failure message')
+        failure_info = FailureInfo([Missing(1)])
+        self.assertFalse(failure_info.empty)
+        list(failure_info)
+        self.assertTrue(failure_info.empty, msg='if exhausted, should become True')
+
+        failure_info = FailureInfo([Missing(1)], 'failure message')
         with self.assertRaises(AttributeError, msg='should be read only'):
-            info.empty = False
+            failure_info.empty = False
 
 
 class TestRequirement(unittest.TestCase):

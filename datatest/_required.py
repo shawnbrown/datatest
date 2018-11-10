@@ -18,48 +18,51 @@ from ._utils import nonstringiter
 
 
 class FailureInfo(object):
+    """An iterator of difference objects and an associated failure
+    message. The given *differences* must be an iterable of difference
+    objects or a single difference. If provided, *message* should be a
+    string that provides some context for the differences.
+    """
     def __init__(self, differences, message=None):
         """Initialize instance."""
-        self.differences = differences
+        if not nonstringiter(differences):
+            if isinstance(differences, BaseDifference):
+                differences = [differences]
+            else:
+                cls_name = differences.__class__.__name__
+                message = ('differences should be a non-string iterable, '
+                           'got {0}: {1!r}')
+                raise TypeError(message.format(cls_name, differences))
+
+        first_item, differences = iterpeek(differences, NOTFOUND)
+        self._empty = first_item is NOTFOUND
+        self._differences = iter(differences)
         self.message = message or 'does not satisfy requirement'
 
     @property
-    def differences(self):
-        """Iterator of difference objects."""
-        return self._differences
-
-    @differences.setter
-    def differences(self, value):
-        if not nonstringiter(value):
-            if isinstance(value, BaseDifference):
-                value = [value]
-            else:
-                cls_name = value.__class__.__name__
-                message = ('differences should be a non-string iterable, '
-                           'got {0}: {1!r}')
-                raise TypeError(message.format(cls_name, value))
-
-        first_item, value = iterpeek(value, NOTFOUND)
-        self._empty = first_item is NOTFOUND
-        self._differences = self._wrap_differences(value)
-
-    @property
     def empty(self):
-        """True if self.differences iterable contains no items."""
+        """True if iterator contains no items or has been exhausted."""
         return self._empty
 
-    @staticmethod
-    def _wrap_differences(differences):
-        """A generator function to wrap and iterable of differences and
-        verify that each item returned is a difference object. If any
-        non-difference objects are encountered, a TypeError is raised.
-        """
-        for value in differences:
-            if not isinstance(value, BaseDifference):
-                cls_name = value.__class__.__name__
-                message = ('must contain difference objects, got {0}: {1!r}')
-                raise TypeError(message.format(cls_name, value))
-            yield value
+    def __next__(self):
+        try:
+            value = next(self._differences)
+        except StopIteration:
+            self._empty = True
+            raise
+
+        if not isinstance(value, BaseDifference):
+            cls_name = value.__class__.__name__
+            message = 'must contain difference objects, got {0}: {1!r}'
+            raise TypeError(message.format(cls_name, value))
+
+        return value
+
+    def next(self):  # <- For Python 2 support.
+        return self.__next__()
+
+    def __iter__(self):
+        return self
 
 
 class Required(abc.ABC):
