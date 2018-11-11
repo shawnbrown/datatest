@@ -78,33 +78,12 @@ class Required(abc.ABC):
         """
         raise NotImplementedError
 
-    @staticmethod
-    def _verify_filterfalse(filtered):
-        """A generator function to wrap the results of filteredfalse()
-        and verify that each item returned is a difference object. If
-        any invalid values are returned, a TypeError is raised.
-        """
-        if not nonstringiter(filtered):
-            cls_name = filtered.__class__.__name__
-            message = ('filterfalse() must return non-string iterable, '
-                       'got {0!r} instead')
-            raise TypeError(message.format(cls_name))
-
-        for value in filtered:
-            if not isinstance(value, BaseDifference):
-                cls_name = value.__class__.__name__
-                message = ('filterfalse() result must contain difference '
-                           'objects, got {0}: {1!r}')
-                raise TypeError(message.format(cls_name, value))
-            yield value
-
     def __call__(self, iterable):
-        filtered = self.filterfalse(iterable)
-        verified = self._verify_filterfalse(filtered)
-        first_element, verified = iterpeek(verified)
-        if first_element:
-            return verified
-        return None
+        differences = self.filterfalse(iterable)
+        failure_info = FailureInfo(differences, 'does not satisfy requirement')
+        if failure_info.empty:
+            return None
+        return failure_info
 
 
 class RequiredPredicate(Required):
@@ -130,12 +109,11 @@ class RequiredPredicate(Required):
 
     def __call__(self, iterable, show_expected=False):
         # Get differences using *show_expected* argument.
-        filtered = self.filterfalse(iterable, show_expected)
-        normalized = self._verify_filterfalse(filtered)
-        first_element, normalized = iterpeek(normalized)
-        if first_element:
-            return normalized
-        return None
+        differences = self.filterfalse(iterable, show_expected)
+        failure_info = FailureInfo(differences, 'does not satisfy requirement')
+        if failure_info.empty:
+            return None
+        return failure_info
 
 
 class RequiredSet(Required):
