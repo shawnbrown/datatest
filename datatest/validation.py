@@ -703,19 +703,19 @@ def validate2(data, requirement, msg=None):
         data = getattr(data, 'iteritems', data.items)()
 
     if isinstance(requirement, Mapping):
-        differences = _apply_mapping_to_mapping(data, requirement)
-        first_item, differences = iterpeek(differences, NOTFOUND)
+        difference_items = _apply_mapping_to_mapping(data, requirement)
+        first_item, difference_items = iterpeek(difference_items, NOTFOUND)
         if first_item is not NOTFOUND:
             mapping_msg = 'does not satisfy requirements'
-            raise ValidationError(dict(differences), msg or mapping_msg)
+            raise ValidationError(dict(difference_items), msg or mapping_msg)
     elif _is_collection_of_items(data):
         required = _get_required(requirement)
-        differences = _apply_required_to_mapping(data, required)
-        first_item, differences = iterpeek(differences, NOTFOUND)
+        difference_items = _apply_required_to_mapping(data, required)
+        first_item, difference_items = iterpeek(difference_items, NOTFOUND)
         if first_item is not NOTFOUND:
             if not msg:
                 msg = required.failure_message()
-            raise ValidationError(dict(differences), msg)
+            raise ValidationError(dict(difference_items), msg)
     else:
         required = _get_required(requirement)
         differences = _apply_required_to_data(data, required)
