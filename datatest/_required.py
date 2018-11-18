@@ -66,6 +66,26 @@ class FailureInfo(object):
         return self
 
 
+def _wrap_differences(differences, func):
+    """A generator function to wrap and iterable of differences
+    and verify that each item returned is a difference object.
+    If any non-difference objects are encountered, a TypeError
+    is raised.
+
+    The given *differences* should be an iterable of difference
+    objects and *func* should be the group requirement function
+    used to generate the differences.
+    """
+    for value in differences:
+        if not isinstance(value, BaseDifference):
+            func_name = getattr(func, '__name__', func.__class__.__name__)
+            cls_name = value.__class__.__name__
+            message = ('iterable from group requirement {0!r} must '
+                       'contain difference objects, got {1!r}: {2!r}')
+            raise TypeError(message.format(func_name, cls_name, value))
+        yield value
+
+
 def group_requirement(func):
     """Decorator for group requirement functions."""
     @wraps(func)
@@ -91,12 +111,11 @@ def group_requirement(func):
         first_item, differences = iterpeek(differences, NOTFOUND)
         if first_item is NOTFOUND:
             return None
+        differences = _wrap_differences(differences, func)
         return differences, description
 
     wrapper._group_requirement = True
     return wrapper
-
-
 
 
 class Required(abc.ABC):

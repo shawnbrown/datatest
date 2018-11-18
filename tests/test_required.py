@@ -8,6 +8,7 @@ from datatest import Deviation
 from datatest import Invalid
 from datatest._predicate import Predicate
 from datatest._required import FailureInfo
+from datatest._required import _wrap_differences
 from datatest._required import group_requirement
 from datatest._required import Required
 from datatest._required import RequiredPredicate
@@ -65,6 +66,23 @@ class TestFailureInfo(unittest.TestCase):
             failure_info.empty = False
 
 
+class TestWrapDifferences(unittest.TestCase):
+    def test_good_values(self):
+        diffs = [Missing(1), Missing(2), Missing(3)]
+        wrapped = _wrap_differences(diffs, lambda x: [])
+        msg = 'yielding difference objects should work without issue'
+        self.assertEqual(list(wrapped), diffs, msg=msg)
+
+    def test_bad_value(self):
+        diffs = [Missing(1), Missing(2), 123]
+        wrapped = _wrap_differences(diffs, lambda x: [])
+        msg = 'yielding a non-difference object should fail with a useful message'
+        pattern = ("iterable from group requirement '<lambda>' must "
+                   "contain difference objects, got 'int': 123")
+        with self.assertRaisesRegex(TypeError, pattern, msg=msg):
+            list(wrapped)  # <- Fully evaluate generator.
+
+
 class TestGroupRequirement(unittest.TestCase):
     def test_group_requirement_flag(self):
         def func(iterable):
@@ -80,17 +98,19 @@ class TestGroupRequirement(unittest.TestCase):
         @group_requirement
         def func(iterable):
             return [Missing(1)], 'error message'  # <- Returns iterable and description.
-        self.assertEqual(func([1, 2, 3]), ([Missing(1)], 'error message'))
+
+        diffs, desc = func([1, 2, 3])
+        self.assertEqual(list(diffs), [Missing(1)])
+        self.assertEqual(desc, 'error message')
 
     def test_iter_alone(self):
         @group_requirement
         def func(iterable):
             return [Missing(1)]  # <- Returns iterable only, no description.
-        self.assertEqual(
-            func([1, 2, 3]),
-            ([Missing(1)], 'does not satisfy requirement'),
-            msg='should be converted to 2-tuple with default description',
-        )
+
+        diffs, desc = func([1, 2, 3])
+        self.assertEqual(list(diffs), [Missing(1)])
+        self.assertEqual(desc, 'does not satisfy requirement', msg='default description')
 
     def test_tuple_of_diffs(self):
         """Should not mistake a 2-tuple of difference objects for a
@@ -100,11 +120,10 @@ class TestGroupRequirement(unittest.TestCase):
         @group_requirement
         def func(iterable):
             return (Missing(1), Missing(2))  # <- Returns 2-tuple of diffs.
-        self.assertEqual(
-            func([1, 2, 3]),
-            ((Missing(1), Missing(2)), 'does not satisfy requirement'),
-            msg='should be converted to 2-tuple with default description',
-        )
+
+        diffs, desc = func([1, 2, 3])
+        self.assertEqual(list(diffs), [Missing(1), Missing(2)])
+        self.assertEqual(desc, 'does not satisfy requirement')
 
     def test_empty_iter(self):
         """Empty iterable result should be converted to None."""
