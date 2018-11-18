@@ -7,6 +7,7 @@ from ._compatibility.collections.abc import Iterable
 from ._compatibility.collections.abc import Mapping
 from ._compatibility.collections.abc import Sequence
 from ._compatibility.collections.abc import Set
+from ._compatibility.functools import wraps
 from .difference import BaseDifference
 from .difference import Extra
 from .difference import Missing
@@ -63,6 +64,39 @@ class FailureInfo(object):
 
     def __iter__(self):
         return self
+
+
+def group_requirement(func):
+    """Decorator for group requirement functions."""
+    @wraps(func)
+    def wrapper(iterable, *args, **kwds):
+        result = func(iterable, *args, **kwds)
+
+        if (isinstance(result, Sequence)
+                and len(result) == 2
+                and not isinstance(result[1], BaseDifference)):
+            differences, description = result
+        else:
+            differences = result
+            description = 'does not satisfy requirement'
+
+        if not isinstance(differences, Iterable):
+            func_name = getattr(func, '__name__', func.__class__.__name__)
+            bad_type = differences.__class__.__name__
+            message = ('group requirement {0!r} should return a single '
+                       'iterable or a tuple containing an iterable and '
+                       'a string description, got {1!r}: {2!r}')
+            raise TypeError(message.format(func_name, bad_type, differences))
+
+        first_item, differences = iterpeek(differences, NOTFOUND)
+        if first_item is NOTFOUND:
+            return None
+        return differences, description
+
+    wrapper._group_requirement = True
+    return wrapper
+
+
 
 
 class Required(abc.ABC):

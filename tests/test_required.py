@@ -8,6 +8,7 @@ from datatest import Deviation
 from datatest import Invalid
 from datatest._predicate import Predicate
 from datatest._required import FailureInfo
+from datatest._required import group_requirement
 from datatest._required import Required
 from datatest._required import RequiredPredicate
 from datatest._required import RequiredSet
@@ -62,6 +63,80 @@ class TestFailureInfo(unittest.TestCase):
         failure_info = FailureInfo([Missing(1)], 'failure message')
         with self.assertRaises(AttributeError, msg='should be read only'):
             failure_info.empty = False
+
+
+class TestGroupRequirement(unittest.TestCase):
+    def test_group_requirement_flag(self):
+        def func(iterable):
+            return [Missing(1)], 'error message'
+
+        self.assertFalse(hasattr(func, '_group_requirement'))
+
+        func = group_requirement(func)  # <- Apply decorator.
+        self.assertTrue(hasattr(func, '_group_requirement'))
+        self.assertTrue(func._group_requirement)
+
+    def test_iter_and_description(self):
+        @group_requirement
+        def func(iterable):
+            return [Missing(1)], 'error message'  # <- Returns iterable and description.
+        self.assertEqual(func([1, 2, 3]), ([Missing(1)], 'error message'))
+
+    def test_iter_alone(self):
+        @group_requirement
+        def func(iterable):
+            return [Missing(1)]  # <- Returns iterable only, no description.
+        self.assertEqual(
+            func([1, 2, 3]),
+            ([Missing(1)], 'does not satisfy requirement'),
+            msg='should be converted to 2-tuple with default description',
+        )
+
+    def test_tuple_of_diffs(self):
+        """Should not mistake a 2-tuple of difference objects for a
+        2-tuple containing an iterable of differences with a string
+        description.
+        """
+        @group_requirement
+        def func(iterable):
+            return (Missing(1), Missing(2))  # <- Returns 2-tuple of diffs.
+        self.assertEqual(
+            func([1, 2, 3]),
+            ((Missing(1), Missing(2)), 'does not satisfy requirement'),
+            msg='should be converted to 2-tuple with default description',
+        )
+
+    def test_empty_iter(self):
+        """Empty iterable result should be converted to None."""
+        @group_requirement
+        def func(iterable):
+            return iter([]), 'error message'  # <- Empty iterable and description.
+        self.assertIsNone(func([1, 2, 3]))
+
+        @group_requirement
+        def func(iterable):
+            return iter([])  # <- Empty iterable.
+        self.assertIsNone(func([1, 2, 3]))
+
+    def test_bad_types(self):
+        """Bad return types should trigger TypeError."""
+        with self.assertRaisesRegex(TypeError, 'should return .* iterable'):
+            @group_requirement
+            def func(iterable):
+                return Missing(1), 'error message'
+            func([1, 2, 3])
+
+        with self.assertRaisesRegex(TypeError, 'should return .* iterable'):
+            @group_requirement
+            def func(iterable):
+                return None  # <- Returns None
+            func([1, 2, 3])
+
+        with self.assertRaisesRegex(TypeError, 'should return .* an iterable and a string'):
+            @group_requirement
+            def func(iterable):
+                return None, 'error message'  # <- Returns None and description.
+            func([1, 2, 3])
 
 
 class TestRequirement(unittest.TestCase):
