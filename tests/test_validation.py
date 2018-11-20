@@ -1403,3 +1403,32 @@ class TestValidate2(unittest.TestCase):
             'b': [Invalid(('xyz', 2.0))],
         }
         self.assertEqual(actual, expected)
+
+    @unittest.skip('TODO: Implement mismatched key handling for validate2().')
+    def test_mapping_vs_mapping_mismatched_keys(self):
+        # Mapping of base-elements.
+        data = {'a': ('abc', 1), 'c': ('abc', 2.0)}
+        requirement = {'a': ('abc', int), 'b': ('abc', float)}
+        with self.assertRaises(ValidationError) as cm:
+            validate2(data, requirement)
+        actual = cm.exception.differences
+        expected = {
+            'b': Missing(('abc', float)),
+            'c': Extra(('abc', 2.0)),
+        }
+        self.assertEqual(actual, expected)
+
+        # Mapping of containers (lists of base-elements).
+        data = {
+            'a': [('abc', 1), ('abc', 2)],
+            'c': [('abc', 1.0), ('abc', 2.0)],
+        }
+        requirement = {'a': ('abc', int), 'b': ('abc', float)}
+        with self.assertRaises(ValidationError) as cm:
+            validate2(data, requirement)
+        actual = cm.exception.differences
+        expected = {
+            'c': [Extra(('abc', 1.0)), Extra(('abc', 2.0))],
+            'b': Missing(('abc', float)),
+        }
+        self.assertEqual(actual, expected)
