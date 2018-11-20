@@ -8,6 +8,7 @@ from ._compatibility.collections.abc import Mapping
 from ._compatibility.collections.abc import Sequence
 from ._compatibility.collections.abc import Set
 from ._compatibility.functools import wraps
+from ._compatibility.itertools import chain
 from .difference import BaseDifference
 from .difference import Extra
 from .difference import Missing
@@ -116,6 +117,29 @@ def group_requirement(func):
 
     wrapper._group_requirement = True
     return wrapper
+
+
+def required_set(requirement):
+    """Returns a group requirement function that checks for set membership."""
+    @group_requirement
+    def _required_set(iterable):  # Closes over *requirement*.
+        matches = set()
+        extras = set()
+        for element in iterable:
+            if element in requirement:
+                matches.add(element)
+            else:
+                extras.add(element)  # <- Build set of Extras so we
+                                     #    do not return duplicates.
+        missing = (x for x in requirement if x not in matches)
+
+        differences = chain(
+            (Missing(x) for x in missing),
+            (Extra(x) for x in extras),
+        )
+        return differences, 'does not satisfy set membership'
+
+    return _required_set
 
 
 class Required(abc.ABC):

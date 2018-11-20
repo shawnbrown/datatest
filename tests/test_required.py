@@ -10,6 +10,7 @@ from datatest._predicate import Predicate
 from datatest._required import FailureInfo
 from datatest._required import _wrap_differences
 from datatest._required import group_requirement
+from datatest._required import required_set
 from datatest._required import Required
 from datatest._required import RequiredPredicate
 from datatest._required import RequiredSet
@@ -156,6 +157,42 @@ class TestGroupRequirement(unittest.TestCase):
             def func(iterable):
                 return None, 'error message'  # <- Returns None and description.
             func([1, 2, 3])
+
+
+class TestRequiredSet2(unittest.TestCase):
+    def setUp(self):
+        self.requirement = required_set(set([1, 2, 3]))
+
+    def test_no_difference(self):
+        data = iter([1, 2, 3])
+        result = self.requirement(data)
+        self.assertIsNone(result)  # No difference, returns None.
+
+    def test_missing(self):
+        data = iter([1, 2])
+        differences, description = self.requirement(data)
+        self.assertEqual(list(differences), [Missing(3)])
+
+    def test_extra(self):
+        data = iter([1, 2, 3, 4])
+        differences, description = self.requirement(data)
+        self.assertEqual(list(differences), [Extra(4)])
+
+    def test_repeat_values(self):
+        """Repeat values should not result in duplicate differences."""
+        data = iter([1, 2, 3, 4, 4, 4])  # <- Multiple 4's.
+        differences, description = self.requirement(data)
+        self.assertEqual(list(differences), [Extra(4)])  # <- One difference.
+
+    def test_missing_and_extra(self):
+        data = iter([1, 3, 4])
+        differences, description = self.requirement(data)
+        self.assertEqual(list(differences), [Missing(2), Extra(4)])
+
+    def test_empty_iterable(self):
+        requirement = required_set(set([1]))
+        differences, description = requirement([])
+        self.assertEqual(list(differences), [Missing(1)])
 
 
 class TestRequirement(unittest.TestCase):
