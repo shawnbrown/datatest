@@ -123,6 +123,20 @@ def required_predicate(requirement, show_expected=False):
     """Accepts a *requirement* object andd returns a group requirement
     that tests for predicate.
     """
+    @group_requirement
+    def _required_predicate(iterable):  # Closes over *requirement*
+                                        # and *show_expected*.
+        def generate_differences(requirement, iterable):
+            predicate = Predicate(requirement)
+            for element in iterable:
+                result = predicate(element)
+                if not result:
+                    yield _make_difference(element, requirement, show_expected)
+
+        differences = generate_differences(requirement, iterable)
+        return differences, 'does not satisfy: {0}'.format(requirement)
+
+    return _required_predicate
 
 
 def required_set(requirement):

@@ -165,6 +165,54 @@ class TestRequiredPredicate2(unittest.TestCase):
         isdigit = lambda x: x.isdigit()
         self.requirement = required_predicate(isdigit)
 
+    def test_all_true(self):
+        data = iter(['10', '20', '30'])
+        result = self.requirement(data)
+        self.assertIsNone(result)  # Predicate is true for all, returns None.
+
+    def test_some_false(self):
+        """When the predicate returns False, values should be returned as
+        Invalid() differences.
+        """
+        data = ['10', '20', 'XX']
+        differences, _ = self.requirement(data)
+        self.assertEqual(list(differences), [Invalid('XX')])
+
+    def test_show_expected(self):
+        data = ['XX', 'YY']
+        requirement = required_predicate('YY', show_expected=True)
+        differences, _ = requirement(data)
+        self.assertEqual(list(differences), [Invalid('XX', expected='YY')])
+
+    def test_duplicate_false(self):
+        """Should return one difference for every false result (including
+        duplicates).
+        """
+        data = ['10', '20', 'XX', 'XX', 'XX']  # <- Multiple XX's.
+        differences, _ = self.requirement(data)
+        self.assertEqual(list(differences), [Invalid('XX'), Invalid('XX'), Invalid('XX')])
+
+    def test_empty_iterable(self):
+        result = self.requirement([])
+        self.assertIsNone(result)
+
+    def test_some_false_deviations(self):
+        """When the predicate returns False, values should be returned as
+        Invalid() differences.
+        """
+        data = [10, 10, 12]
+        requirement = required_predicate(10)
+
+        differences, _ = requirement(data)
+        self.assertEqual(list(differences), [Deviation(+2, 10)])
+
+    def test_predicate_error(self):
+        """Errors should not be counted as False or otherwise hidden."""
+        data = ['10', '20', 'XX', 40]  # <- Predicate assumes string, int has no isdigit().
+        differences, _  = self.requirement(data)
+        with self.assertRaisesRegex(AttributeError, "no attribute 'isdigit'"):
+            list(differences)
+
 
 class TestRequiredSet2(unittest.TestCase):
     def setUp(self):
