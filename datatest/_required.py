@@ -119,6 +119,12 @@ def group_requirement(func):
     return wrapper
 
 
+def required_predicate(requirement, show_expected=False):
+    """Accepts a *requirement* object andd returns a group requirement
+    that tests for predicate.
+    """
+
+
 def required_set(requirement):
     """Returns a group requirement function that checks for set membership."""
     @group_requirement

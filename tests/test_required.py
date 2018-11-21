@@ -10,6 +10,7 @@ from datatest._predicate import Predicate
 from datatest._required import FailureInfo
 from datatest._required import _wrap_differences
 from datatest._required import group_requirement
+from datatest._required import required_predicate
 from datatest._required import required_set
 from datatest._required import Required
 from datatest._required import RequiredPredicate
@@ -157,6 +158,12 @@ class TestGroupRequirement(unittest.TestCase):
             def func(iterable):
                 return None, 'error message'  # <- Returns None and description.
             func([1, 2, 3])
+
+
+class TestRequiredPredicate2(unittest.TestCase):
+    def setUp(self):
+        isdigit = lambda x: x.isdigit()
+        self.requirement = required_predicate(isdigit)
 
 
 class TestRequiredSet2(unittest.TestCase):
