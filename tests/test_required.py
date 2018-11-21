@@ -159,6 +159,18 @@ class TestGroupRequirement(unittest.TestCase):
                 return None, 'error message'  # <- Returns None and description.
             func([1, 2, 3])
 
+    def test_group_requirement_wrapping(self):
+        """Decorating a group requirement should return the original
+        object, it should not double-wrap existing group requirements.
+        """
+        @group_requirement
+        def func1(iterable):
+            return [Missing(1)], 'error message'
+
+        func2 = group_requirement(func1)
+
+        self.assertIs(func1, func2)
+
 
 class TestRequiredPredicate2(unittest.TestCase):
     def setUp(self):

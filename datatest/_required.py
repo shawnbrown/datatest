@@ -89,6 +89,9 @@ def _wrap_differences(differences, func):
 
 def group_requirement(func):
     """Decorator for group requirement functions."""
+    if getattr(func, '_group_requirement', False):
+        return func  # <- EXIT!
+
     @wraps(func)
     def wrapper(iterable, *args, **kwds):
         result = func(iterable, *args, **kwds)
