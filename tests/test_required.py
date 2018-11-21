@@ -213,6 +213,27 @@ class TestRequiredPredicate2(unittest.TestCase):
         with self.assertRaisesRegex(AttributeError, "no attribute 'isdigit'"):
             list(differences)
 
+    def test_returned_difference(self):
+        """When a predicate returns a difference object, it should used in
+        place of the default Invalid difference.
+        """
+        def counts_to_three(x):
+            if 1 <= x <= 3:
+                return True
+            if x == 4:
+                return Invalid('4 shalt thou not count')
+            return Invalid('{0} is right out'.format(x))
+
+        requirement = required_predicate(counts_to_three)
+
+        data = [1, 2, 3, 4, 5]
+        differences, _ = requirement(data)
+        expected = [
+            Invalid('4 shalt thou not count'),
+            Invalid('5 is right out'),
+        ]
+        self.assertEqual(list(differences), expected)
+
 
 class TestRequiredSet2(unittest.TestCase):
     def setUp(self):

@@ -132,6 +132,8 @@ def required_predicate(requirement, show_expected=False):
                 result = predicate(element)
                 if not result:
                     yield _make_difference(element, requirement, show_expected)
+                elif isinstance(result, BaseDifference):
+                    yield result
 
         differences = generate_differences(requirement, iterable)
         return differences, 'does not satisfy: {0}'.format(requirement)
