@@ -15,6 +15,7 @@ from datatest._required import Required
 from datatest._required import RequiredPredicate
 from datatest._required import RequiredSequence
 from datatest._required import RequiredSet
+from datatest.validation import _get_group_requirement
 from datatest.validation import _get_required
 from datatest.validation import _apply_required_to_data
 from datatest.validation import _apply_required_to_mapping
@@ -1109,6 +1110,32 @@ class TestGetRequired(unittest.TestCase):
         original = RequiredPredicate('foo')
         required = _get_required(original)
         self.assertIs(required, original)
+
+
+class TestGetGroupRequirement(unittest.TestCase):
+    def test_set(self):
+        requirement = _get_group_requirement(set(['foo']))
+        self.assertTrue(requirement._group_requirement)
+
+    def test_predicate(self):
+        requirement = _get_group_requirement('foo')
+        self.assertTrue(requirement._group_requirement)
+
+        requirement = _get_group_requirement('bar', show_expected=True)
+        self.assertTrue(requirement._group_requirement)
+
+    @unittest.skip('TODO: Implement using new @group_requirement decorator.')
+    def test_sequence(self):  # For base-item sequences.
+        requirement = _get_group_requirement(['foo'])
+        self.assertTrue(requirement._group_requirement)
+
+    def test_already_requirement(self):
+        """If the requirement is already a group requirement, then the
+        original object should be returned.
+        """
+        requirement1 = _get_group_requirement('foo')
+        requirement2 = _get_group_requirement(requirement1)
+        self.assertIs(requirement1, requirement2)
 
 
 class TestApplyRequiredToData(unittest.TestCase):

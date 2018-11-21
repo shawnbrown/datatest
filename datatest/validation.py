@@ -15,6 +15,8 @@ from ._required import Required
 from ._required import RequiredPredicate
 from ._required import RequiredSequence
 from ._required import RequiredSet
+from ._required import required_predicate
+from ._required import required_set
 from ._utils import nonstringiter
 from ._utils import exhaustible
 from ._utils import iterpeek
@@ -595,6 +597,21 @@ def _get_required(requirement):
         return RequiredSequence(requirement)
 
     return RequiredPredicate(requirement)
+
+
+def _get_group_requirement(requirement, show_expected=False):
+    """Make sure *requirement* is a group requirement."""
+    if getattr(requirement, '_group_requirement', False):
+        return requirement
+
+    if isinstance(requirement, Set):
+        return required_set(requirement)
+
+    #if (not isinstance(requirement, BaseElement)
+    #        and isinstance(requirement, Sequence)):
+    #    return required_sequence(requirement)
+
+    return required_predicate(requirement, show_expected)
 
 
 def _apply_required_to_data(data, required):
