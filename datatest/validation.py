@@ -614,25 +614,23 @@ def _get_group_requirement(requirement, show_expected=False):
     return required_predicate(requirement, show_expected)
 
 
-def _apply_required_to_data(data, required):
-    """Apply *required* object to *data* and return any differences.
-    The *required* argument should be a Required class instance.
-    """
-    # Handle iterable non-BaseElement data.
+def _apply_required_to_data(data, requirement):
+    """Apply *requirement* object to *data* and return any differences."""
+    # Handle *data* that is a container of multiple elements.
     if not isinstance(data, BaseElement):
-        return required(data)  # <- EXIT!
+        requirement = _get_group_requirement(requirement)
+        return requirement(data)  # <- EXIT!
 
-    # Handle single-value BaseElement data.
-    if isinstance(required, RequiredPredicate):
-        diffs = required([data], show_expected=True)
-    else:
-        diffs = required([data])
-
-    if diffs:                 # When *data* is a BaseElement
-        diffs = list(diffs)   # and diffs is a single-item,
-        if len(diffs) == 1:   # return the single difference
-            diffs = diffs[0]  # alone, without a container.
-    return diffs
+    # Handle *data* that is a single-value BaseElement.
+    requirement = _get_group_requirement(requirement, show_expected=True)
+    result = requirement([data])
+    if result:
+        differences, description = result
+        differences = list(differences)
+        if len(differences) == 1:
+            differences = differences[0]  # Unwrap if single difference.
+        return differences, description
+    return None
 
 
 def _apply_required_to_mapping(data, required):
