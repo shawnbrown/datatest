@@ -1199,56 +1199,62 @@ class TestApplyRequiredToData(unittest.TestCase):
         self.assertEqual(differences, Invalid((1, 'x'), expected=(1, 'j')), msg='should have no container and include "expected"')
 
 
-@unittest.skip('Refactoring to use new @group_requirement decorator.')
 class TestApplyRequiredToMapping(unittest.TestCase):
+    @staticmethod
+    def evaluate_generators(obj):
+        return dict((k, list(v)) for k, v in obj.items())
+
     def test_no_differences(self):
         # Set membership.
         data = {'a': ['x', 'y'], 'b': ['x', 'y'],}
-        required = RequiredSet(set(['x', 'y']))
-        result = _apply_required_to_mapping(data, required)
-        self.assertEqual(dict(result), {})
+        requirement = set(['x', 'y'])
+        result = _apply_required_to_mapping(data, requirement)
+        self.assertIsNone(result)
 
         # Equality of single value.
         data = {'a': 'x', 'b': 'x'}
-        required = RequiredPredicate('x')
-        result = _apply_required_to_mapping(data, required)
-        self.assertEqual(dict(result), {})
+        requirement = 'x'
+        result = _apply_required_to_mapping(data, requirement)
+        self.assertIsNone(result)
 
-    def test_some_differences(self):
-        # Set membership.
+    def test_set_membership(self):
         data = {'a': ['x', 'x'], 'b': ['x', 'y', 'z']}
-        required = RequiredSet(set(['x', 'y']))
-        result = _apply_required_to_mapping(data, required)
+        requirement = set(['x', 'y'])
+        differences, description = _apply_required_to_mapping(data, requirement)
+        differences = self.evaluate_generators(differences)
         expected = {'a': [Missing('y')], 'b': [Extra('z')]}
-        self.assertEqual(dict(result), expected)
+        self.assertEqual(differences, expected)
+        self.assertEqual(description, 'does not satisfy set membership')
 
-        # Equality of single values.
+    def test_predicate_with_single_item_values(self):
         data = {'a': 'x', 'b': 10, 'c': 9}
-        required = RequiredPredicate(9)
-        result = _apply_required_to_mapping(data, required)
+        requirement = 9
+        differences, description = _apply_required_to_mapping(data, requirement)
         expected = {'a': Invalid('x'), 'b': Deviation(+1, 9)}
-        self.assertEqual(dict(result), expected)
+        self.assertEqual(differences, expected)
 
-        # Equality of multiple values.
+    def test_predicate_with_lists_of_values(self):
         data = {'a': ['x', 'j'], 'b': [10, 9], 'c': [9, 9]}
-        required = RequiredPredicate(9)
-        result = _apply_required_to_mapping(data, required)
+        requirement = 9
+        differences, description = _apply_required_to_mapping(data, requirement)
+        differences = self.evaluate_generators(differences)
         expected = {'a': [Invalid('x'), Invalid('j')], 'b': [Deviation(+1, 9)]}
-        self.assertEqual(dict(result), expected)
+        self.assertEqual(differences, expected)
 
-        # Equality of single tuples.
+    def test_tuple_with_single_item_values(self):
         data = {'a': ('x', 1.0), 'b': ('y', 2), 'c': ('x', 3)}
-        required = RequiredPredicate(('x', int))
-        result = _apply_required_to_mapping(data, required)
+        required = ('x', int)
+        differences, description = _apply_required_to_mapping(data, required)
         expected = {'a': Invalid(('x', 1.0)), 'b': Invalid(('y', 2))}
-        self.assertEqual(dict(result), expected)
+        self.assertEqual(differences, expected)
 
-        # Equality of multiple tuples.
+    def test_tuple_with_lists_of_values(self):
         data = {'a': [('x', 1.0), ('x', 1)], 'b': [('y', 2), ('x', 3)]}
-        required = RequiredPredicate(('x', int))
-        result = _apply_required_to_mapping(data, required)
+        required = ('x', int)
+        differences, description = _apply_required_to_mapping(data, required)
+        differences = self.evaluate_generators(differences)
         expected = {'a': [Invalid(('x', 1.0))], 'b': [Invalid(('y', 2))]}
-        self.assertEqual(dict(result), expected)
+        self.assertEqual(differences, expected)
 
 
 @unittest.skip('Refactoring to use new @group_requirement decorator.')

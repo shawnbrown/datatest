@@ -633,9 +633,9 @@ def _apply_required_to_data(data, requirement):
     return None
 
 
-def _apply_required_to_mapping(data, required):
-    """Apply *required* object to mapping of *data* values and return a
-    mapping of any differences.
+def _apply_required_to_mapping(data, requirement):
+    """Apply *requirement* object to mapping of *data* values and
+    return a mapping of any differences and a description.
     """
     if isinstance(data, Mapping):
         data_items = getattr(data, 'iteritems', data.items)()
@@ -644,20 +644,28 @@ def _apply_required_to_mapping(data, required):
     else:
         raise TypeError('data must be mapping or iterable of key-value items')
 
-    for key, actual in data_items:
-        if isinstance(actual, BaseElement):
-            single_item = True
-            actual = [actual]
-        else:
-            single_item = False
+    requirement = _get_group_requirement(requirement)
 
-        differences = required(actual)
+    differences = dict()
+    for key, value in data_items:
+        result = _apply_required_to_data(value, requirement)
+        if result:
+            differences[key] = result
 
-        if differences:
-            differences = list(differences)
-            if single_item and len(differences) == 1:
-                differences = differences[0]
-            yield key, differences
+    if not differences:
+        return None  # <- EXIT!
+
+    # Get single description text.
+    _, description = next(iter(getattr(differences, 'itervalues', differences.values)()))
+
+    # Check descriptions and format dictionary values.
+    for key, value in getattr(differences, 'iteritems', differences.items)():
+        diffs, desc = value
+        if description and description != desc:  # If descriptions are not all
+            description = None                   # the same, then clear it.
+        differences[key] = diffs
+
+    return differences, description or 'does not satisfy requirement'
 
 
 def _apply_mapping_to_mapping(data, requirement):
