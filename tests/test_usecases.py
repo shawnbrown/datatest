@@ -66,6 +66,7 @@ class TestValidateIdioms(unittest.TestCase):
         compare = datatest.ProxyGroup(['foo', 'FOO'])
         datatest.validate(*compare.lower())
 
+    @unittest.skip('Waiting to reimplement sequence validation.')
     def test_mappings_of_sequences(self):
         """Should be able to compare mappings of sequences and
         allow differences across keys (e.g., with allowed.extra()
