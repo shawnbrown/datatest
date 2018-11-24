@@ -1371,6 +1371,33 @@ class TestApplyMappingToMapping(unittest.TestCase):
         expected = {'b': [Missing('z')]}
         self.assertEqual(differences, expected)
 
+    def test_mismatched_keys(self):
+        # Mapping of single-items (BaseElement objects).
+        differences, _ = _apply_mapping_to_mapping(
+            data={'a': ('abc', 1), 'c': ('abc', 2.0)},
+            requirement={'a': ('abc', int), 'b': ('abc', float)},
+        )
+        expected = {
+            'b': Missing(('abc', float)),
+            'c': Extra(('abc', 2.0)),
+        }
+        self.assertEqual(differences, expected)
+
+        # Mapping of containers (lists of BaseElement objects).
+        differences, _ = _apply_mapping_to_mapping(
+            data={
+                'a': [('abc', 1), ('abc', 2)],
+                'c': [('abc', 1.0), ('abc', 2.0)],
+            },
+            requirement={'a': ('abc', int), 'b': ('abc', float)},
+        )
+        differences = self.evaluate_generators(differences)
+        expected = {
+            'c': [Extra(('abc', 1.0)), Extra(('abc', 2.0))],
+            'b': Missing(('abc', float)),
+        }
+        self.assertEqual(differences, expected)
+
     def test_empty_vs_nonempty_values(self):
         empty = {}
         nonempty = {'a': set(['x'])}
@@ -1380,7 +1407,7 @@ class TestApplyMappingToMapping(unittest.TestCase):
 
         differences, _ = _apply_mapping_to_mapping(nonempty, empty)
         differences = self.evaluate_generators(differences)
-        self.assertEqual(differences, {'a': Extra(set(['x']))})
+        self.assertEqual(differences, {'a': [Extra('x')]})
 
         differences, _ = _apply_mapping_to_mapping(empty, nonempty)
         differences = self.evaluate_generators(differences)
@@ -1473,34 +1500,5 @@ class TestValidate2(unittest.TestCase):
         expected = {
             'a': [Invalid(('abc', 1.0))],
             'b': [Invalid(('xyz', 2.0))],
-        }
-        self.assertEqual(actual, expected)
-
-    @unittest.skip('TODO: Implement mismatched key handling for validate2().')
-    def test_mapping_vs_mapping_mismatched_keys(self):
-        # Mapping of base-elements.
-        data = {'a': ('abc', 1), 'c': ('abc', 2.0)}
-        requirement = {'a': ('abc', int), 'b': ('abc', float)}
-        with self.assertRaises(ValidationError) as cm:
-            validate2(data, requirement)
-        actual = cm.exception.differences
-        expected = {
-            'b': Missing(('abc', float)),
-            'c': Extra(('abc', 2.0)),
-        }
-        self.assertEqual(actual, expected)
-
-        # Mapping of containers (lists of base-elements).
-        data = {
-            'a': [('abc', 1), ('abc', 2)],
-            'c': [('abc', 1.0), ('abc', 2.0)],
-        }
-        requirement = {'a': ('abc', int), 'b': ('abc', float)}
-        with self.assertRaises(ValidationError) as cm:
-            validate2(data, requirement)
-        actual = cm.exception.differences
-        expected = {
-            'c': [Extra(('abc', 1.0)), Extra(('abc', 2.0))],
-            'b': Missing(('abc', float)),
         }
         self.assertEqual(actual, expected)

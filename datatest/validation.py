@@ -687,14 +687,10 @@ def _apply_mapping_to_mapping(data, requirement):
     for key, actual in data_items:
         data_keys.add(key)
         expected = requirement.get(key, NOTFOUND)
-        if expected is NOTFOUND:
-            diff_obj = _make_difference(actual, NOTFOUND)
-            differences[key] = diff_obj
-        else:
-            result = _apply_required_to_data(actual, expected)
-            if result:
-                diff, desc = result
-                differences[key] = diff
+        result = _apply_required_to_data(actual, expected)
+        if result:
+            diff, desc = result
+            differences[key] = diff
 
     requirement_items = getattr(requirement, 'iteritems', requirement.items)()
     for key, expected in requirement_items:
