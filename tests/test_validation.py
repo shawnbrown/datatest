@@ -1125,7 +1125,6 @@ class TestGetGroupRequirement(unittest.TestCase):
         requirement = _get_group_requirement('bar', show_expected=True)
         self.assertTrue(requirement._group_requirement)
 
-    @unittest.skip('TODO: Implement using new @group_requirement decorator.')
     def test_sequence(self):  # For base-item sequences.
         requirement = _get_group_requirement(['foo'])
         self.assertTrue(requirement._group_requirement)

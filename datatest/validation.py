@@ -18,6 +18,7 @@ from ._required import RequiredSequence
 from ._required import RequiredSet
 from ._required import required_predicate
 from ._required import required_set
+from ._required import required_sequence
 from ._utils import nonstringiter
 from ._utils import exhaustible
 from ._utils import iterpeek
@@ -608,9 +609,9 @@ def _get_group_requirement(requirement, show_expected=False):
     if isinstance(requirement, Set):
         return required_set(requirement)
 
-    #if (not isinstance(requirement, BaseElement)
-    #        and isinstance(requirement, Sequence)):
-    #    return required_sequence(requirement)
+    if (not isinstance(requirement, BaseElement)
+            and isinstance(requirement, Sequence)):
+        return required_sequence(requirement)
 
     return required_predicate(requirement, show_expected)
 

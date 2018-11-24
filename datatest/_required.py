@@ -167,6 +167,63 @@ def required_set(requirement):
     return _required_set
 
 
+def required_sequence(requirement):
+    """Returns a group requirement function that checks for sequence order."""
+    if not isinstance(requirement, Sequence):
+        cls_name = requirement.__class__.__name__
+        message = 'must be sequence, got {0!r}'.format(cls_name)
+        raise TypeError(message)
+
+    @group_requirement
+    def _required_sequence(iterable):  # Closes over *requirement*.
+
+        def generate_differences(iterable, sequence):
+            if not isinstance(iterable, Sequence):
+                iterable = list(iterable)  # <- Needs to be subscriptable.
+
+            try:
+                matcher = difflib.SequenceMatcher(a=iterable, b=requirement)
+            except TypeError:
+                # Fall-back to slower "deep hash" only if needed.
+                data_proxy = tuple(_deephash(x) for x in iterable)
+                required_proxy = tuple(_deephash(x) for x in requirement)
+                matcher = difflib.SequenceMatcher(a=data_proxy, b=required_proxy)
+
+            for tag, istart, istop, jstart, jstop in matcher.get_opcodes():
+                if tag == 'insert':
+                    jvalues = sequence[jstart:jstop]
+                    for value in jvalues:
+                        yield Missing((istart, value))
+                elif tag == 'delete':
+                    ivalues = iterable[istart:istop]
+                    for index, value in enumerate(ivalues, start=istart):
+                        yield Extra((index, value))
+                elif tag == 'replace':
+                    ivalues = iterable[istart:istop]
+                    jvalues = sequence[jstart:jstop]
+
+                    ijvalues = zip(ivalues, jvalues)
+                    for index, (ival, jval) in enumerate(ijvalues, start=istart):
+                        yield Missing((index, jval))
+                        yield Extra((index, ival))
+
+                    ilength = istop - istart
+                    jlength = jstop - jstart
+                    if ilength < jlength:
+                        for value in jvalues[ilength:]:
+                            yield Missing((istop, value))
+                    elif ilength > jlength:
+                        remainder = ivalues[jlength:]
+                        new_start = istart + jlength
+                        for index, value in enumerate(remainder, start=new_start):
+                            yield Extra((index, value))
+
+        differences = generate_differences(iterable, requirement)
+        return differences, 'does not match required sequence'
+
+    return _required_sequence
+
+
 class Required(abc.ABC):
     """Base class for Required objects."""
     def failure_message(self):
