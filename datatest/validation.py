@@ -6,6 +6,7 @@ from ._compatibility import itertools
 from ._compatibility.builtins import callable
 from ._compatibility.collections.abc import Hashable
 from ._compatibility.collections.abc import Iterable
+from ._compatibility.collections.abc import Iterator
 from ._compatibility.collections.abc import Mapping
 from ._compatibility.collections.abc import Sequence
 from ._compatibility.collections.abc import Set
@@ -723,29 +724,21 @@ def validate2(data, requirement, msg=None):
     __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
 
     data = _normalize_data(data)
-    requirement = _normalize_requirement(requirement)
-
     if isinstance(data, Mapping):
         data = getattr(data, 'iteritems', data.items)()
+    requirement = _normalize_requirement(requirement)
 
     if isinstance(requirement, Mapping):
-        difference_items = _apply_mapping_to_mapping(data, requirement)
-        first_item, difference_items = iterpeek(difference_items, NOTFOUND)
-        if first_item is not NOTFOUND:
-            mapping_msg = 'does not satisfy requirements'
-            raise ValidationError(dict(difference_items), msg or mapping_msg)
+        result = _apply_mapping_to_mapping(data, requirement)
     elif _is_collection_of_items(data):
-        required = _get_required(requirement)
-        difference_items = _apply_required_to_mapping(data, required)
-        first_item, difference_items = iterpeek(difference_items, NOTFOUND)
-        if first_item is not NOTFOUND:
-            if not msg:
-                msg = required.failure_message()
-            raise ValidationError(dict(difference_items), msg)
+        result = _apply_required_to_mapping(data, requirement)
     else:
-        required = _get_required(requirement)
-        differences = _apply_required_to_data(data, required)
-        if differences:
-            if not msg:
-                msg = required.failure_message()
-            raise ValidationError(differences, msg)
+        result = _apply_required_to_data(data, requirement)
+
+    if result:
+        differences, description = result
+        if isinstance(differences, dict):
+            for k, v in differences.items():
+                if isinstance(v, Iterator):
+                    differences[k] = list(v)
+        raise ValidationError(differences, msg or description)

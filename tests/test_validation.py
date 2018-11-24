@@ -1387,7 +1387,6 @@ class TestApplyMappingToMapping(unittest.TestCase):
         self.assertEqual(differences, {'a': [Missing('x')]})
 
 
-@unittest.skip('Refactoring to use new @group_requirement decorator.')
 class TestValidate2(unittest.TestCase):
     """An integration test to check behavior of validate() function."""
     def test_required_vs_data_passing(self):
