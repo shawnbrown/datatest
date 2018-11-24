@@ -669,8 +669,9 @@ def _apply_required_to_mapping(data, requirement):
 
 
 def _apply_mapping_to_mapping(data, requirement):
-    """Apply mapping of requirements to mapping of *data* values and
-    return a mapping of any differences.
+    """Apply mapping of *requirement* values to a mapping of *data*
+    values and return a mapping of any differences and a description
+    or None.
     """
     if isinstance(data, Mapping):
         data_items = getattr(data, 'iteritems', data.items)()
@@ -680,31 +681,33 @@ def _apply_mapping_to_mapping(data, requirement):
         raise TypeError('data must be mapping or iterable of key-value items')
 
     data_keys = set()
+    differences = dict()
+
     for key, actual in data_items:
+        data_keys.add(key)
         expected = requirement.get(key, NOTFOUND)
         if expected is NOTFOUND:
-            diff = _make_difference(actual, NOTFOUND, show_expected=True)
-            yield key, diff
+            diff_obj = _make_difference(actual, NOTFOUND)
+            differences[key] = diff_obj
         else:
-            data_keys.add(key)
-            required = _get_required(expected)
-            diff = _apply_required_to_data(actual, required)
-            if diff:
-                if not isinstance(diff, BaseElement):
-                    diff = list(diff)
-                yield key, diff
+            result = _apply_required_to_data(actual, expected)
+            if result:
+                diff, desc = result
+                differences[key] = diff
 
     requirement_items = getattr(requirement, 'iteritems', requirement.items)()
     for key, expected in requirement_items:
         if key not in data_keys:
-            required = _get_required(expected)
-            diff = _apply_required_to_data([], required)  # Try empty container.
-            if not diff:
-                diff = _make_difference(NOTFOUND, expected, show_expected=True)
+            result = _apply_required_to_data([], expected)  # Try empty container.
+            if result:
+                diff, desc = result
+            else:
+                diff = _make_difference(NOTFOUND, expected)
+            differences[key] = diff
 
-            if not isinstance(diff, BaseElement):
-                diff = list(diff)
-            yield key, diff
+    if not differences:
+        return None
+    return differences, 'does not satisfy requirements'
 
 
 def validate2(data, requirement, msg=None):

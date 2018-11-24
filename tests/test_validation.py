@@ -3,6 +3,7 @@ import re
 import textwrap
 from . import _unittest as unittest
 from datatest._utils import exhaustible
+from datatest._compatibility.collections.abc import Iterator
 
 from datatest.difference import BaseDifference
 from datatest.difference import Extra
@@ -1201,8 +1202,11 @@ class TestApplyRequiredToData(unittest.TestCase):
 
 class TestApplyRequiredToMapping(unittest.TestCase):
     @staticmethod
-    def evaluate_generators(obj):
-        return dict((k, list(v)) for k, v in obj.items())
+    def evaluate_generators(dic):
+        new_dic = dict()
+        for k, v in dic.items():
+            new_dic[k] = list(v) if isinstance(v, Iterator) else v
+        return new_dic
 
     def test_no_differences(self):
         # Set membership.
@@ -1257,101 +1261,130 @@ class TestApplyRequiredToMapping(unittest.TestCase):
         self.assertEqual(differences, expected)
 
 
-@unittest.skip('Refactoring to use new @group_requirement decorator.')
 class TestApplyMappingToMapping(unittest.TestCase):
     """Calling _apply_mapping_to_mapping() should run the appropriate
     comparison function (internally) for each value-group and
     return the results as an iterable of key-value items.
     """
+    @staticmethod
+    def evaluate_generators(dic):
+        new_dic = dict()
+        for k, v in dic.items():
+            new_dic[k] = list(v) if isinstance(v, Iterator) else v
+        return new_dic
+
     def test_no_differences(self):
         # Set membership.
         data = {'a': ['x', 'y']}
         result = _apply_mapping_to_mapping(data, {'a': set(['x', 'y'])})
-        self.assertEqual(dict(result), {})
+        self.assertIsNone(result)
 
         # Equality of single values.
         data = {'a': 'x', 'b': 'y'}
         result = _apply_mapping_to_mapping(data, {'a': 'x', 'b': 'y'})
-        self.assertEqual(dict(result), {})
+        self.assertIsNone(result)
 
     def test_bad_data_type(self):
         not_a_mapping = 'abc'
         a_mapping = {'a': 'abc'}
 
         with self.assertRaises(TypeError):
-            result = _apply_mapping_to_mapping(not_a_mapping, a_mapping)
-            dict(result)  # <- Evaluate generator.
+            _apply_mapping_to_mapping(not_a_mapping, a_mapping)
 
-    def test_some_differences(self):
-        # Set membership.
-        data = {'a': ['x', 'x'], 'b': ['x', 'y', 'z']}
-        result = _apply_mapping_to_mapping(data, {'a': set(['x', 'y']),
-                                                  'b': set(['x', 'y'])})
+    def test_set_membership_differences(self):
+        differences, _ = _apply_mapping_to_mapping(
+            {'a': ['x', 'x'], 'b': ['x', 'y', 'z']},
+            {'a': set(['x', 'y']), 'b': set(['x', 'y'])},
+        )
+        differences = self.evaluate_generators(differences)
         expected = {'a': [Missing('y')], 'b': [Extra('z')]}
-        self.assertEqual(dict(result), expected)
+        self.assertEqual(differences, expected)
 
-        # Equality of single values.
-        data = {'a': 'x', 'b': 10}
-        result = _apply_mapping_to_mapping(data, {'a': 'j', 'b': 9})
+    def test_equality_of_single_values(self):
+        differences, _ = _apply_mapping_to_mapping(
+            data={'a': 'x', 'b': 10},
+            requirement={'a': 'j', 'b': 9},
+        )
         expected = {'a': Invalid('x', expected='j'), 'b': Deviation(+1, 9)}
-        self.assertEqual(dict(result), expected)
+        self.assertEqual(differences, expected)
 
-        data = {'a': 'x', 'b': 10, 'c': 10}
-        result = _apply_mapping_to_mapping(data, {'a': 'j', 'b': 'k', 'c': 9})
+        differences, _ = _apply_mapping_to_mapping(
+            data={'a': 'x', 'b': 10, 'c': 10},
+            requirement={'a': 'j', 'b': 'k', 'c': 9},
+        )
         expected = {'a': Invalid('x', 'j'), 'b': Invalid(10, 'k'), 'c': Deviation(+1, 9)}
-        self.assertEqual(dict(result), expected)
+        self.assertEqual(differences, expected)
 
-        # Equality of multiple values.
-        data = {'a': ['x', 'j'], 'b': [10, 9]}
-        result = _apply_mapping_to_mapping(data, {'a': 'j', 'b': 9})
+    def test_equality_of_multiple_values(self):
+        differences, _ = _apply_mapping_to_mapping(
+            data={'a': ['x', 'j'], 'b': [10, 9]},
+            requirement={'a': 'j', 'b': 9},
+        )
+        differences = self.evaluate_generators(differences)
         expected = {'a': [Invalid('x')], 'b': [Deviation(+1, 9)]}
-        self.assertEqual(dict(result), expected)
+        self.assertEqual(differences, expected)
 
-        # Equality of single tuples.
-        data = {'a': (1, 'x'), 'b': (9, 10)}
-        result = _apply_mapping_to_mapping(data, {'a': (1, 'j'), 'b': (9, 9)})
+    def test_equality_of_single_tuples(self):
+        differences, _ = _apply_mapping_to_mapping(
+            data={'a': (1, 'x'), 'b': (9, 10)},
+            requirement={'a': (1, 'j'), 'b': (9, 9)},
+        )
         expected = {'a': Invalid((1, 'x'), expected=(1, 'j')),
                     'b': Invalid((9, 10), expected=(9, 9))}
-        self.assertEqual(dict(result), expected)
+        self.assertEqual(differences, expected)
 
-        # Equality of multiple tuples.
-        data = {'a': [(1, 'j'), (1, 'x')], 'b': [(9, 9), (9, 10)]}
-        result = _apply_mapping_to_mapping(data, {'a': (1, 'j'), 'b': (9, 9)})
+    def test_equality_of_multiple_tuples(self):
+        differences, _ = _apply_mapping_to_mapping(
+            data={'a': [(1, 'j'), (1, 'x')], 'b': [(9, 9), (9, 10)]},
+            requirement={'a': (1, 'j'), 'b': (9, 9)},
+        )
+        differences = self.evaluate_generators(differences)
         expected = {'a': [Invalid((1, 'x'))],
                     'b': [Invalid((9, 10))]}
-        self.assertEqual(dict(result), expected)
+        self.assertEqual(differences, expected)
 
     def test_missing_keys(self):
         # Equality of multiple values, missing key with single item.
-        data = {'a': ['x', 'j'], 'b': [10, 9]}
-        result = _apply_mapping_to_mapping(data, {'a': 'j', 'b': 9, 'c': 'z'})
+        differences, _ = _apply_mapping_to_mapping(
+            data={'a': ['x', 'j'], 'b': [10, 9]},
+            requirement={'a': 'j', 'b': 9, 'c': 'z'},
+        )
+        differences = self.evaluate_generators(differences)
         expected = {'a': [Invalid('x')], 'b': [Deviation(+1, 9)], 'c': Missing('z')}
-        self.assertEqual(dict(result), expected)
+        self.assertEqual(differences, expected)
 
         # Equality of multiple values, missing key with single item.
-        data = {'a': ['x', 'j'], 'b': [10, 9], 'c': 'z'}
-        result = _apply_mapping_to_mapping(data, {'a': 'j', 'b': 9})
+        differences, _ = _apply_mapping_to_mapping(
+            data={'a': ['x', 'j'], 'b': [10, 9], 'c': 'z'},
+            requirement={'a': 'j', 'b': 9},
+        )
+        differences = self.evaluate_generators(differences)
         expected = {'a': [Invalid('x')], 'b': [Deviation(+1, 9)], 'c': Extra('z')}
-        self.assertEqual(dict(result), expected)
+        self.assertEqual(differences, expected)
 
         # Missing key, set membership.
-        data = {'a': 'x'}
-        result = _apply_mapping_to_mapping(data, {'a': 'x', 'b': set(['z'])})
+        differences, _ = _apply_mapping_to_mapping(
+            data={'a': 'x'},
+            requirement={'a': 'x', 'b': set(['z'])},
+        )
+        differences = self.evaluate_generators(differences)
         expected = {'b': [Missing('z')]}
-        self.assertEqual(dict(result), expected)
+        self.assertEqual(differences, expected)
 
     def test_empty_vs_nonempty_values(self):
         empty = {}
         nonempty = {'a': set(['x'])}
 
         result = _apply_mapping_to_mapping(empty, empty)
-        self.assertEqual(dict(result), {})
+        self.assertIsNone(result)
 
-        result = _apply_mapping_to_mapping(nonempty, empty)
-        self.assertEqual(dict(result), {'a': Extra(set(['x']))})
+        differences, _ = _apply_mapping_to_mapping(nonempty, empty)
+        differences = self.evaluate_generators(differences)
+        self.assertEqual(differences, {'a': Extra(set(['x']))})
 
-        result = _apply_mapping_to_mapping(empty, nonempty)
-        self.assertEqual(dict(result), {'a': [Missing('x')]})
+        differences, _ = _apply_mapping_to_mapping(empty, nonempty)
+        differences = self.evaluate_generators(differences)
+        self.assertEqual(differences, {'a': [Missing('x')]})
 
 
 @unittest.skip('Refactoring to use new @group_requirement decorator.')
