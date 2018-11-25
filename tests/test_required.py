@@ -113,7 +113,7 @@ class TestGroupRequirement(unittest.TestCase):
 
         diffs, desc = func([1, 2, 3])
         self.assertEqual(list(diffs), [Missing(1)])
-        self.assertEqual(desc, 'does not satisfy requirement', msg='default description')
+        self.assertIsNone(desc)
 
     def test_tuple_of_diffs(self):
         """Should not mistake a 2-tuple of difference objects for a
@@ -126,7 +126,7 @@ class TestGroupRequirement(unittest.TestCase):
 
         diffs, desc = func([1, 2, 3])
         self.assertEqual(list(diffs), [Missing(1), Missing(2)])
-        self.assertEqual(desc, 'does not satisfy requirement')
+        self.assertIsNone(desc)
 
     def test_empty_iter(self):
         """Empty iterable result should be converted to None."""

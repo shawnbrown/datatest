@@ -102,7 +102,7 @@ def group_requirement(func):
             differences, description = result
         else:
             differences = result
-            description = 'does not satisfy requirement'
+            description = None
 
         if not isinstance(differences, Iterable):
             func_name = getattr(func, '__name__', func.__class__.__name__)

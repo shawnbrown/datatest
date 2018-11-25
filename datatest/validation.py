@@ -665,7 +665,7 @@ def _apply_required_to_mapping(data, requirement):
             description = None                   # the same, then clear it.
         differences[key] = diffs
 
-    return differences, description or 'does not satisfy requirement'
+    return differences, description
 
 
 def _apply_mapping_to_mapping(data, requirement):
@@ -688,22 +688,33 @@ def _apply_mapping_to_mapping(data, requirement):
         expected = requirement.get(key, NOTFOUND)
         result = _apply_required_to_data(actual, expected)
         if result:
-            diff, desc = result
-            differences[key] = diff
+            differences[key] = result
 
     requirement_items = getattr(requirement, 'iteritems', requirement.items)()
     for key, expected in requirement_items:
         if key not in data_keys:
             result = _apply_required_to_data([], expected)  # Try empty container.
-            if result:
-                diff, desc = result
-            else:
+            if not result:
                 diff = _make_difference(NOTFOUND, expected)
-            differences[key] = diff
+                result = (diff, NOTFOUND)
+            differences[key] = result
 
     if not differences:
-        return None
-    return differences, 'does not satisfy requirements'
+        return None  # <- EXIT!
+
+    # Get first description from results.
+    itervalues = getattr(differences, 'itervalues', differences.values)()
+    filtered = (x for _, x in itervalues if (x and x is not NOTFOUND))
+    description = next(filtered, None)
+
+    # Finalize description and format dictionary values.
+    for key, value in getattr(differences, 'iteritems', differences.items)():
+        diffs, desc = value
+        if description and (desc is not NOTFOUND) and (description != desc):
+            description = None
+        differences[key] = diffs
+
+    return differences, description
 
 
 def validate2(data, requirement, msg=None):
@@ -736,4 +747,5 @@ def validate2(data, requirement, msg=None):
             for k, v in differences.items():
                 if isinstance(v, Iterator):
                     differences[k] = list(v)
-        raise ValidationError(differences, msg or description)
+        message = msg or description or 'does not satisfy requirement'
+        raise ValidationError(differences, message)

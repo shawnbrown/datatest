@@ -1208,13 +1208,13 @@ class TestApplyRequiredToData(unittest.TestCase):
         _, description = _apply_required_to_data('bar', requirement1)
         self.assertEqual(description, 'some message')
 
-        # Requirement returns differences only (uses default description).
+        # Requirement returns differences only, description should be None.
         @group_requirement
         def requirement2(iterable):
             return [Invalid('bar')]
 
         _, description = _apply_required_to_data('bar', requirement2)
-        self.assertEqual(description, 'does not satisfy requirement')
+        self.assertIsNone(description)
 
 
 class TestApplyRequiredToMapping(unittest.TestCase):
@@ -1289,15 +1289,14 @@ class TestApplyRequiredToMapping(unittest.TestCase):
         _, description = _apply_required_to_mapping(data, requirement1)
         self.assertEqual(description, 'got some items')
 
-        # When messages are different, use default message.
+        # When messages are different, description should be None.
         @group_requirement
         def requirement2(iterable):
             iterable = list(iterable)
             return [Invalid('bar')], 'got {0} items'.format(len(iterable))
 
         _, description = _apply_required_to_mapping(data, requirement2)
-        default_description = 'does not satisfy requirement'
-        self.assertEqual(description, default_description)
+        self.assertIsNone(description)
 
 
 class TestApplyMappingToMapping(unittest.TestCase):
@@ -1452,7 +1451,6 @@ class TestApplyMappingToMapping(unittest.TestCase):
         differences = self.evaluate_generators(differences)
         self.assertEqual(differences, {'a': [Missing('x')]})
 
-    @unittest.skip('Waiting to refactor message handling.')
     def test_description_message(self):
         data = {'a': 'bar', 'b': ['bar', 'bar']}
 
@@ -1464,12 +1462,12 @@ class TestApplyMappingToMapping(unittest.TestCase):
         def func2(iterable):
             return [Invalid('bar')], 'some other message'
 
-        # When message is the same for all items, use provided message.
+        # When message is same for all items, use provided message.
         requirement1 = {'a': func1, 'b': func1}
         _, description = _apply_mapping_to_mapping(data, requirement1)
-        self.assertEqual(description, 'got some items')
+        self.assertEqual(description, 'some message')
 
-        # When messages are different, use default message.
+        # When messages are different, description should be None.
         requirement2 = {'a': func1, 'b': func2}
         _, description = _apply_mapping_to_mapping(data, requirement2)
         self.assertIsNone(description)
