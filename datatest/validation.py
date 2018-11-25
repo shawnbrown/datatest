@@ -657,10 +657,8 @@ def _apply_required_to_mapping(data, requirement):
     if not differences:
         return None  # <- EXIT!
 
-    # Get single description text.
-    _, description = next(iter(getattr(differences, 'itervalues', differences.values)()))
-
     # Check descriptions and format dictionary values.
+    _, description = next(iter(getattr(differences, 'itervalues', differences.values)()))
     for key, value in getattr(differences, 'iteritems', differences.items)():
         diffs, desc = value
         if description and description != desc:  # If descriptions are not all
