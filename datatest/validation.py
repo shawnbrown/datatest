@@ -657,13 +657,16 @@ def _apply_required_to_mapping(data, requirement):
     if not differences:
         return None  # <- EXIT!
 
-    # Check descriptions and format dictionary values.
-    _, description = next(iter(getattr(differences, 'itervalues', differences.values)()))
+    # Get first description from results.
+    itervalues = getattr(differences, 'itervalues', differences.values)()
+    description = next((x for _, x in itervalues), None)
+
+    # Format dictionary values and finalize description.
     for key, value in getattr(differences, 'iteritems', differences.items)():
         diffs, desc = value
-        if description and description != desc:  # If descriptions are not all
-            description = None                   # the same, then clear it.
         differences[key] = diffs
+        if description and description != desc:
+            description = None
 
     return differences, description
 
@@ -704,15 +707,15 @@ def _apply_mapping_to_mapping(data, requirement):
 
     # Get first description from results.
     itervalues = getattr(differences, 'itervalues', differences.values)()
-    filtered = (x for _, x in itervalues if (x and x is not NOTFOUND))
+    filtered = (x for _, x in itervalues if x is not NOTFOUND)
     description = next(filtered, None)
 
-    # Finalize description and format dictionary values.
+    # Format dictionary values and finalize description.
     for key, value in getattr(differences, 'iteritems', differences.items)():
         diffs, desc = value
-        if description and (desc is not NOTFOUND) and (description != desc):
-            description = None
         differences[key] = diffs
+        if description and description != desc and desc is not NOTFOUND:
+            description = None
 
     return differences, description
 
