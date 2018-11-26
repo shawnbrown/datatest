@@ -54,6 +54,16 @@ class TestBaseDifference(unittest.TestCase):
         diff = MinimalDifference('A', None)
         self.assertEqual(repr(diff), "MinimalDifference('A', None)")
 
+        def myfunc(x):
+            return True
+        diff = MinimalDifference('A', myfunc)
+        self.assertEqual(repr(diff), "MinimalDifference('A', myfunc)")
+
+        class MyClass(object):
+            pass
+        diff = MinimalDifference('A', MyClass)
+        self.assertEqual(repr(diff), "MinimalDifference('A', MyClass)")
+
     def test_string_equal(self):
         first = MinimalDifference('A')
         second = MinimalDifference('A')
@@ -79,6 +89,34 @@ class TestSubclassRelationship(unittest.TestCase):
         self.assertTrue(issubclass(Missing, BaseDifference))
         self.assertTrue(issubclass(Invalid, BaseDifference))
         self.assertTrue(issubclass(Deviation, BaseDifference))
+
+
+class TestInvalid(unittest.TestCase):
+    def test_repr(self):
+        diff = Invalid('foo')
+        self.assertEqual(repr(diff), "Invalid('foo')")
+
+        diff = Invalid('foo', 'bar')
+        self.assertEqual(repr(diff), "Invalid('foo', expected='bar')")
+
+    def test_repr_with_callables(self):
+        def myfunc(x):
+            return True
+
+        class MyClass(object):
+            pass
+
+        diff = Invalid('foo', myfunc)
+        self.assertEqual(repr(diff), "Invalid('foo', expected=myfunc)")
+
+        diff = Invalid('foo', MyClass)
+        self.assertEqual(repr(diff), "Invalid('foo', expected=MyClass)")
+
+        diff = Invalid(myfunc, 'bar')
+        self.assertEqual(repr(diff), "Invalid(myfunc, expected='bar')")
+
+        diff = Invalid(MyClass, 'bar')
+        self.assertEqual(repr(diff), "Invalid(MyClass, expected='bar')")
 
 
 class TestDeviation(unittest.TestCase):

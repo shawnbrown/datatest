@@ -65,7 +65,8 @@ class BaseDifference(abc.ABC):
 
     def __repr__(self):
         cls_name = self.__class__.__name__
-        args_repr = ', '.join(repr(arg) for arg in self.args)
+        args_repr = ', '.join(
+            getattr(x, '__name__', repr(x)) for x in self.args)
         return '{0}({1})'.format(cls_name, args_repr)
 
 
@@ -158,11 +159,13 @@ class Invalid(BaseDifference):
 
     def __repr__(self):
         cls_name = self.__class__.__name__
-        if self.expected is None:
-            return '{0}({1!r})'.format(cls_name, self.invalid)
-        return '{0}({1!r}, expected={2!r})'.format(cls_name,
-                                                   self.invalid,
-                                                   self.expected)
+        invalid_repr = getattr(self.invalid, '__name__', repr(self.invalid))
+        if self.expected:
+            expected_repr = ', expected={0}'.format(
+                getattr(self.expected, '__name__', repr(self.expected)))
+        else:
+            expected_repr = ''
+        return '{0}({1}{2})'.format(cls_name, invalid_repr, expected_repr)
 
     @property
     def args(self):
