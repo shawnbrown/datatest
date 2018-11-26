@@ -4,6 +4,7 @@
 from .validation import *  # Validation error and functions.
 from .difference import *  # Difference classes.
 from .allowance import *   # Allowance context mangers.
+from ._required import group_requirement
 
 # Unittest-style API
 from .case import DataTestCase

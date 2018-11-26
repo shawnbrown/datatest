@@ -88,7 +88,12 @@ def _wrap_differences(differences, func):
 
 
 def group_requirement(func):
-    """Decorator for group requirement functions."""
+    """A decorator for group requirement functions. A group requirement
+    function should accept an iterable and return values appropriate
+    for instantiating a :exc:`ValidationError` (either an iterable of
+    differences or a 2-tuple containing an iterable of differences and
+    a description).
+    """
     if getattr(func, '_group_requirement', False):
         return func  # <- EXIT!
 
