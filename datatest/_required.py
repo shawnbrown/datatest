@@ -174,12 +174,35 @@ def required_set(requirement):
 
 def required_sequence(requirement):
     """Returns a group requirement function that checks for sequence
-    order.
+    order. If the candidate sequence does not match the required
+    sequence, Missing and Extra differences will be returned.
 
-    This function uses difflib.SequenceMatcher() which uses hashable
-    values. This said, required_sequence() will make a best effort
-    attempt to build a "deep hash" to sort many types of unhashable
-    objects.
+    Each difference will contain a two-tuple whose first item is the
+    slice-index where the difference starts (in the candidate) and
+    whose second item is the non-matching value itself::
+
+        >>> required = RequiredSequence(['a', 'b', 'c'])
+        >>> candidate = ['a', 'b', 'x']
+        >>> diffs = required(candidate)
+        >>> list(diffs)
+        [Missing((2, 'c')), Extra((2, 'x'))]
+
+    In the example above, the differences start at slice-index 2 in
+    the candidate sequence:
+
+        required sequence   ->  [ 'a', 'b', 'c', ]
+
+        candidate sequence  ->  [ 'a', 'b', 'x', ]
+                                 ^    ^    ^    ^
+                                 |    |    |    |
+        slice index         ->   0    1    2    3
+
+    .. note::
+        This function uses difflib.SequenceMatcher() which
+        expects hashable values. If given unhashable values,
+        required_sequence() will make a best effort attempt
+        to build a "deep hash" to sort many types of otherwise
+        unhashable objects.
     """
     if not isinstance(requirement, Sequence):
         cls_name = requirement.__class__.__name__
@@ -352,30 +375,6 @@ def _deephash(obj):
 
 
 class RequiredSequence(Required):
-    """Require a specified sequence of objects. If the candidate
-    sequence does not match the required sequence, Missing and Extra
-    differences will be returned.
-
-    Each difference will contain a two-tuple whose first item is the
-    slice-index where the difference starts (in the candidate) and
-    whose second item is the non-matching value itself::
-
-        >>> required = RequiredSequence(['a', 'b', 'c'])
-        >>> candidate = ['a', 'b', 'x']
-        >>> diffs = required(candidate)
-        >>> list(diffs)
-        [Missing((2, 'c')), Extra((2, 'x'))]
-
-    In the example above, the differences start at slice-index 2 in
-    the candidate sequence:
-
-        required sequence   ->  [ 'a', 'b', 'c', ]
-
-        candidate sequence  ->  [ 'a', 'b', 'x', ]
-                                 ^    ^    ^    ^
-                                 |    |    |    |
-        slice index         ->   0    1    2    3
-    """
     def __init__(self, sequence):
         if not isinstance(sequence, Sequence):
             cls_name = sequence.__class__.__name__
