@@ -110,11 +110,14 @@ class TestAssertValid(DataTestCase):
             self.assertValid(data, required)
 
         error = cm.exception
-        expected = {
-            (2, 4): [Invalid('x', expected='c'), Invalid(3, expected=4)],
-        }
+        expected = [
+            Missing((2, 'c')),
+            Extra((2, 'x')),
+            Missing((3, 4)),
+            Extra((3, 3)),
+        ]
         self.assertEqual(error.differences, expected)
-        self.assertEqual(error.args[1], 'does not match sequence order')
+        self.assertEqual(error.args[1], 'does not match required sequence')
 
     def test_required_other(self):
         """When *required* is a string or other object, _compare_other()

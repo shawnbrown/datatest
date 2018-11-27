@@ -9,7 +9,7 @@ from ._compatibility import contextlib
 from ._query.query import Query
 from ._query.query import Result
 
-from .validation import _get_invalid_info
+from .validation import validate2
 from .validation import ValidationError
 
 __datatest = True  # Used to detect in-module stack frames (which are
@@ -110,11 +110,9 @@ class DataTestCase(TestCase):
         # Setup traceback-hiding for pytest integration.
         __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
 
-        invalid_info = _get_invalid_info(data, requirement)
-        if invalid_info:
-            default_msg, differences = invalid_info  # Unpack values.
-            err = ValidationError(differences, msg or default_msg)
-
+        try:
+            validate2(data, requirement, msg=msg)
+        except ValidationError as err:
             def should_truncate(line_count, char_count):
                 return self.maxDiff and (char_count > self.maxDiff)
             err._should_truncate = should_truncate
