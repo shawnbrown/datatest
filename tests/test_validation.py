@@ -30,7 +30,6 @@ from datatest.validation import _get_msg_and_func
 from datatest.validation import _apply_mapping_requirement
 from datatest.validation import _normalize_data
 from datatest.validation import _normalize_requirement
-from datatest.validation import _get_invalid_info
 from datatest.validation import ValidationError
 from datatest.validation import valid
 
@@ -708,73 +707,6 @@ class TestDataRequirementNormalization(unittest.TestCase):
         output = _normalize_requirement(items)
         self.assertIsInstance(output, dict)
         self.assertEqual(output, {0: 'x', 1: 'y', 2: 'z'})
-
-
-class TestGetDifferenceInfo(unittest.TestCase):
-    def test_mapping_requirement(self):
-        """When *requirement* is a mapping, then *data* should also
-        be a mapping. If *data* is not a mapping, an error should be
-        raised.
-        """
-        mapping1 = {'a': 'x', 'b': 'y'}
-        mapping2 = {'a': 'x', 'b': 'z'}
-
-        info = _get_invalid_info(mapping1, mapping1)
-        self.assertIsNone(info)
-
-        # This next test uses _require_predicate() internally.
-        msg, diffs = _get_invalid_info(mapping1, mapping2)
-        self.assertTrue(exhaustible(diffs))
-        self.assertEqual(dict(diffs), {'b': Invalid('y', expected='z')})  # <- SHOWS EXPECTED!
-
-        with self.assertRaises(TypeError):
-            _get_invalid_info(set(['x', 'y']), mapping2)
-
-    def test_dictitems_data(self):
-        """"When *data* is an exhaustible iterator of dict-items and
-        *requirement* is a non-mapping.
-        """
-        items = DictItems(iter([('a', 'x'), ('b', 'y')]))
-        x_or_y = lambda value: value == 'x' or value == 'y'
-        result = _get_invalid_info(items, x_or_y)
-        self.assertIsNone(result)
-
-        items = DictItems(iter([('a', 'x'), ('b', 'y')]))
-        msg, diffs = _get_invalid_info(items, 'x')  # <- string
-        self.assertTrue(exhaustible(diffs))
-        self.assertEqual(dict(diffs), {'b': Invalid('y')})
-
-        items = DictItems(iter([('a', 'x'), ('b', 'y')]))
-        msg, diffs = _get_invalid_info(items, set('x'))  # <- set
-        self.assertTrue(exhaustible(diffs))
-        self.assertEqual(dict(diffs), {'b': [Missing('x'), Extra('y')]})
-
-    def test_mapping_data(self):
-        """"When *data* is a mapping, it should get converted into an
-        exhaustible iterator of dict-items.
-        """
-        mapping = {'a': 'x', 'b': 'y'}
-
-        x_or_y = lambda value: value == 'x' or value == 'y'
-        result = _get_invalid_info(mapping, x_or_y)
-        self.assertIsNone(result)
-
-        msg, diffs = _get_invalid_info(mapping, 'x')  # <- string
-        self.assertTrue(exhaustible(diffs))
-        self.assertEqual(dict(diffs), {'b': Invalid('y')})
-
-        msg, diffs = _get_invalid_info(mapping, set('x'))  # <- set
-        self.assertTrue(exhaustible(diffs))
-        self.assertEqual(dict(diffs), {'b': [Missing('x'), Extra('y')]})
-
-    def test_nonmapping(self):
-        """When neither *data* or *requirement* are mappings."""
-        result = _get_invalid_info(set(['x', 'y']), set(['x', 'y']))
-        self.assertIsNone(result)
-
-        msg, diffs = _get_invalid_info(set(['x']), set(['x', 'y']))
-        self.assertTrue(exhaustible(diffs))
-        self.assertEqual(list(diffs), [Missing('y')])
 
 
 # FOR TESTING: A minimal subclass of BaseDifference.

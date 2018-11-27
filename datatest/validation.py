@@ -343,40 +343,6 @@ def _normalize_requirement(requirement):
     return requirement
 
 
-def _get_invalid_info(data, requirement):
-    """If data is invalid, return a 2-tuple containing a default-message
-    string and an iterable of differences. If data is not invalid,
-    return None.
-    """
-    data = _normalize_data(data)
-    if isinstance(data, Mapping):
-        data = getattr(data, 'iteritems', data.items)()
-
-    requirement = _normalize_requirement(requirement)
-
-    # Get default-message and differences (if any exist).
-    if isinstance(requirement, Mapping):
-        default_msg = 'does not satisfy mapping requirement'
-        diffs = _apply_mapping_requirement(data, requirement)
-        diffs = _normalize_mapping_result(diffs)
-    elif _is_collection_of_items(data):
-        first_item, data = iterpeek(data)
-        default_msg, require_func = _get_msg_and_func(first_item[1], requirement)
-        diffs = ((k, require_func(v, requirement)) for k, v in data)
-        iter_to_list = lambda x: x if isinstance(x, BaseElement) else list(x)
-        diffs = ((k, iter_to_list(v)) for k, v in diffs if v)
-        diffs = _normalize_mapping_result(diffs)
-    else:
-        default_msg, require_func = _get_msg_and_func(data, requirement)
-        diffs = require_func(data, requirement)
-        if isinstance(diffs, BaseDifference):
-            diffs = [diffs]
-
-    if not diffs:
-        return None
-    return (default_msg, diffs)
-
-
 class ValidationError(AssertionError):
     """This exception is raised when data validation fails."""
 
