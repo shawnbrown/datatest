@@ -580,12 +580,12 @@ def validate2(data, requirement, msg=None):
         requirement = ['A', 'B', 'C', ...]  # <- Sequence of predicates
 
         datatest.validate(data, requirement)
-    """
-    # No explicit return value: This function should either
-    # raise an exception or pass without errors (returning
-    # an implicit None). To get a True/False return value,
-    # users should call the valid() function instead.
 
+    .. note::
+        This function will either raise an exception or pass without
+        errors. To get an explicit True/False return value, users
+        should use the :func:`valid` function instead.
+    """
     # Setup traceback-hiding for pytest integration.
     __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
 
