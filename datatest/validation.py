@@ -377,25 +377,6 @@ def _get_invalid_info(data, requirement):
     return (default_msg, diffs)
 
 
-def _check_single_value(value, requirement):
-    """Return a difference or list of differences if *value* fails to
-    satisfy *requirement*.
-    """
-    if isinstance(requirement, Set):
-        requirement = RequiredSet(requirement)
-
-    if isinstance(requirement, Required):
-        differences = requirement([value])
-        if differences:
-            return list(differences)
-    else:
-        matcher = get_matcher(requirement)
-        if not (value == matcher):
-            return _make_difference(value, requirement, show_expected=True)
-
-    return None
-
-
 class ValidationError(AssertionError):
     """This exception is raised when data validation fails."""
 

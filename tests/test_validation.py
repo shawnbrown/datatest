@@ -33,7 +33,6 @@ from datatest.validation import _normalize_requirement
 from datatest.validation import _get_invalid_info
 from datatest.validation import ValidationError
 from datatest.validation import valid
-from datatest.validation import _check_single_value
 
 from datatest._query.query import DictItems
 from datatest._query.query import Result
@@ -1041,56 +1040,6 @@ class TestValidationIntegration(unittest.TestCase):
 
         with self.assertRaises(ValidationError):
             validate2(a, b)
-
-
-class TestCheckSingleValue(unittest.TestCase):
-    def test_simple_equality(self):
-        """Should return None or single difference."""
-        self.assertIsNone(_check_single_value('a', 'a'))
-        self.assertEqual(
-            _check_single_value('a', 'b'),
-            Invalid('a', 'b'),
-        )
-
-        self.assertIsNone(_check_single_value(1, 1))
-        self.assertEqual(
-            _check_single_value(1, 5),
-            Deviation(-4, 5),
-        )
-
-    def test_predicate_matcher(self):
-        """Should return None or single difference."""
-        self.assertIsNone(_check_single_value('a', True))
-        self.assertEqual(
-            _check_single_value('a', False),
-            Invalid('a', False),
-        )
-
-    def test_set_of_values(self):
-        """Should return None or list of differences."""
-        self.assertIsNone(_check_single_value('abc', set(['abc'])))
-        self.assertEqual(
-            _check_single_value('abc', set(['abc', 'def'])),
-            [Missing('def')],
-        )
-
-    def test_required_subclass(self):
-        class RequiredFoo(Required):
-            @property
-            def msg(self):
-                return "equals 'foo'"
-
-            def filterfalse(self, iterable):
-                for x in iterable:
-                    if x != 'foo':
-                        yield Invalid('Value is not foo!')
-
-        required_foo = RequiredFoo()
-        self.assertIsNone(_check_single_value('foo', required_foo))
-        self.assertEqual(
-            _check_single_value('a', required_foo),
-            [Invalid('Value is not foo!')],
-        )
 
 
 class TestGetGroupRequirement(unittest.TestCase):
