@@ -507,17 +507,6 @@ class ValidationError(AssertionError):
         return '{0}({1!r})'.format(cls_name, self.differences)
 
 
-def valid(data, requirement):
-    """Return True if *data* satisfies *requirement* else return False.
-
-    See :func:`validate` for supported *data* and *requirement* values
-    and detailed validation behavior.
-    """
-    if _get_invalid_info(data, requirement):
-        return False
-    return True
-
-
 def _get_required(requirement):
     """Convert *requirement* into Required object."""
     if isinstance(requirement, Required):
@@ -734,3 +723,16 @@ def validate2(data, requirement, msg=None):
                     differences[k] = list(v)
         message = msg or description or 'does not satisfy requirement'
         raise ValidationError(differences, message)
+
+
+def valid(data, requirement):
+    """Return True if *data* satisfies *requirement* else return False.
+
+    See :func:`validate` for supported *data* and *requirement* values
+    and detailed validation behavior.
+    """
+    try:
+        validate2(data, requirement)
+    except ValidationError:
+        return False
+    return True
