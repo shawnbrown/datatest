@@ -507,21 +507,6 @@ class ValidationError(AssertionError):
         return '{0}({1!r})'.format(cls_name, self.differences)
 
 
-def _get_required(requirement):
-    """Convert *requirement* into Required object."""
-    if isinstance(requirement, Required):
-        return requirement
-
-    if isinstance(requirement, Set):
-        return RequiredSet(requirement)
-
-    if (not isinstance(requirement, BaseElement)
-            and isinstance(requirement, Sequence)):
-        return RequiredSequence(requirement)
-
-    return RequiredPredicate(requirement)
-
-
 def _get_group_requirement(requirement, show_expected=False):
     """Make sure *requirement* is a group requirement."""
     if getattr(requirement, '_group_requirement', False):

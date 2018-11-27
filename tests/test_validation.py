@@ -18,7 +18,6 @@ from datatest._required import RequiredSequence
 from datatest._required import RequiredSet
 from datatest._required import group_requirement
 from datatest.validation import _get_group_requirement
-from datatest.validation import _get_required
 from datatest.validation import _apply_required_to_data
 from datatest.validation import _apply_required_to_mapping
 from datatest.validation import _apply_mapping_to_mapping
@@ -1092,25 +1091,6 @@ class TestCheckSingleValue(unittest.TestCase):
             _check_single_value('a', required_foo),
             [Invalid('Value is not foo!')],
         )
-
-
-class TestGetRequired(unittest.TestCase):
-    def test_set(self):
-        required = _get_required(set(['foo']))
-        self.assertIsInstance(required, RequiredSet)
-
-    def test_predicate(self):
-        required = _get_required('foo')
-        self.assertIsInstance(required, RequiredPredicate)
-
-    def test_sequence(self):  # For base-item sequences.
-        required = _get_required(['foo'])
-        self.assertIsInstance(required, RequiredSequence)
-
-    def test_required(self):
-        original = RequiredPredicate('foo')
-        required = _get_required(original)
-        self.assertIs(required, original)
 
 
 class TestGetGroupRequirement(unittest.TestCase):
