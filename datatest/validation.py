@@ -508,59 +508,6 @@ class ValidationError(AssertionError):
 
 
 def validate(data, requirement, msg=None):
-    """Raise a :exc:`ValidationError` if *data* does not satisfy
-    *requirement* or pass without error if data is valid.
-
-    This is a rich comparison function. The given *requirement* can
-    be a single predicate, a mapping of predicates, or a list of
-    predicates (see :ref:`predicate-docs` for details).
-
-    For values that fail to satisfy their predicates, "difference"
-    objects are generated and used to create a :exc:`ValidationError`.
-    If a predicate function returns a difference, the result is
-    counted as a failure and the returned difference is used in
-    place of an automatically generated one.
-
-    **Single Predicates:** When *requirement* is a single predicate,
-    all of the values in *data* are checked for the same
-    criteria---*data* can be a single value (including strings),
-    a mapping, or an iterable::
-
-        data = [2, 4, 6, 8]
-
-        def iseven(x):  # <- Predicate function
-            return x % 2 == 0
-
-        datatest.validate(data, iseven)
-
-    **Mappings:** When *requirement* is a dictionary or other
-    mapping, the values in *data* are checked against predicates
-    of the same key (requires that *data* is also a mapping)::
-
-        data = {
-            'A': 1,
-            'B': 2,
-            'C': ...
-        }
-
-        requirement = {  # <- Mapping of predicates
-            'A': 1,
-            'B': 2,
-            'C': ...
-        }
-
-        datatest.validate(data, requirement)
-
-    **Sequences:** When *requirement* is list (or other non-tuple,
-    non-string sequence), the values in *data* are checked for
-    matching order (requires that *data* is a sequence)::
-
-        data = ['A', 'B', 'C', ...]
-
-        requirement = ['A', 'B', 'C', ...]  # <- Sequence of predicates
-
-        datatest.validate(data, requirement)
-    """
     # Setup traceback-hiding for pytest integration.
     __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
 
@@ -723,6 +670,56 @@ def _apply_mapping_to_mapping(data, requirement):
 def validate2(data, requirement, msg=None):
     """Raise a :exc:`ValidationError` if *data* does not satisfy
     *requirement* or pass without error if data is valid.
+
+    This is a rich comparison function. The given *requirement* can
+    be a single predicate, a mapping of predicates, or a list of
+    predicates (see :ref:`predicate-docs` for details).
+
+    For values that fail to satisfy their predicates, "difference"
+    objects are generated and used to create a :exc:`ValidationError`.
+    If a predicate function returns a difference, the result is
+    counted as a failure and the returned difference is used in
+    place of an automatically generated one.
+
+    **Single Predicates:** When *requirement* is a single predicate,
+    all of the values in *data* are checked for the same
+    criteria---*data* can be a single value (including strings),
+    a mapping, or an iterable::
+
+        data = [2, 4, 6, 8]
+
+        def iseven(x):  # <- Predicate function
+            return x % 2 == 0
+
+        datatest.validate(data, iseven)
+
+    **Mappings:** When *requirement* is a dictionary or other
+    mapping, the values in *data* are checked against predicates
+    of the same key (requires that *data* is also a mapping)::
+
+        data = {
+            'A': 1,
+            'B': 2,
+            'C': ...
+        }
+
+        requirement = {  # <- Mapping of predicates
+            'A': 1,
+            'B': 2,
+            'C': ...
+        }
+
+        datatest.validate(data, requirement)
+
+    **Sequences:** When *requirement* is list (or other non-tuple,
+    non-string sequence), the values in *data* are checked for
+    matching order (requires that *data* is a sequence)::
+
+        data = ['A', 'B', 'C', ...]
+
+        requirement = ['A', 'B', 'C', ...]  # <- Sequence of predicates
+
+        datatest.validate(data, requirement)
     """
     # No explicit return value: This function should either
     # raise an exception or pass without errors (returning
