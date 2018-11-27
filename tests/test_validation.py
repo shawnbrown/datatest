@@ -27,7 +27,6 @@ from datatest.validation import _require_set
 from datatest.validation import _require_predicate
 from datatest.validation import _require_predicate_from_iterable
 from datatest.validation import _get_msg_and_func
-from datatest.validation import _apply_mapping_requirement
 from datatest.validation import _normalize_data
 from datatest.validation import _normalize_requirement
 from datatest.validation import ValidationError
@@ -492,102 +491,6 @@ class TestGetMsgAndFunc(unittest.TestCase):
         default_msg, require_func = _get_msg_and_func({'a': 1}, {'a': 1})
         self.assertIsInstance(default_msg, str)
         self.assertEqual(require_func, _require_predicate)
-
-
-class TestApplyMappingRequirement(unittest.TestCase):
-    """Calling _apply_mapping_requirement() should run the appropriate
-    comparison function (internally) for each value-group and
-    return the results as an iterable of key-value items.
-    """
-    def test_no_differences(self):
-        # Sequence order.
-        data = {'a': ['x', 'y']}
-        result = _apply_mapping_requirement(data, {'a': ['x', 'y']})
-        self.assertEqual(dict(result), {})
-
-        # Set membership.
-        data = {'a': ['x', 'y']}
-        result = _apply_mapping_requirement(data, {'a': set(['x', 'y'])})
-        self.assertEqual(dict(result), {})
-
-        # Equality of single values.
-        data = {'a': 'x', 'b': 'y'}
-        result = _apply_mapping_requirement(data, {'a': 'x', 'b': 'y'})
-        self.assertEqual(dict(result), {})
-
-    def test_some_differences(self):
-        # Sequence order.
-        data = {'a': ['x', 'y']}
-        result = _apply_mapping_requirement(data, {'a': ['x', 'z']})
-        result = dict(result)
-        self.assertTrue(len(result) == 1)
-        self.assertEqual(result, {'a': {(1, 2): [Invalid('y', 'z')]}})
-
-        # Set membership.
-        data = {'a': ['x', 'x'], 'b': ['x', 'y', 'z']}
-        result = _apply_mapping_requirement(data, {'a': set(['x', 'y']),
-                                                   'b': set(['x', 'y'])})
-        expected = {'a': [Missing('y')], 'b': [Extra('z')]}
-        self.assertEqual(dict(result), expected)
-
-        # Equality of single values.
-        data = {'a': 'x', 'b': 10}
-        result = _apply_mapping_requirement(data, {'a': 'j', 'b': 9})
-        expected = {'a': Invalid('x', expected='j'), 'b': Deviation(+1, 9)}
-        self.assertEqual(dict(result), expected)
-
-        # Equality of multiple values.
-        data = {'a': ['x', 'j'], 'b': [10, 9]}
-        result = _apply_mapping_requirement(data, {'a': 'j', 'b': 9})
-        expected = {'a': [Invalid('x')], 'b': [Deviation(+1, 9)]}
-        self.assertEqual(dict(result), expected)
-
-        # Equality of single tuples.
-        data = {'a': (1, 'x'), 'b': (9, 10)}
-        result = _apply_mapping_requirement(data, {'a': (1, 'j'), 'b': (9, 9)})
-        expected = {'a': Invalid((1, 'x'), expected=(1, 'j')),
-                    'b': Invalid((9, 10), expected=(9, 9))}
-        self.assertEqual(dict(result), expected)
-
-        # Equality of multiple tuples.
-        data = {'a': [(1, 'j'), (1, 'x')], 'b': [(9, 9), (9, 10)]}
-        result = _apply_mapping_requirement(data, {'a': (1, 'j'), 'b': (9, 9)})
-        expected = {'a': [Invalid((1, 'x'))],
-                    'b': [Invalid((9, 10))]}
-        self.assertEqual(dict(result), expected)
-
-        # Equality of multiple values, missing key with single item.
-        data = {'a': ['x', 'j'], 'b': [10, 9]}
-        result = _apply_mapping_requirement(data, {'a': 'j', 'b': 9, 'c': 'z'})
-        expected = {'a': [Invalid('x')], 'b': [Deviation(+1, 9)], 'c': Missing('z')}
-        self.assertEqual(dict(result), expected)
-
-        # Missing key, set membership.
-        data = {'a': 'x'}
-        result = _apply_mapping_requirement(data, {'a': 'x', 'b': set(['z'])})
-        expected = {'b': [Missing('z')]}
-        self.assertEqual(dict(result), expected)
-
-    def test_mismatched_types(self):
-        nonsequence_type = {'a': 'x'}      # The value 'x' is not a sequence so
-        sequence_type = {'a': ['x', 'y']}  # comparing it against the required
-                                           # ['x', 'y'] should raise an error.
-        with self.assertRaises(ValueError):
-            result = _apply_mapping_requirement(nonsequence_type, sequence_type)
-            dict(result)  # Evaluate iterator.
-
-    def test_empty_vs_nonempty_values(self):
-        empty = {}
-        nonempty = {'a': set(['x'])}
-
-        result = _apply_mapping_requirement(empty, empty)
-        self.assertEqual(dict(result), {})
-
-        result = _apply_mapping_requirement(nonempty, empty)
-        self.assertEqual(dict(result), {'a': [Extra('x')]})
-
-        result = _apply_mapping_requirement(empty, nonempty)
-        self.assertEqual(dict(result), {'a': [Missing('x')]})
 
 
 class TestDataRequirementNormalization(unittest.TestCase):

@@ -239,40 +239,6 @@ def _get_msg_and_func(data, requirement):
     return equality_msg, equality_func
 
 
-def _apply_mapping_requirement(data, mapping):
-    if isinstance(data, Mapping):
-        data_items = getattr(data, 'iteritems', data.items)()
-    elif _is_collection_of_items(data):
-        data_items = data
-    else:
-        raise TypeError('data must be mapping or iterable of key-value items')
-
-    data_keys = set()
-    for key, actual in data_items:
-        data_keys.add(key)
-        expected = mapping.get(key, NOTFOUND)
-
-        _, require_func = _get_msg_and_func(actual, expected)
-        if require_func is _require_predicate:
-            require_func = _require_predicate_expected
-        diff = require_func(actual, expected)
-        if diff:
-            if not isinstance(diff, (tuple, BaseElement)):
-                diff = list(diff)
-            yield key, diff
-
-    mapping_items = getattr(mapping, 'iteritems', mapping.items)()
-    for key, expected in mapping_items:
-        if key not in data_keys:
-            _, require_func = _get_msg_and_func(NOTFOUND, expected)
-            if require_func is _require_predicate:
-                require_func = _require_predicate_expected
-            diff = require_func(NOTFOUND, expected)
-            if not isinstance(diff, (tuple, BaseElement)):
-                diff = list(diff)
-            yield key, diff
-
-
 def _normalize_data(data):
     if isinstance(data, Query):
         return data.execute()  # <- EXIT! (Returns Result for lazy evaluation.)
