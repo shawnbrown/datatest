@@ -42,7 +42,7 @@ from .difference import (
 
 
 __all__ = [
-    'validate',
+    'validate2',
     'valid',
     'ValidationError',
 ]
@@ -505,21 +505,6 @@ class ValidationError(AssertionError):
         if self.description:
             return '{0}({1!r}, {2!r})'.format(cls_name, self.differences, self.description)
         return '{0}({1!r})'.format(cls_name, self.differences)
-
-
-def validate(data, requirement, msg=None):
-    # Setup traceback-hiding for pytest integration.
-    __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
-
-    # Perform validation.
-    invalid_info = _get_invalid_info(data, requirement)
-    if invalid_info:
-        default_msg, differences = invalid_info  # Unpack values.
-        raise ValidationError(differences, msg or default_msg)
-
-    # Return Value: This function should not return an explicit value.
-    # If users need to test for True/False, they should use the valid()
-    # function instead.
 
 
 def valid(data, requirement):

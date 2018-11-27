@@ -5,6 +5,7 @@ from .validation import *  # Validation error and functions.
 from .difference import *  # Difference classes.
 from .allowance import *   # Allowance context mangers.
 from ._required import group_requirement
+validate = validate2  # Temporary alias for new validate implementation.
 
 # Unittest-style API
 from .case import DataTestCase

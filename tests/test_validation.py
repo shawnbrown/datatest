@@ -34,7 +34,6 @@ from datatest.validation import _normalize_requirement
 from datatest.validation import _get_invalid_info
 from datatest.validation import ValidationError
 from datatest.validation import valid
-from datatest.validation import validate
 from datatest.validation import _check_single_value
 
 from datatest._query.query import DictItems
@@ -1039,10 +1038,10 @@ class TestValidationIntegration(unittest.TestCase):
         a = set([1, 2, 3])
         b = set([2, 3, 4])
 
-        self.assertIsNone(validate(a, a))
+        self.assertIsNone(validate2(a, a))
 
         with self.assertRaises(ValidationError):
-            validate(a, b)
+            validate2(a, b)
 
 
 class TestCheckSingleValue(unittest.TestCase):
