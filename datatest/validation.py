@@ -273,18 +273,6 @@ def _apply_mapping_requirement(data, mapping):
             yield key, diff
 
 
-def _normalize_mapping_result(result):
-    """Accepts an iterator of dictionary items and returns a DictItems
-    object or None.
-    """
-    first_element, result = iterpeek(result)
-    if first_element:
-        if len(first_element) != 2:
-            raise ValueError('expects tuples of key-value pairs')
-        return DictItems(result)  # <- EXIT!
-    return None
-
-
 def _normalize_data(data):
     if isinstance(data, Query):
         return data.execute()  # <- EXIT! (Returns Result for lazy evaluation.)
