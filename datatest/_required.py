@@ -173,7 +173,14 @@ def required_set(requirement):
 
 
 def required_sequence(requirement):
-    """Returns a group requirement function that checks for sequence order."""
+    """Returns a group requirement function that checks for sequence
+    order.
+
+    This function uses difflib.SequenceMatcher() which uses hashable
+    values. This said, required_sequence() will make a best effort
+    attempt to build a "deep hash" to sort many types of unhashable
+    objects.
+    """
     if not isinstance(requirement, Sequence):
         cls_name = requirement.__class__.__name__
         message = 'must be sequence, got {0!r}'.format(cls_name)
