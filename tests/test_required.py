@@ -14,7 +14,6 @@ from datatest._required import required_predicate
 from datatest._required import required_set
 from datatest._required import required_sequence
 from datatest._required import Required
-from datatest._required import RequiredPredicate
 
 
 class TestFailureInfo(unittest.TestCase):
@@ -468,93 +467,3 @@ class TestRequirement(unittest.TestCase):
 
         result = requirement(['abc', 'abc', 'abc'])
         self.assertIsNone(result)
-
-
-class TestRequiredPredicate(unittest.TestCase):
-    def setUp(self):
-        isdigit = lambda x: x.isdigit()
-        self.requirement = RequiredPredicate(isdigit)
-
-    def test_all_true(self):
-        data = iter(['10', '20', '30'])
-        result = self.requirement(data)
-        self.assertIsNone(result)  # Predicat is true for all, returns None.
-
-    def test_some_false(self):
-        """When the predicate returns False, values should be returned as
-        Invalid() differences.
-        """
-        data = ['10', '20', 'XX']
-        result = self.requirement(data)
-        self.assertEqual(list(result), [Invalid('XX')])
-
-    def test_show_expected(self):
-        data = ['XX', 'YY']
-        requirement = RequiredPredicate('YY')
-        result = requirement(data, show_expected=True)
-        self.assertEqual(list(result), [Invalid('XX', expected='YY')])
-
-    def test_duplicate_false(self):
-        """Should return one difference for every false result (including
-        duplicates).
-        """
-        data = ['10', '20', 'XX', 'XX', 'XX']  # <- Multiple XX's.
-        result = self.requirement(data)
-        self.assertEqual(list(result), [Invalid('XX'), Invalid('XX'), Invalid('XX')])
-
-    def test_empty_iterable(self):
-        result = self.requirement([])
-        self.assertIsNone(result)
-
-    def test_some_false_deviations(self):
-        """When the predicate returns False, values should be returned as
-        Invalid() differences.
-        """
-        data = [10, 10, 12]
-        requirement = RequiredPredicate(10)
-
-        result = requirement(data)
-        self.assertEqual(list(result), [Deviation(+2, 10)])
-
-    def test_predicate_error(self):
-        """Errors should not be counted as False or otherwise hidden."""
-        data = ['10', '20', 'XX', 40]  # <- Predicate assumes string, int has no isdigit().
-        result = self.requirement(data)
-        with self.assertRaisesRegex(AttributeError, "no attribute 'isdigit'"):
-            list(result)
-
-    def test_predicate_class(self):
-        """The "predicate" property should be a proper Predicate class,
-        not simply a function.
-        """
-        isdigit = lambda x: x.isdigit()
-
-        requirement = RequiredPredicate(isdigit)
-        self.assertIsInstance(requirement.predicate, Predicate)
-
-        requirement = RequiredPredicate(Predicate(isdigit))
-        self.assertIsInstance(requirement.predicate, Predicate)
-
-    def test_returned_difference(self):
-        """When a predicate returns a difference object, it should used in
-        place of the default Invalid difference.
-        """
-        def func(x):
-            if 1 <= x <= 3:
-                return True
-            if x == 4:
-                return Invalid('four shalt thou not count')
-            if x == 5:
-                return Invalid('five is right out')
-            return False
-
-        requirement = RequiredPredicate(func)
-
-        data = [1, 2, 3, 4, 5, 6]
-        result = requirement(data)
-        expected = [
-            Invalid('four shalt thou not count'),
-            Invalid('five is right out'),
-            Invalid(6),
-        ]
-        self.assertEqual(list(result), expected)

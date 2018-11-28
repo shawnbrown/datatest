@@ -13,7 +13,6 @@ from ._compatibility.collections.abc import Set
 from ._predicate import MatcherBase
 from ._predicate import get_matcher
 from ._required import Required
-from ._required import RequiredPredicate
 from ._required import required_predicate
 from ._required import required_set
 from ._required import required_sequence

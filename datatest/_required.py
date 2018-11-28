@@ -280,36 +280,6 @@ class Required(abc.ABC):
         return failure_info
 
 
-class RequiredPredicate(Required):
-    def __init__(self, predicate):
-        if not isinstance(predicate, Predicate):
-            predicate = Predicate(predicate)
-        self.predicate = predicate
-
-    def failure_message(self):
-        return 'does not satisfy: {0}'.format(self.predicate)
-
-    def filterfalse(self, iterable, show_expected):
-        predicate = self.predicate  # Assign directly in local scope
-        obj = predicate.obj         # to avoid dot-lookups.
-
-        for element in iterable:
-            result = predicate(element)
-            if not result:
-                yield _make_difference(element, obj, show_expected)
-
-            elif isinstance(result, BaseDifference):
-                yield result
-
-    def __call__(self, iterable, show_expected=False):
-        # Get differences using *show_expected* argument.
-        differences = self.filterfalse(iterable, show_expected)
-        failure_info = FailureInfo(differences, 'does not satisfy requirement')
-        if failure_info.empty:
-            return None
-        return failure_info
-
-
 def _deephash(obj):
     """Return a "deep hash" value for the given object. If the
     object can not be deep-hashed, a TypeError is raised.
