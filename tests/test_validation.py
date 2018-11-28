@@ -12,7 +12,6 @@ from datatest.difference import Invalid
 from datatest.difference import Deviation
 from datatest.difference import NOTFOUND
 
-from datatest._required import Required
 from datatest._required import group_requirement
 from datatest.validation import _get_group_requirement
 from datatest.validation import _apply_required_to_data

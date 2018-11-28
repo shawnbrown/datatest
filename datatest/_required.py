@@ -259,27 +259,6 @@ def required_sequence(requirement):
     return _required_sequence
 
 
-class Required(abc.ABC):
-    """Base class for Required objects."""
-    def failure_message(self):
-        """Returns a string to describe the failure."""
-        return 'does not satisfy requirement'
-
-    @abc.abstractmethod
-    def filterfalse(self, iterable):
-        """Return a non-string iterable of differences for values in
-        *iterable* that do not satisfy the requirement.
-        """
-        raise NotImplementedError
-
-    def __call__(self, iterable):
-        differences = self.filterfalse(iterable)
-        failure_info = FailureInfo(differences, 'does not satisfy requirement')
-        if failure_info.empty:
-            return None
-        return failure_info
-
-
 def _deephash(obj):
     """Return a "deep hash" value for the given object. If the
     object can not be deep-hashed, a TypeError is raised.
