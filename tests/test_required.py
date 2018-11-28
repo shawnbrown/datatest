@@ -15,7 +15,6 @@ from datatest._required import required_set
 from datatest._required import required_sequence
 from datatest._required import Required
 from datatest._required import RequiredPredicate
-from datatest._required import RequiredSet
 
 
 class TestFailureInfo(unittest.TestCase):
@@ -559,43 +558,3 @@ class TestRequiredPredicate(unittest.TestCase):
             Invalid(6),
         ]
         self.assertEqual(list(result), expected)
-
-
-class TestRequiredSet(unittest.TestCase):
-    def setUp(self):
-        self.required = RequiredSet(set([1, 2, 3]))
-
-    def test_no_difference(self):
-        data = iter([1, 2, 3])
-        result = self.required(data)
-        self.assertIsNone(result)  # No difference, returns None.
-
-    def test_missing(self):
-        data = iter([1, 2])
-        result = self.required(data)
-        self.assertEqual(list(result), [Missing(3)])
-
-    def test_extra(self):
-        data = iter([1, 2, 3, 4])
-        result = self.required(data)
-        self.assertEqual(list(result), [Extra(4)])
-
-    def test_repeat_values(self):
-        """Repeat values should not result in duplicate differences."""
-        data = iter([1, 2, 3, 4, 4, 4])  # <- Multiple 4's.
-        result = self.required(data)
-        self.assertEqual(list(result), [Extra(4)])
-
-    def test_missing_and_extra(self):
-        data = iter([1, 3, 4])
-        result = self.required(data)
-
-        result = list(result)
-        self.assertEqual(len(result), 2)
-        self.assertIn(Missing(2), result)
-        self.assertIn(Extra(4), result)
-
-    def test_empty_iterable(self):
-        required = RequiredSet(set([1]))
-        result = required([])
-        self.assertEqual(list(result), [Missing(1)])

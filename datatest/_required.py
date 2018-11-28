@@ -310,32 +310,6 @@ class RequiredPredicate(Required):
         return failure_info
 
 
-class RequiredSet(Required):
-    def __init__(self, requirement):
-        self.requirement = requirement
-
-    def failure_message(self):
-        return 'does not satisfy set membership'
-
-    def filterfalse(self, iterable):
-        requirement = self.requirement  # Assign locally to avoid dot-lookups.
-
-        matching_elements = set()
-        extra_elements = set()
-        for element in iterable:
-            if element in requirement:
-                matching_elements.add(element)
-            else:
-                extra_elements.add(element)  # <- Build set of Extras so we
-                                             #    do not return duplicates.
-        for element in requirement:
-            if element not in matching_elements:
-                yield Missing(element)
-
-        for element in extra_elements:
-            yield Extra(element)
-
-
 def _deephash(obj):
     """Return a "deep hash" value for the given object. If the
     object can not be deep-hashed, a TypeError is raised.
