@@ -1,8 +1,6 @@
 """Tests for validation and comparison functions."""
-import re
 import textwrap
 from . import _unittest as unittest
-from datatest._utils import exhaustible
 from datatest._compatibility.collections.abc import Iterator
 
 from datatest.difference import BaseDifference
@@ -10,7 +8,6 @@ from datatest.difference import Extra
 from datatest.difference import Missing
 from datatest.difference import Invalid
 from datatest.difference import Deviation
-from datatest.difference import NOTFOUND
 
 from datatest._required import group_requirement
 from datatest.validation import _get_group_requirement
