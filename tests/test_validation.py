@@ -26,7 +26,6 @@ from datatest.validation import _require_sequence
 from datatest.validation import _require_set
 from datatest.validation import _require_predicate
 from datatest.validation import _require_predicate_from_iterable
-from datatest.validation import _get_msg_and_func
 from datatest.validation import _normalize_data
 from datatest.validation import _normalize_requirement
 from datatest.validation import ValidationError
@@ -419,78 +418,6 @@ class TestRequirePredicateTuple(unittest.TestCase):
         data = [('x', 'y'), ('x', 'x')]
         result = _require_predicate_from_iterable(data, (Ellipsis, 'y'))
         self.assertEqual(list(result), [Invalid(('x', 'x'))])
-
-
-class TestGetMsgAndFunc(unittest.TestCase):
-    def setUp(self):
-        self.multiple = ['A', 'B', 'A']
-        self.single = 'B'
-
-    def test_sequence(self):
-        default_msg, require_func = _get_msg_and_func(['A', 'B'], ['A', 'B'])
-        self.assertIsInstance(default_msg, str)
-        self.assertEqual(require_func, _require_sequence)
-
-    def test_tuple(self):
-        default_msg, require_func = _get_msg_and_func([('A', 'B')], ('A', 'B'))
-        self.assertIsInstance(default_msg, str)
-        self.assertEqual(require_func, _require_predicate_from_iterable)
-
-    def test_set(self):
-        default_msg, require_func = _get_msg_and_func(['A', 'B'], set(['A', 'B']))
-        self.assertIsInstance(default_msg, str)
-        self.assertEqual(require_func, _require_set)
-
-    def test_callable(self):
-        def mydocstr_func(x):
-            """helper docstring"""
-            return True
-        default_msg, require_func = _get_msg_and_func(['A', 'B'], mydocstr_func)
-        self.assertIn('helper docstring', default_msg, 'message should include docstring')
-        self.assertEqual(require_func, _require_predicate_from_iterable)
-
-        def myfunc(x):
-            return True
-        default_msg, require_func = _get_msg_and_func(['A', 'B'], myfunc)
-        self.assertIn("does not satisfy 'myfunc'", default_msg, 'when no docstring, message should include name')
-        self.assertEqual(require_func, _require_predicate_from_iterable)
-
-        mylambda = lambda x: True
-        default_msg, require_func = _get_msg_and_func(['A', 'B'], mylambda)
-        self.assertIn('<lambda>', default_msg, 'message should include function name')
-        self.assertEqual(require_func, _require_predicate_from_iterable)
-
-        class MyClass(object):
-            def __call__(_self, x):
-                return True
-        myinstance = MyClass()
-        default_msg, require_func = _get_msg_and_func(['A', 'B'], myinstance)
-        self.assertIn('MyClass', default_msg, 'message should include class name')
-        self.assertEqual(require_func, _require_predicate_from_iterable)
-
-    def test_regex(self):
-        myregex = re.compile('[AB]')
-        default_msg, require_func = _get_msg_and_func(['A', 'B'], myregex)
-        self.assertIn(repr(myregex.pattern), default_msg, 'message should include pattern')
-        self.assertEqual(require_func, _require_predicate_from_iterable)
-
-    def test_require_predicate_from_iterable(self):
-        default_msg, require_func = _get_msg_and_func(['A', 'B'], 'A')
-        self.assertIsInstance(default_msg, str)
-        self.assertEqual(require_func, _require_predicate_from_iterable)
-
-        default_msg, require_func = _get_msg_and_func([{'a': 1}, {'a': 1}], {'a': 1})
-        self.assertIsInstance(default_msg, str)
-        self.assertEqual(require_func, _require_predicate_from_iterable)
-
-    def test_predicate_single_value(self):
-        default_msg, require_func = _get_msg_and_func('A', 'A')
-        self.assertIsInstance(default_msg, str)
-        self.assertEqual(require_func, _require_predicate)
-
-        default_msg, require_func = _get_msg_and_func({'a': 1}, {'a': 1})
-        self.assertIsInstance(default_msg, str)
-        self.assertEqual(require_func, _require_predicate)
 
 
 class TestDataRequirementNormalization(unittest.TestCase):

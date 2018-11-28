@@ -294,12 +294,3 @@ def _require_callable(data, function):
     if first_element:  # If not empty, return diffs.
         return diffs
     return None
-
-
-_orig_get_msg_and_func = datatest.validation._get_msg_and_func
-def _get_msg_and_func(data, requirement):
-    if callable(requirement):
-        name = getattr(requirement, '__name__', requirement.__class__.__name__)
-        return 'does not satisfy {0!r} condition'.format(name), _require_callable
-    return _orig_get_msg_and_func(data, requirement)
-datatest.validation._get_msg_and_func = _get_msg_and_func

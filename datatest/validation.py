@@ -201,44 +201,6 @@ def _require_predicate_from_iterable(data, other):
     return None
 
 
-def _get_msg_and_func(data, requirement):
-    """
-    Each validation-function must accept an iterable of differences,
-    a single difference, or None.
-    """
-    # Check for special cases--*requirement* types
-    # that trigger a particular validation method.
-    if not isinstance(requirement, (str, tuple)) and \
-               isinstance(requirement, Sequence):
-        return 'does not match sequence order', _require_sequence
-
-    if isinstance(requirement, Set):
-        return 'does not satisfy set membership', _require_set
-
-    # If *requirement* did not match any of the special cases
-    # above, then return an appropriate equality function.
-    if isinstance(data, (tuple, BaseElement)):    # <- Based on *data* not
-        equality_func = _require_predicate        #    *requirement* like
-    else:                                         #    the rest.
-        equality_func = _require_predicate_from_iterable
-
-    if isinstance(requirement, _regex_type):
-        equality_msg = 'does not satisfy regex {0!r}'.format(requirement.pattern)
-    elif callable(requirement) and not isinstance(requirement, type):
-        docstring = getattr(requirement, '__doc__', None)
-        if docstring:
-            equality_msg = docstring.splitlines()[0]
-        else:
-            func_name = getattr(requirement, '__name__', repr(requirement))
-            equality_msg = 'does not satisfy {0!r}'.format(func_name)
-    elif isinstance(requirement, (MatcherBase, BaseElement)):
-        equality_msg = 'does not satisfy {0!r}'.format(requirement)
-    else:
-        equality_msg = 'does not satisfy requirement'
-
-    return equality_msg, equality_func
-
-
 def _normalize_data(data):
     if isinstance(data, Query):
         return data.execute()  # <- EXIT! (Returns Result for lazy evaluation.)
