@@ -216,8 +216,8 @@ def _get_group_requirement(requirement, show_expected=False):
     return required_predicate(requirement, show_expected)
 
 
-def _apply_required_to_data(data, requirement):
-    """Apply *requirement* object to *data* and return any differences."""
+def _data_vs_requirement(data, requirement):
+    """Validate *data* using *requirement* and return any differences."""
     # Handle *data* that is a container of multiple elements.
     if not isinstance(data, BaseElement):
         requirement = _get_group_requirement(requirement)
@@ -235,7 +235,7 @@ def _apply_required_to_data(data, requirement):
     return None
 
 
-def _apply_required_to_mapping(data, requirement):
+def _datadict_vs_requirement(data, requirement):
     """Apply *requirement* object to mapping of *data* values and
     return a mapping of any differences and a description.
     """
@@ -250,7 +250,7 @@ def _apply_required_to_mapping(data, requirement):
 
     differences = dict()
     for key, value in data_items:
-        result = _apply_required_to_data(value, requirement)
+        result = _data_vs_requirement(value, requirement)
         if result:
             differences[key] = result
 
@@ -271,7 +271,7 @@ def _apply_required_to_mapping(data, requirement):
     return differences, description
 
 
-def _apply_mapping_to_mapping(data, requirement):
+def _datadict_vs_requirementdict(data, requirement):
     """Apply mapping of *requirement* values to a mapping of *data*
     values and return a mapping of any differences and a description
     or None.
@@ -289,14 +289,14 @@ def _apply_mapping_to_mapping(data, requirement):
     for key, actual in data_items:
         data_keys.add(key)
         expected = requirement.get(key, NOTFOUND)
-        result = _apply_required_to_data(actual, expected)
+        result = _data_vs_requirement(actual, expected)
         if result:
             differences[key] = result
 
     requirement_items = getattr(requirement, 'iteritems', requirement.items)()
     for key, expected in requirement_items:
         if key not in data_keys:
-            result = _apply_required_to_data([], expected)  # Try empty container.
+            result = _data_vs_requirement([], expected)  # Try empty container.
             if not result:
                 diff = _make_difference(NOTFOUND, expected)
                 result = (diff, NOTFOUND)
@@ -388,11 +388,11 @@ def validate(data, requirement, msg=None):
     requirement = _normalize_requirement(requirement)
 
     if isinstance(requirement, Mapping):
-        result = _apply_mapping_to_mapping(data, requirement)
+        result = _datadict_vs_requirementdict(data, requirement)
     elif _is_collection_of_items(data):
-        result = _apply_required_to_mapping(data, requirement)
+        result = _datadict_vs_requirement(data, requirement)
     else:
-        result = _apply_required_to_data(data, requirement)
+        result = _data_vs_requirement(data, requirement)
 
     if result:
         differences, description = result

@@ -8,20 +8,19 @@ from datatest.difference import Extra
 from datatest.difference import Missing
 from datatest.difference import Invalid
 from datatest.difference import Deviation
-
+from datatest._query.query import DictItems
+from datatest._query.query import Result
 from datatest._required import group_requirement
-from datatest.validation import _get_group_requirement
-from datatest.validation import _apply_required_to_data
-from datatest.validation import _apply_required_to_mapping
-from datatest.validation import _apply_mapping_to_mapping
-from datatest.validation import validate
+
 from datatest.validation import _normalize_data
 from datatest.validation import _normalize_requirement
 from datatest.validation import ValidationError
+from datatest.validation import _get_group_requirement
+from datatest.validation import _data_vs_requirement
+from datatest.validation import _datadict_vs_requirement
+from datatest.validation import _datadict_vs_requirementdict
+from datatest.validation import validate
 from datatest.validation import valid
-
-from datatest._query.query import DictItems
-from datatest._query.query import Result
 
 try:
     import pandas
@@ -451,27 +450,27 @@ class TestGetGroupRequirement(unittest.TestCase):
         self.assertIs(requirement1, requirement2)
 
 
-class TestApplyRequiredToData(unittest.TestCase):
+class TestDataVsRequirement(unittest.TestCase):
     def test_set_against_container(self):
         requirement = set(['foo'])
 
-        result = _apply_required_to_data(['foo', 'foo'], requirement)
+        result = _data_vs_requirement(['foo', 'foo'], requirement)
         self.assertIsNone(result)
 
-        differences, _ = _apply_required_to_data(['foo', 'bar'], requirement)
+        differences, _ = _data_vs_requirement(['foo', 'bar'], requirement)
         self.assertEqual(list(differences), [Extra('bar')])
 
     def test_set_against_single_item(self):
         requirement = set(['foo'])
-        result = _apply_required_to_data('foo', requirement)
+        result = _data_vs_requirement('foo', requirement)
         self.assertIsNone(result)
 
         requirement = set(['foo', 'bar'])
-        differences, _ = _apply_required_to_data('bar', requirement)
+        differences, _ = _data_vs_requirement('bar', requirement)
         self.assertEqual(differences, Missing('foo'), msg='should not be in container')
 
         requirement = set(['foo'])
-        differences, _ = _apply_required_to_data('bar', requirement)
+        differences, _ = _data_vs_requirement('bar', requirement)
         differences = list(differences)
         self.assertEqual(len(differences), 2, msg='expects container if multiple diffs')
         self.assertIn(Missing('foo'), differences)
@@ -479,36 +478,36 @@ class TestApplyRequiredToData(unittest.TestCase):
 
     def test_predicate_against_container(self):
         requirement = 'foo'
-        result = _apply_required_to_data(['foo', 'foo'], requirement)
+        result = _data_vs_requirement(['foo', 'foo'], requirement)
         self.assertIsNone(result)
 
         requirement = 'foo'
-        differences, _ = _apply_required_to_data(['foo', 'bar'], requirement)
+        differences, _ = _data_vs_requirement(['foo', 'bar'], requirement)
         self.assertEqual(list(differences), [Invalid('bar')], msg='should be iterable of diffs')
 
         requirement = 10
-        differences, _ = _apply_required_to_data([10, 12], requirement)
+        differences, _ = _data_vs_requirement([10, 12], requirement)
         self.assertEqual(list(differences), [Deviation(+2, 10)], msg='should be iterable of diffs')
 
         requirement = (1, 'j')
-        differences, _ = _apply_required_to_data([(1, 'x'), (1, 'j')], requirement)
+        differences, _ = _data_vs_requirement([(1, 'x'), (1, 'j')], requirement)
         self.assertEqual(list(differences), [Invalid((1, 'x'))], msg='should be iterable of diffs and no "expected"')
 
     def test_predicate_against_single_item(self):
         requirement = 'foo'
-        result = _apply_required_to_data('foo', requirement)
+        result = _data_vs_requirement('foo', requirement)
         self.assertIsNone(result)
 
         requirement = 'foo'
-        differences, _ = _apply_required_to_data('bar', requirement)
+        differences, _ = _data_vs_requirement('bar', requirement)
         self.assertEqual(differences, Invalid('bar', expected='foo'), msg='should have no container and include "expected"')
 
         requirement = 10
-        differences, _ = _apply_required_to_data(12, requirement)
+        differences, _ = _data_vs_requirement(12, requirement)
         self.assertEqual(differences, Deviation(+2, 10), msg='should have no container')
 
         requirement = (1, 'j')
-        differences, _ = _apply_required_to_data((1, 'x'), requirement)
+        differences, _ = _data_vs_requirement((1, 'x'), requirement)
         self.assertEqual(differences, Invalid((1, 'x'), expected=(1, 'j')), msg='should have no container and include "expected"')
 
     def test_description_message(self):
@@ -517,7 +516,7 @@ class TestApplyRequiredToData(unittest.TestCase):
         def requirement1(iterable):
             return [Invalid('bar')], 'some message'
 
-        _, description = _apply_required_to_data('bar', requirement1)
+        _, description = _data_vs_requirement('bar', requirement1)
         self.assertEqual(description, 'some message')
 
         # Requirement returns differences only, description should be None.
@@ -525,11 +524,11 @@ class TestApplyRequiredToData(unittest.TestCase):
         def requirement2(iterable):
             return [Invalid('bar')]
 
-        _, description = _apply_required_to_data('bar', requirement2)
+        _, description = _data_vs_requirement('bar', requirement2)
         self.assertIsNone(description)
 
 
-class TestApplyRequiredToMapping(unittest.TestCase):
+class TestDatadictVsRequirement(unittest.TestCase):
     @staticmethod
     def evaluate_generators(dic):
         new_dic = dict()
@@ -541,19 +540,19 @@ class TestApplyRequiredToMapping(unittest.TestCase):
         # Set membership.
         data = {'a': ['x', 'y'], 'b': ['x', 'y'],}
         requirement = set(['x', 'y'])
-        result = _apply_required_to_mapping(data, requirement)
+        result = _datadict_vs_requirement(data, requirement)
         self.assertIsNone(result)
 
         # Equality of single value.
         data = {'a': 'x', 'b': 'x'}
         requirement = 'x'
-        result = _apply_required_to_mapping(data, requirement)
+        result = _datadict_vs_requirement(data, requirement)
         self.assertIsNone(result)
 
     def test_set_membership(self):
         data = {'a': ['x', 'x'], 'b': ['x', 'y', 'z']}
         requirement = set(['x', 'y'])
-        differences, description = _apply_required_to_mapping(data, requirement)
+        differences, description = _datadict_vs_requirement(data, requirement)
         differences = self.evaluate_generators(differences)
         expected = {'a': [Missing('y')], 'b': [Extra('z')]}
         self.assertEqual(differences, expected)
@@ -562,14 +561,14 @@ class TestApplyRequiredToMapping(unittest.TestCase):
     def test_predicate_with_single_item_values(self):
         data = {'a': 'x', 'b': 10, 'c': 9}
         requirement = 9
-        differences, description = _apply_required_to_mapping(data, requirement)
+        differences, description = _datadict_vs_requirement(data, requirement)
         expected = {'a': Invalid('x'), 'b': Deviation(+1, 9)}
         self.assertEqual(differences, expected)
 
     def test_predicate_with_lists_of_values(self):
         data = {'a': ['x', 'j'], 'b': [10, 9], 'c': [9, 9]}
         requirement = 9
-        differences, description = _apply_required_to_mapping(data, requirement)
+        differences, description = _datadict_vs_requirement(data, requirement)
         differences = self.evaluate_generators(differences)
         expected = {'a': [Invalid('x'), Invalid('j')], 'b': [Deviation(+1, 9)]}
         self.assertEqual(differences, expected)
@@ -577,14 +576,14 @@ class TestApplyRequiredToMapping(unittest.TestCase):
     def test_tuple_with_single_item_values(self):
         data = {'a': ('x', 1.0), 'b': ('y', 2), 'c': ('x', 3)}
         required = ('x', int)
-        differences, description = _apply_required_to_mapping(data, required)
+        differences, description = _datadict_vs_requirement(data, required)
         expected = {'a': Invalid(('x', 1.0)), 'b': Invalid(('y', 2))}
         self.assertEqual(differences, expected)
 
     def test_tuple_with_lists_of_values(self):
         data = {'a': [('x', 1.0), ('x', 1)], 'b': [('y', 2), ('x', 3)]}
         required = ('x', int)
-        differences, description = _apply_required_to_mapping(data, required)
+        differences, description = _datadict_vs_requirement(data, required)
         differences = self.evaluate_generators(differences)
         expected = {'a': [Invalid(('x', 1.0))], 'b': [Invalid(('y', 2))]}
         self.assertEqual(differences, expected)
@@ -598,7 +597,7 @@ class TestApplyRequiredToMapping(unittest.TestCase):
             iterable = list(iterable)
             return [Invalid('bar')], 'got some items'
 
-        _, description = _apply_required_to_mapping(data, requirement1)
+        _, description = _datadict_vs_requirement(data, requirement1)
         self.assertEqual(description, 'got some items')
 
         # When messages are different, description should be None.
@@ -607,11 +606,11 @@ class TestApplyRequiredToMapping(unittest.TestCase):
             iterable = list(iterable)
             return [Invalid('bar')], 'got {0} items'.format(len(iterable))
 
-        _, description = _apply_required_to_mapping(data, requirement2)
+        _, description = _datadict_vs_requirement(data, requirement2)
         self.assertIsNone(description)
 
 
-class TestApplyMappingToMapping(unittest.TestCase):
+class TestDatadictVsRequirementdict(unittest.TestCase):
     """Calling _apply_mapping_to_mapping() should run the appropriate
     comparison function (internally) for each value-group and
     return the results as an iterable of key-value items.
@@ -626,12 +625,12 @@ class TestApplyMappingToMapping(unittest.TestCase):
     def test_no_differences(self):
         # Set membership.
         data = {'a': ['x', 'y']}
-        result = _apply_mapping_to_mapping(data, {'a': set(['x', 'y'])})
+        result = _datadict_vs_requirementdict(data, {'a': set(['x', 'y'])})
         self.assertIsNone(result)
 
         # Equality of single values.
         data = {'a': 'x', 'b': 'y'}
-        result = _apply_mapping_to_mapping(data, {'a': 'x', 'b': 'y'})
+        result = _datadict_vs_requirementdict(data, {'a': 'x', 'b': 'y'})
         self.assertIsNone(result)
 
     def test_bad_data_type(self):
@@ -639,10 +638,10 @@ class TestApplyMappingToMapping(unittest.TestCase):
         a_mapping = {'a': 'abc'}
 
         with self.assertRaises(TypeError):
-            _apply_mapping_to_mapping(not_a_mapping, a_mapping)
+            _datadict_vs_requirementdict(not_a_mapping, a_mapping)
 
     def test_set_membership_differences(self):
-        differences, _ = _apply_mapping_to_mapping(
+        differences, _ = _datadict_vs_requirementdict(
             {'a': ['x', 'x'], 'b': ['x', 'y', 'z']},
             {'a': set(['x', 'y']), 'b': set(['x', 'y'])},
         )
@@ -651,14 +650,14 @@ class TestApplyMappingToMapping(unittest.TestCase):
         self.assertEqual(differences, expected)
 
     def test_equality_of_single_values(self):
-        differences, _ = _apply_mapping_to_mapping(
+        differences, _ = _datadict_vs_requirementdict(
             data={'a': 'x', 'b': 10},
             requirement={'a': 'j', 'b': 9},
         )
         expected = {'a': Invalid('x', expected='j'), 'b': Deviation(+1, 9)}
         self.assertEqual(differences, expected)
 
-        differences, _ = _apply_mapping_to_mapping(
+        differences, _ = _datadict_vs_requirementdict(
             data={'a': 'x', 'b': 10, 'c': 10},
             requirement={'a': 'j', 'b': 'k', 'c': 9},
         )
@@ -666,7 +665,7 @@ class TestApplyMappingToMapping(unittest.TestCase):
         self.assertEqual(differences, expected)
 
     def test_equality_of_multiple_values(self):
-        differences, _ = _apply_mapping_to_mapping(
+        differences, _ = _datadict_vs_requirementdict(
             data={'a': ['x', 'j'], 'b': [10, 9]},
             requirement={'a': 'j', 'b': 9},
         )
@@ -675,7 +674,7 @@ class TestApplyMappingToMapping(unittest.TestCase):
         self.assertEqual(differences, expected)
 
     def test_equality_of_single_tuples(self):
-        differences, _ = _apply_mapping_to_mapping(
+        differences, _ = _datadict_vs_requirementdict(
             data={'a': (1, 'x'), 'b': (9, 10)},
             requirement={'a': (1, 'j'), 'b': (9, 9)},
         )
@@ -684,7 +683,7 @@ class TestApplyMappingToMapping(unittest.TestCase):
         self.assertEqual(differences, expected)
 
     def test_equality_of_multiple_tuples(self):
-        differences, _ = _apply_mapping_to_mapping(
+        differences, _ = _datadict_vs_requirementdict(
             data={'a': [(1, 'j'), (1, 'x')], 'b': [(9, 9), (9, 10)]},
             requirement={'a': (1, 'j'), 'b': (9, 9)},
         )
@@ -695,7 +694,7 @@ class TestApplyMappingToMapping(unittest.TestCase):
 
     def test_missing_keys(self):
         # Equality of multiple values, missing key with single item.
-        differences, _ = _apply_mapping_to_mapping(
+        differences, _ = _datadict_vs_requirementdict(
             data={'a': ['x', 'j'], 'b': [10, 9]},
             requirement={'a': 'j', 'b': 9, 'c': 'z'},
         )
@@ -704,7 +703,7 @@ class TestApplyMappingToMapping(unittest.TestCase):
         self.assertEqual(differences, expected)
 
         # Equality of multiple values, missing key with single item.
-        differences, _ = _apply_mapping_to_mapping(
+        differences, _ = _datadict_vs_requirementdict(
             data={'a': ['x', 'j'], 'b': [10, 9], 'c': 'z'},
             requirement={'a': 'j', 'b': 9},
         )
@@ -713,7 +712,7 @@ class TestApplyMappingToMapping(unittest.TestCase):
         self.assertEqual(differences, expected)
 
         # Missing key, set membership.
-        differences, _ = _apply_mapping_to_mapping(
+        differences, _ = _datadict_vs_requirementdict(
             data={'a': 'x'},
             requirement={'a': 'x', 'b': set(['z'])},
         )
@@ -723,7 +722,7 @@ class TestApplyMappingToMapping(unittest.TestCase):
 
     def test_mismatched_keys(self):
         # Mapping of single-items (BaseElement objects).
-        differences, _ = _apply_mapping_to_mapping(
+        differences, _ = _datadict_vs_requirementdict(
             data={'a': ('abc', 1), 'c': ('abc', 2.0)},
             requirement={'a': ('abc', int), 'b': ('abc', float)},
         )
@@ -734,7 +733,7 @@ class TestApplyMappingToMapping(unittest.TestCase):
         self.assertEqual(differences, expected)
 
         # Mapping of containers (lists of BaseElement objects).
-        differences, _ = _apply_mapping_to_mapping(
+        differences, _ = _datadict_vs_requirementdict(
             data={
                 'a': [('abc', 1), ('abc', 2)],
                 'c': [('abc', 1.0), ('abc', 2.0)],
@@ -752,14 +751,14 @@ class TestApplyMappingToMapping(unittest.TestCase):
         empty = {}
         nonempty = {'a': set(['x'])}
 
-        result = _apply_mapping_to_mapping(empty, empty)
+        result = _datadict_vs_requirementdict(empty, empty)
         self.assertIsNone(result)
 
-        differences, _ = _apply_mapping_to_mapping(nonempty, empty)
+        differences, _ = _datadict_vs_requirementdict(nonempty, empty)
         differences = self.evaluate_generators(differences)
         self.assertEqual(differences, {'a': [Extra('x')]})
 
-        differences, _ = _apply_mapping_to_mapping(empty, nonempty)
+        differences, _ = _datadict_vs_requirementdict(empty, nonempty)
         differences = self.evaluate_generators(differences)
         self.assertEqual(differences, {'a': [Missing('x')]})
 
@@ -776,12 +775,12 @@ class TestApplyMappingToMapping(unittest.TestCase):
 
         # When message is same for all items, use provided message.
         requirement1 = {'a': func1, 'b': func1}
-        _, description = _apply_mapping_to_mapping(data, requirement1)
+        _, description = _datadict_vs_requirementdict(data, requirement1)
         self.assertEqual(description, 'some message')
 
         # When messages are different, description should be None.
         requirement2 = {'a': func1, 'b': func2}
-        _, description = _apply_mapping_to_mapping(data, requirement2)
+        _, description = _datadict_vs_requirementdict(data, requirement2)
         self.assertIsNone(description)
 
 
