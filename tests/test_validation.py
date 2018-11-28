@@ -41,12 +41,15 @@ except ImportError:
     numpy = None
 
 
-class TestDataRequirementNormalization(unittest.TestCase):
-    def test_normalize_data(self):
+class TestNormalizeData(unittest.TestCase):
+    def test_unchanged(self):
         data = [1, 2, 3]
         self.assertIs(_normalize_data(data), data, 'should return original object')
 
         data = iter([1, 2, 3])
+        self.assertIs(_normalize_data(data), data, 'should return original object')
+
+        data = Result(iter([1, 2, 3]), evaluation_type=tuple)
         self.assertIs(_normalize_data(data), data, 'should return original object')
 
     @unittest.skipIf(not pandas, 'pandas not found')
@@ -141,19 +144,24 @@ class TestDataRequirementNormalization(unittest.TestCase):
         result = _normalize_data(arr)
         self.assertIs(result, arr, msg='unsupported, returns unchanged')
 
-    def test_normalize_requirement(self):
+
+class TestNormalizeRequirement(unittest.TestCase):
+    def test_unchanged(self):
         requirement = [1, 2, 3]
         self.assertIs(_normalize_requirement(requirement), requirement,
             msg='should return original object')
 
+    def test_bad_type(self):
         with self.assertRaises(TypeError, msg='cannot use generic iter'):
             _normalize_requirement(iter([1, 2, 3]))
 
+    def test_result_object(self):
         result_obj = Result(iter([1, 2, 3]), evaluation_type=tuple)
         output = _normalize_requirement(result_obj)
         self.assertIsInstance(output, tuple)
         self.assertEqual(output, (1, 2, 3))
 
+    def test_dict_items(self):
         items = DictItems(iter([(0, 'x'), (1, 'y'), (2, 'z')]))
         output = _normalize_requirement(items)
         self.assertIsInstance(output, dict)
