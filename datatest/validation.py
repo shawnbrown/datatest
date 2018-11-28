@@ -48,9 +48,6 @@ __all__ = [
 ]
 
 
-_regex_type = type(re.compile(''))
-
-
 def _normalize_data(data):
     if isinstance(data, Query):
         return data.execute()  # <- EXIT! (Returns Result for lazy evaluation.)
