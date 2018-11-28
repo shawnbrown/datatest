@@ -1,23 +1,15 @@
 """Validation and comparison handling."""
-import difflib
-import re
 import sys
-from ._compatibility import itertools
-from ._compatibility.builtins import callable
-from ._compatibility.collections.abc import Hashable
 from ._compatibility.collections.abc import Iterable
 from ._compatibility.collections.abc import Iterator
 from ._compatibility.collections.abc import Mapping
 from ._compatibility.collections.abc import Sequence
 from ._compatibility.collections.abc import Set
-from ._predicate import MatcherBase
-from ._predicate import get_matcher
 from ._required import required_predicate
 from ._required import required_set
 from ._required import required_sequence
 from ._utils import nonstringiter
 from ._utils import exhaustible
-from ._utils import iterpeek
 from ._utils import _safesort_key
 from ._query.query import (
     BaseElement,
@@ -28,10 +20,6 @@ from ._query.query import (
 )
 from .difference import (
     BaseDifference,
-    Extra,
-    Missing,
-    Invalid,
-    Deviation,
     _make_difference,
     NOTFOUND,
 )
