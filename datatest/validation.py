@@ -26,7 +26,7 @@ from .difference import (
 
 
 __all__ = [
-    'validate2',
+    'validate',
     'valid',
     'ValidationError',
 ]
@@ -320,7 +320,7 @@ def _apply_mapping_to_mapping(data, requirement):
     return differences, description
 
 
-def validate2(data, requirement, msg=None):
+def validate(data, requirement, msg=None):
     """Raise a :exc:`ValidationError` if *data* does not satisfy
     *requirement* or pass without error if data is valid.
 
@@ -411,7 +411,7 @@ def valid(data, requirement):
     and detailed validation behavior.
     """
     try:
-        validate2(data, requirement)
+        validate(data, requirement)
     except ValidationError:
         return False
     return True

@@ -14,7 +14,7 @@ from datatest.validation import _get_group_requirement
 from datatest.validation import _apply_required_to_data
 from datatest.validation import _apply_required_to_mapping
 from datatest.validation import _apply_mapping_to_mapping
-from datatest.validation import validate2
+from datatest.validation import validate
 from datatest.validation import _normalize_data
 from datatest.validation import _normalize_requirement
 from datatest.validation import ValidationError
@@ -420,10 +420,10 @@ class TestValidationIntegration(unittest.TestCase):
         a = set([1, 2, 3])
         b = set([2, 3, 4])
 
-        self.assertIsNone(validate2(a, a))
+        self.assertIsNone(validate(a, a))
 
         with self.assertRaises(ValidationError):
-            validate2(a, b)
+            validate(a, b)
 
 
 class TestGetGroupRequirement(unittest.TestCase):
@@ -785,7 +785,7 @@ class TestApplyMappingToMapping(unittest.TestCase):
         self.assertIsNone(description)
 
 
-class TestValidate2(unittest.TestCase):
+class TestValidate(unittest.TestCase):
     """An integration test to check behavior of validate() function."""
     def test_required_vs_data_passing(self):
         """Single requirement to BaseElement or non-mapping
@@ -793,11 +793,11 @@ class TestValidate2(unittest.TestCase):
         """
         data = ('abc', 1)  # A single base element.
         requirement = ('abc', int)
-        self.assertIsNone(validate2(data, requirement))
+        self.assertIsNone(validate(data, requirement))
 
         data = [('abc', 1), ('abc', 2)]  # Non-mapping container of base elements.
         requirement = ('abc', int)
-        self.assertIsNone(validate2(data, requirement))
+        self.assertIsNone(validate(data, requirement))
 
     def test_required_vs_data_failing(self):
         """Apply single requirement to BaseElement or non-mapping
@@ -806,55 +806,55 @@ class TestValidate2(unittest.TestCase):
         with self.assertRaises(ValidationError) as cm:
             data = ('abc', 1.0)  # A single base element.
             requirement = ('abc', int)
-            validate2(data, requirement)
+            validate(data, requirement)
         differences = cm.exception.differences
         self.assertEqual(differences, [Invalid(('abc', 1.0), ('abc', int))])
 
         with self.assertRaises(ValidationError) as cm:
             data = [('abc', 1.0), ('xyz', 2)]  # Non-mapping container of base elements.
             requirement = ('abc', int)
-            validate2(data, requirement)
+            validate(data, requirement)
         differences = cm.exception.differences
         self.assertEqual(differences, [Invalid(('abc', 1.0)), Invalid(('xyz', 2))])
 
     def test_required_vs_mapping_passing(self):
         data = {'a': ('abc', 1), 'b': ('abc', 2)}  # Mapping of base-elements.
         requirement = ('abc', int)
-        self.assertIsNone(validate2(data, requirement))
+        self.assertIsNone(validate(data, requirement))
 
         data = {'a': [1, 2], 'b': [3, 4]}  # Mapping of containers.
         requirement = int
-        self.assertIsNone(validate2(data, requirement))
+        self.assertIsNone(validate(data, requirement))
 
     def test_required_vs_mapping_failing(self):
         with self.assertRaises(ValidationError) as cm:
             data = {'a': ('abc', 1.0), 'b': ('xyz', 2)}  # Mapping of base-elements.
             requirement = ('abc', int)
-            validate2(data, requirement)
+            validate(data, requirement)
         differences = cm.exception.differences
         self.assertEqual(differences, {'a': Invalid(('abc', 1.0)), 'b': Invalid(('xyz', 2))})
 
         with self.assertRaises(ValidationError) as cm:
             data = {'a': [1, 2.0], 'b': [3.0, 4]}  # Mapping of containers.
-            validate2(data, int)
+            validate(data, int)
         differences = cm.exception.differences
         self.assertEqual(differences, {'a': [Invalid(2.0)], 'b': [Invalid(3.0)]})
 
     def test_mapping_vs_mapping_passing(self):
         data = {'a': ('abc', 1), 'b': ('abc', 2.0)}  # Mapping of base-elements.
         requirement = {'a': ('abc', int), 'b': ('abc', float)}  # Mapping of requirements.
-        self.assertIsNone(validate2(data, requirement))
+        self.assertIsNone(validate(data, requirement))
 
         data = {'a': [('abc', 1), ('abc', 2)],
                 'b': [('abc', 1.0), ('abc', 2.0)]}  # Mapping of containers.
         requirement = {'a': ('abc', int), 'b': ('abc', float)}  # Mapping of requirements.
-        self.assertIsNone(validate2(data, requirement))
+        self.assertIsNone(validate(data, requirement))
 
     def test_mapping_vs_mapping_failing(self):
         with self.assertRaises(ValidationError) as cm:
             data = {'a': ('abc', 1.0), 'b': ('xyz', 2.0)}  # Mapping of base-elements.
             requirement = {'a': ('abc', int), 'b': ('abc', float)}  # Mapping of requirements.
-            validate2(data, requirement)
+            validate(data, requirement)
         actual = cm.exception.differences
         expected = {
             'a': Invalid(('abc', 1.0), ('abc', int)),
@@ -866,7 +866,7 @@ class TestValidate2(unittest.TestCase):
             data = {'a': [('abc', 1.0), ('abc', 2)],
                     'b': [('abc', 1.0), ('xyz', 2.0)]}  # Mapping of containers.
             requirement = {'a': ('abc', int), 'b': ('abc', float)}  # Mapping of requirements.
-            validate2(data, requirement)
+            validate(data, requirement)
         actual = cm.exception.differences
         expected = {
             'a': [Invalid(('abc', 1.0))],

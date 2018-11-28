@@ -36,11 +36,11 @@ class TestSelectorIdioms(unittest.TestCase):
         b = self.selector_b
 
         # A case we want to optimize.
-        datatest.validate2(a.fieldnames, set(a.fieldnames))
+        datatest.validate(a.fieldnames, set(a.fieldnames))
 
         # A case we want to optimize.
         with datatest.allowed.specific(datatest.Extra('C')):
-            datatest.validate2(a.fieldnames, set(b.fieldnames))
+            datatest.validate(a.fieldnames, set(b.fieldnames))
 
     def test_compare_rows(self):
         """Should be able to compare rows by calling a selector by
@@ -50,11 +50,11 @@ class TestSelectorIdioms(unittest.TestCase):
         b = self.selector_b
 
         # A case we want to optimize.
-        datatest.validate2(a(a.fieldnames), a(a.fieldnames))
+        datatest.validate(a(a.fieldnames), a(a.fieldnames))
 
         # A case we want to optimize (using ordered intersection of fieldnames).
         common_fields = tuple(x for x in a.fieldnames if x in b.fieldnames)
-        datatest.validate2(a(common_fields), b(common_fields))
+        datatest.validate(a(common_fields), b(common_fields))
 
 
 class TestValidateIdioms(unittest.TestCase):
@@ -64,7 +64,7 @@ class TestValidateIdioms(unittest.TestCase):
         the validate() function call.
         """
         compare = datatest.ProxyGroup(['foo', 'FOO'])
-        datatest.validate2(*compare.lower())
+        datatest.validate(*compare.lower())
 
     def test_mappings_of_sequences(self):
         """Should be able to compare mappings of sequences and
@@ -72,7 +72,7 @@ class TestValidateIdioms(unittest.TestCase):
         and allowed.missing()).
         """
         # Pull objects into local name space to improve readability.
-        validate = datatest.validation.validate2
+        validate = datatest.validation.validate
         allowed = datatest.allowed
         ValidationError = datatest.ValidationError
         Missing = datatest.Missing

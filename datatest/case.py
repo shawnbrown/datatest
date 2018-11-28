@@ -9,7 +9,7 @@ from ._compatibility import contextlib
 from ._query.query import Query
 from ._query.query import Result
 
-from .validation import validate2
+from .validation import validate
 from .validation import ValidationError
 
 __datatest = True  # Used to detect in-module stack frames (which are
@@ -111,7 +111,7 @@ class DataTestCase(TestCase):
         __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
 
         try:
-            validate2(data, requirement, msg=msg)
+            validate(data, requirement, msg=msg)
         except ValidationError as err:
             def should_truncate(line_count, char_count):
                 return self.maxDiff and (char_count > self.maxDiff)
