@@ -383,20 +383,18 @@ def validate(data, requirement, msg=None):
     __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
 
     data = _normalize_data(data)
-    if isinstance(data, Mapping):
-        data = getattr(data, 'iteritems', data.items)()
     requirement = _normalize_requirement(requirement)
 
     if isinstance(requirement, Mapping):
         result = _datadict_vs_requirementdict(data, requirement)
-    elif _is_collection_of_items(data):
+    elif isinstance(data, Mapping) or _is_collection_of_items(data):
         result = _datadict_vs_requirement(data, requirement)
     else:
         result = _data_vs_requirement(data, requirement)
 
     if result:
         differences, description = result
-        if isinstance(differences, dict):
+        if isinstance(differences, Mapping):
             for k, v in differences.items():
                 if isinstance(v, Iterator):
                     differences[k] = list(v)
