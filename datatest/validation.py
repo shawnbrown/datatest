@@ -67,27 +67,6 @@ def _require_predicate(value, other, show_expected=False):
     return None
 
 
-def _require_predicate_from_iterable(data, other):
-    if data is NOTFOUND:
-        return Invalid(None)  # <- EXIT!
-
-    if isinstance(data, tuple):
-        data = [data]
-
-    if callable(other) and not isinstance(other, type):
-        predicate = other
-    else:
-        predicate = get_matcher(other)
-
-    diffs = (_require_predicate(value, predicate) for value in data)
-    diffs = (x for x in diffs if x)
-
-    first_element, diffs = iterpeek(diffs)
-    if first_element:  # If not empty, return diffs.
-        return diffs
-    return None
-
-
 def _normalize_data(data):
     if isinstance(data, Query):
         return data.execute()  # <- EXIT! (Returns Result for lazy evaluation.)

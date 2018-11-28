@@ -23,7 +23,6 @@ from datatest.validation import _apply_required_to_mapping
 from datatest.validation import _apply_mapping_to_mapping
 from datatest.validation import validate2
 from datatest.validation import _require_predicate
-from datatest.validation import _require_predicate_from_iterable
 from datatest.validation import _normalize_data
 from datatest.validation import _normalize_requirement
 from datatest.validation import ValidationError
@@ -41,70 +40,6 @@ try:
     import numpy
 except ImportError:
     numpy = None
-
-
-class TestRequireCallable(unittest.TestCase):
-    def setUp(self):
-        self.isdigit = lambda x: x.isdigit()
-
-    def test_all_true(self):
-        data = ['10', '20', '30']
-        result = _require_predicate_from_iterable(data, self.isdigit)
-        self.assertIsNone(result)
-
-    def test_some_false(self):
-        """Elements that evaluate to False are returned as Invalid() errors."""
-        data = ['10', '20', 'XX']
-        result = _require_predicate_from_iterable(data, self.isdigit)
-        self.assertEqual(list(result), [Invalid('XX')])
-
-    def test_duplicate_false(self):
-        """Should return an error for every false result (incl. duplicates)."""
-        data = ['10', '20', 'XX', 'XX', 'XX']  # <- Multiple XX's.
-        result = _require_predicate_from_iterable(data, self.isdigit)
-        self.assertEqual(list(result), [Invalid('XX'), Invalid('XX'), Invalid('XX')])
-
-    def test_returned_error(self):
-        """When a difference is returned, it is used in place of Invalid."""
-        def func(x):
-            if x == 'c':
-                return Invalid("Letter 'c' is no good!")
-            return True
-
-        data = ['a', 'b', 'c']
-        result = _require_predicate_from_iterable(data, func)
-        self.assertEqual(list(result), [Invalid("Letter 'c' is no good!")])
-
-    def test_notfound(self):
-        def func(x):
-            return False
-        result = _require_predicate_from_iterable(NOTFOUND, func)
-        self.assertEqual(result, Invalid(None))
-
-
-class TestRequireRegex(unittest.TestCase):
-    def setUp(self):
-        self.regex = re.compile('[a-z][0-9]+')
-
-    def test_all_true(self):
-        data = iter(['a1', 'b2', 'c3'])
-        result = _require_predicate_from_iterable(data, self.regex)
-        self.assertIsNone(result)
-
-    def test_some_false(self):
-        data = iter(['a1', 'b2', 'XX'])
-        result = _require_predicate_from_iterable(data, self.regex)
-        self.assertEqual(list(result), [Invalid('XX')])
-
-    def test_duplicate_false(self):
-        """Should return an error for every non-match (incl. duplicates)."""
-        data = iter(['a1', 'b2', 'XX', 'XX', 'XX'])  # <- Multiple XX's.
-        result = _require_predicate_from_iterable(data, self.regex)
-        self.assertEqual(list(result), [Invalid('XX'), Invalid('XX'), Invalid('XX')])
-
-    def test_notfound(self):
-        result = _require_predicate_from_iterable(NOTFOUND, self.regex)
-        self.assertEqual(result, Invalid(None))
 
 
 class TestRequirePredicate(unittest.TestCase):
@@ -166,73 +101,6 @@ class TestRequirePredicate(unittest.TestCase):
         msg = 'errors should bubble-up for debugging'
         with self.assertRaises(Exception, msg=msg):
             _require_predicate(bad_instance, 10)
-
-
-class TestRequirePredicateFromIterable(unittest.TestCase):
-    def test_all_true(self):
-        data = ['x', 'x', 'x']
-        result = _require_predicate_from_iterable(data, 'x')
-        self.assertIsNone(result)
-
-    def test_some_false(self):
-        data = ['x', 'x', 'y']
-        result = _require_predicate_from_iterable(data, 'x')
-        self.assertEqual(list(result), [Invalid('y')])
-
-        data = [2, 2, 7]
-        result = _require_predicate_from_iterable(data, 2)
-        self.assertEqual(list(result), [Deviation(+5, 2)])
-
-    def test_duplicate_false(self):
-        """Should return an error for every false result (incl. duplicates)."""
-        data = ['x', 'x', 'y', 'y']  # <- Multiple invalid y's.
-        result = _require_predicate_from_iterable(data, 'x')
-        self.assertEqual(list(result), [Invalid('y'), Invalid('y')])
-
-    def test_raised_error(self):
-        """Exceptions should raise as normal (earlier implementation
-        coerced errors to False).
-        """
-        capital_letters = lambda x: x.isupper()
-        data = ['X', 'X', 10]  # <- Fails on 30 (int has no 'isupper' method).
-        with self.assertRaises(AttributeError):
-            result = _require_predicate_from_iterable(data, capital_letters)
-
-    def test_returned_error(self):
-        """When a difference is returned, it should be used in place of
-        an auto-generated one.
-        """
-        def func(x):
-            if x == 5:
-                return Invalid("Five is right out!")
-            return True
-
-        data = [1, 2, 5]
-        result = _require_predicate_from_iterable(data, func)
-        self.assertEqual(list(result), [Invalid("Five is right out!")])
-
-    def test_notfound(self):
-        def func(x):
-            return False
-        result = _require_predicate_from_iterable(NOTFOUND, func)
-        self.assertEqual(result, Invalid(None))
-
-
-class TestRequirePredicateTuple(unittest.TestCase):
-    def test_all_true(self):
-        data = [('x', 'y'), ('x', 'y')]
-        result = _require_predicate_from_iterable(data, ('x', 'y'))
-        self.assertIsNone(result)
-
-    def test_some_false(self):
-        data = [('x', 'y'), ('x', 'x')]
-        result = _require_predicate_from_iterable(data, ('x', 'y'))
-        self.assertEqual(list(result), [Invalid(('x', 'x'))])
-
-    def test_wildcard(self):
-        data = [('x', 'y'), ('x', 'x')]
-        result = _require_predicate_from_iterable(data, (Ellipsis, 'y'))
-        self.assertEqual(list(result), [Invalid(('x', 'x'))])
 
 
 class TestDataRequirementNormalization(unittest.TestCase):
