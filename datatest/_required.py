@@ -16,7 +16,6 @@ from .difference import _make_difference
 from .difference import NOTFOUND
 from ._predicate import Predicate
 from ._utils import iterpeek
-from ._utils import nonstringiter
 
 
 def _wrap_differences(differences, func):
@@ -124,6 +123,44 @@ def required_set(requirement):
     return _required_set
 
 
+def _deephash(obj):
+    """Return a "deep hash" value for the given object. If the
+    object can not be deep-hashed, a TypeError is raised.
+    """
+    # Adapted from "deephash" Copyright 2017 Shawn Brown, Apache License 2.0.
+    already_seen = {}
+
+    def _hashable_proxy(obj):
+        if isinstance(obj, Hashable) and not isinstance(obj, tuple):
+            return obj  # <- EXIT!
+
+        # Guard against recursive references in compound objects.
+        obj_id = id(obj)
+        if obj_id in already_seen:
+            return already_seen[obj_id]  # <- EXIT!
+        else:
+            already_seen[obj_id] = object()  # Token for duplicates.
+
+        # Recurse into compound object to make hashable proxies.
+        if isinstance(obj, Sequence):
+            proxy = tuple(_hashable_proxy(x) for x in obj)
+        elif isinstance(obj, Set):
+            proxy = frozenset(_hashable_proxy(x) for x in obj)
+        elif isinstance(obj, Mapping):
+            items = getattr(obj, 'iteritems', obj.items)()
+            items = ((k, _hashable_proxy(v)) for k, v in items)
+            proxy = frozenset(items)
+        else:
+            message = 'unhashable type: {0!r}'.format(obj.__class__.__name__)
+            raise TypeError(message)
+        return obj.__class__, proxy
+
+    try:
+        return hash(obj)
+    except TypeError:
+        return hash(_hashable_proxy(obj))
+
+
 def required_sequence(requirement):
     """Returns a group requirement function that checks for sequence
     order. If the candidate sequence does not match the required
@@ -209,41 +246,3 @@ def required_sequence(requirement):
         return differences, 'does not match required sequence'
 
     return _required_sequence
-
-
-def _deephash(obj):
-    """Return a "deep hash" value for the given object. If the
-    object can not be deep-hashed, a TypeError is raised.
-    """
-    # Adapted from "deephash" Copyright 2017 Shawn Brown, Apache License 2.0.
-    already_seen = {}
-
-    def _hashable_proxy(obj):
-        if isinstance(obj, Hashable) and not isinstance(obj, tuple):
-            return obj  # <- EXIT!
-
-        # Guard against recursive references in compound objects.
-        obj_id = id(obj)
-        if obj_id in already_seen:
-            return already_seen[obj_id]  # <- EXIT!
-        else:
-            already_seen[obj_id] = object()  # Token for duplicates.
-
-        # Recurse into compound object to make hashable proxies.
-        if isinstance(obj, Sequence):
-            proxy = tuple(_hashable_proxy(x) for x in obj)
-        elif isinstance(obj, Set):
-            proxy = frozenset(_hashable_proxy(x) for x in obj)
-        elif isinstance(obj, Mapping):
-            items = getattr(obj, 'iteritems', obj.items)()
-            items = ((k, _hashable_proxy(v)) for k, v in items)
-            proxy = frozenset(items)
-        else:
-            message = 'unhashable type: {0!r}'.format(obj.__class__.__name__)
-            raise TypeError(message)
-        return obj.__class__, proxy
-
-    try:
-        return hash(obj)
-    except TypeError:
-        return hash(_hashable_proxy(obj))
