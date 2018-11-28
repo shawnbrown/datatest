@@ -14,7 +14,6 @@ from datatest.difference import NOTFOUND
 
 from datatest._required import Required
 from datatest._required import RequiredPredicate
-from datatest._required import RequiredSequence
 from datatest._required import RequiredSet
 from datatest._required import group_requirement
 from datatest.validation import _get_group_requirement
