@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from . import _unittest as unittest
-from datatest._compatibility.collections.abc import Iterator
 from datatest import Missing
 from datatest import Extra
 from datatest import Deviation
 from datatest import Invalid
-from datatest._predicate import Predicate
 from datatest._required import _wrap_differences
 from datatest._required import group_requirement
 from datatest._required import required_predicate
@@ -118,7 +116,7 @@ class TestGroupRequirement(unittest.TestCase):
         self.assertIs(func1, func2)
 
 
-class TestRequiredPredicate2(unittest.TestCase):
+class TestRequiredPredicate(unittest.TestCase):
     def setUp(self):
         isdigit = lambda x: x.isdigit()
         self.requirement = required_predicate(isdigit)
@@ -193,7 +191,7 @@ class TestRequiredPredicate2(unittest.TestCase):
         self.assertEqual(list(differences), expected)
 
 
-class TestRequiredSet2(unittest.TestCase):
+class TestRequiredSet(unittest.TestCase):
     def setUp(self):
         self.requirement = required_set(set([1, 2, 3]))
 
@@ -229,7 +227,7 @@ class TestRequiredSet2(unittest.TestCase):
         self.assertEqual(list(differences), [Missing(1)])
 
 
-class TestRequiredSequence2(unittest.TestCase):
+class TestRequiredSequence(unittest.TestCase):
     def test_no_difference(self):
         data = ['aaa', 'bbb', 'ccc']
         required = required_sequence(['aaa', 'bbb', 'ccc'])
