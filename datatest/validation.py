@@ -51,22 +51,6 @@ __all__ = [
 _regex_type = type(re.compile(''))
 
 
-def _require_predicate(value, other, show_expected=False):
-    # Matcher comparisons use "==" to trigger __eq__(), not "!=".
-    if isinstance(other, MatcherBase):
-        matches = other == value
-    elif callable(other) and not isinstance(other, type):
-        matches = other(value)
-    else:
-        matches = get_matcher(other) == value
-
-    if not matches:
-        return _make_difference(value, other, show_expected)
-    elif isinstance(matches, BaseDifference):
-        return matches
-    return None
-
-
 def _normalize_data(data):
     if isinstance(data, Query):
         return data.execute()  # <- EXIT! (Returns Result for lazy evaluation.)
