@@ -67,10 +67,6 @@ def _require_predicate(value, other, show_expected=False):
     return None
 
 
-def _require_predicate_expected(value, other):
-    return _require_predicate(value, other, show_expected=True)
-
-
 def _require_predicate_from_iterable(data, other):
     if data is NOTFOUND:
         return Invalid(None)  # <- EXIT!
