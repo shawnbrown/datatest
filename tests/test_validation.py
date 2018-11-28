@@ -22,7 +22,6 @@ from datatest.validation import _apply_required_to_data
 from datatest.validation import _apply_required_to_mapping
 from datatest.validation import _apply_mapping_to_mapping
 from datatest.validation import validate2
-from datatest.validation import _require_sequence
 from datatest.validation import _require_set
 from datatest.validation import _require_predicate
 from datatest.validation import _require_predicate_from_iterable
@@ -43,107 +42,6 @@ try:
     import numpy
 except ImportError:
     numpy = None
-
-
-class TestRequireSequence(unittest.TestCase):
-    def test_no_difference(self):
-        first = ['aaa', 'bbb', 'ccc']
-        second = ['aaa', 'bbb', 'ccc']
-        error = _require_sequence(first, second)
-        self.assertIsNone(error)  # No difference, returns None.
-
-    def test_extra(self):
-        data = ['aaa', 'bbb', 'ccc', 'ddd', 'eee', 'fff']
-        requirement = ['aaa', 'ccc', 'fff']
-        error = _require_sequence(data, requirement)
-        self.assertEqual(error, {(1, 2): [Extra('bbb')], (3, 5): [Extra('ddd'), Extra('eee')]})
-
-    def test_extra_with_empty_requirement(self):
-        data = ['aaa', 'bbb']
-        requirement = []
-        error = _require_sequence(data, requirement)
-        self.assertEqual(error, {(0, 2): [Extra('aaa'), Extra('bbb')]})
-
-    def test_missing(self):
-        data = ['bbb', 'eee']
-        requirement = ['aaa', 'bbb', 'ccc', 'ddd', 'eee']
-        error = _require_sequence(data, requirement)
-        expected = {
-            (0, 0): [Missing('aaa')],
-            (1, 1): [Missing('ccc'), Missing('ddd')],
-        }
-        self.assertEqual(error, expected)
-
-    def test_missing_with_empty_data(self):
-        data = []
-        requirement = ['aaa', 'bbb']
-        error = _require_sequence(data, requirement)
-        self.assertEqual(error, {(0, 0): [Missing('aaa'), Missing('bbb')]})
-
-    def test_invalid(self):
-        data = ['aaa', 'xxx', 'ccc']
-        requirement = ['aaa', 'bbb', 'ccc']
-        actual = _require_sequence(data, requirement)
-        expected = {
-            (1, 2): [Invalid('xxx', 'bbb')],
-        }
-        self.assertEqual(actual, expected)
-
-    def test_invalid_different_lengths(self):
-        data = ['aaa', 'xxx', 'ddd']
-        requirement = ['aaa', 'bbb', 'ccc', 'ddd']
-        actual = _require_sequence(data, requirement)
-        expected = {
-            (1, 2): [Invalid('xxx', 'bbb'), Missing('ccc')],
-        }
-        self.assertEqual(actual, expected)
-
-        data = ['aaa', 'xxx', 'yyy', 'ccc']
-        requirement = ['aaa', 'bbb', 'ccc']
-        actual = _require_sequence(data, requirement)
-        expected = {
-            (1, 3): [Invalid('xxx', 'bbb'), Extra('yyy')],
-        }
-        self.assertEqual(actual, expected)
-
-    def test_mixed_differences(self):
-        data = ['aaa', 'xxx', 'ddd', 'eee', 'ggg']
-        requirement = ['aaa', 'bbb', 'ccc', 'ddd', 'fff']
-        actual = _require_sequence(data, requirement)
-        expected = {
-            (1, 2): [Invalid('xxx', expected='bbb'), Missing('ccc')],
-            (3, 5): [Invalid('eee', expected='fff'), Extra('ggg')],
-        }
-        self.assertEqual(actual, expected)
-
-    def test_numeric_matching(self):
-        """When checking sequence order, numeric differences should not
-        be converted into Deviation objects.
-        """
-        data = [1, 100, 4, 200, 300]
-        requirement = [1, 2, 3, 4, 5]
-        actual = _require_sequence(data, requirement)
-        expected = {
-            (1, 2): [Invalid(100, expected=2), Missing(3)],
-            (3, 5): [Invalid(200, expected=5), Extra(300)],
-        }
-        self.assertEqual(actual, expected)
-
-    def test_unhashable(self):
-        """Uses "deep hashing" to attempt to sort unhashable types."""
-        first = [{'a': 1}, {'b': 2}, {'c': 3}]
-        second = [{'a': 1}, {'b': 2}, {'c': 3}]
-        error = _require_sequence(first, second)
-        self.assertIsNone(error)  # No difference, returns None.
-
-        data = [{'a': 1}, {'x': 0}, {'d': 4}, {'y': 5}, {'g': 7}]
-        requirement = [{'a': 1}, {'b': 2}, {'c': 3}, {'d': 4}, {'f': 6}]
-        actual = _require_sequence(data, requirement)
-        expected = {
-            (1, 2): [Invalid({'x': 0}, expected={'b': 2}), Missing({'c': 3})],
-            (3, 5): [Invalid({'y': 5}, expected={'f': 6}), Extra({'g': 7})],
-        }
-        self.assertEqual(actual, expected)
 
 
 class TestRequireSet(unittest.TestCase):
