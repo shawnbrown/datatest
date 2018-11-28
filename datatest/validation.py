@@ -51,30 +51,6 @@ __all__ = [
 _regex_type = type(re.compile(''))
 
 
-def _require_set(data, requirement_set):
-    """Compare *data* against a *requirement_set* of values."""
-    if data is NOTFOUND:
-        data = []
-    elif isinstance(data, (BaseElement, tuple)):  # TODO: For the future,
-        data = [data]                             # investigate the idea of
-                                                  # making tuple a BaseElement
-    matching_elements = set()                     # subclass (would require
-    extra_elements = set()                        # changes to Query handling
-    for element in data:                          # and argument unpacking).
-        if element in requirement_set:
-            matching_elements.add(element)
-        else:
-            extra_elements.add(element)
-
-    missing_elements = requirement_set.difference(matching_elements)
-
-    if extra_elements or missing_elements:
-        missing = (Missing(x) for x in missing_elements)
-        extra = (Extra(x) for x in extra_elements)
-        return itertools.chain(missing, extra)
-    return None
-
-
 def _require_predicate(value, other, show_expected=False):
     # Matcher comparisons use "==" to trigger __eq__(), not "!=".
     if isinstance(other, MatcherBase):

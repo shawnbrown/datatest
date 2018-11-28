@@ -22,7 +22,6 @@ from datatest.validation import _apply_required_to_data
 from datatest.validation import _apply_required_to_mapping
 from datatest.validation import _apply_mapping_to_mapping
 from datatest.validation import validate2
-from datatest.validation import _require_set
 from datatest.validation import _require_predicate
 from datatest.validation import _require_predicate_from_iterable
 from datatest.validation import _normalize_data
@@ -42,88 +41,6 @@ try:
     import numpy
 except ImportError:
     numpy = None
-
-
-class TestRequireSet(unittest.TestCase):
-    def setUp(self):
-        self.requirement = set(['a', 'b', 'c'])
-
-    def test_no_difference(self):
-        data = iter(['a', 'b', 'c'])
-        result = _require_set(data, self.requirement)
-        self.assertIsNone(result)  # No difference, returns None.
-
-    def test_missing(self):
-        data = iter(['a', 'b'])
-        result = _require_set(data, self.requirement)
-        self.assertEqual(list(result), [Missing('c')])
-
-    def test_extra(self):
-        data = iter(['a', 'b', 'c', 'x'])
-        result = _require_set(data, self.requirement)
-        self.assertEqual(list(result), [Extra('x')])
-
-    def test_duplicate_extras(self):
-        """Should return only one error for each distinct extra value."""
-        data = iter(['a', 'b', 'c', 'x', 'x', 'x'])  # <- Multiple x's.
-        result = _require_set(data, self.requirement)
-        self.assertEqual(list(result), [Extra('x')])
-
-    def test_missing_and_extra(self):
-        data = iter(['a', 'c', 'x'])
-        result = _require_set(data, self.requirement)
-
-        result = list(result)
-        self.assertEqual(len(result), 2)
-        self.assertIn(Missing('b'), result)
-        self.assertIn(Extra('x'), result)
-
-    def test_string_or_noniterable(self):
-        data = 'a'
-        result = _require_set(data, self.requirement)
-
-        result = list(result)
-        self.assertEqual(len(result), 2)
-        self.assertIn(Missing('b'), result)
-        self.assertIn(Missing('c'), result)
-
-    def test_notfound(self):
-        result = _require_set(NOTFOUND, set(['a']))
-        self.assertEqual(list(result), [Missing('a')])
-
-    def test_atomic_object_handling(self):
-        # Non-containers are, of course, treated as atomic objects.
-        requirement = set([777])
-        self.assertIsNone(
-            _require_set([777], requirement),
-            msg='list containing one int',
-        )
-        self.assertIsNone(
-            _require_set(777, requirement),
-            msg='int, no container',
-        )
-
-        # Strings should treated as an atomic objects.
-        requirement = set(['abc'])
-        self.assertIsNone(
-            _require_set(['abc'], requirement),
-            msg='list containing one str',
-        )
-        self.assertIsNone(
-            _require_set('abc', requirement),
-            msg='single strings should be treated as atomic objects',
-        )
-
-        # Tuples should also be treated as an atomic objects.
-        requirement = set([('a', 'b', 'c')])
-        self.assertIsNone(
-            _require_set([('a', 'b', 'c')], requirement),
-            msg='list containing one tuple',
-        )
-        self.assertIsNone(
-            _require_set(('a', 'b', 'c'), requirement),
-            msg='single tuples should be treated as atomic objects',
-        )
 
 
 class TestRequireCallable(unittest.TestCase):
