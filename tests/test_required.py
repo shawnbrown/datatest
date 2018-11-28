@@ -7,62 +7,11 @@ from datatest import Extra
 from datatest import Deviation
 from datatest import Invalid
 from datatest._predicate import Predicate
-from datatest._required import FailureInfo
 from datatest._required import _wrap_differences
 from datatest._required import group_requirement
 from datatest._required import required_predicate
 from datatest._required import required_set
 from datatest._required import required_sequence
-
-
-class TestFailureInfo(unittest.TestCase):
-    def test_iterator(self):
-        msg = 'should be iterator'
-        failure_info = FailureInfo([Missing(1)])
-        self.assertIsInstance(failure_info, Iterator)
-
-        msg = 'when iterated over, should return same differences'
-        differences = [Missing(1), Missing(2)]
-        failure_info = FailureInfo(differences)
-        self.assertEqual(list(failure_info), differences)
-
-        msg = 'single difference should be wrapped as a single-item iterator'
-        info = FailureInfo(Missing(1))
-        self.assertEqual(list(info), [Missing(1)], msg=msg)
-
-    def test_message(self):
-        failure_info = FailureInfo([Missing(1)])  # <- No message, uses default.
-        self.assertEqual(failure_info.message, 'does not satisfy requirement')
-
-        custom_message = 'custom failure message'
-        failure_info = FailureInfo([Missing(1)], custom_message)
-        self.assertEqual(failure_info.message, custom_message)
-
-    def test_bad_argument(self):
-        with self.assertRaisesRegex(TypeError, 'should be a non-string iterable'):
-            FailureInfo('abc')
-
-    def test_type_check_message(self):
-        failure_info = FailureInfo([Missing(1), Missing(2), 123])
-        msg = 'yielding a non-difference object should fail with a useful message'
-        with self.assertRaisesRegex(TypeError, 'must contain difference objects', msg=msg):
-            list(failure_info)  # <- Fully evaluate iterator.
-
-    def test_empty_attr(self):
-        failure_info = FailureInfo([Missing(1)])
-        self.assertFalse(failure_info.empty)
-
-        failure_info = FailureInfo(iter([]))
-        self.assertTrue(failure_info.empty)
-
-        failure_info = FailureInfo([Missing(1)])
-        self.assertFalse(failure_info.empty)
-        list(failure_info)
-        self.assertTrue(failure_info.empty, msg='if exhausted, should become True')
-
-        failure_info = FailureInfo([Missing(1)], 'failure message')
-        with self.assertRaises(AttributeError, msg='should be read only'):
-            failure_info.empty = False
 
 
 class TestWrapDifferences(unittest.TestCase):

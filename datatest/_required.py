@@ -19,54 +19,6 @@ from ._utils import iterpeek
 from ._utils import nonstringiter
 
 
-class FailureInfo(object):
-    """An iterator of difference objects and an associated failure
-    message. The given *differences* must be an iterable of difference
-    objects or a single difference. If provided, *message* should be a
-    string that provides some context for the differences.
-    """
-    def __init__(self, differences, message=None):
-        """Initialize instance."""
-        if not nonstringiter(differences):
-            if isinstance(differences, BaseDifference):
-                differences = [differences]
-            else:
-                cls_name = differences.__class__.__name__
-                message = ('differences should be a non-string iterable, '
-                           'got {0}: {1!r}')
-                raise TypeError(message.format(cls_name, differences))
-
-        first_item, differences = iterpeek(differences, NOTFOUND)
-        self._empty = first_item is NOTFOUND
-        self._differences = iter(differences)
-        self.message = message or 'does not satisfy requirement'
-
-    @property
-    def empty(self):
-        """True if iterator contains no items or has been exhausted."""
-        return self._empty
-
-    def __next__(self):
-        try:
-            value = next(self._differences)
-        except StopIteration:
-            self._empty = True
-            raise
-
-        if not isinstance(value, BaseDifference):
-            cls_name = value.__class__.__name__
-            message = 'must contain difference objects, got {0}: {1!r}'
-            raise TypeError(message.format(cls_name, value))
-
-        return value
-
-    def next(self):  # <- For Python 2 support.
-        return self.__next__()
-
-    def __iter__(self):
-        return self
-
-
 def _wrap_differences(differences, func):
     """A generator function to wrap and iterable of differences
     and verify that each item returned is a difference object.
