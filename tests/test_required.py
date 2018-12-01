@@ -190,6 +190,82 @@ class TestRequiredPredicate(unittest.TestCase):
         ]
         self.assertEqual(list(differences), expected)
 
+    def test_description_func_docstring(self):
+        def func(x):
+            """
+                line one
+            line two
+            """
+            return False
+            # NOTE!!!: The docstring above is intentially messy! Don't
+            #          change it. This test checks that docstrings are
+            #          stripped and properly cleaned.
+
+        requirement = required_predicate(func)
+        _, description = requirement([1])
+        self.assertEqual(description, 'line one')
+
+    def test_description_func_no_docstring(self):
+        def func(x):
+            return False
+        requirement = required_predicate(func)
+        _, description = requirement([1])
+        self.assertEqual(description, "does not satisfy 'func'")
+
+    def test_description_nonfunc_name(self):
+        # Built-in type.
+        requirement = required_predicate(float)
+        _, description = requirement([1])
+        msg = 'name should be in single quotes'
+        self.assertEqual(description, "does not satisfy 'float'", msg=msg)
+
+        # User-defined class.
+        class MyClass(object):
+            """A dummy class for testing."""
+            def __call__(self, *args):
+                """Always returns False."""
+                return False
+
+            def __repr__(self):
+                return '<dummy class for testing>'
+
+        requirement = required_predicate(MyClass)
+        _, description = requirement([1])
+        msg = 'user objects should work same as built-in types, name in quotes'
+        self.assertEqual(description, "does not satisfy 'MyClass'", msg=msg)
+
+        # Lambda expression.
+        requirement = required_predicate(lambda x: False)
+        _, description = requirement([1])
+        msg = 'if object is in angle brackets, should not use quotes'
+        self.assertEqual(description, "does not satisfy <lambda>", msg=msg)
+
+    def test_description_nonfunc_no_name(self):
+        my_str = 'abc'
+        requirement = required_predicate(my_str)
+        _, description = requirement([1])
+        self.assertEqual(description, "does not satisfy 'abc'")
+
+        my_int = 123
+        requirement = required_predicate(my_int)
+        _, description = requirement([1])
+        self.assertEqual(description, "does not satisfy 123")
+
+        # Instance of user-defined class.
+        class MyClass(object):
+            """A dummy class for testing."""
+            def __call__(self, *args):
+                """Always returns False."""
+                return False
+
+            def __repr__(self):
+                return '**dummy class**'
+
+        myinstance = MyClass()  # <- Get instance.
+        requirement = required_predicate(myinstance)
+        _, description = requirement([1])
+        self.assertEqual(description, "does not satisfy **dummy class**")
+
 
 class TestRequiredSet(unittest.TestCase):
     def setUp(self):

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import difflib
+from types import FunctionType
 from ._compatibility.builtins import *
 from ._compatibility import abc
 from ._compatibility.collections.abc import Hashable
@@ -79,8 +80,8 @@ def group_requirement(func):
 
 
 def required_predicate(requirement, show_expected=False):
-    """Accepts a *requirement* object andd returns a group requirement
-    that tests for predicate.
+    """Accepts a *requirement* object and returns a group requirement
+    that tests for a predicate.
     """
     @group_requirement
     def _required_predicate(iterable):  # Closes over *requirement*
@@ -95,7 +96,26 @@ def required_predicate(requirement, show_expected=False):
                     yield result
 
         differences = generate_differences(requirement, iterable)
-        return differences, 'does not satisfy: {0}'.format(requirement)
+
+        if isinstance(requirement, FunctionType):
+            description = getattr(requirement, '__doc__', None)
+            if description:
+                description = description.strip().split('\n', 1)[0]  # 1st line
+        else:
+            description = None
+
+        if not description:
+            req_name = getattr(requirement, '__name__', None)
+            if req_name:
+                if req_name.startswith('<'):  # E.g., "<lambda>".
+                    req_repr = req_name
+                else:
+                    req_repr = "'{0}'".format(req_name)
+            else:
+                req_repr = repr(requirement)
+            description = 'does not satisfy {0}'.format(req_repr)
+
+        return differences, description
 
     return _required_predicate
 
