@@ -87,7 +87,7 @@ def group_requirement(func):
             differences, description = result
         else:
             differences = result
-            description = None
+            description = _build_description(func)
 
         if not isinstance(differences, Iterable):
             func_name = getattr(func, '__name__', func.__class__.__name__)

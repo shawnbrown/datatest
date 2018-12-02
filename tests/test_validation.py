@@ -513,19 +513,19 @@ class TestDataVsRequirement(unittest.TestCase):
     def test_description_message(self):
         # Requirement returns differences and description.
         @group_requirement
-        def requirement1(iterable):
+        def require1(iterable):
             return [Invalid('bar')], 'some message'
 
-        _, description = _data_vs_requirement('bar', requirement1)
+        _, description = _data_vs_requirement('bar', require1)
         self.assertEqual(description, 'some message')
 
-        # Requirement returns differences only, description should be None.
+        # Requirement returns differences only, should get default description.
         @group_requirement
-        def requirement2(iterable):
+        def require2(iterable):
             return [Invalid('bar')]
 
-        _, description = _data_vs_requirement('bar', requirement2)
-        self.assertIsNone(description)
+        _, description = _data_vs_requirement('bar', require2)
+        self.assertEqual(description, 'does not satisfy require2()')
 
 
 class TestDatadictVsRequirement(unittest.TestCase):
