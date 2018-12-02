@@ -19,6 +19,34 @@ from ._predicate import Predicate
 from ._utils import iterpeek
 
 
+def _build_description(obj):
+    """Build failure description for required_predicate() or
+    for a group-requirement function that does not return its
+    own description.
+    """
+    if isinstance(obj, FunctionType):
+        docstring = getattr(obj, '__doc__', None)
+        if docstring:
+            first_line = docstring.lstrip().partition('\n')[0]
+            description = first_line.rstrip()
+            if description:
+                return description  # <- EXIT!
+
+    name = getattr(obj, '__name__', None)
+    if name:
+        if name.startswith('<'):  # E.g., "<lambda>".
+            obj_repr = name
+        else:
+            if callable(obj) and not isinstance(obj, type):
+                obj_repr = "{0}()".format(name)
+            else:
+                obj_repr = "'{0}'".format(name)
+    else:
+        obj_repr = repr(obj)
+
+    return 'does not satisfy {0}'.format(obj_repr)
+
+
 def _wrap_differences(differences, func):
     """A generator function to wrap and iterable of differences
     and verify that each item returned is a difference object.
@@ -96,25 +124,7 @@ def required_predicate(requirement, show_expected=False):
                     yield result
 
         differences = generate_differences(requirement, iterable)
-
-        if isinstance(requirement, FunctionType):
-            description = getattr(requirement, '__doc__', None)
-            if description:
-                description = description.strip().split('\n', 1)[0]  # 1st line
-        else:
-            description = None
-
-        if not description:
-            req_name = getattr(requirement, '__name__', None)
-            if req_name:
-                if req_name.startswith('<'):  # E.g., "<lambda>".
-                    req_repr = req_name
-                else:
-                    req_repr = "'{0}'".format(req_name)
-            else:
-                req_repr = repr(requirement)
-            description = 'does not satisfy {0}'.format(req_repr)
-
+        description = _build_description(requirement)
         return differences, description
 
     return _required_predicate
