@@ -22,7 +22,7 @@ checks for the YYYY-MM-DD format:
 
 
     def date_format(value):
-        """date should be in YYYY-MM-DD format"""
+        """date should use 'YYYY-MM-DD' format"""
         try:
             datetime.strptime(value, '%Y-%m-%d')
         except ValueError:
