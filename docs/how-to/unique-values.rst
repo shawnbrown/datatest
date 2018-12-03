@@ -10,41 +10,38 @@
 How to Assert Unique Values
 ###########################
 
-To assert that values are unique, we can define a callable class
-that generates :class:`Extra` differences when duplicates are
-discovered.
+To assert that values are unique, we can define a group-requirement
+that generates :class:`Extra` differences when duplicate values are
+encountered.
 
-You can copy the following class to use in your own tests:
+You can copy the ``is_unique()`` function to use in your own tests:
 
 .. tabs::
 
     .. group-tab:: Pytest
 
         .. code-block:: python
-            :emphasize-lines: 22
+            :emphasize-lines: 21
 
             from datatest import validate
+            from datatest import group_requirement
             from datatest import Extra
 
 
-            def make_is_unique():
-                previously_seen = set()
-
-                def is_unique(value):
-                    """values should be unique"""
-                    if value in previously_seen:
-                        return Extra(value)
-                    previously_seen.add(value)
-                    return True
-
-                return is_unique
+            @group_requirement
+            def is_unique(iterable):
+                """values should be unique"""
+                seen = set()
+                for element in iterable:
+                    if element in seen:
+                        yield Extra(element)
+                    else:
+                        seen.add(element)
 
 
-            def test_is_unique():
+            def test_unique_data():
 
                 data = ['a', 'b', 'a', 'c']  # <- 'a' is not unique
-
-                is_unique = make_is_unique()
 
                 validate(data, is_unique)
 
@@ -52,32 +49,29 @@ You can copy the following class to use in your own tests:
     .. group-tab:: Unittest
 
         .. code-block:: python
-            :emphasize-lines: 24
+            :emphasize-lines: 23
 
             from datatest import DataTestCase
+            from datatest import group_requirement
             from datatest import Extra
 
 
-            def make_is_unique():
-                previously_seen = set()
-
-                def is_unique(value):
-                    """values should be unique"""
-                    if value in previously_seen:
-                        return Extra(value)
-                    previously_seen.add(value)
-                    return True
-
-                return is_unique
+            @group_requirement
+            def is_unique(iterable):
+                """values should be unique"""
+                seen = set()
+                for element in iterable:
+                    if element in seen:
+                        yield Extra(element)
+                    else:
+                        seen.add(element)
 
 
             class MyTest(DataTestCase):
 
-                def test_is_unique(self):
+                def test_unique_data(self):
 
                     data = ['a', 'a', 'b', 'c']  # <- 'a' is not unique
-
-                    is_unique = make_is_unique()
 
                     self.assertValid(data, is_unique)
 
@@ -100,7 +94,7 @@ counts are equal to ``1``:
             from datatest import validate
 
 
-            def test_is_unique():
+            def test_unique_data():
 
                 data = ['a', 'a', 'b', 'c']  # <- 'a' is not unique
 
@@ -117,7 +111,7 @@ counts are equal to ``1``:
 
             class MyTest(DataTestCase):
 
-                def test_is_unique(self):
+                def test_unique_data(self):
 
                     data = ['a', 'a', 'b', 'c']  # <- 'a' is not unique
 
