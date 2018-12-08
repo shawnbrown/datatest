@@ -10,177 +10,223 @@
 How to Assert Subsets and Supersets
 ###################################
 
-==============
-A Single Check
-==============
+When given a :py:class:`set` requirement, the :func:`validate` function's
+default behavior checks data elements for membership in the set. But if you
+need to check for subset or superset relations you can use the following
+approaches.
 
-You can check for a **subset** relationship by using a
-:py:class:`set` *requirement* and allowing :class:`Missing`
-differences.
 
-And you can check for a **superset** relationship by using
-a :py:class:`set` *requirement* and allowing :class:`Extra`
-differences.
+===============
+With Allowances
+===============
 
-See the following examples:
+**Subset:** To require that a collection of data contains all of the
+values from a given subset, you can use a :py:class:`set` requirement
+together with an allowance for :class:`Extra` differences:
 
 .. tabs::
 
     .. group-tab:: Pytest
 
         .. code-block:: python
-            :emphasize-lines: 9,11,19,21
+            :emphasize-lines: 11-12
 
             from datatest import validate
             from datatest import allowed
 
 
-            def test_subset():
-
-                data = ['A', 'B', 'C']
-
-                requirement = {'A', 'B', 'C', 'D'}  # <- Use set requirement.
-
-                with allowed.missing():             # <- And allow Missing.
-                    validate(data, requirement)
-
-
-            def test_superset():
+            def test_required_subset():
 
                 data = ['A', 'B', 'C', 'D']
 
-                requirement = {'A', 'B', 'C'}  # <- Use set requirement.
-
-                with allowed.extra():          # <- And allow Extra.
-                    validate(data, requirement)
-
-
-    .. group-tab:: Unittest
-
-        .. code-block:: python
-            :emphasize-lines: 10,12,19,21
-
-            from datatest import DataTestCase
-
-
-            class MyTest(DataTestCase):
-
-                def test_subset(self):
-
-                    data = ['A', 'B', 'C']
-
-                    requirement = {'A', 'B', 'C', 'D'}  # <- Use set requirement.
-
-                    with self.allowedMissing():         # <- And allow Missing.
-                        self.assertValid(data, requirement)
-
-                def test_superset(self):
-
-                    data = ['A', 'B', 'C', 'D']
-
-                    requirement = {'A', 'B', 'C'}  # <- Use set requirement.
-
-                    with self.allowedExtra():      # <- And allow Extra.
-                        self.assertValid(data, requirement)
-
-
-=========================
-Reusable Helper Functions
-=========================
-
-If you need to assert subset and superset relationships many times,
-you may want to wrap this behavior in a helper function or method:
-
-.. tabs::
-
-    .. group-tab:: Pytest
-
-        .. code-block:: python
-            :emphasize-lines: 33,42
-
-            from datatest import validate
-            from datatest import allowed
-
-
-            def validate_subset(data, requirement):
-                """Pass without error if *data* is a subset of *requirement*."""
-                if not isinstance(requirement, set):
-                    requirement = set(requirement)
-
-                __tracebackhide__ = True
-
-                with allowed.missing():
-                    validate(data, requirement)
-
-
-            def validate_superset(data, requirement):
-                """Pass without error if *data* is a superset of *requirement*."""
-                if not isinstance(requirement, set):
-                    requirement = set(requirement)
-
-                __tracebackhide__ = True
+                my_required_subset = {'A', 'B', 'C'}
 
                 with allowed.extra():
-                    validate(data, requirement)
-
-
-            def test_subset():
-
-                data = ['A', 'B', 'C']
-
-                requirement = {'A', 'B', 'C', 'D'}
-
-                validate_subset(data, requirement)
-
-
-            def test_superset():
-
-                data = ['A', 'B', 'C', 'D']
-
-                requirement = {'A', 'B', 'C'}
-
-                validate_superset(data, requirement)
-
+                    validate(data, my_required_subset)
 
     .. group-tab:: Unittest
 
         .. code-block:: python
-            :emphasize-lines: 29,37
+            :emphasize-lines: 12-13
 
             from datatest import DataTestCase
 
 
             class MyTest(DataTestCase):
 
-                def assertSubset(self, data, requirement):  # <- HELPER METHOD!
-                    """Pass without error if *data* is a subset of *requirement*."""
-                    if not isinstance(requirement, set):
-                        requirement = set(requirement)
-
-                    with self.allowedMissing():
-                        self.assertValid(data, requirement)
-
-
-                def assertSuperset(self, data, requirement):  # <- HELPER METHOD!
-                    """Pass without error if *data* is a superset of *requirement*."""
-                    if not isinstance(requirement, set):
-                        requirement = set(requirement)
-
-                    with self.allowedExtra():
-                        self.assertValid(data, requirement)
-
-                def test_subset(self):
-
-                    data = ['A', 'B', 'C']
-
-                    requirement = {'A', 'B', 'C', 'D'}
-
-                    self.assertSubset(data, requirement)
-
-                def test_superset(self):
+                def test_required_subset(self):
 
                     data = ['A', 'B', 'C', 'D']
 
-                    requirement = {'A', 'B', 'C'}
+                    my_required_subset = {'A', 'B', 'C'}
 
-                    self.assertSuperset(data, requirement)
+                    with self.allowedExtra():
+                        self.assertValid(data, my_required_subset)
+
+
+**Superset:** To require that a collection of data contains only values
+from a given superset, you can use a :py:class:`set` requirement together
+with an allowance for :class:`Missing` differences:
+
+.. tabs::
+
+    .. group-tab:: Pytest
+
+        .. code-block:: python
+            :emphasize-lines: 9-10
+
+            ...
+
+            def test_required_superset():
+
+                data = ['A', 'B', 'C']
+
+                my_required_superset = {'A', 'B', 'C', 'D'}
+
+                with allowed.missing():
+                    self.assertValid(data, my_required_superset)
+
+    .. group-tab:: Unittest
+
+        .. code-block:: python
+            :emphasize-lines: 13-14
+
+            ...
+
+            class MyTest(DataTestCase):
+
+                ...
+
+                def test_required_superset(self):
+
+                    data = ['A', 'B', 'C']
+
+                    my_required_superset = {'A', 'B', 'C', 'D'}
+
+                    with self.allowedMissing():
+                        self.assertValid(data, my_required_superset)
+
+
+=======================
+With Group Requirements
+=======================
+
+For most cases, the allowance-based approaches given above are
+perfectly adequate. That said, it is always less efficient to
+use an allowance than it is to not have differences in the first
+place.
+
+If a set contained millions of unique differences, an allowance-based
+approach would instantiate millions of difference objects which are
+then discarded by the allowance. It would be more efficient to skip
+the creation of those differences that are going to be allowed anyway.
+
+To implement this more efficient approach, you can use the following
+``required_subset()`` and ``required_superset()`` functions in your
+own tests:
+
+
+.. code-block:: python
+
+    from datatest import group_requirement
+    from datatest import Missing
+    from datatest import Extra
+
+
+    def required_subset(subset):
+        """Require that data contains all elements of *subset*."""
+        if not isinstance(subset, set):
+            raise TypeError('requirement must be set')
+
+        @group_requirement
+        def _required_subset(iterable):
+            """must contain all elements of given subset"""
+            missing = subset.copy()
+            for element in iterable:
+                if not missing:
+                    break
+                missing.discard(element)
+            return (Missing(element) for element in missing)
+
+        return _required_subset
+
+
+    def required_superset(superset):
+        """Require that data contains only elements of *superset*."""
+        if not isinstance(superset, set):
+            raise TypeError('requirement must be set')
+
+        @group_requirement
+        def _required_superset(iterable):
+            """may contain only elements of given superset"""
+            extras = set()
+            for element in iterable:
+                if element not in superset:
+                    extras.add(element)
+            return (Extra(element) for element in extras)
+
+        return _required_superset
+
+
+Example Usage
+-------------
+
+Use of the ``required_subset()`` and ``required_superset()`` requirements
+are demonstrated below:
+
+.. tabs::
+
+    .. group-tab:: Pytest
+
+        .. code-block:: python
+            :emphasize-lines: 10,19
+
+            from datatest import validate
+            from datatest import allowed
+
+            ...
+
+            def test_required_subset():
+
+                data = ['A', 'B', 'C', 'D']
+
+                subset = required_subset({'A', 'B', 'C'})
+
+                validate(data, subset)
+
+
+            def test_required_superset():
+
+                data = ['A', 'B', 'C']
+
+                superset = required_superset({'A', 'B', 'C', 'D'})
+
+                validate(data, superset)
+
+
+    .. group-tab:: Unittest
+
+        .. code-block:: python
+            :emphasize-lines: 11,19
+
+            from datatest import DataTestCase
+
+            ...
+
+            class MyTest(DataTestCase):
+
+                def test_required_subset(self):
+
+                    data = ['A', 'B', 'C', 'D']
+
+                    subset = required_subset({'A', 'B', 'C'})
+
+                    self.assertValid(data, subset)
+
+                def test_required_superset():
+
+                    data = ['A', 'B', 'C']
+
+                    superset = required_superset({'A', 'B', 'C', 'D'})
+
+                    self.assertValid(data, superset)
