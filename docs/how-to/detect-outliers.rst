@@ -12,18 +12,13 @@ How to Detect Outliers
 
 To detect outliers, we can use a group-requirement to implement
 the *Tukey fence*/interquartile method for outlier labeling.
-Many common methods for outlier detection are sensitive to
-extreme values and can perform poorly when applied to skewed
-distributions. The Tukey fence method is provided because it
-is less sensitive to extreme values and applies to both normal
-and skewed dsitributions.
 
-You can copy the following ``outliers`` requirement to use in
-your own tests:
+You can copy the following ``outliers()`` function to use in your
+own tests:
 
 .. code-block:: python
 
-    from decimal import Decimal
+    from math import log10
     from statistics import median
     from datatest import validate
     from datatest import group_requirement
@@ -32,7 +27,7 @@ your own tests:
 
     @group_requirement
     def outliers(iterable):
-        """should not contain outlier values
+        """should not contain outliers
 
         This requirement uses the Tukey fence/interquartile method
         for outlier labeling. The internal multiplier of 2.2 is based
@@ -45,31 +40,35 @@ your own tests:
         midpoint = int(round(len(iterable) / 2.0))
         q1 = median(iterable[:midpoint])
         q3 = median(iterable[midpoint:])
-        multiplier = 2.2  # Hoaglin/Iglewicz multiplier.
-        kprime = (q3 - q1) * multiplier
-        lower_fence = q1 - kprime
-        upper_fence = q3 + kprime
+        iqr = q3 - q1
+        kprime = iqr * 2.2  # Hoaglin/Iglewicz multiplier.
+        lower = q1 - kprime
+        upper = q3 + kprime
 
-        # Round fences so differences are easier to read.
-        smallest = iterable[0]
-        if isinstance(smallest, float):
-            smallest = str(smallest)
-        ndigits =  abs(Decimal(smallest).as_tuple().exponent)
-        lower_fence = round(lower_fence, ndigits)
-        upper_fence = round(upper_fence, ndigits)
+        # Round fence values so deviations are easier to read.
+        if iqr:
+            ndigits = int(log10(1 / iqr)) + 2
+            lower = round(lower, ndigits)
+            upper = round(upper, ndigits)
 
-        # Check values.
+        # Check for outliers.
         for value in iterable:
-            if value < lower_fence:
-                yield Deviation(value - lower_fence, lower_fence)
-            elif value > upper_fence:
-                yield Deviation(value - upper_fence, upper_fence)
+            if value < lower:
+                yield Deviation(value - lower, lower)
+            elif value > upper:
+                yield Deviation(value - upper, upper)
+
+
+Some common methods for outlier detection are sensitive to extreme
+values and can perform poorly when applied to skewed distributions.
+The Tukey fence method, implemented above, is resistant to extreme
+values and applies to both normal and slightly skewed distributions.
 
 
 Example Usage
 =============
 
-Use of the ``outliers`` requirement is demonstrated below:
+Use of the ``outliers()`` requirement is demonstrated below:
 
 .. tabs::
 
@@ -89,7 +88,7 @@ Use of the ``outliers`` requirement is demonstrated below:
             def test_outliers2():
                 data = {
                     'A': [12, 5, 8, 37, 5, 7, 15],  # <- 37 is an outlier
-                    'B': [81, 74, 77, 58, 76, 89],  # <- 58 is an outlier
+                    'B': [83, 75, 78, 50, 76, 89],  # <- 50 is an outlier
                 }
                 validate(data, outliers)
 
@@ -113,14 +112,14 @@ Use of the ``outliers`` requirement is demonstrated below:
                 def test_outliers2(self):
                     data = {
                         'A': [12, 5, 8, 37, 5, 7, 15],  # <- 37 is an outlier
-                        'B': [81, 74, 77, 58, 76, 89],  # <- 58 is an outlier
+                        'B': [83, 75, 78, 50, 76, 89],  # <- 50 is an outlier
                     }
                     self.assertValid(data, outliers)
 
 
 .. note::
 
-    The ``outliers`` requirement uses the :py:func:`statistics.median`
+    The ``outliers()`` requirement uses the :py:func:`statistics.median`
     function which is new in Python 3.4. If you are running an older
     version of Python, you can use the following ``median()`` function
     instead:
