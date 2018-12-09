@@ -10,89 +10,98 @@
 How to Assert an Interval
 #########################
 
-To check that data elements are within a given interval, you
-can use a helper function as the *requirement* value (see
+To check that data elements are within a given interval, you can
+define a helper function to use as the *requirement* value (see
 :ref:`predicate-docs`).
 
-In the following example, we define a helper function to check
-that an element is between ``5`` and ``10`` (inclusive). Elements
-in *data* are considered valid when our function returns ``True``:
+In the following example, we define a simple helper function to
+check that an element is between ``5`` and ``10``. Elements in
+*data* are considered valid when our function returns ``True``:
 
 .. tabs::
 
     .. group-tab:: Pytest
 
         .. code-block:: python
-            :emphasize-lines: 8-10
+            :emphasize-lines: 8-9
 
-            import datatest
+            from datatest import validate
 
 
             def test_interval():
 
                 data = [5, 7, 4, 5, 9]
 
-                def interval(x):
-                    """from 5 to 10"""
+                def from5to10(x):
                     return 5 <= x <= 10
 
-                datatest.validate(data, interval)
-
+                validate(data, from5to10)
 
     .. group-tab:: Unittest
 
         .. code-block:: python
-            :emphasize-lines: 10-12
+            :emphasize-lines: 10-11
 
-            import datatest
+            from datatest import DataTestCase
 
 
-            class MyTest(datatest.DataTestCase):
+            class MyTest(DataTestCase):
 
                 def test_interval(self):
 
                     data = [5, 7, 4, 5, 9]
 
-                    def interval(x):
-                        """from 5 to 10"""
+                    def from5to10(x):
                         return 5 <= x <= 10
 
-                    self.assertValid(data, interval)
+                    self.assertValid(data, from5to10)
 
 
 ========================
 Reusable Helper Function
 ========================
 
-If you are asserting intervals many times, you may want to define
-a reusable helper function:
-
+If you are asserting intervals many times or need to handle differences
+as :class:`Deviation` objects (instead of :class:`Invalid` objects) you
+can use the following ``interval()`` function in your own tests:
 
 .. code-block:: python
 
     import operator
-    import datatest
+    from datatest import Deviation
 
 
-    def make_interval(low, high, inclusive=True):
+    def interval(low, high, inclusive=True):
+        if low > high:
+            raise ValueError('low must be less than high')
         op = operator.le if inclusive else operator.lt
 
-        def interval(x):
-            return op(low, x) and op(x, high)
+        def _interval(value):
+            if not op(low, value):
+                return Deviation(value - low, low)
+            if not op(value, high):
+                return Deviation(value - high, high)
+            return True
 
-        interval.__doc__ = 'from {0} to {1}'.format(low, high)
+        exclusive = ', exclusive' if not inclusive else ''
+        description = 'values should range from {0} to {1}{2}'
+        _interval.__doc__ = description.format(low, high, exclusive)
+        return _interval
 
-        return interval
 
+Example Usage
+=============
 
-Use of this helper function is demonstrated below:
+Use of the ``interval()`` function is demonstrated below:
 
 .. tabs::
 
     .. group-tab:: Pytest
 
         .. code-block:: python
-            :emphasize-lines: 7
+            :emphasize-lines: 9
+
+            from datatest import validate
 
             ...
 
@@ -100,24 +109,22 @@ Use of this helper function is demonstrated below:
 
                 data = [5, 7, 4, 5, 9]
 
-                interval = make_interval(5, 10)
-
-                datatest.validate(data, interval)
+                validate(data, interval(5, 10))
 
 
     .. group-tab:: Unittest
 
         .. code-block:: python
-            :emphasize-lines: 9
+            :emphasize-lines: 11
+
+            from datatest import DataTestCase
 
             ...
 
-            class MyTest(datatest.DataTestCase):
+            class MyTest(DataTestCase):
 
                 def test_interval(self):
 
                     data = [5, 7, 4, 5, 9]
 
-                    interval = make_interval(5, 10)
-
-                    self.assertValid(data, interval)
+                    self.assertValid(data, interval(5, 10))
