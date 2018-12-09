@@ -107,17 +107,17 @@ with an allowance for :class:`Missing` differences:
                         self.assertValid(data, my_required_superset)
 
 
-=======================
-With Group Requirements
-=======================
+==========================
+With Requirement Functions
+==========================
 
 For most cases, the allowance-based approaches given above are
 perfectly adequate. That said, it is always less efficient to
 use an allowance than it is to not have differences in the first
 place.
 
-If a set contained millions of unique differences, an allowance-based
-approach would instantiate millions of difference objects which are
+If a set contained thousands of unique differences, an allowance-based
+approach would instantiate thousands of difference objects which are
 then discarded by the allowance. It would be more efficient to skip
 the creation of those differences that are going to be allowed anyway.
 
