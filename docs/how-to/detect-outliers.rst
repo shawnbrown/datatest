@@ -20,7 +20,6 @@ own tests:
 
     from math import log10
     from statistics import median
-    from datatest import validate
     from datatest import group_requirement
     from datatest import Deviation
 
@@ -75,7 +74,9 @@ Use of the ``outliers()`` requirement is demonstrated below:
     .. group-tab:: Pytest
 
         .. code-block:: python
-            :emphasize-lines: 6,14
+            :emphasize-lines: 8,16
+
+            from datatest import validate
 
             ...
 
