@@ -2,109 +2,26 @@
 .. module:: datatest
 
 .. meta::
-    :description: How to Assert Column Names.
+    :description: How to validate column names.
     :keywords: datatest, column names, columns, fieldnames
 
 
-##########################
-How to Assert Column Names
-##########################
+############################
+How to Validate Column Names
+############################
+
+To validate column names, we need pass the names as they appear and
+the names we're expecting to the :func:`validate` function (or the
+:meth:`assertValid() <DataTestCase.assertValid>` method if we're
+writing unittest-style tests).
 
 
-To check that a file contains the expected column names, we can use a
-:class:`Selector` and validate its :attr:`fieldnames <Selector.fieldnames>`
-using a required **set**:
+=============
+Some Examples
+=============
 
-.. tabs::
-
-    .. group-tab:: Pytest
-
-        .. code-block:: python
-            :emphasize-lines: 15,17
-
-            import pytest
-            from datatest import working_directory
-            from datatest import Selector
-            from datatest import validate
-
-
-            @pytest.fixture(scope='module')
-            @working_directory(__file__)
-            def mydata():
-                return Selector('mydata.csv')
-
-
-            def test_columns(mydata):
-
-                required_set = {'A', 'B', 'C'}
-
-                validate(mydata.fieldnames, required_set)
-
-
-    .. group-tab:: Unittest
-
-        .. code-block:: python
-            :emphasize-lines: 16,18
-
-            from datatest import working_directory
-            from datatest import Selector
-            from datatest import DataTestCase
-
-
-            def setUpModule():
-                global mydata
-                with working_directory(__file__):
-                    mydata = Selector('mydata.csv')
-
-
-            class TestMyData(DataTestCase):
-
-                def test_columns(self):
-
-                    required_set = {'A', 'B', 'C'}
-
-                    self.assertValid(mydata.fieldnames, required_set)
-
-
-The example above checks for column names in any order (sets are
-unordered). If we want to make sure that column names appear in a
-specific order, we can validate the fieldnames using a **list**:
-
-.. tabs::
-
-    .. group-tab:: Pytest
-
-        .. code-block:: python
-            :emphasize-lines: 5
-
-            ...
-
-            def test_columns(mydata):
-
-                required_list = ['A', 'B', 'C']
-
-                validate(mydata.fieldnames, required_list)
-
-
-    .. group-tab:: Unittest
-
-        .. code-block:: python
-            :emphasize-lines: 7
-
-            ...
-
-            class TestMyData(DataTestCase):
-
-                def test_columns(self):
-
-                    required_list = ['A', 'B', 'C']
-
-                    self.assertValid(mydata.fieldnames, required_list)
-
-
-If we want to assert that a file contains a minimum set of
-required columns (but may include additional columns), we can
-use an allowance:
+**Selector:** The columns names of a :class:`datatest.Selector` can be
+accessed with the :attr:`fieldnames <Selector.fieldnames>` attribute.
 
 .. tabs::
 
@@ -113,71 +30,175 @@ use an allowance:
         .. code-block:: python
             :emphasize-lines: 11
 
-            ...
+            from datatest import validate
+            from datatest import Selector
 
-            from datatest import allowed
 
-            ...
+            def test_columns():
 
-            def test_columns(mydata):
+                mydata = Selector('mydata.csv')
 
-                required_set = {'A', 'B', 'C'}
+                required_columns = {'A', 'B', 'C'}
 
-                with allowed.extra():
-                    validate(mydata.fieldnames, required_set)
+                validate(mydata.fieldnames, required_columns)
 
 
     .. group-tab:: Unittest
 
         .. code-block:: python
-            :emphasize-lines: 9
+            :emphasize-lines: 13
 
-            ...
+            from datatest import DataTestCase
+            from datatest import Selector
+
 
             class TestMyData(DataTestCase):
 
                 def test_columns(self):
 
-                    required_set = {'A', 'B', 'C'}
+                    mydata = Selector('mydata.csv')
 
-                    with self.allowedExtra():
-                        self.assertValid(mydata.fieldnames, required_set)
+                    required_columns = {'A', 'B', 'C'}
+
+                    self.assertValid(mydata.fieldnames, required_columns)
 
 
-If we don't care exactly what the column names are but we want
-to check that they conform to a specific format, we can use a
-predicate **function**. Below we will check that the column
-names are all upper case:
+**DataFrame:** The columns names of a ``pandas.DataFrame`` can be
+accessed with the ``columns`` attribute.
 
 .. tabs::
 
     .. group-tab:: Pytest
 
         .. code-block:: python
-            :emphasize-lines: 5-6
+            :emphasize-lines: 11
 
-            ...
+            import pandas as pd
+            import datatest as dt
 
-            def test_columns(mydata):
 
-                def uppercase(value):
-                    return value.isupper()
+            def test_columns():
 
-                validate(mydata.fieldnames, uppercase)
+                mydata = pd.read_csv('mydata.csv')  # <- Creates DataFrame.
+
+                required_columns = {'A', 'B', 'C'}
+
+                validate(mydata.columns, required_columns)
+
+    .. group-tab:: Unittest
+
+        .. code-block:: python
+            :emphasize-lines: 13
+
+            import pandas as pd
+            import datatest as dt
+
+
+            class TestMyData(dt.DataTestCase):
+
+                def test_columns(self):
+
+                    mydata = pd.read_csv('mydata.csv')  # <- Creates DataFrame.
+
+                    required_columns = {'A', 'B', 'C'}
+
+                    self.assertValid(mydata.columns, required_columns)
+
+
+==============
+Other Criteria
+==============
+
+The examples above check that the column names are members of a given
+:py:class:`set`. But because sets are unordered, we are not validating
+the order of these columns---only that they exist.
+
+**Column Order:** If we want to validate the order the columns, we
+can use a :py:class:`list` of ``required_columns`` (instead instead of
+a set).
+
+.. tabs::
+
+    .. group-tab:: Pytest
+
+        .. code-block:: python
+            :emphasize-lines: 9
+
+            from datatest import validate
+            from datatest import Selector
+
+
+            def test_columns():
+
+                mydata = Selector('mydata.csv')
+
+                required_columns = ['A', 'B', 'C']  # <- Checks order.
+
+                validate(mydata.fieldnames, required_columns)
 
 
     .. group-tab:: Unittest
 
         .. code-block:: python
-            :emphasize-lines: 7-8
+            :emphasize-lines: 11
 
-            ...
+            from datatest import DataTestCase
+            from datatest import Selector
+
 
             class TestMyData(DataTestCase):
 
                 def test_columns(self):
 
-                    def uppercase(value):
+                    mydata = Selector('mydata.csv')
+
+                    required_columns = ['A', 'B', 'C']  # <- Checks order.
+
+                    self.assertValid(mydata.fieldnames, required_columns)
+
+
+**Column Format:** If we don't care exactly what the column names are
+but we want to check that they conform to a specific format, we can use
+a predicate **function**:
+
+.. tabs::
+
+    .. group-tab:: Pytest
+
+        .. code-block:: python
+            :emphasize-lines: 9-11
+
+            from datatest import validate
+            from datatest import Selector
+
+
+            def test_columns():
+
+                mydata = Selector('mydata.csv')
+
+                def required_format(value):
+                    """must be upper case"""
+                    return value.isupper()
+
+                validate(mydata.fieldnames, required_format)
+
+    .. group-tab:: Unittest
+
+        .. code-block:: python
+            :emphasize-lines: 11-13
+
+            from datatest import DataTestCase
+            from datatest import Selector
+
+
+            class TestMyData(DataTestCase):
+
+                def test_columns(self):
+
+                    mydata = Selector('mydata.csv')
+
+                    def required_format(value):
+                        """must be upper case"""
                         return value.isupper()
 
-                    self.assertValid(mydata.fieldnames, uppercase)
+                    self.assertValid(mydata.fieldnames, required_format)
