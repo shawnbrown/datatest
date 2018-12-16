@@ -6,6 +6,38 @@ from . import _unittest as unittest
 import datatest
 
 
+class TestNamespaces(unittest.TestCase):
+    def test_root_namespace(self):
+        """Make sure important objects are in root namespace
+        for easy access.
+        """
+        # Core objects.
+        self.assertTrue(hasattr(datatest, 'validate'))
+        self.assertTrue(hasattr(datatest, 'allowed'))
+        self.assertTrue(hasattr(datatest, 'group_requirement'))
+
+        # Error and difference objects.
+        self.assertTrue(hasattr(datatest, 'ValidationError'))
+        self.assertTrue(hasattr(datatest, 'Missing'))
+        self.assertTrue(hasattr(datatest, 'Extra'))
+        self.assertTrue(hasattr(datatest, 'Deviation'))
+        self.assertTrue(hasattr(datatest, 'Invalid'))
+
+        # Data handling support.
+        self.assertTrue(hasattr(datatest, 'working_directory'))
+        self.assertTrue(hasattr(datatest, 'get_reader'))
+        self.assertTrue(hasattr(datatest, 'Selector'))
+        self.assertTrue(hasattr(datatest, 'ProxyGroup'))
+
+        # Unittest-style support.
+        self.assertTrue(hasattr(datatest, 'DataTestCase'))
+        self.assertTrue(hasattr(datatest, 'main'))
+        self.assertTrue(hasattr(datatest, 'mandatory'))
+        self.assertTrue(hasattr(datatest, 'skip'))
+        self.assertTrue(hasattr(datatest, 'skipIf'))
+        self.assertTrue(hasattr(datatest, 'skipUnless'))
+
+
 class TestSelectorIdioms(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
