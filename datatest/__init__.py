@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+"""test driven data-wrangling and validation
+
+PYTEST_DONT_REWRITE
+"""
 
 # Datatest Core API (__all__ property defined in submodules)
 from .validation import *  # Validation error and functions.

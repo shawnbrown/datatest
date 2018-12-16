@@ -37,6 +37,20 @@ class TestNamespaces(unittest.TestCase):
         self.assertTrue(hasattr(datatest, 'skipIf'))
         self.assertTrue(hasattr(datatest, 'skipUnless'))
 
+    def test_pytest_flag(self):
+        """Pytest should not try to rewrite the datatest module itself.
+
+        If Pytest does try to rewrite datatest, it will give a warning
+        in cases where datatest is imported before asserting rewriting
+        begins. But there's no reason to rewrite datatest in the first
+        place so pytest shouldn't even be trying this.
+
+        See "PYTEST_DONT_REWRITE" in the Pytest documentation:
+
+            https://docs.pytest.org/latest/reference.html
+        """
+        self.assertIn('PYTEST_DONT_REWRITE', datatest.__doc__)
+
 
 class TestSelectorIdioms(unittest.TestCase):
     @classmethod
