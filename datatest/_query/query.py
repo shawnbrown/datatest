@@ -1053,13 +1053,20 @@ with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
 class Selector(object):
     """A class to quickly load and select tabular data. The given
     *objs*, *\*args*, and *\*\*kwds*, can be any values supported
-    by :class:`load_data()`::
+    by :class:`get_reader()`. Additionally, *objs* can be a list
+    of supported objects or a string with shell-style wildcards.
+
+    Load a single file::
 
         select = datatest.Selector('myfile.csv')
 
-    Create an empty Selector that can be populated later::
+    Load multiple files into the same selector::
 
-        select = datatest.Selector()
+        select = datatest.Selector(['myfile1.csv', 'myfile2.csv'])
+
+    Load multple files using a shell-style wildcard::
+
+        select = datatest.Selector('*.csv')
     """
     def __init__(self, objs=None, *args, **kwds):
         """Initialize self."""
@@ -1075,36 +1082,24 @@ class Selector(object):
                 raise
 
     def load_data(self, objs, *args, **kwds):
-        """Load data from one or more objects. The given *objs*,
-        *\*args*, and *\*\*kwds*, can be any values supported by
-        :class:`get_reader()`. Additionally, *objs* can be a list
-        of supported objects or a string with shell-style wildcards.
+        """Load data from one or more objects into the Selector. The
+        given *objs*, *\*args*, and *\*\*kwds*, can be any values
+        supported by the :class:`Selector` class initialization.
 
-        Load data from single objects of various kinds::
+        Load a single file into an empty Selector::
 
-            # CSV file.
-            select = datatest.Selector()
+            select = datatest.Selector()  # <- Empty Selector.
             select.load_data('myfile.csv')
 
-            # Excel file.
-            select = datatest.Selector()
-            select.load_data('myfile.xlsx', worksheet='Sheet2')
+        Add a single file to an already-populated Selector::
 
-            # Pandas DataFrame.
-            df = pandas.DataFrame([...])
-            select = datatest.Selector()
-            select.load_data(df)
+            select = datatest.Selector('myfile1.csv')
+            select.load_data('myfile2.xlsx', worksheet='Sheet2')
 
-        Load data from multiple sources using a list of objects::
+        Add multiple files to an already-populated Selector::
 
-            select = datatest.Selector()
-            select.load_data(['myfile1.csv', 'myfile2.csv'])
-
-        Load data from multple sources using a string with shell-style
-        wildcards::
-
-            select = datatest.Selector()
-            select.load_data('*.csv')
+            select = datatest.Selector('myfile1.csv')
+            select.load_data(['myfile2.csv', 'myfile3.csv'])
         """
         if isinstance(objs, string_types):
             obj_list = glob(objs)  # Get shell-style wildcard matches.
