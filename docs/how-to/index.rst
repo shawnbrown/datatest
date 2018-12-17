@@ -18,7 +18,8 @@ How-to Guide
     :maxdepth: 1
 
     Install Datatest <install>
-    Running Tests <run-tests>
+    Get Started <get-started>
+    Run Tests <run-tests>
     Use Relative File Paths <relative-paths>
     Assert Data Types <data-types>
     Assert an Interval <interval-compare>
