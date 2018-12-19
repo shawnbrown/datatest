@@ -20,17 +20,17 @@ How-to Guide
     Install Datatest <install>
     Get Started <get-started>
     Run Tests <run-tests>
-    Relative File Paths <relative-paths>
-    Data Types <data-types>
-    Intervals <interval-compare>
-    Date Formats <date-format>
-    Phone Numbers <phone-format>
-    Uniqueness <unique-values>
-    Subsets and Supersets <subset-superset>
-    File Names <file-names>
     Column Names <column-names>
-    Descriptive Statistics <sum-totals>
-    Fuzzy Matching <fuzzy-matching>
-    Excel Auto-Formatting <excel-formatting>
     Custom Differences <customize-errors>
+    Data Types <data-types>
+    Date Formats <date-format>
+    Descriptive Statistics <sum-totals>
+    Excel Auto-Formatting <excel-formatting>
+    File Names <file-names>
+    Fuzzy Matching <fuzzy-matching>
+    Intervals <interval-compare>
     Outliers <detect-outliers>
+    Phone Numbers <phone-format>
+    Relative File Paths <relative-paths>
+    Subsets and Supersets <subset-superset>
+    Uniqueness <unique-values>
