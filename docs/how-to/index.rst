@@ -5,7 +5,7 @@
     :title: How-to Guide
 
 .. module:: datatest
-    :synopsis: Test driven data-wrangling.
+    :synopsis: Test driven data-wrangling and validation.
 .. moduleauthor:: Shawn Brown <sbrown@ncecservices.com>
 .. sectionauthor:: Shawn Brown <sbrown@ncecservices.com>
 
@@ -20,17 +20,17 @@ How-to Guide
     Install Datatest <install>
     Get Started <get-started>
     Run Tests <run-tests>
-    Use Relative File Paths <relative-paths>
-    Assert Data Types <data-types>
-    Assert an Interval <interval-compare>
-    Assert Date Formats <date-format>
-    Assert Phone Numbers <phone-format>
-    Assert Unique Values <unique-values>
-    Assert Subsets and Supersets <subset-superset>
-    Assert File Names <file-names>
-    Assert Column Names <column-names>
-    Assert Sum Totals <sum-totals>
-    Assert Fuzzy Matching <fuzzy-matching>
-    Avoid Excel Formatting <excel-formatting>
-    Customize Errors <customize-errors>
-    Detect Outliers <detect-outliers>
+    Relative File Paths <relative-paths>
+    Data Types <data-types>
+    Intervals <interval-compare>
+    Date Formats <date-format>
+    Phone Numbers <phone-format>
+    Uniqueness <unique-values>
+    Subsets and Supersets <subset-superset>
+    File Names <file-names>
+    Column Names <column-names>
+    Descriptive Statistics <sum-totals>
+    Fuzzy Matching <fuzzy-matching>
+    Excel Auto-Formatting <excel-formatting>
+    Custom Differences <customize-errors>
+    Outliers <detect-outliers>
