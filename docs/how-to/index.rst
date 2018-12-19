@@ -21,16 +21,16 @@ How-to Guide
     Get Started <get-started>
     Run Tests <run-tests>
     Column Names <column-names>
-    Custom Differences <customize-errors>
+    Customize Differences <customize-differences>
     Data Types <data-types>
-    Date Formats <date-format>
-    Descriptive Statistics <sum-totals>
-    Excel Auto-Formatting <excel-formatting>
+    Date Formats <date-formats>
+    Descriptive Statistics <descriptive-stats>
+    Excel Auto-Formatting <excel-auto-formatting>
     File Names <file-names>
     Fuzzy Matching <fuzzy-matching>
-    Intervals <interval-compare>
-    Outliers <detect-outliers>
-    Phone Numbers <phone-format>
-    Relative File Paths <relative-paths>
+    Intervals <intervals>
+    Outliers <outliers>
+    Phone Numbers <phone-numbers>
+    Relative File Paths <relative-file-paths>
     Subsets and Supersets <subset-superset>
-    Uniqueness <unique-values>
+    Uniqueness <uniqueness>
