@@ -6,9 +6,9 @@
     :keywords: datatest, differences, custom
 
 
-#######################
-How to Customize Errors
-#######################
+############################
+How to Customize Differences
+############################
 
 When using a predicate function (see :ref:`predicate-docs`),
 a ValidationError contains one "difference" for each time the

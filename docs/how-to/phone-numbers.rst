@@ -6,9 +6,9 @@
     :keywords: datatest, phone format, validate phone number
 
 
-##################################
-How to Assert Phone Number Formats
-##################################
+#############################
+How to Validate Phone Numbers
+#############################
 
 To check that phone numbers are well-formed, you can use a regular
 expression.

@@ -6,9 +6,9 @@
     :keywords: datatest, validate, sum, total
 
 
-########################
-How to Assert Sum Totals
-########################
+######################################
+How to Validate Descriptive Statistics
+######################################
 
 To check sum totals from a file, you would select data from a column,
 sum the values, and then validate the result against a required number

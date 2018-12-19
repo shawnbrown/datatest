@@ -7,7 +7,7 @@
 
 
 #########################
-How to Assert an Interval
+How to Validate Intervals
 #########################
 
 To check that data elements are within a given interval, you can

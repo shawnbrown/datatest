@@ -6,9 +6,9 @@
     :keywords: datatest, validate, subset, superset
 
 
-###################################
-How to Assert Subsets and Supersets
-###################################
+#####################################
+How to Validate Subsets and Supersets
+#####################################
 
 When given a :py:class:`set` requirement, the :func:`validate` function's
 default behavior checks data elements for membership in the set. But if you

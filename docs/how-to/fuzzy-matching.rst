@@ -6,9 +6,9 @@
     :keywords: approximate string, fuzzy matching, testing, datatest
 
 
-###########################
-How to Assert Fuzzy Matches
-###########################
+#############################
+How to Validate Fuzzy Matches
+#############################
 
 When comparing strings of text, it can sometimes be useful to assert
 that values are similar instead of asserting that they are exactly the

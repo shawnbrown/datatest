@@ -6,11 +6,11 @@
     :keywords: datatest, date format, validate date
 
 
-##########################
-How to Assert Date Formats
-##########################
+############################
+How to Validate Date Formats
+############################
 
-To assert a particular date format, you can use a predicate
+To check for a particular date format, you can use a predicate
 function. In the following example, we define a function that
 checks for the YYYY-MM-DD format:
 

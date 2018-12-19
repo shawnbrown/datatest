@@ -6,15 +6,15 @@
     :keywords: datatest, reference data
 
 
-########################
-How to Assert Data Types
-########################
+##########################
+How to Validate Data Types
+##########################
 
 To check that data is of a particular type, you can pass a
-type object (e.g., a class) as the *requirement* value
+type object (i.e., a class) as the *requirement* value
 (see :ref:`predicate-docs`).
 
-In the following example, we use the type :py:class:`float`
+In the following example, we use the :py:class:`float` type
 as the *requirement*. The elements in *data* are considered
 valid if they are float instances:
 
@@ -52,7 +52,7 @@ valid if they are float instances:
                     self.assertValid(data, float)
 
 
-In this example, we use the type :py:class:`str` as the
+In this example, we use the :py:class:`str` type as the
 *requirement*. The elements in *data* are considered
 valid if they are strings:
 

@@ -7,10 +7,10 @@
 
 
 ###########################
-How to Assert Unique Values
+How to Check for Uniqueness
 ###########################
 
-To assert that values are unique, we can define a group-requirement
+To checck that values are unique, we can define a group-requirement
 that generates :class:`Extra` differences when duplicate values are
 encountered.
 

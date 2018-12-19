@@ -6,9 +6,9 @@
     :keywords: datatest, check file names
 
 
-########################
-How to Assert File Names
-########################
+##########################
+How to Validate File Names
+##########################
 
 The following example uses :py:func:`glob() <glob.glob>` to get
 a list of file names from a specified location and then uses a
