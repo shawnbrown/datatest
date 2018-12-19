@@ -1,6 +1,6 @@
 
 .. module:: datatest
-    :synopsis: Test driven data-wrangling.
+    :synopsis: Test driven data-wrangling and analysis.
 .. moduleauthor:: Shawn Brown <sbrown@ncecservices.com>
 .. sectionauthor:: Shawn Brown <sbrown@ncecservices.com>
 
@@ -21,5 +21,5 @@ Reference
     Data Handling <data-handling>
     unittest-support
 
-For a full list of classes and objects, see the
-:ref:`Package Index <genindex>`.
+See the :ref:`Package Index <genindex>` for a full list of classes
+and objects.
