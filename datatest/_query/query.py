@@ -1055,12 +1055,23 @@ class Selector(object):
     *objs*, *\*args*, and *\*\*kwds*, can be any values supported
     by :class:`get_reader()`. Additionally, *objs* can be a list
     of supported objects or a string with shell-style wildcards.
+    If *objs* is already a reader-like object, it will be used as
+    is.
 
     Load a single file::
 
         select = datatest.Selector('myfile.csv')
 
-    Load multiple files into the same selector::
+    Load a reader-like iterable::
+
+        select = datatest.Selector([
+            ['A', 'B'],
+            ['x', 100],
+            ['y', 200],
+            ['z', 300],
+        ])
+
+    Load multiple files::
 
         select = datatest.Selector(['myfile1.csv', 'myfile2.csv'])
 
