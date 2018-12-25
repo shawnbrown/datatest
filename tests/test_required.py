@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from . import _unittest as unittest
+from datatest._compatibility.collections.abc import Iterator
 from datatest import Missing
 from datatest import Extra
 from datatest import Deviation
@@ -13,6 +14,7 @@ from datatest._required import required_set
 from datatest._required import required_sequence
 from datatest._required import _get_group_requirement
 from datatest._required import _data_vs_requirement
+from datatest._required import _datadict_vs_requirement
 
 
 class TestBuildDescription(unittest.TestCase):
@@ -540,3 +542,85 @@ class TestDataVsRequirement(unittest.TestCase):
 
         _, description = _data_vs_requirement('bar', require2)
         self.assertEqual(description, 'does not satisfy require2()')
+
+
+class TestDatadictVsRequirement(unittest.TestCase):
+    @staticmethod
+    def evaluate_generators(dic):
+        new_dic = dict()
+        for k, v in dic.items():
+            new_dic[k] = list(v) if isinstance(v, Iterator) else v
+        return new_dic
+
+    def test_no_differences(self):
+        # Set membership.
+        data = {'a': ['x', 'y'], 'b': ['x', 'y'],}
+        requirement = set(['x', 'y'])
+        result = _datadict_vs_requirement(data, requirement)
+        self.assertIsNone(result)
+
+        # Equality of single value.
+        data = {'a': 'x', 'b': 'x'}
+        requirement = 'x'
+        result = _datadict_vs_requirement(data, requirement)
+        self.assertIsNone(result)
+
+    def test_set_membership(self):
+        data = {'a': ['x', 'x'], 'b': ['x', 'y', 'z']}
+        requirement = set(['x', 'y'])
+        differences, description = _datadict_vs_requirement(data, requirement)
+        differences = self.evaluate_generators(differences)
+        expected = {'a': [Missing('y')], 'b': [Extra('z')]}
+        self.assertEqual(differences, expected)
+        self.assertEqual(description, 'does not satisfy set membership')
+
+    def test_predicate_with_single_item_values(self):
+        data = {'a': 'x', 'b': 10, 'c': 9}
+        requirement = 9
+        differences, description = _datadict_vs_requirement(data, requirement)
+        expected = {'a': Invalid('x'), 'b': Deviation(+1, 9)}
+        self.assertEqual(differences, expected)
+
+    def test_predicate_with_lists_of_values(self):
+        data = {'a': ['x', 'j'], 'b': [10, 9], 'c': [9, 9]}
+        requirement = 9
+        differences, description = _datadict_vs_requirement(data, requirement)
+        differences = self.evaluate_generators(differences)
+        expected = {'a': [Invalid('x'), Invalid('j')], 'b': [Deviation(+1, 9)]}
+        self.assertEqual(differences, expected)
+
+    def test_tuple_with_single_item_values(self):
+        data = {'a': ('x', 1.0), 'b': ('y', 2), 'c': ('x', 3)}
+        required = ('x', int)
+        differences, description = _datadict_vs_requirement(data, required)
+        expected = {'a': Invalid(('x', 1.0)), 'b': Invalid(('y', 2))}
+        self.assertEqual(differences, expected)
+
+    def test_tuple_with_lists_of_values(self):
+        data = {'a': [('x', 1.0), ('x', 1)], 'b': [('y', 2), ('x', 3)]}
+        required = ('x', int)
+        differences, description = _datadict_vs_requirement(data, required)
+        differences = self.evaluate_generators(differences)
+        expected = {'a': [Invalid(('x', 1.0))], 'b': [Invalid(('y', 2))]}
+        self.assertEqual(differences, expected)
+
+    def test_description_message(self):
+        data = {'a': 'bar', 'b': ['bar', 'bar']}
+
+        # When message is the same for all items, use provided message.
+        @group_requirement
+        def requirement1(iterable):
+            iterable = list(iterable)
+            return [Invalid('bar')], 'got some items'
+
+        _, description = _datadict_vs_requirement(data, requirement1)
+        self.assertEqual(description, 'got some items')
+
+        # When messages are different, description should be None.
+        @group_requirement
+        def requirement2(iterable):
+            iterable = list(iterable)
+            return [Invalid('bar')], 'got {0} items'.format(len(iterable))
+
+        _, description = _datadict_vs_requirement(data, requirement2)
+        self.assertIsNone(description)

@@ -311,3 +311,39 @@ def _data_vs_requirement(data, requirement):
             differences = differences[0]  # Unwrap if single difference.
         return differences, description
     return None
+
+
+def _datadict_vs_requirement(data, requirement):
+    """Apply *requirement* object to mapping of *data* values and
+    return a mapping of any differences and a description.
+    """
+    if isinstance(data, Mapping):
+        data_items = getattr(data, 'iteritems', data.items)()
+    elif _is_collection_of_items(data):
+        data_items = data
+    else:
+        raise TypeError('data must be mapping or iterable of key-value items')
+
+    requirement = _get_group_requirement(requirement)
+
+    differences = dict()
+    for key, value in data_items:
+        result = _data_vs_requirement(value, requirement)
+        if result:
+            differences[key] = result
+
+    if not differences:
+        return None  # <- EXIT!
+
+    # Get first description from results.
+    itervalues = getattr(differences, 'itervalues', differences.values)()
+    description = next((x for _, x in itervalues), None)
+
+    # Format dictionary values and finalize description.
+    for key, value in getattr(differences, 'iteritems', differences.items)():
+        diffs, desc = value
+        differences[key] = diffs
+        if description and description != desc:
+            description = None
+
+    return differences, description
