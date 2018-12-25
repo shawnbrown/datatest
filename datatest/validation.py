@@ -3,11 +3,9 @@ import sys
 from ._compatibility.collections.abc import Iterable
 from ._compatibility.collections.abc import Iterator
 from ._compatibility.collections.abc import Mapping
-from ._compatibility.collections.abc import Sequence
-from ._compatibility.collections.abc import Set
-from ._required import _get_group_requirement
 from ._required import _data_vs_requirement
 from ._required import _datadict_vs_requirement
+from ._required import _datadict_vs_requirementdict
 from ._utils import nonstringiter
 from ._utils import exhaustible
 from ._utils import _safesort_key
@@ -88,55 +86,6 @@ def _normalize_requirement(requirement):
                          "as a requirement").format(cls_name))
 
     return requirement
-
-
-def _datadict_vs_requirementdict(data, requirement):
-    """Apply mapping of *requirement* values to a mapping of *data*
-    values and return a mapping of any differences and a description
-    or None.
-    """
-    if isinstance(data, Mapping):
-        data_items = getattr(data, 'iteritems', data.items)()
-    elif _is_collection_of_items(data):
-        data_items = data
-    else:
-        raise TypeError('data must be mapping or iterable of key-value items')
-
-    data_keys = set()
-    differences = dict()
-
-    for key, actual in data_items:
-        data_keys.add(key)
-        expected = requirement.get(key, NOTFOUND)
-        result = _data_vs_requirement(actual, expected)
-        if result:
-            differences[key] = result
-
-    requirement_items = getattr(requirement, 'iteritems', requirement.items)()
-    for key, expected in requirement_items:
-        if key not in data_keys:
-            result = _data_vs_requirement([], expected)  # Try empty container.
-            if not result:
-                diff = _make_difference(NOTFOUND, expected)
-                result = (diff, NOTFOUND)
-            differences[key] = result
-
-    if not differences:
-        return None  # <- EXIT!
-
-    # Get first description from results.
-    itervalues = getattr(differences, 'itervalues', differences.values)()
-    filtered = (x for _, x in itervalues if x is not NOTFOUND)
-    description = next(filtered, None)
-
-    # Format dictionary values and finalize description.
-    for key, value in getattr(differences, 'iteritems', differences.items)():
-        diffs, desc = value
-        differences[key] = diffs
-        if description and description != desc and desc is not NOTFOUND:
-            description = None
-
-    return differences, description
 
 
 class ValidationError(AssertionError):

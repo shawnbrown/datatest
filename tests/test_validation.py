@@ -2,7 +2,6 @@
 import textwrap
 from . import _unittest as unittest
 from datatest._compatibility.collections.abc import Iterator
-
 from datatest.difference import BaseDifference
 from datatest.difference import Extra
 from datatest.difference import Missing
@@ -10,12 +9,10 @@ from datatest.difference import Invalid
 from datatest.difference import Deviation
 from datatest._query.query import DictItems
 from datatest._query.query import Result
-from datatest._required import group_requirement
 
 from datatest.validation import _normalize_data
 from datatest.validation import _normalize_requirement
 from datatest.validation import ValidationError
-from datatest.validation import _datadict_vs_requirementdict
 from datatest.validation import validate
 from datatest.validation import valid
 
@@ -420,180 +417,6 @@ class TestValidationIntegration(unittest.TestCase):
 
         with self.assertRaises(ValidationError):
             validate(a, b)
-
-
-class TestDatadictVsRequirementdict(unittest.TestCase):
-    """Calling _apply_mapping_to_mapping() should run the appropriate
-    comparison function (internally) for each value-group and
-    return the results as an iterable of key-value items.
-    """
-    @staticmethod
-    def evaluate_generators(dic):
-        new_dic = dict()
-        for k, v in dic.items():
-            new_dic[k] = list(v) if isinstance(v, Iterator) else v
-        return new_dic
-
-    def test_no_differences(self):
-        # Set membership.
-        data = {'a': ['x', 'y']}
-        result = _datadict_vs_requirementdict(data, {'a': set(['x', 'y'])})
-        self.assertIsNone(result)
-
-        # Equality of single values.
-        data = {'a': 'x', 'b': 'y'}
-        result = _datadict_vs_requirementdict(data, {'a': 'x', 'b': 'y'})
-        self.assertIsNone(result)
-
-    def test_bad_data_type(self):
-        not_a_mapping = 'abc'
-        a_mapping = {'a': 'abc'}
-
-        with self.assertRaises(TypeError):
-            _datadict_vs_requirementdict(not_a_mapping, a_mapping)
-
-    def test_set_membership_differences(self):
-        differences, _ = _datadict_vs_requirementdict(
-            {'a': ['x', 'x'], 'b': ['x', 'y', 'z']},
-            {'a': set(['x', 'y']), 'b': set(['x', 'y'])},
-        )
-        differences = self.evaluate_generators(differences)
-        expected = {'a': [Missing('y')], 'b': [Extra('z')]}
-        self.assertEqual(differences, expected)
-
-    def test_equality_of_single_values(self):
-        differences, _ = _datadict_vs_requirementdict(
-            data={'a': 'x', 'b': 10},
-            requirement={'a': 'j', 'b': 9},
-        )
-        expected = {'a': Invalid('x', expected='j'), 'b': Deviation(+1, 9)}
-        self.assertEqual(differences, expected)
-
-        differences, _ = _datadict_vs_requirementdict(
-            data={'a': 'x', 'b': 10, 'c': 10},
-            requirement={'a': 'j', 'b': 'k', 'c': 9},
-        )
-        expected = {'a': Invalid('x', 'j'), 'b': Invalid(10, 'k'), 'c': Deviation(+1, 9)}
-        self.assertEqual(differences, expected)
-
-    def test_equality_of_multiple_values(self):
-        differences, _ = _datadict_vs_requirementdict(
-            data={'a': ['x', 'j'], 'b': [10, 9]},
-            requirement={'a': 'j', 'b': 9},
-        )
-        differences = self.evaluate_generators(differences)
-        expected = {'a': [Invalid('x')], 'b': [Deviation(+1, 9)]}
-        self.assertEqual(differences, expected)
-
-    def test_equality_of_single_tuples(self):
-        differences, _ = _datadict_vs_requirementdict(
-            data={'a': (1, 'x'), 'b': (9, 10)},
-            requirement={'a': (1, 'j'), 'b': (9, 9)},
-        )
-        expected = {'a': Invalid((1, 'x'), expected=(1, 'j')),
-                    'b': Invalid((9, 10), expected=(9, 9))}
-        self.assertEqual(differences, expected)
-
-    def test_equality_of_multiple_tuples(self):
-        differences, _ = _datadict_vs_requirementdict(
-            data={'a': [(1, 'j'), (1, 'x')], 'b': [(9, 9), (9, 10)]},
-            requirement={'a': (1, 'j'), 'b': (9, 9)},
-        )
-        differences = self.evaluate_generators(differences)
-        expected = {'a': [Invalid((1, 'x'))],
-                    'b': [Invalid((9, 10))]}
-        self.assertEqual(differences, expected)
-
-    def test_missing_keys(self):
-        # Equality of multiple values, missing key with single item.
-        differences, _ = _datadict_vs_requirementdict(
-            data={'a': ['x', 'j'], 'b': [10, 9]},
-            requirement={'a': 'j', 'b': 9, 'c': 'z'},
-        )
-        differences = self.evaluate_generators(differences)
-        expected = {'a': [Invalid('x')], 'b': [Deviation(+1, 9)], 'c': Missing('z')}
-        self.assertEqual(differences, expected)
-
-        # Equality of multiple values, missing key with single item.
-        differences, _ = _datadict_vs_requirementdict(
-            data={'a': ['x', 'j'], 'b': [10, 9], 'c': 'z'},
-            requirement={'a': 'j', 'b': 9},
-        )
-        differences = self.evaluate_generators(differences)
-        expected = {'a': [Invalid('x')], 'b': [Deviation(+1, 9)], 'c': Extra('z')}
-        self.assertEqual(differences, expected)
-
-        # Missing key, set membership.
-        differences, _ = _datadict_vs_requirementdict(
-            data={'a': 'x'},
-            requirement={'a': 'x', 'b': set(['z'])},
-        )
-        differences = self.evaluate_generators(differences)
-        expected = {'b': [Missing('z')]}
-        self.assertEqual(differences, expected)
-
-    def test_mismatched_keys(self):
-        # Mapping of single-items (BaseElement objects).
-        differences, _ = _datadict_vs_requirementdict(
-            data={'a': ('abc', 1), 'c': ('abc', 2.0)},
-            requirement={'a': ('abc', int), 'b': ('abc', float)},
-        )
-        expected = {
-            'b': Missing(('abc', float)),
-            'c': Extra(('abc', 2.0)),
-        }
-        self.assertEqual(differences, expected)
-
-        # Mapping of containers (lists of BaseElement objects).
-        differences, _ = _datadict_vs_requirementdict(
-            data={
-                'a': [('abc', 1), ('abc', 2)],
-                'c': [('abc', 1.0), ('abc', 2.0)],
-            },
-            requirement={'a': ('abc', int), 'b': ('abc', float)},
-        )
-        differences = self.evaluate_generators(differences)
-        expected = {
-            'c': [Extra(('abc', 1.0)), Extra(('abc', 2.0))],
-            'b': Missing(('abc', float)),
-        }
-        self.assertEqual(differences, expected)
-
-    def test_empty_vs_nonempty_values(self):
-        empty = {}
-        nonempty = {'a': set(['x'])}
-
-        result = _datadict_vs_requirementdict(empty, empty)
-        self.assertIsNone(result)
-
-        differences, _ = _datadict_vs_requirementdict(nonempty, empty)
-        differences = self.evaluate_generators(differences)
-        self.assertEqual(differences, {'a': [Extra('x')]})
-
-        differences, _ = _datadict_vs_requirementdict(empty, nonempty)
-        differences = self.evaluate_generators(differences)
-        self.assertEqual(differences, {'a': [Missing('x')]})
-
-    def test_description_message(self):
-        data = {'a': 'bar', 'b': ['bar', 'bar']}
-
-        @group_requirement
-        def func1(iterable):
-            return [Invalid('bar')], 'some message'
-
-        @group_requirement
-        def func2(iterable):
-            return [Invalid('bar')], 'some other message'
-
-        # When message is same for all items, use provided message.
-        requirement1 = {'a': func1, 'b': func1}
-        _, description = _datadict_vs_requirementdict(data, requirement1)
-        self.assertEqual(description, 'some message')
-
-        # When messages are different, description should be None.
-        requirement2 = {'a': func1, 'b': func2}
-        _, description = _datadict_vs_requirementdict(data, requirement2)
-        self.assertIsNone(description)
 
 
 class TestValidate(unittest.TestCase):
