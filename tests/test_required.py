@@ -12,6 +12,7 @@ from datatest._required import required_predicate
 from datatest._required import required_set
 from datatest._required import required_sequence
 from datatest._required import _get_group_requirement
+from datatest._required import _data_vs_requirement
 
 
 class TestBuildDescription(unittest.TestCase):
@@ -461,3 +462,81 @@ class TestGetGroupRequirement(unittest.TestCase):
         requirement1 = _get_group_requirement('foo')
         requirement2 = _get_group_requirement(requirement1)
         self.assertIs(requirement1, requirement2)
+
+
+class TestDataVsRequirement(unittest.TestCase):
+    def test_set_against_container(self):
+        requirement = set(['foo'])
+
+        result = _data_vs_requirement(['foo', 'foo'], requirement)
+        self.assertIsNone(result)
+
+        differences, _ = _data_vs_requirement(['foo', 'bar'], requirement)
+        self.assertEqual(list(differences), [Extra('bar')])
+
+    def test_set_against_single_item(self):
+        requirement = set(['foo'])
+        result = _data_vs_requirement('foo', requirement)
+        self.assertIsNone(result)
+
+        requirement = set(['foo', 'bar'])
+        differences, _ = _data_vs_requirement('bar', requirement)
+        self.assertEqual(differences, Missing('foo'), msg='should not be in container')
+
+        requirement = set(['foo'])
+        differences, _ = _data_vs_requirement('bar', requirement)
+        differences = list(differences)
+        self.assertEqual(len(differences), 2, msg='expects container if multiple diffs')
+        self.assertIn(Missing('foo'), differences)
+        self.assertIn(Extra('bar'), differences)
+
+    def test_predicate_against_container(self):
+        requirement = 'foo'
+        result = _data_vs_requirement(['foo', 'foo'], requirement)
+        self.assertIsNone(result)
+
+        requirement = 'foo'
+        differences, _ = _data_vs_requirement(['foo', 'bar'], requirement)
+        self.assertEqual(list(differences), [Invalid('bar')], msg='should be iterable of diffs')
+
+        requirement = 10
+        differences, _ = _data_vs_requirement([10, 12], requirement)
+        self.assertEqual(list(differences), [Deviation(+2, 10)], msg='should be iterable of diffs')
+
+        requirement = (1, 'j')
+        differences, _ = _data_vs_requirement([(1, 'x'), (1, 'j')], requirement)
+        self.assertEqual(list(differences), [Invalid((1, 'x'))], msg='should be iterable of diffs and no "expected"')
+
+    def test_predicate_against_single_item(self):
+        requirement = 'foo'
+        result = _data_vs_requirement('foo', requirement)
+        self.assertIsNone(result)
+
+        requirement = 'foo'
+        differences, _ = _data_vs_requirement('bar', requirement)
+        self.assertEqual(differences, Invalid('bar', expected='foo'), msg='should have no container and include "expected"')
+
+        requirement = 10
+        differences, _ = _data_vs_requirement(12, requirement)
+        self.assertEqual(differences, Deviation(+2, 10), msg='should have no container')
+
+        requirement = (1, 'j')
+        differences, _ = _data_vs_requirement((1, 'x'), requirement)
+        self.assertEqual(differences, Invalid((1, 'x'), expected=(1, 'j')), msg='should have no container and include "expected"')
+
+    def test_description_message(self):
+        # Requirement returns differences and description.
+        @group_requirement
+        def require1(iterable):
+            return [Invalid('bar')], 'some message'
+
+        _, description = _data_vs_requirement('bar', require1)
+        self.assertEqual(description, 'some message')
+
+        # Requirement returns differences only, should get default description.
+        @group_requirement
+        def require2(iterable):
+            return [Invalid('bar')]
+
+        _, description = _data_vs_requirement('bar', require2)
+        self.assertEqual(description, 'does not satisfy require2()')

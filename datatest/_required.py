@@ -292,3 +292,22 @@ def _get_group_requirement(requirement, show_expected=False):
         return required_sequence(requirement)
 
     return required_predicate(requirement, show_expected)
+
+
+def _data_vs_requirement(data, requirement):
+    """Validate *data* using *requirement* and return any differences."""
+    # Handle *data* that is a container of multiple elements.
+    if not isinstance(data, BaseElement):
+        requirement = _get_group_requirement(requirement)
+        return requirement(data)  # <- EXIT!
+
+    # Handle *data* that is a single-value BaseElement.
+    requirement = _get_group_requirement(requirement, show_expected=True)
+    result = requirement([data])
+    if result:
+        differences, description = result
+        differences = list(differences)
+        if len(differences) == 1:
+            differences = differences[0]  # Unwrap if single difference.
+        return differences, description
+    return None

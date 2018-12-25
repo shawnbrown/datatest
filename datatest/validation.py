@@ -6,6 +6,7 @@ from ._compatibility.collections.abc import Mapping
 from ._compatibility.collections.abc import Sequence
 from ._compatibility.collections.abc import Set
 from ._required import _get_group_requirement
+from ._required import _data_vs_requirement
 from ._utils import nonstringiter
 from ._utils import exhaustible
 from ._utils import _safesort_key
@@ -86,25 +87,6 @@ def _normalize_requirement(requirement):
                          "as a requirement").format(cls_name))
 
     return requirement
-
-
-def _data_vs_requirement(data, requirement):
-    """Validate *data* using *requirement* and return any differences."""
-    # Handle *data* that is a container of multiple elements.
-    if not isinstance(data, BaseElement):
-        requirement = _get_group_requirement(requirement)
-        return requirement(data)  # <- EXIT!
-
-    # Handle *data* that is a single-value BaseElement.
-    requirement = _get_group_requirement(requirement, show_expected=True)
-    result = requirement([data])
-    if result:
-        differences, description = result
-        differences = list(differences)
-        if len(differences) == 1:
-            differences = differences[0]  # Unwrap if single difference.
-        return differences, description
-    return None
 
 
 def _datadict_vs_requirement(data, requirement):
