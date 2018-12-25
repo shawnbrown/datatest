@@ -11,6 +11,7 @@ from datatest._required import group_requirement
 from datatest._required import required_predicate
 from datatest._required import required_set
 from datatest._required import required_sequence
+from datatest._required import _get_group_requirement
 
 
 class TestBuildDescription(unittest.TestCase):
@@ -435,3 +436,28 @@ class TestRequiredSequence(unittest.TestCase):
             Extra((4, {'g': 7})),
         ]
         self.assertEqual(list(differences), expected)
+
+
+class TestGetGroupRequirement(unittest.TestCase):
+    def test_set(self):
+        requirement = _get_group_requirement(set(['foo']))
+        self.assertTrue(requirement._group_requirement)
+
+    def test_predicate(self):
+        requirement = _get_group_requirement('foo')
+        self.assertTrue(requirement._group_requirement)
+
+        requirement = _get_group_requirement('bar', show_expected=True)
+        self.assertTrue(requirement._group_requirement)
+
+    def test_sequence(self):  # For base-item sequences.
+        requirement = _get_group_requirement(['foo'])
+        self.assertTrue(requirement._group_requirement)
+
+    def test_already_requirement(self):
+        """If the requirement is already a group requirement, then the
+        original object should be returned.
+        """
+        requirement1 = _get_group_requirement('foo')
+        requirement2 = _get_group_requirement(requirement1)
+        self.assertIs(requirement1, requirement2)

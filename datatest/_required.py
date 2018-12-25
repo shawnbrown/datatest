@@ -16,6 +16,7 @@ from .difference import Missing
 from .difference import _make_difference
 from .difference import NOTFOUND
 from ._predicate import Predicate
+from ._query.query import BaseElement
 from ._utils import iterpeek
 
 
@@ -276,3 +277,18 @@ def required_sequence(requirement):
         return differences, 'does not match required sequence'
 
     return _required_sequence
+
+
+def _get_group_requirement(requirement, show_expected=False):
+    """Make sure *requirement* is a group requirement."""
+    if getattr(requirement, '_group_requirement', False):
+        return requirement
+
+    if isinstance(requirement, Set):
+        return required_set(requirement)
+
+    if (not isinstance(requirement, BaseElement)
+            and isinstance(requirement, Sequence)):
+        return required_sequence(requirement)
+
+    return required_predicate(requirement, show_expected)

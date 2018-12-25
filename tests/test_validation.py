@@ -15,7 +15,6 @@ from datatest._required import group_requirement
 from datatest.validation import _normalize_data
 from datatest.validation import _normalize_requirement
 from datatest.validation import ValidationError
-from datatest.validation import _get_group_requirement
 from datatest.validation import _data_vs_requirement
 from datatest.validation import _datadict_vs_requirement
 from datatest.validation import _datadict_vs_requirementdict
@@ -423,31 +422,6 @@ class TestValidationIntegration(unittest.TestCase):
 
         with self.assertRaises(ValidationError):
             validate(a, b)
-
-
-class TestGetGroupRequirement(unittest.TestCase):
-    def test_set(self):
-        requirement = _get_group_requirement(set(['foo']))
-        self.assertTrue(requirement._group_requirement)
-
-    def test_predicate(self):
-        requirement = _get_group_requirement('foo')
-        self.assertTrue(requirement._group_requirement)
-
-        requirement = _get_group_requirement('bar', show_expected=True)
-        self.assertTrue(requirement._group_requirement)
-
-    def test_sequence(self):  # For base-item sequences.
-        requirement = _get_group_requirement(['foo'])
-        self.assertTrue(requirement._group_requirement)
-
-    def test_already_requirement(self):
-        """If the requirement is already a group requirement, then the
-        original object should be returned.
-        """
-        requirement1 = _get_group_requirement('foo')
-        requirement2 = _get_group_requirement(requirement1)
-        self.assertIs(requirement1, requirement2)
 
 
 class TestDataVsRequirement(unittest.TestCase):

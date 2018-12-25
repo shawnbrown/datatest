@@ -5,9 +5,7 @@ from ._compatibility.collections.abc import Iterator
 from ._compatibility.collections.abc import Mapping
 from ._compatibility.collections.abc import Sequence
 from ._compatibility.collections.abc import Set
-from ._required import required_predicate
-from ._required import required_set
-from ._required import required_sequence
+from ._required import _get_group_requirement
 from ._utils import nonstringiter
 from ._utils import exhaustible
 from ._utils import _safesort_key
@@ -88,21 +86,6 @@ def _normalize_requirement(requirement):
                          "as a requirement").format(cls_name))
 
     return requirement
-
-
-def _get_group_requirement(requirement, show_expected=False):
-    """Make sure *requirement* is a group requirement."""
-    if getattr(requirement, '_group_requirement', False):
-        return requirement
-
-    if isinstance(requirement, Set):
-        return required_set(requirement)
-
-    if (not isinstance(requirement, BaseElement)
-            and isinstance(requirement, Sequence)):
-        return required_sequence(requirement)
-
-    return required_predicate(requirement, show_expected)
 
 
 def _data_vs_requirement(data, requirement):
