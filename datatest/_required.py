@@ -69,6 +69,34 @@ def _wrap_differences(differences, func):
         yield value
 
 
+def _normalize_requirement_result(result, func):
+    """Takes the *result* of a requirement function as well as the
+    *func* itself and returns a normalized differences-description
+    2-tuple or None.
+    """
+    if (isinstance(result, Sequence)
+            and len(result) == 2
+            and not isinstance(result[1], BaseDifference)):
+        differences, description = result
+    else:
+        differences = result
+        description = _build_description(func)
+
+    if not isinstance(differences, Iterable):
+        func_name = getattr(func, '__name__', func.__class__.__name__)
+        bad_type = differences.__class__.__name__
+        message = ('requirement function {0!r} should return a single '
+                   'iterable or a tuple containing an iterable and a '
+                   'string description, got {1!r}: {2!r}')
+        raise TypeError(message.format(func_name, bad_type, differences))
+
+    first_item, differences = iterpeek(differences, NOTFOUND)
+    if first_item is NOTFOUND:
+        return None
+    differences = _wrap_differences(differences, func)
+    return differences, description
+
+
 def group_requirement(func):
     """A decorator for group requirement functions. A group requirement
     function should accept an iterable and return values appropriate
@@ -82,28 +110,7 @@ def group_requirement(func):
     @wraps(func)
     def wrapper(iterable, *args, **kwds):
         result = func(iterable, *args, **kwds)
-
-        if (isinstance(result, Sequence)
-                and len(result) == 2
-                and not isinstance(result[1], BaseDifference)):
-            differences, description = result
-        else:
-            differences = result
-            description = _build_description(func)
-
-        if not isinstance(differences, Iterable):
-            func_name = getattr(func, '__name__', func.__class__.__name__)
-            bad_type = differences.__class__.__name__
-            message = ('group requirement {0!r} should return a single '
-                       'iterable or a tuple containing an iterable and '
-                       'a string description, got {1!r}: {2!r}')
-            raise TypeError(message.format(func_name, bad_type, differences))
-
-        first_item, differences = iterpeek(differences, NOTFOUND)
-        if first_item is NOTFOUND:
-            return None
-        differences = _wrap_differences(differences, func)
-        return differences, description
+        return _normalize_requirement_result(result, func)
 
     wrapper._group_requirement = True
     return wrapper
