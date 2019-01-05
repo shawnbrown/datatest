@@ -404,3 +404,50 @@ def _datadict_vs_requirementdict(data, requirement):
             description = None
 
     return differences, description
+
+
+def whole_requirement(func):
+    """A decorator for whole requirement functions. A whole requirement
+    function should accept a *data* object and return values appropriate
+    for instantiating a :exc:`ValidationError` (either an iterable of
+    differences or a 2-tuple containing an iterable of differences and
+    a description).
+    """
+    if getattr(func, '_whole_requirement', False):
+        return func  # <- EXIT!
+
+    func._whole_requirement = True
+    return func
+
+    @wraps(func)
+    def wrapper(data):
+        result = func(data)
+        return _normalize_requirement_result(result, func)
+
+    wrapper._whole_requirement = True
+    return wrapper
+
+
+def requirement_handler(requirement):
+    """Returns a while requirement function that provides default
+    validation behavior.
+    """
+    @whole_requirement
+    def _requirement_handler(data):
+        """Default requirement handler."""
+        if isinstance(requirement, Mapping):
+            result = _datadict_vs_requirementdict(data, requirement)
+        elif isinstance(data, Mapping) or _is_collection_of_items(data):
+            result = _datadict_vs_requirement(data, requirement)
+        else:
+            result = _data_vs_requirement(data, requirement)
+        return result
+
+    return _requirement_handler
+
+
+def _get_required_func(requirement):
+    """Returns a whole-object requirement handler."""
+    if getattr(requirement, '_whole_requirement', False):
+        return requirement
+    return requirement_handler(requirement)

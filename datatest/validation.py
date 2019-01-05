@@ -3,9 +3,7 @@ import sys
 from ._compatibility.collections.abc import Iterable
 from ._compatibility.collections.abc import Iterator
 from ._compatibility.collections.abc import Mapping
-from ._required import _data_vs_requirement
-from ._required import _datadict_vs_requirement
-from ._required import _datadict_vs_requirementdict
+from ._required import _get_required_func
 from ._utils import nonstringiter
 from ._utils import exhaustible
 from ._utils import _safesort_key
@@ -264,12 +262,8 @@ def validate(data, requirement, msg=None):
     data = _normalize_data(data)
     requirement = _normalize_requirement(requirement)
 
-    if isinstance(requirement, Mapping):
-        result = _datadict_vs_requirementdict(data, requirement)
-    elif isinstance(data, Mapping) or _is_collection_of_items(data):
-        result = _datadict_vs_requirement(data, requirement)
-    else:
-        result = _data_vs_requirement(data, requirement)
+    required_func = _get_required_func(requirement)
+    result = required_func(data)
 
     if result:
         differences, description = result
