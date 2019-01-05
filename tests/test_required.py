@@ -17,6 +17,7 @@ from datatest._required import _data_vs_requirement
 from datatest._required import _datadict_vs_requirement
 from datatest._required import _datadict_vs_requirementdict
 from datatest._required import _normalize_requirement_result
+from datatest._required import BaseRequirement
 
 
 class TestBuildDescription(unittest.TestCase):
@@ -790,3 +791,16 @@ class TestDatadictVsRequirementdict(unittest.TestCase):
         requirement2 = {'a': func1, 'b': func2}
         _, description = _datadict_vs_requirementdict(data, requirement2)
         self.assertIsNone(description)
+
+
+class TestBaseRequirement(unittest.TestCase):
+    def test_minimal_subclass(self):
+        class RequiredStuff(BaseRequirement):
+            def check_data(self, data):
+                return [], ''
+
+        requirement = RequiredStuff()
+
+    def test_missing_abstractmethod(self):
+        with self.assertRaises(TypeError):
+            instance = BaseRequirement()

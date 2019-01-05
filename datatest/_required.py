@@ -451,3 +451,12 @@ def _get_required_func(requirement):
     if getattr(requirement, '_whole_requirement', False):
         return requirement
     return requirement_handler(requirement)
+
+
+class BaseRequirement(abc.ABC):
+    @abc.abstractmethod
+    def check_data(self, data):
+        raise NotImplementedError()
+
+    def __call__(self, data):
+        return self.check_data(data)
