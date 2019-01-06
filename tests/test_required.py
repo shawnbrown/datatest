@@ -805,6 +805,15 @@ class TestBaseRequirement(unittest.TestCase):
         with self.assertRaises(TypeError):
             BaseRequirement()
 
+    def test_verify_difference(self):
+        self.assertIsNone(self.requirement._verify_difference(Missing(1)),
+                          msg='no explicit return value')
+
+        regex = (r"values returned from MinimalRequirement must be "
+                 r"difference objects, got str: 'a string instance'")
+        with self.assertRaisesRegex(TypeError, regex):
+            self.requirement._verify_difference('a string instance')
+
     def test_normalize_iter_and_description(self):
         result = ([Missing(1)], 'error message')  # <- Iterable and description.
         diffs, desc = self.requirement._normalize(result)

@@ -458,6 +458,15 @@ class BaseRequirement(abc.ABC):
     def check_data(self, data):
         raise NotImplementedError()
 
+    def _verify_difference(self, obj):
+        """Raise an error if *obj* is not a subclass of BaseDifference."""
+        if not isinstance(obj, BaseDifference):
+            slf_name = self.__class__.__name__
+            obj_name = obj.__class__.__name__
+            message = ('values returned from {0} must be '
+                       'difference objects, got {1}: {2!r}')
+            raise TypeError(message.format(slf_name, obj_name, obj))
+
     def _normalize(self, result):
         """Return a normalized *result* as a 2-tuple (containing an
         iterable of differences and a string description) or None.
