@@ -524,3 +524,12 @@ class BaseRequirement(abc.ABC):
     def __call__(self, data):
         result = self.check_data(data)
         return self._normalize(result)
+
+
+class RequiredItems(BaseRequirement):
+    @abc.abstractmethod
+    def check_items(self, items):
+        raise NotImplementedError()
+
+    def check_data(self, data):
+        return self.check_items(data)

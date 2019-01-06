@@ -18,6 +18,7 @@ from datatest._required import _datadict_vs_requirement
 from datatest._required import _datadict_vs_requirementdict
 from datatest._required import _normalize_requirement_result
 from datatest._required import BaseRequirement
+from datatest._required import RequiredItems
 
 
 class TestBuildDescription(unittest.TestCase):
@@ -892,3 +893,25 @@ class TestBaseRequirement(unittest.TestCase):
         with self.assertRaisesRegex(TypeError, 'should return .* an iterable and a string'):
             result = (None, 'error message')  # <- None and description
             self.requirement._normalize(result)
+
+
+class TestRequiredItems(unittest.TestCase):
+    def test_missing_abstractmethod(self):
+        with self.assertRaises(TypeError):
+            RequiredItems()
+
+    def test_check_items(self):
+        class RequiredIntValues(RequiredItems):
+            def check_items(self, items):
+                for k, v in items:
+                    if not isinstance(v, int):
+                        yield k, Invalid(v)
+
+        requirement = RequiredIntValues()
+
+        self.assertIsNone(requirement([('A', 1), ('B', 2)]),
+                          msg='should return None when data satisfies requirement')
+
+        differences, description = requirement([('A', 1), ('B', 2.0)])
+        self.assertEqual(list(differences), [('B', Invalid(2.0))],
+                         msg='should return items iterable for values that fail requirement')
