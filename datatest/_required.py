@@ -467,6 +467,14 @@ class BaseRequirement(abc.ABC):
                        'difference objects, got {1}: {2!r}')
             raise TypeError(message.format(slf_name, obj_name, obj))
 
+    def _wrap_difference_group(self, group):
+        """A generator function to wrap an iterable of differences and
+        verify that each value is a difference object.
+        """
+        for element in group:
+            self._verify_difference(element)
+            yield element
+
     def _normalize(self, result):
         """Return a normalized *result* as a 2-tuple (containing an
         iterable of differences and a string description) or None.
@@ -492,6 +500,7 @@ class BaseRequirement(abc.ABC):
         first_item, differences = iterpeek(differences, NOTFOUND)
         if first_item is NOTFOUND:
             return None
+        differences = self._wrap_difference_group(differences)
         return differences, description
 
     def __call__(self, data):

@@ -814,6 +814,16 @@ class TestBaseRequirement(unittest.TestCase):
         with self.assertRaisesRegex(TypeError, regex):
             self.requirement._verify_difference('a string instance')
 
+    def test_wrap_difference_group(self):
+        group = [Missing(1), Missing(2)]
+        wrapped = self.requirement._wrap_difference_group(group)
+        self.assertEqual(list(wrapped), group)
+
+        group = [Missing(1), 'a string instance']
+        wrapped = self.requirement._wrap_difference_group(group)
+        with self.assertRaises(TypeError):
+            list(wrapped)  # <- Evaluate generator.
+
     def test_normalize_iter_and_description(self):
         result = ([Missing(1)], 'error message')  # <- Iterable and description.
         diffs, desc = self.requirement._normalize(result)
