@@ -794,13 +794,59 @@ class TestDatadictVsRequirementdict(unittest.TestCase):
 
 
 class TestBaseRequirement(unittest.TestCase):
-    def test_minimal_subclass(self):
-        class RequiredStuff(BaseRequirement):
+    def setUp(self):
+        class MinimalRequirement(BaseRequirement):
             def check_data(self, data):
                 return [], ''
 
-        requirement = RequiredStuff()
+        self.requirement = MinimalRequirement()
 
     def test_missing_abstractmethod(self):
         with self.assertRaises(TypeError):
-            instance = BaseRequirement()
+            BaseRequirement()
+
+    def test_normalize_iter_and_description(self):
+        result = ([Missing(1)], 'error message')  # <- Iterable and description.
+        diffs, desc = self.requirement._normalize(result)
+        self.assertEqual(list(diffs), [Missing(1)])
+        self.assertEqual(desc, 'error message')
+
+    def test_normalize_iter(self):
+        result = [Missing(1)]  # <- Iterable only, no description.
+        diffs, desc = self.requirement._normalize(result)
+        self.assertEqual(list(diffs), [Missing(1)])
+        self.assertEqual(desc, 'does not satisfy MinimalRequirement', msg='gets default description')
+
+    def test_normalize_tuple_of_diffs(self):
+        """Should not mistake a 2-tuple of difference objects for a
+        2-tuple containing an iterable of differences with a string
+        description.
+        """
+        result = (Missing(1), Missing(2))  # <- A 2-tuple of diffs.
+        diffs, desc = self.requirement._normalize(result)
+        self.assertEqual(list(diffs), [Missing(1), Missing(2)])
+        self.assertEqual(desc, 'does not satisfy MinimalRequirement', msg='gets default description')
+
+    def test_normalize_empty_iter(self):
+        """Empty iterable result should be converted to None."""
+        result = (iter([]), 'error message')  # <- Empty iterable and description.
+        normalized = self.requirement._normalize(result)
+        self.assertIsNone(normalized)
+
+        result = iter([])  # <- Empty iterable
+        normalized = self.requirement._normalize(result)
+        self.assertIsNone(normalized)
+
+    def test_normalize_bad_types(self):
+        """Bad return types should trigger TypeError."""
+        with self.assertRaisesRegex(TypeError, 'should return .* iterable'):
+            result = (Missing(1), 'error message')  # <- Non-iterable and description.
+            self.requirement._normalize(result)
+
+        with self.assertRaisesRegex(TypeError, 'should return .* iterable'):
+            result = None  # <- None only.
+            self.requirement._normalize(result)
+
+        with self.assertRaisesRegex(TypeError, 'should return .* an iterable and a string'):
+            result = (None, 'error message')  # <- None and description
+            self.requirement._normalize(result)

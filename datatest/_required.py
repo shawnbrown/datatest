@@ -458,5 +458,33 @@ class BaseRequirement(abc.ABC):
     def check_data(self, data):
         raise NotImplementedError()
 
+    def _normalize(self, result):
+        """Return a normalized *result* as a 2-tuple (containing an
+        iterable of differences and a string description) or None.
+        """
+        if (isinstance(result, Sequence)
+                and len(result) == 2
+                and not isinstance(result[1], BaseDifference)):
+            differences, description = result
+        else:
+            differences = result
+            description = \
+                'does not satisfy {0}'.format(self.__class__.__name__)
+
+        if not isinstance(differences, Iterable):
+            slf_name = self.__class__.__name__
+            dff_name = differences.__class__.__name__
+            message = (
+                '{0!r} should return an iterable or a tuple containing '
+                'an iterable and a string description, got {1!r}: {2!r}'
+            )
+            raise TypeError(message.format(slf_name, dff_name, differences))
+
+        first_item, differences = iterpeek(differences, NOTFOUND)
+        if first_item is NOTFOUND:
+            return None
+        return differences, description
+
     def __call__(self, data):
-        return self.check_data(data)
+        result = self.check_data(data)
+        return self._normalize(result)
