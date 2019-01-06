@@ -824,6 +824,29 @@ class TestBaseRequirement(unittest.TestCase):
         with self.assertRaises(TypeError):
             list(wrapped)  # <- Evaluate generator.
 
+    def test_wrap_difference_items(self):
+        # Values as single differences.
+        items = [('A', Missing(1)), ('B', Missing(2))]
+        wrapped = self.requirement._wrap_difference_items(items)
+        self.assertEqual(list(wrapped), items)
+
+        items = [('A', Missing(1)), ('B', 'a string instance')]
+        wrapped = self.requirement._wrap_difference_items(items)
+        with self.assertRaises(TypeError):
+            list(wrapped)  # <- Evaluate generator.
+
+        # Values as groups of differences.
+        items = [('A', [Missing(1), Missing(2)]),
+                 ('B', [Missing(3), Missing(4)])]
+        wrapped = self.requirement._wrap_difference_items(items)
+        self.assertEqual([(k, list(v)) for k, v in wrapped], items)
+
+        items = [('A', [Missing(1), Missing(2)]),
+                 ('B', [Missing(3), 'a string instance'])]
+        wrapped = self.requirement._wrap_difference_items(items)
+        with self.assertRaises(TypeError):
+            [(k, list(v)) for k, v in wrapped]  # <- Evaluate generator.
+
     def test_normalize_iter_and_description(self):
         result = ([Missing(1)], 'error message')  # <- Iterable and description.
         diffs, desc = self.requirement._normalize(result)

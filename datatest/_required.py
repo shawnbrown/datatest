@@ -19,6 +19,7 @@ from ._predicate import Predicate
 from ._query.query import BaseElement
 from ._query.query import _is_collection_of_items
 from ._utils import iterpeek
+from ._utils import nonstringiter
 
 
 def _build_description(obj):
@@ -471,9 +472,21 @@ class BaseRequirement(abc.ABC):
         """A generator function to wrap an iterable of differences and
         verify that each value is a difference object.
         """
-        for element in group:
-            self._verify_difference(element)
-            yield element
+        for value in group:
+            self._verify_difference(value)
+            yield value
+
+    def _wrap_difference_items(self, items):
+        """A generator function to wrap an iterable of key/value pairs
+        and verify that each value is a difference or an iterable of
+        difference objects.
+        """
+        for key, value in items:
+            if nonstringiter(value):
+                value = self._wrap_difference_group(value)
+            else:
+                self._verify_difference(value)
+            yield key, value
 
     def _normalize(self, result):
         """Return a normalized *result* as a 2-tuple (containing an
@@ -498,9 +511,14 @@ class BaseRequirement(abc.ABC):
             raise TypeError(message.format(slf_name, dff_name, differences))
 
         first_item, differences = iterpeek(differences, NOTFOUND)
+
         if first_item is NOTFOUND:
-            return None
-        differences = self._wrap_difference_group(differences)
+            return None  # <- EXIT!
+
+        if isinstance(first_item, tuple):
+            differences = self._wrap_difference_items(differences)
+        else:
+            differences = self._wrap_difference_group(differences)
         return differences, description
 
     def __call__(self, data):
