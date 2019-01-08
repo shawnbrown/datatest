@@ -961,7 +961,7 @@ class TestRequiredGroup(unittest.TestCase):
 
         data = [('A', [1, 2, 3]), ('B', [4, 5])]
         diff, desc = self.requirement.check_items(data)
-        diff = [(k, list(v)) for k, v in diff]
+        diff = sorted((k, list(v)) for k, v in diff)
         self.assertEqual(diff, [('B', [Invalid(4), Invalid(5)])])
         self.assertEqual(desc, 'requires 3 or more elements')
 
@@ -969,7 +969,7 @@ class TestRequiredGroup(unittest.TestCase):
         # Test mapping or key/value items.
         data = {'A': [1, 2, 3], 'B': [4, 5], 'C': 6}
         diff, desc = self.requirement.check_data(data)
-        diff = [(k, list(v)) for k, v in diff]
+        diff = sorted((k, list(v)) for k, v in diff)
         self.assertEqual(diff, [('B', [Invalid(4), Invalid(5)]), ('C', [Invalid(6)])])
         self.assertEqual(desc, 'requires 3 or more elements')
 
