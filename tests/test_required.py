@@ -19,6 +19,7 @@ from datatest._required import _datadict_vs_requirementdict
 from datatest._required import _normalize_requirement_result
 from datatest._required import BaseRequirement
 from datatest._required import RequiredItems
+from datatest._required import RequiredGroup
 
 
 class TestBuildDescription(unittest.TestCase):
@@ -915,3 +916,43 @@ class TestRequiredItems(unittest.TestCase):
         differences, description = requirement([('A', 1), ('B', 2.0)])
         self.assertEqual(list(differences), [('B', Invalid(2.0))],
                          msg='should return items iterable for values that fail requirement')
+
+
+class TestRequiredGroup(unittest.TestCase):
+    def setUp(self):
+        class RequiredThreePlus(RequiredGroup):
+            def check_group(self, group):
+                group = list(group)
+                if len(group) < 3:
+                    diffs = (Invalid(x) for x in group)
+                    return diffs, 'requires 3 or more elements'
+                return [], ''
+
+        self.requirement = RequiredThreePlus()
+
+    def test_missing_abstractmethod(self):
+        with self.assertRaises(TypeError):
+            RequiredGroup()
+
+    def test_check_group(self):
+        requirement = self.requirement
+
+        diff, desc = requirement.check_group([1, 2, 3])
+        self.assertEqual(list(diff), [])
+        self.assertEqual(desc, '')
+
+        diff, desc = requirement.check_group([1, 2])
+        self.assertEqual(list(diff), [Invalid(1), Invalid(2)])
+        self.assertEqual(desc, 'requires 3 or more elements')
+
+    def test_check_items(self):
+        data = [('A', [1, 2, 3]), ('B', [4, 5, 6])]
+        diff, desc = self.requirement.check_items(data)
+        self.assertEqual(diff, [])
+        self.assertEqual(desc, '')
+
+        data = [('A', [1, 2, 3]), ('B', [4, 5])]
+        diff, desc = self.requirement.check_items(data)
+        diff = [(k, list(v)) for k, v in diff]
+        self.assertEqual(diff, [('B', [Invalid(4), Invalid(5)])])
+        self.assertEqual(desc, 'requires 3 or more elements')

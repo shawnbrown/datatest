@@ -533,3 +533,38 @@ class RequiredItems(BaseRequirement):
 
     def check_data(self, data):
         return self.check_items(data)
+
+
+_INCONSISTENT = object()  # Marker for inconsistent descriptions.
+
+class RequiredGroup(BaseRequirement):
+    @abc.abstractmethod
+    def check_group(self, group):
+        raise NotImplementedError()
+
+    def check_items(self, items):
+        differences = []
+        description = ''
+
+        for key, value in items:
+            diff, desc = self.check_group(value)
+            first_element, diff = iterpeek(diff, None)
+            if first_element:
+                differences.append((key, diff))
+
+                if description == desc or description is _INCONSISTENT:
+                    continue
+                elif not description:
+                    description = desc
+                else:
+                    description = _INCONSISTENT
+
+        if description is _INCONSISTENT:
+            description = 'does not satisfy {0}'.format(self.__class__.__name__)
+        return differences, description
+
+    def check_data(self, data):
+        first_item, data = iterpeek(data, default=NOTFOUND)
+        if isinstance(first_item, tuple) and len(first_item) == 2:
+            return self.check_items(data)
+        return self.check_group(data)
