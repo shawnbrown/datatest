@@ -897,25 +897,33 @@ class TestBaseRequirement(unittest.TestCase):
 
 
 class TestRequiredItems(unittest.TestCase):
-    def test_missing_abstractmethod(self):
-        with self.assertRaises(TypeError):
-            RequiredItems()
-
-    def test_check_items(self):
+    def setUp(self):
         class RequiredIntValues(RequiredItems):
             def check_items(self, items):
                 for k, v in items:
                     if not isinstance(v, int):
                         yield k, Invalid(v)
 
-        requirement = RequiredIntValues()
+        self.requirement = RequiredIntValues()
 
-        self.assertIsNone(requirement([('A', 1), ('B', 2)]),
+    def test_missing_abstractmethod(self):
+        with self.assertRaises(TypeError):
+            RequiredItems()
+
+    def test_check_items(self):
+        self.assertIsNone(self.requirement([('A', 1), ('B', 2)]),
                           msg='should return None when data satisfies requirement')
 
-        differences, description = requirement([('A', 1), ('B', 2.0)])
-        self.assertEqual(list(differences), [('B', Invalid(2.0))],
+        diff, desc = self.requirement([('A', 1), ('B', 2.0)])
+        self.assertEqual(list(diff), [('B', Invalid(2.0))],
                          msg='should return items iterable for values that fail requirement')
+
+    def test_check_data(self):
+        diff, desc = self.requirement([('A', 1), ('B', 2.0)])
+        self.assertEqual(list(diff), [('B', Invalid(2.0))])
+
+        diff, desc = self.requirement({'A': 1, 'B': 2.0})
+        self.assertEqual(list(diff), [('B', Invalid(2.0))])
 
 
 class TestRequiredGroup(unittest.TestCase):

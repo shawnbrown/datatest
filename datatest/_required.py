@@ -532,6 +532,8 @@ class RequiredItems(BaseRequirement):
         raise NotImplementedError()
 
     def check_data(self, data):
+        if isinstance(data, Mapping):
+            data = getattr(data, 'iteritems', data.items)()
         return self.check_items(data)
 
 
