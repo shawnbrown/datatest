@@ -547,6 +547,8 @@ class RequiredGroup(BaseRequirement):
         description = ''
 
         for key, value in items:
+            if isinstance(value, BaseElement):
+                value = [value]
             diff, desc = self.check_group(value)
             first_element, diff = iterpeek(diff, None)
             if first_element:
