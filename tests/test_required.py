@@ -956,3 +956,23 @@ class TestRequiredGroup(unittest.TestCase):
         diff = [(k, list(v)) for k, v in diff]
         self.assertEqual(diff, [('B', [Invalid(4), Invalid(5)])])
         self.assertEqual(desc, 'requires 3 or more elements')
+
+    def test_check_data(self):
+        # Test mapping or key/value items.
+        data = {'A': [1, 2, 3], 'B': [4, 5]}
+        diff, desc = self.requirement.check_data(data)
+        diff = [(k, list(v)) for k, v in diff]
+        self.assertEqual(diff, [('B', [Invalid(4), Invalid(5)])])
+        self.assertEqual(desc, 'requires 3 or more elements')
+
+        # Test group.
+        data = [4, 5]
+        diff, desc = self.requirement.check_data(data)
+        self.assertEqual(list(diff), [Invalid(4), Invalid(5)])
+        self.assertEqual(desc, 'requires 3 or more elements')
+
+        # Test BaseElement.
+        data = 4
+        diff, desc = self.requirement.check_data(data)
+        self.assertEqual(list(diff), [Invalid(4)])
+        self.assertEqual(desc, 'requires 3 or more elements')

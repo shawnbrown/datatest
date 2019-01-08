@@ -564,7 +564,12 @@ class RequiredGroup(BaseRequirement):
         return differences, description
 
     def check_data(self, data):
-        first_item, data = iterpeek(data, default=NOTFOUND)
-        if isinstance(first_item, tuple) and len(first_item) == 2:
+        if isinstance(data, Mapping):
+            data = getattr(data, 'iteritems', data.items)()
+
+        if _is_collection_of_items(data):
             return self.check_items(data)
+
+        if isinstance(data, BaseElement):
+            data = [data]
         return self.check_group(data)
