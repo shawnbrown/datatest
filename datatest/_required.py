@@ -498,8 +498,10 @@ class BaseRequirement(abc.ABC):
             differences, description = result
         else:
             differences = result
-            description = \
-                'does not satisfy {0}'.format(self.__class__.__name__)
+            description = ''
+
+        if not description:
+            description = 'does not satisfy {0}'.format(self.__class__.__name__)
 
         if not isinstance(differences, Iterable):
             slf_name = self.__class__.__name__
@@ -573,7 +575,7 @@ class GroupRequirement(BaseRequirement):
                 description = _INCONSISTENT
 
         if description is _INCONSISTENT:
-            description = 'does not satisfy {0}'.format(self.__class__.__name__)
+            description = ''
         return differences, description
 
     def check_data(self, data):
