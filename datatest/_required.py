@@ -662,3 +662,61 @@ class RequiredSet(GroupRequirement):
             (Extra(x) for x in extras),
         )
         return differences, 'does not satisfy set membership'
+
+
+class RequiredSequence(GroupRequirement):
+    """A requirement to test data for sequence order."""
+    def __init__(self, sequence):
+        if not isinstance(sequence, Sequence):
+            cls_name = sequence.__class__.__name__
+            message = 'must be sequence, got {0!r}'.format(cls_name)
+            raise TypeError(message)
+        self.sequence = sequence
+
+    def _generate_differences(self, group):
+        if not isinstance(group, Sequence):
+            group = list(group)  # <- Needs to be subscriptable.
+
+        requirement = self.sequence
+
+        try:
+            # Try sequences directly.
+            matcher = difflib.SequenceMatcher(a=group, b=requirement)
+        except TypeError:
+            # Fall-back to slower proxy method when needed.
+            data_proxy = tuple(_deephash(x) for x in group)
+            required_proxy = tuple(_deephash(x) for x in requirement)
+            matcher = difflib.SequenceMatcher(a=data_proxy, b=required_proxy)
+
+        for tag, istart, istop, jstart, jstop in matcher.get_opcodes():
+            if tag == 'insert':
+                jvalues = requirement[jstart:jstop]
+                for value in jvalues:
+                    yield Missing((istart, value))
+            elif tag == 'delete':
+                ivalues = group[istart:istop]
+                for index, value in enumerate(ivalues, start=istart):
+                    yield Extra((index, value))
+            elif tag == 'replace':
+                ivalues = group[istart:istop]
+                jvalues = requirement[jstart:jstop]
+
+                ijvalues = zip(ivalues, jvalues)
+                for index, (ival, jval) in enumerate(ijvalues, start=istart):
+                    yield Missing((index, jval))
+                    yield Extra((index, ival))
+
+                ilength = istop - istart
+                jlength = jstop - jstart
+                if ilength < jlength:
+                    for value in jvalues[ilength:]:
+                        yield Missing((istop, value))
+                elif ilength > jlength:
+                    remainder = ivalues[jlength:]
+                    new_start = istart + jlength
+                    for index, value in enumerate(remainder, start=new_start):
+                        yield Extra((index, value))
+
+    def check_group(self, group):
+        differences = self._generate_differences(group)
+        return differences, 'does not match required sequence'

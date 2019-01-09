@@ -23,6 +23,7 @@ from datatest._required import ItemsRequirement
 from datatest._required import GroupRequirement
 from datatest._required import RequiredPredicate
 from datatest._required import RequiredSet
+from datatest._required import RequiredSequence
 
 
 class TestBuildDescription(unittest.TestCase):
@@ -1119,3 +1120,136 @@ class TestRequiredSet2(unittest.TestCase):
         requirement = RequiredSet(set([1]))
         differences, description = requirement([])
         self.assertEqual(list(differences), [Missing(1)])
+
+
+class TestRequiredSequence2(unittest.TestCase):
+    def test_no_difference(self):
+        data = ['aaa', 'bbb', 'ccc']
+        required = RequiredSequence(['aaa', 'bbb', 'ccc'])
+        self.assertIsNone(required(data))  # No difference, returns None.
+
+    def test_some_missing(self):
+        data = ['bbb', 'ddd']
+        required = RequiredSequence(['aaa', 'bbb', 'ccc', 'ddd', 'eee'])
+        differences, _ = required(data)
+        expected = [
+            Missing((0, 'aaa')),
+            Missing((1, 'ccc')),
+            Missing((2, 'eee')),
+        ]
+        self.assertEqual(list(differences), expected)
+
+    def test_all_missing(self):
+        data = []  # <- Empty!
+        required = RequiredSequence(['aaa', 'bbb'])
+        differences, _ = required(data)
+        expected = [
+            Missing((0, 'aaa')),
+            Missing((0, 'bbb')),
+        ]
+        self.assertEqual(list(differences), expected)
+
+    def test_some_extra(self):
+        data = ['aaa', 'bbb', 'ccc', 'ddd', 'eee', 'fff']
+        required = RequiredSequence(['aaa', 'bbb', 'ccc'])
+        differences, _ = required(data)
+        expected = [
+            Extra((3, 'ddd')),
+            Extra((4, 'eee')),
+            Extra((5, 'fff')),
+        ]
+        self.assertEqual(list(differences), expected)
+
+    def test_all_extra(self):
+        data = ['aaa', 'bbb']
+        required = RequiredSequence([])  # <- Empty!
+        differences, _ = required(data)
+        expected = [
+            Extra((0, 'aaa')),
+            Extra((1, 'bbb')),
+        ]
+        self.assertEqual(list(differences), expected)
+
+    def test_one_missing_and_extra(self):
+        data = ['aaa', 'xxx', 'ccc']
+        required = RequiredSequence(['aaa', 'bbb', 'ccc'])
+        differences, _ = required(data)
+        expected = [
+            Missing((1, 'bbb')),
+            Extra((1, 'xxx')),
+        ]
+        self.assertEqual(list(differences), expected)
+
+    def test_some_missing_and_extra(self):
+        data = ['aaa', 'xxx', 'ccc', 'yyy', 'zzz']
+        required = RequiredSequence(['aaa', 'bbb', 'ccc', 'ddd', 'eee'])
+        differences, _ = required(data)
+        expected = [
+            Missing((1, 'bbb')),
+            Extra((1, 'xxx')),
+            Missing((3, 'ddd')),
+            Extra((3, 'yyy')),
+            Missing((4, 'eee')),
+            Extra((4, 'zzz')),
+        ]
+        self.assertEqual(list(differences), expected)
+
+    def test_some_missing_and_extra_different_lengths(self):
+        data = ['aaa', 'xxx', 'eee']
+        required = RequiredSequence(['aaa', 'bbb', 'ccc', 'ddd', 'eee'])
+        differences, _ = required(data)
+        expected = [
+            Missing((1, 'bbb')),
+            Extra((1, 'xxx')),
+            Missing((2, 'ccc')),
+            Missing((2, 'ddd')),
+        ]
+        self.assertEqual(list(differences), expected)
+
+        data = ['aaa', 'xxx', 'yyy', 'zzz', 'ccc']
+        required = RequiredSequence(['aaa', 'bbb', 'ccc'])
+        differences, _ = required(data)
+        expected = [
+            Missing((1, 'bbb')),
+            Extra((1, 'xxx')),
+            Extra((2, 'yyy')),
+            Extra((3, 'zzz')),
+        ]
+        self.assertEqual(list(differences), expected)
+
+    def test_numeric_matching(self):
+        """When checking sequence order, numeric differences should NOT
+        be converted into Deviation objects.
+        """
+        data = [1, 100, 4, 200, 300]
+        required = RequiredSequence([1, 2, 3, 4, 5])
+        differences, _ = required(data)
+        expected = [
+            Missing((1, 2)),
+            Extra((1, 100)),
+            Missing((2, 3)),
+            Missing((3, 5)),
+            Extra((3, 200)),
+            Extra((4, 300)),
+        ]
+        self.assertEqual(list(differences), expected)
+
+    def test_unhashable_objects(self):
+        """Should try to compare sequences of unhashable types."""
+        data = [{'a': 1}, {'b': 2}, {'c': 3}]
+        required = RequiredSequence([{'a': 1}, {'b': 2}, {'c': 3}])
+        result = required(data)
+        self.assertIsNone(result)  # No difference, returns None.
+
+        data = [{'a': 1}, {'x': 0}, {'d': 4}, {'y': 5}, {'g': 7}]
+        required = RequiredSequence([{'a': 1}, {'b': 2}, {'c': 3}, {'d': 4}, {'f': 6}])
+        differences, _ = required(data)
+        expected = [
+            Missing((1, {'b': 2})),
+            Extra((1, {'x': 0})),
+            Missing((2, {'c': 3})),
+            Missing((3, {'f': 6})),
+            Extra((3, {'y': 5})),
+            Extra((4, {'g': 7})),
+        ]
+        self.assertEqual(list(differences), expected)
