@@ -637,3 +637,28 @@ class RequiredPredicate(GroupRequirement):
 
         description = _build_description(self._obj)
         return differences, description
+
+
+class RequiredSet(GroupRequirement):
+    """A requirement to test data for set membership."""
+    def __init__(self, requirement):
+        self._set = set(requirement)
+
+    def check_group(self, group):
+        requirement = self._set
+
+        matches = set()
+        extras = set()
+        for element in group:
+            if element in requirement:
+                matches.add(element)
+            else:
+                extras.add(element)  # <- Build set of Extras so we
+                                     #    do not return duplicates.
+        missing = (x for x in requirement if x not in matches)
+
+        differences = chain(
+            (Missing(x) for x in missing),
+            (Extra(x) for x in extras),
+        )
+        return differences, 'does not satisfy set membership'
