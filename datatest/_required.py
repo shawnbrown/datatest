@@ -526,7 +526,7 @@ class BaseRequirement(abc.ABC):
         return self._normalize(result)
 
 
-class RequiredItems(BaseRequirement):
+class ItemsRequirement(BaseRequirement):
     @abc.abstractmethod
     def check_items(self, items):
         raise NotImplementedError()
@@ -539,7 +539,7 @@ class RequiredItems(BaseRequirement):
 
 _INCONSISTENT = object()  # Marker for inconsistent descriptions.
 
-class RequiredGroup(BaseRequirement):
+class GroupRequirement(BaseRequirement):
     @abc.abstractmethod
     def check_group(self, group):
         raise NotImplementedError()

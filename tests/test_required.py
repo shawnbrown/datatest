@@ -19,8 +19,8 @@ from datatest._required import _datadict_vs_requirement
 from datatest._required import _datadict_vs_requirementdict
 from datatest._required import _normalize_requirement_result
 from datatest._required import BaseRequirement
-from datatest._required import RequiredItems
-from datatest._required import RequiredGroup
+from datatest._required import ItemsRequirement
+from datatest._required import GroupRequirement
 
 
 class TestBuildDescription(unittest.TestCase):
@@ -897,9 +897,9 @@ class TestBaseRequirement(unittest.TestCase):
             self.requirement._normalize(result)
 
 
-class TestRequiredItems(unittest.TestCase):
+class TestItemsRequirement(unittest.TestCase):
     def setUp(self):
-        class RequiredIntValues(RequiredItems):
+        class RequiredIntValues(ItemsRequirement):
             def check_items(self, items):
                 for k, v in items:
                     if not isinstance(v, int):
@@ -909,7 +909,7 @@ class TestRequiredItems(unittest.TestCase):
 
     def test_missing_abstractmethod(self):
         with self.assertRaises(TypeError):
-            RequiredItems()
+            ItemsRequirement()
 
     def test_check_items(self):
         self.assertIsNone(self.requirement([('A', 1), ('B', 2)]),
@@ -927,9 +927,9 @@ class TestRequiredItems(unittest.TestCase):
         self.assertEqual(list(diff), [('B', Invalid(2.0))])
 
 
-class TestRequiredGroup(unittest.TestCase):
+class TestGroupRequirement(unittest.TestCase):
     def setUp(self):
-        class RequiredThreePlus(RequiredGroup):
+        class RequiredThreePlus(GroupRequirement):
             def check_group(self, group):
                 group = list(group)
                 if len(group) < 3:
@@ -941,7 +941,7 @@ class TestRequiredGroup(unittest.TestCase):
 
     def test_missing_abstractmethod(self):
         with self.assertRaises(TypeError):
-            RequiredGroup()
+            GroupRequirement()
 
     def test_check_group(self):
         requirement = self.requirement
