@@ -550,18 +550,27 @@ class RequiredGroup(BaseRequirement):
 
         for key, value in items:
             if isinstance(value, BaseElement):
-                value = [value]
-            diff, desc = self.check_group(value)
-            first_element, diff = iterpeek(diff, None)
-            if first_element:
-                differences.append((key, diff))
-
-                if description == desc or description is _INCONSISTENT:
+                diff, desc = self.check_group([value])
+                diff = list(diff)
+                if len(diff) == 1:
+                    diff = diff[0]  # Unwrap if single difference.
+                if not diff:
                     continue
-                elif not description:
-                    description = desc
-                else:
-                    description = _INCONSISTENT
+            else:
+                diff, desc = self.check_group(value)
+                first_element, diff = iterpeek(diff, None)
+                if not first_element:
+                    continue
+
+            differences.append((key, diff))
+
+            if description == desc or description is _INCONSISTENT:
+                continue
+
+            if not description:
+                description = desc
+            else:
+                description = _INCONSISTENT
 
         if description is _INCONSISTENT:
             description = 'does not satisfy {0}'.format(self.__class__.__name__)

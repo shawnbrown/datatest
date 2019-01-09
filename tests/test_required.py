@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from . import _unittest as unittest
+from datatest._compatibility.collections.abc import Iterable
 from datatest._compatibility.collections.abc import Iterator
 from datatest import Missing
 from datatest import Extra
@@ -969,8 +970,8 @@ class TestRequiredGroup(unittest.TestCase):
         # Test mapping or key/value items.
         data = {'A': [1, 2, 3], 'B': [4, 5], 'C': 6}
         diff, desc = self.requirement.check_data(data)
-        diff = sorted((k, list(v)) for k, v in diff)
-        self.assertEqual(diff, [('B', [Invalid(4), Invalid(5)]), ('C', [Invalid(6)])])
+        diff = sorted((k, list(v) if isinstance(v, Iterable) else v) for k, v in diff)
+        self.assertEqual(diff, [('B', [Invalid(4), Invalid(5)]), ('C', Invalid(6))])
         self.assertEqual(desc, 'requires 3 or more elements')
 
         # Test group.
