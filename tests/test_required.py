@@ -21,6 +21,7 @@ from datatest._required import _normalize_requirement_result
 from datatest._required import BaseRequirement
 from datatest._required import ItemsRequirement
 from datatest._required import GroupRequirement
+from datatest._required import RequiredPredicate
 
 
 class TestBuildDescription(unittest.TestCase):
@@ -985,3 +986,99 @@ class TestGroupRequirement(unittest.TestCase):
         diff, desc = self.requirement.check_data(data)
         self.assertEqual(list(diff), [Invalid(4)])
         self.assertEqual(desc, 'requires 3 or more elements')
+
+
+class TestRequiredPredicate2(unittest.TestCase):
+    def setUp(self):
+        def isdigit(x):
+            return x.isdigit()
+        self.requirement = RequiredPredicate(isdigit)
+
+    def test_all_true(self):
+        data = iter(['10', '20', '30'])
+        result = self.requirement(data)
+        self.assertIsNone(result)  # Predicate is true for all, returns None.
+
+    def test_some_false(self):
+        """When the predicate returns False, values should be returned as
+        Invalid() differences.
+        """
+        data = ['10', '20', 'XX']
+        diff, desc = self.requirement(data)
+        self.assertEqual(list(diff), [Invalid('XX')])
+        self.assertEqual(desc, 'does not satisfy isdigit()')
+
+    def test_show_expected(self):
+        data = ['XX', 'YY']
+        requirement = RequiredPredicate('YY', show_expected=True)
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Invalid('XX', expected='YY')])
+        self.assertEqual(desc, "does not satisfy 'YY'")
+
+    def test_duplicate_false(self):
+        """Should return one difference for every false result (including
+        duplicates).
+        """
+        data = ['10', '20', 'XX', 'XX', 'XX']  # <- Multiple XX's.
+        diff, desc = self.requirement(data)
+        self.assertEqual(list(diff), [Invalid('XX'), Invalid('XX'), Invalid('XX')])
+        self.assertEqual(desc, 'does not satisfy isdigit()')
+
+    def test_empty_iterable(self):
+        result = self.requirement([])
+        self.assertIsNone(result)
+
+    def test_some_false_deviations(self):
+        """When the predicate returns False, values should be returned as
+        Invalid() differences.
+        """
+        data = [10, 10, 12]
+        requirement = RequiredPredicate(10)
+
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Deviation(+2, 10)])
+        self.assertEqual(desc, 'does not satisfy 10')
+
+    def test_predicate_error(self):
+        """Errors should not be counted as False or otherwise hidden."""
+        data = ['10', '20', 'XX', 40]  # <- Predicate assumes string, int has no isdigit().
+        diff, desc  = self.requirement(data)
+        with self.assertRaisesRegex(AttributeError, "no attribute 'isdigit'"):
+            list(diff)
+
+    def test_returned_difference(self):
+        """When a predicate returns a difference object, it should
+        used in place of the default Invalid difference.
+        """
+        def counts_to_three(x):
+            if 1 <= x <= 3:
+                return True
+            if x == 4:
+                return Invalid('4 shalt thou not count')
+            return Invalid('{0} is right out'.format(x))
+
+        requirement = RequiredPredicate(counts_to_three)
+
+        data = [1, 2, 3, 4, 5]
+        diff, desc = requirement(data)
+        expected = [
+            Invalid('4 shalt thou not count'),
+            Invalid('5 is right out'),
+        ]
+        self.assertEqual(list(diff), expected)
+        self.assertEqual(desc, 'does not satisfy counts_to_three()')
+
+    def test_items(self):
+        def iseven(x):
+            return x % 2 == 0
+        requirement = RequiredPredicate(iseven)
+
+        data = {'A': [2, 4, 5], 'B': 6, 'C': 7}
+        diff, desc = requirement(data)
+        expected = [
+            ('A', [Invalid(5)]),
+            ('C', Invalid(7)),
+        ]
+        evaluate = lambda v: list(v) if isinstance(v, Iterable) else v
+        result = sorted([(k, evaluate(v)) for k, v in diff])
+        self.assertEqual(result, expected)

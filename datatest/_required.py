@@ -588,3 +588,52 @@ class GroupRequirement(BaseRequirement):
         if isinstance(data, BaseElement):
             data = [data]
         return self.check_group(data)
+
+
+class RequiredPredicate(GroupRequirement):
+    """A requirement to test that data matches a predicate object."""
+    def __init__(self, obj, show_expected=False):
+        self._pred = Predicate(obj)
+        self._obj = obj
+        self.show_expected = show_expected
+
+    def _get_differences(self, group):
+        pred = self._pred
+        obj = self._obj
+        show_expected = self.show_expected
+        for element in group:
+            result = pred(element)
+            if not result:
+                yield _make_difference(element, obj, show_expected)
+            elif isinstance(result, BaseDifference):
+                yield result
+
+    def check_group(self, group):
+        differences = self._get_differences(group)
+        description = _build_description(self._obj)
+        return differences, description
+
+    def check_items(self, items):
+        pred = self._pred
+        obj = self._obj
+        show_expected = self.show_expected
+
+        differences = []
+        for key, value in items:
+            if isinstance(value, BaseElement):
+                result = pred(value)
+                if not result:
+                    diff = _make_difference(value, obj, show_expected)
+                elif isinstance(result, BaseDifference):
+                    diff = result
+                else:
+                    continue
+            else:
+                diff, desc = self.check_group(value)
+                first_element, diff = iterpeek(diff, None)
+                if not first_element:
+                    continue
+            differences.append((key, diff))
+
+        description = _build_description(self._obj)
+        return differences, description
