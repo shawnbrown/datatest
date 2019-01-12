@@ -728,5 +728,16 @@ class RequiredMapping(ItemsRequirement):
             mapping = dict(mapping)
         self.mapping = mapping
 
+    def _get_differences(self, items):
+        for item in items:
+            try:
+                key, value = item
+            except ValueError:
+                msg = ('item {0!r} is not a valid key/value pair; {1} '
+                       'expects a mapping or iterable of key/value pairs')
+                raise ValueError(msg.format(item, self.__class__.__name__))
+        return []
+
     def check_items(self, items):
-        return [], 'does not satisfy mapping requirements'
+        differences = self._get_differences(items)
+        return differences, 'does not satisfy mapping requirements'

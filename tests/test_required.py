@@ -1285,3 +1285,8 @@ class TestRequiredMapping(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             requirement = RequiredMapping('abc')
+
+    def test_bad_data_type(self):
+        requirement = RequiredMapping({'a': 'abc'})
+        with self.assertRaises(ValueError):
+            requirement('abc')
