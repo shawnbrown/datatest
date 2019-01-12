@@ -24,6 +24,7 @@ from datatest._required import GroupRequirement
 from datatest._required import RequiredPredicate
 from datatest._required import RequiredSet
 from datatest._required import RequiredSequence
+from datatest.difference import NOTFOUND
 
 
 class TestBuildDescription(unittest.TestCase):
@@ -1040,6 +1041,25 @@ class TestRequiredPredicate2(unittest.TestCase):
         diff, desc = requirement(data)
         self.assertEqual(list(diff), [Deviation(+2, 10)])
         self.assertEqual(desc, 'does not satisfy 10')
+
+    def test_notfound_token(self):
+        data = [123, 'abc']
+        requirement = RequiredPredicate(NOTFOUND)
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Deviation(+123, None), Extra('abc')])
+        #self.assertEqual(desc, 'does not satisfy requirement')
+
+        data = [10, NOTFOUND]
+        requirement = RequiredPredicate(10)
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Deviation(-10, 10)])
+        self.assertEqual(desc, 'does not satisfy 10')
+
+        data = ['abc', NOTFOUND]
+        requirement = RequiredPredicate('abc')
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Missing('abc')])
+        self.assertEqual(desc, "does not satisfy 'abc'")
 
     def test_predicate_error(self):
         """Errors should not be counted as False or otherwise hidden."""
