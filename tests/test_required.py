@@ -233,8 +233,8 @@ class TestRequiredPredicate(unittest.TestCase):
         self.assertIsNone(result)
 
     def test_some_false_deviations(self):
-        """When the predicate returns False, values should be returned as
-        Invalid() differences.
+        """When the predicate returns False, numeric differences should
+        be Deviation() objects not Invalid() objects.
         """
         data = [10, 10, 12]
         requirement = required_predicate(10)
@@ -1031,8 +1031,8 @@ class TestRequiredPredicate2(unittest.TestCase):
         self.assertIsNone(result)
 
     def test_some_false_deviations(self):
-        """When the predicate returns False, values should be returned as
-        Invalid() differences.
+        """When the predicate returns False, numeric differences should
+        be Deviation() objects not Invalid() objects.
         """
         data = [10, 10, 12]
         requirement = RequiredPredicate(10)
