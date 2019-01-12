@@ -720,3 +720,13 @@ class RequiredSequence(GroupRequirement):
     def check_group(self, group):
         differences = self._generate_differences(group)
         return differences, 'does not match required sequence'
+
+
+class RequiredMapping(ItemsRequirement):
+    def __init__(self, mapping):
+        if not isinstance(mapping, Mapping):
+            mapping = dict(mapping)
+        self.mapping = mapping
+
+    def check_items(self, items):
+        return [], 'does not satisfy mapping requirements'

@@ -24,6 +24,7 @@ from datatest._required import GroupRequirement
 from datatest._required import RequiredPredicate
 from datatest._required import RequiredSet
 from datatest._required import RequiredSequence
+from datatest._required import RequiredMapping
 from datatest.difference import NOTFOUND
 
 
@@ -1273,3 +1274,14 @@ class TestRequiredSequence2(unittest.TestCase):
             Extra((4, {'g': 7})),
         ]
         self.assertEqual(list(differences), expected)
+
+
+class TestRequiredMapping(unittest.TestCase):
+    def test_instantiation(self):
+        # Should pass without error.
+        some_dict = {'a': 'abc'}
+        requirement = RequiredMapping(some_dict)
+        requirement = RequiredMapping(some_dict.items())
+
+        with self.assertRaises(ValueError):
+            requirement = RequiredMapping('abc')
