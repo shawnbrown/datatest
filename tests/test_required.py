@@ -1290,3 +1290,15 @@ class TestRequiredMapping(unittest.TestCase):
         requirement = RequiredMapping({'a': 'abc'})
         with self.assertRaises(ValueError):
             requirement('abc')
+
+    def test_equality_of_single_values(self):
+        requirement = RequiredMapping({'a': 'j', 'b': 9})
+        diff, desc = requirement({'a': 'x', 'b': 10})
+        expected = {'a': Invalid('x', expected='j'), 'b': Deviation(+1, 9)}
+        self.assertEqual(dict(diff), expected)
+        self.assertEqual(desc, 'does not satisfy mapping requirements')
+
+        requirement = RequiredMapping({'a': 'j', 'b': 'k', 'c': 9})
+        diff, desc = requirement({'a': 'x', 'b': 10, 'c': 10})
+        expected = {'a': Invalid('x', 'j'), 'b': Invalid(10, 'k'), 'c': Deviation(+1, 9)}
+        self.assertEqual(dict(diff), expected)

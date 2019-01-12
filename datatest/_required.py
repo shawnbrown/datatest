@@ -729,6 +729,8 @@ class RequiredMapping(ItemsRequirement):
         self.mapping = mapping
 
     def _get_differences(self, items):
+        required_mapping = self.mapping
+
         for item in items:
             try:
                 key, value = item
@@ -736,7 +738,15 @@ class RequiredMapping(ItemsRequirement):
                 msg = ('item {0!r} is not a valid key/value pair; {1} '
                        'expects a mapping or iterable of key/value pairs')
                 raise ValueError(msg.format(item, self.__class__.__name__))
-        return []
+
+            expected = required_mapping.get(key, NOTFOUND)
+
+            pred = Predicate(expected)
+            result = pred(value)
+            if not result:
+                yield key, _make_difference(value, expected, show_expected=True)
+            elif isinstance(result, BaseDifference):
+                yield key, result
 
     def check_items(self, items):
         differences = self._get_differences(items)
