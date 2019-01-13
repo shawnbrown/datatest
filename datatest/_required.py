@@ -728,6 +728,19 @@ class RequiredMapping(ItemsRequirement):
             mapping = dict(mapping)
         self.mapping = mapping
 
+    @staticmethod
+    def _get_group_requirement(obj):
+        if isinstance(obj, GroupRequirement):
+            return obj
+
+        if isinstance(obj, Set):
+            return RequiredSet(obj)
+
+        if isinstance(obj, Sequence) and not isinstance(obj, BaseElement):
+            return RequiredSequence(obj)
+
+        return RequiredPredicate(obj)
+
     def _get_differences(self, items):
         required_mapping = self.mapping
 
@@ -749,8 +762,8 @@ class RequiredMapping(ItemsRequirement):
                 elif isinstance(result, BaseDifference):
                     yield key, result
             else:
-                req = RequiredPredicate(expected)
-                diff, desc = req.check_group(value)
+                requirement = self._get_group_requirement(expected)
+                diff, desc = requirement.check_group(value)
                 first_item, diff = iterpeek(diff, None)
                 if first_item:
                     yield key, diff

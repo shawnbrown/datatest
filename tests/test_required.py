@@ -1327,3 +1327,16 @@ class TestRequiredMapping(unittest.TestCase):
         expected = {'a': [Invalid((1, 'x'))], 'b': [Invalid((9, 10))]}
         self.assertEqual(self.evaluate_item_values(diff), expected)
         self.assertEqual(desc, 'does not satisfy mapping requirements')
+
+    def test_set_membership_differences(self):
+        requirement = RequiredMapping({'a': set(['x', 'y']), 'b': set(['x', 'y'])})
+        diff, desc = requirement({'a': ['x', 'x'], 'b': ['x', 'y', 'z']})
+        expected = {'a': [Missing('y')], 'b': [Extra('z')]}
+        self.assertEqual(self.evaluate_item_values(diff), expected)
+        self.assertEqual(desc, 'does not satisfy mapping requirements')
+
+        #requirement = RequiredMapping({'a': set(['x', 'y'])})
+        #diff, desc = requirement({'a': 'x'})
+        #expected = {'a': [Missing('y')]}
+        #self.assertEqual(self.evaluate_item_values(diff), expected)
+        #self.assertEqual(desc, 'does not satisfy mapping requirements')
