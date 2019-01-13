@@ -744,6 +744,8 @@ class RequiredMapping(ItemsRequirement):
     def _get_differences(self, items):
         required_mapping = self.mapping
 
+        # Check values using requirement of corresponding key.
+        keys_seen = set()
         for item in items:
             try:
                 key, value = item
@@ -751,6 +753,8 @@ class RequiredMapping(ItemsRequirement):
                 msg = ('item {0!r} is not a valid key/value pair; {1} '
                        'expects a mapping or iterable of key/value pairs')
                 raise ValueError(msg.format(item, self.__class__.__name__))
+
+            keys_seen.add(key)
 
             expected = required_mapping.get(key, NOTFOUND)
             req_type = self._get_requirement_type(expected)
@@ -770,9 +774,21 @@ class RequiredMapping(ItemsRequirement):
                     value = [value]
 
             requirement = req_type(expected)  # <- Instantiate requirement.
-            diff, desc = requirement.check_group(value)
+            diff, _ = requirement.check_group(value)
             first_item, diff = iterpeek(diff, None)
             if first_item:
+                yield key, diff
+
+        # Check for expected keys that are missing from items.
+        required_items = getattr(required_mapping, 'iteritems', required_mapping.items)()
+        for key, expected in required_items:
+            if key not in keys_seen:
+                req_type = self._get_requirement_type(expected)
+                requirement = req_type(expected)
+                diff, _ = requirement.check_group([])  # Try empty container.
+                first_item, diff = iterpeek(diff, None)
+                if not first_item:
+                    diff = _make_difference(NOTFOUND, expected)
                 yield key, diff
 
     def check_items(self, items):

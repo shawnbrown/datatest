@@ -1340,3 +1340,38 @@ class TestRequiredMapping(unittest.TestCase):
         expected = {'a': [Missing('y')]}
         self.assertEqual(self.evaluate_item_values(diff), expected)
         self.assertEqual(desc, 'does not satisfy mapping requirements')
+
+    def test_mismatched_keys(self):
+        # Required keys missing from data.
+        requirement = RequiredMapping({
+            'a': 'j',
+            'b': 9,
+            'c': 'x',
+            'd': set(['y']),
+        })
+        diff, desc = requirement({'a': 'j'})
+        expected = {
+            'b': Deviation(-9, 9),
+            'c': Missing('x'),
+            'd': [Missing('y')],
+        }
+        self.assertEqual(self.evaluate_item_values(diff), expected)
+        self.assertEqual(desc, 'does not satisfy mapping requirements')
+
+        # Extra keys unexpectedly found in data.
+        requirement = RequiredMapping({'a': 'j'})
+        diff, desc = requirement({
+            'a': 'j',
+            'b': 9,
+            'c': [10, 11],
+            'd': 'x',
+            'e': set(['y']),
+        })
+        expected = {
+            'b': Deviation(+9, None),
+            'c': [Deviation(+10, None), Deviation(+11, None)],
+            'd': Extra('x'),
+            'e': [Extra('y')],
+        }
+        self.assertEqual(self.evaluate_item_values(diff), expected)
+        self.assertEqual(desc, 'does not satisfy mapping requirements')
