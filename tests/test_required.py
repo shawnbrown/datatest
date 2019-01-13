@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from . import _unittest as unittest
 from datatest._compatibility.collections.abc import Iterable
 from datatest._compatibility.collections.abc import Iterator
+from datatest._utils import nonstringiter
 from datatest import Missing
 from datatest import Extra
 from datatest import Deviation
@@ -1277,6 +1278,13 @@ class TestRequiredSequence2(unittest.TestCase):
 
 
 class TestRequiredMapping(unittest.TestCase):
+    @staticmethod
+    def evaluate_item_values(items):
+        new_dic = dict()
+        for k, v in items:
+            new_dic[k] = list(v) if nonstringiter(v) else v
+        return new_dic
+
     def test_instantiation(self):
         # Should pass without error.
         some_dict = {'a': 'abc'}
@@ -1302,3 +1310,10 @@ class TestRequiredMapping(unittest.TestCase):
         diff, desc = requirement({'a': 'x', 'b': 10, 'c': 10})
         expected = {'a': Invalid('x', 'j'), 'b': Invalid(10, 'k'), 'c': Deviation(+1, 9)}
         self.assertEqual(dict(diff), expected)
+
+    def test_equality_of_multiple_values(self):
+        requirement = RequiredMapping({'a': 'j', 'b': 9})
+        diff, desc = requirement({'a': ['x', 'j'], 'b': [10, 9]})
+        expected = {'a': [Invalid('x')], 'b': [Deviation(+1, 9)]}
+        self.assertEqual(self.evaluate_item_values(diff), expected)
+        self.assertEqual(desc, 'does not satisfy mapping requirements')

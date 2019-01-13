@@ -741,12 +741,19 @@ class RequiredMapping(ItemsRequirement):
 
             expected = required_mapping.get(key, NOTFOUND)
 
-            pred = Predicate(expected)
-            result = pred(value)
-            if not result:
-                yield key, _make_difference(value, expected, show_expected=True)
-            elif isinstance(result, BaseDifference):
-                yield key, result
+            if isinstance(value, BaseElement):
+                pred = Predicate(expected)
+                result = pred(value)
+                if not result:
+                    yield key, _make_difference(value, expected, show_expected=True)
+                elif isinstance(result, BaseDifference):
+                    yield key, result
+            else:
+                req = RequiredPredicate(expected)
+                diff, desc = req.check_group(value)
+                first_item, diff = iterpeek(diff, None)
+                if first_item:
+                    yield key, diff
 
     def check_items(self, items):
         differences = self._get_differences(items)
