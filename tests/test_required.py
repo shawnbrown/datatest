@@ -1391,3 +1391,61 @@ class TestRequiredMapping(unittest.TestCase):
         diff, desc = required_nonempty(empty)
         expected = {'a': [Missing('x')]}
         self.assertEqual(self.evaluate_item_values(diff), expected)
+
+    def test_integration(self):
+        requirement = RequiredMapping({
+            'a': 'x',
+            'b': 'y',
+            'c': 1,
+            'd': 2,
+            'e': ('abc', int),
+            'f': ('def', float),
+            'g': set(['a']),
+            'h': set(['d', 'e', 'f']),
+            'i': [1],
+            'j': [4, 5, 6],
+        })
+
+        # No differences.
+        data = {
+            'a': 'x',
+            'b': ['y', 'y'],
+            'c': 1,
+            'd': iter([2, 2]),
+            'e': ('abc', 1),
+            'f': [('def', 1.0), ('def', 2.0)],
+            'g': 'a',
+            'h': ['d', 'e', 'f'],
+            'i': 1,
+            'j': [4, 5, 6],
+        }
+        self.assertIsNone(requirement(data))
+
+        # Variety of differences.
+        data = {
+            'a': 'y',
+            'b': ['x', 'y'],
+            'c': 2,
+            'd': [1, 2],
+            'e': ('abc', 1.0),
+            'f': [('def', 2)],
+            'g': 'b',
+            'h': ['e', 'f', 'g'],
+            'i': 2,
+            'j': [5, 6, 7],
+        }
+        diff, desc = requirement(data)
+
+        expected = {
+            'a': Invalid('y', expected='x'),
+            'b': [Invalid('x')],
+            'c': Deviation(+1, 1),
+            'd': [Deviation(-1, 2)],
+            'e': Invalid(('abc', 1.0), expected=('abc', int)),
+            'f': [Invalid(('def', 2))],
+            'g': [Missing('a'), Extra('b')],
+            'h': [Missing('d'), Extra('g')],
+            'i': [Missing((0, 1)), Extra((0, 2))],
+            'j': [Missing((0, 4)), Extra((2, 7))],
+        }
+        self.assertEqual(self.evaluate_item_values(diff), expected)
