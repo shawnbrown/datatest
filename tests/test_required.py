@@ -1299,21 +1299,31 @@ class TestRequiredMapping(unittest.TestCase):
         with self.assertRaises(ValueError):
             requirement('abc')
 
-    def test_equality_of_single_values(self):
-        requirement = RequiredMapping({'a': 'j', 'b': 9})
-        diff, desc = requirement({'a': 'x', 'b': 10})
-        expected = {'a': Invalid('x', expected='j'), 'b': Deviation(+1, 9)}
-        self.assertEqual(dict(diff), expected)
-        self.assertEqual(desc, 'does not satisfy mapping requirements')
-
+    def test_equality_of_single_elements(self):
         requirement = RequiredMapping({'a': 'j', 'b': 'k', 'c': 9})
         diff, desc = requirement({'a': 'x', 'b': 10, 'c': 10})
         expected = {'a': Invalid('x', 'j'), 'b': Invalid(10, 'k'), 'c': Deviation(+1, 9)}
         self.assertEqual(dict(diff), expected)
+        self.assertEqual(desc, 'does not satisfy mapping requirements')
 
-    def test_equality_of_multiple_values(self):
+        # Test that tuples are also treated as single-elements.
+        requirement = RequiredMapping({'a': (1, 'j'), 'b': (9, 9)})
+        diff, desc = requirement({'a': (1, 'x'), 'b': (9, 10)})
+        expected = {'a': Invalid((1, 'x'), expected=(1, 'j')),
+                    'b': Invalid((9, 10), expected=(9, 9))}
+        self.assertEqual(dict(diff), expected)
+        self.assertEqual(desc, 'does not satisfy mapping requirements')
+
+    def test_equality_of_multiple_elements(self):
         requirement = RequiredMapping({'a': 'j', 'b': 9})
         diff, desc = requirement({'a': ['x', 'j'], 'b': [10, 9]})
         expected = {'a': [Invalid('x')], 'b': [Deviation(+1, 9)]}
+        self.assertEqual(self.evaluate_item_values(diff), expected)
+        self.assertEqual(desc, 'does not satisfy mapping requirements')
+
+        # Test groups of tuple elements.
+        requirement = RequiredMapping({'a': (1, 'j'), 'b': (9, 9)})
+        diff, desc = requirement({'a': [(1, 'j'), (1, 'x')], 'b': [(9, 9), (9, 10)]})
+        expected = {'a': [Invalid((1, 'x'))], 'b': [Invalid((9, 10))]}
         self.assertEqual(self.evaluate_item_values(diff), expected)
         self.assertEqual(desc, 'does not satisfy mapping requirements')
