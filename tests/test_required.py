@@ -1375,3 +1375,19 @@ class TestRequiredMapping(unittest.TestCase):
         }
         self.assertEqual(self.evaluate_item_values(diff), expected)
         self.assertEqual(desc, 'does not satisfy mapping requirements')
+
+    def test_empty_vs_nonempty_values(self):
+        empty = dict()
+        nonempty = {'a': set(['x'])}
+        required_empty = RequiredMapping(empty)
+        required_nonempty = RequiredMapping(nonempty)
+
+        self.assertIsNone(required_empty(empty))
+
+        diff, desc = required_empty(nonempty)
+        expected = {'a': [Extra('x')]}
+        self.assertEqual(self.evaluate_item_values(diff), expected)
+
+        diff, desc = required_nonempty(empty)
+        expected = {'a': [Missing('x')]}
+        self.assertEqual(self.evaluate_item_values(diff), expected)
