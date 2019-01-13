@@ -729,17 +729,17 @@ class RequiredMapping(ItemsRequirement):
         self.mapping = mapping
 
     @staticmethod
-    def _get_group_requirement(obj):
+    def _get_requirement_type(obj):
         if isinstance(obj, GroupRequirement):
-            return obj
+            return None
 
         if isinstance(obj, Set):
-            return RequiredSet(obj)
+            return RequiredSet
 
         if isinstance(obj, Sequence) and not isinstance(obj, BaseElement):
-            return RequiredSequence(obj)
+            return RequiredSequence
 
-        return RequiredPredicate(obj)
+        return RequiredPredicate
 
     def _get_differences(self, items):
         required_mapping = self.mapping
@@ -753,20 +753,27 @@ class RequiredMapping(ItemsRequirement):
                 raise ValueError(msg.format(item, self.__class__.__name__))
 
             expected = required_mapping.get(key, NOTFOUND)
+            req_type = self._get_requirement_type(expected)
 
             if isinstance(value, BaseElement):
-                pred = Predicate(expected)
-                result = pred(value)
-                if not result:
-                    yield key, _make_difference(value, expected, show_expected=True)
-                elif isinstance(result, BaseDifference):
-                    yield key, result
-            else:
-                requirement = self._get_group_requirement(expected)
-                diff, desc = requirement.check_group(value)
-                first_item, diff = iterpeek(diff, None)
-                if first_item:
-                    yield key, diff
+                if req_type is RequiredPredicate:
+                    # Skip requirement and use Predicate directly.
+                    pred = Predicate(expected)
+                    result = pred(value)
+                    if not result:
+                        yield key, _make_difference(value, expected, show_expected=True)
+                    elif isinstance(result, BaseDifference):
+                        yield key, result
+                    continue  # <- CONTINUE!
+                else:
+                    # Change single-element into a group.
+                    value = [value]
+
+            requirement = req_type(expected)  # <- Instantiate requirement.
+            diff, desc = requirement.check_group(value)
+            first_item, diff = iterpeek(diff, None)
+            if first_item:
+                yield key, diff
 
     def check_items(self, items):
         differences = self._get_differences(items)

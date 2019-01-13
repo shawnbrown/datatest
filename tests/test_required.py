@@ -1335,8 +1335,8 @@ class TestRequiredMapping(unittest.TestCase):
         self.assertEqual(self.evaluate_item_values(diff), expected)
         self.assertEqual(desc, 'does not satisfy mapping requirements')
 
-        #requirement = RequiredMapping({'a': set(['x', 'y'])})
-        #diff, desc = requirement({'a': 'x'})
-        #expected = {'a': [Missing('y')]}
-        #self.assertEqual(self.evaluate_item_values(diff), expected)
-        #self.assertEqual(desc, 'does not satisfy mapping requirements')
+        requirement = RequiredMapping({'a': set(['x', 'y'])})
+        diff, desc = requirement({'a': 'x'})
+        expected = {'a': [Missing('y')]}
+        self.assertEqual(self.evaluate_item_values(diff), expected)
+        self.assertEqual(desc, 'does not satisfy mapping requirements')
