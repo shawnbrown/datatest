@@ -552,17 +552,18 @@ class GroupRequirement(BaseRequirement):
     def check_items(self, items):
         differences = []
         description = ''
+        check_group = self.check_group
 
         for key, value in items:
             if isinstance(value, BaseElement):
-                diff, desc = self.check_group([value])
+                diff, desc = check_group([value])
                 diff = list(diff)
                 if len(diff) == 1:
                     diff = diff[0]  # Unwrap if single difference.
                 if not diff:
                     continue
             else:
-                diff, desc = self.check_group(value)
+                diff, desc = check_group(value)
                 first_element, diff = iterpeek(diff, None)
                 if not first_element:
                     continue
@@ -620,6 +621,7 @@ class RequiredPredicate(GroupRequirement):
         pred = self._pred
         obj = self._obj
         show_expected = self.show_expected
+        check_group = self.check_group
 
         differences = []
         for key, value in items:
@@ -632,13 +634,13 @@ class RequiredPredicate(GroupRequirement):
                 else:
                     continue
             else:
-                diff, desc = self.check_group(value)
+                diff, desc = check_group(value)
                 first_element, diff = iterpeek(diff, None)
                 if not first_element:
                     continue
             differences.append((key, diff))
 
-        description = _build_description(self._obj)
+        description = _build_description(obj)
         return differences, description
 
 
