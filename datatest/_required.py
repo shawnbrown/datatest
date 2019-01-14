@@ -820,3 +820,36 @@ class RequiredMapping(ItemsRequirement):
         if description is _INCONSISTENT or not description:
             description = 'does not satisfy mapping requirements'
         return differences, description
+
+
+class required(abc.ABC):
+    """:class:`required` is an abstract factory class that returns
+    requirement objects. It contains several factory methods that can
+    be called directly to instantiate specific requirement types.
+    """
+    def __new__(cls, obj, *args, **kwds):
+        if isinstance(obj, BaseRequirement):
+            return obj
+        if isinstance(obj, Mapping):
+            return cls.mapping(obj, *args, **kwds)
+        if isinstance(obj, Set):
+            return cls.set(obj, *args, **kwds)
+        if isinstance(obj, Sequence) and not isinstance(obj, BaseElement):
+            return cls.sequence(obj, *args, **kwds)
+        return cls.predicate(obj, *args, **kwds)
+
+    @classmethod
+    def predicate(cls, predicate, show_expected=False):
+        return RequiredPredicate(predicate, show_expected)
+
+    @classmethod
+    def set(cls, set):
+        return RequiredSet(set)
+
+    @classmethod
+    def sequence(cls, sequence):
+        return RequiredSequence(sequence)
+
+    @classmethod
+    def mapping(cls, mapping):
+        return RequiredMapping(mapping)
