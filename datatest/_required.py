@@ -27,6 +27,9 @@ def _build_description(obj):
     for a group-requirement function that does not return its
     own description.
     """
+    if obj is NOTFOUND:
+        return obj  # <- EXIT!
+
     if isinstance(obj, FunctionType):
         docstring = getattr(obj, '__doc__', None)
         if docstring:
@@ -741,8 +744,20 @@ class RequiredMapping(ItemsRequirement):
 
         return RequiredPredicate
 
-    def _get_differences(self, items):
+    @staticmethod
+    def _update_description(current, new):
+        if current == new or current is _INCONSISTENT or new is NOTFOUND:
+            return current
+
+        if not current:
+            return new
+
+        return _INCONSISTENT
+
+    def check_items(self, items):
         required_mapping = self.mapping
+        differences = []
+        description = ''
 
         # Check values using requirement of corresponding key.
         keys_seen = set()
@@ -765,19 +780,27 @@ class RequiredMapping(ItemsRequirement):
                     pred = Predicate(expected)
                     result = pred(value)
                     if not result:
-                        yield key, _make_difference(value, expected, show_expected=True)
+                        diff = _make_difference(value, expected, show_expected=True)
+                        differences.append((key, diff))
+                        #if expected is not NOTFOUND:
+                        desc = _build_description(expected)
+                        description = self._update_description(description, desc)
                     elif isinstance(result, BaseDifference):
-                        yield key, result
+                        differences.append((key, diff))
+                        #if expected is not NOTFOUND:
+                        desc = _build_description(expected)
+                        description = self._update_description(description, desc)
                     continue  # <- CONTINUE!
                 else:
                     # Change single-element into a group.
                     value = [value]
 
             requirement = req_type(expected)  # <- Instantiate requirement.
-            diff, _ = requirement.check_group(value)
+            diff, desc = requirement.check_group(value)
             first_item, diff = iterpeek(diff, None)
             if first_item:
-                yield key, diff
+                differences.append((key, diff))
+                description = self._update_description(description, desc)
 
         # Check for expected keys that are missing from items.
         required_items = getattr(required_mapping, 'iteritems', required_mapping.items)()
@@ -785,12 +808,13 @@ class RequiredMapping(ItemsRequirement):
             if key not in keys_seen:
                 req_type = self._get_requirement_type(expected)
                 requirement = req_type(expected)
-                diff, _ = requirement.check_group([])  # Try empty container.
+                diff, desc = requirement.check_group([])  # Try empty container.
                 first_item, diff = iterpeek(diff, None)
                 if not first_item:
                     diff = _make_difference(NOTFOUND, expected)
-                yield key, diff
+                differences.append((key, diff))
+                description = self._update_description(description, desc)
 
-    def check_items(self, items):
-        differences = self._get_differences(items)
-        return differences, 'does not satisfy mapping requirements'
+        if description is _INCONSISTENT or not description:
+            description = 'does not satisfy mapping requirements'
+        return differences, description

@@ -1333,13 +1333,13 @@ class TestRequiredMapping(unittest.TestCase):
         diff, desc = requirement({'a': ['x', 'x'], 'b': ['x', 'y', 'z']})
         expected = {'a': [Missing('y')], 'b': [Extra('z')]}
         self.assertEqual(self.evaluate_item_values(diff), expected)
-        self.assertEqual(desc, 'does not satisfy mapping requirements')
+        self.assertEqual(desc, 'does not satisfy set membership')
 
         requirement = RequiredMapping({'a': set(['x', 'y'])})
         diff, desc = requirement({'a': 'x'})
         expected = {'a': [Missing('y')]}
         self.assertEqual(self.evaluate_item_values(diff), expected)
-        self.assertEqual(desc, 'does not satisfy mapping requirements')
+        self.assertEqual(desc, 'does not satisfy set membership')
 
     def test_mismatched_keys(self):
         # Required keys missing from data.
@@ -1449,3 +1449,14 @@ class TestRequiredMapping(unittest.TestCase):
             'j': [Missing((0, 4)), Extra((2, 7))],
         }
         self.assertEqual(self.evaluate_item_values(diff), expected)
+
+    def test_description_message(self):
+        # Test same message (set membership message).
+        requirement = RequiredMapping({'a': set(['x']), 'b': set(['y'])})
+        _, desc = requirement({'a': ['x', 'y'], 'b': ['y', 'z']})
+        self.assertEqual(desc, 'does not satisfy set membership')
+
+        # Test different messages--uses default instead.
+        requirement = RequiredMapping({'a': set(['x']), 'b': 'y'})
+        _, desc = requirement({'a': ['x', 'y'], 'b': ['y', 'z']})
+        self.assertEqual(desc, 'does not satisfy mapping requirements')
