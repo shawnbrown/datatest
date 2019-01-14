@@ -795,7 +795,8 @@ class RequiredMapping(ItemsRequirement):
                     # Change single-element into a group.
                     value = [value]
 
-            requirement = req_type(expected)  # <- Instantiate requirement.
+            requirement = req_type(expected) if req_type else expected
+
             diff, desc = requirement.check_group(value)
             first_item, diff = iterpeek(diff, None)
             if first_item:
@@ -807,7 +808,8 @@ class RequiredMapping(ItemsRequirement):
         for key, expected in required_items:
             if key not in keys_seen:
                 req_type = self._get_requirement_type(expected)
-                requirement = req_type(expected)
+                requirement = req_type(expected) if req_type else expected
+
                 diff, desc = requirement.check_group([])  # Try empty container.
                 first_item, diff = iterpeek(diff, None)
                 if not first_item:

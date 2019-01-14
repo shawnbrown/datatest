@@ -1392,6 +1392,21 @@ class TestRequiredMapping(unittest.TestCase):
         expected = {'a': [Missing('x')]}
         self.assertEqual(self.evaluate_item_values(diff), expected)
 
+    def test_custom_requirements(self):
+        class MyRequirement(GroupRequirement):
+            def check_group(self, group):
+                return [Invalid('foo')], 'my message'
+
+        requirement = RequiredMapping({'a': MyRequirement()})
+        diff, desc = requirement({'a': 1})  # <- Single-element value.
+        self.assertEqual(self.evaluate_item_values(diff), {'a': [Invalid('foo')]})
+        self.assertEqual(desc, 'my message')
+
+        requirement = RequiredMapping({'a': MyRequirement()})
+        diff, desc = requirement({'a': [1, 2, 3]})  # <- List of values.
+        self.assertEqual(self.evaluate_item_values(diff), {'a': [Invalid('foo')]})
+        self.assertEqual(desc, 'my message')
+
     def test_integration(self):
         requirement = RequiredMapping({
             'a': 'x',
