@@ -832,13 +832,16 @@ class required(abc.ABC):
     def __new__(cls, obj, *args, **kwds):
         if isinstance(obj, BaseRequirement):
             return obj
+
         if isinstance(obj, Mapping):
-            return cls.mapping(obj, *args, **kwds)
-        if isinstance(obj, Set):
-            return cls.set(obj, *args, **kwds)
-        if isinstance(obj, Sequence) and not isinstance(obj, BaseElement):
-            return cls.sequence(obj, *args, **kwds)
-        return cls.predicate(obj, *args, **kwds)
+            constructor = cls.mapping
+        elif isinstance(obj, Set):
+            constructor = cls.set
+        elif isinstance(obj, Sequence) and not isinstance(obj, BaseElement):
+            constructor = cls.sequence
+        else:
+            constructor = cls.predicate
+        return constructor(obj, *args, **kwds)
 
     @classmethod
     def predicate(cls, predicate, show_expected=False):
