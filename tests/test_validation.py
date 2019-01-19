@@ -164,6 +164,11 @@ class MinimalDifference(BaseDifference):
 
 
 class TestValidationError(unittest.TestCase):
+    def test_single_diff(self):
+        single_diff = MinimalDifference('A')
+        err = ValidationError(single_diff)
+        self.assertEqual(err.differences, [single_diff])
+
     def test_list_of_diffs(self):
         diff_list = [MinimalDifference('A'), MinimalDifference('B')]
 
@@ -188,11 +193,6 @@ class TestValidationError(unittest.TestCase):
 
         err = ValidationError(diff_dict)
         self.assertEqual(err.differences, diff_dict)
-
-    def test_single_diff(self):
-        single_diff = MinimalDifference('A')
-        err = ValidationError(single_diff)
-        self.assertEqual(err.differences, [single_diff])
 
     def test_bad_args(self):
         with self.assertRaises(TypeError, msg='must be iterable'):
