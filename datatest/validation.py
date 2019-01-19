@@ -4,8 +4,10 @@ from ._compatibility.collections.abc import Iterable
 from ._compatibility.collections.abc import Iterator
 from ._compatibility.collections.abc import Mapping
 from ._required import _get_required_func
-from ._utils import nonstringiter
+from ._utils import IterItems
 from ._utils import exhaustible
+from ._utils import iterpeek
+from ._utils import nonstringiter
 from ._utils import _safesort_key
 from ._query.query import (
     BaseElement,
@@ -95,12 +97,30 @@ class ValidationError(AssertionError):
         if isinstance(differences, BaseDifference):
             differences = [differences]
         elif not nonstringiter(differences):
-            msg = 'expected an iterable of differences, got {0!r}'
+            msg = 'expected an iterable or mapping of differences, got {0}'
             raise TypeError(msg.format(differences.__class__.__name__))
 
-        # Normalize *differences* argument.
-        if _is_collection_of_items(differences):
-            differences = dict(differences)
+        # Convert dictionary update sequences to dict.
+        if not isinstance(differences, Mapping):
+            first_item, differences = iterpeek(differences)
+            if not isinstance(first_item, BaseDifference):
+                try:
+                    differences = dict(differences)
+                except (TypeError, ValueError) as err:
+                    msg = (
+                        'expected differences or valid dictionary '
+                        'update sequences, found {0}: {1!r}'
+                    ).format(first_item.__class__.__name__, first_item)
+                    err_cls = err.__class__
+                    init_err = err_cls(msg)
+                    init_err.__cause__ = getattr(err, '__cause__', None)
+                    raise init_err
+
+        # Eagerly evaluate lazy-iterables.
+        if isinstance(differences, Mapping):
+            for k, v in IterItems(differences):
+                if nonstringiter(v) and exhaustible(v):
+                    differences[k] = list(v)
         elif exhaustible(differences):
             differences = list(differences)
 

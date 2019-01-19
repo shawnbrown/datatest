@@ -194,6 +194,27 @@ class TestValidationError(unittest.TestCase):
         err = ValidationError(diff_dict)
         self.assertEqual(err.differences, diff_dict)
 
+    def test_iteritems_of_diffs(self):
+        diff_dict = {'a': MinimalDifference('A'), 'b': MinimalDifference('B')}
+        diff_items = ((k, v) for k, v in diff_dict.items())
+
+        err = ValidationError(diff_items)
+        self.assertEqual(err.differences, diff_dict)
+
+    def test_dict_of_iters(self):
+        dict_of_lists = {'a': [MinimalDifference('A')], 'b': [MinimalDifference('B')]}
+        dict_of_iters = dict((k, iter(v)) for k, v in dict_of_lists.items())
+
+        err = ValidationError(dict_of_iters)
+        self.assertEqual(err.differences, dict_of_lists)
+
+    def test_iteritems_of_iters(self):
+        dict_of_lists = {'a': [MinimalDifference('A')], 'b': [MinimalDifference('B')]}
+        iteritems_of_iters = ((k, iter(v)) for k, v in dict_of_lists.items())
+
+        err = ValidationError(iteritems_of_iters)
+        self.assertEqual(err.differences, dict_of_lists)
+
     def test_bad_args(self):
         with self.assertRaises(TypeError, msg='must be iterable'):
             bad_arg = object()
