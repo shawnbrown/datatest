@@ -164,31 +164,30 @@ class MinimalDifference(BaseDifference):
 
 
 class TestValidationError(unittest.TestCase):
-    def test_error_list(self):
-        error_list = [MinimalDifference('A'), MinimalDifference('B')]
+    def test_list_of_diffs(self):
+        diff_list = [MinimalDifference('A'), MinimalDifference('B')]
 
-        err = ValidationError(error_list)
-        self.assertEqual(err.differences, error_list)
+        err = ValidationError(diff_list)
+        self.assertEqual(err.differences, diff_list)
 
-    def test_error_iter(self):
-        error_list = [MinimalDifference('A'), MinimalDifference('B')]
-        error_iter = iter(error_list)
+    def test_iter_of_diffs(self):
+        diff_list = [MinimalDifference('A'), MinimalDifference('B')]
+        diff_iter = iter(diff_list)
 
-        err = ValidationError(error_iter)
-        self.assertEqual(err.differences, error_list, 'iterable should be converted to list')
+        err = ValidationError(diff_iter)
+        self.assertEqual(err.differences, diff_list, 'iterable should be converted to list')
 
-    def test_error_dict(self):
-        error_dict = {'a': MinimalDifference('A'), 'b': MinimalDifference('B')}
+    def test_dict_of_diffs(self):
+        diff_dict = {'a': MinimalDifference('A'), 'b': MinimalDifference('B')}
 
-        err = ValidationError(error_dict)
-        self.assertEqual(err.differences, error_dict)
+        err = ValidationError(diff_dict)
+        self.assertEqual(err.differences, diff_dict)
 
-    def test_error_iteritems(self):
-        error_dict = {'a': MinimalDifference('A'), 'b': MinimalDifference('B')}
-        error_iteritems = getattr(error_dict, 'iteritems', error_dict.items)()
+    def test_dict_of_lists(self):
+        diff_dict = {'a': [MinimalDifference('A')], 'b': [MinimalDifference('B')]}
 
-        err = ValidationError(error_iteritems)
-        self.assertEqual(err.differences, error_dict)
+        err = ValidationError(diff_dict)
+        self.assertEqual(err.differences, diff_dict)
 
     def test_single_diff(self):
         single_diff = MinimalDifference('A')
