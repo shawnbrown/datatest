@@ -27,6 +27,7 @@ from .._compatibility import contextlib
 from .._compatibility import functools
 from .._compatibility import itertools
 from .._utils import _flatten
+from .._utils import IterItems
 from .._utils import iterpeek
 from .._utils import nonstringiter
 from .._utils import sortable
@@ -142,6 +143,9 @@ class DictItems(Iterator):
 
     def next(self):
         return next(self.__wrapped__)  # For Python 2 compatibility.
+
+
+IterItems.register(DictItems)  # <- Register DictItems as a virtual-subclass.
 
 
 _iteritem_types = (

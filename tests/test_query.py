@@ -13,6 +13,7 @@ from . import _unittest as unittest
 from datatest._compatibility.builtins import *
 from datatest._compatibility.collections import namedtuple
 from datatest._compatibility.collections.abc import Mapping
+from datatest._utils import IterItems
 from datatest._utils import nonstringiter
 
 from datatest._load.working_directory import working_directory
@@ -174,6 +175,11 @@ class TestDictItems(unittest.TestCase):
         source = [{'x': 1}, {'y': 2}]
         with self.assertRaises(TypeError):
             normalized = DictItems(source)
+
+    def test_virtual_subset_rel(self):
+        """DictItems should be virtual subclass of IterItems."""
+        items = DictItems([('a', 1), ('b', 2)])
+        self.assertIsInstance(items, IterItems)
 
 
 class TestIsCollectionOfItems(unittest.TestCase):
