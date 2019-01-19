@@ -6,8 +6,12 @@ import re
 from io import IOBase
 from numbers import Number
 from sys import version_info as _version_info
+
+from ._compatibility.abc import ABC
 from ._compatibility.builtins import callable
+from ._compatibility.collections.abc import ItemsView
 from ._compatibility.collections.abc import Iterable
+from ._compatibility.collections.abc import Mapping
 from ._compatibility.decimal import Decimal
 from ._compatibility.itertools import chain
 from ._compatibility.itertools import filterfalse
@@ -208,3 +212,52 @@ def _expects_multiple_params(func):
     except ValueError:
         return None
     return (arglen > 1) or (vararglen > 0)
+
+
+class IterItems(ABC):
+    """A wrapper class to identify objects containing data appropriate
+    for constructing a dictionary or other mapping. The given
+    *items_or_mapping* should be an iterable of key/value pairs or a
+    mapping. When iterated over, :class:`IterItems` will return an
+    iterator of key/value pairs.
+
+    .. warning::
+
+        :class:`IterItems` does no type checking or verification of
+        the iterable's contents. When iterated over, it should yield
+        only those values necessary for constructing a :py:class:`dict`
+        or other mapping and no more---no duplicate or unhashable keys.
+    """
+    def __init__(self, items_or_mapping):
+        """Initialize self."""
+        if not isinstance(items_or_mapping, (Iterable, Mapping)):
+            msg = 'expected iterable or mapping, got {0!r}'
+            raise TypeError(msg.format(items_or_mapping.__class__.__name__))
+
+        while isinstance(items_or_mapping, IterItems) \
+                and hasattr(items_or_mapping, '__wrapped__'):
+            items_or_mapping = items_or_mapping.__wrapped__
+
+        self.__wrapped__ = items_or_mapping
+
+    def __iter__(self):
+        wrapped = self.__wrapped__
+        if isinstance(wrapped, Mapping):
+            if hasattr(wrapped, 'iteritems'):
+                return wrapped.iteritems()
+            return iter(wrapped.items())
+        return iter(wrapped)
+
+    def __repr__(self):
+        cls_name = self.__class__.__name__
+        return '{0}({1!r})'.format(cls_name, self.__wrapped__)
+
+    # Set iteritems type as a class attribute.
+    _iteritems_type = type(getattr(dict(), 'iteritems', dict().items)())
+
+    @classmethod
+    def __subclasshook__(cls, C):
+        if cls is IterItems:
+            if issubclass(C, (ItemsView, cls._iteritems_type)):
+                return True
+        return NotImplemented

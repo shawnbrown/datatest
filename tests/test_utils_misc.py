@@ -5,7 +5,7 @@ import platform
 import re
 from . import _unittest as unittest
 from datatest import _utils
-
+from datatest._utils import IterItems
 
 _PYPY2 = (platform.python_implementation() == 'PyPy'
           and platform.python_version_tuple()[0] == '2')
@@ -79,3 +79,85 @@ class TestExpectsMultipleParams(unittest.TestCase):
         else:
             expects_multiple = _utils._expects_multiple_params(max)
             self.assertIsNone(expects_multiple)
+
+
+class TestIterItems(unittest.TestCase):
+    def test_type_error(self):
+        regex = "expected iterable or mapping, got 'int'"
+        with self.assertRaisesRegex(TypeError, regex):
+            IterItems(123)
+
+    def test_non_exhaustible(self):
+        items_list = [('a', 1), ('b', 2)]  # <- Non-exhaustible iterable.
+
+        items = IterItems(items_list)
+        self.assertIsNot(iter(items), iter(items))
+        self.assertEqual(list(items), items_list)
+        self.assertEqual(list(items), items_list, msg='not exhaustible')
+
+    def test_exhaustible(self):
+        items_iter = iter([('a', 1), ('b', 2)])  # <- Exhaustible iterator.
+
+        items = IterItems(items_iter)
+        self.assertIs(iter(items), iter(items))
+        self.assertEqual(list(items), [('a', 1), ('b', 2)])
+        self.assertEqual(list(items), [], msg='already exhausted')
+
+    def test_dict(self):
+        mapping = {'a': 1, 'b': 2}
+
+        items = IterItems(mapping)
+        self.assertEqual(set(items), set([('a', 1), ('b', 2)]))
+        self.assertEqual(set(items), set([('a', 1), ('b', 2)]), msg='not exhaustible')
+
+    def test_dictitems(self):
+        dic = {'a': 1}
+
+        if hasattr(dic, 'iteritems'):  # <- Python 2
+            dic_items = dic.iteritems()
+
+            items = IterItems(dic_items)
+            self.assertEqual(list(items), [('a', 1)])
+            self.assertEqual(list(items), [], msg='already exhausted')
+
+        dic_items = dic.items()
+
+        items = IterItems(dic_items)
+        self.assertEqual(list(items), [('a', 1)])
+        self.assertEqual(list(items), [('a', 1)], msg='not exhaustible')
+
+    def test_empty_iterable(self):
+        empty = iter([])
+
+        items = IterItems(empty)
+        self.assertEqual(list(items), [])
+
+    def test_repr(self):
+        items = IterItems([1, 2])
+        self.assertEqual(repr(items), "IterItems([1, 2])")
+
+        generator = (x for x in [1, 2])
+        items = IterItems(generator)
+        self.assertEqual(repr(items), 'IterItems({0!r})'.format(generator))
+
+        items = IterItems({'a': 1})
+        self.assertEqual(repr(items), "IterItems({'a': 1})")
+
+    def test_subclasshook(self):
+        items = IterItems(iter([]))
+        self.assertIsInstance(items, IterItems)
+
+        try:
+            items = dict([]).iteritems()  # <- For Python 2
+        except AttributeError:
+            items = dict([]).items()  # <- For Python 3
+        self.assertIsInstance(items, IterItems)
+
+    def test_virtual_subclass(self):
+        class OtherClass(object):
+            pass
+
+        oth_cls = OtherClass()
+
+        IterItems.register(OtherClass)  # <- Register virtual subclass.
+        self.assertIsInstance(oth_cls, IterItems)
