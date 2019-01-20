@@ -283,12 +283,6 @@ def validate(data, requirement, msg=None):
     """
     # Setup traceback-hiding for pytest integration.
     __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
-    return validate2(data, requirement, msg)
-
-
-def validate2(data, requirement, msg=None):
-    # Setup traceback-hiding for pytest integration.
-    __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
 
     data = _normalize_data(data)
     requirement = _normalize_requirement(requirement)
