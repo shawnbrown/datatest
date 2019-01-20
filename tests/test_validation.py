@@ -7,8 +7,8 @@ from datatest.difference import Extra
 from datatest.difference import Missing
 from datatest.difference import Invalid
 from datatest.difference import Deviation
-from datatest._query.query import DictItems
 from datatest._query.query import Result
+from datatest._utils import IterItems
 
 from datatest.validation import _normalize_data
 from datatest.validation import _normalize_requirement
@@ -42,14 +42,14 @@ class TestNormalizeData(unittest.TestCase):
     def test_normalize_pandas_dataframe(self):
         df = pandas.DataFrame([(1, 'a'), (2, 'b'), (3, 'c')])
         result = _normalize_data(df)
-        self.assertIsInstance(result, DictItems)
+        self.assertIsInstance(result, IterItems)
         expected = {0: (1, 'a'), 1: (2, 'b'), 2: (3, 'c')}
         self.assertEqual(dict(result), expected)
 
         # Single column.
         df = pandas.DataFrame([('x',), ('y',), ('z',)])
         result = _normalize_data(df)
-        self.assertIsInstance(result, DictItems)
+        self.assertIsInstance(result, IterItems)
         expected = {0: 'x', 1: 'y', 2: 'z'}
         self.assertEqual(dict(result), expected, 'single column should be unwrapped')
 
@@ -57,7 +57,7 @@ class TestNormalizeData(unittest.TestCase):
         df = pandas.DataFrame([('x',), ('y',), ('z',)])
         df.index = pandas.MultiIndex.from_tuples([(0, 0), (0, 1), (1, 0)])
         result = _normalize_data(df)
-        self.assertIsInstance(result, DictItems)
+        self.assertIsInstance(result, IterItems)
         expected = {(0, 0): 'x', (0, 1): 'y', (1, 0): 'z'}
         self.assertEqual(dict(result), expected, 'multi-index should be tuples')
 
@@ -71,7 +71,7 @@ class TestNormalizeData(unittest.TestCase):
     def test_normalize_pandas_series(self):
         s = pandas.Series(['x', 'y', 'z'])
         result = _normalize_data(s)
-        self.assertIsInstance(result, DictItems)
+        self.assertIsInstance(result, IterItems)
         expected = {0: 'x', 1: 'y', 2: 'z'}
         self.assertEqual(dict(result), expected)
 
@@ -79,7 +79,7 @@ class TestNormalizeData(unittest.TestCase):
         s = pandas.Series(['x', 'y', 'z'])
         s.index = pandas.MultiIndex.from_tuples([(0, 0), (0, 1), (1, 0)])
         result = _normalize_data(s)
-        self.assertIsInstance(result, DictItems)
+        self.assertIsInstance(result, IterItems)
         expected = {(0, 0): 'x', (0, 1): 'y', (1, 0): 'z'}
         self.assertEqual(dict(result), expected, 'multi-index should be tuples')
 
@@ -147,8 +147,8 @@ class TestNormalizeRequirement(unittest.TestCase):
         self.assertIsInstance(output, tuple)
         self.assertEqual(output, (1, 2, 3))
 
-    def test_dict_items(self):
-        items = DictItems(iter([(0, 'x'), (1, 'y'), (2, 'z')]))
+    def test_iter_items(self):
+        items = IterItems(iter([(0, 'x'), (1, 'y'), (2, 'z')]))
         output = _normalize_requirement(items)
         self.assertIsInstance(output, dict)
         self.assertEqual(output, {0: 'x', 1: 'y', 2: 'z'})

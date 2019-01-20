@@ -11,8 +11,6 @@ from ._utils import nonstringiter
 from ._utils import _safesort_key
 from ._query.query import (
     BaseElement,
-    DictItems,
-    _is_collection_of_items,
     Query,
     Result,
 )
@@ -45,13 +43,13 @@ def _normalize_data(data):
                               'be unique').format(cls_name))
 
         if is_series:
-            return DictItems(data.iteritems())  # <- EXIT!
+            return IterItems(data.iteritems())  # <- EXIT!
 
         if is_dataframe:
             gen = ((x[0], x[1:]) for x in data.itertuples())
             if len(data.columns) == 1:
                 gen = ((k, v[0]) for k, v in gen)  # Unwrap if 1-tuple.
-            return DictItems(gen)  # <- EXIT!
+            return IterItems(gen)  # <- EXIT!
 
     numpy = sys.modules.get('numpy', None)
     if numpy and isinstance(data, numpy.ndarray):
@@ -77,7 +75,7 @@ def _normalize_requirement(requirement):
     if isinstance(requirement, Result):
         return requirement.fetch()  # <- Eagerly evaluate.
 
-    if isinstance(requirement, DictItems):
+    if isinstance(requirement, IterItems):
         return dict(requirement)
 
     if isinstance(requirement, Iterable) and exhaustible(requirement):
