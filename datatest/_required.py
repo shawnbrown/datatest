@@ -667,8 +667,8 @@ class RequiredSet(GroupRequirement):
         return differences, 'does not satisfy set membership'
 
 
-class RequiredSequence(GroupRequirement):
-    """A requirement to test data for sequence order."""
+class RequiredOrder(GroupRequirement):
+    """A requirement to test data for element order."""
     def __init__(self, sequence):
         if not isinstance(sequence, Sequence):
             cls_name = sequence.__class__.__name__
@@ -740,7 +740,7 @@ class RequiredMapping(ItemsRequirement):
             return RequiredSet
 
         if isinstance(obj, Sequence) and not isinstance(obj, BaseElement):
-            return RequiredSequence
+            return RequiredOrder
 
         return RequiredPredicate
 
@@ -833,7 +833,7 @@ class required(abc.ABC):
         elif isinstance(obj, Set):
             constructor = cls.set
         elif isinstance(obj, Sequence) and not isinstance(obj, BaseElement):
-            constructor = cls.sequence
+            constructor = cls.order
         else:
             constructor = cls.predicate
         return constructor(obj, *args, **kwds)
@@ -847,8 +847,8 @@ class required(abc.ABC):
         return RequiredSet(set)
 
     @classmethod
-    def sequence(cls, sequence):
-        return RequiredSequence(sequence)
+    def order(cls, sequence):
+        return RequiredOrder(sequence)
 
     @classmethod
     def mapping(cls, mapping):

@@ -22,10 +22,10 @@ from datatest._required import _normalize_requirement_result
 from datatest._required import BaseRequirement
 from datatest._required import ItemsRequirement
 from datatest._required import GroupRequirement
+from datatest._required import RequiredMapping
+from datatest._required import RequiredOrder
 from datatest._required import RequiredPredicate
 from datatest._required import RequiredSet
-from datatest._required import RequiredSequence
-from datatest._required import RequiredMapping
 from datatest._required import required
 from datatest.difference import NOTFOUND
 
@@ -1145,15 +1145,15 @@ class TestRequiredSet2(unittest.TestCase):
         self.assertEqual(list(differences), [Missing(1)])
 
 
-class TestRequiredSequence2(unittest.TestCase):
+class TestRequiredOrder2(unittest.TestCase):
     def test_no_difference(self):
         data = ['aaa', 'bbb', 'ccc']
-        required = RequiredSequence(['aaa', 'bbb', 'ccc'])
+        required = RequiredOrder(['aaa', 'bbb', 'ccc'])
         self.assertIsNone(required(data))  # No difference, returns None.
 
     def test_some_missing(self):
         data = ['bbb', 'ddd']
-        required = RequiredSequence(['aaa', 'bbb', 'ccc', 'ddd', 'eee'])
+        required = RequiredOrder(['aaa', 'bbb', 'ccc', 'ddd', 'eee'])
         differences, _ = required(data)
         expected = [
             Missing((0, 'aaa')),
@@ -1164,7 +1164,7 @@ class TestRequiredSequence2(unittest.TestCase):
 
     def test_all_missing(self):
         data = []  # <- Empty!
-        required = RequiredSequence(['aaa', 'bbb'])
+        required = RequiredOrder(['aaa', 'bbb'])
         differences, _ = required(data)
         expected = [
             Missing((0, 'aaa')),
@@ -1174,7 +1174,7 @@ class TestRequiredSequence2(unittest.TestCase):
 
     def test_some_extra(self):
         data = ['aaa', 'bbb', 'ccc', 'ddd', 'eee', 'fff']
-        required = RequiredSequence(['aaa', 'bbb', 'ccc'])
+        required = RequiredOrder(['aaa', 'bbb', 'ccc'])
         differences, _ = required(data)
         expected = [
             Extra((3, 'ddd')),
@@ -1185,7 +1185,7 @@ class TestRequiredSequence2(unittest.TestCase):
 
     def test_all_extra(self):
         data = ['aaa', 'bbb']
-        required = RequiredSequence([])  # <- Empty!
+        required = RequiredOrder([])  # <- Empty!
         differences, _ = required(data)
         expected = [
             Extra((0, 'aaa')),
@@ -1195,7 +1195,7 @@ class TestRequiredSequence2(unittest.TestCase):
 
     def test_one_missing_and_extra(self):
         data = ['aaa', 'xxx', 'ccc']
-        required = RequiredSequence(['aaa', 'bbb', 'ccc'])
+        required = RequiredOrder(['aaa', 'bbb', 'ccc'])
         differences, _ = required(data)
         expected = [
             Missing((1, 'bbb')),
@@ -1205,7 +1205,7 @@ class TestRequiredSequence2(unittest.TestCase):
 
     def test_some_missing_and_extra(self):
         data = ['aaa', 'xxx', 'ccc', 'yyy', 'zzz']
-        required = RequiredSequence(['aaa', 'bbb', 'ccc', 'ddd', 'eee'])
+        required = RequiredOrder(['aaa', 'bbb', 'ccc', 'ddd', 'eee'])
         differences, _ = required(data)
         expected = [
             Missing((1, 'bbb')),
@@ -1219,7 +1219,7 @@ class TestRequiredSequence2(unittest.TestCase):
 
     def test_some_missing_and_extra_different_lengths(self):
         data = ['aaa', 'xxx', 'eee']
-        required = RequiredSequence(['aaa', 'bbb', 'ccc', 'ddd', 'eee'])
+        required = RequiredOrder(['aaa', 'bbb', 'ccc', 'ddd', 'eee'])
         differences, _ = required(data)
         expected = [
             Missing((1, 'bbb')),
@@ -1230,7 +1230,7 @@ class TestRequiredSequence2(unittest.TestCase):
         self.assertEqual(list(differences), expected)
 
         data = ['aaa', 'xxx', 'yyy', 'zzz', 'ccc']
-        required = RequiredSequence(['aaa', 'bbb', 'ccc'])
+        required = RequiredOrder(['aaa', 'bbb', 'ccc'])
         differences, _ = required(data)
         expected = [
             Missing((1, 'bbb')),
@@ -1241,11 +1241,11 @@ class TestRequiredSequence2(unittest.TestCase):
         self.assertEqual(list(differences), expected)
 
     def test_numeric_matching(self):
-        """When checking sequence order, numeric differences should NOT
+        """When checking element order, numeric differences should NOT
         be converted into Deviation objects.
         """
         data = [1, 100, 4, 200, 300]
-        required = RequiredSequence([1, 2, 3, 4, 5])
+        required = RequiredOrder([1, 2, 3, 4, 5])
         differences, _ = required(data)
         expected = [
             Missing((1, 2)),
@@ -1260,12 +1260,12 @@ class TestRequiredSequence2(unittest.TestCase):
     def test_unhashable_objects(self):
         """Should try to compare sequences of unhashable types."""
         data = [{'a': 1}, {'b': 2}, {'c': 3}]
-        required = RequiredSequence([{'a': 1}, {'b': 2}, {'c': 3}])
+        required = RequiredOrder([{'a': 1}, {'b': 2}, {'c': 3}])
         result = required(data)
         self.assertIsNone(result)  # No difference, returns None.
 
         data = [{'a': 1}, {'x': 0}, {'d': 4}, {'y': 5}, {'g': 7}]
-        required = RequiredSequence([{'a': 1}, {'b': 2}, {'c': 3}, {'d': 4}, {'f': 6}])
+        required = RequiredOrder([{'a': 1}, {'b': 2}, {'c': 3}, {'d': 4}, {'f': 6}])
         differences, _ = required(data)
         expected = [
             Missing((1, {'b': 2})),
@@ -1496,9 +1496,9 @@ class TestRequiredFactory(unittest.TestCase):
         requirement = required(set(['foo', 'bar', 'baz']))
         self.assertIsInstance(requirement, RequiredSet)
 
-    def test_autoinit_requiredsequence(self):
+    def test_autoinit_requiredorder(self):
         requirement = required(['foo', 'bar', 'baz'])
-        self.assertIsInstance(requirement, RequiredSequence)
+        self.assertIsInstance(requirement, RequiredOrder)
 
     def test_autoinit_requiredpredicate(self):
         requirement = required(123)
