@@ -1315,6 +1315,19 @@ class TestRequiredMapping(unittest.TestCase):
         self.assertEqual(dict(diff), expected)
         self.assertEqual(desc, 'does not satisfy mapping requirements')
 
+        # Test custom difference handling.
+        def func1(x):
+            return True if x == 'foo' else Invalid('bar')
+
+        def func2(x):
+            return True if x == 'foo' else Invalid('baz')
+
+        requirement = RequiredMapping({'a': func1, 'b': func2})
+        diff, desc = requirement({'a': 'qux', 'b': 'quux'})
+        expected = {'a': Invalid('bar'), 'b': Invalid('baz')}
+        self.assertEqual(dict(diff), expected)
+        self.assertEqual(desc, 'does not satisfy mapping requirements')
+
     def test_equality_of_multiple_elements(self):
         requirement = RequiredMapping({'a': 'j', 'b': 9})
         diff, desc = requirement({'a': ['x', 'j'], 'b': [10, 9]})

@@ -787,7 +787,7 @@ class RequiredMapping(ItemsRequirement):
                         desc = _build_description(expected)
                         description = self._update_description(description, desc)
                     elif isinstance(result, BaseDifference):
-                        differences.append((key, diff))
+                        differences.append((key, result))
                         desc = _build_description(expected)
                         description = self._update_description(description, desc)
                     continue  # <- CONTINUE!
