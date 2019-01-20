@@ -477,7 +477,7 @@ class TestValidate(unittest.TestCase):
             requirement = ('abc', int)
             validate(data, requirement)
         differences = cm.exception.differences
-        self.assertEqual(differences, [Invalid(('abc', 1.0), ('abc', int))])
+        self.assertEqual(differences, [Invalid(('abc', 1.0))])
 
         with self.assertRaises(ValidationError) as cm:
             data = [('abc', 1.0), ('xyz', 2)]  # Non-mapping container of base elements.
