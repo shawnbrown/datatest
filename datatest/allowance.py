@@ -19,7 +19,6 @@ from ._utils import _expects_multiple_params
 from ._utils import _make_decimal
 from ._utils import string_types
 from ._query.query import BaseElement
-from ._query.query import DictItems
 
 from .validation import ValidationError
 from .difference import BaseDifference

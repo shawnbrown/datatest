@@ -17,7 +17,7 @@ from .difference import _make_difference
 from .difference import NOTFOUND
 from ._predicate import Predicate
 from ._query.query import BaseElement
-from ._query.query import _is_collection_of_items
+from ._utils import IterItems
 from ._utils import iterpeek
 from ._utils import nonstringiter
 
@@ -190,8 +190,7 @@ def _deephash(obj):
         elif isinstance(obj, Set):
             proxy = frozenset(_hashable_proxy(x) for x in obj)
         elif isinstance(obj, Mapping):
-            items = getattr(obj, 'iteritems', obj.items)()
-            items = ((k, _hashable_proxy(v)) for k, v in items)
+            items = ((k, _hashable_proxy(v)) for k, v in IterItems(obj))
             proxy = frozenset(items)
         else:
             message = 'unhashable type: {0!r}'.format(obj.__class__.__name__)
@@ -330,8 +329,8 @@ def _datadict_vs_requirement(data, requirement):
     return a mapping of any differences and a description.
     """
     if isinstance(data, Mapping):
-        data_items = getattr(data, 'iteritems', data.items)()
-    elif _is_collection_of_items(data):
+        data_items = IterItems(data)
+    elif isinstance(data, IterItems):
         data_items = data
     else:
         raise TypeError('data must be mapping or iterable of key-value items')
@@ -352,7 +351,7 @@ def _datadict_vs_requirement(data, requirement):
     description = next((x for _, x in itervalues), None)
 
     # Format dictionary values and finalize description.
-    for key, value in getattr(differences, 'iteritems', differences.items)():
+    for key, value in IterItems(differences):
         diffs, desc = value
         differences[key] = diffs
         if description and description != desc:
@@ -367,8 +366,8 @@ def _datadict_vs_requirementdict(data, requirement):
     or None.
     """
     if isinstance(data, Mapping):
-        data_items = getattr(data, 'iteritems', data.items)()
-    elif _is_collection_of_items(data):
+        data_items = IterItems(data)
+    elif isinstance(data, IterItems):
         data_items = data
     else:
         raise TypeError('data must be mapping or iterable of key-value items')
@@ -383,8 +382,7 @@ def _datadict_vs_requirementdict(data, requirement):
         if result:
             differences[key] = result
 
-    requirement_items = getattr(requirement, 'iteritems', requirement.items)()
-    for key, expected in requirement_items:
+    for key, expected in IterItems(requirement):
         if key not in data_keys:
             result = _data_vs_requirement([], expected)  # Try empty container.
             if not result:
@@ -401,7 +399,7 @@ def _datadict_vs_requirementdict(data, requirement):
     description = next(filtered, None)
 
     # Format dictionary values and finalize description.
-    for key, value in getattr(differences, 'iteritems', differences.items)():
+    for key, value in IterItems(differences):
         diffs, desc = value
         differences[key] = diffs
         if description and description != desc and desc is not NOTFOUND:
@@ -441,7 +439,7 @@ def requirement_handler(requirement):
         """Default requirement handler."""
         if isinstance(requirement, Mapping):
             result = _datadict_vs_requirementdict(data, requirement)
-        elif isinstance(data, Mapping) or _is_collection_of_items(data):
+        elif isinstance(data, (Mapping, IterItems)):
             result = _datadict_vs_requirement(data, requirement)
         else:
             result = _data_vs_requirement(data, requirement)
@@ -538,7 +536,7 @@ class ItemsRequirement(BaseRequirement):
 
     def check_data(self, data):
         if isinstance(data, Mapping):
-            data = getattr(data, 'iteritems', data.items)()
+            data = IterItems(data)
         return self.check_items(data)
 
 
@@ -584,9 +582,9 @@ class GroupRequirement(BaseRequirement):
 
     def check_data(self, data):
         if isinstance(data, Mapping):
-            data = getattr(data, 'iteritems', data.items)()
+            data = IterItems(data)
 
-        if _is_collection_of_items(data):
+        if isinstance(data, IterItems):
             return self.check_items(data)
 
         if isinstance(data, BaseElement):
@@ -804,8 +802,7 @@ class RequiredMapping(ItemsRequirement):
                 description = self._update_description(description, desc)
 
         # Check for expected keys that are missing from items.
-        required_items = getattr(required_mapping, 'iteritems', required_mapping.items)()
-        for key, expected in required_items:
+        for key, expected in IterItems(required_mapping):
             if key not in keys_seen:
                 req_type = self._get_requirement_type(expected)
                 requirement = req_type(expected) if req_type else expected
