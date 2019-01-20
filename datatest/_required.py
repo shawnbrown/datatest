@@ -784,12 +784,10 @@ class RequiredMapping(ItemsRequirement):
                     if not result:
                         diff = _make_difference(value, expected, show_expected=True)
                         differences.append((key, diff))
-                        #if expected is not NOTFOUND:
                         desc = _build_description(expected)
                         description = self._update_description(description, desc)
                     elif isinstance(result, BaseDifference):
                         differences.append((key, diff))
-                        #if expected is not NOTFOUND:
                         desc = _build_description(expected)
                         description = self._update_description(description, desc)
                     continue  # <- CONTINUE!
