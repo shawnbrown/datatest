@@ -4,6 +4,7 @@ from ._compatibility.collections.abc import Iterable
 from ._compatibility.collections.abc import Iterator
 from ._compatibility.collections.abc import Mapping
 from ._required import _get_required_func
+from ._required import required
 from ._utils import IterItems
 from ._utils import exhaustible
 from ._utils import iterpeek
@@ -289,6 +290,22 @@ def validate(data, requirement, msg=None):
             for k, v in differences.items():
                 if isinstance(v, Iterator):
                     differences[k] = list(v)
+        message = msg or description or 'does not satisfy requirement'
+        raise ValidationError(differences, message)
+
+
+def validate2(data, requirement, msg=None):
+    # Setup traceback-hiding for pytest integration.
+    __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
+
+    data = _normalize_data(data)
+    requirement = _normalize_requirement(requirement)
+
+    requirement_object = required(requirement)
+    result = requirement_object(data)  # <- Apply requirement.
+
+    if result:
+        differences, description = result
         message = msg or description or 'does not satisfy requirement'
         raise ValidationError(differences, message)
 
