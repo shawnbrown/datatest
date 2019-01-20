@@ -9,6 +9,7 @@ from datatest.difference import Invalid
 from datatest.difference import Deviation
 from datatest._query.query import Result
 from datatest._utils import IterItems
+from datatest._required import BaseRequirement
 
 from datatest.validation import _normalize_data
 from datatest.validation import _normalize_requirement
@@ -133,9 +134,23 @@ class TestNormalizeData(unittest.TestCase):
 
 class TestNormalizeRequirement(unittest.TestCase):
     def test_unchanged(self):
+        """For given instances, should return original object."""
         requirement = [1, 2, 3]
-        self.assertIs(_normalize_requirement(requirement), requirement,
-            msg='should return original object')
+        self.assertIs(_normalize_requirement(requirement), requirement)
+
+        # Test corner case.
+        class MyRequirement(BaseRequirement, IterItems):
+            def __init__(self):
+                pass
+
+            def __iter__(self):
+                return iter([])
+
+            def check_data():
+                return None
+
+        requirement = MyRequirement()
+        self.assertIs(_normalize_requirement(requirement), requirement)
 
     def test_bad_type(self):
         with self.assertRaises(TypeError, msg='cannot use generic iter'):

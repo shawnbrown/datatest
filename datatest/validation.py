@@ -5,6 +5,7 @@ from ._compatibility.collections.abc import Iterator
 from ._compatibility.collections.abc import Mapping
 from ._required import _get_required_func
 from ._required import required
+from ._required import BaseRequirement
 from ._utils import IterItems
 from ._utils import exhaustible
 from ._utils import iterpeek
@@ -70,7 +71,12 @@ def _normalize_data(data):
     return data
 
 
+# THINK ABOUT MOVING THE FOLLOWING CODE DIRECTLY INTO
+# THE required() FUNCTION'S AUTO-DETECTION BEHAVIOR.
 def _normalize_requirement(requirement):
+    if isinstance(requirement, BaseRequirement):
+        return requirement
+
     requirement = _normalize_data(requirement)
 
     if isinstance(requirement, Result):
