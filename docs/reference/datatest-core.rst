@@ -261,75 +261,7 @@ to right.
 Predicates
 **********
 
-Datatest uses "predicate objects" to define the criteria that values
-are matched against. The specific behavior of a predicate depends on
-its type:
+Datatest can use :class:`Predicate` objects for validation, certain
+allowances, and querying data.
 
-    +-------------------------+---------------------------------------------------+
-    | Predicate type          | Checks that                                       |
-    +=========================+===================================================+
-    | set                     | | value is a member of the set                    |
-    +-------------------------+---------------------------------------------------+
-    | function                | | the result of ``function(value)`` tests as True |
-    |                         | | and is not a "difference" object                |
-    +-------------------------+---------------------------------------------------+
-    | type                    | | value is an instance of the type                |
-    +-------------------------+---------------------------------------------------+
-    | ``re.compile(pattern)`` | | value matches the regular expression pattern    |
-    +-------------------------+---------------------------------------------------+
-    | str or non-container    | | value is equal to the predicate                 |
-    +-------------------------+---------------------------------------------------+
-    | tuple of predicates     | | tuple of values satisfies corresponding tuple   |
-    |                         | | of predicates---each according to their type    |
-    +-------------------------+---------------------------------------------------+
-    | ``True``                | | ``bool(value)`` returns True (value is truthy)  |
-    +-------------------------+---------------------------------------------------+
-    | ``False``               | | ``bool(value)`` returns False (value is falsy)  |
-    +-------------------------+---------------------------------------------------+
-    | ``...`` (Ellipsis       | | (used as a wildcard, matches any value)         |
-    | literal)                |                                                   |
-    +-------------------------+---------------------------------------------------+
-
-Predicates can be used as arguments for asserting validity and
-for some allowances. For some examples, see the following table:
-
-    +---------------------------+----------------+---------+
-    | Example Predicate         | Example Value  | Matches |
-    +===========================+================+=========+
-    | .. code-block:: python    | ``'A'``        | Yes     |
-    |                           +----------------+---------+
-    |     {'A', 'B'}            | ``'C'``        | No      |
-    +---------------------------+----------------+---------+
-    | .. code-block:: python    | ``4``          | Yes     |
-    |                           +----------------+---------+
-    |     def iseven(x):        | ``9``          | No      |
-    |         return x % 2 == 0 |                |         |
-    +---------------------------+----------------+---------+
-    | .. code-block:: python    | ``1.0``        | Yes     |
-    |                           +----------------+---------+
-    |     float                 | ``1``          | No      |
-    +---------------------------+----------------+---------+
-    | .. code-block:: python    | ``'bake'``     | Yes     |
-    |                           +----------------+---------+
-    |     re.compile('[bc]ake') | ``'cake'``     | Yes     |
-    |                           +----------------+---------+
-    |                           | ``'fake'``     | No      |
-    +---------------------------+----------------+---------+
-    | .. code-block:: python    | ``'foo'``      | Yes     |
-    |                           +----------------+---------+
-    |     'foo'                 | ``'bar'``      | No      |
-    +---------------------------+----------------+---------+
-    | .. code-block:: python    | ``'x'``        | Yes     |
-    |                           +----------------+---------+
-    |     True                  | ``''``         | No      |
-    +---------------------------+----------------+---------+
-    | .. code-block:: python    | ``''``         | Yes     |
-    |                           +----------------+---------+
-    |     False                 | ``'x'``        | No      |
-    +---------------------------+----------------+---------+
-    | .. code-block:: python    | ``('A', 'X')`` | Yes     |
-    |                           +----------------+---------+
-    |     ('A', ...)            | ``('A', 'Y')`` | Yes     |
-    |                           +----------------+---------+
-    | Uses ellipsis wildcard.   | ``('B', 'X')`` | No      |
-    +---------------------------+----------------+---------+
+.. autoclass:: Predicate
