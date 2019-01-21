@@ -1,0 +1,26 @@
+/*
+    Since themes can be loaded after this style sheet is applied, the
+    declarations below should use the "!important" annotation so they
+    will take precedence over corresponding declarations defined later.
+*/
+
+
+/*
+    In the sphinx_rtd_theme (version 0.4.2, as of this update), table
+    cells do not wrap text by default. This can make for unnecessarily
+    wide tables that scroll off the page. The following declarations
+    allow lines to wrap when the width is 445px or greater.
+
+    This solution is adapted from ideas discussed on the following
+    issue:
+
+        https://github.com/rtfd/sphinx_rtd_theme/issues/117
+*/
+@media screen and (min-width: 445px) {
+    .wy-table-responsive table td {
+        white-space: normal !important;
+    }
+    .wy-table-responsive {
+        overflow: visible !important;
+    }
+}
