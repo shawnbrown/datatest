@@ -35,5 +35,3 @@ Query.__module__ = 'datatest'
 Result.__module__ = 'datatest'
 
 __version__ = '0.9.3.dev0'
-
-required = mandatory  # Temporary alias for old "required" decorator.
