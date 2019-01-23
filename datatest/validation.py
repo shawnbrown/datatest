@@ -226,10 +226,10 @@ def validate(data, requirement, msg=None):
     """Raise a :exc:`ValidationError` if *data* does not satisfy
     *requirement* or pass without error if data is valid.
 
-    This is a rich comparison function---the given *requirement* can
-    be a mapping, sequence, set, :class:`BaseRequirement` subclass, or
-    other object. The *requirement*'s type determines how the data is
-    validated.
+    This is a rich comparison function---the given *data* and
+    *requirement* arguments can be mappings, iterables, or other
+    objects. An optional *msg* string can be provided to describe
+    the validation.
 
     Required Predicate:
         When *requirement* is a function, tuple, string, or
