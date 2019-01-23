@@ -226,60 +226,102 @@ def validate(data, requirement, msg=None):
     """Raise a :exc:`ValidationError` if *data* does not satisfy
     *requirement* or pass without error if data is valid.
 
-    This is a rich comparison function. The given *requirement* can
-    be a single predicate, a mapping of predicates, or a list of
-    predicates (see :ref:`predicate-docs` for details).
+    This is a rich comparison function---the given *requirement* can
+    be a mapping, sequence, set, :class:`BaseRequirement` subclass, or
+    other object. The *requirement*'s type determines how the data is
+    validated.
 
-    For values that fail to satisfy their predicates, "difference"
-    objects are generated and used to create a :exc:`ValidationError`.
-    If a predicate function returns a difference, the result is
-    counted as a failure and the returned difference is used in
-    place of an automatically generated one.
+    Required Predicate:
+        When *requirement* is a function, tuple, string, or
+        non-iterable object, it is used to construct a
+        :class:`Predicate` for testing elements in *data*:
 
-    **Single Predicates:** When *requirement* is a single predicate,
-    all of the values in *data* are checked for the same
-    criteria---*data* can be a single value (including strings),
-    a mapping, or an iterable::
+        .. code-block:: python
+            :emphasize-lines: 5-6
 
-        data = [2, 4, 6, 8]
+            from datatest import validate
 
-        def iseven(x):  # <- Predicate function
-            return x % 2 == 0
+            data = [2, 4, 6, 8]
 
-        datatest.validate(data, iseven)
+            def iseven(x):  # <- Used as predicate
+                return x % 2 == 0
 
-    **Mappings:** When *requirement* is a dictionary or other
-    mapping, the values in *data* are checked against predicates
-    of the same key (requires that *data* is also a mapping)::
+            validate(data, iseven)
 
-        data = {
-            'A': 1,
-            'B': 2,
-            'C': ...
-        }
+        If the predicate returns False, an :class:`Invalid` or
+        :class:`Deviation` difference is generated. If the predicate
+        returns a difference object, the difference is used as-is (see
+        :ref:`difference-docs`). When the predicate returns any other
+        truthy value, an element is considered valid.
 
-        requirement = {  # <- Mapping of predicates
-            'A': 1,
-            'B': 2,
-            'C': ...
-        }
+    **Required Set:**
+        When *requirement* is a set, the elements in *data* are checked
+        for membership in the set:
 
-        datatest.validate(data, requirement)
+        .. code-block:: python
+            :emphasize-lines: 5
 
-    **Sequences:** When *requirement* is list (or other non-tuple,
-    non-string sequence), the values in *data* are checked for
-    matching order (requires that *data* is a sequence)::
+            from datatest import validate
 
-        data = ['A', 'B', 'C', ...]
+            data = ['a', 'a', 'b', 'b', 'c', 'c']
 
-        requirement = ['A', 'B', 'C', ...]  # <- Sequence of predicates
+            required_set = {'a', 'b', 'c'}
 
-        datatest.validate(data, requirement)
+            validate(data, required_set)
+
+        If the elements in *data* do not match the required set, then
+        :class:`Missing` and :class:`Extra` differences are generated.
+
+    **Required Order:**
+        When *requirement* is a non-tuple, non-string sequence, the
+        *data* is checked for element order:
+
+        .. code-block:: python
+            :emphasize-lines: 5
+
+            from datatest import validate
+
+            data = ['A', 'B', 'C', ...]
+
+            required_order = ['A', 'B', 'C', ...]  # <- Sequence of elements
+
+            validate(data, required_order)
+
+        If elements do not match the required order, :class:`Missing`
+        and :class:`Extra` differences are returned. Each difference
+        will contain a two-tuple whose first item is the slice-index
+        where the difference starts (in the data under test) and whose
+        second item is the non-matching value itself.
+
+    **Required Mapping:**
+        When *requirement* is a dictionary or other mapping, the values
+        in *data* are checked against required objects of the same key
+        (*data* must also be a mapping):
+
+        .. code-block:: python
+            :emphasize-lines: 5
+
+            from datatest import validate
+
+            data = {'A': 1, 'B': 2, 'C': ...}
+
+            required_dict = {'A': 1, 'B': 2, 'C': ...}  # <- Mapping object
+
+            datatest.validate(data, required_dict)
+
+        If values do not satisfy the corresponding required object,
+        then differences are generated according to each object type.
+        If an object itself is a nested mapping, it is treated as a
+        predicate object.
+
+    **Other Requirement:**
+        When *requirement* is a subclass of :class:`BaseRequirement`,
+        it performs all checks and difference generation directly.
 
     .. note::
-        This function will either raise an exception or pass without
-        errors. To get an explicit True/False return value, users
-        should use the :func:`valid` function instead.
+        The :func:`validate` function will either raise an exception
+        or pass without errors. To get an explicit True/False return
+        value, use the :func:`valid` function instead.
     """
     # Setup traceback-hiding for pytest integration.
     __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
