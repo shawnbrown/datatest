@@ -17,14 +17,9 @@ Validation
 
 .. autofunction:: validate
 
+
 .. autofunction:: valid
 
-
-.. _failure-docs:
-
-********
-Failures
-********
 
 .. autoexception:: ValidationError
 
@@ -35,11 +30,9 @@ Failures
 
 .. _difference-docs:
 
+***********
 Differences
-===========
-
-Base Difference
----------------
+***********
 
 .. autoclass:: BaseDifference
 
@@ -47,7 +40,7 @@ Base Difference
 
 
 Concrete Differences
---------------------
+====================
 
 .. autoclass:: Missing
 

@@ -325,7 +325,7 @@ and "D": ``405`` ≠ ``400``). Failed numeric comparisons raise
             }
 
 
-For more information on errors and differences, see :ref:`failure-docs`.
+For more information, see :ref:`difference-docs`.
 
 
 .. tabs::
