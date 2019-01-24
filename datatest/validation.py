@@ -3,8 +3,7 @@ import sys
 from ._compatibility.collections.abc import Iterable
 from ._compatibility.collections.abc import Iterator
 from ._compatibility.collections.abc import Mapping
-from ._required import _get_required_func
-from ._required import required
+from ._required import get_requirement
 from ._required import BaseRequirement
 from ._utils import IterItems
 from ._utils import exhaustible
@@ -329,7 +328,7 @@ def validate(data, requirement, msg=None):
     data = _normalize_data(data)
     requirement = _normalize_requirement(requirement)
 
-    requirement_object = required(requirement)
+    requirement_object = get_requirement(requirement)
     result = requirement_object(data)  # <- Apply requirement.
 
     if result:

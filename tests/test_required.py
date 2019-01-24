@@ -1522,24 +1522,19 @@ class TestGetRequirement(unittest.TestCase):
 
 
 class TestRequiredFactory(unittest.TestCase):
-    def test_autoinit_requiredset(self):
-        requirement = required(set(['foo', 'bar', 'baz']))
-        self.assertIsInstance(requirement, RequiredSet)
+    def test_bad_init(self):
+        """The `required` factory should not be instantiated directly."""
+        with self.assertRaises(TypeError):
+            required('foo')
 
-    def test_autoinit_requiredorder(self):
-        requirement = required(['foo', 'bar', 'baz'])
-        self.assertIsInstance(requirement, RequiredOrder)
+    @unittest.skip('not yet implemented')
+    def test_unique(self):
+        pass
 
-    def test_autoinit_requiredpredicate(self):
-        requirement = required(123)
-        self.assertIsInstance(requirement, RequiredPredicate)
+    @unittest.skip('not yet implemented')
+    def test_subset(self):
+        pass
 
-        requirement = required('foo')
-        self.assertIsInstance(requirement, RequiredPredicate)
-
-        requirement = required(('foo', 'bar', 'baz'))
-        self.assertIsInstance(requirement, RequiredPredicate)
-
-    def test_autoinit_requiredmapping(self):
-        requirement = required({'foo': 1, 'bar': 2, 'baz': 3})
-        self.assertIsInstance(requirement, RequiredMapping)
+    @unittest.skip('not yet implemented')
+    def test_superset(self):
+        pass

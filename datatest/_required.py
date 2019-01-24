@@ -813,38 +813,19 @@ class required(abc.ABC):
     requirement objects. It contains several factory methods that can
     be called directly to instantiate specific requirement types.
     """
-    def __new__(cls, obj, *args, **kwds):
-        if isinstance(obj, BaseRequirement):
-            return obj
-
-        if isinstance(obj, Mapping):
-            constructor = cls.mapping
-        elif isinstance(obj, Set):
-            constructor = cls.set
-        elif isinstance(obj, Sequence) and not isinstance(obj, BaseElement):
-            constructor = cls.order
-        else:
-            constructor = cls.predicate
-        return constructor(obj, *args, **kwds)
+    def __new__(cls, *args, **kwds):
+        msg = ("Can't instantiate abstract class required, use factory "
+               "methods like required.unique(), required.subset(), etc.")
+        raise TypeError(msg)
 
     @classmethod
-    def predicate(cls, obj, show_expected=False):
-        """A requirement to test data for predicate object matches."""
-        return RequiredPredicate(obj, show_expected)
+    def unique(cls):
+        pass
 
     @classmethod
-    def set(cls, set):
-        """A requirement to test data for membership in *set*."""
-        return RequiredSet(set)
+    def subset(cls, set):
+        pass
 
     @classmethod
-    def order(cls, sequence):
-        """A requirement to test data for element order."""
-        return RequiredOrder(sequence)
-
-    @classmethod
-    def mapping(cls, mapping):
-        """A requirement to test a mapping of data against a *mapping*
-        of required objects.
-        """
-        return RequiredMapping(mapping)
+    def superset(cls, set):
+        pass
