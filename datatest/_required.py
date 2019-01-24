@@ -562,7 +562,7 @@ class GroupRequirement(BaseRequirement):
 
 
 class RequiredPredicate(GroupRequirement):
-    """A requirement to test that data matches a predicate object."""
+    """A requirement to test data for predicate matches."""
     def __init__(self, obj, show_expected=False):
         self._pred = Predicate(obj)
         self._obj = obj
@@ -695,6 +695,9 @@ class RequiredOrder(GroupRequirement):
 
 
 class RequiredMapping(ItemsRequirement):
+    """A requirement to test a mapping of data against a *mapping*
+    of required objects.
+    """
     def __init__(self, mapping):
         if not isinstance(mapping, Mapping):
             mapping = dict(mapping)
@@ -808,17 +811,23 @@ class required(abc.ABC):
         return constructor(obj, *args, **kwds)
 
     @classmethod
-    def predicate(cls, predicate, show_expected=False):
-        return RequiredPredicate(predicate, show_expected)
+    def predicate(cls, obj, show_expected=False):
+        """A requirement to test data for predicate object matches."""
+        return RequiredPredicate(obj, show_expected)
 
     @classmethod
     def set(cls, set):
+        """A requirement to test data for membership in *set*."""
         return RequiredSet(set)
 
     @classmethod
     def order(cls, sequence):
+        """A requirement to test data for element order."""
         return RequiredOrder(sequence)
 
     @classmethod
     def mapping(cls, mapping):
+        """A requirement to test a mapping of data against a *mapping*
+        of required objects.
+        """
         return RequiredMapping(mapping)
