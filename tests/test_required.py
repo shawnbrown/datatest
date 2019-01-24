@@ -26,6 +26,7 @@ from datatest._required import RequiredMapping
 from datatest._required import RequiredOrder
 from datatest._required import RequiredPredicate
 from datatest._required import RequiredSet
+from datatest._required import get_requirement
 from datatest._required import required
 from datatest.difference import NOTFOUND
 
@@ -1489,6 +1490,35 @@ class TestRequiredMapping(unittest.TestCase):
         requirement = RequiredMapping({'a': set(['x']), 'b': 'y'})
         _, desc = requirement({'a': ['x', 'y'], 'b': ['y', 'z']})
         self.assertEqual(desc, 'does not satisfy mapping requirements')
+
+
+class TestGetRequirement(unittest.TestCase):
+    def test_set(self):
+        requirement = get_requirement(set(['foo', 'bar', 'baz']))
+        self.assertIsInstance(requirement, RequiredSet)
+
+    def test_order(self):
+        requirement = get_requirement(['foo', 'bar', 'baz'])
+        self.assertIsInstance(requirement, RequiredOrder)
+
+    def test_predicate(self):
+        requirement = get_requirement(123)
+        self.assertIsInstance(requirement, RequiredPredicate)
+
+        requirement = get_requirement('foo')
+        self.assertIsInstance(requirement, RequiredPredicate)
+
+        requirement = get_requirement(('foo', 'bar', 'baz'))
+        self.assertIsInstance(requirement, RequiredPredicate)
+
+    def test_mapping(self):
+        requirement = get_requirement({'foo': 1, 'bar': 2, 'baz': 3})
+        self.assertIsInstance(requirement, RequiredMapping)
+
+    def test_existing_requirement(self):
+        existing_requirement = RequiredPredicate('foo')
+        requirement = get_requirement(existing_requirement)
+        self.assertIs(requirement, existing_requirement)
 
 
 class TestRequiredFactory(unittest.TestCase):

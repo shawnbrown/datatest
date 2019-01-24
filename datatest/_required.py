@@ -791,6 +791,23 @@ class RequiredMapping(ItemsRequirement):
         return differences, description
 
 
+def get_requirement(obj):
+    """Return a requirement instance appropriate for the given *obj*."""
+    if isinstance(obj, BaseRequirement):
+        return obj
+
+    if isinstance(obj, Mapping):
+        return RequiredMapping(obj)
+
+    if isinstance(obj, Set):
+        return RequiredSet(obj)
+
+    if isinstance(obj, Sequence) and not isinstance(obj, BaseElement):
+        return RequiredOrder(obj)
+
+    return RequiredPredicate(obj)
+
+
 class required(abc.ABC):
     """:class:`required` is an abstract factory class that returns
     requirement objects. It contains several factory methods that can
