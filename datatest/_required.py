@@ -424,6 +424,10 @@ def _get_required_func(requirement):
     return requirement_handler(requirement)
 
 
+##############################
+# Abstract Requirement Classes
+##############################
+
 class BaseRequirement(abc.ABC):
     @abc.abstractmethod
     def check_data(self, data):
@@ -560,6 +564,10 @@ class GroupRequirement(BaseRequirement):
             data = [data]
         return self.check_group(data)
 
+
+##############################
+# Concrete Requirement Classes
+##############################
 
 class RequiredPredicate(GroupRequirement):
     """A requirement to test data for predicate matches."""
@@ -807,6 +815,10 @@ def get_requirement(obj):
 
     return RequiredPredicate(obj)
 
+
+########################
+# Abstract Factory Class
+########################
 
 class required(abc.ABC):
     """:class:`required` is an abstract factory class that returns
