@@ -520,14 +520,15 @@ class GroupRequirement(BaseRequirement):
     def check_group(self, group):
         raise NotImplementedError()
 
-    def check_items(self, items):
+    def check_items(self, items, autowrap=True):
         differences = []
         description = ''
         check_group = self.check_group
 
         for key, value in items:
-            if isinstance(value, BaseElement):
-                diff, desc = check_group([value])
+            if isinstance(value, BaseElement) and autowrap:
+                value = [value]  # Wrap element to treat it as a group.
+                diff, desc = check_group(value)
                 diff = list(diff)
                 if len(diff) == 1:
                     diff = diff[0]  # Unwrap if single difference.

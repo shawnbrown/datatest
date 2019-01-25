@@ -974,6 +974,21 @@ class TestGroupRequirement(unittest.TestCase):
         self.assertEqual(diff, [('B', [Invalid(4), Invalid(5)])])
         self.assertEqual(desc, 'requires 3 or more elements')
 
+    def test_check_items_autowrap(self):
+        """Check autowrap behavior."""
+        data = [('A', 1)]  # <- 1 is a base element, not a group of elements.
+
+        # With autowrap=True, the 1 should get wrapped in a list and
+        # treated as a group.
+        diff, desc = self.requirement.check_items(data)  # <- autowrap=True is the default
+        diff = sorted((k, v) for k, v in diff)
+        self.assertEqual(diff, [('A', Invalid(1))])
+        self.assertEqual(desc, 'requires 3 or more elements')
+
+        # With autowrap=False, the 1 used as-is without changes.
+        with self.assertRaises(TypeError):
+            self.requirement.check_items(data, autowrap=False)
+
     def test_check_data(self):
         # Test mapping or key/value items.
         data = {'A': [1, 2, 3], 'B': [4, 5], 'C': 6}
