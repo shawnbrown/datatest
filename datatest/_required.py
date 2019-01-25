@@ -817,9 +817,39 @@ def get_requirement(obj):
     return RequiredPredicate(obj)
 
 
-########################
-# Abstract Factory Class
-########################
+#########################################
+# Additional Concrete Requirement Classes
+#########################################
+
+class RequiredUnique(GroupRequirement):
+    """A requirement to test that elements are unique."""
+    @staticmethod
+    def _generate_differences(group):
+        seen = set()
+        for element in group:
+            if element in seen:
+                yield Extra(element)
+            else:
+                seen.add(element)
+
+    def check_group(self, group):
+        if isinstance(group, BaseElement):
+            cls_name = group.__class__.__name__
+            msg = 'expected non-tuple, non-string sequence, got {0}: {1!r}'
+            raise ValueError(msg.format(cls_name, group))
+
+        differences = self._generate_differences(group)
+        return differences, 'elements should be unique'
+
+    def check_data(self, data):
+        if isinstance(data, Mapping):
+            data = IterItems(data)
+
+        if isinstance(data, IterItems):
+            return self.check_items(data, autowrap=False)
+
+        return self.check_group(data)
+
 
 class required(abc.ABC):
     """:class:`required` is an abstract factory class that returns
@@ -833,7 +863,19 @@ class required(abc.ABC):
 
     @classmethod
     def unique(cls):
-        pass
+        """Requires that elements are unique.
+
+        .. code-block:: python
+            :emphasize-lines: 6
+
+            from datatest import validate
+            from datatest import required
+
+            data = [1, 2, 3, ...]
+
+            validate(data, required.unique())
+        """
+        return RequiredUnique()
 
     @classmethod
     def subset(cls, set):

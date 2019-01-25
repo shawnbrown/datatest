@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from . import _unittest as unittest
 from datatest._compatibility.collections.abc import Iterable
 from datatest._compatibility.collections.abc import Iterator
+from datatest._utils import exhaustible
 from datatest._utils import nonstringiter
 from datatest import Missing
 from datatest import Extra
@@ -27,6 +28,7 @@ from datatest._required import RequiredOrder
 from datatest._required import RequiredPredicate
 from datatest._required import RequiredSet
 from datatest._required import get_requirement
+from datatest._required import RequiredUnique
 from datatest._required import required
 from datatest.difference import NOTFOUND
 
@@ -1536,15 +1538,56 @@ class TestGetRequirement(unittest.TestCase):
         self.assertIs(requirement, existing_requirement)
 
 
+class TestRequiredUnique(unittest.TestCase):
+    def setUp(self):
+        self.requirement = RequiredUnique()
+
+    @staticmethod
+    def items_to_dict(items):
+        """Eagerly evaluate items and return a dictionary."""
+        new_dic = dict()
+        for k, v in items:
+            if nonstringiter(v) and exhaustible(v):
+                v = list(v)
+            new_dic[k] = v
+        return new_dic
+
+    def test_element_group(self):
+        data = [1, 2, 3]
+        self.assertIsNone(self.requirement(data))  # No duplicates.
+
+        data = [1, 2, 2, 3, 3, 3]
+        diff, desc = self.requirement(data)
+        self.assertEqual(list(diff), [Extra(2), Extra(3), Extra(3)])
+        self.assertRegex(desc, 'should be unique')
+
+    def test_mapping_of_element_groups(self):
+        data = {'a': [1, 2, 3], 'b': [1, 2, 3], 'c': [1, 2, 3]}
+        self.assertIsNone(self.requirement(data))  # No duplicates.
+
+        data = {'a': [1], 'b': [2, 2], 'c': [3, 3, 3]}
+        diff, desc = self.requirement(data)
+        self.assertEqual(self.items_to_dict(diff), {'b': [Extra(2)], 'c': [Extra(3), Extra(3)]})
+        self.assertRegex(desc, 'should be unique')
+
+    def test_single_element_handling(self):
+        """RequiredUnique can not operate directly on base elements."""
+        with self.assertRaises(ValueError):
+            self.requirement((1, 2))
+
+        with self.assertRaises(ValueError):
+            self.requirement({'a': (1, 2)})
+
+
 class TestRequiredFactory(unittest.TestCase):
     def test_bad_init(self):
         """The `required` factory should not be instantiated directly."""
         with self.assertRaises(TypeError):
             required('foo')
 
-    @unittest.skip('not yet implemented')
     def test_unique(self):
-        pass
+        requirement = required.unique()
+        self.assertIsInstance(requirement, RequiredUnique)
 
     @unittest.skip('not yet implemented')
     def test_subset(self):
