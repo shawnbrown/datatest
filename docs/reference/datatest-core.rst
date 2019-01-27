@@ -77,95 +77,95 @@ collection of differences.
 
 .. autoclass:: allowed
 
-.. automethod:: allowed.missing
+    .. automethod:: missing
 
-.. automethod:: allowed.extra
+    .. automethod:: extra
 
-.. automethod:: allowed.invalid
+    .. automethod:: invalid
 
-.. automethod:: allowed.keys
+    .. automethod:: keys
 
-.. automethod:: allowed.args
+    .. automethod:: args
 
-.. classmethod:: allowed.deviation(tolerance, /, msg=None)
-                 allowed.deviation(lower, upper, msg=None)
+    .. classmethod:: deviation(tolerance, /, msg=None)
+                     deviation(lower, upper, msg=None)
 
-    Allows numeric :class:`Deviations <datatest.Deviation>`
-    within a given *tolerance* without triggering a test
-    failure:
+        Allows numeric :class:`Deviations <datatest.Deviation>`
+        within a given *tolerance* without triggering a test
+        failure:
 
-    .. code-block:: python
-        :emphasize-lines: 7
+        .. code-block:: python
+            :emphasize-lines: 7
 
-        from datatest import validate, allowed
+            from datatest import validate, allowed
 
-        data = {'A': 45, 'B': 205}
+            data = {'A': 45, 'B': 205}
 
-        requirement = {'A': 50, 'B': 200}
+            requirement = {'A': 50, 'B': 200}
 
-        with allowed.deviation(5):  # <- tolerance of ±5
-            validate(data, requirement)  # raises dictionary
-                                         # {'A': Deviation(-5, 50),
-                                         #  'B': Deviation(+5, 200)}
+            with allowed.deviation(5):  # <- tolerance of ±5
+                validate(data, requirement)  # raises dictionary
+                                             # {'A': Deviation(-5, 50),
+                                             #  'B': Deviation(+5, 200)}
 
-    Specifying different *lower* and *upper* bounds:
+        Specifying different *lower* and *upper* bounds:
 
-    .. code-block:: python
-        :emphasize-lines: 1
+        .. code-block:: python
+            :emphasize-lines: 1
 
-        with allowed.deviation(-2, 7):  # <- tolerance from -2 to +7
-            validate(..., ...)
+            with allowed.deviation(-2, 7):  # <- tolerance from -2 to +7
+                validate(..., ...)
 
-    Deviations within the given range are suppressed while those
-    outside the range will trigger a test failure.
+        Deviations within the given range are suppressed while those
+        outside the range will trigger a test failure.
 
-    Empty values (None, empty string, etc.) are treated as zeros
-    when performing comparisons.
-
-
-.. classmethod:: allowed.percent(tolerance, /, msg=None)
-                 allowed.percent(lower, upper, msg=None)
-
-    Allows :class:`Deviations <datatest.Deviation>` with
-    percentages of error within a given *tolerance* without
-    triggering a test failure:
-
-    .. code-block:: python
-        :emphasize-lines: 7
-
-        from datatest import validate, allowed
-
-        data = {'A': 47, 'B': 212}
-
-        requirement = {'A': 50, 'B': 200}
-
-        with allowed.percent(0.06):  # <- tolerance of ±6%
-            validate(data, requirement)  # raises dictionary
-                                         # {'A': Deviation(-3, 50),
-                                         #  'B': Deviation(+12, 200)}
-
-    Specifying different *lower* and *upper* bounds:
-
-    .. code-block:: python
-        :emphasize-lines: 1
-
-        with allowed.percent(-0.02, 0.01):  # <- tolerance from -2% to +1%
-            validate(..., ...)
-
-    Deviations within the given range are suppressed while those
-    outside the range will trigger a test failure.
-
-    Empty values (None, empty string, etc.) are treated as zeros
-    when performing comparisons.
+        Empty values (None, empty string, etc.) are treated as zeros
+        when performing comparisons.
 
 
-.. automethod:: allowed.percent_deviation
+    .. classmethod:: percent(tolerance, /, msg=None)
+                     percent(lower, upper, msg=None)
+
+        Allows :class:`Deviations <datatest.Deviation>` with
+        percentages of error within a given *tolerance* without
+        triggering a test failure:
+
+        .. code-block:: python
+            :emphasize-lines: 7
+
+            from datatest import validate, allowed
+
+            data = {'A': 47, 'B': 212}
+
+            requirement = {'A': 50, 'B': 200}
+
+            with allowed.percent(0.06):  # <- tolerance of ±6%
+                validate(data, requirement)  # raises dictionary
+                                             # {'A': Deviation(-3, 50),
+                                             #  'B': Deviation(+12, 200)}
+
+        Specifying different *lower* and *upper* bounds:
+
+        .. code-block:: python
+            :emphasize-lines: 1
+
+            with allowed.percent(-0.02, 0.01):  # <- tolerance from -2% to +1%
+                validate(..., ...)
+
+        Deviations within the given range are suppressed while those
+        outside the range will trigger a test failure.
+
+        Empty values (None, empty string, etc.) are treated as zeros
+        when performing comparisons.
 
 
-.. automethod:: allowed.specific
+    .. automethod:: percent_deviation
 
 
-.. automethod:: allowed.limit
+    .. automethod:: specific
+
+
+    .. automethod:: limit
 
 
 Composability

@@ -590,12 +590,12 @@ class allowed_limit(BaseAllowance):
 # Factory class for pytest-style testing.
 #########################################
 class allowed(abc.ABC):
-    """:class:`allowed` is an abstract class that can not be
-    instantiated directly. It contains several factory methods
-    to create allowance objects.
+    """:class:`allowed` is an abstract factory class that can not be
+    instantiated directly. It contains several constructors to create
+    allowance objects.
     """
     def __new__(cls, *args, **kwds):
-        msg = ("Can't instantiate abstract class allowed, use factory "
+        msg = ("Can't instantiate abstract class allowed, use constructor "
                "methods like allowed.missing(), allowed.extra(), etc.")
         raise TypeError(msg)
 
