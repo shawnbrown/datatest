@@ -207,7 +207,9 @@ def pytest_runtest_makereport(item, call):
             result.longrepr.reprtraceback.reprentries = new_entries
 
         # If test was mandatory, session should fail immediately.
-        if (call.excinfo and item.get_marker('mandatory')
+        # pytest >= 3.6 replaced get_marker with get_closest_marker
+        get_marker = item.get_marker if hasattr(item, 'get_marker') else item.get_closest_marker
+        if (call.excinfo and get_marker('mandatory')
                 and not item.config.getoption('--ignore-mandatory')):
             shouldfail = 'mandatory {0!r} failed'.format(item.name)
             item.session.shouldfail = shouldfail
