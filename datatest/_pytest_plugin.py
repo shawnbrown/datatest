@@ -42,8 +42,8 @@ else:
     _bundled_version_info = (0, 0, 0)
 
 
-version = '0.1.2'
-version_info = (0, 1, 2)
+version = '0.1.3'
+version_info = (0, 1, 3)
 
 _idconfig_session_dict = {}  # Dictionary to store ``session`` reference.
 
@@ -91,8 +91,8 @@ def pytest_collection_modifyitems(session, config, items):
 
 # Compile regex patterns to match error message text.
 _diff_start_regex = re.compile(
-    '^E\s+(?:datatest.)?ValidationError:.+\d+ difference[s]?.*: [\[{]$')
-_diff_stop_regex = re.compile('^E\s+(?:\}|\]|\.\.\.)$')
+    r'^E\s+(?:datatest.)?ValidationError:.+\d+ difference[s]?.*: [\[{]$')
+_diff_stop_regex = re.compile(r'^E\s+(?:\}|\]|\.\.\.)$')
 
 
 class DatatestReprEntry(ReprEntry):
@@ -207,12 +207,18 @@ def pytest_runtest_makereport(item, call):
             result.longrepr.reprtraceback.reprentries = new_entries
 
         # If test was mandatory, session should fail immediately.
-        # pytest >= 3.6 replaced get_marker with get_closest_marker
-        get_marker = item.get_marker if hasattr(item, 'get_marker') else item.get_closest_marker
-        if (call.excinfo and get_marker('mandatory')
-                and not item.config.getoption('--ignore-mandatory')):
-            shouldfail = 'mandatory {0!r} failed'.format(item.name)
-            item.session.shouldfail = shouldfail
+        if call.excinfo:
+            try:
+                mandatory = item.get_closest_marker('mandatory')
+            except AttributeError:
+                try:
+                    mandatory = item.get_marker('mandatory')  # pytest <= 3.5
+                except AttributeError:
+                    mandatory = False  # in pytest <= 3.6 item can be non-Item
+
+            if mandatory and not item.config.getoption('--ignore-mandatory'):
+                shouldfail = 'mandatory {0!r} failed'.format(item.name)
+                item.session.shouldfail = shouldfail
 
     else:
         outcome = yield
