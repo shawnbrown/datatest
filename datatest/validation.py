@@ -31,7 +31,12 @@ __all__ = [
 
 def _normalize_data(data):
     if isinstance(data, Query):
-        return data.execute()  # <- EXIT! (Returns Result for lazy evaluation.)
+        data = data.execute()  # Make Result for lazy evaluation.
+
+    if isinstance(data, Result):
+        if issubclass(data.evaluation_type, Mapping):
+            data = IterItems(data)
+        return data  # <- EXIT!
 
     pandas = sys.modules.get('pandas', None)
     if pandas:

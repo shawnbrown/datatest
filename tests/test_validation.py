@@ -8,6 +8,7 @@ from datatest.difference import Missing
 from datatest.difference import Invalid
 from datatest.difference import Deviation
 from datatest._query.query import Result
+from datatest._query.query import DictItems
 from datatest._utils import IterItems
 from datatest._required import BaseRequirement
 
@@ -38,6 +39,11 @@ class TestNormalizeData(unittest.TestCase):
 
         data = Result(iter([1, 2, 3]), evaluation_type=tuple)
         self.assertIs(_normalize_data(data), data, 'should return original object')
+
+    def test_requirement(self):
+        result = Result(DictItems([('a', 1), ('b', 2)]), evaluation_type=dict)
+        normalized = _normalize_data(result)
+        self.assertIsInstance(normalized, IterItems)
 
     @unittest.skipIf(not pandas, 'pandas not found')
     def test_normalize_pandas_dataframe(self):
