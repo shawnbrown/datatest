@@ -310,6 +310,22 @@ def _map_data(function, iterable):
     return _apply_to_data(wrapper, iterable)
 
 
+def _starmap_data(function, iterable):
+    def wrapper(iterable):
+        if isinstance(iterable, BaseElement):
+            if not isinstance(iterable, Iterable):
+                iterable = (iterable,)
+            return function(*iterable)  # <- EXIT!
+
+        evaluation_type = _get_evaluation_type(iterable)
+        if issubclass(evaluation_type, Set):
+            evaluation_type = list
+        iterable = (x if isinstance(x, Iterable) else (x,) for x in iterable)
+        return Result(itertools.starmap(function, iterable), evaluation_type)
+
+    return _apply_to_data(wrapper, iterable)
+
+
 def _reduce_data(function, iterable, initializer_factory=None):
     def wrapper(iterable):
         if isinstance(iterable, BaseElement):

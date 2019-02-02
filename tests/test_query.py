@@ -22,6 +22,7 @@ from datatest._query.query import (
     _is_collection_of_items,
     DictItems,
     _map_data,
+    _starmap_data,
     _filter_data,
     _reduce_data,
     _flatten_data,
@@ -255,6 +256,97 @@ class TestMapData(unittest.TestCase):
         data = (1, 8)
         result = _map_data(function, data)
         self.assertEqual(result, 0.125)
+
+
+class TestStarmapData(unittest.TestCase):
+    def test_iter_of_tuples(self):
+        data = Result([(1, 1), (2, 2)], list)
+
+        function = lambda x, y: x + y
+        result = _starmap_data(function, data)
+
+        self.assertIsInstance(result, Result)
+        self.assertEqual(result.evaluation_type, list)
+        self.assertEqual(result.fetch(), [2, 4])
+
+    def test_iter_of_noniters(self):
+        data = Result([1, 2], list)
+
+        function = lambda x: x + 1
+        result = _starmap_data(function, data)
+
+        self.assertIsInstance(result, Result)
+        self.assertEqual(result.evaluation_type, list)
+        self.assertEqual(result.fetch(), [2, 3])
+
+    def test_settype_to_list(self):
+        data = Result([(1, 1), (2, 2)], set)  # <- Starts as 'set'.
+
+        function = lambda x, y: x - y
+        result = _starmap_data(function, data)
+
+        self.assertIsInstance(result, Result)
+        self.assertEqual(result.evaluation_type, list) # <- Now a 'list'.
+        self.assertEqual(result.fetch(), [0, 0])
+
+    def test_unwrapped_tuple(self):
+        data = (2, 4)
+        function = lambda x, y: x + y
+        result = _starmap_data(function, data)
+        self.assertEqual(result, 6)
+
+    def test_unwrapped_noniter(self):
+        data = 2
+        function = lambda x: x + 1
+        result = _starmap_data(function, data)
+        self.assertEqual(result, 3)
+
+    def test_dataiter_dict_of_lists_of_tuples(self):
+        data = Result({'a': [(1, 2), (1, 2)], 'b': [(3, 4), (3, 4)]}, dict)
+
+        function = lambda x, y: x + y
+        result = _starmap_data(function, data)
+
+        self.assertIsInstance(result, Result)
+        self.assertEqual(result.evaluation_type, dict)
+        self.assertEqual(result.fetch(), {'a': [3, 3], 'b': [7, 7]})
+
+    def test_dataiter_dict_of_tuples(self):
+        data = Result({'a': (1, 2), 'b': (3, 4)}, dict)
+
+        function = lambda x, y: x + y
+        result = _starmap_data(function, data)
+
+        self.assertIsInstance(result, Result)
+        self.assertEqual(result.evaluation_type, dict)
+        self.assertEqual(result.fetch(), {'a': 3, 'b': 7})
+
+    def test_dataiter_dict_of_lists(self):
+        data = Result({'a': [1, 2], 'b': [3, 4]}, dict)
+
+        function = lambda x: x + 1
+        result = _starmap_data(function, data)
+
+        self.assertIsInstance(result, Result)
+        self.assertEqual(result.evaluation_type, dict)
+        self.assertEqual(result.fetch(), {'a': [2, 3], 'b': [4, 5]})
+
+    def test_dataiter_dict_of_noniters(self):
+        data = Result({'a': 2, 'b': 3}, dict)
+
+        function = lambda x: x * 2
+        result = _starmap_data(function, data)
+
+        self.assertIsInstance(result, Result)
+        self.assertEqual(result.evaluation_type, dict)
+        self.assertEqual(result.fetch(), {'a': 4, 'b': 6})
+
+    def test_bad_function(self):
+        data = [(1, 2, 3), (1, 2, 3)]  # <- gets unpacked to 3 args
+        function = lambda x, y: x / y  # <- function takes 2 args
+        with self.assertRaises(TypeError, msg='mismatched arg number should fail'):
+            result = _starmap_data(function, data)
+            result.fetch()
 
 
 class TestFilterData(unittest.TestCase):
