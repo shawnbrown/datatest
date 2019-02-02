@@ -62,7 +62,7 @@ make sure your filename starts with "**test\_**".
 
             if __name__ == '__main__':
                 import sys
-                sys.exit(pytest.main([__file__]))
+                sys.exit(pytest.main(sys.argv))
 
     .. group-tab:: Unittest
 
