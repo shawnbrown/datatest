@@ -851,6 +851,44 @@ class RequiredUnique(GroupRequirement):
         return self.check_group(data)
 
 
+class RequiredSubset(GroupRequirement):
+    """Require that data contains all elements of *subset*."""
+    def __init__(self, subset):
+        if not isinstance(subset, Set):
+            subset = set(subset)
+        self._subset = subset
+
+    def check_group(self, group):
+        missing = self._subset.copy()
+        for element in group:
+            if not missing:
+                break
+            missing.discard(element)
+
+        differences = (Missing(element) for element in missing)
+        description = 'must contain all elements of given subset'
+        return differences, description
+
+
+class RequiredSuperset(GroupRequirement):
+    """Require that data contains only elements of *superset*."""
+    def __init__(self, superset):
+        if not isinstance(superset, Set):
+            superset = set(superset)
+        self._superset = superset
+
+    def check_group(self, group):
+        superset = self._superset
+        extras = set()
+        for element in group:
+            if element not in superset:
+                extras.add(element)
+
+        differences = (Extra(element) for element in extras)
+        description = 'may contain only elements of given superset'
+        return differences, description
+
+
 class required(abc.ABC):
     """:class:`required` is an abstract factory class that returns
     requirement objects. It contains several factory methods that can

@@ -29,6 +29,8 @@ from datatest._required import RequiredPredicate
 from datatest._required import RequiredSet
 from datatest._required import get_requirement
 from datatest._required import RequiredUnique
+from datatest._required import RequiredSubset
+from datatest._required import RequiredSuperset
 from datatest._required import required
 from datatest.difference import NOTFOUND
 
@@ -1577,6 +1579,96 @@ class TestRequiredUnique(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             self.requirement({'a': (1, 2)})
+
+
+class TestRequiredSubset(unittest.TestCase):
+    @staticmethod
+    def items_to_dict(items):
+        """Eagerly evaluate items and return a dictionary."""
+        new_dic = dict()
+        for k, v in items:
+            if nonstringiter(v) and exhaustible(v):
+                v = list(v)
+            new_dic[k] = v
+        return new_dic
+
+    def test_element_group(self):
+        data = [1, 2, 3]
+        requirement = RequiredSubset(set([1, 2]))
+        self.assertIsNone(requirement(data))
+
+        data = [1, 2]
+        requirement = RequiredSubset(set([1, 2, 3, 4]))
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Missing(3), Missing(4)])
+        self.assertRegex(desc, 'must contain all')
+
+    def test_mapping_of_element_groups(self):
+        requirement = RequiredSubset(set([1, 2, 3]))
+
+        data = {'a': [1, 2, 3], 'b': [1, 2, 3], 'c': [1, 2, 3]}
+        self.assertIsNone(requirement(data))
+
+        data = {'a': [1, 2], 'b': [1, 2, 3], 'c': [1, 2, 3, 4]}
+        diff, desc = requirement(data)
+        self.assertEqual(self.items_to_dict(diff), {'a': [Missing(3)]})
+        self.assertRegex(desc, 'must contain all')
+
+    def test_single_element_handling(self):
+        """RequiredUnique can not operate directly on base elements."""
+        requirement = RequiredSubset(set([1, 2]))
+
+        diff, desc = requirement(1)
+        self.assertEqual(list(diff), [Missing(2)])
+
+        diff, desc = requirement((3, 4))  # <- Tuple is single element.
+        diff = sorted(diff, key=lambda x: x.args)
+        self.assertEqual(diff, [Missing(1), Missing(2)])
+
+
+class TestRequiredSuperset(unittest.TestCase):
+    @staticmethod
+    def items_to_dict(items):
+        """Eagerly evaluate items and return a dictionary."""
+        new_dic = dict()
+        for k, v in items:
+            if nonstringiter(v) and exhaustible(v):
+                v = list(v)
+            new_dic[k] = v
+        return new_dic
+
+    def test_element_group(self):
+        data = [1, 2]
+        requirement = RequiredSuperset(set([1, 2, 3]))
+        self.assertIsNone(requirement(data))
+
+        data = [1, 2, 3, 4]
+        requirement = RequiredSuperset(set([1, 2]))
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Extra(3), Extra(4)])
+        self.assertRegex(desc, 'may contain only')
+
+    def test_mapping_of_element_groups(self):
+        requirement = RequiredSuperset(set([1, 2, 3]))
+
+        data = {'a': [1, 2, 3], 'b': [1, 2], 'c': [1]}
+        self.assertIsNone(requirement(data))
+
+        data = {'a': [1, 2], 'b': [1, 2, 3], 'c': [1, 2, 3, 4]}
+        diff, desc = requirement(data)
+        self.assertEqual(self.items_to_dict(diff), {'c': [Extra(4)]})
+        self.assertRegex(desc, 'may contain only')
+
+    def test_single_element_handling(self):
+        """RequiredUnique can not operate directly on base elements."""
+        requirement = RequiredSuperset(set([1, 2]))
+
+        diff, desc = requirement(3)
+        self.assertEqual(list(diff), [Extra(3)])
+
+        diff, desc = requirement((3, 4))  # <- Tuple is single element.
+        diff = sorted(diff, key=lambda x: x.args)
+        self.assertEqual(diff, [Extra((3, 4))])
 
 
 class TestRequiredFactory(unittest.TestCase):
