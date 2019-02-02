@@ -808,6 +808,12 @@ class TestDatadictVsRequirementdict(unittest.TestCase):
         self.assertIsNone(description)
 
 
+def evaluate_items(items):  # <- Test helper.
+    """Eagerly evaluate items and return a sorted list of tuples."""
+    evaluate = lambda v: list(v) if nonstringiter(v) and exhaustible(v) else v
+    return sorted([(k, evaluate(v)) for k, v in items])
+
+
 class TestBaseRequirement(unittest.TestCase):
     def setUp(self):
         class MinimalRequirement(BaseRequirement):
@@ -860,7 +866,7 @@ class TestBaseRequirement(unittest.TestCase):
                  ('B', [Missing(3), 'a string instance'])]
         wrapped = self.requirement._wrap_difference_items(items)
         with self.assertRaises(TypeError):
-            [(k, list(v)) for k, v in wrapped]  # <- Evaluate generator.
+            evaluate_items(wrapped)  # <- Evaluate generator.
 
     def test_normalize_iter_and_description(self):
         result = ([Missing(1)], 'error message')  # <- Iterable and description.
@@ -1124,9 +1130,7 @@ class TestRequiredPredicate2(unittest.TestCase):
             ('A', [Invalid(5)]),
             ('C', Invalid(7)),
         ]
-        evaluate = lambda v: list(v) if isinstance(v, Iterable) else v
-        result = sorted([(k, evaluate(v)) for k, v in diff])
-        self.assertEqual(result, expected)
+        self.assertEqual(evaluate_items(diff), expected)
 
 
 class TestRequiredSet2(unittest.TestCase):
@@ -1299,13 +1303,6 @@ class TestRequiredOrder2(unittest.TestCase):
 
 
 class TestRequiredMapping(unittest.TestCase):
-    @staticmethod
-    def evaluate_item_values(items):
-        new_dic = dict()
-        for k, v in items:
-            new_dic[k] = list(v) if nonstringiter(v) else v
-        return new_dic
-
     def test_instantiation(self):
         # Should pass without error.
         some_dict = {'a': 'abc'}
@@ -1351,28 +1348,39 @@ class TestRequiredMapping(unittest.TestCase):
     def test_equality_of_multiple_elements(self):
         requirement = RequiredMapping({'a': 'j', 'b': 9})
         diff, desc = requirement({'a': ['x', 'j'], 'b': [10, 9]})
-        expected = {'a': [Invalid('x')], 'b': [Deviation(+1, 9)]}
-        self.assertEqual(self.evaluate_item_values(diff), expected)
+        expected = [
+            ('a', [Invalid('x')]),
+            ('b', [Deviation(+1, 9)]),
+        ]
+        self.assertEqual(evaluate_items(diff), expected)
         self.assertEqual(desc, 'does not satisfy mapping requirements')
 
         # Test groups of tuple elements.
         requirement = RequiredMapping({'a': (1, 'j'), 'b': (9, 9)})
         diff, desc = requirement({'a': [(1, 'j'), (1, 'x')], 'b': [(9, 9), (9, 10)]})
-        expected = {'a': [Invalid((1, 'x'))], 'b': [Invalid((9, 10))]}
-        self.assertEqual(self.evaluate_item_values(diff), expected)
+        expected = [
+            ('a', [Invalid((1, 'x'))]),
+            ('b', [Invalid((9, 10))]),
+        ]
+        self.assertEqual(evaluate_items(diff), expected)
         self.assertEqual(desc, 'does not satisfy mapping requirements')
 
     def test_set_membership_differences(self):
         requirement = RequiredMapping({'a': set(['x', 'y']), 'b': set(['x', 'y'])})
         diff, desc = requirement({'a': ['x', 'x'], 'b': ['x', 'y', 'z']})
-        expected = {'a': [Missing('y')], 'b': [Extra('z')]}
-        self.assertEqual(self.evaluate_item_values(diff), expected)
+        expected = [
+            ('a', [Missing('y')]),
+            ('b', [Extra('z')]),
+        ]
+        self.assertEqual(evaluate_items(diff), expected)
         self.assertEqual(desc, 'does not satisfy set membership')
 
         requirement = RequiredMapping({'a': set(['x', 'y'])})
         diff, desc = requirement({'a': 'x'})
-        expected = {'a': [Missing('y')]}
-        self.assertEqual(self.evaluate_item_values(diff), expected)
+        expected = [
+            ('a', [Missing('y')]),
+        ]
+        self.assertEqual(evaluate_items(diff), expected)
         self.assertEqual(desc, 'does not satisfy set membership')
 
     def test_mismatched_keys(self):
@@ -1384,12 +1392,12 @@ class TestRequiredMapping(unittest.TestCase):
             'd': set(['y']),
         })
         diff, desc = requirement({'a': 'j'})
-        expected = {
-            'b': Deviation(-9, 9),
-            'c': Missing('x'),
-            'd': [Missing('y')],
-        }
-        self.assertEqual(self.evaluate_item_values(diff), expected)
+        expected = [
+            ('b', Deviation(-9, 9)),
+            ('c', Missing('x')),
+            ('d', [Missing('y')]),
+        ]
+        self.assertEqual(evaluate_items(diff), expected)
         self.assertEqual(desc, 'does not satisfy mapping requirements')
 
         # Extra keys unexpectedly found in data.
@@ -1401,13 +1409,13 @@ class TestRequiredMapping(unittest.TestCase):
             'd': 'x',
             'e': set(['y']),
         })
-        expected = {
-            'b': Deviation(+9, None),
-            'c': [Deviation(+10, None), Deviation(+11, None)],
-            'd': Extra('x'),
-            'e': [Extra('y')],
-        }
-        self.assertEqual(self.evaluate_item_values(diff), expected)
+        expected = [
+            ('b', Deviation(+9, None)),
+            ('c', [Deviation(+10, None), Deviation(+11, None)]),
+            ('d', Extra('x')),
+            ('e', [Extra('y')]),
+        ]
+        self.assertEqual(evaluate_items(diff), expected)
         self.assertEqual(desc, 'does not satisfy mapping requirements')
 
     def test_empty_vs_nonempty_values(self):
@@ -1419,12 +1427,16 @@ class TestRequiredMapping(unittest.TestCase):
         self.assertIsNone(required_empty(empty))
 
         diff, desc = required_empty(nonempty)
-        expected = {'a': [Extra('x')]}
-        self.assertEqual(self.evaluate_item_values(diff), expected)
+        expected = [
+            ('a', [Extra('x')]),
+        ]
+        self.assertEqual(evaluate_items(diff), expected)
 
         diff, desc = required_nonempty(empty)
-        expected = {'a': [Missing('x')]}
-        self.assertEqual(self.evaluate_item_values(diff), expected)
+        expected = [
+            ('a', [Missing('x')]),
+        ]
+        self.assertEqual(evaluate_items(diff), expected)
 
     def test_custom_requirements(self):
         class MyRequirement(GroupRequirement):
@@ -1433,12 +1445,18 @@ class TestRequiredMapping(unittest.TestCase):
 
         requirement = RequiredMapping({'a': MyRequirement()})
         diff, desc = requirement({'a': 1})  # <- Single-element value.
-        self.assertEqual(self.evaluate_item_values(diff), {'a': [Invalid('foo')]})
+        expected = [
+            ('a', [Invalid('foo')]),
+        ]
+        self.assertEqual(evaluate_items(diff), expected)
         self.assertEqual(desc, 'my message')
 
         requirement = RequiredMapping({'a': MyRequirement()})
         diff, desc = requirement({'a': [1, 2, 3]})  # <- List of values.
-        self.assertEqual(self.evaluate_item_values(diff), {'a': [Invalid('foo')]})
+        expected = [
+            ('a', [Invalid('foo')]),
+        ]
+        self.assertEqual(evaluate_items(diff), expected)
         self.assertEqual(desc, 'my message')
 
     def test_integration(self):
@@ -1497,7 +1515,7 @@ class TestRequiredMapping(unittest.TestCase):
             'i': [Missing((0, 1)), Extra((0, 2))],
             'j': [Missing((0, 4)), Extra((2, 7))],
         }
-        self.assertEqual(self.evaluate_item_values(diff), expected)
+        self.assertEqual(dict(evaluate_items(diff)), expected)
 
     def test_description_message(self):
         # Test same message (set membership message).
@@ -1544,16 +1562,6 @@ class TestRequiredUnique(unittest.TestCase):
     def setUp(self):
         self.requirement = RequiredUnique()
 
-    @staticmethod
-    def items_to_dict(items):
-        """Eagerly evaluate items and return a dictionary."""
-        new_dic = dict()
-        for k, v in items:
-            if nonstringiter(v) and exhaustible(v):
-                v = list(v)
-            new_dic[k] = v
-        return new_dic
-
     def test_element_group(self):
         data = [1, 2, 3]
         self.assertIsNone(self.requirement(data))  # No duplicates.
@@ -1569,7 +1577,11 @@ class TestRequiredUnique(unittest.TestCase):
 
         data = {'a': [1], 'b': [2, 2], 'c': [3, 3, 3]}
         diff, desc = self.requirement(data)
-        self.assertEqual(self.items_to_dict(diff), {'b': [Extra(2)], 'c': [Extra(3), Extra(3)]})
+        expected = [
+            ('b', [Extra(2)]),
+            ('c', [Extra(3), Extra(3)]),
+        ]
+        self.assertEqual(evaluate_items(diff), expected)
         self.assertRegex(desc, 'should be unique')
 
     def test_single_element_handling(self):
@@ -1582,16 +1594,6 @@ class TestRequiredUnique(unittest.TestCase):
 
 
 class TestRequiredSubset(unittest.TestCase):
-    @staticmethod
-    def items_to_dict(items):
-        """Eagerly evaluate items and return a dictionary."""
-        new_dic = dict()
-        for k, v in items:
-            if nonstringiter(v) and exhaustible(v):
-                v = list(v)
-            new_dic[k] = v
-        return new_dic
-
     def test_element_group(self):
         data = [1, 2, 3]
         requirement = RequiredSubset(set([1, 2]))
@@ -1611,7 +1613,10 @@ class TestRequiredSubset(unittest.TestCase):
 
         data = {'a': [1, 2], 'b': [1, 2, 3], 'c': [1, 2, 3, 4]}
         diff, desc = requirement(data)
-        self.assertEqual(self.items_to_dict(diff), {'a': [Missing(3)]})
+        expected = [
+            ('a', [Missing(3)]),
+        ]
+        self.assertEqual(evaluate_items(diff), expected)
         self.assertRegex(desc, 'must contain all')
 
     def test_single_element_handling(self):
@@ -1626,16 +1631,6 @@ class TestRequiredSubset(unittest.TestCase):
 
 
 class TestRequiredSuperset(unittest.TestCase):
-    @staticmethod
-    def items_to_dict(items):
-        """Eagerly evaluate items and return a dictionary."""
-        new_dic = dict()
-        for k, v in items:
-            if nonstringiter(v) and exhaustible(v):
-                v = list(v)
-            new_dic[k] = v
-        return new_dic
-
     def test_element_group(self):
         data = [1, 2]
         requirement = RequiredSuperset(set([1, 2, 3]))
@@ -1655,7 +1650,10 @@ class TestRequiredSuperset(unittest.TestCase):
 
         data = {'a': [1, 2], 'b': [1, 2, 3], 'c': [1, 2, 3, 4]}
         diff, desc = requirement(data)
-        self.assertEqual(self.items_to_dict(diff), {'c': [Extra(4)]})
+        expected = [
+            ('c', [Extra(4)]),
+        ]
+        self.assertEqual(evaluate_items(diff), expected)
         self.assertRegex(desc, 'may contain only')
 
     def test_single_element_handling(self):
