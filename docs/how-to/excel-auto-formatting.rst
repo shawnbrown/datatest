@@ -43,6 +43,9 @@ auto-formatting:
                 | (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[ \-]\d{1,2}
                 | [01]?[0-9]-(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)
 
+                # Twelve-hour clock conversion.
+                | [01]?[0-9][ ]?(AM?|PM?)
+
                 # Numeric conversions.
                 | 0\d+.?\d*         # Number with leading zeros.
                 | \d*\.\d*0         # Decimal point with trailing zeros.
