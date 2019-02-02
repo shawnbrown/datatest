@@ -1615,7 +1615,6 @@ class TestRequiredSubset(unittest.TestCase):
         self.assertRegex(desc, 'must contain all')
 
     def test_single_element_handling(self):
-        """RequiredUnique can not operate directly on base elements."""
         requirement = RequiredSubset(set([1, 2]))
 
         diff, desc = requirement(1)
@@ -1660,7 +1659,6 @@ class TestRequiredSuperset(unittest.TestCase):
         self.assertRegex(desc, 'may contain only')
 
     def test_single_element_handling(self):
-        """RequiredUnique can not operate directly on base elements."""
         requirement = RequiredSuperset(set([1, 2]))
 
         diff, desc = requirement(3)
