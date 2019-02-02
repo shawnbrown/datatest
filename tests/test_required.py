@@ -808,6 +808,10 @@ class TestDatadictVsRequirementdict(unittest.TestCase):
         self.assertIsNone(description)
 
 
+#######################################################################
+# New BaseRequirement and subclass tests.
+#######################################################################
+
 def evaluate_items(items):  # <- Test helper.
     """Eagerly evaluate items and return a sorted list of tuples."""
     evaluate = lambda v: list(v) if nonstringiter(v) and exhaustible(v) else v
