@@ -725,6 +725,9 @@ class Query(object):
         """
         return self._add_step('map', function)
 
+    def starmap(self, function):
+        return self._add_step('starmap', function)
+
     def filter(self, predicate=True):
         """Filter elements, keeping only those values that match the
         given *predicate*. When *predicate* is True, this method keeps
@@ -799,6 +802,9 @@ class Query(object):
 
         if name == 'map':
             function = _map_data
+            args = (query_args[0], RESULT_TOKEN,)
+        elif name == 'starmap':
+            function = _starmap_data
             args = (query_args[0], RESULT_TOKEN,)
         elif name == 'filter':
             function = _filter_data

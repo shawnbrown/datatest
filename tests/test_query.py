@@ -1132,6 +1132,15 @@ class TestQuery(unittest.TestCase):
         result = query2.execute(source)
         self.assertEqual(result.fetch(), [2, 2])
 
+    def test_starmap(self):
+        query1 = Query([('col2', 'col2')])
+        query2 = query1.starmap(lambda x, y: x + y)
+        self.assertIsNot(query1, query2, 'should return new object')
+
+        source = Selector([('col1', 'col2'), ('a', 1), ('b', 2)])
+        result = query2.execute(source)
+        self.assertEqual(result.fetch(), [2, 4])
+
     def test_filter(self):
         query1 = Query(['col1'])
         query2 = query1.filter(lambda x: x == 'a')
