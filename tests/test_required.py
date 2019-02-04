@@ -31,7 +31,6 @@ from datatest._required import get_requirement
 from datatest._required import RequiredUnique
 from datatest._required import RequiredSubset
 from datatest._required import RequiredSuperset
-from datatest._required import required
 from datatest.difference import NOTFOUND
 
 
@@ -1669,22 +1668,3 @@ class TestRequiredSuperset(unittest.TestCase):
         diff, desc = requirement((3, 4))  # <- Tuple is single element.
         diff = sorted(diff, key=lambda x: x.args)
         self.assertEqual(diff, [Extra((3, 4))])
-
-
-class TestRequiredFactory(unittest.TestCase):
-    def test_bad_init(self):
-        """The `required` factory should not be instantiated directly."""
-        with self.assertRaises(TypeError):
-            required('foo')
-
-    def test_unique(self):
-        requirement = required.unique()
-        self.assertIsInstance(requirement, RequiredUnique)
-
-    @unittest.skip('not yet implemented')
-    def test_subset(self):
-        pass
-
-    @unittest.skip('not yet implemented')
-    def test_superset(self):
-        pass

@@ -9,7 +9,6 @@ from .validation import *  # Validation error and functions.
 from .difference import *  # Difference classes.
 from .allowance import *   # Allowance context mangers.
 from ._required import group_requirement
-from ._required import required
 from ._predicate import Predicate
 
 # Unittest-style API

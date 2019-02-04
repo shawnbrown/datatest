@@ -887,38 +887,3 @@ class RequiredSuperset(GroupRequirement):
         differences = (Extra(element) for element in extras)
         description = 'may contain only elements of given superset'
         return differences, description
-
-
-class required(abc.ABC):
-    """:class:`required` is an abstract factory class that returns
-    requirement objects. It contains several factory methods that can
-    be called directly to instantiate specific requirement types.
-    """
-    def __new__(cls, *args, **kwds):
-        msg = ("Can't instantiate abstract class required, use factory "
-               "methods like required.unique(), required.subset(), etc.")
-        raise TypeError(msg)
-
-    @classmethod
-    def unique(cls):
-        """Requires that elements are unique.
-
-        .. code-block:: python
-            :emphasize-lines: 6
-
-            from datatest import validate
-            from datatest import required
-
-            data = [1, 2, 3, ...]
-
-            validate(data, required.unique())
-        """
-        return RequiredUnique()
-
-    @classmethod
-    def subset(cls, set):
-        pass
-
-    @classmethod
-    def superset(cls, set):
-        pass
