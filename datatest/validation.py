@@ -235,7 +235,8 @@ class ValidateType(object):
     objects. An optional *msg* string can be provided to describe
     the validation.
 
-    Required Predicate:
+    **Required Predicate:**
+
         When *requirement* is a function, tuple, string, or
         non-iterable object, it is used to construct a
         :class:`Predicate` for testing elements in *data*:
@@ -259,6 +260,7 @@ class ValidateType(object):
         truthy value, an element is considered valid.
 
     **Required Set:**
+
         When *requirement* is a set, the elements in *data* are checked
         for membership in the set:
 
@@ -277,6 +279,7 @@ class ValidateType(object):
         :class:`Missing` and :class:`Extra` differences are generated.
 
     **Required Order:**
+
         When *requirement* is a non-tuple, non-string sequence, the
         *data* is checked for element order:
 
@@ -298,6 +301,7 @@ class ValidateType(object):
         second item is the non-matching value itself.
 
     **Required Mapping:**
+
         When *requirement* is a dictionary or other mapping, the values
         in *data* are checked against required objects of the same key
         (*data* must also be a mapping):
@@ -319,6 +323,7 @@ class ValidateType(object):
         predicate object.
 
     **Other Requirement:**
+
         When *requirement* is a subclass of :class:`BaseRequirement`,
         it performs all checks and difference generation directly.
 
