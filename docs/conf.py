@@ -32,6 +32,22 @@ extensions = [
     'sphinx_tabs.tabs',
 ]
 
+# -- Configure custom extension: autodoc_classinstance --------------------
+if 'sphinx.ext.autodoc' in extensions:
+
+    # Add custom extension directory ("_ext") to sys.path.
+    dirname = os.path.abspath(os.path.dirname(globals().get('__file__', '.')))
+    sys.path.insert(0, os.path.join(dirname, '_ext'))
+
+    # Add to list of extensions (must appear after autodoc in list).
+    extensions.append('autodoc_classinstance')
+
+    # Suppress the warning given when the extension overrides the
+    # registered "automethod" directive.
+    suppress_warnings = [
+        'app.add_directive',
+    ]
+
 # intersphinx settins for external project references
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
