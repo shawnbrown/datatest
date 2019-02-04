@@ -15,7 +15,13 @@ Datatest Core API Reference
 Validation
 **********
 
-.. autofunction:: validate
+.. autoclassinstance:: validate
+
+    .. automethod:: unique
+
+    .. automethod:: subset
+
+    .. automethod:: superset
 
 
 .. autofunction:: valid
