@@ -5,6 +5,7 @@ from ._compatibility.collections.abc import Iterator
 from ._compatibility.collections.abc import Mapping
 from ._required import get_requirement
 from ._required import BaseRequirement
+from . import _required
 from ._utils import IterItems
 from ._utils import exhaustible
 from ._utils import iterpeek
@@ -346,6 +347,52 @@ class ValidateType(object):
             differences, description = result
             message = msg or description or 'does not satisfy requirement'
             raise ValidationError(differences, message)
+
+    def unique(self, data, msg=None):
+        """Require that elements in *data* are unique:
+
+        .. code-block:: python
+            :emphasize-lines: 5
+
+            from datatest import validate
+
+            data = [1, 2, 3, ...]
+
+            validate.unique(data)
+        """
+        self(data, _required.RequiredUnique(), msg=msg)
+
+    def subset(self, data, subset, msg=None):
+        """Require that *data* contains all elements of *subset*:
+
+        .. code-block:: python
+            :emphasize-lines: 7
+
+            from datatest import validate
+
+            data = ['A', 'B', 'C', 'D']
+
+            requirement = {'A', 'B', 'C'}
+
+            validate.subset(data, requirement)
+        """
+        self(data, _required.RequiredSubset(subset), msg=msg)
+
+    def superset(self, data, superset, msg=None):
+        """Require that *data* contains only elements of *superset*:
+
+        .. code-block:: python
+            :emphasize-lines: 7
+
+            from datatest import validate
+
+            data = ['A', 'B', 'C']
+
+            requirement = {'A', 'B', 'C', 'D'}
+
+            validate.subset(data, requirement)
+        """
+        self(data, _required.RequiredSuperset(superset), msg=msg)
 
 
 validate = ValidateType()  # Use as instance.
