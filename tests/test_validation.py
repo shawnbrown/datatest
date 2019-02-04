@@ -560,12 +560,12 @@ class TestValidate(unittest.TestCase):
 
     def test_subset_method(self):
         data = [1, 2, 3, 4]
-        subset = {1, 2, 3}
+        subset = set([1, 2, 3])
         validate.subset(data, subset)
 
         with self.assertRaises(ValidationError) as cm:
             data = [1, 2, 3]
-            subset = {1, 2, 3, 4}
+            subset = set([1, 2, 3, 4])
             validate.subset(data, subset)
         actual = cm.exception.differences
         expected = [Missing(4)]
@@ -573,12 +573,12 @@ class TestValidate(unittest.TestCase):
 
     def test_superset_method(self):
         data = [1, 2, 3]
-        superset = {1, 2, 3, 4}
+        superset = set([1, 2, 3, 4])
         validate.superset(data, superset)
 
         with self.assertRaises(ValidationError) as cm:
             data = [1, 2, 3, 4]
-            superset = {1, 2, 3}
+            superset = set([1, 2, 3])
             validate.superset(data, superset)
         actual = cm.exception.differences
         expected = [Extra(4)]
