@@ -226,7 +226,7 @@ class ValidationError(AssertionError):
         return '{0}({1!r})'.format(cls_name, self.differences)
 
 
-def validate(data, requirement, msg=None):
+class ValidateType(object):
     """Raise a :exc:`ValidationError` if *data* does not satisfy
     *requirement* or pass without error if data is valid.
 
@@ -327,19 +327,23 @@ def validate(data, requirement, msg=None):
         or pass without errors. To get an explicit True/False return
         value, use the :func:`valid` function instead.
     """
-    # Setup traceback-hiding for pytest integration.
-    __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
+    def __call__(self, data, requirement, msg=None):
+        # Setup traceback-hiding for pytest integration.
+        __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
 
-    data = _normalize_data(data)
-    requirement = _normalize_requirement(requirement)
+        data = _normalize_data(data)
+        requirement = _normalize_requirement(requirement)
 
-    requirement_object = get_requirement(requirement)
-    result = requirement_object(data)  # <- Apply requirement.
+        requirement_object = get_requirement(requirement)
+        result = requirement_object(data)  # <- Apply requirement.
 
-    if result:
-        differences, description = result
-        message = msg or description or 'does not satisfy requirement'
-        raise ValidationError(differences, message)
+        if result:
+            differences, description = result
+            message = msg or description or 'does not satisfy requirement'
+            raise ValidationError(differences, message)
+
+
+validate = ValidateType()  # Use as instance.
 
 
 def valid(data, requirement):
