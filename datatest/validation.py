@@ -374,7 +374,7 @@ class ValidateType(object):
         self(data, _required.RequiredSubset(subset), msg=msg)
 
     def superset(self, data, superset, msg=None):
-        """Require that *data* contains only elements of *superset*:
+        """Require that *data* contains only elements from *superset*:
 
         .. code-block:: python
             :emphasize-lines: 7
@@ -385,7 +385,7 @@ class ValidateType(object):
 
             requirement = {'A', 'B', 'C', 'D'}
 
-            validate.subset(data, requirement)
+            validate.superset(data, requirement)
         """
         self(data, _required.RequiredSuperset(superset), msg=msg)
 
