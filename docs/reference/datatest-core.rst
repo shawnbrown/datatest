@@ -23,6 +23,12 @@ Validation
 
     .. automethod:: superset
 
+    .. note::
+
+        Calling :class:`validate()` or its methods will either raise an
+        exception or pass without error. To get an explicit True/False
+        return value, use the :func:`valid` function instead.
+
 
 .. autofunction:: valid
 

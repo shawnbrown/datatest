@@ -327,11 +327,6 @@ class ValidateType(object):
 
         When *requirement* is a subclass of :class:`BaseRequirement`,
         it performs all checks and difference generation directly.
-
-    .. note::
-        The :func:`validate` function will either raise an exception
-        or pass without errors. To get an explicit True/False return
-        value, use the :func:`valid` function instead.
     """
     def __call__(self, data, requirement, msg=None):
         # Setup traceback-hiding for pytest integration.
