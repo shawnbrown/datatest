@@ -231,34 +231,35 @@ class ValidateType(object):
     """Raise a :exc:`ValidationError` if *data* does not satisfy
     *requirement* or pass without error if data is valid.
 
-    This is a rich comparison function---the given *data* and
+    This is a rich comparison object---the given *data* and
     *requirement* arguments can be mappings, iterables, or other
     objects. An optional *msg* string can be provided to describe
     the validation.
 
     **Required Predicate:**
 
-        When *requirement* is a function, tuple, string, or
+        When *requirement* is a callable, tuple, string, or
         non-iterable object, it is used to construct a
         :class:`Predicate` for testing elements in *data*:
 
         .. code-block:: python
-            :emphasize-lines: 5-6
+            :emphasize-lines: 8
 
             from datatest import validate
 
             data = [2, 4, 6, 8]
 
-            def iseven(x):  # <- Used as predicate
+            def iseven(x):
                 return x % 2 == 0
 
-            validate(data, iseven)
+            validate(data, iseven)  # <- callable used as predicate
 
-        If the predicate returns False, an :class:`Invalid` or
+        If the predicate returns False, then an :class:`Invalid` or
         :class:`Deviation` difference is generated. If the predicate
-        returns a difference object, the difference is used as-is (see
-        :ref:`difference-docs`). When the predicate returns any other
-        truthy value, an element is considered valid.
+        returns a difference object, that object is used in place of
+        a generated difference (see :ref:`difference-docs`). When the
+        predicate returns any other truthy value, an element is
+        considered valid.
 
     **Required Set:**
 
@@ -266,7 +267,7 @@ class ValidateType(object):
         for membership in the set:
 
         .. code-block:: python
-            :emphasize-lines: 5
+            :emphasize-lines: 7
 
             from datatest import validate
 
@@ -274,7 +275,7 @@ class ValidateType(object):
 
             required_set = {'a', 'b', 'c'}
 
-            validate(data, required_set)
+            validate(data, required_set)  # <- tests for set membership
 
         If the elements in *data* do not match the required set, then
         :class:`Missing` and :class:`Extra` differences are generated.
@@ -285,15 +286,15 @@ class ValidateType(object):
         *data* is checked for element order:
 
         .. code-block:: python
-            :emphasize-lines: 5
+            :emphasize-lines: 7
 
             from datatest import validate
 
             data = ['A', 'B', 'C', ...]
 
-            required_order = ['A', 'B', 'C', ...]  # <- Sequence of elements
+            required_order = ['A', 'B', 'C', ...]
 
-            validate(data, required_order)
+            validate(data, required_order)  # <- tests object order
 
         If elements do not match the required order, :class:`Missing`
         and :class:`Extra` differences are returned. Each difference
@@ -308,15 +309,15 @@ class ValidateType(object):
         (*data* must also be a mapping):
 
         .. code-block:: python
-            :emphasize-lines: 5
+            :emphasize-lines: 7
 
             from datatest import validate
 
             data = {'A': 1, 'B': 2, 'C': ...}
 
-            required_dict = {'A': 1, 'B': 2, 'C': ...}  # <- Mapping object
+            required_dict = {'A': 1, 'B': 2, 'C': ...}
 
-            datatest.validate(data, required_dict)
+            datatest.validate(data, required_dict)  # <- compares values
 
         If values do not satisfy the corresponding required object,
         then differences are generated according to each object type.
@@ -326,7 +327,7 @@ class ValidateType(object):
     **Other Requirement:**
 
         When *requirement* is a subclass of :class:`BaseRequirement`,
-        it performs all checks and difference generation directly.
+        it is used to check data and generate differences directly.
     """
     def __call__(self, data, requirement, msg=None):
         # Setup traceback-hiding for pytest integration.
