@@ -135,8 +135,7 @@ class TestNormalizeEager(unittest.TestCase):
         requirement = [1, 2, 3]
         self.assertIs(_normalize_eager(requirement), requirement)
 
-        # Test corner case.
-        class MyRequirement(BaseRequirement, IterItems):
+        class MyRequirement(BaseRequirement):
             def __init__(self):
                 pass
 

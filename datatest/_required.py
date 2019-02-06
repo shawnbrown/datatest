@@ -15,6 +15,7 @@ from .difference import Extra
 from .difference import Missing
 from .difference import _make_difference
 from .difference import NOTFOUND
+from ._normalize import normalize
 from ._predicate import Predicate
 from ._query.query import BaseElement
 from ._utils import IterItems
@@ -508,6 +509,7 @@ class ItemsRequirement(BaseRequirement):
         raise NotImplementedError()
 
     def check_data(self, data):
+        data = normalize(data, lazy_evaluation=True)
         if isinstance(data, Mapping):
             data = IterItems(data)
         return self.check_items(data)
@@ -555,6 +557,8 @@ class GroupRequirement(BaseRequirement):
         return differences, description
 
     def check_data(self, data):
+        data = normalize(data, lazy_evaluation=True)
+
         if isinstance(data, Mapping):
             data = IterItems(data)
 
@@ -805,6 +809,8 @@ def get_requirement(obj):
     if isinstance(obj, BaseRequirement):
         return obj
 
+    obj = normalize(obj, lazy_evaluation=False)
+
     if isinstance(obj, Mapping):
         return RequiredMapping(obj)
 
@@ -842,6 +848,8 @@ class RequiredUnique(GroupRequirement):
         return differences, 'elements should be unique'
 
     def check_data(self, data):
+        data = normalize(data, lazy_evaluation=True)
+
         if isinstance(data, Mapping):
             data = IterItems(data)
 

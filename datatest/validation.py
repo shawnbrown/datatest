@@ -3,16 +3,14 @@ import sys
 from ._compatibility.collections.abc import Iterable
 from ._compatibility.collections.abc import Iterator
 from ._compatibility.collections.abc import Mapping
+from .difference import BaseDifference
 from ._normalize import normalize
-from ._required import get_requirement
-from ._required import BaseRequirement
 from . import _required
 from ._utils import IterItems
 from ._utils import exhaustible
 from ._utils import iterpeek
 from ._utils import nonstringiter
 from ._utils import _safesort_key
-from .difference import BaseDifference
 
 __all__ = [
     'validate',
@@ -256,10 +254,7 @@ class ValidateType(object):
         # Setup traceback-hiding for pytest integration.
         __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
 
-        data = normalize(data, lazy_evaluation=True)
-        requirement = normalize(requirement, lazy_evaluation=False)
-
-        requirement_object = get_requirement(requirement)
+        requirement_object = _required.get_requirement(requirement)
         result = requirement_object(data)  # <- Apply requirement.
 
         if result:
@@ -295,6 +290,7 @@ class ValidateType(object):
 
             validate.subset(data, requirement)
         """
+        subset = normalize(subset, lazy_evaluation=False)
         self(data, _required.RequiredSubset(subset), msg=msg)
 
     def superset(self, data, superset, msg=None):
@@ -311,6 +307,7 @@ class ValidateType(object):
 
             validate.superset(data, requirement)
         """
+        superset = normalize(superset, lazy_evaluation=False)
         self(data, _required.RequiredSuperset(superset), msg=msg)
 
 

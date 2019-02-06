@@ -5,7 +5,6 @@ from ._compatibility.collections.abc import Mapping
 from ._query.query import BaseElement
 from ._query.query import Query
 from ._query.query import Result
-from ._required import BaseRequirement
 from ._utils import exhaustible
 from ._utils import IterItems
 
@@ -57,9 +56,6 @@ def _normalize_lazy(data):
 
 
 def _normalize_eager(requirement):
-    if isinstance(requirement, BaseRequirement):
-        return requirement
-
     if isinstance(requirement, Result):
         return requirement.fetch()  # <- Eagerly evaluate.
 
