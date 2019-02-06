@@ -3,6 +3,7 @@ import sys
 from ._compatibility.collections.abc import Iterable
 from ._compatibility.collections.abc import Iterator
 from ._compatibility.collections.abc import Mapping
+from ._normalize import normalize
 from ._required import get_requirement
 from ._required import BaseRequirement
 from . import _required
@@ -11,91 +12,13 @@ from ._utils import exhaustible
 from ._utils import iterpeek
 from ._utils import nonstringiter
 from ._utils import _safesort_key
-from ._query.query import (
-    BaseElement,
-    Query,
-    Result,
-)
-from .difference import (
-    BaseDifference,
-    _make_difference,
-    NOTFOUND,
-)
-
+from .difference import BaseDifference
 
 __all__ = [
     'validate',
     'valid',
     'ValidationError',
 ]
-
-
-def _normalize_data(data):
-    if isinstance(data, Query):
-        data = data.execute()  # Make Result for lazy evaluation.
-
-    if isinstance(data, Result):
-        if issubclass(data.evaluation_type, Mapping):
-            data = IterItems(data)
-        return data  # <- EXIT!
-
-    pandas = sys.modules.get('pandas', None)
-    if pandas:
-        is_series = isinstance(data, pandas.Series)
-        is_dataframe = isinstance(data, pandas.DataFrame)
-
-        if (is_series or is_dataframe) and not data.index.is_unique:
-            cls_name = data.__class__.__name__
-            raise ValueError(('{0} index contains duplicates, must '
-                              'be unique').format(cls_name))
-
-        if is_series:
-            return IterItems(data.iteritems())  # <- EXIT!
-
-        if is_dataframe:
-            gen = ((x[0], x[1:]) for x in data.itertuples())
-            if len(data.columns) == 1:
-                gen = ((k, v[0]) for k, v in gen)  # Unwrap if 1-tuple.
-            return IterItems(gen)  # <- EXIT!
-
-    numpy = sys.modules.get('numpy', None)
-    if numpy and isinstance(data, numpy.ndarray):
-        # Two-dimentional array, recarray, or structured array.
-        if data.ndim == 2 or (data.ndim == 1 and len(data.dtype) > 1):
-            data = (tuple(x) for x in data)
-            return Result(data, evaluation_type=list)  # <- EXIT!
-
-        # One-dimentional array, recarray, or structured array.
-        if data.ndim == 1:
-            if len(data.dtype) == 1:         # Unpack single-valued recarray
-                data = (x[0] for x in data)  # or structured array.
-            else:
-                data = iter(data)
-            return Result(data, evaluation_type=list)  # <- EXIT!
-
-    return data
-
-
-# THINK ABOUT MOVING THE FOLLOWING CODE DIRECTLY INTO
-# THE required() FUNCTION'S AUTO-DETECTION BEHAVIOR.
-def _normalize_requirement(requirement):
-    if isinstance(requirement, BaseRequirement):
-        return requirement
-
-    requirement = _normalize_data(requirement)
-
-    if isinstance(requirement, Result):
-        return requirement.fetch()  # <- Eagerly evaluate.
-
-    if isinstance(requirement, IterItems):
-        return dict(requirement)
-
-    if isinstance(requirement, Iterable) and exhaustible(requirement):
-        cls_name = requirement.__class__.__name__
-        raise TypeError(("exhaustible type '{0}' cannot be used "
-                         "as a requirement").format(cls_name))
-
-    return requirement
 
 
 class ValidationError(AssertionError):
@@ -333,8 +256,8 @@ class ValidateType(object):
         # Setup traceback-hiding for pytest integration.
         __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
 
-        data = _normalize_data(data)
-        requirement = _normalize_requirement(requirement)
+        data = normalize(data, lazy_evaluation=True)
+        requirement = normalize(requirement, lazy_evaluation=False)
 
         requirement_object = get_requirement(requirement)
         result = requirement_object(data)  # <- Apply requirement.
