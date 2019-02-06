@@ -274,6 +274,7 @@ class ValidateType(object):
 
             validate.unique(data)
         """
+        __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
         self(data, _required.RequiredUnique(), msg=msg)
 
     def subset(self, data, subset, msg=None):
@@ -290,6 +291,7 @@ class ValidateType(object):
 
             validate.subset(data, requirement)
         """
+        __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
         subset = normalize(subset, lazy_evaluation=False)
         self(data, _required.RequiredSubset(subset), msg=msg)
 
@@ -307,6 +309,7 @@ class ValidateType(object):
 
             validate.superset(data, requirement)
         """
+        __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
         superset = normalize(superset, lazy_evaluation=False)
         self(data, _required.RequiredSuperset(superset), msg=msg)
 
