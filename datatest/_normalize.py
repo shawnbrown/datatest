@@ -1,5 +1,6 @@
 """Normalize objects for validation."""
 import sys
+from ._compatibility.collections.abc import Collection
 from ._compatibility.collections.abc import Iterable
 from ._compatibility.collections.abc import Mapping
 from ._query.query import BaseElement
@@ -56,8 +57,11 @@ def _normalize_lazy(obj):
     return obj
 
 
-def _normalize_eager(obj):
-    """Eagerly evaluate object when possible."""
+def _normalize_eager(obj, default_type=None):
+    """Eagerly evaluate *obj* when possible. When *obj* is exhaustible,
+    a *default_type* must be specified. When provided, *default_type*
+    must be a collection type (a sized iterable container).
+    """
     if isinstance(obj, Result):
         return obj.fetch()
 
@@ -65,9 +69,14 @@ def _normalize_eager(obj):
         return dict(obj)
 
     if isinstance(obj, Iterable) and exhaustible(obj):
-        cls_name = obj.__class__.__name__
-        raise TypeError(("exhaustible type '{0}' cannot be used "
-                         "eagerly evaluated").format(cls_name))
+        if isinstance(default_type, type) and issubclass(default_type, Collection):
+            return default_type(obj)
+        else:
+            cls_name = obj.__class__.__name__
+            msg = ("exhaustible type '{0}' cannot be eagerly evaluated "
+                   "without specifying a 'default_type' collection")
+            raise TypeError(msg.format(cls_name))
+
     return obj
 
 

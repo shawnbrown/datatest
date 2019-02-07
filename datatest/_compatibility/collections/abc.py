@@ -22,3 +22,30 @@ except ImportError:
         ItemsView,
         ValuesView,
     )
+
+
+try:
+    Collection  # New in 3.6
+except NameError:
+    # Adapted from Python 3.6 standard library.
+    def _check_methods(C, *methods):
+        mro = C.__mro__
+        for method in methods:
+            for B in mro:
+                if method in B.__dict__:
+                    if B.__dict__[method] is None:
+                        return NotImplemented
+                    break
+            else:
+                return NotImplemented
+        return True
+
+
+    # Adapted from Python 3.6 standard library.
+    class Collection(Sized, Iterable, Container):
+        __slots__ = ()
+
+        @classmethod
+        def __subclasshook__(cls, C):
+            if cls is Collection:
+                return _check_methods(C, '__len__', '__iter__', '__contains__')

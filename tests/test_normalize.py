@@ -148,9 +148,12 @@ class TestNormalizeEager(unittest.TestCase):
         requirement = MyRequirement()
         self.assertIs(_normalize_eager(requirement), requirement)
 
-    def test_bad_type(self):
+    def test_exhaustible_type(self):
         with self.assertRaises(TypeError, msg='cannot use generic iter'):
             _normalize_eager(iter([1, 2, 3]))
+
+        output = _normalize_eager(iter([1, 2, 3]), default_type=set)
+        self.assertEqual(output, set([1, 2, 3]))
 
     def test_result_object(self):
         result_obj = Result(iter([1, 2, 3]), evaluation_type=tuple)
