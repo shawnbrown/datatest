@@ -400,6 +400,10 @@ class TestValidate(unittest.TestCase):
         subset = set([1, 2, 3])
         validate.subset(data, subset)
 
+        data = [1, 2, 3, 4]
+        subset = iter([1, 2, 3])  # <- Exhaustible iterator.
+        validate.subset(data, subset)
+
         with self.assertRaises(ValidationError) as cm:
             data = [1, 2, 3]
             subset = set([1, 2, 3, 4])
@@ -411,6 +415,10 @@ class TestValidate(unittest.TestCase):
     def test_superset_method(self):
         data = [1, 2, 3]
         superset = set([1, 2, 3, 4])
+        validate.superset(data, superset)
+
+        data = [1, 2, 3]
+        superset = iter([1, 2, 3, 4])  # <- Exhaustible iterator.
         validate.superset(data, superset)
 
         with self.assertRaises(ValidationError) as cm:

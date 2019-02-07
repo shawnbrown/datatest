@@ -80,8 +80,8 @@ def _normalize_eager(obj, default_type=None):
     return obj
 
 
-def normalize(obj, lazy_evaluation=False):
+def normalize(obj, lazy_evaluation=False, default_type=None):
     obj = _normalize_lazy(obj)
     if lazy_evaluation:
         return obj
-    return _normalize_eager(obj)
+    return _normalize_eager(obj, default_type)
