@@ -919,11 +919,23 @@ class RequiredApprox(RequiredPredicate):
     the difference between values is more than the given delta.
     """
     def __new__(cls, obj, places=None, delta=None, show_expected=False):
+        # If numeric, return new RequiredApprox (normal behavior).
         if isinstance(obj, Number):
             return super(RequiredApprox, cls).__new__(cls)
 
-        # If not numeric, return RequiredPredicate instead.
-        return RequiredPredicate(obj)
+        # If mapping, use RequiredMapping with abstract factory.
+        if isinstance(obj, (Mapping, IterItems)):
+            def abstract_factory(value):
+                if isinstance(value, Number):
+                    def make_approx(val):
+                        return RequiredApprox(val, places=places, delta=delta)
+                    return make_approx  # <- Concrete factory.
+                return None
+
+            return RequiredMapping(obj, abstract_factory=abstract_factory)
+
+        # If not numeric or mapping, use auto-detected type.
+        return get_requirement(obj)
 
     def __init__(self, obj, places=None, delta=None, show_expected=False):
         if delta is not None and places is not None:

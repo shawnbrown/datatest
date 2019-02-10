@@ -1798,7 +1798,6 @@ class TestRequiredApprox(unittest.TestCase):
         self.assertEqual(list(diff), [Deviation(-10, 10)])
         self.assertEqual(desc, 'not equal within 7 decimal places')
 
-    @unittest.skip('not yet implemented')
     def test_items(self):
         trusted = {'A': 5, 'B': 10}
         requirement = RequiredApprox(trusted)
@@ -1807,6 +1806,6 @@ class TestRequiredApprox(unittest.TestCase):
         diff, desc = requirement(data)
         expected = [
             ('A', [Deviation(-2, 5)]),
-            ('C', Invalid(7)),
+            ('C', Deviation(+7, None)),
         ]
         self.assertEqual(evaluate_items(diff), expected)

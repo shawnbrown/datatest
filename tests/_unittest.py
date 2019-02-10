@@ -98,14 +98,19 @@ except AttributeError:
 
 try:
     TestCase.assertIsInstance  # New in 3.2
+    TestCase.assertNotIsInstance  # New in 3.2
 except AttributeError:
     def _assertIsInstance(self, obj, cls, msg=None):
-        """Same as self.assertTrue(isinstance(obj, cls)), with a nicer
-        default message."""
         if not isinstance(obj, cls):
             standardMsg = '%s is not an instance of %r' % (safe_repr(obj), cls)
             self.fail(self._formatMessage(msg, standardMsg))
     TestCase.assertIsInstance = _assertIsInstance
+
+    def _assertNotIsInstance(self, obj, cls, msg=None):
+        if isinstance(obj, cls):
+            standardMsg = '%s is an instance of %r' % (safe_repr(obj), cls)
+            self.fail(self._formatMessage(msg, standardMsg))
+    TestCase.assertNotIsInstance = _assertNotIsInstance
 
 
 try:
