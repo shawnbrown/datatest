@@ -313,6 +313,36 @@ class ValidateType(object):
         superset = normalize(superset, lazy_evaluation=False, default_type=set)
         self(data, _required.RequiredSuperset(superset), msg=msg)
 
+    def approx(self, data, requirement, places=None, msg=None, delta=None):
+        """Require that numeric values are approximately equal. The
+        given *requirement* can be a single element or a mapping.
+
+        Values compare as equal if their difference rounded to the
+        given number of decimal places (default 7) equals zero, or
+        if the difference between values is less than or equal to
+        the given delta:
+
+        .. code-block:: python
+            :emphasize-lines: 7
+
+            from datatest import validate
+
+            data = {'A': 10.8515625, 'B': 8.578125}
+
+            requirement = {'A': 10.85, 'B': 8.58}
+
+            validate.approx(data, requirement, places=2)
+
+        It is appropriate to use :meth:`validate.approx` when checking
+        for nominal values---where deviations are considered an
+        intrinsic feature of the data. But when deviations represent an
+        undesired-but-acceptible variation, :meth:`allowed.deviation`
+        should be used instead.
+        """
+        __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
+        requirement = _required.RequiredApprox(requirement, places=places, delta=delta)
+        self(data, requirement, msg=msg)
+
 
 validate = ValidateType()  # Use as instance.
 

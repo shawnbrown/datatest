@@ -23,6 +23,8 @@ Validation
 
     .. automethod:: superset
 
+    .. automethod:: approx
+
     .. note::
 
         Calling :class:`validate()` or its methods will either raise an
