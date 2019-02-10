@@ -771,10 +771,10 @@ class RequiredMapping(ItemsRequirement):
             keys_seen.add(key)
 
             expected = required_mapping.get(key, NOTFOUND)
-            req_type = self.abstract_factory(expected)
+            req_factory = self.abstract_factory(expected)
 
             if isinstance(value, BaseElement):
-                if req_type is RequiredPredicate:
+                if req_factory is RequiredPredicate:
                     # Skip requirement and use Predicate directly.
                     pred = Predicate(expected)
                     result = pred(value)
@@ -792,7 +792,7 @@ class RequiredMapping(ItemsRequirement):
                     # Change single-element into a group.
                     value = [value]
 
-            requirement = req_type(expected) if req_type else expected
+            requirement = req_factory(expected) if req_factory else expected
 
             diff, desc = requirement.check_group(value)
             first_item, diff = iterpeek(diff, None)
@@ -803,8 +803,8 @@ class RequiredMapping(ItemsRequirement):
         # Check for expected keys that are missing from items.
         for key, expected in IterItems(required_mapping):
             if key not in keys_seen:
-                req_type = self.abstract_factory(expected)
-                requirement = req_type(expected) if req_type else expected
+                req_factory = self.abstract_factory(expected)
+                requirement = req_factory(expected) if req_factory else expected
 
                 diff, desc = requirement.check_group([])  # Try empty container.
                 first_item, diff = iterpeek(diff, None)
