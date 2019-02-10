@@ -915,8 +915,9 @@ class RequiredApprox(RequiredPredicate):
     """Require that numeric values are approximately equal.
 
     Values compare as equal if their difference rounded to the
-    given number of decimal places (default 7) equals zero, or if
-    the difference between values is more than the given delta.
+    given number of decimal places (default 7) equals zero, or
+    if the difference between values is less than or equal to
+    the given delta.
     """
     def __new__(cls, obj, places=None, delta=None, show_expected=False):
         # If numeric, return new RequiredApprox (normal behavior).
