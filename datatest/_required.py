@@ -711,14 +711,27 @@ class RequiredOrder(GroupRequirement):
 class RequiredMapping(ItemsRequirement):
     """A requirement to test a mapping of data against a *mapping*
     of required objects.
+
+    If given, an *abstract_factory* should be a callable of one
+    argument that accepts a value and returns an appropriate
+    GroupRequirement factory or None. If None is returned, the
+    default auto-detection is used instead.
     """
-    def __init__(self, mapping):
+    def __init__(self, mapping, abstract_factory=None):
         if not isinstance(mapping, Mapping):
             mapping = dict(mapping)
         self.mapping = mapping
+        self._abstract_factory = abstract_factory
 
-    @staticmethod
-    def _get_requirement_type(obj):
+    def abstract_factory(self, obj):
+        """Return a group requirement type appropriate for the given
+        *obj* or None if *obj* is already a GroupRequirement instance.
+        """
+        if self._abstract_factory:
+            factory = self._abstract_factory(obj)
+            if factory:
+                return factory
+
         if isinstance(obj, GroupRequirement):
             return None
 
@@ -758,7 +771,7 @@ class RequiredMapping(ItemsRequirement):
             keys_seen.add(key)
 
             expected = required_mapping.get(key, NOTFOUND)
-            req_type = self._get_requirement_type(expected)
+            req_type = self.abstract_factory(expected)
 
             if isinstance(value, BaseElement):
                 if req_type is RequiredPredicate:
@@ -790,7 +803,7 @@ class RequiredMapping(ItemsRequirement):
         # Check for expected keys that are missing from items.
         for key, expected in IterItems(required_mapping):
             if key not in keys_seen:
-                req_type = self._get_requirement_type(expected)
+                req_type = self.abstract_factory(expected)
                 requirement = req_type(expected) if req_type else expected
 
                 diff, desc = requirement.check_group([])  # Try empty container.

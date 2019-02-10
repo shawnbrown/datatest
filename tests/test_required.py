@@ -1463,6 +1463,29 @@ class TestRequiredMapping(unittest.TestCase):
         self.assertEqual(evaluate_items(diff), expected)
         self.assertEqual(desc, 'my message')
 
+    def test_abstract_factory(self):
+        """Test *abstract_factory* argument and method."""
+        def custom_factory(value):
+            if isinstance(value, str):
+                return RequiredSet  # <- Treat str as set of characters.
+            return None
+
+        req_dict = {
+            'A': 'xy',   # <- Passed to RequiredSet
+            'B': 'xyz',  # <- Passed to RequiredSet
+            'C': 123,    # <- Passed to RequiredPredicate (via auto-detect
+                         #    when custom_factory() returns None)
+        }
+        requirement = RequiredMapping(req_dict, abstract_factory=custom_factory)
+
+        data = {'A': ['x', 'y', 'y'], 'B': ['x', 'y'], 'C': [123, 123]}
+        diff, desc = requirement(data)
+        expected = [
+            ('B', [Missing('z')]),
+        ]
+        self.assertEqual(evaluate_items(diff), expected)
+        self.assertEqual(desc, 'does not satisfy set membership')
+
     def test_integration(self):
         requirement = RequiredMapping({
             'a': 'x',
