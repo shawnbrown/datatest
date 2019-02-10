@@ -31,6 +31,7 @@ from datatest._required import get_requirement
 from datatest._required import RequiredUnique
 from datatest._required import RequiredSubset
 from datatest._required import RequiredSuperset
+from datatest._required import RequiredApprox
 from datatest.difference import NOTFOUND
 
 
@@ -1668,3 +1669,121 @@ class TestRequiredSuperset(unittest.TestCase):
         diff, desc = requirement((3, 4))  # <- Tuple is single element.
         diff = sorted(diff, key=lambda x: x.args)
         self.assertEqual(diff, [Extra((3, 4))])
+
+
+class TestRequiredApprox(unittest.TestCase):
+    def test_passing_default(self):
+        requirement = RequiredApprox(10)
+
+        data = [10.00000001, 10.00000002, 10.00000003]
+        result = requirement(data)
+        self.assertIsNone(result)  # True for all, returns None.
+
+    def test_some_false(self):
+        """Numeric differences beyond the approximate range should
+        create Deviation differences.
+        """
+        requirement = RequiredApprox(10)
+
+        # Using check_group() method internally.
+        data = [10.00000001, 10.00000002, 9.5]
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Deviation(-0.5, 10)])
+        self.assertEqual(desc, 'not equal within 7 decimal places')
+
+        # Using check_group() method with single item.
+        data = 9.5
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Deviation(-0.5, 10)])
+        self.assertEqual(desc, 'not equal within 7 decimal places')
+
+        # Using check_items() method internally.
+        data = {'A': 10.00000001, 'B': 9.5, 'C': [9.5, 10.00000001]}
+        diff, desc = requirement(data)
+        expected = [
+            ('B', Deviation(-0.5, 10)),
+            ('C', [Deviation(-0.5, 10)]),
+        ]
+        self.assertEqual(evaluate_items(diff), expected)
+        self.assertEqual(desc, 'not equal within 7 decimal places')
+
+    def test_specified_places(self):
+        requirement = RequiredApprox(0.5, places=2)
+
+        data = [0.50390625, 0.49609375, 0.4921875]
+
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Deviation(-0.0078125, 0.5)])
+        self.assertEqual(desc, 'not equal within 2 decimal places')
+
+    def test_specified_delta(self):
+        requirement = RequiredApprox(10, delta=3)
+
+        data = [10, 7, 13, 13.0625]
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Deviation(+3.0625, 10)])
+        self.assertEqual(desc, 'not equal within delta of 3')
+
+    def test_nonnumeric_data(self):
+        """Non-numeric differences should create Invalid() differences."""
+        requirement = RequiredApprox(10)
+
+        data = [10.00000001, 10.00000002, 'abc']
+
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Invalid('abc')])
+        self.assertEqual(desc, 'not equal within 7 decimal places')
+
+    def test_show_expected(self):
+        requirement = RequiredApprox(10, show_expected=True)
+
+        data = [10.00000001, 10.00000002, 'abc']
+
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Invalid('abc', expected=10)])
+        self.assertEqual(desc, 'not equal within 7 decimal places')
+
+    def test_duplicate_false(self):
+        """Should return one difference for every false result (including
+        duplicates).
+        """
+        requirement = RequiredApprox(10)
+
+        data = [10.00000001, 9.5, 9.5]  # <- Multiple 9.5's.
+
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Deviation(-0.5, 10), Deviation(-0.5, 10)])
+        self.assertEqual(desc, 'not equal within 7 decimal places')
+
+    def test_empty_iterable(self):
+        requirement = RequiredApprox(10)
+        result = requirement([])
+        self.assertIsNone(result)
+
+    def test_nonnumeric_baseelement(self):
+        """Non-numeric base elements should return a RequiredPredicate,
+        not a RequiredApprox instance.
+        """
+        requirement = RequiredApprox('abc')
+        self.assertIsInstance(requirement, RequiredPredicate)
+        self.assertNotIsInstance(requirement, RequiredApprox)
+
+    def test_notfound_token(self):
+        data = [10.00000001, NOTFOUND]
+        requirement = RequiredApprox(10)
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Deviation(-10, 10)])
+        self.assertEqual(desc, 'not equal within 7 decimal places')
+
+    @unittest.skip('not yet implemented')
+    def test_items(self):
+        trusted = {'A': 5, 'B': 10}
+        requirement = RequiredApprox(trusted)
+
+        data = {'A': [3, 5.00000001], 'B': 10.00000001, 'C': 7}
+        diff, desc = requirement(data)
+        expected = [
+            ('A', [Deviation(-2, 5)]),
+            ('C', Invalid(7)),
+        ]
+        self.assertEqual(evaluate_items(diff), expected)

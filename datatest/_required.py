@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import difflib
+from numbers import Number
 from types import FunctionType
 from ._compatibility.builtins import *
 from ._compatibility import abc
@@ -895,3 +896,57 @@ class RequiredSuperset(GroupRequirement):
         differences = (Extra(element) for element in extras)
         description = 'may contain only elements of given superset'
         return differences, description
+
+
+class RequiredApprox(RequiredPredicate):
+    """Require that numeric values are approximately equal.
+
+    Values compare as equal if their difference rounded to the
+    given number of decimal places (default 7) equals zero, or if
+    the difference between values is more than the given delta.
+    """
+    def __new__(cls, obj, places=None, delta=None, show_expected=False):
+        if isinstance(obj, Number):
+            return super(RequiredApprox, cls).__new__(cls)
+
+        # If not numeric, return RequiredPredicate instead.
+        return RequiredPredicate(obj)
+
+    def __init__(self, obj, places=None, delta=None, show_expected=False):
+        if delta is not None and places is not None:
+            raise TypeError('specify delta or places not both')
+
+        if places is None:
+            places = 7
+
+        if delta is not None:
+            def approx_equal(element):  # <- Closes over obj and delta.
+                try:
+                    return abs(element - obj) <= delta
+                except TypeError:
+                    return False
+        else:
+            def approx_equal(element):  # <- Closes over obj and places.
+                try:
+                    return round(abs(element - obj), places) == 0
+                except TypeError:
+                    return False
+
+        self._pred = approx_equal
+        self._obj = obj
+        self.show_expected = show_expected
+        self.places = places
+        self.delta = delta
+
+    def _get_description(self):
+        if self.delta is not None:
+            return 'not equal within delta of {0}'.format(self.delta)
+        return 'not equal within {0} decimal places'.format(self.places)
+
+    def check_group(self, group):
+        differences, _ = super(RequiredApprox, self).check_group(group)
+        return differences, self._get_description()
+
+    def check_items(self, group):
+        differences, _ = super(RequiredApprox, self).check_items(group)
+        return differences, self._get_description()
