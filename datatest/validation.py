@@ -327,17 +327,17 @@ class ValidateType(object):
 
             from datatest import validate
 
-            data = {'A': 10.8515625, 'B': 8.578125}
+            data = {'A': 1.171875, 'B': 8.859375}
 
-            requirement = {'A': 10.85, 'B': 8.58}
+            requirement = {'A': 1.17, 'B': 8.86}
 
             validate.approx(data, requirement, places=2)
 
         It is appropriate to use :meth:`validate.approx` when checking
-        for nominal values---where deviations are considered an
+        for nominal values---where some deviation is considered an
         intrinsic feature of the data. But when deviations represent an
         undesired-but-acceptible variation, :meth:`allowed.deviation`
-        should be used instead.
+        would be more fitting.
         """
         __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
         requirement = _required.RequiredApprox(requirement, places=places, delta=delta)
