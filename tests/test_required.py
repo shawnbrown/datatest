@@ -1382,7 +1382,7 @@ class TestRequiredMapping(unittest.TestCase):
         requirement = RequiredMapping({'a': set(['x', 'y'])})
         diff, desc = requirement({'a': 'x'})
         expected = [
-            ('a', [Missing('y')]),
+            ('a', Missing('y')),
         ]
         self.assertEqual(evaluate_items(diff), expected)
         self.assertEqual(desc, 'does not satisfy set membership')
@@ -1450,7 +1450,7 @@ class TestRequiredMapping(unittest.TestCase):
         requirement = RequiredMapping({'a': MyRequirement()})
         diff, desc = requirement({'a': 1})  # <- Single-element value.
         expected = [
-            ('a', [Invalid('foo')]),
+            ('a', Invalid('foo')),
         ]
         self.assertEqual(evaluate_items(diff), expected)
         self.assertEqual(desc, 'my message')

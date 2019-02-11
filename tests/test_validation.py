@@ -439,5 +439,5 @@ class TestValidate(unittest.TestCase):
             requirement = {'A': 5, 'B': 10}
             validate.approx(data, requirement)
         actual = cm.exception.differences
-        expected = {'A': [Deviation(-2, 5)]}
+        expected = {'A': Deviation(-2, 5)}
         self.assertEqual(actual, expected)

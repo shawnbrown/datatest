@@ -787,18 +787,25 @@ class RequiredMapping(ItemsRequirement):
                         differences.append((key, result))
                         desc = _build_description(expected)
                         description = self._update_description(description, desc)
-                    continue  # <- CONTINUE!
                 else:
-                    # Change single-element into a group.
-                    value = [value]
-
-            requirement = req_factory(expected) if req_factory else expected
-
-            diff, desc = requirement.check_group(value)
-            first_item, diff = iterpeek(diff, None)
-            if first_item:
-                differences.append((key, diff))
-                description = self._update_description(description, desc)
+                    # Single-element handling for other requirement types.
+                    requirement = req_factory(expected) if req_factory else expected
+                    value = [value]  # Wrap element to treat it as a group.
+                    diff, desc = requirement.check_group(value)
+                    diff = list(diff)
+                    if len(diff) == 1:
+                        diff = diff[0]  # Unwrap if single difference.
+                    if diff:
+                        differences.append((key, diff))
+                        description = self._update_description(description, desc)
+            else:
+                # Normal group handling (`value` is already a group).
+                requirement = req_factory(expected) if req_factory else expected
+                diff, desc = requirement.check_group(value)
+                first_item, diff = iterpeek(diff, None)
+                if first_item:
+                    differences.append((key, diff))
+                    description = self._update_description(description, desc)
 
         # Check for expected keys that are missing from items.
         for key, expected in IterItems(required_mapping):
