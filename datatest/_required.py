@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import difflib
 from numbers import Number
+from statistics import median
 from types import FunctionType
 from ._compatibility.builtins import *
 from ._compatibility import abc
@@ -14,6 +15,7 @@ from ._compatibility.itertools import chain
 from .difference import BaseDifference
 from .difference import Extra
 from .difference import Missing
+from .difference import Deviation
 from .difference import _make_difference
 from .difference import NOTFOUND
 from ._normalize import normalize
@@ -983,3 +985,68 @@ class RequiredApprox(RequiredPredicate):
     def check_items(self, group):
         differences, _ = super(RequiredApprox, self).check_items(group)
         return differences, self._get_description()
+
+
+class RequiredOutliers(GroupRequirement):
+    """Require that groups do not contain outliers.
+
+    This requirement uses the Tukey fence/interquartile method
+    for outlier labeling. The default multiplier of 2.2 is based
+    on "Fine-Tuning Some Resistant Rules for Outlier Labeling"
+    by Hoaglin and Iglewicz (1987).
+    """
+    def __new__(cls, obj, multiplier=2.2):
+        # If mapping, use RequiredMapping with abstract factory.
+        if isinstance(obj, (Mapping, IterItems)):
+            def abstract_factory(value):
+                def make_outlier(val):
+                    return RequiredOutliers(val, multiplier=multiplier)
+                return make_outlier  # <- Concrete factory.
+
+            return RequiredMapping(obj, abstract_factory=abstract_factory)
+
+        return super(RequiredOutliers, cls).__new__(cls)
+
+    def __init__(self, obj, multiplier=2.2, rounding=True):
+        # Build lower and upper fences.
+        try:
+            group = sorted(obj)
+        except TypeError as err:
+            msg = 'outlier checking requires numeric values: {0}'.format(err)
+            raise TypeError(msg)
+
+        if len(group) < 2:
+            self.lower = self.upper = (group[0] if group else 0)
+            return  # <- EXIT!
+
+        midpoint = int(round(len(group) / 2.0))
+        q1 = median(group[:midpoint])
+        q3 = median(group[midpoint:])
+        iqr = q3 - q1
+        kprime = iqr * multiplier
+        lower = q1 - kprime
+        upper = q3 + kprime
+
+        if iqr and rounding:
+            # Round fences to concise float representations.
+            one_percent_iqr = iqr / 100
+            reciprocal = 1 / one_percent_iqr
+            next_power_of_2 = 1 << int(reciprocal - 1).bit_length()
+            quantile = 1 / next_power_of_2
+            lower = round(lower / quantile) * quantile
+            upper = round(upper / quantile) * quantile
+
+        self.lower = lower
+        self.upper = upper
+
+    @staticmethod
+    def _generate_differences(group, lower, upper):
+        for element in group:
+            if element < lower:
+                yield Deviation(element - lower, lower)
+            elif element > upper:
+                yield Deviation(element - upper, upper)
+
+    def check_group(self, group):
+        differences = self._generate_differences(group, self.lower, self.upper)
+        return differences, 'contains outliers'

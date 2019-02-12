@@ -32,6 +32,7 @@ from datatest._required import RequiredUnique
 from datatest._required import RequiredSubset
 from datatest._required import RequiredSuperset
 from datatest._required import RequiredApprox
+from datatest._required import RequiredOutliers
 from datatest.difference import NOTFOUND
 
 
@@ -1807,5 +1808,49 @@ class TestRequiredApprox(unittest.TestCase):
         expected = [
             ('A', [Deviation(-2, 5)]),
             ('C', Deviation(+7, None)),
+        ]
+        self.assertEqual(evaluate_items(diff), expected)
+
+
+class TestRequiredOutliers(unittest.TestCase):
+    def test_passing(self):
+        data = [12, 5, 8, 5, 7, 15]
+        requirement = RequiredOutliers(data)
+        result = requirement(data)
+        self.assertIsNone(result)  # True for all, returns None.
+
+    def test_failing_group(self):
+        data = [12, 5, 8, 37, 5, 7, 15]  # <- 37 is an outlier
+        requirement = RequiredOutliers(data)
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Deviation(+2.1875, 34.8125)])
+
+    def test_zero_or_one_value(self):
+        data = []  # <- Zero values.
+        requirement = RequiredOutliers(data)
+        result = requirement(data)
+        self.assertIsNone(result)  # Can have no outliers.
+
+        data = [42]  # <- One value.
+        requirement = RequiredOutliers(data)
+        result = requirement(data)
+        self.assertIsNone(result)  # Can have no outliers.
+
+    def test_bad_values(self):
+        data = [12, 5, 8, 'abc', 5, 7, 15]  # <- 'abc' not compatible
+        with self.assertRaises(TypeError):
+            requirement = RequiredOutliers(data)
+
+    def test_failing_mapping(self):
+        data = {
+            'A': [12, 5, 8, 37, 5, 7, 15],  # <- 37 is an outlier
+            'B': [83, 75, 78, 50, 76, 89],  # <- 50 is an outlier
+        }
+        requirement = RequiredOutliers(data)
+
+        diff, desc = requirement(data)
+        expected = [
+            ('A', [Deviation(+2.1875, 34.8125)]),
+            ('B', [Deviation(-7.375, 57.375)]),
         ]
         self.assertEqual(evaluate_items(diff), expected)
