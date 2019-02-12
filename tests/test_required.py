@@ -1836,10 +1836,16 @@ class TestRequiredOutliers(unittest.TestCase):
         result = requirement(data)
         self.assertIsNone(result)  # Can have no outliers.
 
-    def test_bad_values(self):
-        data = [12, 5, 8, 'abc', 5, 7, 15]  # <- 'abc' not compatible
+    def test_nonnumeric_requirement(self):
+        requirement = [12, 5, 8, 'abc', 5, 7, 15]  # <- 'abc' not valid input
         with self.assertRaises(TypeError):
-            requirement = RequiredOutliers(data)
+            RequiredOutliers(requirement)
+
+    def test_nonnumeric_data(self):
+        requirement = RequiredOutliers([12, 5, 8, 5, 7, 15])
+        data = [12, 5, 8, 'abc', 5, 7, 15]  # <- 'abc' not comparable
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Invalid('abc')])
 
     def test_failing_mapping(self):
         data = {

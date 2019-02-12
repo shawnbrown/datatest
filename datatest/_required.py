@@ -15,9 +15,10 @@ from ._compatibility.functools import wraps
 from ._compatibility.itertools import chain
 from ._compatibility.statistics import median
 from .difference import BaseDifference
-from .difference import Extra
-from .difference import Missing
 from .difference import Deviation
+from .difference import Extra
+from .difference import Invalid
+from .difference import Missing
 from .difference import _make_difference
 from .difference import NOTFOUND
 from ._normalize import normalize
@@ -1047,10 +1048,13 @@ class RequiredOutliers(GroupRequirement):
     @staticmethod
     def _generate_differences(group, lower, upper):
         for element in group:
-            if element < lower:
-                yield Deviation(element - lower, lower)
-            elif element > upper:
-                yield Deviation(element - upper, upper)
+            try:
+                if element < lower:
+                    yield Deviation(element - lower, lower)
+                elif element > upper:
+                    yield Deviation(element - upper, upper)
+            except TypeError:
+                yield Invalid(element)
 
     def check_group(self, group):
         differences = self._generate_differences(group, self.lower, self.upper)
