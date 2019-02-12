@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
+from __future__ import division
+
 import difflib
 from numbers import Number
-from statistics import median
 from types import FunctionType
 from ._compatibility.builtins import *
 from ._compatibility import abc
@@ -12,6 +13,7 @@ from ._compatibility.collections.abc import Sequence
 from ._compatibility.collections.abc import Set
 from ._compatibility.functools import wraps
 from ._compatibility.itertools import chain
+from ._compatibility.statistics import median
 from .difference import BaseDifference
 from .difference import Extra
 from .difference import Missing
@@ -1031,8 +1033,9 @@ class RequiredOutliers(GroupRequirement):
             # Round fences to concise float representations.
             one_percent_iqr = iqr / 100
             reciprocal = 1 / one_percent_iqr
-            next_power_of_2 = 1 << int(reciprocal - 1).bit_length()
-            quantile = 1 / next_power_of_2
+            bit_length = len(bin(int(reciprocal - 1))) - 2  # Py 2.6 compat;
+            next_power_of_2 = 1 << bit_length               # use bit_length()
+            quantile = 1 / next_power_of_2                  # method in 2.7+
             lower = round(lower / quantile) * quantile
             upper = round(upper / quantile) * quantile
 
