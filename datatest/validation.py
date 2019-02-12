@@ -340,6 +340,7 @@ class ValidateType(object):
         would be more fitting.
         """
         __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
+        requirement = normalize(requirement, lazy_evaluation=False)
         requirement = _required.RequiredApprox(requirement, places=places, delta=delta)
         self(data, requirement, msg=msg)
 

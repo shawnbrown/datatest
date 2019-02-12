@@ -6,7 +6,9 @@ from datatest.difference import Extra
 from datatest.difference import Missing
 from datatest.difference import Invalid
 from datatest.difference import Deviation
+from datatest._query.query import Query
 from datatest._utils import IterItems
+
 from datatest.validation import ValidationError
 from datatest.validation import validate
 from datatest.validation import valid
@@ -431,7 +433,7 @@ class TestValidate(unittest.TestCase):
 
     def test_approx_method(self):
         data = {'A': 5.00000001, 'B': 10.00000001}
-        requirement = {'A': 5, 'B': 10}
+        requirement = Query.from_object({'A': 5, 'B': 10})
         validate.approx(data, requirement)
 
         with self.assertRaises(ValidationError) as cm:
