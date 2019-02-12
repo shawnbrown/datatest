@@ -1010,17 +1010,19 @@ class RequiredOutliers(GroupRequirement):
         return super(RequiredOutliers, cls).__new__(cls)
 
     def __init__(self, obj, multiplier=2.2, rounding=True):
-        # Build lower and upper fences.
-        try:
-            group = sorted(obj)
-        except TypeError as err:
-            msg = 'outlier checking requires numeric values: {0}'.format(err)
-            raise TypeError(msg)
+        def verify_numeric(x):
+            if not isinstance(x, Number):
+                msg = 'outlier check requires numeric values, got {0}: {1!r}'
+                raise TypeError(msg.format(x.__class__.__name__, x))
+            return x
+
+        group = sorted(obj, key=verify_numeric)
 
         if len(group) < 2:
             self.lower = self.upper = (group[0] if group else 0)
             return  # <- EXIT!
 
+        # Build lower and upper fences.
         midpoint = int(round(len(group) / 2.0))
         q1 = median(group[:midpoint])
         q3 = median(group[midpoint:])
