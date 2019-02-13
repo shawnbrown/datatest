@@ -1014,12 +1014,12 @@ class RequiredOutliers(GroupRequirement):
     on "Fine-Tuning Some Resistant Rules for Outlier Labeling"
     by Hoaglin and Iglewicz (1987).
     """
-    def __new__(cls, obj, multiplier=2.2):
+    def __new__(cls, obj, multiplier=2.2, rounding=True):
         # If mapping, use RequiredMapping with abstract factory.
         if isinstance(obj, (Mapping, IterItems)):
             def abstract_factory(value):
                 def make_outlier(val):
-                    return RequiredOutliers(val, multiplier=multiplier)
+                    return RequiredOutliers(val, multiplier=multiplier, rounding=rounding)
                 return make_outlier  # <- Concrete factory.
 
             return RequiredMapping(obj, abstract_factory=abstract_factory)
