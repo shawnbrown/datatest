@@ -887,6 +887,14 @@ class RequiredUnique(GroupRequirement):
 
 class RequiredSubset(GroupRequirement):
     """Require that data contains all elements of *subset*."""
+    def __new__(cls, subset):
+        if isinstance(subset, (Mapping, IterItems)):
+            def abstract_factory(value):
+                return RequiredSubset  # <- Concrete factory.
+            return RequiredMapping(subset, abstract_factory=abstract_factory)
+
+        return super(RequiredSubset, cls).__new__(cls)
+
     def __init__(self, subset):
         if not isinstance(subset, Set):
             subset = set(subset)

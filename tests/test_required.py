@@ -1633,7 +1633,7 @@ class TestRequiredSubset(unittest.TestCase):
         self.assertEqual(list(diff), [Missing(3), Missing(4)])
         self.assertRegex(desc, 'must contain all')
 
-    def test_mapping_of_element_groups(self):
+    def test_data_mapping(self):
         requirement = RequiredSubset(set([1, 2, 3]))
 
         data = {'a': [1, 2, 3], 'b': [1, 2, 3], 'c': [1, 2, 3]}
@@ -1646,6 +1646,19 @@ class TestRequiredSubset(unittest.TestCase):
         ]
         self.assertEqual(evaluate_items(diff), expected)
         self.assertRegex(desc, 'must contain all')
+
+    def test_requirement_mapping(self):
+        requirement = RequiredSubset({'A': set([1, 2]), 'B': set([2, 3])})
+
+        data = {'A': [1, 2, 3], 'B': [2, 3, 4]}
+        self.assertIsNone(requirement(data))
+
+        data ={'A': [1, 2, 3], 'B': [3, 4, 5]}
+        diff, desc = requirement(data)
+        expected = [
+            ('B', [Missing(2)]),
+        ]
+        self.assertEqual(evaluate_items(diff), expected)
 
     def test_single_element_handling(self):
         requirement = RequiredSubset(set([1, 2]))
