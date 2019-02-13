@@ -1683,7 +1683,7 @@ class TestRequiredSuperset(unittest.TestCase):
         self.assertEqual(list(diff), [Extra(3), Extra(4)])
         self.assertRegex(desc, 'may contain only')
 
-    def test_mapping_of_element_groups(self):
+    def test_data_mapping(self):
         requirement = RequiredSuperset(set([1, 2, 3]))
 
         data = {'a': [1, 2, 3], 'b': [1, 2], 'c': [1]}
@@ -1696,6 +1696,19 @@ class TestRequiredSuperset(unittest.TestCase):
         ]
         self.assertEqual(evaluate_items(diff), expected)
         self.assertRegex(desc, 'may contain only')
+
+    def test_requirement_mapping(self):
+        requirement = RequiredSuperset({'A': set([1, 2, 3]), 'B': set([2, 3, 4])})
+
+        data = {'A': [1, 2], 'B': [2, 4]}
+        self.assertIsNone(requirement(data))
+
+        data ={'A': [1, 2, 3], 'B': [3, 4, 5]}
+        diff, desc = requirement(data)
+        expected = [
+            ('B', [Extra(5)]),
+        ]
+        self.assertEqual(evaluate_items(diff), expected)
 
     def test_single_element_handling(self):
         requirement = RequiredSuperset(set([1, 2]))

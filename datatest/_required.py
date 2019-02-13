@@ -914,6 +914,14 @@ class RequiredSubset(GroupRequirement):
 
 class RequiredSuperset(GroupRequirement):
     """Require that data contains only elements of *superset*."""
+    def __new__(cls, superset):
+        if isinstance(superset, (Mapping, IterItems)):
+            def abstract_factory(value):
+                return RequiredSuperset  # <- Concrete factory.
+            return RequiredMapping(superset, abstract_factory=abstract_factory)
+
+        return super(RequiredSuperset, cls).__new__(cls)
+
     def __init__(self, superset):
         if not isinstance(superset, Set):
             superset = set(superset)
