@@ -148,18 +148,10 @@ class DictItems(Iterator):
 IterItems.register(DictItems)  # <- Register DictItems as a virtual-subclass.
 
 
-_iteritem_types = (
-    ItemsView,
-    DictItems,
-    type(getattr(dict(), 'iteritems', dict().items)()),  # For Python 2 compatibility.
-)
-
 def _is_collection_of_items(obj):
-    while hasattr(obj, '__wrapped__'):
-        if isinstance(obj, DictItems):
-            return True
+    while isinstance(obj, Result):
         obj = obj.__wrapped__
-    return isinstance(obj, _iteritem_types)
+    return isinstance(obj, IterItems)
 
 
 class Result(Iterator):
@@ -188,8 +180,7 @@ class Result(Iterator):
             msg = 'evaluation_type must be a type, found instance of {0}'
             raise TypeError(msg.format(evaluation_type.__class__.__name__))
 
-        while (hasattr(iterable, '__wrapped__')
-                   and not isinstance(iterable, DictItems)):
+        while isinstance(iterable, Result):
             iterable = iterable.__wrapped__
 
         if isinstance(iterable, Mapping):
