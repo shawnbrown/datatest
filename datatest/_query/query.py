@@ -186,13 +186,6 @@ class Result(Iterator):
         if isinstance(iterable, Mapping):
             iterable = DictItems(iterable)
 
-        if (issubclass(evaluation_type, Mapping)
-                and not _is_collection_of_items(iterable)):
-            cls_name = iterable.__class__.__name__
-            raise TypeError('when evaluation_type is a mapping, '
-                            'iterator must be DictItems or ItemsView, '
-                            'found {0} instead'.format(cls_name))
-
         #: The underlying iterator---useful when introspecting
         #: or rewrapping.
         self.__wrapped__ = iter(iterable)

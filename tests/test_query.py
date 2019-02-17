@@ -126,18 +126,35 @@ def convert_iter_to_type(iterable, target_type):
 
 
 class TestResult(unittest.TestCase):
-    def test_init(self):
-        untyped = iter([1, 2, 3, 4])
+    def test_nonmappings(self):
+        """Check collection types (i.e., sized, iterable containers)."""
+        result = Result([1, 2, 3], list)
+        self.assertEqual(result.fetch(), [1, 2, 3])
 
-        typed = Result(untyped, list)
-        self.assertEqual(typed.evaluation_type, list)
+        result = Result([1, 2, 3], set)
+        self.assertEqual(result.fetch(), set([1, 2, 3]))
 
-        typed = Result(iterable=untyped, evaluation_type=list)
-        self.assertEqual(typed.evaluation_type, list)
+        result = Result(iter([1, 2, 3]), set)
+        self.assertEqual(result.fetch(), set([1, 2, 3]))
 
+    def test_mappings(self):
+        result = Result({'a': 1, 'b': 2}, dict)
+        self.assertEqual(result.fetch(), {'a': 1, 'b': 2})
+
+        result = Result(IterItems([('a', 1), ('b', 2)]), dict)
+        self.assertEqual(result.fetch(), {'a': 1, 'b': 2})
+
+        result = Result(iter([iter(['a', 1]), iter(['b', 2])]), dict)
+        self.assertEqual(result.fetch(), {'a': 1, 'b': 2})
+
+        with self.assertRaises(ValueError):
+            result = Result([('a', 1), 'b'], dict)
+            result.fetch()  # <- Fails late (on fetch, only)
+
+    def test_bad_evaluation_type(self):
         regex = 'evaluation_type must be a type, found instance of list'
         with self.assertRaisesRegex(TypeError, regex):
-            typed = Result(untyped, [1, 2])
+            typed = Result([1, 2, 3], [1])
 
 
 class TestDictItems(unittest.TestCase):
