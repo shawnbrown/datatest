@@ -344,6 +344,72 @@ class ValidateType(object):
         requirement = _required.RequiredApprox(requirement, places=places, delta=delta)
         self(data, requirement, msg=msg)
 
+    def outliers(self, data, requirement=None, multiplier=2.2, msg=None,
+                 rounding=True):
+        """Check *data* for outliers using the Tukey
+        fence/interquartile range (IQR) method for outlier labeling.
+
+        The Tukey fence method determines a range of values that
+        elements in *data* are expected to fall within (the lower and
+        upper bounds of this range are called "fences"). When elements
+        fall outside the determined range, they are considered to be
+        outliers. The range can be broadened or narrowed by increasing
+        or decreasing the *multiplier*.
+
+        If *requirement* is given, it is used in place of *data* to
+        determine the expected range of values. The *requirement*
+        should be a collection of numbers or a mapping of collections.
+
+        When *rounding* is True, fence values are rounded to precise
+        float representations.
+
+        .. code-block:: python
+            :emphasize-lines: 5
+
+            from datatest import validate
+
+            data = [12, 5, 8, 37, 5, 7, 15]  # <- 37 is an outlier
+
+            validate.outliers(data)
+
+        Mappings can also be used:
+
+        .. code-block:: python
+            :emphasize-lines: 8
+
+            from datatest import validate
+
+            data = {
+                'A': [12, 5, 8, 37, 5, 7, 15],  # <- 37 is an outlier
+                'B': [83, 75, 78, 50, 76, 89],  # <- 50 is an outlier
+            }
+
+            validate.outliers(data)
+
+        The default *multiplier* of 2.2 is based on "Fine-Tuning Some
+        Resistant Rules for Outlier Labeling" by Hoaglin and Iglewicz
+        (1987).
+        """
+        __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
+
+        if requirement is None:
+            requirement = data
+
+        normalized = normalize(
+            requirement,
+            lazy_evaluation=False,
+            default_type=list,
+        )
+        if requirement is data and nonstringiter(data) and exhaustible(data):
+            data = normalized  # Use non-exhaustible version.
+
+        requirement = _required.RequiredOutliers(
+            normalized,
+            multiplier=multiplier,
+            rounding=rounding,
+        )
+        self(data, requirement, msg=msg)
+
 
 validate = ValidateType()  # Use as instance.
 
