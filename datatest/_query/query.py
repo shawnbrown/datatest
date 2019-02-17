@@ -11,12 +11,10 @@ from glob import glob
 from numbers import Number
 
 from .._compatibility.builtins import *
-from .._compatibility.textwrap import indent
 from .._compatibility import abc
-from .._compatibility.collections import defaultdict
 from .._compatibility.collections import namedtuple
+from .._compatibility.collections.abc import Collection
 from .._compatibility.collections.abc import Hashable
-from .._compatibility.collections.abc import ItemsView
 from .._compatibility.collections.abc import Iterable
 from .._compatibility.collections.abc import Iterator
 from .._compatibility.collections.abc import Mapping
@@ -232,7 +230,7 @@ class Result(Iterator):
         return evaluation_type(self)
 
 
-def _get_evaluation_type(obj, default=None):
+def _get_evaluation_type(obj, default=list):
     """Return object's evaluation_type property. If the object does
     not have an evaluation_type property and is a mapping, sequence,
     or set, then return the type of the object itself. If the object
@@ -240,22 +238,19 @@ def _get_evaluation_type(obj, default=None):
     object.
     """
     if hasattr(obj, 'evaluation_type'):
-        return obj.evaluation_type  # <- EXIT!
+        return obj.evaluation_type
 
-    obj_cls = obj.__class__  # Avoiding type() to support old-style
-                             # classes in Python 2.7 and 2.6.
+    if isinstance(obj, IterItems):
+        return dict
 
-    #if isinstance(obj, DictItems):
-    #    return dict  # <- EXIT!
+    if isinstance(obj, Collection):
+        return obj.__class__
 
-    if issubclass(obj_cls, (Mapping, Sequence, Set)):
-        return obj_cls  # <- EXIT!
+    if isinstance(obj, Iterable):
+        return default
 
-    if default and issubclass(obj_cls, Iterable):
-        return default  # <- EXIT!
-
-    err_msg = 'unable to determine target type for {0!r} instance'
-    raise TypeError(err_msg.format(obj_cls.__name__))
+    err_msg = 'unable to determine evaluation type for {0!r} instance'
+    raise TypeError(err_msg.format(obj.__class__.__name__))
 
 
 def _make_dataresult(iterable):
@@ -263,11 +258,6 @@ def _make_dataresult(iterable):
         return iterable
 
     eval_type = _get_evaluation_type(iterable)
-    if issubclass(eval_type, Mapping):
-        iterable = getattr(iterable, 'iteritems', iterable.items)()
-        iterable = DictItems(iterable)
-    else:
-        iterable = iter(iterable)
     return Result(iterable, eval_type)
 
 
