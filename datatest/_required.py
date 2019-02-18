@@ -1007,13 +1007,7 @@ class RequiredApprox(RequiredPredicate):
 
 
 class RequiredOutliers(GroupRequirement):
-    """Require that groups do not contain outliers.
-
-    This requirement uses the Tukey fence/interquartile method
-    for outlier labeling. The default multiplier of 2.2 is based
-    on "Fine-Tuning Some Resistant Rules for Outlier Labeling"
-    by Hoaglin and Iglewicz (1987).
-    """
+    """Require that groups do not contain outliers."""
     def __new__(cls, obj, multiplier=2.2, rounding=True):
         # If mapping, use RequiredMapping with abstract factory.
         if isinstance(obj, (Mapping, IterItems)):

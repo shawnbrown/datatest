@@ -347,21 +347,23 @@ class ValidateType(object):
     def outliers(self, data, requirement=None, multiplier=2.2, msg=None,
                  rounding=True):
         """Check *data* for outliers using the Tukey
-        fence/interquartile range (IQR) method for outlier labeling.
+        fence/interquartile range method for outlier labeling.
 
         The Tukey fence method determines a range of values that
-        elements in *data* are expected to fall within (the lower and
-        upper bounds of this range are called "fences"). When elements
-        fall outside the determined range, they are considered to be
-        outliers. The range can be broadened or narrowed by increasing
+        elements in *data* are expected to fall within. When elements
+        fall outside the expected range, they are considered outliers.
+        The expected range can be broadened or narrowed by increasing
         or decreasing the *multiplier*.
 
         If *requirement* is given, it is used in place of *data* to
-        determine the expected range of values. The *requirement*
-        should be a collection of numbers or a mapping of collections.
+        calculate the expected range of values. Elements in *data* are
+        then compared against this range. The *requirement* should be
+        a collection of numbers or a mapping of collections.
 
-        When *rounding* is True, fence values are rounded to precise
-        float representations.
+        When *rounding* is True, the lower and upper bounds of the
+        expected range are rounded to precise float representations.
+
+        Checking a list of values:
 
         .. code-block:: python
             :emphasize-lines: 5
@@ -372,7 +374,7 @@ class ValidateType(object):
 
             validate.outliers(data)
 
-        Mappings can also be used:
+        Checking a mapping of multiple lists:
 
         .. code-block:: python
             :emphasize-lines: 8
@@ -386,9 +388,11 @@ class ValidateType(object):
 
             validate.outliers(data)
 
-        The default *multiplier* of 2.2 is based on "Fine-Tuning Some
-        Resistant Rules for Outlier Labeling" by Hoaglin and Iglewicz
-        (1987).
+        In "Exploratory Data Analysis" by Tukey (1977), a multiplier of
+        1.5 was proposed for labeling outliers and 3.0 was proposed for
+        labeling "far out" outliers. The default *multiplier* of 2.2 is
+        based on "Fine-Tuning Some Resistant Rules for Outlier
+        Labeling" by Hoaglin and Iglewicz (1987).
         """
         __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
 
