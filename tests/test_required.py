@@ -1758,6 +1758,16 @@ class TestRequiredApprox(unittest.TestCase):
         self.assertEqual(evaluate_items(diff), expected)
         self.assertEqual(desc, 'not equal within 7 decimal places')
 
+    def test_tuple_comparison(self):
+        """Should work on numeric elements within tuples."""
+        data = [(0.50390625, 'abc'), (0.4921875, 'abc'), (0.5, 'xyz')]
+
+        requirement = RequiredApprox((0.5, 'abc'), places=2)
+        diff, desc = requirement(data)
+
+        self.assertEqual(list(diff), [Invalid((0.4921875, 'abc')), Invalid((0.5, 'xyz'))])
+        self.assertEqual(desc, 'not equal within 2 decimal places')
+
     def test_specified_places(self):
         requirement = RequiredApprox(0.5, places=2)
 
@@ -1812,12 +1822,13 @@ class TestRequiredApprox(unittest.TestCase):
         self.assertIsNone(result)
 
     def test_nonnumeric_baseelement(self):
-        """Non-numeric base elements should return a RequiredPredicate,
-        not a RequiredApprox instance.
-        """
+        """Non-numeric base elements should have normal predicate behavior."""
         requirement = RequiredApprox('abc')
-        self.assertIsInstance(requirement, RequiredPredicate)
-        self.assertNotIsInstance(requirement, RequiredApprox)
+
+        self.assertIsNone(requirement('abc'))
+
+        diff, desc = requirement('xxx')
+        self.assertEqual(list(diff), [Invalid('xxx')])
 
     def test_notfound_token(self):
         data = [10.00000001, NOTFOUND]

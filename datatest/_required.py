@@ -956,49 +956,60 @@ class RequiredApprox(RequiredPredicate):
     the given delta.
     """
     def __new__(cls, obj, places=None, delta=None, show_expected=False):
-        # If numeric, return new RequiredApprox (normal behavior).
-        if isinstance(obj, Number):
-            return super(RequiredApprox, cls).__new__(cls)
-
-        # If mapping, use RequiredMapping with abstract factory.
         if isinstance(obj, (Mapping, IterItems)):
+            # Return RequiredMapping instance with abstract factory.
             def abstract_factory(value):
-                if isinstance(value, Number):
-                    def make_approx(val):
-                        return RequiredApprox(val, places=places, delta=delta)
-                    return make_approx  # <- Concrete factory.
-                return None
+                def make_approx(val):
+                    new_inst = super(RequiredApprox, cls).__new__(cls)
+                    new_inst.__init__(val, places, delta, show_expected)
+                    return new_inst
+                return make_approx  # <- Concrete factory.
 
             return RequiredMapping(obj, abstract_factory=abstract_factory)
 
-        # If not numeric or mapping, use auto-detected type.
-        return get_requirement(obj)
+        return super(RequiredApprox, cls).__new__(cls)  # Normal instantiation.
 
     def __init__(self, obj, places=None, delta=None, show_expected=False):
-        if delta is not None and places is not None:
-            raise TypeError('specify delta or places not both')
-
         if places is None:
             places = 7
-
-        if delta is not None:
-            def approx_equal(element):  # <- Closes over obj and delta.
-                try:
-                    return abs(element - obj) <= delta
-                except TypeError:
-                    return False
-        else:
-            def approx_equal(element):  # <- Closes over obj and places.
-                try:
-                    return round(abs(element - obj), places) == 0
-                except TypeError:
-                    return False
-
-        self._pred = approx_equal
+        self._pred = self.approx_predicate(obj, places, delta)
         self._obj = obj
         self.show_expected = show_expected
         self.places = places
         self.delta = delta
+
+    @staticmethod
+    def approx_delta(delta, value, other):
+        try:
+            return abs(other - value) <= delta
+        except TypeError:
+            return False
+
+    @staticmethod
+    def approx_places(places, value, other):
+        try:
+            return round(abs(other - value), places) == 0
+        except TypeError:
+            return False
+
+    @classmethod
+    def approx_predicate(cls, obj, places, delta):
+        """Return Predicate object where string components have been
+        replaced with approx_delta() or approx_delta() function.
+        """
+        if delta is not None:
+            approx_equal = partial(cls.approx_delta, delta)
+        else:
+            approx_equal = partial(cls.approx_places, places)
+
+        def approx_or_orig(x):
+            if isinstance(x, Number):
+                return partial(approx_equal, x)
+            return x
+
+        if isinstance(obj, tuple):
+            return Predicate(tuple(approx_or_orig(x) for x in obj))
+        return Predicate(approx_or_orig(obj))
 
     def _get_description(self):
         if self.delta is not None:
