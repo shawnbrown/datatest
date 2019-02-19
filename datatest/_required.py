@@ -606,6 +606,9 @@ class RequiredPredicate(GroupRequirement):
         return differences, description
 
     def check_items(self, items):
+        if self.__class__ is not RequiredPredicate:
+            return super(RequiredPredicate, self).check_items(items)
+
         pred = self._pred
         obj = self._obj
         show_expected = self.show_expected
@@ -1004,10 +1007,6 @@ class RequiredApprox(RequiredPredicate):
 
     def check_group(self, group):
         differences, _ = super(RequiredApprox, self).check_group(group)
-        return differences, self._get_description()
-
-    def check_items(self, group):
-        differences, _ = super(RequiredApprox, self).check_items(group)
         return differences, self._get_description()
 
 
