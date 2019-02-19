@@ -11,6 +11,7 @@ from ._compatibility.collections.abc import Iterable
 from ._compatibility.collections.abc import Mapping
 from ._compatibility.collections.abc import Sequence
 from ._compatibility.collections.abc import Set
+from ._compatibility.functools import partial
 from ._compatibility.functools import wraps
 from ._compatibility.itertools import chain
 from ._compatibility.statistics import median
@@ -27,6 +28,7 @@ from ._query.query import BaseElement
 from ._utils import IterItems
 from ._utils import iterpeek
 from ._utils import nonstringiter
+from ._utils import string_types
 
 
 def _build_description(obj):
@@ -1072,3 +1074,60 @@ class RequiredOutliers(GroupRequirement):
     def check_group(self, group):
         differences = self._generate_differences(group, self.lower, self.upper)
         return differences, 'contains outliers'
+
+
+class RequiredFuzzy(RequiredPredicate):
+    """Require that strings match with a similarity greater than
+    or equal to *cutoff* (default 0.6).
+
+    Similarity measures are determined using the ratio() method
+    of the difflib.SequenceMatcher class. The values range from
+    1.0 (exactly the same) to 0.0 (completely different).
+    """
+    def __new__(cls, obj, cutoff=0.6, show_expected=False):
+        # If mapping, use RequiredMapping with abstract factory.
+        if isinstance(obj, (Mapping, IterItems)):
+            def abstract_factory(value):
+                def make_fuzzy(val):
+                    return RequiredFuzzy(val,
+                                         cutoff=cutoff,
+                                         show_expected=show_expected)
+                return make_fuzzy  # <- Concrete factory.
+
+            return RequiredMapping(obj, abstract_factory=abstract_factory)
+
+        # If not a mapping, use normal instantiation.
+        return super(RequiredFuzzy, cls).__new__(cls)
+
+    @staticmethod
+    def fuzzy_predicate(obj, cutoff):
+        """Return Predicate object where string components have been
+        replaced with fuzzy_match() function.
+        """
+        def fuzzy_match(cutoff, a, b):
+            try:
+                matcher = difflib.SequenceMatcher(a=a, b=b)
+                return matcher.ratio() >= cutoff
+            except TypeError:
+                return False
+
+        def fuzzy_or_orig(a):
+            if isinstance(a, string_types):
+                return partial(fuzzy_match, cutoff, a)
+            return a
+
+        if isinstance(obj, tuple):
+            return Predicate(tuple(fuzzy_or_orig(x) for x in obj))
+        return Predicate(fuzzy_or_orig(obj))
+
+    def __init__(self, obj, cutoff=0.6, show_expected=False):
+        self._pred = self.fuzzy_predicate(obj, cutoff)
+        self._obj = obj
+        self.show_expected = show_expected
+        self.cutoff = cutoff
+
+    def check_group(self, group):
+        differences, description = super(RequiredFuzzy, self).check_group(group)
+        fuzzy_info = '{0}, fuzzy matching at ratio {1} or greater'
+        description = fuzzy_info.format(description, self.cutoff)
+        return differences, description

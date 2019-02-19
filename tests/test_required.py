@@ -33,6 +33,7 @@ from datatest._required import RequiredSubset
 from datatest._required import RequiredSuperset
 from datatest._required import RequiredApprox
 from datatest._required import RequiredOutliers
+from datatest._required import RequiredFuzzy
 from datatest.difference import NOTFOUND
 
 
@@ -1884,5 +1885,114 @@ class TestRequiredOutliers(unittest.TestCase):
         expected = [
             ('A', [Deviation(+2.1875, 34.8125)]),
             ('B', [Deviation(-7.375, 57.375)]),
+        ]
+        self.assertEqual(evaluate_items(diff), expected)
+
+
+class TestRequiredFuzzy(unittest.TestCase):
+    def test_all_true(self):
+        data = iter(['abx', 'aby', 'abz'])
+        requirement = RequiredFuzzy('abc')
+        result = requirement(data)
+        self.assertIsNone(result)  # True for all elements, returns None.
+
+    def test_some_false(self):
+        """When the fuzzy predicate returns False, values should be
+        returned as Invalid() differences.
+        """
+        data = ['abx', 'aby', 'xyz']
+
+        requirement = RequiredFuzzy('abc')
+        diff, desc = requirement(data)
+
+        self.assertEqual(list(diff), [Invalid('xyz')])
+        self.assertEqual(desc, "does not satisfy 'abc', fuzzy matching at ratio 0.6 or greater")
+
+    def test_cutoff(self):
+        data = ['aaaaa', 'aaaax', 'aaaxx', 'xxxxx']
+
+        requirement = RequiredFuzzy('aaaaa', cutoff=0.6)
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Invalid('xxxxx')])
+        self.assertEqual(desc, "does not satisfy 'aaaaa', fuzzy matching at ratio 0.6 or greater")
+
+        requirement = RequiredFuzzy('aaaaa', cutoff=0.8)
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Invalid('aaaxx'), Invalid('xxxxx')])
+        self.assertEqual(desc, "does not satisfy 'aaaaa', fuzzy matching at ratio 0.8 or greater")
+
+    def test_tuple_comparison(self):
+        """Should work on string elements within tuples."""
+        data = [(1, 'abx'), (2, 'abx'), (1, 'xyz')]
+
+        requirement = RequiredFuzzy((1, 'abc'))
+        diff, desc = requirement(data)
+
+        self.assertEqual(list(diff), [Invalid((2, 'abx')), Invalid((1, 'xyz'))])
+        self.assertEqual(desc, "does not satisfy (1, 'abc'), fuzzy matching at ratio 0.6 or greater")
+
+    def test_show_expected(self):
+        data = ['abx', 'aby', 'xyz']
+
+        requirement = RequiredFuzzy('abc', show_expected=True)
+        diff, desc = requirement(data)
+
+        self.assertEqual(list(diff), [Invalid('xyz', expected='abc')])
+        self.assertEqual(desc, "does not satisfy 'abc', fuzzy matching at ratio 0.6 or greater")
+
+    def test_empty_iterable(self):
+        requirement = RequiredFuzzy('abc')
+        result = requirement([])
+        self.assertIsNone(result)
+
+    def test_nonstring_value(self):
+        """When the RequiredFuzzy is given non-string values, the normal
+        predicate differences should be returned (e.g., Deviation, for
+        numeric comparisons).
+        """
+        data = [10, 10, 12]
+        requirement = RequiredFuzzy(10)
+
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Deviation(+2, 10)])
+        self.assertEqual(desc, 'does not satisfy 10, fuzzy matching at ratio 0.6 or greater')
+
+    def test_notfound_token(self):
+        data = [123, 'abc']
+        requirement = RequiredFuzzy(NOTFOUND)
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Deviation(+123, None), Extra('abc')])
+
+        data = [10, NOTFOUND]
+        requirement = RequiredFuzzy(10)
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Deviation(-10, 10)])
+        self.assertEqual(desc, 'does not satisfy 10, fuzzy matching at ratio 0.6 or greater')
+
+        data = ['abc', NOTFOUND]
+        requirement = RequiredFuzzy('abc')
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Missing('abc')])
+        self.assertEqual(desc, "does not satisfy 'abc', fuzzy matching at ratio 0.6 or greater")
+
+    def test_items(self):
+        requirement = RequiredFuzzy('abc')
+
+        data = {'A': ['abx', 'abx', 'xxx'], 'B': 'abc', 'C': 'yyy'}
+        diff, desc = requirement(data)
+        expected = [
+            ('A', [Invalid('xxx')]),
+            ('C', Invalid('yyy')),
+        ]
+        self.assertEqual(evaluate_items(diff), expected)
+
+    def test_mapping_of_fuzzy(self):
+        requirement = RequiredFuzzy({'A': 'abc', 'B': 'xyz', 'C': 'xyz'})
+
+        data = {'A': ['abx', 'abx', 'xxx'], 'B': 'xyy', 'C': 'aaa'}
+        diff, desc = requirement(data)
+        expected = [
+            ('A', [Invalid('xxx')]),
+            ('C', Invalid('aaa')),
         ]
         self.assertEqual(evaluate_items(diff), expected)
