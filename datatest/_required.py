@@ -955,20 +955,6 @@ class RequiredApprox(RequiredPredicate):
     if the difference between values is less than or equal to
     the given delta.
     """
-    def __new__(cls, obj, places=None, delta=None, show_expected=False):
-        if isinstance(obj, (Mapping, IterItems)):
-            # Return RequiredMapping instance with abstract factory.
-            def abstract_factory(value):
-                def make_approx(val):
-                    new_inst = super(RequiredApprox, cls).__new__(cls)
-                    new_inst.__init__(val, places, delta, show_expected)
-                    return new_inst
-                return make_approx  # <- Concrete factory.
-
-            return RequiredMapping(obj, abstract_factory=abstract_factory)
-
-        return super(RequiredApprox, cls).__new__(cls)  # Normal instantiation.
-
     def __init__(self, obj, places=None, delta=None, show_expected=False):
         if places is None:
             places = 7

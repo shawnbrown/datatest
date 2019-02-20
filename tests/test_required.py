@@ -1837,18 +1837,6 @@ class TestRequiredApprox(unittest.TestCase):
         self.assertEqual(list(diff), [Deviation(-10, 10)])
         self.assertEqual(desc, 'not equal within 7 decimal places')
 
-    def test_items(self):
-        trusted = {'A': 5, 'B': 10}
-        requirement = RequiredApprox(trusted)
-
-        data = {'A': [3, 5.00000001], 'B': 10.00000001, 'C': 7}
-        diff, desc = requirement(data)
-        expected = [
-            ('A', [Deviation(-2, 5)]),
-            ('C', Deviation(+7, None)),
-        ]
-        self.assertEqual(evaluate_items(diff), expected)
-
 
 class TestRequiredOutliers(unittest.TestCase):
     def test_passing(self):

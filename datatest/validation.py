@@ -3,6 +3,7 @@ import sys
 from ._compatibility.collections.abc import Iterable
 from ._compatibility.collections.abc import Iterator
 from ._compatibility.collections.abc import Mapping
+from ._compatibility.functools import partial
 from .difference import BaseDifference
 from ._normalize import normalize
 from . import _required
@@ -340,8 +341,16 @@ class ValidateType(object):
         would be more fitting.
         """
         __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
+
         requirement = normalize(requirement, lazy_evaluation=False)
-        requirement = _required.RequiredApprox(requirement, places=places, delta=delta)
+
+        if isinstance(requirement, (Mapping, IterItems)):
+            factory = partial(_required.RequiredApprox, places=places, delta=delta)
+            abstract_factory = lambda _: factory  # Same factory for all values.
+            requirement = _required.RequiredMapping(requirement, abstract_factory)
+        else:
+            requirement = _required.RequiredApprox(requirement, places, delta)
+
         self(data, requirement, msg=msg)
 
     def outliers(self, data, requirement=None, multiplier=2.2, msg=None,
