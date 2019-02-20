@@ -327,9 +327,9 @@ class ValidateType(object):
 
             from datatest import validate
 
-            data = {'A': 1.171875, 'B': 8.859375}
+            data = {'A': 1.3125, 'B': 8.6875}
 
-            requirement = {'A': 1.17, 'B': 8.86}
+            requirement = {'A': 1.31, 'B': 8.69}
 
             validate.approx(data, requirement, places=2)
 
