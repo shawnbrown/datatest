@@ -1984,14 +1984,3 @@ class TestRequiredFuzzy(unittest.TestCase):
             ('C', Invalid('yyy')),
         ]
         self.assertEqual(evaluate_items(diff), expected)
-
-    def test_mapping_of_fuzzy(self):
-        requirement = RequiredFuzzy({'A': 'abc', 'B': 'xyz', 'C': 'xyz'})
-
-        data = {'A': ['abx', 'abx', 'xxx'], 'B': 'xyy', 'C': 'aaa'}
-        diff, desc = requirement(data)
-        expected = [
-            ('A', [Invalid('xxx')]),
-            ('C', Invalid('aaa')),
-        ]
-        self.assertEqual(evaluate_items(diff), expected)

@@ -27,6 +27,8 @@ Validation
 
     .. automethod:: outliers
 
+    .. automethod:: fuzzy
+
     .. note::
 
         Calling :class:`validate()` or its methods will either raise an

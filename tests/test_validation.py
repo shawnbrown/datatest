@@ -473,3 +473,16 @@ class TestValidate(unittest.TestCase):
             'B': [Deviation(-7.375, 57.375)],
         }
         self.assertEqual(actual, expected)
+
+    def test_fuzzy_method(self):
+        data = {'A': 'aaa', 'B': 'bbx'}
+        requirement = Query.from_object({'A': 'aaa', 'B': 'bbb'})
+        validate.fuzzy(data, requirement)
+
+        with self.assertRaises(ValidationError) as cm:
+            data = {'A': 'axx', 'B': 'bbx'}
+            requirement = Query.from_object({'A': 'aaa', 'B': 'bbb'})
+            validate.fuzzy(data, requirement)
+        actual = cm.exception.differences
+        expected = {'A': Invalid('axx')}
+        self.assertEqual(actual, expected)

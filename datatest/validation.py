@@ -423,6 +423,48 @@ class ValidateType(object):
         )
         self(data, requirement, msg=msg)
 
+    def fuzzy(self, data, requirement, cutoff=0.6, msg=None):
+        """Require that strings match with a similarity greater than
+        or equal to *cutoff* (default ``0.6``).
+
+        Similarity measures are determined using
+        :py:meth:`SequenceMatcher.ratio()
+        <difflib.SequenceMatcher.ratio>` from the Standard Library's
+        :py:mod:`difflib` module. The values range from ``1.0``
+        (exactly the same) to ``0.0`` (completely different).
+
+        .. code-block:: python
+            :emphasize-lines: 15
+
+            from datatest import validate
+
+            data = {
+                'MO': 'Saint Louis',
+                'NY': 'New York',  # <- does not meet cutoff
+                'OH': 'Cincinatti',
+            }
+
+            requirement = {
+                'MO': 'St. Louis',
+                'NY': 'New York City',
+                'OH': 'Cincinnati',
+            }
+
+            validate.fuzzy(data, requirement, cutoff=0.8)
+        """
+        __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
+
+        requirement = normalize(requirement, lazy_evaluation=False)
+
+        if isinstance(requirement, (Mapping, IterItems)):
+            factory = partial(_required.RequiredFuzzy, cutoff=cutoff)
+            abstract_factory = lambda _: factory  # Same factory for all values.
+            requirement = _required.RequiredMapping(requirement, abstract_factory)
+        else:
+            requirement = _required.RequiredFuzzy(requirement, cutoff=cutoff)
+
+        self(data, requirement, msg=msg)
+
 
 validate = ValidateType()  # Use as instance.
 

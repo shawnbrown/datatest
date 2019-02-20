@@ -1080,21 +1080,6 @@ class RequiredFuzzy(RequiredPredicate):
     of the difflib.SequenceMatcher class. The values range from
     1.0 (exactly the same) to 0.0 (completely different).
     """
-    def __new__(cls, obj, cutoff=0.6, show_expected=False):
-        # If mapping, use RequiredMapping with abstract factory.
-        if isinstance(obj, (Mapping, IterItems)):
-            def abstract_factory(value):
-                def make_fuzzy(val):
-                    return RequiredFuzzy(val,
-                                         cutoff=cutoff,
-                                         show_expected=show_expected)
-                return make_fuzzy  # <- Concrete factory.
-
-            return RequiredMapping(obj, abstract_factory=abstract_factory)
-
-        # If not a mapping, use normal instantiation.
-        return super(RequiredFuzzy, cls).__new__(cls)
-
     @staticmethod
     def fuzzy_predicate(obj, cutoff):
         """Return Predicate object where string components have been
