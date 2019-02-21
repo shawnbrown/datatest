@@ -415,8 +415,8 @@ class ValidateType(object):
 
         In "Exploratory Data Analysis" by Tukey (1977), a multiplier of
         1.5 was proposed for labeling outliers and 3.0 was proposed for
-        labeling "far out" outliers. The default *multiplier* of 2.2 is
-        based on "Fine-Tuning Some Resistant Rules for Outlier
+        labeling "far out" outliers. The default *multiplier* of ``2.2``
+        is based on "Fine-Tuning Some Resistant Rules for Outlier
         Labeling" by Hoaglin and Iglewicz (1987).
         """
         __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
