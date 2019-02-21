@@ -993,18 +993,6 @@ class RequiredApprox(RequiredPredicate):
 
 class RequiredOutliers(GroupRequirement):
     """Require that groups do not contain outliers."""
-    def __new__(cls, obj, multiplier=2.2, rounding=True):
-        # If mapping, use RequiredMapping with abstract factory.
-        if isinstance(obj, (Mapping, IterItems)):
-            def abstract_factory(value):
-                def make_outlier(val):
-                    return RequiredOutliers(val, multiplier=multiplier, rounding=rounding)
-                return make_outlier  # <- Concrete factory.
-
-            return RequiredMapping(obj, abstract_factory=abstract_factory)
-
-        return super(RequiredOutliers, cls).__new__(cls)
-
     def __init__(self, obj, multiplier=2.2, rounding=True):
         def verify_numeric(x):
             if not isinstance(x, Number):

@@ -432,11 +432,17 @@ class ValidateType(object):
         if requirement is data and nonstringiter(data) and exhaustible(data):
             data = normalized  # Use non-exhaustible version.
 
-        requirement = _required.RequiredOutliers(
-            normalized,
-            multiplier=multiplier,
-            rounding=rounding,
-        )
+        if isinstance(normalized, (Mapping, IterItems)):
+            factory = partial(_required.RequiredOutliers, multiplier=multiplier, rounding=rounding)
+            abstract_factory = lambda _: factory  # Same factory for all values.
+            requirement = _required.RequiredMapping(normalized, abstract_factory)
+        else:
+            requirement = _required.RequiredOutliers(
+                normalized,
+                multiplier=multiplier,
+                rounding=rounding,
+            )
+
         self(data, requirement, msg=msg)
 
     def fuzzy(self, data, requirement, cutoff=0.6, msg=None):

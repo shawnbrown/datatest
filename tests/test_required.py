@@ -1847,20 +1847,6 @@ class TestRequiredOutliers(unittest.TestCase):
         diff, desc = requirement(data)
         self.assertEqual(list(diff), [Invalid('abc')])
 
-    def test_failing_mapping(self):
-        data = {
-            'A': [12, 5, 8, 37, 5, 7, 15],  # <- 37 is an outlier
-            'B': [83, 75, 78, 50, 76, 89],  # <- 50 is an outlier
-        }
-        requirement = RequiredOutliers(data)
-
-        diff, desc = requirement(data)
-        expected = [
-            ('A', [Deviation(+2.1875, 34.8125)]),
-            ('B', [Deviation(-7.375, 57.375)]),
-        ]
-        self.assertEqual(evaluate_items(diff), expected)
-
 
 class TestRequiredFuzzy(unittest.TestCase):
     def test_all_true(self):
