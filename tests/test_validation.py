@@ -424,11 +424,11 @@ class TestValidate(unittest.TestCase):
         validate.superset(data, superset)
 
         with self.assertRaises(ValidationError) as cm:
-            data = [1, 2, 3, 4]
-            superset = set([1, 2, 3])
+            data = {'A': [1, 2, 3], 'B': [3, 4, 5]}
+            superset = {'A': set([1, 2, 3]), 'B': set([2, 3, 4])}
             validate.superset(data, superset)
         actual = cm.exception.differences
-        expected = [Extra(4)]
+        expected = {'B': [Extra(5)]}
         self.assertEqual(actual, expected)
 
     def test_approx_method(self):

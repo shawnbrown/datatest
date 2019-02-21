@@ -319,8 +319,16 @@ class ValidateType(object):
             validate.superset(data, requirement)
         """
         __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
-        superset = normalize(superset, lazy_evaluation=False, default_type=set)
-        self(data, _required.RequiredSuperset(superset), msg=msg)
+
+        requirement = normalize(superset, lazy_evaluation=False, default_type=set)
+
+        if isinstance(requirement, (Mapping, IterItems)):
+            abstract_factory = lambda _: _required.RequiredSuperset
+            requirement = _required.RequiredMapping(requirement, abstract_factory)
+        else:
+            requirement = _required.RequiredSuperset(requirement)
+
+        self(data, requirement, msg=msg)
 
     def approx(self, data, requirement, places=None, msg=None, delta=None):
         """Require that numeric values are approximately equal. The
