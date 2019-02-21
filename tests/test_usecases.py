@@ -138,3 +138,22 @@ class TestValidateIdioms(unittest.TestCase):
         })
         with allowed.missing() | expected_extras:
             validate(data, requirement)
+
+    def test_enumerate_to_dict(self):
+        """Enumerations should be interpreted as mappings before validation."""
+        validate = datatest.validate
+        ValidationError = datatest.ValidationError
+        Invalid = datatest.Invalid
+        Missing = datatest.Missing
+
+        with self.assertRaises(ValidationError) as cm:
+            data = ['a', 'b', 'x', 'd']
+            requirement = ['a', 'b', 'c', 'd', 'e']
+            validate(enumerate(data), enumerate(requirement))
+
+        differences = cm.exception.differences
+        expected = {
+            2: Invalid('x', expected='c'),
+            4: Missing('e'),
+        }
+        self.assertEqual(differences, expected)

@@ -258,6 +258,6 @@ class IterItems(ABC):
     @classmethod
     def __subclasshook__(cls, C):
         if cls is IterItems:
-            if issubclass(C, (ItemsView, cls._iteritems_type)):
+            if issubclass(C, (ItemsView, cls._iteritems_type, enumerate)):
                 return True
         return NotImplemented

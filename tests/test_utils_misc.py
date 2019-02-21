@@ -153,6 +153,9 @@ class TestIterItems(unittest.TestCase):
             items = dict([]).items()  # <- For Python 3
         self.assertIsInstance(items, IterItems)
 
+        items = enumerate([])
+        self.assertIsInstance(items, IterItems)
+
     def test_virtual_subclass(self):
         class OtherClass(object):
             pass
