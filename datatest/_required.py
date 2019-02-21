@@ -664,9 +664,7 @@ class RequiredOrder(GroupRequirement):
     """A requirement to test data for element order."""
     def __init__(self, sequence):
         if not isinstance(sequence, Sequence):
-            cls_name = sequence.__class__.__name__
-            message = 'must be sequence, got {0!r}'.format(cls_name)
-            raise TypeError(message)
+            sequence = list(sequence)
         self.sequence = sequence
 
     def _generate_differences(self, group):
