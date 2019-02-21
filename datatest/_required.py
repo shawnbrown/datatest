@@ -713,7 +713,7 @@ class RequiredOrder(GroupRequirement):
 
     def check_group(self, group):
         differences = self._generate_differences(group)
-        return differences, 'does not match required sequence'
+        return differences, 'does not match required order'
 
 
 class RequiredMapping(ItemsRequirement):
