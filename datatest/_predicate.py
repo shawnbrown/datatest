@@ -84,8 +84,12 @@ def _check_regex(regex, value):
 
 def _check_set(set_, value):
     """Return true if *value* is a member of the given set or if
-    the *value* is equal to the given set."""
-    return value in set_ or value == set_
+    the *value* is equal to the given set.
+    """
+    try:
+        return value in set_ or value == set_
+    except TypeError:
+        return False
 
 
 def _get_matcher_parts(obj):

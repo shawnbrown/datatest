@@ -135,6 +135,11 @@ class TestCheckSet(unittest.TestCase):
         function = lambda x: _check_set(set(['abc', 'def']), x)
         self.assertTrue(function(set(['abc', 'def'])))
 
+    def test_unhashable_check(self):
+        function = lambda x: _check_set(set(['abc', 'def']), x)
+        self.assertFalse(function(['abc']))
+        self.assertFalse(function((1, ['xyz'])))
+
 
 class TestGetMatcherParts(unittest.TestCase):
     def test_type(self):
