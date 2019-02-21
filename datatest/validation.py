@@ -293,8 +293,16 @@ class ValidateType(object):
             validate.subset(data, requirement)
         """
         __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
-        subset = normalize(subset, lazy_evaluation=False, default_type=set)
-        self(data, _required.RequiredSubset(subset), msg=msg)
+
+        requirement = normalize(subset, lazy_evaluation=False, default_type=set)
+
+        if isinstance(requirement, (Mapping, IterItems)):
+            abstract_factory = lambda _: _required.RequiredSubset
+            requirement = _required.RequiredMapping(requirement, abstract_factory)
+        else:
+            requirement = _required.RequiredSubset(requirement)
+
+        self(data, requirement, msg=msg)
 
     def superset(self, data, superset, msg=None):
         """Require that *data* contains only elements from *superset*:

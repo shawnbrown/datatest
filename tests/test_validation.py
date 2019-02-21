@@ -410,6 +410,14 @@ class TestValidate(unittest.TestCase):
         expected = [Missing(4)]
         self.assertEqual(actual, expected)
 
+        with self.assertRaises(ValidationError) as cm:
+            data ={'A': [1, 2, 3], 'B': [3, 4, 5]}
+            subset = {'A': iter([1, 2]), 'B': iter([2, 3])}
+            validate.subset(data, subset)
+        actual = cm.exception.differences
+        expected = {'B': [Missing(2)]}
+        self.assertEqual(actual, expected)
+
     def test_superset_method(self):
         data = [1, 2, 3]
         superset = Query.from_object([1, 2, 3, 4])
