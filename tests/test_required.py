@@ -1323,7 +1323,7 @@ class TestRequiredSequence2(unittest.TestCase):
         diff, desc = requirement(['a', 1, 'x', 'd', 'e'])
         expected =  [
             Deviation(-1, 2),
-            Invalid('x', expected={'c'}),
+            Invalid('x', expected=set(['c'])),
         ]
         self.assertEqual(list(diff), expected)
         self.assertEqual(desc, 'does not match required sequence')
