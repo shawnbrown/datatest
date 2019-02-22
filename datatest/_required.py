@@ -14,6 +14,7 @@ from ._compatibility.collections.abc import Set
 from ._compatibility.functools import partial
 from ._compatibility.functools import wraps
 from ._compatibility.itertools import chain
+from ._compatibility.itertools import zip_longest
 from ._compatibility.statistics import median
 from .difference import BaseDifference
 from .difference import Deviation
@@ -714,6 +715,36 @@ class RequiredOrder(GroupRequirement):
     def check_group(self, group):
         differences = self._generate_differences(group)
         return differences, 'does not match required order'
+
+
+class RequiredSequence(GroupRequirement):
+    """A requirement to test elements in data against an *iterable*
+    of predicate matches (compared by iteration order).
+    """
+    def __init__(self, iterable, predicate_factory=None):
+        if not nonstringiter(iterable):
+            iterable = [iterable]
+        self.iterable = iterable
+        self.predicate_factory = predicate_factory
+
+    def _generate_differences(self, group):
+        if self.predicate_factory:
+            predicate_factory = self.predicate_factory
+        else:
+            predicate_factory = Predicate
+
+        zipped = zip_longest(group, self.iterable, fillvalue=NOTFOUND)
+        for actual, expected in zipped:
+            pred = predicate_factory(expected)
+            result = pred(actual)
+            if not result:
+                yield _make_difference(actual, expected, show_expected=True)
+            elif isinstance(result, BaseDifference):
+                yield result
+
+    def check_group(self, group):
+        differences = self._generate_differences(group)
+        return differences, 'does not match required sequence'
 
 
 class RequiredMapping(ItemsRequirement):

@@ -9,6 +9,7 @@ from datatest import Missing
 from datatest import Extra
 from datatest import Deviation
 from datatest import Invalid
+from datatest._predicate import Predicate
 from datatest._required import _build_description
 from datatest._required import _wrap_differences
 from datatest._required import group_requirement
@@ -26,6 +27,7 @@ from datatest._required import GroupRequirement
 from datatest._required import RequiredMapping
 from datatest._required import RequiredOrder
 from datatest._required import RequiredPredicate
+from datatest._required import RequiredSequence
 from datatest._required import RequiredSet
 from datatest._required import get_requirement
 from datatest._required import RequiredUnique
@@ -1306,6 +1308,51 @@ class TestRequiredOrder2(unittest.TestCase):
             Extra((4, {'g': 7})),
         ]
         self.assertEqual(list(differences), expected)
+
+
+class TestRequiredSequence2(unittest.TestCase):
+    def test_passing(self):
+        requirement = RequiredSequence(['a', 'b', 'c', 'd'])
+        self.assertIsNone(requirement(['a', 'b', 'c', 'd']))
+
+        requirement = RequiredSequence(['a', 2, set(['c'])])
+        self.assertIsNone(requirement(['a', 2, 'c']))
+
+    def test_some_differences(self):
+        requirement = RequiredSequence(['a', 2, set(['c']), 'd', 'e'])
+        diff, desc = requirement(['a', 1, 'x', 'd', 'e'])
+        expected =  [
+            Deviation(-1, 2),
+            Invalid('x', expected={'c'}),
+        ]
+        self.assertEqual(list(diff), expected)
+        self.assertEqual(desc, 'does not match required sequence')
+
+    def test_mismatched_length(self):
+        requirement = RequiredSequence(['a', 'b', 'c', 'd'])
+        diff, desc = requirement(['a', 'b'])
+        expected =  [Missing('c'), Missing('d')]
+        self.assertEqual(list(diff), expected)
+        self.assertEqual(desc, 'does not match required sequence')
+
+        requirement = RequiredSequence(['a', 'b'])
+        diff, desc = requirement(['a', 'b', 'c', 'd'])
+        expected =  [Extra('c'), Extra('d')]
+        self.assertEqual(list(diff), expected)
+        self.assertEqual(desc, 'does not match required sequence')
+
+    def test_predicate_factory(self):
+        def factory(val):
+            obj_or_repr = lambda x: x == val or x == repr(val)
+            return Predicate(obj_or_repr)
+
+        requirement = RequiredSequence([1.0, 2], predicate_factory=factory)
+
+        self.assertIsNone(requirement(['1.0', '2']))
+
+        diff, desc = requirement(['1', 3])
+        expected = [Invalid('1', expected=1.0), Deviation(+1, 2)]
+        self.assertEqual(list(diff), expected)
 
 
 class TestRequiredMapping(unittest.TestCase):
