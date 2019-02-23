@@ -23,6 +23,8 @@ Validation
 
     .. automethod:: superset
 
+    .. automethod:: order
+
     .. automethod:: approx
 
     .. automethod:: outliers

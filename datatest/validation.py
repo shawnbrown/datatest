@@ -330,6 +330,65 @@ class ValidateType(object):
 
         self(data, requirement, msg=msg)
 
+    def order(self, data, sequence, msg=None):
+        """Check that elements in *data* match the order of elements
+        in *sequence*:
+
+        .. code-block:: python
+            :emphasize-lines: 7
+
+            from datatest import validate
+
+            data = ['A', 'C', 'D', 'F', ...]
+
+            required_order = ['A', 'B', 'C', 'D', ...]
+
+            validate.order(data, required_order)
+
+        If elements do not match the required order, :class:`Missing`
+        and :class:`Extra` differences are raised. Each difference
+        will contain a two-tuple whose first value is the index where
+        the difference occurs in *data* and whose second value is the
+        non-matching element itself.
+
+        In the given example, *data* is missing ``'B'`` at index 1
+        and contains an extra ``'F'`` at index 3:
+
+        .. code-block:: none
+
+                                        extra
+                                          ⭣
+                   data: ['A', 'C', 'D', 'F', ...]
+
+            requirement: ['A', 'B', 'C', 'D', ...]
+                                ⭡
+                             missing
+
+        The validation fails with the following error:
+
+        .. code-block:: none
+
+            ValidationError: does not match required order (2 differences): [
+                Missing((1, 'B')),
+                Extra((3, 'F')),
+            ]
+
+        Notice there are no differences for ``'C'`` and ``'D'``
+        because their order matches the *requirement*---even though
+        their index positions are different.
+        """
+        __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
+
+        requirement = normalize(sequence, lazy_evaluation=False, default_type=set)
+
+        if isinstance(requirement, (Mapping, IterItems)):
+            abstract_factory = lambda _: _required.RequiredOrder
+            requirement = _required.RequiredMapping(requirement, abstract_factory)
+        else:
+            requirement = _required.RequiredOrder(requirement)
+
+        self(data, requirement, msg=msg)
+
     def approx(self, data, requirement, places=None, msg=None, delta=None):
         """Require that numeric values are approximately equal. The
         given *requirement* can be a single element or a mapping.
