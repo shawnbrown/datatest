@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Validation and comparison handling."""
 import sys
 from ._compatibility.collections.abc import Iterable
