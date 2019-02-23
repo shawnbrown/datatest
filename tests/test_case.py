@@ -100,8 +100,10 @@ class TestAssertValid(DataTestCase):
         differences = cm.exception.differences
         self.assertEqual(differences, {'BBB': Invalid('x', 'b'), 'CCC': Missing('c')})
 
-    def test_required_order(self):
-        """When *required* is a sequence, should require order."""
+    def test_required_sequence(self):
+        """When *required* is a sequence, should compare predicates by
+        position.
+        """
         with self.assertRaises(ValidationError) as cm:
             data = ['a', 2, 'x', 3]
             required = ['a', 2, 'c', 4]
@@ -109,13 +111,11 @@ class TestAssertValid(DataTestCase):
 
         error = cm.exception
         expected = [
-            Missing((2, 'c')),
-            Extra((2, 'x')),
-            Missing((3, 4)),
-            Extra((3, 3)),
+            Invalid('x', expected='c'),
+            Deviation(-1, 4),
         ]
         self.assertEqual(error.differences, expected)
-        self.assertEqual(error.args[1], 'does not match required order')
+        self.assertEqual(error.args[1], 'does not match required sequence')
 
     def test_required_other(self):
         """When *required* is a string or other object, _compare_other()

@@ -112,10 +112,10 @@ class TestValidateIdioms(unittest.TestCase):
         compare = datatest.ProxyGroup(['foo', 'FOO'])
         datatest.validate(*compare.lower())
 
-    def test_mappings_of_sequences(self):
-        """Should be able to compare mappings of sequences and
-        allow differences across keys (e.g., with allowed.extra()
-        and allowed.missing()).
+    def test_mapping_of_sequences_for_order(self):
+        """Should be able to compare mapping of sequences for order and
+        allow differences across keys (e.g., with allowed.extra() and
+        allowed.missing()).
         """
         # Pull objects into local name space to improve readability.
         validate = datatest.validation.validate
@@ -137,7 +137,7 @@ class TestValidateIdioms(unittest.TestCase):
             'baz': [Extra((3, 'd'))],
         })
         with allowed.missing() | expected_extras:
-            validate(data, requirement)
+            validate.order(data, requirement)
 
     def test_enumerate_to_dict(self):
         """Enumerations should be interpreted as mappings before validation."""

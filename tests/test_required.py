@@ -1610,9 +1610,9 @@ class TestGetRequirement(unittest.TestCase):
         requirement = get_requirement(set(['foo', 'bar', 'baz']))
         self.assertIsInstance(requirement, RequiredSet)
 
-    def test_order(self):
+    def test_sequence(self):
         requirement = get_requirement(['foo', 'bar', 'baz'])
-        self.assertIsInstance(requirement, RequiredOrder)
+        self.assertIsInstance(requirement, RequiredSequence)
 
     def test_predicate(self):
         requirement = get_requirement(123)

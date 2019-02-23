@@ -203,10 +203,13 @@ class ValidateType(object):
         If the elements in *data* do not match the required set, then
         :class:`Missing` and :class:`Extra` differences are generated.
 
-    **Required Order:**
+    **Sequence Validation:**
 
-        When *requirement* is a non-tuple, non-string sequence, the
-        *data* is checked for element order:
+        When *requirement* is a non-tuple, non-string iterable, the
+        *data* is validated as a sequence of elements. Elements are
+        checked for predicate matches against required objects of the
+        same position (both *data* and *requirement* should iterables
+        of deterministic order):
 
         .. code-block:: python
             :emphasize-lines: 7
@@ -215,15 +218,11 @@ class ValidateType(object):
 
             data = ['A', 'B', 'C', ...]
 
-            required_order = ['A', 'B', 'C', ...]
+            sequence = ['A', 'B', 'C', ...]
 
-            validate(data, required_order)  # <- tests object order
+            validate(data, sequence)  # <- compare elements by position
 
-        If elements do not match the required order, :class:`Missing`
-        and :class:`Extra` differences are returned. Each difference
-        will contain a two-tuple whose first item is the slice-index
-        where the difference starts (in the data under test) and whose
-        second item is the non-matching value itself.
+        For details on predicate matching, see :class:`Predicate`.
 
     **Required Mapping:**
 

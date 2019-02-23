@@ -880,8 +880,8 @@ def get_requirement(obj):
     if isinstance(obj, Set):
         return RequiredSet(obj)
 
-    if isinstance(obj, Sequence) and not isinstance(obj, BaseElement):
-        return RequiredOrder(obj)
+    if isinstance(obj, Iterable) and not isinstance(obj, BaseElement):
+        return RequiredSequence(obj)
 
     return RequiredPredicate(obj)
 
