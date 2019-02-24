@@ -184,6 +184,8 @@ class ValidateType(object):
         predicate returns any other truthy value, an element is
         considered valid.
 
+    .. _set-validation:
+
     **Set Validation:**
 
         When *requirement* is a set, the elements in *data* are checked
@@ -278,6 +280,23 @@ class ValidateType(object):
         """
         __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
         self(data, _required.RequiredUnique(), msg=msg)
+
+    def set(self, data, requirement, msg=None):
+        """Check that the set of elements in *data* matches the set
+        of elements in *requirement* (applies :ref:`set validation
+        <set-validation>` using a *requirement* of any iterable type).
+        """
+        __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
+
+        requirement = normalize(requirement, lazy_evaluation=False, default_type=set)
+
+        if isinstance(requirement, (Mapping, IterItems)):
+            abstract_factory = lambda _: _required.RequiredSet
+            requirement = _required.RequiredMapping(requirement, abstract_factory)
+        else:
+            requirement = _required.RequiredSet(requirement)
+
+        self(data, requirement, msg=msg)
 
     def subset(self, data, requirement, msg=None):
         """Check that *requirement* is a subset of *data* (i.e., that

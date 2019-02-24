@@ -639,7 +639,9 @@ class RequiredPredicate(GroupRequirement):
 class RequiredSet(GroupRequirement):
     """A requirement to test data for set membership."""
     def __init__(self, requirement):
-        self._set = set(requirement)
+        if not isinstance(requirement, Set):
+            requirement = set(requirement)
+        self._set = requirement
 
     def check_group(self, group):
         requirement = self._set

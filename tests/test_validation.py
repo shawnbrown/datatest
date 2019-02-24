@@ -397,6 +397,27 @@ class TestValidate(unittest.TestCase):
         expected = [Extra(3)]
         self.assertEqual(actual, expected)
 
+    def test_set_method(self):
+        data = [1, 2, 3, 4]
+        requirement = Query.from_object([1, 2, 3, 4])
+        validate.set(data, requirement)
+
+        with self.assertRaises(ValidationError) as cm:
+            data = [1, 2, 3, 5]
+            requirement = set([1, 2, 3, 4])
+            validate.set(data, requirement)
+        actual = cm.exception.differences
+        expected = [Missing(4), Extra(5)]
+        self.assertEqual(actual, expected)
+
+        with self.assertRaises(ValidationError) as cm:
+            data ={'A': [1, 2, 3], 'B': [3]}
+            requirement = {'A': iter([1, 2]), 'B': iter([3, 4])}
+            validate.set(data, requirement)
+        actual = cm.exception.differences
+        expected = {'A': [Extra(3)], 'B': [Missing(4)]}
+        self.assertEqual(actual, expected)
+
     def test_subset_method(self):
         data = [1, 2, 3, 4]
         subset = Query.from_object([1, 2, 3])

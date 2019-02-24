@@ -22,6 +22,8 @@ Validation
 
     .. automethod:: unique
 
+    .. automethod:: set
+
     .. automethod:: subset
 
     .. automethod:: superset
