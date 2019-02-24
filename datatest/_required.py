@@ -586,7 +586,12 @@ class GroupRequirement(BaseRequirement):
 class RequiredPredicate(GroupRequirement):
     """A requirement to test data for predicate matches."""
     def __init__(self, obj, show_expected=False):
-        self._pred = Predicate(obj)
+        if isinstance(obj, Predicate):
+            pred = obj
+        else:
+            pred = Predicate(obj)
+
+        self._pred = pred
         self._obj = obj
         self.show_expected = show_expected
 

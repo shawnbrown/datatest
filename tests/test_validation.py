@@ -388,6 +388,22 @@ class TestValidate(unittest.TestCase):
         }
         self.assertEqual(actual, expected)
 
+    def test_predicate_method(self):
+        data = {'A': 'aaa', 'B': [1, 2, 3], 'C': ('a', 1)}
+        requirement = Query.from_object({'A': set(['aaa', 'bbb']), 'B': int, 'C': ('a', 1)})
+        validate.predicate(data, requirement)
+
+        with self.assertRaises(ValidationError) as cm:
+            data = {'A': 'aaa', 'B': [1, 2, 3.5], 'C': ('b', 2)}
+            requirement = Query.from_object({'A': set(['aaa', 'bbb']), 'B': int, 'C': ('a', 1)})
+            validate.predicate(data, requirement)
+        actual = cm.exception.differences
+        expected = {
+            'B': [Invalid(3.5)],
+            'C': Invalid(('b', 2), expected=('a', 1)),
+        }
+        self.assertEqual(actual, expected)
+
     def test_unique_method(self):
         validate.unique([1, 2, 3, 4])
 

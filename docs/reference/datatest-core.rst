@@ -20,6 +20,8 @@ Validation
     In addition to :class:`validate()`'s default behavior, the following
     methods can be used to specify additional validation behaviors.
 
+    .. automethod:: predicate
+
     .. automethod:: unique
 
     .. automethod:: set

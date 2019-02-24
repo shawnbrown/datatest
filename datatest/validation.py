@@ -159,6 +159,8 @@ class ValidateType(object):
     objects. An optional *msg* string can be provided to describe
     the validation.
 
+    .. _predicate-validation:
+
     **Predicate Validation:**
 
         When *requirement* is a callable, tuple, string, or
@@ -265,6 +267,23 @@ class ValidateType(object):
             differences, description = result
             message = msg or description or 'does not satisfy requirement'
             raise ValidationError(differences, message)
+
+    def predicate(self, data, requirement, msg=None):
+        """Use *requirement* to construct a :class:`Predicate` and
+        check elements in *data* for matches (see :ref:`predicate
+        validation <predicate-validation>` for more details).
+        """
+        __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
+
+        requirement = normalize(requirement, lazy_evaluation=False, default_type=list)
+
+        if isinstance(requirement, (Mapping, IterItems)):
+            abstract_factory = lambda _: _required.RequiredPredicate
+            requirement = _required.RequiredMapping(requirement, abstract_factory)
+        else:
+            requirement = _required.RequiredPredicate(requirement)
+
+        self(data, requirement, msg=msg)
 
     def unique(self, data, msg=None):
         """Require that elements in *data* are unique:
