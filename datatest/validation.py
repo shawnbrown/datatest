@@ -279,8 +279,9 @@ class ValidateType(object):
         __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
         self(data, _required.RequiredUnique(), msg=msg)
 
-    def subset(self, data, subset, msg=None):
-        """Require that *data* contains all elements of *subset*:
+    def subset(self, data, requirement, msg=None):
+        """Check that *requirement* is a subset of *data* (i.e., that
+        all elements in *requirement* are also contained in *data*):
 
         .. code-block:: python
             :emphasize-lines: 7
@@ -295,7 +296,7 @@ class ValidateType(object):
         """
         __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
 
-        requirement = normalize(subset, lazy_evaluation=False, default_type=set)
+        requirement = normalize(requirement, lazy_evaluation=False, default_type=set)
 
         if isinstance(requirement, (Mapping, IterItems)):
             abstract_factory = lambda _: _required.RequiredSubset
@@ -305,8 +306,9 @@ class ValidateType(object):
 
         self(data, requirement, msg=msg)
 
-    def superset(self, data, superset, msg=None):
-        """Require that *data* contains only elements from *superset*:
+    def superset(self, data, requirement, msg=None):
+        """Check that *requirement* is a superset of *data* (i.e., that
+        all elements in *data* are also contained in *requirement*):
 
         .. code-block:: python
             :emphasize-lines: 7
@@ -321,7 +323,7 @@ class ValidateType(object):
         """
         __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
 
-        requirement = normalize(superset, lazy_evaluation=False, default_type=set)
+        requirement = normalize(requirement, lazy_evaluation=False, default_type=set)
 
         if isinstance(requirement, (Mapping, IterItems)):
             abstract_factory = lambda _: _required.RequiredSuperset
