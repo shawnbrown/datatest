@@ -22,7 +22,9 @@ Validation
 
     .. automethod:: predicate
 
-    .. automethod:: unique
+    .. automethod:: approx
+
+    .. automethod:: fuzzy
 
     .. automethod:: set
 
@@ -30,13 +32,11 @@ Validation
 
     .. automethod:: superset
 
+    .. automethod:: unique
+
     .. automethod:: order
 
-    .. automethod:: approx
-
     .. automethod:: outliers
-
-    .. automethod:: fuzzy
 
     .. note::
 

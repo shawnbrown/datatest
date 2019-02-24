@@ -641,6 +641,108 @@ class RequiredPredicate(GroupRequirement):
         return differences, description
 
 
+class RequiredApprox(RequiredPredicate):
+    """Require that numeric values are approximately equal.
+
+    Values compare as equal if their difference rounded to the
+    given number of decimal places (default 7) equals zero, or
+    if the difference between values is less than or equal to
+    the given delta.
+    """
+    def __init__(self, obj, places=None, delta=None, show_expected=False):
+        if places is None:
+            places = 7
+        self._pred = self.approx_predicate(obj, places, delta)
+        self._obj = obj
+        self.show_expected = show_expected
+        self.places = places
+        self.delta = delta
+
+    @staticmethod
+    def approx_delta(delta, value, other):
+        try:
+            return abs(other - value) <= delta
+        except TypeError:
+            return False
+
+    @staticmethod
+    def approx_places(places, value, other):
+        try:
+            return round(abs(other - value), places) == 0
+        except TypeError:
+            return False
+
+    @classmethod
+    def approx_predicate(cls, obj, places, delta):
+        """Return Predicate object where string components have been
+        replaced with approx_delta() or approx_delta() function.
+        """
+        if delta is not None:
+            approx_equal = partial(cls.approx_delta, delta)
+        else:
+            approx_equal = partial(cls.approx_places, places)
+
+        def approx_or_orig(x):
+            if isinstance(x, Number):
+                return partial(approx_equal, x)
+            return x
+
+        if isinstance(obj, tuple):
+            return Predicate(tuple(approx_or_orig(x) for x in obj))
+        return Predicate(approx_or_orig(obj))
+
+    def _get_description(self):
+        if self.delta is not None:
+            return 'not equal within delta of {0}'.format(self.delta)
+        return 'not equal within {0} decimal places'.format(self.places)
+
+    def check_group(self, group):
+        differences, _ = super(RequiredApprox, self).check_group(group)
+        return differences, self._get_description()
+
+
+class RequiredFuzzy(RequiredPredicate):
+    """Require that strings match with a similarity greater than
+    or equal to *cutoff* (default 0.6).
+
+    Similarity measures are determined using the ratio() method
+    of the difflib.SequenceMatcher class. The values range from
+    1.0 (exactly the same) to 0.0 (completely different).
+    """
+    @staticmethod
+    def fuzzy_predicate(obj, cutoff):
+        """Return Predicate object where string components have been
+        replaced with fuzzy_match() function.
+        """
+        def fuzzy_match(cutoff, a, b):
+            try:
+                matcher = difflib.SequenceMatcher(a=a, b=b)
+                return matcher.ratio() >= cutoff
+            except TypeError:
+                return False
+
+        def fuzzy_or_orig(a):
+            if isinstance(a, string_types):
+                return partial(fuzzy_match, cutoff, a)
+            return a
+
+        if isinstance(obj, tuple):
+            return Predicate(tuple(fuzzy_or_orig(x) for x in obj))
+        return Predicate(fuzzy_or_orig(obj))
+
+    def __init__(self, obj, cutoff=0.6, show_expected=False):
+        self._pred = self.fuzzy_predicate(obj, cutoff)
+        self._obj = obj
+        self.show_expected = show_expected
+        self.cutoff = cutoff
+
+    def check_group(self, group):
+        differences, description = super(RequiredFuzzy, self).check_group(group)
+        fuzzy_info = '{0}, fuzzy matching at ratio {1} or greater'
+        description = fuzzy_info.format(description, self.cutoff)
+        return differences, description
+
+
 class RequiredSet(GroupRequirement):
     """A requirement to test data for set membership."""
     def __init__(self, requirement):
@@ -666,6 +768,76 @@ class RequiredSet(GroupRequirement):
             (Extra(x) for x in extras),
         )
         return differences, 'does not satisfy set membership'
+
+
+class RequiredSubset(GroupRequirement):
+    """Require that data contains all elements of *subset*."""
+    def __init__(self, subset):
+        if not isinstance(subset, Set):
+            subset = set(subset)
+        self._subset = subset
+
+    def check_group(self, group):
+        missing = self._subset.copy()
+        for element in group:
+            if not missing:
+                break
+            missing.discard(element)
+
+        differences = (Missing(element) for element in missing)
+        description = 'must contain all elements of given subset'
+        return differences, description
+
+
+class RequiredSuperset(GroupRequirement):
+    """Require that data contains only elements of *superset*."""
+    def __init__(self, superset):
+        if not isinstance(superset, Set):
+            superset = set(superset)
+        self._superset = superset
+
+    def check_group(self, group):
+        superset = self._superset
+        extras = set()
+        for element in group:
+            if element not in superset:
+                extras.add(element)
+
+        differences = (Extra(element) for element in extras)
+        description = 'may contain only elements of given superset'
+        return differences, description
+
+
+class RequiredUnique(GroupRequirement):
+    """A requirement to test that elements are unique."""
+    @staticmethod
+    def _generate_differences(group):
+        seen = set()
+        for element in group:
+            if element in seen:
+                yield Extra(element)
+            else:
+                seen.add(element)
+
+    def check_group(self, group):
+        if isinstance(group, BaseElement):
+            cls_name = group.__class__.__name__
+            msg = 'expected non-tuple, non-string sequence, got {0}: {1!r}'
+            raise ValueError(msg.format(cls_name, group))
+
+        differences = self._generate_differences(group)
+        return differences, 'elements should be unique'
+
+    def check_data(self, data):
+        data = normalize(data, lazy_evaluation=True)
+
+        if isinstance(data, Mapping):
+            data = IterItems(data)
+
+        if isinstance(data, IterItems):
+            return self.check_items(data, autowrap=False)
+
+        return self.check_group(data)
 
 
 class RequiredOrder(GroupRequirement):
@@ -722,6 +894,59 @@ class RequiredOrder(GroupRequirement):
     def check_group(self, group):
         differences = self._generate_differences(group)
         return differences, 'does not match required order'
+
+
+class RequiredOutliers(GroupRequirement):
+    """Require that groups do not contain outliers."""
+    def __init__(self, obj, multiplier=2.2, rounding=True):
+        def verify_numeric(x):
+            if not isinstance(x, Number):
+                msg = 'outlier check requires numeric values, got {0}: {1!r}'
+                raise TypeError(msg.format(x.__class__.__name__, x))
+            return x
+
+        group = sorted(obj, key=verify_numeric)
+
+        if len(group) < 2:
+            self.lower = self.upper = (group[0] if group else 0)
+            return  # <- EXIT!
+
+        # Build lower and upper fences.
+        midpoint = int(round(len(group) / 2.0))
+        q1 = median(group[:midpoint])
+        q3 = median(group[midpoint:])
+        iqr = q3 - q1
+        kprime = iqr * multiplier
+        lower = q1 - kprime
+        upper = q3 + kprime
+
+        if iqr and rounding:
+            # Round fences to concise float representations.
+            one_percent_iqr = iqr / 100
+            reciprocal = 1 / one_percent_iqr
+            bit_length = len(bin(int(reciprocal - 1))) - 2  # Py 2.6 compat;
+            next_power_of_2 = 1 << bit_length               # use bit_length()
+            quantile = 1 / next_power_of_2                  # method in 2.7+
+            lower = round(lower / quantile) * quantile
+            upper = round(upper / quantile) * quantile
+
+        self.lower = lower
+        self.upper = upper
+
+    @staticmethod
+    def _generate_differences(group, lower, upper):
+        for element in group:
+            try:
+                if element < lower:
+                    yield Deviation(element - lower, lower)
+                elif element > upper:
+                    yield Deviation(element - upper, upper)
+            except TypeError:
+                yield Invalid(element)
+
+    def check_group(self, group):
+        differences = self._generate_differences(group, self.lower, self.upper)
+        return differences, 'contains outliers'
 
 
 class RequiredSequence(GroupRequirement):
@@ -891,232 +1116,3 @@ def get_requirement(obj):
         return RequiredSequence(obj)
 
     return RequiredPredicate(obj)
-
-
-#########################################
-# Additional Concrete Requirement Classes
-#########################################
-
-class RequiredUnique(GroupRequirement):
-    """A requirement to test that elements are unique."""
-    @staticmethod
-    def _generate_differences(group):
-        seen = set()
-        for element in group:
-            if element in seen:
-                yield Extra(element)
-            else:
-                seen.add(element)
-
-    def check_group(self, group):
-        if isinstance(group, BaseElement):
-            cls_name = group.__class__.__name__
-            msg = 'expected non-tuple, non-string sequence, got {0}: {1!r}'
-            raise ValueError(msg.format(cls_name, group))
-
-        differences = self._generate_differences(group)
-        return differences, 'elements should be unique'
-
-    def check_data(self, data):
-        data = normalize(data, lazy_evaluation=True)
-
-        if isinstance(data, Mapping):
-            data = IterItems(data)
-
-        if isinstance(data, IterItems):
-            return self.check_items(data, autowrap=False)
-
-        return self.check_group(data)
-
-
-class RequiredSubset(GroupRequirement):
-    """Require that data contains all elements of *subset*."""
-    def __init__(self, subset):
-        if not isinstance(subset, Set):
-            subset = set(subset)
-        self._subset = subset
-
-    def check_group(self, group):
-        missing = self._subset.copy()
-        for element in group:
-            if not missing:
-                break
-            missing.discard(element)
-
-        differences = (Missing(element) for element in missing)
-        description = 'must contain all elements of given subset'
-        return differences, description
-
-
-class RequiredSuperset(GroupRequirement):
-    """Require that data contains only elements of *superset*."""
-    def __init__(self, superset):
-        if not isinstance(superset, Set):
-            superset = set(superset)
-        self._superset = superset
-
-    def check_group(self, group):
-        superset = self._superset
-        extras = set()
-        for element in group:
-            if element not in superset:
-                extras.add(element)
-
-        differences = (Extra(element) for element in extras)
-        description = 'may contain only elements of given superset'
-        return differences, description
-
-
-class RequiredApprox(RequiredPredicate):
-    """Require that numeric values are approximately equal.
-
-    Values compare as equal if their difference rounded to the
-    given number of decimal places (default 7) equals zero, or
-    if the difference between values is less than or equal to
-    the given delta.
-    """
-    def __init__(self, obj, places=None, delta=None, show_expected=False):
-        if places is None:
-            places = 7
-        self._pred = self.approx_predicate(obj, places, delta)
-        self._obj = obj
-        self.show_expected = show_expected
-        self.places = places
-        self.delta = delta
-
-    @staticmethod
-    def approx_delta(delta, value, other):
-        try:
-            return abs(other - value) <= delta
-        except TypeError:
-            return False
-
-    @staticmethod
-    def approx_places(places, value, other):
-        try:
-            return round(abs(other - value), places) == 0
-        except TypeError:
-            return False
-
-    @classmethod
-    def approx_predicate(cls, obj, places, delta):
-        """Return Predicate object where string components have been
-        replaced with approx_delta() or approx_delta() function.
-        """
-        if delta is not None:
-            approx_equal = partial(cls.approx_delta, delta)
-        else:
-            approx_equal = partial(cls.approx_places, places)
-
-        def approx_or_orig(x):
-            if isinstance(x, Number):
-                return partial(approx_equal, x)
-            return x
-
-        if isinstance(obj, tuple):
-            return Predicate(tuple(approx_or_orig(x) for x in obj))
-        return Predicate(approx_or_orig(obj))
-
-    def _get_description(self):
-        if self.delta is not None:
-            return 'not equal within delta of {0}'.format(self.delta)
-        return 'not equal within {0} decimal places'.format(self.places)
-
-    def check_group(self, group):
-        differences, _ = super(RequiredApprox, self).check_group(group)
-        return differences, self._get_description()
-
-
-class RequiredOutliers(GroupRequirement):
-    """Require that groups do not contain outliers."""
-    def __init__(self, obj, multiplier=2.2, rounding=True):
-        def verify_numeric(x):
-            if not isinstance(x, Number):
-                msg = 'outlier check requires numeric values, got {0}: {1!r}'
-                raise TypeError(msg.format(x.__class__.__name__, x))
-            return x
-
-        group = sorted(obj, key=verify_numeric)
-
-        if len(group) < 2:
-            self.lower = self.upper = (group[0] if group else 0)
-            return  # <- EXIT!
-
-        # Build lower and upper fences.
-        midpoint = int(round(len(group) / 2.0))
-        q1 = median(group[:midpoint])
-        q3 = median(group[midpoint:])
-        iqr = q3 - q1
-        kprime = iqr * multiplier
-        lower = q1 - kprime
-        upper = q3 + kprime
-
-        if iqr and rounding:
-            # Round fences to concise float representations.
-            one_percent_iqr = iqr / 100
-            reciprocal = 1 / one_percent_iqr
-            bit_length = len(bin(int(reciprocal - 1))) - 2  # Py 2.6 compat;
-            next_power_of_2 = 1 << bit_length               # use bit_length()
-            quantile = 1 / next_power_of_2                  # method in 2.7+
-            lower = round(lower / quantile) * quantile
-            upper = round(upper / quantile) * quantile
-
-        self.lower = lower
-        self.upper = upper
-
-    @staticmethod
-    def _generate_differences(group, lower, upper):
-        for element in group:
-            try:
-                if element < lower:
-                    yield Deviation(element - lower, lower)
-                elif element > upper:
-                    yield Deviation(element - upper, upper)
-            except TypeError:
-                yield Invalid(element)
-
-    def check_group(self, group):
-        differences = self._generate_differences(group, self.lower, self.upper)
-        return differences, 'contains outliers'
-
-
-class RequiredFuzzy(RequiredPredicate):
-    """Require that strings match with a similarity greater than
-    or equal to *cutoff* (default 0.6).
-
-    Similarity measures are determined using the ratio() method
-    of the difflib.SequenceMatcher class. The values range from
-    1.0 (exactly the same) to 0.0 (completely different).
-    """
-    @staticmethod
-    def fuzzy_predicate(obj, cutoff):
-        """Return Predicate object where string components have been
-        replaced with fuzzy_match() function.
-        """
-        def fuzzy_match(cutoff, a, b):
-            try:
-                matcher = difflib.SequenceMatcher(a=a, b=b)
-                return matcher.ratio() >= cutoff
-            except TypeError:
-                return False
-
-        def fuzzy_or_orig(a):
-            if isinstance(a, string_types):
-                return partial(fuzzy_match, cutoff, a)
-            return a
-
-        if isinstance(obj, tuple):
-            return Predicate(tuple(fuzzy_or_orig(x) for x in obj))
-        return Predicate(fuzzy_or_orig(obj))
-
-    def __init__(self, obj, cutoff=0.6, show_expected=False):
-        self._pred = self.fuzzy_predicate(obj, cutoff)
-        self._obj = obj
-        self.show_expected = show_expected
-        self.cutoff = cutoff
-
-    def check_group(self, group):
-        differences, description = super(RequiredFuzzy, self).check_group(group)
-        fuzzy_info = '{0}, fuzzy matching at ratio {1} or greater'
-        description = fuzzy_info.format(description, self.cutoff)
-        return differences, description

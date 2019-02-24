@@ -1141,6 +1141,220 @@ class TestRequiredPredicate2(unittest.TestCase):
         self.assertEqual(evaluate_items(diff), expected)
 
 
+class TestRequiredApprox(unittest.TestCase):
+    def test_passing_default(self):
+        requirement = RequiredApprox(10)
+
+        data = [10.00000001, 10.00000002, 10.00000003]
+        result = requirement(data)
+        self.assertIsNone(result)  # True for all, returns None.
+
+    def test_some_false(self):
+        """Numeric differences beyond the approximate range should
+        create Deviation differences.
+        """
+        requirement = RequiredApprox(10)
+
+        # Using check_group() method internally.
+        data = [10.00000001, 10.00000002, 9.5]
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Deviation(-0.5, 10)])
+        self.assertEqual(desc, 'not equal within 7 decimal places')
+
+        # Using check_group() method with single item.
+        data = 9.5
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Deviation(-0.5, 10)])
+        self.assertEqual(desc, 'not equal within 7 decimal places')
+
+        # Using check_items() method internally.
+        data = {'A': 10.00000001, 'B': 9.5, 'C': [9.5, 10.00000001]}
+        diff, desc = requirement(data)
+        expected = [
+            ('B', Deviation(-0.5, 10)),
+            ('C', [Deviation(-0.5, 10)]),
+        ]
+        self.assertEqual(evaluate_items(diff), expected)
+        self.assertEqual(desc, 'not equal within 7 decimal places')
+
+    def test_tuple_comparison(self):
+        """Should work on numeric elements within tuples."""
+        data = [(0.50390625, 'abc'), (0.4921875, 'abc'), (0.5, 'xyz')]
+
+        requirement = RequiredApprox((0.5, 'abc'), places=2)
+        diff, desc = requirement(data)
+
+        self.assertEqual(list(diff), [Invalid((0.4921875, 'abc')), Invalid((0.5, 'xyz'))])
+        self.assertEqual(desc, 'not equal within 2 decimal places')
+
+    def test_specified_places(self):
+        requirement = RequiredApprox(0.5, places=2)
+
+        data = [0.50390625, 0.49609375, 0.4921875]
+
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Deviation(-0.0078125, 0.5)])
+        self.assertEqual(desc, 'not equal within 2 decimal places')
+
+    def test_specified_delta(self):
+        requirement = RequiredApprox(10, delta=3)
+
+        data = [10, 7, 13, 13.0625]
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Deviation(+3.0625, 10)])
+        self.assertEqual(desc, 'not equal within delta of 3')
+
+    def test_nonnumeric_data(self):
+        """Non-numeric differences should create Invalid() differences."""
+        requirement = RequiredApprox(10)
+
+        data = [10.00000001, 10.00000002, 'abc']
+
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Invalid('abc')])
+        self.assertEqual(desc, 'not equal within 7 decimal places')
+
+    def test_show_expected(self):
+        requirement = RequiredApprox(10, show_expected=True)
+
+        data = [10.00000001, 10.00000002, 'abc']
+
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Invalid('abc', expected=10)])
+        self.assertEqual(desc, 'not equal within 7 decimal places')
+
+    def test_duplicate_false(self):
+        """Should return one difference for every false result (including
+        duplicates).
+        """
+        requirement = RequiredApprox(10)
+
+        data = [10.00000001, 9.5, 9.5]  # <- Multiple 9.5's.
+
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Deviation(-0.5, 10), Deviation(-0.5, 10)])
+        self.assertEqual(desc, 'not equal within 7 decimal places')
+
+    def test_empty_iterable(self):
+        requirement = RequiredApprox(10)
+        result = requirement([])
+        self.assertIsNone(result)
+
+    def test_nonnumeric_baseelement(self):
+        """Non-numeric base elements should have normal predicate behavior."""
+        requirement = RequiredApprox('abc')
+
+        self.assertIsNone(requirement('abc'))
+
+        diff, desc = requirement('xxx')
+        self.assertEqual(list(diff), [Invalid('xxx')])
+
+    def test_notfound_token(self):
+        data = [10.00000001, NOTFOUND]
+        requirement = RequiredApprox(10)
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Deviation(-10, 10)])
+        self.assertEqual(desc, 'not equal within 7 decimal places')
+
+
+class TestRequiredFuzzy(unittest.TestCase):
+    def test_all_true(self):
+        data = iter(['abx', 'aby', 'abz'])
+        requirement = RequiredFuzzy('abc')
+        result = requirement(data)
+        self.assertIsNone(result)  # True for all elements, returns None.
+
+    def test_some_false(self):
+        """When the fuzzy predicate returns False, values should be
+        returned as Invalid() differences.
+        """
+        data = ['abx', 'aby', 'xyz']
+
+        requirement = RequiredFuzzy('abc')
+        diff, desc = requirement(data)
+
+        self.assertEqual(list(diff), [Invalid('xyz')])
+        self.assertEqual(desc, "does not satisfy 'abc', fuzzy matching at ratio 0.6 or greater")
+
+    def test_cutoff(self):
+        data = ['aaaaa', 'aaaax', 'aaaxx', 'xxxxx']
+
+        requirement = RequiredFuzzy('aaaaa', cutoff=0.6)
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Invalid('xxxxx')])
+        self.assertEqual(desc, "does not satisfy 'aaaaa', fuzzy matching at ratio 0.6 or greater")
+
+        requirement = RequiredFuzzy('aaaaa', cutoff=0.8)
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Invalid('aaaxx'), Invalid('xxxxx')])
+        self.assertEqual(desc, "does not satisfy 'aaaaa', fuzzy matching at ratio 0.8 or greater")
+
+    def test_tuple_comparison(self):
+        """Should work on string elements within tuples."""
+        data = [(1, 'abx'), (2, 'abx'), (1, 'xyz')]
+
+        requirement = RequiredFuzzy((1, 'abc'))
+        diff, desc = requirement(data)
+
+        self.assertEqual(list(diff), [Invalid((2, 'abx')), Invalid((1, 'xyz'))])
+        self.assertEqual(desc, "does not satisfy (1, 'abc'), fuzzy matching at ratio 0.6 or greater")
+
+    def test_show_expected(self):
+        data = ['abx', 'aby', 'xyz']
+
+        requirement = RequiredFuzzy('abc', show_expected=True)
+        diff, desc = requirement(data)
+
+        self.assertEqual(list(diff), [Invalid('xyz', expected='abc')])
+        self.assertEqual(desc, "does not satisfy 'abc', fuzzy matching at ratio 0.6 or greater")
+
+    def test_empty_iterable(self):
+        requirement = RequiredFuzzy('abc')
+        result = requirement([])
+        self.assertIsNone(result)
+
+    def test_nonstring_value(self):
+        """When the RequiredFuzzy is given non-string values, the normal
+        predicate differences should be returned (e.g., Deviation, for
+        numeric comparisons).
+        """
+        data = [10, 10, 12]
+        requirement = RequiredFuzzy(10)
+
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Deviation(+2, 10)])
+        self.assertEqual(desc, 'does not satisfy 10, fuzzy matching at ratio 0.6 or greater')
+
+    def test_notfound_token(self):
+        data = [123, 'abc']
+        requirement = RequiredFuzzy(NOTFOUND)
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Deviation(+123, None), Extra('abc')])
+
+        data = [10, NOTFOUND]
+        requirement = RequiredFuzzy(10)
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Deviation(-10, 10)])
+        self.assertEqual(desc, 'does not satisfy 10, fuzzy matching at ratio 0.6 or greater')
+
+        data = ['abc', NOTFOUND]
+        requirement = RequiredFuzzy('abc')
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Missing('abc')])
+        self.assertEqual(desc, "does not satisfy 'abc', fuzzy matching at ratio 0.6 or greater")
+
+    def test_items(self):
+        requirement = RequiredFuzzy('abc')
+
+        data = {'A': ['abx', 'abx', 'xxx'], 'B': 'abc', 'C': 'yyy'}
+        diff, desc = requirement(data)
+        expected = [
+            ('A', [Invalid('xxx')]),
+            ('C', Invalid('yyy')),
+        ]
+        self.assertEqual(evaluate_items(diff), expected)
+
+
 class TestRequiredSet2(unittest.TestCase):
     def setUp(self):
         self.requirement = RequiredSet(set([1, 2, 3]))
@@ -1175,6 +1389,115 @@ class TestRequiredSet2(unittest.TestCase):
         requirement = RequiredSet(set([1]))
         differences, description = requirement([])
         self.assertEqual(list(differences), [Missing(1)])
+
+
+class TestRequiredSubset(unittest.TestCase):
+    def test_element_group(self):
+        data = [1, 2, 3]
+        requirement = RequiredSubset(set([1, 2]))
+        self.assertIsNone(requirement(data))
+
+        data = [1, 2]
+        requirement = RequiredSubset(set([1, 2, 3, 4]))
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Missing(3), Missing(4)])
+        self.assertRegex(desc, 'must contain all')
+
+    def test_data_mapping(self):
+        requirement = RequiredSubset(set([1, 2, 3]))
+
+        data = {'a': [1, 2, 3], 'b': [1, 2, 3], 'c': [1, 2, 3]}
+        self.assertIsNone(requirement(data))
+
+        data = {'a': [1, 2], 'b': [1, 2, 3], 'c': [1, 2, 3, 4]}
+        diff, desc = requirement(data)
+        expected = [
+            ('a', [Missing(3)]),
+        ]
+        self.assertEqual(evaluate_items(diff), expected)
+        self.assertRegex(desc, 'must contain all')
+
+    def test_single_element_handling(self):
+        requirement = RequiredSubset(set([1, 2]))
+
+        diff, desc = requirement(1)
+        self.assertEqual(list(diff), [Missing(2)])
+
+        diff, desc = requirement((3, 4))  # <- Tuple is single element.
+        diff = sorted(diff, key=lambda x: x.args)
+        self.assertEqual(diff, [Missing(1), Missing(2)])
+
+
+class TestRequiredSuperset(unittest.TestCase):
+    def test_element_group(self):
+        data = [1, 2]
+        requirement = RequiredSuperset(set([1, 2, 3]))
+        self.assertIsNone(requirement(data))
+
+        data = [1, 2, 3, 4]
+        requirement = RequiredSuperset(set([1, 2]))
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Extra(3), Extra(4)])
+        self.assertRegex(desc, 'may contain only')
+
+    def test_data_mapping(self):
+        requirement = RequiredSuperset(set([1, 2, 3]))
+
+        data = {'a': [1, 2, 3], 'b': [1, 2], 'c': [1]}
+        self.assertIsNone(requirement(data))
+
+        data = {'a': [1, 2], 'b': [1, 2, 3], 'c': [1, 2, 3, 4]}
+        diff, desc = requirement(data)
+        expected = [
+            ('c', [Extra(4)]),
+        ]
+        self.assertEqual(evaluate_items(diff), expected)
+        self.assertRegex(desc, 'may contain only')
+
+    def test_single_element_handling(self):
+        requirement = RequiredSuperset(set([1, 2]))
+
+        diff, desc = requirement(3)
+        self.assertEqual(list(diff), [Extra(3)])
+
+        diff, desc = requirement((3, 4))  # <- Tuple is single element.
+        diff = sorted(diff, key=lambda x: x.args)
+        self.assertEqual(diff, [Extra((3, 4))])
+
+
+class TestRequiredUnique(unittest.TestCase):
+    def setUp(self):
+        self.requirement = RequiredUnique()
+
+    def test_element_group(self):
+        data = [1, 2, 3]
+        self.assertIsNone(self.requirement(data))  # No duplicates.
+
+        data = [1, 2, 2, 3, 3, 3]
+        diff, desc = self.requirement(data)
+        self.assertEqual(list(diff), [Extra(2), Extra(3), Extra(3)])
+        self.assertRegex(desc, 'should be unique')
+
+    def test_mapping_of_element_groups(self):
+        data = {'a': [1, 2, 3], 'b': [1, 2, 3], 'c': [1, 2, 3]}
+        self.assertIsNone(self.requirement(data))  # No duplicates.
+
+        data = {'a': [1], 'b': [2, 2], 'c': [3, 3, 3]}
+        diff, desc = self.requirement(data)
+        expected = [
+            ('b', [Extra(2)]),
+            ('c', [Extra(3), Extra(3)]),
+        ]
+        self.assertEqual(evaluate_items(diff), expected)
+        self.assertRegex(desc, 'should be unique')
+
+    def test_single_element_handling(self):
+        """RequiredUnique can not operate directly on base elements."""
+        with self.assertRaises(ValueError):
+            self.requirement((1, 2))
+
+        with self.assertRaises(ValueError):
+            self.requirement({'a': (1, 2)})
 
 
 class TestRequiredOrder2(unittest.TestCase):
@@ -1308,6 +1631,42 @@ class TestRequiredOrder2(unittest.TestCase):
             Extra((4, {'g': 7})),
         ]
         self.assertEqual(list(differences), expected)
+
+
+class TestRequiredOutliers(unittest.TestCase):
+    def test_passing(self):
+        data = [12, 5, 8, 5, 7, 15]
+        requirement = RequiredOutliers(data)
+        result = requirement(data)
+        self.assertIsNone(result)  # True for all, returns None.
+
+    def test_failing_group(self):
+        data = [12, 5, 8, 37, 5, 7, 15]  # <- 37 is an outlier
+        requirement = RequiredOutliers(data)
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Deviation(+2.1875, 34.8125)])
+
+    def test_zero_or_one_value(self):
+        data = []  # <- Zero values.
+        requirement = RequiredOutliers(data)
+        result = requirement(data)
+        self.assertIsNone(result)  # Can have no outliers.
+
+        data = [42]  # <- One value.
+        requirement = RequiredOutliers(data)
+        result = requirement(data)
+        self.assertIsNone(result)  # Can have no outliers.
+
+    def test_nonnumeric_requirement(self):
+        requirement = [12, 5, 8, 'abc', 5, 7, 15]  # <- 'abc' not valid input
+        with self.assertRaises(TypeError):
+            RequiredOutliers(requirement)
+
+    def test_nonnumeric_data(self):
+        requirement = RequiredOutliers([12, 5, 8, 5, 7, 15])
+        data = [12, 5, 8, 'abc', 5, 7, 15]  # <- 'abc' not comparable
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Invalid('abc')])
 
 
 class TestRequiredSequence2(unittest.TestCase):
@@ -1632,362 +1991,3 @@ class TestGetRequirement(unittest.TestCase):
         existing_requirement = RequiredPredicate('foo')
         requirement = get_requirement(existing_requirement)
         self.assertIs(requirement, existing_requirement)
-
-
-class TestRequiredUnique(unittest.TestCase):
-    def setUp(self):
-        self.requirement = RequiredUnique()
-
-    def test_element_group(self):
-        data = [1, 2, 3]
-        self.assertIsNone(self.requirement(data))  # No duplicates.
-
-        data = [1, 2, 2, 3, 3, 3]
-        diff, desc = self.requirement(data)
-        self.assertEqual(list(diff), [Extra(2), Extra(3), Extra(3)])
-        self.assertRegex(desc, 'should be unique')
-
-    def test_mapping_of_element_groups(self):
-        data = {'a': [1, 2, 3], 'b': [1, 2, 3], 'c': [1, 2, 3]}
-        self.assertIsNone(self.requirement(data))  # No duplicates.
-
-        data = {'a': [1], 'b': [2, 2], 'c': [3, 3, 3]}
-        diff, desc = self.requirement(data)
-        expected = [
-            ('b', [Extra(2)]),
-            ('c', [Extra(3), Extra(3)]),
-        ]
-        self.assertEqual(evaluate_items(diff), expected)
-        self.assertRegex(desc, 'should be unique')
-
-    def test_single_element_handling(self):
-        """RequiredUnique can not operate directly on base elements."""
-        with self.assertRaises(ValueError):
-            self.requirement((1, 2))
-
-        with self.assertRaises(ValueError):
-            self.requirement({'a': (1, 2)})
-
-
-class TestRequiredSubset(unittest.TestCase):
-    def test_element_group(self):
-        data = [1, 2, 3]
-        requirement = RequiredSubset(set([1, 2]))
-        self.assertIsNone(requirement(data))
-
-        data = [1, 2]
-        requirement = RequiredSubset(set([1, 2, 3, 4]))
-        diff, desc = requirement(data)
-        self.assertEqual(list(diff), [Missing(3), Missing(4)])
-        self.assertRegex(desc, 'must contain all')
-
-    def test_data_mapping(self):
-        requirement = RequiredSubset(set([1, 2, 3]))
-
-        data = {'a': [1, 2, 3], 'b': [1, 2, 3], 'c': [1, 2, 3]}
-        self.assertIsNone(requirement(data))
-
-        data = {'a': [1, 2], 'b': [1, 2, 3], 'c': [1, 2, 3, 4]}
-        diff, desc = requirement(data)
-        expected = [
-            ('a', [Missing(3)]),
-        ]
-        self.assertEqual(evaluate_items(diff), expected)
-        self.assertRegex(desc, 'must contain all')
-
-    def test_single_element_handling(self):
-        requirement = RequiredSubset(set([1, 2]))
-
-        diff, desc = requirement(1)
-        self.assertEqual(list(diff), [Missing(2)])
-
-        diff, desc = requirement((3, 4))  # <- Tuple is single element.
-        diff = sorted(diff, key=lambda x: x.args)
-        self.assertEqual(diff, [Missing(1), Missing(2)])
-
-
-class TestRequiredSuperset(unittest.TestCase):
-    def test_element_group(self):
-        data = [1, 2]
-        requirement = RequiredSuperset(set([1, 2, 3]))
-        self.assertIsNone(requirement(data))
-
-        data = [1, 2, 3, 4]
-        requirement = RequiredSuperset(set([1, 2]))
-        diff, desc = requirement(data)
-        self.assertEqual(list(diff), [Extra(3), Extra(4)])
-        self.assertRegex(desc, 'may contain only')
-
-    def test_data_mapping(self):
-        requirement = RequiredSuperset(set([1, 2, 3]))
-
-        data = {'a': [1, 2, 3], 'b': [1, 2], 'c': [1]}
-        self.assertIsNone(requirement(data))
-
-        data = {'a': [1, 2], 'b': [1, 2, 3], 'c': [1, 2, 3, 4]}
-        diff, desc = requirement(data)
-        expected = [
-            ('c', [Extra(4)]),
-        ]
-        self.assertEqual(evaluate_items(diff), expected)
-        self.assertRegex(desc, 'may contain only')
-
-    def test_single_element_handling(self):
-        requirement = RequiredSuperset(set([1, 2]))
-
-        diff, desc = requirement(3)
-        self.assertEqual(list(diff), [Extra(3)])
-
-        diff, desc = requirement((3, 4))  # <- Tuple is single element.
-        diff = sorted(diff, key=lambda x: x.args)
-        self.assertEqual(diff, [Extra((3, 4))])
-
-
-class TestRequiredApprox(unittest.TestCase):
-    def test_passing_default(self):
-        requirement = RequiredApprox(10)
-
-        data = [10.00000001, 10.00000002, 10.00000003]
-        result = requirement(data)
-        self.assertIsNone(result)  # True for all, returns None.
-
-    def test_some_false(self):
-        """Numeric differences beyond the approximate range should
-        create Deviation differences.
-        """
-        requirement = RequiredApprox(10)
-
-        # Using check_group() method internally.
-        data = [10.00000001, 10.00000002, 9.5]
-        diff, desc = requirement(data)
-        self.assertEqual(list(diff), [Deviation(-0.5, 10)])
-        self.assertEqual(desc, 'not equal within 7 decimal places')
-
-        # Using check_group() method with single item.
-        data = 9.5
-        diff, desc = requirement(data)
-        self.assertEqual(list(diff), [Deviation(-0.5, 10)])
-        self.assertEqual(desc, 'not equal within 7 decimal places')
-
-        # Using check_items() method internally.
-        data = {'A': 10.00000001, 'B': 9.5, 'C': [9.5, 10.00000001]}
-        diff, desc = requirement(data)
-        expected = [
-            ('B', Deviation(-0.5, 10)),
-            ('C', [Deviation(-0.5, 10)]),
-        ]
-        self.assertEqual(evaluate_items(diff), expected)
-        self.assertEqual(desc, 'not equal within 7 decimal places')
-
-    def test_tuple_comparison(self):
-        """Should work on numeric elements within tuples."""
-        data = [(0.50390625, 'abc'), (0.4921875, 'abc'), (0.5, 'xyz')]
-
-        requirement = RequiredApprox((0.5, 'abc'), places=2)
-        diff, desc = requirement(data)
-
-        self.assertEqual(list(diff), [Invalid((0.4921875, 'abc')), Invalid((0.5, 'xyz'))])
-        self.assertEqual(desc, 'not equal within 2 decimal places')
-
-    def test_specified_places(self):
-        requirement = RequiredApprox(0.5, places=2)
-
-        data = [0.50390625, 0.49609375, 0.4921875]
-
-        diff, desc = requirement(data)
-        self.assertEqual(list(diff), [Deviation(-0.0078125, 0.5)])
-        self.assertEqual(desc, 'not equal within 2 decimal places')
-
-    def test_specified_delta(self):
-        requirement = RequiredApprox(10, delta=3)
-
-        data = [10, 7, 13, 13.0625]
-        diff, desc = requirement(data)
-        self.assertEqual(list(diff), [Deviation(+3.0625, 10)])
-        self.assertEqual(desc, 'not equal within delta of 3')
-
-    def test_nonnumeric_data(self):
-        """Non-numeric differences should create Invalid() differences."""
-        requirement = RequiredApprox(10)
-
-        data = [10.00000001, 10.00000002, 'abc']
-
-        diff, desc = requirement(data)
-        self.assertEqual(list(diff), [Invalid('abc')])
-        self.assertEqual(desc, 'not equal within 7 decimal places')
-
-    def test_show_expected(self):
-        requirement = RequiredApprox(10, show_expected=True)
-
-        data = [10.00000001, 10.00000002, 'abc']
-
-        diff, desc = requirement(data)
-        self.assertEqual(list(diff), [Invalid('abc', expected=10)])
-        self.assertEqual(desc, 'not equal within 7 decimal places')
-
-    def test_duplicate_false(self):
-        """Should return one difference for every false result (including
-        duplicates).
-        """
-        requirement = RequiredApprox(10)
-
-        data = [10.00000001, 9.5, 9.5]  # <- Multiple 9.5's.
-
-        diff, desc = requirement(data)
-        self.assertEqual(list(diff), [Deviation(-0.5, 10), Deviation(-0.5, 10)])
-        self.assertEqual(desc, 'not equal within 7 decimal places')
-
-    def test_empty_iterable(self):
-        requirement = RequiredApprox(10)
-        result = requirement([])
-        self.assertIsNone(result)
-
-    def test_nonnumeric_baseelement(self):
-        """Non-numeric base elements should have normal predicate behavior."""
-        requirement = RequiredApprox('abc')
-
-        self.assertIsNone(requirement('abc'))
-
-        diff, desc = requirement('xxx')
-        self.assertEqual(list(diff), [Invalid('xxx')])
-
-    def test_notfound_token(self):
-        data = [10.00000001, NOTFOUND]
-        requirement = RequiredApprox(10)
-        diff, desc = requirement(data)
-        self.assertEqual(list(diff), [Deviation(-10, 10)])
-        self.assertEqual(desc, 'not equal within 7 decimal places')
-
-
-class TestRequiredOutliers(unittest.TestCase):
-    def test_passing(self):
-        data = [12, 5, 8, 5, 7, 15]
-        requirement = RequiredOutliers(data)
-        result = requirement(data)
-        self.assertIsNone(result)  # True for all, returns None.
-
-    def test_failing_group(self):
-        data = [12, 5, 8, 37, 5, 7, 15]  # <- 37 is an outlier
-        requirement = RequiredOutliers(data)
-        diff, desc = requirement(data)
-        self.assertEqual(list(diff), [Deviation(+2.1875, 34.8125)])
-
-    def test_zero_or_one_value(self):
-        data = []  # <- Zero values.
-        requirement = RequiredOutliers(data)
-        result = requirement(data)
-        self.assertIsNone(result)  # Can have no outliers.
-
-        data = [42]  # <- One value.
-        requirement = RequiredOutliers(data)
-        result = requirement(data)
-        self.assertIsNone(result)  # Can have no outliers.
-
-    def test_nonnumeric_requirement(self):
-        requirement = [12, 5, 8, 'abc', 5, 7, 15]  # <- 'abc' not valid input
-        with self.assertRaises(TypeError):
-            RequiredOutliers(requirement)
-
-    def test_nonnumeric_data(self):
-        requirement = RequiredOutliers([12, 5, 8, 5, 7, 15])
-        data = [12, 5, 8, 'abc', 5, 7, 15]  # <- 'abc' not comparable
-        diff, desc = requirement(data)
-        self.assertEqual(list(diff), [Invalid('abc')])
-
-
-class TestRequiredFuzzy(unittest.TestCase):
-    def test_all_true(self):
-        data = iter(['abx', 'aby', 'abz'])
-        requirement = RequiredFuzzy('abc')
-        result = requirement(data)
-        self.assertIsNone(result)  # True for all elements, returns None.
-
-    def test_some_false(self):
-        """When the fuzzy predicate returns False, values should be
-        returned as Invalid() differences.
-        """
-        data = ['abx', 'aby', 'xyz']
-
-        requirement = RequiredFuzzy('abc')
-        diff, desc = requirement(data)
-
-        self.assertEqual(list(diff), [Invalid('xyz')])
-        self.assertEqual(desc, "does not satisfy 'abc', fuzzy matching at ratio 0.6 or greater")
-
-    def test_cutoff(self):
-        data = ['aaaaa', 'aaaax', 'aaaxx', 'xxxxx']
-
-        requirement = RequiredFuzzy('aaaaa', cutoff=0.6)
-        diff, desc = requirement(data)
-        self.assertEqual(list(diff), [Invalid('xxxxx')])
-        self.assertEqual(desc, "does not satisfy 'aaaaa', fuzzy matching at ratio 0.6 or greater")
-
-        requirement = RequiredFuzzy('aaaaa', cutoff=0.8)
-        diff, desc = requirement(data)
-        self.assertEqual(list(diff), [Invalid('aaaxx'), Invalid('xxxxx')])
-        self.assertEqual(desc, "does not satisfy 'aaaaa', fuzzy matching at ratio 0.8 or greater")
-
-    def test_tuple_comparison(self):
-        """Should work on string elements within tuples."""
-        data = [(1, 'abx'), (2, 'abx'), (1, 'xyz')]
-
-        requirement = RequiredFuzzy((1, 'abc'))
-        diff, desc = requirement(data)
-
-        self.assertEqual(list(diff), [Invalid((2, 'abx')), Invalid((1, 'xyz'))])
-        self.assertEqual(desc, "does not satisfy (1, 'abc'), fuzzy matching at ratio 0.6 or greater")
-
-    def test_show_expected(self):
-        data = ['abx', 'aby', 'xyz']
-
-        requirement = RequiredFuzzy('abc', show_expected=True)
-        diff, desc = requirement(data)
-
-        self.assertEqual(list(diff), [Invalid('xyz', expected='abc')])
-        self.assertEqual(desc, "does not satisfy 'abc', fuzzy matching at ratio 0.6 or greater")
-
-    def test_empty_iterable(self):
-        requirement = RequiredFuzzy('abc')
-        result = requirement([])
-        self.assertIsNone(result)
-
-    def test_nonstring_value(self):
-        """When the RequiredFuzzy is given non-string values, the normal
-        predicate differences should be returned (e.g., Deviation, for
-        numeric comparisons).
-        """
-        data = [10, 10, 12]
-        requirement = RequiredFuzzy(10)
-
-        diff, desc = requirement(data)
-        self.assertEqual(list(diff), [Deviation(+2, 10)])
-        self.assertEqual(desc, 'does not satisfy 10, fuzzy matching at ratio 0.6 or greater')
-
-    def test_notfound_token(self):
-        data = [123, 'abc']
-        requirement = RequiredFuzzy(NOTFOUND)
-        diff, desc = requirement(data)
-        self.assertEqual(list(diff), [Deviation(+123, None), Extra('abc')])
-
-        data = [10, NOTFOUND]
-        requirement = RequiredFuzzy(10)
-        diff, desc = requirement(data)
-        self.assertEqual(list(diff), [Deviation(-10, 10)])
-        self.assertEqual(desc, 'does not satisfy 10, fuzzy matching at ratio 0.6 or greater')
-
-        data = ['abc', NOTFOUND]
-        requirement = RequiredFuzzy('abc')
-        diff, desc = requirement(data)
-        self.assertEqual(list(diff), [Missing('abc')])
-        self.assertEqual(desc, "does not satisfy 'abc', fuzzy matching at ratio 0.6 or greater")
-
-    def test_items(self):
-        requirement = RequiredFuzzy('abc')
-
-        data = {'A': ['abx', 'abx', 'xxx'], 'B': 'abc', 'C': 'yyy'}
-        diff, desc = requirement(data)
-        expected = [
-            ('A', [Invalid('xxx')]),
-            ('C', Invalid('yyy')),
-        ]
-        self.assertEqual(evaluate_items(diff), expected)

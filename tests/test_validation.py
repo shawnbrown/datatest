@@ -404,13 +404,30 @@ class TestValidate(unittest.TestCase):
         }
         self.assertEqual(actual, expected)
 
-    def test_unique_method(self):
-        validate.unique([1, 2, 3, 4])
+    def test_approx_method(self):
+        data = {'A': 5.00000001, 'B': 10.00000001}
+        requirement = Query.from_object({'A': 5, 'B': 10})
+        validate.approx(data, requirement)
 
         with self.assertRaises(ValidationError) as cm:
-            validate.unique([1, 2, 3, 3])
+            data = {'A': 3, 'B': 10.00000001}
+            requirement = {'A': 5, 'B': 10}
+            validate.approx(data, requirement)
         actual = cm.exception.differences
-        expected = [Extra(3)]
+        expected = {'A': Deviation(-2, 5)}
+        self.assertEqual(actual, expected)
+
+    def test_fuzzy_method(self):
+        data = {'A': 'aaa', 'B': 'bbx'}
+        requirement = Query.from_object({'A': 'aaa', 'B': 'bbb'})
+        validate.fuzzy(data, requirement)
+
+        with self.assertRaises(ValidationError) as cm:
+            data = {'A': 'axx', 'B': 'bbx'}
+            requirement = Query.from_object({'A': 'aaa', 'B': 'bbb'})
+            validate.fuzzy(data, requirement)
+        actual = cm.exception.differences
+        expected = {'A': Invalid('axx')}
         self.assertEqual(actual, expected)
 
     def test_set_method(self):
@@ -468,6 +485,15 @@ class TestValidate(unittest.TestCase):
         expected = {'B': [Extra(5)]}
         self.assertEqual(actual, expected)
 
+    def test_unique_method(self):
+        validate.unique([1, 2, 3, 4])
+
+        with self.assertRaises(ValidationError) as cm:
+            validate.unique([1, 2, 3, 3])
+        actual = cm.exception.differences
+        expected = [Extra(3)]
+        self.assertEqual(actual, expected)
+
     def test_order_method(self):
         data = ['A', 'B', 'C', 'D']
         requirement = Query.from_object(['A', 'B', 'C', 'D'])
@@ -487,19 +513,6 @@ class TestValidate(unittest.TestCase):
             validate.order(data, requirement)
         actual = cm.exception.differences
         expected = {'x': [Missing((1, 'B'))], 'y': [Extra((0, 'B'))]}
-        self.assertEqual(actual, expected)
-
-    def test_approx_method(self):
-        data = {'A': 5.00000001, 'B': 10.00000001}
-        requirement = Query.from_object({'A': 5, 'B': 10})
-        validate.approx(data, requirement)
-
-        with self.assertRaises(ValidationError) as cm:
-            data = {'A': 3, 'B': 10.00000001}
-            requirement = {'A': 5, 'B': 10}
-            validate.approx(data, requirement)
-        actual = cm.exception.differences
-        expected = {'A': Deviation(-2, 5)}
         self.assertEqual(actual, expected)
 
     def test_outliers_method(self):
@@ -538,17 +551,4 @@ class TestValidate(unittest.TestCase):
             'A': [Deviation(+2.1875, 34.8125)],
             'B': [Deviation(-7.375, 57.375)],
         }
-        self.assertEqual(actual, expected)
-
-    def test_fuzzy_method(self):
-        data = {'A': 'aaa', 'B': 'bbx'}
-        requirement = Query.from_object({'A': 'aaa', 'B': 'bbb'})
-        validate.fuzzy(data, requirement)
-
-        with self.assertRaises(ValidationError) as cm:
-            data = {'A': 'axx', 'B': 'bbx'}
-            requirement = Query.from_object({'A': 'aaa', 'B': 'bbb'})
-            validate.fuzzy(data, requirement)
-        actual = cm.exception.differences
-        expected = {'A': Invalid('axx')}
         self.assertEqual(actual, expected)
