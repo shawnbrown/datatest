@@ -159,7 +159,7 @@ class ValidateType(object):
     objects. An optional *msg* string can be provided to describe
     the validation.
 
-    **Required Predicate:**
+    **Predicate Validation:**
 
         When *requirement* is a callable, tuple, string, or
         non-iterable object, it is used to construct a
@@ -184,7 +184,7 @@ class ValidateType(object):
         predicate returns any other truthy value, an element is
         considered valid.
 
-    **Required Set:**
+    **Set Validation:**
 
         When *requirement* is a set, the elements in *data* are checked
         for membership in the set:
@@ -205,11 +205,12 @@ class ValidateType(object):
 
     **Sequence Validation:**
 
-        When *requirement* is a non-tuple, non-string iterable, the
-        *data* is validated as a sequence of elements. Elements are
-        checked for predicate matches against required objects of the
-        same position (both *data* and *requirement* should iterables
-        of deterministic order):
+        When *requirement* is an iterable type other than a set,
+        mapping, tuple or string, then *data* is validated as a
+        sequence of elements. Elements are checked for predicate
+        matches against required objects of the same position (both
+        *data* and *requirement* should yield values in a predictable
+        order):
 
         .. code-block:: python
             :emphasize-lines: 7
@@ -224,7 +225,7 @@ class ValidateType(object):
 
         For details on predicate matching, see :class:`Predicate`.
 
-    **Required Mapping:**
+    **Mapping Validation:**
 
         When *requirement* is a dictionary or other mapping, the values
         in *data* are checked against required objects of the same key
@@ -246,7 +247,7 @@ class ValidateType(object):
         If an object itself is a nested mapping, it is treated as a
         predicate object.
 
-    **Other Requirement:**
+    **Requirement Object Validation:**
 
         When *requirement* is a subclass of :class:`BaseRequirement`,
         it is used to check data and generate differences directly.
