@@ -953,26 +953,36 @@ class RequiredSequence(GroupRequirement):
     """A requirement to test elements in data against an *iterable*
     of predicate matches (compared by iteration order).
     """
-    def __init__(self, iterable, predicate_factory=None):
+    def __init__(self, iterable, factory=None):
         if not nonstringiter(iterable):
             iterable = [iterable]
         self.iterable = iterable
-        self.predicate_factory = predicate_factory
+        if not factory:
+            factory = RequiredPredicate
+        self.factory = factory
 
     def _generate_differences(self, group):
-        if self.predicate_factory:
-            predicate_factory = self.predicate_factory
-        else:
-            predicate_factory = Predicate
+        factory = self.factory
 
         zipped = zip_longest(group, self.iterable, fillvalue=NOTFOUND)
         for actual, expected in zipped:
-            pred = predicate_factory(expected)
-            result = pred(actual)
-            if not result:
-                yield _make_difference(actual, expected, show_expected=True)
-            elif isinstance(result, BaseDifference):
-                yield result
+            if factory is RequiredPredicate:
+                pred = Predicate(expected)
+                result = pred(actual)
+                if not result:
+                    yield _make_difference(actual, expected, show_expected=True)
+                elif isinstance(result, BaseDifference):
+                    yield result
+            else:
+                requirement = factory(expected)
+                actual = [actual]  # Wrap element to treat it as a group.
+                diff, desc = requirement.check_group(actual)
+                diff = list(diff)
+                if diff:
+                    if len(diff) > 1:
+                        msg = 'expected at 0 or 1 differences, got {0}: {1!r}'
+                        raise ValueError(msg.format(len(diff), diff))
+                    yield diff[0]
 
     def check_group(self, group):
         differences = self._generate_differences(group)

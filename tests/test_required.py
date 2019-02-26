@@ -1700,17 +1700,18 @@ class TestRequiredSequence2(unittest.TestCase):
         self.assertEqual(list(diff), expected)
         self.assertEqual(desc, 'does not match required sequence')
 
-    def test_predicate_factory(self):
+    def test_requirement_factory(self):
         def factory(val):
             obj_or_repr = lambda x: x == val or x == repr(val)
-            return Predicate(obj_or_repr)
+            return RequiredPredicate(obj_or_repr)
 
-        requirement = RequiredSequence([1.0, 2], predicate_factory=factory)
+        requirement = RequiredSequence([1.0, 2], factory=factory)
 
+        self.assertIsNone(requirement([1.0, 2]))
         self.assertIsNone(requirement(['1.0', '2']))
 
         diff, desc = requirement(['1', 3])
-        expected = [Invalid('1', expected=1.0), Deviation(+1, 2)]
+        expected = [Invalid('1'), Invalid(3)]
         self.assertEqual(list(diff), expected)
 
 
