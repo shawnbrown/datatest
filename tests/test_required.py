@@ -1876,16 +1876,15 @@ class TestRequiredMapping(unittest.TestCase):
         """Test *abstract_factory* argument and method."""
         def custom_factory(value):
             if isinstance(value, str):
-                return RequiredSet  # <- Treat str as set of characters.
-            return None
+                return RequiredSet(value)  # <- Treat str as set of characters.
+            return RequiredPredicate(value)
 
         req_dict = {
             'A': 'xy',   # <- Passed to RequiredSet
             'B': 'xyz',  # <- Passed to RequiredSet
-            'C': 123,    # <- Passed to RequiredPredicate (via auto-detect
-                         #    when custom_factory() returns None)
+            'C': 123,    # <- Passed to RequiredPredicate
         }
-        requirement = RequiredMapping(req_dict, abstract_factory=custom_factory)
+        requirement = RequiredMapping(req_dict, factory=custom_factory)
 
         data = {'A': ['x', 'y', 'y'], 'B': ['x', 'y'], 'C': [123, 123]}
         diff, desc = requirement(data)

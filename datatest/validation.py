@@ -279,8 +279,8 @@ class ValidateType(object):
         requirement = normalize(requirement, lazy_evaluation=False, default_type=list)
 
         if isinstance(requirement, (Mapping, IterItems)):
-            abstract_factory = lambda _: _required.RequiredPredicate
-            requirement = _required.RequiredMapping(requirement, abstract_factory)
+            factory = _required.RequiredPredicate
+            requirement = _required.RequiredMapping(requirement, factory)
         else:
             requirement = _required.RequiredPredicate(requirement)
 
@@ -319,8 +319,7 @@ class ValidateType(object):
         factory = partial(_required.RequiredApprox, places=places, delta=delta)
 
         if isinstance(requirement, (Mapping, IterItems)):
-            abstract_factory = lambda _: factory  # Same factory for all values.
-            requirement = _required.RequiredMapping(requirement, abstract_factory)
+            requirement = _required.RequiredMapping(requirement, factory)
         elif (isinstance(requirement, Iterable)
                 and not isinstance(requirement, BaseElement)):
             requirement = _required.RequiredSequence(requirement, factory)
@@ -364,8 +363,7 @@ class ValidateType(object):
 
         if isinstance(requirement, (Mapping, IterItems)):
             factory = partial(_required.RequiredFuzzy, cutoff=cutoff)
-            abstract_factory = lambda _: factory  # Same factory for all values.
-            requirement = _required.RequiredMapping(requirement, abstract_factory)
+            requirement = _required.RequiredMapping(requirement, factory)
         else:
             requirement = _required.RequiredFuzzy(requirement, cutoff=cutoff)
 
@@ -381,8 +379,8 @@ class ValidateType(object):
         requirement = normalize(requirement, lazy_evaluation=False, default_type=set)
 
         if isinstance(requirement, (Mapping, IterItems)):
-            abstract_factory = lambda _: _required.RequiredSet
-            requirement = _required.RequiredMapping(requirement, abstract_factory)
+            factory = _required.RequiredSet
+            requirement = _required.RequiredMapping(requirement, factory)
         else:
             requirement = _required.RequiredSet(requirement)
 
@@ -408,8 +406,8 @@ class ValidateType(object):
         requirement = normalize(requirement, lazy_evaluation=False, default_type=set)
 
         if isinstance(requirement, (Mapping, IterItems)):
-            abstract_factory = lambda _: _required.RequiredSubset
-            requirement = _required.RequiredMapping(requirement, abstract_factory)
+            factory = _required.RequiredSubset
+            requirement = _required.RequiredMapping(requirement, factory)
         else:
             requirement = _required.RequiredSubset(requirement)
 
@@ -435,8 +433,8 @@ class ValidateType(object):
         requirement = normalize(requirement, lazy_evaluation=False, default_type=set)
 
         if isinstance(requirement, (Mapping, IterItems)):
-            abstract_factory = lambda _: _required.RequiredSuperset
-            requirement = _required.RequiredMapping(requirement, abstract_factory)
+            factory = _required.RequiredSuperset
+            requirement = _required.RequiredMapping(requirement, factory)
         else:
             requirement = _required.RequiredSuperset(requirement)
 
@@ -509,8 +507,8 @@ class ValidateType(object):
         requirement = normalize(sequence, lazy_evaluation=False, default_type=set)
 
         if isinstance(requirement, (Mapping, IterItems)):
-            abstract_factory = lambda _: _required.RequiredOrder
-            requirement = _required.RequiredMapping(requirement, abstract_factory)
+            factory = _required.RequiredOrder
+            requirement = _required.RequiredMapping(requirement, factory)
         else:
             requirement = _required.RequiredOrder(requirement)
 
@@ -581,8 +579,7 @@ class ValidateType(object):
 
         if isinstance(normalized, (Mapping, IterItems)):
             factory = partial(_required.RequiredOutliers, multiplier=multiplier, rounding=rounding)
-            abstract_factory = lambda _: factory  # Same factory for all values.
-            requirement = _required.RequiredMapping(normalized, abstract_factory)
+            requirement = _required.RequiredMapping(normalized, factory)
         else:
             requirement = _required.RequiredOutliers(
                 normalized,

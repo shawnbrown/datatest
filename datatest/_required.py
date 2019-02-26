@@ -998,20 +998,18 @@ class RequiredMapping(ItemsRequirement):
     GroupRequirement factory or None. If None is returned, the
     default auto-detection is used instead.
     """
-    def __init__(self, mapping, abstract_factory=None):
+    def __init__(self, mapping, factory=None):
         if not isinstance(mapping, Mapping):
             mapping = dict(mapping)
         self.mapping = mapping
-        self._abstract_factory = abstract_factory
+        self._factory = factory
 
     def abstract_factory(self, obj):
         """Return a group requirement type appropriate for the given
         *obj* or None if *obj* is already a GroupRequirement instance.
         """
-        if self._abstract_factory:
-            factory = self._abstract_factory(obj)
-            if factory:
-                return factory
+        if self._factory:
+            return self._factory
 
         if isinstance(obj, GroupRequirement):
             return None
