@@ -7,6 +7,7 @@ from ._compatibility.collections.abc import Mapping
 from ._compatibility.functools import partial
 from .difference import BaseDifference
 from ._normalize import normalize
+from ._query.query import BaseElement
 from . import _required
 from ._utils import IterItems
 from ._utils import exhaustible
@@ -315,12 +316,16 @@ class ValidateType(object):
 
         requirement = normalize(requirement, lazy_evaluation=False)
 
+        factory = partial(_required.RequiredApprox, places=places, delta=delta)
+
         if isinstance(requirement, (Mapping, IterItems)):
-            factory = partial(_required.RequiredApprox, places=places, delta=delta)
             abstract_factory = lambda _: factory  # Same factory for all values.
             requirement = _required.RequiredMapping(requirement, abstract_factory)
+        elif (isinstance(requirement, Iterable)
+                and not isinstance(requirement, BaseElement)):
+            requirement = _required.RequiredSequence(requirement, factory)
         else:
-            requirement = _required.RequiredApprox(requirement, places, delta)
+            requirement = factory(requirement)
 
         self(data, requirement, msg=msg)
 
