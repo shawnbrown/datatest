@@ -478,11 +478,13 @@ class ValidateType(object):
         .. code-block:: none
 
                                         extra
-                                          ⭣
+                                          |
+                                          v
                    data: ['A', 'C', 'D', 'F', ...]
 
             requirement: ['A', 'B', 'C', 'D', ...]
-                                ⭡
+                                ^
+                                |
                              missing
 
         The validation fails with the following error:
