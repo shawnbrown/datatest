@@ -980,7 +980,7 @@ class RequiredSequence(GroupRequirement):
                 diff = list(diff)
                 if diff:
                     if len(diff) > 1:
-                        msg = 'expected at 0 or 1 differences, got {0}: {1!r}'
+                        msg = 'expected 0 or 1 differences, got {0}: {1!r}'
                         raise ValueError(msg.format(len(diff), diff))
                     yield diff[0]
 
