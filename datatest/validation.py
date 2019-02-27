@@ -4,6 +4,7 @@ import sys
 from ._compatibility.collections.abc import Iterable
 from ._compatibility.collections.abc import Iterator
 from ._compatibility.collections.abc import Mapping
+from ._compatibility.collections.abc import Set
 from ._compatibility.functools import partial
 from .difference import BaseDifference
 from ._normalize import normalize
@@ -268,6 +269,26 @@ class ValidateType(object):
             differences, description = result
             message = msg or description or 'does not satisfy requirement'
             raise ValidationError(differences, message)
+
+    @staticmethod
+    def _get_predicate_requirement(requirement, factory):
+        """Return appropriate requirement object for explicit predicate
+        validation. If *requirement* is a mapping or sequence, return
+        RequiredMapping or RequiredSequence (using the given *factory*
+        function) or else call *factory* and return RequiredPredicate
+        directly.
+        """
+        requirement = normalize(requirement, lazy_evaluation=False)
+        def wrapped_factory(obj):
+            if (isinstance(obj, Iterable)
+                    and not isinstance(obj, Set)
+                    and not isinstance(obj, BaseElement)):
+                return _required.RequiredSequence(obj, factory)
+            return factory(obj)
+
+        if isinstance(requirement, (Mapping, IterItems)):
+            return _required.RequiredMapping(requirement, wrapped_factory)
+        return wrapped_factory(requirement)
 
     def predicate(self, data, requirement, msg=None):
         """Use *requirement* to construct a :class:`Predicate` and
