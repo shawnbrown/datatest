@@ -503,6 +503,10 @@ class TestValidate(unittest.TestCase):
         self.assertEqual(actual, expected)
 
     def test_order_method(self):
+        data = ['A', 'B', 'C', 'C']
+        requirement = iter(['A', 'B', 'C', 'C'])
+        validate.order(data, requirement)
+
         data = ['A', 'B', 'C', 'D']
         requirement = Query.from_object(['A', 'B', 'C', 'D'])
         validate.order(data, requirement)

@@ -502,7 +502,7 @@ class ValidateType(object):
         """
         __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
 
-        requirement = normalize(sequence, lazy_evaluation=False, default_type=set)
+        requirement = normalize(sequence, lazy_evaluation=False, default_type=list)
 
         if isinstance(requirement, (Mapping, IterItems)):
             factory = _required.RequiredOrder
