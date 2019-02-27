@@ -1702,8 +1702,8 @@ class TestRequiredSequence2(unittest.TestCase):
 
     def test_requirement_factory(self):
         def factory(val):
-            obj_or_repr = lambda x: x == val or x == repr(val)
-            return RequiredPredicate(obj_or_repr)
+            val_or_repr = set([val, repr(val)])
+            return RequiredPredicate(val_or_repr)
 
         requirement = RequiredSequence([1.0, 2], factory=factory)
 
@@ -1711,7 +1711,10 @@ class TestRequiredSequence2(unittest.TestCase):
         self.assertIsNone(requirement(['1.0', '2']))
 
         diff, desc = requirement(['1', 3])
-        expected = [Invalid('1'), Invalid(3)]
+        expected = [
+            Invalid('1', expected=set([1.0, '1.0'])),
+            Invalid(3, expected=set([2, '2'])),
+        ]
         self.assertEqual(list(diff), expected)
 
 

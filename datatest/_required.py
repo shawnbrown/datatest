@@ -974,9 +974,13 @@ class RequiredSequence(GroupRequirement):
                 elif isinstance(result, BaseDifference):
                     yield result
             else:
+                # Get requirement.
                 requirement = factory(expected)
-                actual = [actual]  # Wrap element to treat it as a group.
-                diff, desc = requirement.check_group(actual)
+                if isinstance(requirement, RequiredPredicate):
+                    requirement.show_expected = True
+
+                # Check element as group and yield unwrapped result.
+                diff, desc = requirement.check_group([actual])
                 diff = list(diff)
                 if diff:
                     if len(diff) > 1:
@@ -1050,10 +1054,10 @@ class RequiredMapping(ItemsRequirement):
             keys_seen.add(key)
 
             expected = required_mapping.get(key, NOTFOUND)
-            req_factory = self.abstract_factory(expected)
+            factory = self.abstract_factory(expected)
 
             if isinstance(value, BaseElement):
-                if req_factory is RequiredPredicate:
+                if factory is RequiredPredicate:
                     # Skip requirement and use Predicate directly.
                     # Note: Performance benchmarking shows that this
                     # optimization can finish in 72% of the time it
@@ -1070,10 +1074,13 @@ class RequiredMapping(ItemsRequirement):
                         desc = _build_description(expected)
                         description = self._update_description(description, desc)
                 else:
-                    # Instantiate requirement and check element.
-                    requirement = req_factory(expected) if req_factory else expected
-                    value = [value]  # Wrap element to treat it as a group.
-                    diff, desc = requirement.check_group(value)
+                    # Get requirement.
+                    requirement = factory(expected) if factory else expected
+                    if isinstance(requirement, RequiredPredicate):
+                        requirement.show_expected = True
+
+                    # Check element as group and unwrap single element result.
+                    diff, desc = requirement.check_group([value])
                     diff = list(diff)
                     if len(diff) == 1:
                         diff = diff[0]  # Unwrap if single difference.
@@ -1082,7 +1089,7 @@ class RequiredMapping(ItemsRequirement):
                         description = self._update_description(description, desc)
             else:
                 # Normal group handling (`value` is already a group).
-                requirement = req_factory(expected) if req_factory else expected
+                requirement = factory(expected) if factory else expected
                 diff, desc = requirement.check_group(value)
                 first_item, diff = iterpeek(diff, None)
                 if first_item:
@@ -1092,8 +1099,8 @@ class RequiredMapping(ItemsRequirement):
         # Check for expected keys that are missing from items.
         for key, expected in IterItems(required_mapping):
             if key not in keys_seen:
-                req_factory = self.abstract_factory(expected)
-                requirement = req_factory(expected) if req_factory else expected
+                factory = self.abstract_factory(expected)
+                requirement = factory(expected) if factory else expected
 
                 diff, desc = requirement.check_group([])  # Try empty container.
                 first_item, diff = iterpeek(diff, None)

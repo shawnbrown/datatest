@@ -413,6 +413,10 @@ class TestValidate(unittest.TestCase):
         requirement = Query.from_object([5, 10])
         validate.approx(data, requirement)
 
+        data = {'A': [5.00000001, 10.00000001], 'B': [5.00000001, 10.00000001]}
+        requirement = Query.from_object({'A': [5, 10], 'B': [5, 10]})
+        validate.approx(data, requirement)
+
         with self.assertRaises(ValidationError) as cm:
             data = {'A': 3, 'B': 10.00000001}
             requirement = {'A': 5, 'B': 10}
@@ -431,7 +435,7 @@ class TestValidate(unittest.TestCase):
             requirement = Query.from_object({'A': 'aaa', 'B': 'bbb'})
             validate.fuzzy(data, requirement)
         actual = cm.exception.differences
-        expected = {'A': Invalid('axx')}
+        expected = {'A': Invalid('axx', expected='aaa')}
         self.assertEqual(actual, expected)
 
     def test_set_method(self):
