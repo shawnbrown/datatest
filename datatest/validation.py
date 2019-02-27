@@ -296,15 +296,8 @@ class ValidateType(object):
         validation <predicate-validation>` for more details).
         """
         __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
-
-        requirement = normalize(requirement, lazy_evaluation=False, default_type=list)
-
-        if isinstance(requirement, (Mapping, IterItems)):
-            factory = _required.RequiredPredicate
-            requirement = _required.RequiredMapping(requirement, factory)
-        else:
-            requirement = _required.RequiredPredicate(requirement)
-
+        factory = _required.RequiredPredicate
+        requirement = self._get_predicate_requirement(requirement, factory)
         self(data, requirement, msg=msg)
 
     def approx(self, data, requirement, places=None, msg=None, delta=None):
@@ -334,19 +327,8 @@ class ValidateType(object):
         would be more fitting.
         """
         __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
-
-        requirement = normalize(requirement, lazy_evaluation=False)
-
         factory = partial(_required.RequiredApprox, places=places, delta=delta)
-
-        if isinstance(requirement, (Mapping, IterItems)):
-            requirement = _required.RequiredMapping(requirement, factory)
-        elif (isinstance(requirement, Iterable)
-                and not isinstance(requirement, BaseElement)):
-            requirement = _required.RequiredSequence(requirement, factory)
-        else:
-            requirement = factory(requirement)
-
+        requirement = self._get_predicate_requirement(requirement, factory)
         self(data, requirement, msg=msg)
 
     def fuzzy(self, data, requirement, cutoff=0.6, msg=None):
@@ -379,15 +361,8 @@ class ValidateType(object):
             validate.fuzzy(data, requirement, cutoff=0.8)
         """
         __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
-
-        requirement = normalize(requirement, lazy_evaluation=False)
-
-        if isinstance(requirement, (Mapping, IterItems)):
-            factory = partial(_required.RequiredFuzzy, cutoff=cutoff)
-            requirement = _required.RequiredMapping(requirement, factory)
-        else:
-            requirement = _required.RequiredFuzzy(requirement, cutoff=cutoff)
-
+        factory = partial(_required.RequiredFuzzy, cutoff=cutoff)
+        requirement = self._get_predicate_requirement(requirement, factory)
         self(data, requirement, msg=msg)
 
     def set(self, data, requirement, msg=None):
