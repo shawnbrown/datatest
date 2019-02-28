@@ -88,12 +88,12 @@ class TestIterItems(unittest.TestCase):
             IterItems(123)
 
     def test_non_exhaustible(self):
-        items_list = [('a', 1), ('b', 2)]  # <- Non-exhaustible iterable.
+        items_list = [('a', 1), ('b', 2)]  # <- Non-exhaustible input.
 
         items = IterItems(items_list)
-        self.assertIsNot(iter(items), iter(items))
+        self.assertIs(iter(items), iter(items), msg='exhaustible output')
         self.assertEqual(list(items), items_list)
-        self.assertEqual(list(items), items_list, msg='not exhaustible')
+        self.assertEqual(list(items), [], msg='already exhausted')
 
     def test_exhaustible(self):
         items_iter = iter([('a', 1), ('b', 2)])  # <- Exhaustible iterator.
@@ -108,7 +108,7 @@ class TestIterItems(unittest.TestCase):
 
         items = IterItems(mapping)
         self.assertEqual(set(items), set([('a', 1), ('b', 2)]))
-        self.assertEqual(set(items), set([('a', 1), ('b', 2)]), msg='not exhaustible')
+        self.assertEqual(set(items), set(), msg='already exhausted')
 
     def test_dictitems(self):
         dic = {'a': 1}
@@ -124,7 +124,7 @@ class TestIterItems(unittest.TestCase):
 
         items = IterItems(dic_items)
         self.assertEqual(list(items), [('a', 1)])
-        self.assertEqual(list(items), [('a', 1)], msg='not exhaustible')
+        self.assertEqual(list(items), [], msg='already exhausted')
 
     def test_empty_iterable(self):
         empty = iter([])
@@ -134,14 +134,14 @@ class TestIterItems(unittest.TestCase):
 
     def test_repr(self):
         items = IterItems([1, 2])
-        self.assertEqual(repr(items), "IterItems([1, 2])")
+
+        repr_part = repr(iter([])).partition(' ')[0]
+        repr_start = 'IterItems({0}'.format(repr_part)
+        self.assertTrue(repr(items).startswith(repr_start))
 
         generator = (x for x in [1, 2])
         items = IterItems(generator)
         self.assertEqual(repr(items), 'IterItems({0!r})'.format(generator))
-
-        items = IterItems({'a': 1})
-        self.assertEqual(repr(items), "IterItems({'a': 1})")
 
     def test_subclasshook(self):
         items = IterItems(iter([]))

@@ -215,11 +215,9 @@ def _expects_multiple_params(func):
 
 
 class IterItems(ABC):
-    """A wrapper class to identify objects containing data appropriate
-    for constructing a dictionary or other mapping. The given
-    *items_or_mapping* should be an iterable of key/value pairs or a
-    mapping. When iterated over, :class:`IterItems` will return an
-    iterator of key/value pairs.
+    """An iterator that returns item-pairs appropriate for constructing
+    a dictionary or other mapping. The given *items_or_mapping* should
+    be an iterable of key/value pairs or a mapping.
 
     .. warning::
 
@@ -234,19 +232,26 @@ class IterItems(ABC):
             msg = 'expected iterable or mapping, got {0!r}'
             raise TypeError(msg.format(items_or_mapping.__class__.__name__))
 
-        while isinstance(items_or_mapping, IterItems) \
-                and hasattr(items_or_mapping, '__wrapped__'):
-            items_or_mapping = items_or_mapping.__wrapped__
+        if isinstance(items_or_mapping, Mapping):
+            if hasattr(items_or_mapping, 'iteritems'):
+                items = items_or_mapping.iteritems()
+            else:
+                items = items_or_mapping.items()
+        else:
+            items = items_or_mapping
+            while isinstance(items, IterItems) and hasattr(items, '__wrapped__'):
+                items = items.__wrapped__
 
-        self.__wrapped__ = items_or_mapping
+        self.__wrapped__ = iter(items)
 
     def __iter__(self):
-        wrapped = self.__wrapped__
-        if isinstance(wrapped, Mapping):
-            if hasattr(wrapped, 'iteritems'):
-                return wrapped.iteritems()
-            return iter(wrapped.items())
-        return iter(wrapped)
+        return self
+
+    def __next__(self):
+        return next(self.__wrapped__)
+
+    def next(self):
+        return next(self.__wrapped__)
 
     def __repr__(self):
         cls_name = self.__class__.__name__
