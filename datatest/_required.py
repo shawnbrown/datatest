@@ -439,6 +439,10 @@ def _get_required_func(requirement):
 ##############################
 
 class BaseRequirement(abc.ABC):
+    """A class to check that the data fulfills a specific need
+    or expectation. All requirement classes must inherit from
+    BaseRequirement.
+    """
     @abc.abstractmethod
     def check_data(self, data):
         raise NotImplementedError()
@@ -513,6 +517,9 @@ class BaseRequirement(abc.ABC):
 
 
 class ItemsRequirement(BaseRequirement):
+    """A class to check that items or mappings of data fulfill a
+    specific need or expectation.
+    """
     @abc.abstractmethod
     def check_items(self, items):
         raise NotImplementedError()
@@ -527,6 +534,9 @@ class ItemsRequirement(BaseRequirement):
 _INCONSISTENT = object()  # Marker for inconsistent descriptions.
 
 class GroupRequirement(BaseRequirement):
+    """A class to check that groups of data fulfill a specific need
+    or expectation.
+    """
     @abc.abstractmethod
     def check_group(self, group):
         raise NotImplementedError()
