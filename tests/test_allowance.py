@@ -19,6 +19,7 @@ from datatest.allowance import allowed_keys
 from datatest.allowance import allowed_args
 from datatest.allowance import allowed_deviation
 from datatest.allowance import allowed_percent
+from datatest.allowance import allowed_fuzzy
 from datatest.allowance import allowed_specific
 from datatest.allowance import allowed_limit
 
@@ -561,6 +562,51 @@ class TestAllowedPercentDeviation(unittest.TestCase):
 
         uncaught_diffs = cm.exception.differences
         self.assertEqual(diffs, uncaught_diffs)
+
+
+class TestAllowedFuzzy(unittest.TestCase):
+    def setUp(self):
+        self.differences = [
+            Invalid('aaax', 'aaaa'),
+            Invalid('bbyy', 'bbbb'),
+        ]
+
+    def test_passing(self):
+        with allowed_fuzzy():  # <- default cutoff=0.6
+            raise ValidationError([Invalid('aaax', 'aaaa')])
+
+        with allowed_fuzzy(cutoff=0.5):  # <- Lower cutoff allows more.
+            raise ValidationError(self.differences)
+
+    def test_failing(self):
+        with self.assertRaises(ValidationError) as cm:
+            with allowed_fuzzy(cutoff=0.7):
+                raise ValidationError(self.differences)
+        remaining = cm.exception.differences
+        self.assertEqual(remaining, [Invalid('bbyy', 'bbbb')])
+
+        with self.assertRaises(ValidationError) as cm:
+            with allowed_fuzzy(cutoff=0.8):
+                raise ValidationError(self.differences)
+        remaining = cm.exception.differences
+        self.assertEqual(remaining, self.differences, msg='none allowed')
+
+    def test_incompatible_diffs(self):
+        """Test differences that cannot be fuzzy matched."""
+        incompatible_diffs = [
+            Missing('foo'),
+            Extra('bar'),
+            Invalid('baz'),  # <- Cannot allow if there's no expected value.
+            Deviation(1, 10),
+        ]
+        differences = incompatible_diffs + self.differences
+
+        with self.assertRaises(ValidationError) as cm:
+            with allowed_fuzzy(cutoff=0.5):
+                raise ValidationError(differences)
+
+        remaining = cm.exception.differences
+        self.assertEqual(remaining, incompatible_diffs)
 
 
 class TestAllowedSpecific(unittest.TestCase):

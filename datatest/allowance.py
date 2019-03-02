@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
+import difflib
 import inspect
 from math import isnan
 from numbers import Number
@@ -467,6 +468,43 @@ with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
     ])
 
 allowed_percent_deviation = allowed_percent  # Set alias for full name.
+
+
+class allowed_fuzzy(BaseAllowance):
+    """Context manager that allows Invalid string differences without
+    triggering a test failure if the actual value and the expected
+    value match with a similarity greater than or equal to *cutoff*
+    (default 0.6).
+
+    Similarity measures are determined using the ratio() method
+    of the difflib.SequenceMatcher class. The values range from
+    1.0 (exactly the same) to 0.0 (completely different).
+    """
+    def __init__(self, cutoff=0.6, msg=None):
+        self.cutoff = cutoff
+        super(allowed_fuzzy, self).__init__(msg)
+
+    def __repr__(self):
+        cls_name = self.__class__.__name__
+        msg_part = ', msg={0!r}'.format(self.msg) if self.msg else ''
+        return '{0}(cutoff={1!r}{2})'.format(cls_name, self.cutoff, msg_part)
+
+    def call_predicate(self, item):
+        diff = item[1]
+
+        try:
+            a = diff.invalid
+            b = diff.expected
+        except AttributeError:
+            return False  # <- EXIT!
+
+        try:
+            matcher = difflib.SequenceMatcher(a=a, b=b)
+            similarity = matcher.ratio()
+        except TypeError:
+            return False  # <- EXIT!
+
+        return similarity >= self.cutoff
 
 
 class allowed_specific(BaseAllowance):
