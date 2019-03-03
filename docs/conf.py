@@ -318,9 +318,10 @@ texinfo_documents = [
         'datatest Documentation',
         author,
         'datatest',
-        'Testing tools for data-wrangling, validation, and analysis.',
+        'Test driven data-wrangling and data validation.',
         (
-            'Datatest provides testing tools for data validation and analysis.'
+            'Datatest provides tools for test driven data-wrangling '
+            'and data validation.'
         ),
     ),
 ]

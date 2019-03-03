@@ -6,13 +6,13 @@
     :title: Index
 
 .. module:: datatest
-    :synopsis: Testing tools for data validation and analysis.
+    :synopsis: Test driven data-wrangling and data validation.
 .. moduleauthor:: Shawn Brown <sbrown@ncecservices.com>
 .. sectionauthor:: Shawn Brown <sbrown@ncecservices.com>
 
 
 ########################################################
-Datatest: Testing tools for data validation and analysis
+Datatest: Test driven data-wrangling and data validation
 ########################################################
 
 Version |release|
