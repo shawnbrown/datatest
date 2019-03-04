@@ -114,6 +114,8 @@ collection of differences.
 
     .. automethod:: args
 
+    .. automethod:: fuzzy
+
     .. classmethod:: deviation(tolerance, /, msg=None)
                      deviation(lower, upper, msg=None)
 
