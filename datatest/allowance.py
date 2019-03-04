@@ -736,6 +736,29 @@ class allowed(abc.ABC):
         return allowed_args(predicate, msg)
 
     @classmethod
+    def fuzzy(cls, cutoff=0.6, msg=None):
+        """Allows invalid strings that match their expected value with
+        a similarity greater than or equal to *cutoff* (default 0.6).
+
+        Similarity measures are determined using the ratio() method of
+        the difflib.SequenceMatcher class. The values range from 1.0
+        (exactly the same) to 0.0 (completely different):
+
+        .. code-block:: python
+            :emphasize-lines: 7
+
+            from datatest import validate, allowed
+
+            data = {'A': 'aax', 'B': 'bbx'}
+
+            requirement = {'A': 'aaa', 'B': 'bbb'}
+
+            with allowed.fuzzy():
+                validate(data, requirement)
+        """
+        return allowed_fuzzy(cutoff=cutoff, msg=msg)
+
+    @classmethod
     def deviation(cls, lower, upper=None, msg=None):
         """allowed.deviation(tolerance, /, msg=None)
         allowed.deviation(lower, upper, msg=None)

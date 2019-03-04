@@ -23,6 +23,7 @@ from .allowance import allowed_percent
 from .allowance import allowed_specific
 from .allowance import allowed_keys
 from .allowance import allowed_args
+from .allowance import allowed_fuzzy
 from .allowance import allowed_limit
 
 
@@ -209,6 +210,16 @@ class DataTestCase(TestCase):
         given *predicate*.
         """
         return allowed_args(predicate, msg)
+
+    def allowedFuzzy(self, cutoff=0.6, msg=None):
+        """Allows invalid strings that match their expected value with
+        a similarity greater than or equal to *cutoff* (default 0.6).
+
+        Similarity measures are determined using the ratio() method of
+        the difflib.SequenceMatcher class. The values range from 1.0
+        (exactly the same) to 0.0 (completely different).
+        """
+        return allowed_fuzzy(cutoff=cutoff, msg=msg)
 
     def allowedLimit(self, number, msg=None):
         """Allows a limited *number* of differences without triggering
