@@ -14,7 +14,9 @@ class TestNamespaces(unittest.TestCase):
         # Core objects.
         self.assertTrue(hasattr(datatest, 'validate'))
         self.assertTrue(hasattr(datatest, 'allowed'))
-        self.assertTrue(hasattr(datatest, 'group_requirement'))
+
+        # Internal sub-module.
+        self.assertTrue(hasattr(datatest, 'requirements'))
 
         # Error and difference objects.
         self.assertTrue(hasattr(datatest, 'ValidationError'))

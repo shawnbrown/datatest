@@ -9,7 +9,7 @@ from ._compatibility.functools import partial
 from .difference import BaseDifference
 from ._normalize import normalize
 from ._query.query import BaseElement
-from . import _required
+from . import requirements
 from ._utils import IterItems
 from ._utils import exhaustible
 from ._utils import iterpeek
@@ -262,7 +262,7 @@ class ValidateType(object):
         # Setup traceback-hiding for pytest integration.
         __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
 
-        requirement_object = _required.get_requirement(requirement)
+        requirement_object = requirements.get_requirement(requirement)
         result = requirement_object(data)  # <- Apply requirement.
 
         if result:
@@ -283,11 +283,11 @@ class ValidateType(object):
             if (isinstance(obj, Iterable)
                     and not isinstance(obj, Set)
                     and not isinstance(obj, BaseElement)):
-                return _required.RequiredSequence(obj, factory)
+                return requirements.RequiredSequence(obj, factory)
             return factory(obj)
 
         if isinstance(requirement, (Mapping, IterItems)):
-            return _required.RequiredMapping(requirement, wrapped_factory)
+            return requirements.RequiredMapping(requirement, wrapped_factory)
         return wrapped_factory(requirement)
 
     def predicate(self, data, requirement, msg=None):
@@ -296,7 +296,7 @@ class ValidateType(object):
         validation <predicate-validation>` for more details).
         """
         __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
-        factory = _required.RequiredPredicate
+        factory = requirements.RequiredPredicate
         requirement = self._get_predicate_requirement(requirement, factory)
         self(data, requirement, msg=msg)
 
@@ -327,7 +327,7 @@ class ValidateType(object):
         would be more fitting.
         """
         __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
-        factory = partial(_required.RequiredApprox, places=places, delta=delta)
+        factory = partial(requirements.RequiredApprox, places=places, delta=delta)
         requirement = self._get_predicate_requirement(requirement, factory)
         self(data, requirement, msg=msg)
 
@@ -361,7 +361,7 @@ class ValidateType(object):
             validate.fuzzy(data, requirement, cutoff=0.8)
         """
         __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
-        factory = partial(_required.RequiredFuzzy, cutoff=cutoff)
+        factory = partial(requirements.RequiredFuzzy, cutoff=cutoff)
         requirement = self._get_predicate_requirement(requirement, factory)
         self(data, requirement, msg=msg)
 
@@ -375,10 +375,10 @@ class ValidateType(object):
         requirement = normalize(requirement, lazy_evaluation=False, default_type=set)
 
         if isinstance(requirement, (Mapping, IterItems)):
-            factory = _required.RequiredSet
-            requirement = _required.RequiredMapping(requirement, factory)
+            factory = requirements.RequiredSet
+            requirement = requirements.RequiredMapping(requirement, factory)
         else:
-            requirement = _required.RequiredSet(requirement)
+            requirement = requirements.RequiredSet(requirement)
 
         self(data, requirement, msg=msg)
 
@@ -402,10 +402,10 @@ class ValidateType(object):
         requirement = normalize(requirement, lazy_evaluation=False, default_type=set)
 
         if isinstance(requirement, (Mapping, IterItems)):
-            factory = _required.RequiredSubset
-            requirement = _required.RequiredMapping(requirement, factory)
+            factory = requirements.RequiredSubset
+            requirement = requirements.RequiredMapping(requirement, factory)
         else:
-            requirement = _required.RequiredSubset(requirement)
+            requirement = requirements.RequiredSubset(requirement)
 
         self(data, requirement, msg=msg)
 
@@ -429,10 +429,10 @@ class ValidateType(object):
         requirement = normalize(requirement, lazy_evaluation=False, default_type=set)
 
         if isinstance(requirement, (Mapping, IterItems)):
-            factory = _required.RequiredSuperset
-            requirement = _required.RequiredMapping(requirement, factory)
+            factory = requirements.RequiredSuperset
+            requirement = requirements.RequiredMapping(requirement, factory)
         else:
-            requirement = _required.RequiredSuperset(requirement)
+            requirement = requirements.RequiredSuperset(requirement)
 
         self(data, requirement, msg=msg)
 
@@ -449,7 +449,7 @@ class ValidateType(object):
             validate.unique(data)
         """
         __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
-        self(data, _required.RequiredUnique(), msg=msg)
+        self(data, requirements.RequiredUnique(), msg=msg)
 
     def order(self, data, sequence, msg=None):
         """Check that elements in *data* match the order of elements
@@ -505,10 +505,10 @@ class ValidateType(object):
         requirement = normalize(sequence, lazy_evaluation=False, default_type=list)
 
         if isinstance(requirement, (Mapping, IterItems)):
-            factory = _required.RequiredOrder
-            requirement = _required.RequiredMapping(requirement, factory)
+            factory = requirements.RequiredOrder
+            requirement = requirements.RequiredMapping(requirement, factory)
         else:
-            requirement = _required.RequiredOrder(requirement)
+            requirement = requirements.RequiredOrder(requirement)
 
         self(data, requirement, msg=msg)
 
@@ -576,10 +576,10 @@ class ValidateType(object):
             data = normalized  # Use non-exhaustible version.
 
         if isinstance(normalized, (Mapping, IterItems)):
-            factory = partial(_required.RequiredOutliers, multiplier=multiplier, rounding=rounding)
-            requirement = _required.RequiredMapping(normalized, factory)
+            factory = partial(requirements.RequiredOutliers, multiplier=multiplier, rounding=rounding)
+            requirement = requirements.RequiredMapping(normalized, factory)
         else:
-            requirement = _required.RequiredOutliers(
+            requirement = requirements.RequiredOutliers(
                 normalized,
                 multiplier=multiplier,
                 rounding=rounding,

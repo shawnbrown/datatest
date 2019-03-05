@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""This module defines requirement classes used internally by datatest."""
 from __future__ import division
 
 import difflib

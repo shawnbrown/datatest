@@ -2,7 +2,7 @@
 from . import _unittest as unittest
 from datatest._query.query import DictItems
 from datatest._query.query import Result
-from datatest._required import BaseRequirement
+from datatest.requirements import BaseRequirement
 from datatest._utils import IterItems
 
 from datatest._normalize import _normalize_lazy
