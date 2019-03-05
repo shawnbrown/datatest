@@ -5,10 +5,27 @@ Datatest Changelog
 COMING SOON (0.9.4)
 -------------------
 
-* Added unwrap() method to Query class to unwrap single-item sequences
-  or sets.
+* Added new validate methods (moved from how-to recipes into core module):
+    * Added approx() method to require for approximate numeric equality.
+    * Added fuzzy() method to require strings by approximate match.
+    * Added set(), subset(), and superset() methods for explicit membership
+      checking.
+    * Added unique() method to require unique elements.
+    * Added outlier() method to check numeric data for outliers.
+* Added fuzzy-matching allowance to allow strings by approximate match.
+* Added Predicate class to formalize behavior--also provides inverse-matching
+  with the inversion operator (~).
+* Added new methods to Query class:
+    * Added unwrap() to remove single-element containers and return their
+      unwrapped contents.
+    * Added starmap() to unpack grouped arguments when applying a function
+      to elements.
 * Fixed improper use of assert statements with appropriate conditional
   checks and error behavior.
+* Added requirement class hierarchy (using BaseRequirement). This gives
+  users a cleaner way to implement custom validation behavior and makes
+  the underlying codebase easier to maintain.
+* Changed "How To" examples to use the new validation methods.
 
 
 2019-01-29 (0.9.3)
