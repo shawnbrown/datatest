@@ -3,7 +3,7 @@
 
 .. meta::
     :description: How to assert an interval.
-    :keywords: datatest, reference data
+    :keywords: datatest, testing, intervals, ranges
 
 
 #########################
@@ -23,7 +23,7 @@ check that an element is between ``5`` and ``10``. Elements in
     .. group-tab:: Pytest
 
         .. code-block:: python
-            :emphasize-lines: 8-9
+            :emphasize-lines: 8-10
 
             from datatest import validate
 
@@ -33,6 +33,7 @@ check that an element is between ``5`` and ``10``. Elements in
                 data = [5, 7, 4, 5, 9]
 
                 def from5to10(x):
+                    """values should range from 5 to 10"""
                     return 5 <= x <= 10
 
                 validate(data, from5to10)
@@ -40,7 +41,7 @@ check that an element is between ``5`` and ``10``. Elements in
     .. group-tab:: Unittest
 
         .. code-block:: python
-            :emphasize-lines: 10-11
+            :emphasize-lines: 10-12
 
             from datatest import DataTestCase
 
@@ -52,47 +53,73 @@ check that an element is between ``5`` and ``10``. Elements in
                     data = [5, 7, 4, 5, 9]
 
                     def from5to10(x):
+                        """values should range from 5 to 10"""
                         return 5 <= x <= 10
 
                     self.assertValid(data, from5to10)
 
 
+The example above will produce :class:`Invalid` differences when the
+function returns False. You can change this to produce :class:`Deviation`
+differences instead with the following code:
+
+.. code-block:: python
+
+    def from5to10(x):
+        """values should range from 5 to 10"""
+        low, high = 5, 10
+        if x < low:
+            return Deviation(x - low, low)
+        if x > high:
+            return Deviation(x - high, high)
+        return True
+
+
 ========================
-Reusable Helper Function
+Custom Requirement Class
 ========================
 
-If you are asserting intervals many times or need to handle differences
-as :class:`Deviation` objects (instead of :class:`Invalid` objects) you
-can use the following ``interval()`` function in your own tests:
+If you need to assert intervals in many different tests, you may want
+to define a custom requirement class to limit code duplication. The
+following ``RequiredInterval`` class can be used for this purpose:
 
 .. code-block:: python
 
     import operator
+    from datatest import requirements
     from datatest import Deviation
 
 
-    def interval(low, high, inclusive=True):
-        if low > high:
-            raise ValueError('low must be less than high')
-        op = operator.le if inclusive else operator.lt
+    class RequiredInterval(requirements.GroupRequirement):
+        def __init__(self, low, high, inclusive=True):
+            if not low < high:
+                raise ValueError('low must be less than high')
+            self.low = low
+            self.high = high
+            self.op = operator.le if inclusive else operator.lt
 
-        def _interval(value):
-            if not op(low, value):
-                return Deviation(value - low, low)
-            if not op(value, high):
-                return Deviation(value - high, high)
-            return True
+        def _get_differences(self, group):
+            low, high, op = self.low, self.high, self.op
+            for element in group:
+                if not op(low, element):
+                    yield Deviation(element - low, low)
+                elif not op(element, high):
+                    return Deviation(element - high, high)
 
-        exclusive = ', exclusive' if not inclusive else ''
-        description = 'values should range from {0} to {1}{2}'
-        _interval.__doc__ = description.format(low, high, exclusive)
-        return _interval
+        def check_group(self, group):
+            """Takes an iterable *group* of elements, returns a tuple
+            containing an iterable of differences and a description.
+            """
+            differences = self._get_differences(group)
+            description = 'values should range from {0} to {1}{2}'.format(
+                self.low,
+                self.high,
+                '' if self.op is operator.le else ', exclusive'
+            )
+            return differences, description
 
 
-Example Usage
-=============
-
-Use of the ``interval()`` function is demonstrated below:
+Use of the custom ``RequiredInterval`` class is demonstrated below:
 
 .. tabs::
 
@@ -109,7 +136,7 @@ Use of the ``interval()`` function is demonstrated below:
 
                 data = [5, 7, 4, 5, 9]
 
-                validate(data, interval(5, 10))
+                validate(data, RequiredInterval(5, 10))
 
 
     .. group-tab:: Unittest
@@ -127,4 +154,4 @@ Use of the ``interval()`` function is demonstrated below:
 
                     data = [5, 7, 4, 5, 9]
 
-                    self.assertValid(data, interval(5, 10))
+                    self.assertValid(data, RequiredInterval(5, 10))
