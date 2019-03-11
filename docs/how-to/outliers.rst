@@ -95,11 +95,11 @@ it works. The following example will step through the data given in
    .. math::
 
         \begin{array}
-        & & & \rlap{\mathbf{Q1\;(}45\mathbf{)}} & & & & & & & & \rlap{\mathbf{Q3\;(}55\mathbf{)}} & & & \\
+        & & & \rlap{\mathbf{\text{Q1 }}(45)} & & & & & & & & \rlap{\mathbf{\text{Q3 }}(55)} & & & \\
         & & & \downarrow & & & & & & & & \downarrow & & & \\
         42 & & 44 & & 46 & & 48 & & 52 & & 54 & & 56 & & 87 \\
         & & & & & & & \uparrow & & & & & & & \\
-        & & & & & & \rlap{median\;(50)} & & & & & & & & \\
+        & & & & & & \rlap{\text{median }(50)} & & & & & & & & \\
         \end{array}
 
 2. Get the interquartile range (**IQR**) by taking the third quartile
@@ -118,19 +118,19 @@ it works. The following example will step through the data given in
 
    .. math::
 
-        \mathbf{lower\;limit = Q1 - (IQR × multiplier)}
+        \mathbf{\text{lower limit} = Q1 - (IQR \times multiplier)}
 
    .. math::
 
-        23 = 45 - (10 × 2.2)
+        23 = 45 - (10 \times 2.2)
 
    .. math::
 
-        \mathbf{upper\;limit = Q3 + (IQR × multiplier)}
+        \mathbf{\text{upper limit} = Q3 + (IQR \times multiplier)}
 
    .. math::
 
-        77 = 55 + (10 × 2.2)
+        77 = 55 + (10 \times 2.2)
 
 5. Check that values are within the interval defined by the limits.
    Any value less than the lower limit (23) or greater than the upper
