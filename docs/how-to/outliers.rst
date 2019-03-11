@@ -83,8 +83,8 @@ it works. The following example will step through the data given in
 
    .. math::
 
-        \begin{array}
-        & 54 && 44 && 42 && 46 && 87 && 48 && 56 && 52 \\
+        \begin{array}{cccccccccccccccc}
+        54 && 44 && 42 && 46 && 87 && 48 && 56 && 52 \\
         \end{array}
 
 1. Determine the first and third quartiles. This is done by sorting
@@ -94,12 +94,15 @@ it works. The following example will step through the data given in
 
    .. math::
 
-        \begin{array}
-        & & & \rlap{\mathbf{\text{Q1 }}(45)} & & & & & & & & \rlap{\mathbf{\text{Q3 }}(55)} & & & \\
-        & & & \downarrow & & & & & & & & \downarrow & & & \\
-        42 & & 44 & & 46 & & 48 & & 52 & & 54 & & 56 & & 87 \\
-        & & & & & & & \uparrow & & & & & & & \\
-        & & & & & & \rlap{\text{median }(50)} & & & & & & & & \\
+        \begin{array}{c}
+            \begin{array}{cc}
+                \mathbf{Q1}\;(45) & \mathbf{Q3}\;(55) \\
+                \downarrow & \downarrow \\
+                \begin{array}{cccccccc}42 && 44 && 46 && 48\end{array}
+                    & \begin{array}{cccccccc}52 && 54 && 56 && 87\end{array}
+            \end{array} \\
+            \uparrow \\
+            median\;(50) \\
         \end{array}
 
 2. Get the interquartile range (**IQR**) by taking the third quartile
