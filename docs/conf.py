@@ -28,6 +28,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.coverage',
     'sphinx.ext.todo',
+    #'sphinx.ext.imgmath',
     'sphinx.ext.mathjax',
     'sphinx.ext.intersphinx',
     'sphinx_tabs.tabs',
