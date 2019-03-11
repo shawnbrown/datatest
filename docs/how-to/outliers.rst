@@ -63,23 +63,26 @@ values and applies to both normal and slightly skewed distributions.
 
 Once potential outliers have been identified, you need to decide
 how best to address them---there is no single rule for determining
-what to do. Potential outliers should be used as a strting point
-for further investigation.
+what to do. Potential outliers provide a starting point for further
+investigation.
 
 In some cases, these extreme values are legitimate and you will want to
 increase the *multiplier* or allow them (see :ref:`allowance-docs`).
 In other cases, you may determine that your data contains values from
 two separate distributions and the test itself needs to be restructured.
 Or you could discover that they represent data processing errors or
-other erroneous values that should excluded altogether.
+other erroneous values that should be excluded altogether.
+
+For more on multipliers, see the :meth:`outliers() <validate.outliers>`
+reference documentation.
 
 
 How it Works
 ============
 
 To use this approach most effectively, it helps to understand how
-it works. The following example will step through the data given in
-``test_outilers1()`` shown previously:
+it works. The following example explains the technique in detail
+using the same data as the ``test_outilers1()`` example above:
 
    .. math::
 
@@ -87,8 +90,8 @@ it works. The following example will step through the data given in
         54 && 44 && 42 && 46 && 87 && 48 && 56 && 52 \\
         \end{array}
 
-1. Determine the first and third quartiles. This is done by sorting
-   the data and finding its median to split the data into two halves.
+1. Determine the first and third quartiles. First, sort the values
+   in ascending order. Then, split the data in half at its median.
    The first quartile (**Q1**) is the median of the lower half and
    the third quartile (**Q3**) is the median of the upper half:
 
@@ -144,5 +147,3 @@ it works. The following example will step through the data given in
 
         87
 
-..
-    https://www.itl.nist.gov/div898/handbook/eda/section3/eda35h.htm
