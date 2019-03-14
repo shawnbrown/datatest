@@ -82,7 +82,7 @@ How it Works
 
 To use this approach most effectively, it helps to understand how
 it works. The following example explains the technique in detail
-using the same data as the ``test_outilers1()`` example above:
+using the same data as the ``test_outliers1()`` example above:
 
    .. math::
 
