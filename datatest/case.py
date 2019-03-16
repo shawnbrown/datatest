@@ -35,6 +35,25 @@ class DataTestCase(TestCase):
     """
     maxDiff = getattr(TestCase, 'maxDiff', 80 * 8)  # Uses default in 3.1 and 2.6.
 
+    def _apply_validation(self, function, *args, **kwds):
+        """Wrapper to call *function* (with given *args and **kwds)
+        and manage truncation behavior if a ValidationError is raised.
+
+        The *function* must be a callable object and it should pass
+        silently or raise a ValidationError.
+        """
+        try:
+            function(*args, **kwds)
+        except ValidationError as err:
+            def should_truncate(line_count, char_count):
+                return self.maxDiff and (char_count > self.maxDiff)
+            err._should_truncate = should_truncate
+
+            err._truncation_notice = \
+                'Diff is too long. Set self.maxDiff to None to see it.'
+
+            raise err
+
     def assertValid(self, data, requirement, msg=None):
         """Fail if the *data* under test does not satisfy the
         *requirement*.
@@ -110,18 +129,7 @@ class DataTestCase(TestCase):
         """
         # Setup traceback-hiding for pytest integration.
         __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
-
-        try:
-            validate(data, requirement, msg=msg)
-        except ValidationError as err:
-            def should_truncate(line_count, char_count):
-                return self.maxDiff and (char_count > self.maxDiff)
-            err._should_truncate = should_truncate
-
-            err._truncation_notice = \
-                'Diff is too long. Set self.maxDiff to None to see it.'
-
-            raise err
+        self._apply_validation(validate, data, requirement, msg=msg)
 
     #def assertUnique(self, data, msg=None):
     #    pass
