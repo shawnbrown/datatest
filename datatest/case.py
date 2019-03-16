@@ -27,6 +27,15 @@ from .allowance import allowed_fuzzy
 from .allowance import allowed_limit
 
 
+def _pytest_tracebackhide(excinfo):
+    """Pytest integration for hiding error tracebacks. To use, assign
+    to the special traceback-hide value inside a function or method::
+
+        __tracebackhide__ = _pytest_tracebackhide
+    """
+    return excinfo.errisinstance(ValidationError)
+
+
 class DataTestCase(TestCase):
     """This class extends :py:class:`unittest.TestCase` with methods
     for asserting data validity. In addition to the new functionality,
@@ -127,8 +136,7 @@ class DataTestCase(TestCase):
                 requirement = 'FOO'
                 self.assertValid(data, requirement)
         """
-        # Setup traceback-hiding for pytest integration.
-        __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
+        __tracebackhide__ = _pytest_tracebackhide
         self._apply_validation(validate, data, requirement, msg=msg)
 
     #def assertUnique(self, data, msg=None):
