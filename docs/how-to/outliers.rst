@@ -86,7 +86,7 @@ using the same data as the ``test_outliers1()`` example above:
 
    .. math::
 
-        \begin{array}{cccccccccccccccc}
+        \begin{array}{ccccccccccccccc}
         54 && 44 && 42 && 46 && 87 && 48 && 56 && 52 \\
         \end{array}
 
@@ -98,11 +98,11 @@ using the same data as the ``test_outliers1()`` example above:
    .. math::
 
         \begin{array}{c}
-            \begin{array}{cc}
-                \mathbf{Q1}\;(45) & \mathbf{Q3}\;(55) \\
-                \downarrow & \downarrow \\
-                \begin{array}{cccccccc}42 && 44 && 46 && 48\end{array}
-                    & \begin{array}{cccccccc}52 && 54 && 56 && 87\end{array}
+            \begin{array}{ccc}
+                \mathbf{Q1}\;(45) && \mathbf{Q3}\;(55) \\
+                \downarrow && \downarrow \\
+                \begin{array}{ccccccc}42 && 44 && 46 && 48\end{array}
+                    && \begin{array}{ccccccc}52 && 54 && 56 && 87\end{array}
             \end{array} \\
             \uparrow \\
             median\;(50) \\
