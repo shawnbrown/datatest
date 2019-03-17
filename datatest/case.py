@@ -64,77 +64,98 @@ class DataTestCase(TestCase):
             raise err
 
     def assertValid(self, data, requirement, msg=None):
-        """Fail if the *data* under test does not satisfy the
-        *requirement*.
+        """Raise a :exc:`ValidationError` if *data* does not satisfy
+        *requirement* or pass without error if data is valid.
 
-        The given *data* can be a set, sequence, iterable, mapping,
-        or other object. The *requirement* type determines how the
-        data is validated (see below).
+        This is a rich comparison object---the given *data* and
+        *requirement* arguments can be mappings, iterables, or other
+        objects. An optional *msg* string can be provided to describe
+        the validation.
 
-        **Set membership:** When *requirement* is a set, elements
-        in *data* are checked for membership in this set. On failure,
-        a :class:`ValidationError` is raised which contains
-        :class:`Missing` or :class:`Extra` differences::
+        **Predicate Validation:**
 
-            def test_mydata(self):
-                data = ...
-                requirement = {'A', 'B', 'C', ...}  # <- set
-                self.assertValid(data, requirement)
+            When *requirement* is a callable, tuple, string, or
+            non-iterable object, it is used to construct a
+            :class:`Predicate` for testing elements in *data*:
 
-        **Regular expression match:** When *requirement* is a regular
-        expression object, elements in *data* are checked to see if
-        they match the given pattern. On failure, a
-        :class:`ValidationError` is raised with :class:`Invalid`
-        differences::
+            .. code-block:: python
+                :emphasize-lines: 5
 
-            def test_mydata(self):
-                data = ...
-                requirement = re.compile(r'^[0-9A-F]*$')  # <- regex
-                self.assertValid(data, requirement)
+                def test_predicate(self):
+                    data = [2, 4, 6, 8]
+                    def iseven(x):  # <- callable requirement
+                        return x % 2 == 0
+                    self.assertValid(data, iseven)  # <- callable used as predicate
 
-        **Sequence order:** When *requirement* is a list or other
-        sequence, elements in *data* are checked for matching order
-        and value. On failure, an :py:class:`AssertionError` is
-        raised::
+            If the predicate returns False, then an :class:`Invalid`
+            or :class:`Deviation` difference is generated. If the
+            predicate returns a difference object, that object is
+            used in place of a generated difference
+            (see :ref:`difference-docs`). When the predicate returns
+            any other truthy value, an element is considered valid.
 
-            def test_mydata(self):
-                data = ...
-                requirement = ['A', 'B', 'C', ...]  # <- sequence
-                self.assertValid(data, requirement)
+        .. _set-validation:
 
-        **Mapping comparison:** When *requirement* is a dict (or other
-        mapping), elements of matching keys are checked for equality.
-        This comparison also requires *data* to be a mapping. On
-        failure, a :class:`ValidationError` is raised with
-        :class:`Invalid` or :class:`Deviation` differences::
+        **Set Validation:**
 
-            def test_mydata(self):
-                data = ...  # <- Should also be a mapping.
-                requirement = {'A': 1, 'B': 2, 'C': ...}  # <- mapping
-                self.assertValid(data, requirement)
+            When *requirement* is a set, the elements in *data* are
+            checked for membership in the set:
 
-        **Function comparison:** When *requirement* is a function or
-        other callable, elements in *data* are checked to see if they
-        evaluate to True. When the function returns False, a
-        :class:`ValidationError` is raised with :class:`Invalid`
-        differences::
+            .. code-block:: python
+                :emphasize-lines: 4
 
-            def test_mydata(self):
-                data = ...
-                def requirement(x):  # <- callable (helper function)
-                    return x.isupper()
-                self.assertValid(data, requirement)
+                def test_set(self):
+                    data = ['a', 'a', 'b', 'b', 'c', 'c']
+                    required_set = {'a', 'b', 'c'}
+                    self.assertValid(data, required_set)  # <- tests for set membership
 
-        **Other comparison:** When *requirement* does not match any
-        previously specified type (e.g., str, float, etc.), elements
-        in *data* are checked to see if they are equal to the given
-        object. On failure, a :class:`ValidationError` is raised which
-        contains :class:`Invalid` or :class:`Deviation` differences::
+            If the elements in *data* do not match the required set,
+            then :class:`Missing` and :class:`Extra` differences are
+            generated.
 
-            def test_mydata(self):
-                data = ...
-                requirement = 'FOO'
-                self.assertValid(data, requirement)
+        **Sequence Validation:**
+
+            When *requirement* is an iterable type other than a set,
+            mapping, tuple or string, then *data* is validated as a
+            sequence of elements. Elements are checked for predicate
+            matches against required objects of the same position
+            (both *data* and *requirement* should yield values in a
+            predictable order):
+
+            .. code-block:: python
+                :emphasize-lines: 4
+
+                def test_sequence(self):
+                    data = ['A', 'B', 'C', ...]
+                    sequence = ['A', 'B', 'C', ...]
+                    self.assertValid(data, sequence)  # <- compare elements by position
+
+            For details on predicate matching, see :class:`Predicate`.
+
+        **Mapping Validation:**
+
+            When *requirement* is a dictionary or other mapping, the
+            values in *data* are checked against required objects of
+            the same key (*data* must also be a mapping):
+
+            .. code-block:: python
+                :emphasize-lines: 4
+
+                def test_mapping(self):
+                    data = {'A': 1, 'B': 2, 'C': ...}
+                    required_dict = {'A': 1, 'B': 2, 'C': ...}
+                    self.assertValid(data, required_dict)  # <- compares values
+
+            If values do not satisfy the corresponding required
+            object, then differences are generated according to
+            each object type. If an object itself is a nested
+            mapping, it is treated as a predicate object.
+
+        **Requirement Object Validation:**
+
+            When *requirement* is a subclass of
+            :class:`BaseRequirement`, it is used to check data and
+            generate differences directly.
         """
         __tracebackhide__ = _pytest_tracebackhide
         self._apply_validation(validate, data, requirement, msg=msg)
