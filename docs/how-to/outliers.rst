@@ -138,10 +138,10 @@ using the same data as the ``test_outliers1()`` example above:
 
         77 = 55 + (10 \times 2.2)
 
-5. Check that values are within the interval defined by the limits.
-   Any value less than the lower limit (23) or greater than the upper
-   limit (77) is considered a potential outlier. In the given data,
-   there is one potential outlier:
+5. Check that values are within the determined limits. Any value less
+   than the lower limit (23) or greater than the upper limit (77) is
+   considered a potential outlier. In the given data, there is one
+   potential outlier:
 
    .. math::
 
