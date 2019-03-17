@@ -139,8 +139,58 @@ class DataTestCase(TestCase):
         __tracebackhide__ = _pytest_tracebackhide
         self._apply_validation(validate, data, requirement, msg=msg)
 
-    #def assertUnique(self, data, msg=None):
-    #    pass
+    def assertValidApprox(self, data, requirement, places=None, msg=None, delta=None):
+        """Wrapper for :meth:`validate.approx`."""
+        __tracebackhide__ = _pytest_tracebackhide
+        self._apply_validation(validate.approx, data, requirement,
+                               places=places, msg=msg, delta=delta)
+
+    def assertValidFuzzy(self, data, requirement, cutoff=0.6, msg=None):
+        """Wrapper for :meth:`validate.fuzzy`."""
+        __tracebackhide__ = _pytest_tracebackhide
+        self._apply_validation(validate.fuzzy, data, requirement,
+                               cutoff=cutoff, msg=msg)
+
+    def assertValidOrder(self, data, sequence, msg=None):
+        """Wrapper for :meth:`validate.order`."""
+        __tracebackhide__ = _pytest_tracebackhide
+        self._apply_validation(validate.order, data, sequence, msg=msg)
+
+    def assertValidOutliers(self, data, requirement=None,
+                            multiplier=2.2, msg=None, rounding=True):
+        """Wrapper for :meth:`validate.outliers`."""
+        __tracebackhide__ = _pytest_tracebackhide
+        self._apply_validation(validate.outliers,
+                               data,
+                               requirement=requirement,
+                               multiplier=multiplier,
+                               msg=msg,
+                               rounding=rounding)
+
+    def assertValidPredicate(self, data, requirement, msg=None):
+        """Wrapper for :meth:`validate.predicate`."""
+        __tracebackhide__ = _pytest_tracebackhide
+        self._apply_validation(validate.predicate, data, requirement, msg=msg)
+
+    def assertValidSet(self, data, requirement, msg=None):
+        """Wrapper for :meth:`validate.set`."""
+        __tracebackhide__ = _pytest_tracebackhide
+        self._apply_validation(validate.set, data, requirement, msg=msg)
+
+    def assertValidSubset(self, data, requirement, msg=None):
+        """Wrapper for :meth:`validate.subset`."""
+        __tracebackhide__ = _pytest_tracebackhide
+        self._apply_validation(validate.subset, data, requirement, msg=msg)
+
+    def assertValidSuperset(self, data, requirement, msg=None):
+        """Wrapper for :meth:`validate.superset`."""
+        __tracebackhide__ = _pytest_tracebackhide
+        self._apply_validation(validate.superset, data, requirement, msg=msg)
+
+    def assertValidUnique(self, data, msg=None):
+        """Wrapper for :meth:`validate.unique`."""
+        __tracebackhide__ = _pytest_tracebackhide
+        self._apply_validation(validate.unique, data, msg=msg)
 
     def allowedMissing(self, msg=None):
         """Allows :class:`Missing` elements without triggering a test

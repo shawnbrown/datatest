@@ -17,6 +17,7 @@ from datatest._query.query import Selector
 from datatest._query.query import Query
 from datatest._query.query import Result
 
+from datatest.validation import validate
 from datatest.validation import ValidationError
 from datatest.difference import Extra
 from datatest.difference import Missing
@@ -182,6 +183,78 @@ class TestAssertEqual(unittest.TestCase):
                 self.assertEqual(first, second)
 
             self.assertIs(type(cm.exception), AssertionError)
+
+
+class TestValidationWrappers(unittest.TestCase):
+    def setUp(self):
+        class DummyCase(DataTestCase):
+            def runTest(self_):
+                pass
+
+            def _apply_validation(self_, function, *args, **kwds):
+                """Knocks-out existing method to log applied function."""
+                self_._applied_function = function
+
+        self.case = DummyCase()
+
+    def test_methods_names(self):
+        """For each validate() method, DataTestCase should have a
+        matching unittest-style method.
+
+        ==========  ===================
+        validate()  DataTestCase
+        ==========  ===================
+        approx()    assertValidApprox()
+        subset()    assertValidSubset()
+        ...         ...
+        ==========  ===================
+        """
+        methods = [x for x in dir(validate) if not x.startswith('_')]
+
+        missing_methods = []
+        for method in methods:
+            name = 'assertValid{0}'.format(method.title())
+            msg = 'DataTestCase does not have method named {0!r}'.format(name)
+            if not hasattr(self.case, name):
+                foo = '  {0}() -> {1}()'.format(method, name)
+                missing_methods.append(foo)
+
+        msg = ('validate() and DataTestCase should have matching '
+               'validation methods:\n{0}').format('\n'.join(missing_methods))
+        self.assertTrue(len(missing_methods) == 0, msg=msg)
+
+    def test_methods_wrappers(self):
+        """DataTestCase method wrappers should call appropriate
+        validate methods.
+        """
+        method_calls = [
+            ('predicate', ('aaa', 'aaa'), {}),
+            ('approx', ([1.5, 1.5], 1.5), {}),
+            ('fuzzy', ('aaa', 'aaa'), {}),
+            ('set', ([1, 1, 2, 2], set([1, 2])), {}),
+            ('subset', ([1, 2, 3], set([1, 2])), {}),
+            ('superset', ([1, 2], set([1, 2, 3])), {}),
+            ('unique', ([1, 2, 3],), {}),
+            ('order', (['x', 'y'], ['x', 'y']), {}),
+            ('outliers', ([2, 3, 3, 4]), {}),
+        ]
+        method_names = set(x[0] for x in method_calls)
+        all_names = set(x for x in dir(validate) if not x.startswith('_'))
+        self.assertSetEqual(method_names, all_names)
+
+        for orig_name, args, kwds in method_calls:
+            case_name = 'assertValid{0}'.format(orig_name.title())
+            case_method = getattr(self.case, case_name)
+            case_method(*args, **kwds)
+            orig_method = getattr(validate, orig_name)
+
+            applied_name = self.case._applied_function.__name__
+            msg = (
+                '\n\n  '
+                'DataTestCase.{0}() should map to validate.{1}() '
+                'but instead maps to validate.{2}()'
+            ).format(case_name, orig_name, applied_name)
+            self.assertEqual(self.case._applied_function, orig_method, msg=msg)
 
 
 class TestAllowanceWrappers(unittest.TestCase):
