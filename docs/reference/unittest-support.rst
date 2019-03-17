@@ -108,6 +108,24 @@ DataTestCase
 
     .. automethod:: assertValid
 
+    .. automethod:: assertValidPredicate
+
+    .. automethod:: assertValidApprox
+
+    .. automethod:: assertValidFuzzy
+
+    .. automethod:: assertValidSet
+
+    .. automethod:: assertValidSubset
+
+    .. automethod:: assertValidSuperset
+
+    .. automethod:: assertValidUnique
+
+    .. automethod:: assertValidOrder
+
+    .. automethod:: assertValidOutliers
+
     .. attribute:: maxDiff
 
         This attribute controls the maximum length of diffs output by
