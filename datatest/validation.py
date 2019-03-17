@@ -246,7 +246,7 @@ class ValidateType(object):
 
             required_dict = {'A': 1, 'B': 2, 'C': ...}
 
-            datatest.validate(data, required_dict)  # <- compares values
+            validate(data, required_dict)  # <- compares values
 
         If values do not satisfy the corresponding required object,
         then differences are generated according to each object type.
