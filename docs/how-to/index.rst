@@ -32,5 +32,6 @@ How-to Guide
     Outliers <outliers>
     Phone Numbers <phone-numbers>
     Relative File Paths <relative-file-paths>
+    Sequences <sequences>
     Subsets and Supersets <subset-superset>
     Uniqueness <uniqueness>
