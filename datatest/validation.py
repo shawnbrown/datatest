@@ -274,7 +274,13 @@ class ValidateType(object):
         if result:
             differences, description = result
             message = msg or description or 'does not satisfy requirement'
-            raise ValidationError(differences, message)
+            err = ValidationError(differences, message)
+
+            sequence_or_order_types = (requirements.RequiredSequence,
+                                       requirements.RequiredOrder)
+            if isinstance(requirement_object, sequence_or_order_types):
+                err._sorted_str = False
+            raise err
 
     @staticmethod
     def _get_predicate_requirement(requirement, factory):
