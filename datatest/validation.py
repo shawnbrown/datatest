@@ -67,6 +67,7 @@ class ValidationError(AssertionError):
         self._description = description
         self._should_truncate = None
         self._truncation_notice = None
+        self._sorted_str = True
 
     @property
     def differences(self):
@@ -94,14 +95,19 @@ class ValidationError(AssertionError):
                 value = self._differences[key]
                 if nonstringiter(value):
                     sort_args = lambda diff: _safesort_key(diff.args)
-                    return sorted(value, key=sort_args)
+                    if self._sorted_str:
+                        return sorted(value, key=sort_args)
+                    return value
                 return value
             iterator = iter((key, sorted_value(key)) for key in all_keys)
             format_diff = lambda x: '    {0!r}: {1!r},'.format(x[0], x[1])
         else:
             begin, end = '[', ']'
             sort_args = lambda diff: _safesort_key(diff.args)
-            iterator = iter(sorted(self._differences, key=sort_args))
+            if self._sorted_str:
+                iterator = iter(sorted(self._differences, key=sort_args))
+            else:
+                iterator = iter(self._differences)
             format_diff = lambda x: '    {0!r},'.format(x)
 
         # Format differences as a list of strings and get line count.

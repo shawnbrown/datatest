@@ -196,6 +196,67 @@ class TestValidationError(unittest.TestCase):
         expected = textwrap.dedent(expected).strip()
         self.assertEqual(str(err), expected)
 
+    def test_str_no_sorting(self):
+        """Check that string does not sort when _sorted_str is False."""
+        self.maxDiff = None
+
+        # Check no sorting of non-mapping container.
+        err = ValidationError([MinimalDifference('Z', 'Z'),
+                               MinimalDifference('Z'),
+                               MinimalDifference(1, 'C'),
+                               MinimalDifference('B', 'C'),
+                               MinimalDifference('A'),
+                               MinimalDifference(1.5),
+                               MinimalDifference(True),
+                               MinimalDifference(0),
+                               MinimalDifference(None)])
+
+        err._sorted_str = False  # <- Turn-off sorting!
+
+        expected = """
+            9 differences: [
+                MinimalDifference('Z', 'Z'),
+                MinimalDifference('Z'),
+                MinimalDifference(1, 'C'),
+                MinimalDifference('B', 'C'),
+                MinimalDifference('A'),
+                MinimalDifference(1.5),
+                MinimalDifference(True),
+                MinimalDifference(0),
+                MinimalDifference(None),
+            ]
+        """
+        expected = textwrap.dedent(expected).strip()
+        self.assertEqual(str(err), expected)
+
+        # Check sorted dict keys but unsorted value containers.
+        err = ValidationError(
+            {
+                ('C', 3): [MinimalDifference('Z', 3), MinimalDifference(1, 2)],
+                ('A', 'C'): MinimalDifference('A'),
+                'A': [MinimalDifference('C'), MinimalDifference(1)],
+                2: [MinimalDifference('B'), MinimalDifference('A')],
+                1: MinimalDifference('A'),
+                (None, 4): MinimalDifference('A'),
+            },
+            'description string'
+        )
+
+        err._sorted_str = False  # <- Turn-off sorting!
+
+        expected = """
+            description string (6 differences): {
+                1: MinimalDifference('A'),
+                2: [MinimalDifference('B'), MinimalDifference('A')],
+                'A': [MinimalDifference('C'), MinimalDifference(1)],
+                (None, 4): MinimalDifference('A'),
+                ('A', 'C'): MinimalDifference('A'),
+                ('C', 3): [MinimalDifference('Z', 3), MinimalDifference(1, 2)],
+            }
+        """
+        expected = textwrap.dedent(expected).strip()
+        self.assertEqual(str(err), expected)
+
     def test_str_truncation(self):
         # Assert optional truncation behavior.
         err = ValidationError([MinimalDifference('A'),
