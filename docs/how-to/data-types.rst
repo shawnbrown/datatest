@@ -90,31 +90,33 @@ valid if they are strings:
                     self.assertValid(data, str)
 
 
-You can also use a *predicate tuple* to test the types contained
-in tuples:
+You can also use a **predicate tuple** to test the types contained
+in tuples. The elements in *data* are considered valid if the tuples
+contain a number followed by a string:
 
 .. tabs::
 
     .. group-tab:: Pytest
 
         .. code-block:: python
-            :emphasize-lines: 8
+            :emphasize-lines: 9
 
+            from numbers import Number
             from datatest import validate
 
 
             def test_multiple_types():
 
-                data = [(0.0, 'a'), (1.0, 'b'), (2.0, 'c')]
+                data = [(0.0, 'a'), (1.0, 'b'), (2, 'c'), (3, 'd')]
 
-                validate(data, (float, str))
-
+                validate(data, (Number, str))
 
     .. group-tab:: Unittest
 
         .. code-block:: python
-            :emphasize-lines: 10
+            :emphasize-lines: 11
 
+            from numbers import Number
             from datatest import DataTestCase
 
 
@@ -122,6 +124,11 @@ in tuples:
 
                 def test_multiple_types(self):
 
-                    data = [(0.0, 'a'), (1.0, 'b'), (2.0, 'c')]
+                    data = [(0.0, 'a'), (1.0, 'b'), (2, 'c'), (3, 'd')]
 
-                    self.assertValid(data, (float, str))
+                    self.assertValid(data, (Number, str))
+
+In the example above, the :py:class:`Number <numbers.Number>` base
+class is used to check for numbers of any type (:py:class:`int`,
+:py:class:`float`, :py:class:`complex`, :py:class:`Decimal
+<decimal.Decimal>`, etc.).
