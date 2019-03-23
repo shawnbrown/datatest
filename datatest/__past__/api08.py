@@ -18,7 +18,7 @@ from datatest._utils import string_types
 from datatest._utils import iterpeek
 from datatest.allowance import BaseAllowance
 from datatest import Invalid
-from datatest.difference import NOTFOUND
+from datatest.difference import NOVALUE
 
 datatest.DataResult = datatest.Result
 
@@ -196,18 +196,18 @@ def _require_sequence(data, sequence):  # New behavior in datatest 0.8.3
         raise ValueError(msg)
 
     message_prefix = None
-    previous_element = NOTFOUND
-    zipped = itertools.zip_longest(data, sequence, fillvalue=NOTFOUND)
+    previous_element = NOVALUE
+    zipped = itertools.zip_longest(data, sequence, fillvalue=NOVALUE)
     for index, (actual, expected) in enumerate(zipped):
         if actual == expected:
             previous_element = actual
             continue
 
-        if actual == NOTFOUND:
+        if actual == NOVALUE:
             message_prefix = ('Data sequence is missing '
                              'elements starting with index {0}').format(index)
             message_suffix = 'Expected {0!r}'.format(expected)
-        elif expected == NOTFOUND:
+        elif expected == NOVALUE:
             message_prefix = ('Data sequence contains extra '
                              'elements starting with index {0}').format(index)
             message_suffix = 'Found {0!r}'.format(actual)
@@ -223,17 +223,17 @@ def _require_sequence(data, sequence):  # New behavior in datatest 0.8.3
     leading_elements = []
     if index > 1:
         leading_elements.append('...')
-    if previous_element != NOTFOUND:
+    if previous_element != NOVALUE:
         leading_elements.append(repr(previous_element))
 
-    actual_repr = repr(actual) if actual != NOTFOUND else '?????'
+    actual_repr = repr(actual) if actual != NOVALUE else '?????'
     caret_underline = '^' * len(actual_repr)
 
     trailing_elements = []
-    next_tuple = next(zipped, NOTFOUND)
-    if next_tuple != NOTFOUND:
+    next_tuple = next(zipped, NOVALUE)
+    if next_tuple != NOVALUE:
         trailing_elements.append(repr(next_tuple[0]))
-        if next(zipped, NOTFOUND) != NOTFOUND:
+        if next(zipped, NOVALUE) != NOVALUE:
             trailing_elements.append('...')
 
     if leading_elements:
@@ -259,7 +259,7 @@ datatest.validation._require_sequence = _require_sequence
 
 
 def _require_callable(data, function):
-    if data is NOTFOUND:
+    if data is NOVALUE:
         return Invalid(None)  # <- EXIT!
 
     def wrapped(element):

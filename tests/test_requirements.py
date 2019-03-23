@@ -36,7 +36,7 @@ from datatest.requirements import RequiredSuperset
 from datatest.requirements import RequiredApprox
 from datatest.requirements import RequiredOutliers
 from datatest.requirements import RequiredFuzzy
-from datatest.difference import NOTFOUND
+from datatest.difference import NOVALUE
 
 
 class TestBuildDescription(unittest.TestCase):
@@ -1079,20 +1079,20 @@ class TestRequiredPredicate2(unittest.TestCase):
         self.assertEqual(list(diff), [Deviation(+2, 10)])
         self.assertEqual(desc, 'does not satisfy 10')
 
-    def test_notfound_token(self):
+    def test_novalue_token(self):
         data = [123, 'abc']
-        requirement = RequiredPredicate(NOTFOUND)
+        requirement = RequiredPredicate(NOVALUE)
         diff, desc = requirement(data)
         self.assertEqual(list(diff), [Deviation(+123, None), Extra('abc')])
         #self.assertEqual(desc, 'does not satisfy requirement')
 
-        data = [10, NOTFOUND]
+        data = [10, NOVALUE]
         requirement = RequiredPredicate(10)
         diff, desc = requirement(data)
         self.assertEqual(list(diff), [Deviation(-10, 10)])
         self.assertEqual(desc, 'does not satisfy 10')
 
-        data = ['abc', NOTFOUND]
+        data = ['abc', NOVALUE]
         requirement = RequiredPredicate('abc')
         diff, desc = requirement(data)
         self.assertEqual(list(diff), [Missing('abc')])
@@ -1249,8 +1249,8 @@ class TestRequiredApprox(unittest.TestCase):
         diff, desc = requirement('xxx')
         self.assertEqual(list(diff), [Invalid('xxx')])
 
-    def test_notfound_token(self):
-        data = [10.00000001, NOTFOUND]
+    def test_novalue_token(self):
+        data = [10.00000001, NOVALUE]
         requirement = RequiredApprox(10)
         diff, desc = requirement(data)
         self.assertEqual(list(diff), [Deviation(-10, 10)])
@@ -1325,19 +1325,19 @@ class TestRequiredFuzzy(unittest.TestCase):
         self.assertEqual(list(diff), [Deviation(+2, 10)])
         self.assertEqual(desc, 'does not satisfy 10, fuzzy matching at ratio 0.6 or greater')
 
-    def test_notfound_token(self):
+    def test_novalue_token(self):
         data = [123, 'abc']
-        requirement = RequiredFuzzy(NOTFOUND)
+        requirement = RequiredFuzzy(NOVALUE)
         diff, desc = requirement(data)
         self.assertEqual(list(diff), [Deviation(+123, None), Extra('abc')])
 
-        data = [10, NOTFOUND]
+        data = [10, NOVALUE]
         requirement = RequiredFuzzy(10)
         diff, desc = requirement(data)
         self.assertEqual(list(diff), [Deviation(-10, 10)])
         self.assertEqual(desc, 'does not satisfy 10, fuzzy matching at ratio 0.6 or greater')
 
-        data = ['abc', NOTFOUND]
+        data = ['abc', NOVALUE]
         requirement = RequiredFuzzy('abc')
         diff, desc = requirement(data)
         self.assertEqual(list(diff), [Missing('abc')])

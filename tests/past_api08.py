@@ -6,7 +6,7 @@ from . import _unittest as unittest
 import datatest
 from datatest.__past__ import api08  # <- MONKEY PATCH!!!
 
-from datatest.difference import NOTFOUND
+from datatest.difference import NOVALUE
 from datatest.validation import _require_sequence
 
 
@@ -166,9 +166,9 @@ class TestRequireSequence(unittest.TestCase):
         message = textwrap.dedent(message).strip()
         self.assertEqual(str(error), message)
 
-    def test_notfound(self):
+    def test_novalue(self):
         with self.assertRaises(ValueError):
-            _require_sequence(NOTFOUND, [1, 2, 3])
+            _require_sequence(NOVALUE, [1, 2, 3])
 
 
 Missing = datatest.Missing

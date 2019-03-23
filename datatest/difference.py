@@ -235,9 +235,9 @@ class Deviation(BaseDifference):
         return '{0}({1}, {2!r})'.format(cls_name, devi_repr, self.expected)
 
 
-NOTFOUND = _make_token(
-    'NOTFOUND',
-    'Token for handling values that are not available for comparison.'
+NOVALUE = _make_token(
+    'NOVALUE',
+    'Token for handling comparisons against a value that does not exist.'
 )
 
 
@@ -260,17 +260,17 @@ def _make_difference(actual, expected, show_expected=True):
         diff = actual - expected
         return Deviation(diff, expected)
 
-    # Numeric vs empty (or not found).
-    if first_isnum and (not expected or expected is NOTFOUND):
-        if expected is NOTFOUND:
+    # Numeric vs empty (or NOVALUE).
+    if first_isnum and (not expected or expected is NOVALUE):
+        if expected is NOVALUE:
             expected = None
 
         diff = actual - 0
         return Deviation(diff, expected)
 
-    # Empty (or not found) vs numeric.
-    if (not actual or actual is NOTFOUND) and second_isnum:
-        if actual is NOTFOUND:
+    # Empty (or NOVALUE) vs numeric.
+    if (not actual or actual is NOVALUE) and second_isnum:
+        if actual is NOVALUE:
             actual = None
 
         if expected == 0:
@@ -279,12 +279,12 @@ def _make_difference(actual, expected, show_expected=True):
             diff = 0 - expected
         return Deviation(diff, expected)
 
-    # Object vs NOTFOUND.
-    if expected is NOTFOUND:
+    # Object vs NOVALUE.
+    if expected is NOVALUE:
         return Extra(actual)
 
-    # NOTFOUND vs object.
-    if actual is NOTFOUND:
+    # NOVALUE vs object.
+    if actual is NOVALUE:
         return Missing(expected)
 
     # All other pairs of objects.

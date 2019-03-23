@@ -23,7 +23,7 @@ from .difference import Extra
 from .difference import Invalid
 from .difference import Missing
 from .difference import _make_difference
-from .difference import NOTFOUND
+from .difference import NOVALUE
 from ._normalize import normalize
 from ._predicate import Predicate
 from ._query.query import BaseElement
@@ -38,7 +38,7 @@ def _build_description(obj):
     for a group-requirement function that does not return its
     own description.
     """
-    if obj is NOTFOUND:
+    if obj is NOVALUE:
         return obj  # <- EXIT!
 
     if isinstance(obj, FunctionType):
@@ -105,8 +105,8 @@ def _normalize_requirement_result(result, func):
                    'string description, got {1!r}: {2!r}')
         raise TypeError(message.format(func_name, bad_type, differences))
 
-    first_item, differences = iterpeek(differences, NOTFOUND)
-    if first_item is NOTFOUND:
+    first_item, differences = iterpeek(differences, NOVALUE)
+    if first_item is NOVALUE:
         return None
     differences = _wrap_differences(differences, func)
     return differences, description
@@ -357,7 +357,7 @@ def _datadict_vs_requirementdict(data, requirement):
 
     for key, actual in data_items:
         data_keys.add(key)
-        expected = requirement.get(key, NOTFOUND)
+        expected = requirement.get(key, NOVALUE)
         result = _data_vs_requirement(actual, expected)
         if result:
             differences[key] = result
@@ -366,8 +366,8 @@ def _datadict_vs_requirementdict(data, requirement):
         if key not in data_keys:
             result = _data_vs_requirement([], expected)  # Try empty container.
             if not result:
-                diff = _make_difference(NOTFOUND, expected)
-                result = (diff, NOTFOUND)
+                diff = _make_difference(NOVALUE, expected)
+                result = (diff, NOVALUE)
             differences[key] = result
 
     if not differences:
@@ -375,14 +375,14 @@ def _datadict_vs_requirementdict(data, requirement):
 
     # Get first description from results.
     itervalues = getattr(differences, 'itervalues', differences.values)()
-    filtered = (x for _, x in itervalues if x is not NOTFOUND)
+    filtered = (x for _, x in itervalues if x is not NOVALUE)
     description = next(filtered, None)
 
     # Format dictionary values and finalize description.
     for key, value in IterItems(differences):
         diffs, desc = value
         differences[key] = diffs
-        if description and description != desc and desc is not NOTFOUND:
+        if description and description != desc and desc is not NOVALUE:
             description = None
 
     return differences, description
@@ -501,9 +501,9 @@ class BaseRequirement(abc.ABC):
             )
             raise TypeError(message.format(slf_name, dff_name, differences))
 
-        first_item, differences = iterpeek(differences, NOTFOUND)
+        first_item, differences = iterpeek(differences, NOVALUE)
 
-        if first_item is NOTFOUND:
+        if first_item is NOVALUE:
             return None  # <- EXIT!
 
         if isinstance(first_item, tuple):
@@ -971,7 +971,7 @@ class RequiredSequence(GroupRequirement):
     def _generate_differences(self, group):
         factory = self.factory
 
-        zipped = zip_longest(group, self.iterable, fillvalue=NOTFOUND)
+        zipped = zip_longest(group, self.iterable, fillvalue=NOVALUE)
         for actual, expected in zipped:
             if factory is RequiredPredicate:
                 pred = Predicate(expected)
@@ -1035,7 +1035,7 @@ class RequiredMapping(ItemsRequirement):
 
     @staticmethod
     def _update_description(current, new):
-        if current == new or current is _INCONSISTENT or new is NOTFOUND:
+        if current == new or current is _INCONSISTENT or new is NOVALUE:
             return current
 
         if not current:
@@ -1060,7 +1060,7 @@ class RequiredMapping(ItemsRequirement):
 
             keys_seen.add(key)
 
-            expected = required_mapping.get(key, NOTFOUND)
+            expected = required_mapping.get(key, NOVALUE)
             factory = self.abstract_factory(expected)
 
             if isinstance(value, BaseElement):
@@ -1112,7 +1112,7 @@ class RequiredMapping(ItemsRequirement):
                 diff, desc = requirement.check_group([])  # Try empty container.
                 first_item, diff = iterpeek(diff, None)
                 if not first_item:
-                    diff = _make_difference(NOTFOUND, expected)
+                    diff = _make_difference(NOVALUE, expected)
                 differences.append((key, diff))
                 description = self._update_description(description, desc)
 

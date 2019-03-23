@@ -9,7 +9,7 @@ from datatest.difference import Extra
 from datatest.difference import Invalid
 from datatest.difference import Deviation
 from datatest.difference import _make_difference
-from datatest.difference import NOTFOUND
+from datatest.difference import NOVALUE
 
 
 # FOR TESTING: A minimal subclass of BaseDifference.
@@ -225,25 +225,25 @@ class TestMakeDifference(unittest.TestCase):
         diff = _make_difference('a', regex)
         self.assertEqual(diff, Invalid('a', re.compile('^test$')))
 
-    def test_notfound_comparisons(self):
-        diff = _make_difference('a', NOTFOUND)
+    def test_novalue_comparisons(self):
+        diff = _make_difference('a', NOVALUE)
         self.assertEqual(diff, Extra('a'))
 
-        diff = _make_difference(NOTFOUND, 'b')
+        diff = _make_difference(NOVALUE, 'b')
         self.assertEqual(diff, Missing('b'))
 
-        # For numeric comparisons, NOTFOUND behaves like None.
-        diff = _make_difference(5, NOTFOUND)
+        # For numeric comparisons, NOVALUE behaves like None.
+        diff = _make_difference(5, NOVALUE)
         self.assertEqual(diff, Deviation(+5, None))
 
-        diff = _make_difference(0, NOTFOUND)
+        diff = _make_difference(0, NOVALUE)
         self.assertEqual(diff, Deviation(0, None))
 
-        diff = _make_difference(NOTFOUND, 6)
+        diff = _make_difference(NOVALUE, 6)
         self.assertEqual(diff, Deviation(-6, 6))  # <- Asymmetric behavior
                                                   #    (see None vs numeric)!
 
-        diff = _make_difference(NOTFOUND, 0)
+        diff = _make_difference(NOVALUE, 0)
         self.assertEqual(diff, Deviation(None, 0))
 
     def test_show_expected(self):
@@ -256,7 +256,7 @@ class TestMakeDifference(unittest.TestCase):
         diff = _make_difference('a', 6, show_expected=False)
         self.assertEqual(diff, Invalid('a'))
 
-        diff = _make_difference(NOTFOUND, 6, show_expected=False)
+        diff = _make_difference(NOVALUE, 6, show_expected=False)
         self.assertEqual(diff, Deviation(-6, 6))
 
     def test_same(self):
