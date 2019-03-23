@@ -597,14 +597,14 @@ class GroupRequirement(BaseRequirement):
 class RequiredPredicate(GroupRequirement):
     """A requirement to test data for predicate matches."""
     def __init__(self, obj, show_expected=False):
-        if isinstance(obj, Predicate):
-            pred = obj
-        else:
-            pred = Predicate(obj)
-
-        self._pred = pred
+        self._pred = self.predicate_factory(obj)
         self._obj = obj
         self.show_expected = show_expected
+
+    def predicate_factory(self, obj):
+        if isinstance(obj, Predicate):
+            return obj
+        return Predicate(obj)
 
     def _get_differences(self, group):
         pred = self._pred
@@ -663,11 +663,9 @@ class RequiredApprox(RequiredPredicate):
     def __init__(self, obj, places=None, delta=None, show_expected=False):
         if places is None:
             places = 7
-        self._pred = self.approx_predicate(obj, places, delta)
-        self._obj = obj
-        self.show_expected = show_expected
         self.places = places
         self.delta = delta
+        super(RequiredApprox, self).__init__(obj, show_expected=show_expected)
 
     @staticmethod
     def approx_delta(delta, value, other):
@@ -683,15 +681,15 @@ class RequiredApprox(RequiredPredicate):
         except TypeError:
             return False
 
-    @classmethod
-    def approx_predicate(cls, obj, places, delta):
+    def predicate_factory(self, obj):
         """Return Predicate object where string components have been
         replaced with approx_delta() or approx_delta() function.
         """
+        delta = self.delta
         if delta is not None:
-            approx_equal = partial(cls.approx_delta, delta)
+            approx_equal = partial(self.approx_delta, delta)
         else:
-            approx_equal = partial(cls.approx_places, places)
+            approx_equal = partial(self.approx_places, self.places)
 
         def approx_or_orig(x):
             if isinstance(x, Number):
@@ -720,11 +718,15 @@ class RequiredFuzzy(RequiredPredicate):
     of the difflib.SequenceMatcher class. The values range from
     1.0 (exactly the same) to 0.0 (completely different).
     """
-    @staticmethod
-    def fuzzy_predicate(obj, cutoff):
+    def __init__(self, obj, cutoff=0.6, show_expected=False):
+        self.cutoff = cutoff
+        super(RequiredFuzzy, self).__init__(obj, show_expected=show_expected)
+
+    def predicate_factory(self, obj):
         """Return Predicate object where string components have been
         replaced with fuzzy_match() function.
         """
+        cutoff = self.cutoff
         def fuzzy_match(cutoff, a, b):
             try:
                 matcher = difflib.SequenceMatcher(a=a, b=b)
@@ -740,12 +742,6 @@ class RequiredFuzzy(RequiredPredicate):
         if isinstance(obj, tuple):
             return Predicate(tuple(fuzzy_or_orig(x) for x in obj))
         return Predicate(fuzzy_or_orig(obj))
-
-    def __init__(self, obj, cutoff=0.6, show_expected=False):
-        self._pred = self.fuzzy_predicate(obj, cutoff)
-        self._obj = obj
-        self.show_expected = show_expected
-        self.cutoff = cutoff
 
     def check_group(self, group):
         differences, description = super(RequiredFuzzy, self).check_group(group)
