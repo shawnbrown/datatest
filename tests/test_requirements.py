@@ -5,6 +5,7 @@ from datatest._compatibility.collections.abc import Iterable
 from datatest._compatibility.collections.abc import Iterator
 from datatest._utils import exhaustible
 from datatest._utils import nonstringiter
+from datatest._utils import sortable
 from datatest import Missing
 from datatest import Extra
 from datatest import Deviation
@@ -36,6 +37,7 @@ from datatest.requirements import RequiredSuperset
 from datatest.requirements import RequiredApprox
 from datatest.requirements import RequiredOutliers
 from datatest.requirements import RequiredFuzzy
+from datatest.requirements import RequiredInterval
 from datatest.difference import NOVALUE
 
 
@@ -1351,6 +1353,114 @@ class TestRequiredFuzzy(unittest.TestCase):
         expected = [
             ('A', [Invalid('xxx')]),
             ('C', Invalid('yyy')),
+        ]
+        self.assertEqual(evaluate_items(diff), expected)
+
+
+class TestRequiredInterval(unittest.TestCase):
+    def test_all_valid(self):
+        requirement = RequiredInterval(2, 8)
+        result = requirement([2, 4, 6, 8])
+        self.assertIsNone(result)  # All elements are valid, returns None.
+
+    def test_deviations(self):
+        """If an element are less than the lower bound, the lower bound
+        should be used as the expected value. If an element is greater
+        than the upper bound, the upper bound should be used as the
+        expected value.
+        """
+        requirement = RequiredInterval(2, 8)
+        diff, desc = requirement([0, 2, 4, 6, 8, 10])
+
+        self.assertEqual(list(diff), [Deviation(-2, 2), Deviation(+2, 8)])
+        self.assertEqual(desc, r"elements `x` do not satisfy `2 <= x <= 8`")
+
+    def test_degenrate_interval(self):
+        """Should allow degenerate intervals. If lower and upper bounds
+        are auto-calculated from a collection of values, there are two
+        cases where they could be equal--resulting in a "degenerate"
+        interval: (1) all of the values are equal, (2) the collection
+        only contains a single value.
+        """
+        requirement = RequiredInterval(6, 6)
+
+        result = requirement([6, 6, 6])
+        self.assertIsNone(result)
+
+        diff, desc = requirement([4, 6, 8])
+        self.assertEqual(list(diff), [Deviation(-2, 6), Deviation(+2, 6)])
+        self.assertEqual(desc, r"elements `x` do not satisfy `6 <= x <= 6`")
+
+    def test_left_bound(self):
+        requirement = RequiredInterval(4)
+        diff, desc = requirement([2, 4, 6])
+
+        self.assertEqual(list(diff), [Deviation(-2, 4)])
+        self.assertEqual(desc, r"elements `x` do not satisfy `4 <= x`")
+
+    def test_right_bound(self):
+        requirement = RequiredInterval(upper=4)
+        diff, desc = requirement([2, 4, 6])
+
+        self.assertEqual(list(diff), [Deviation(+2, 4)])
+        self.assertEqual(desc, r"elements `x` do not satisfy `x <= 4`")
+
+    def test_bad_args(self):
+        with self.assertRaises(ValueError, msg='lower must not be greater than upper'):
+            requirement = RequiredInterval(6, 5)
+
+        if not sortable([6, 'a']):
+            with self.assertRaises(TypeError, msg='unsortable args should raise error'):
+                requirement = RequiredInterval(6, 'a')
+
+    def test_non_numeric(self):
+        """Should work for any sortable types."""
+        requirement = RequiredInterval('b', 'e')
+        result = requirement(['b', 'c', 'd', 'e'])
+        self.assertIsNone(result)  # All elements are valid, returns None.
+
+    def test_non_numeric_failure(self):
+        """Should return Invalid() differences."""
+        requirement = RequiredInterval('b', 'e')
+        diff, desc = requirement(['a', 'b', 'c', 'd', 'e', 'f'])
+
+        self.assertEqual(list(diff), [Invalid('a'), Invalid('f')])
+        self.assertEqual(desc, r"elements `x` do not satisfy `'b' <= x <= 'e'`")
+
+    def test_non_numeric_show_expected(self):
+        """Should return Invalid() differences."""
+        requirement = RequiredInterval('b', 'e', show_expected=True)
+        diff, desc = requirement(['a', 'b', 'c', 'd', 'e', 'f'])
+
+        self.assertEqual(list(diff), [Invalid('a', expected='b'), Invalid('f', expected='e')])
+        self.assertEqual(desc, r"elements `x` do not satisfy `'b' <= x <= 'e'`")
+
+    def test_empty_iterable(self):
+        requirement = RequiredInterval(2, 8)
+        result = requirement([])
+        self.assertIsNone(result)  # No elements means no invalid elements!
+
+    def test_mixed_types(self):
+        requirement = RequiredInterval(2, 6)
+        diff, desc = requirement([2, 4, 'a', 6, 8])
+        self.assertEqual(list(diff), [Invalid('a'), Deviation(+2, 6)])
+        self.assertEqual(desc, r"elements `x` do not satisfy `2 <= x <= 6`")
+
+    def test_items(self):
+        requirement = RequiredInterval(2, 6)
+        data = {
+            'A': [4, 6, 8],
+            'B': 5,
+            'C': 10,
+            'D': 'a',
+            'E': [5, 'b'],
+        }
+        diff, desc = requirement(data)
+        expected = [
+            ('A', [Deviation(+2, 6)]),
+            ('C', Deviation(+4, 6)),
+            ('D', Invalid('a')),
+            ('E', [Invalid('b')]),
         ]
         self.assertEqual(evaluate_items(diff), expected)
 

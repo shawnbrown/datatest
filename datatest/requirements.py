@@ -750,6 +750,59 @@ class RequiredFuzzy(RequiredPredicate):
         return differences, description
 
 
+class RequiredInterval(RequiredPredicate):
+    """Require that values are within given interval."""
+    def __init__(self, lower=None, upper=None, show_expected=False):
+        left_bounded = lower is not None
+        right_bounded = upper is not None
+
+        if left_bounded and right_bounded:
+            if lower > upper:
+                raise ValueError("'lower' must not be greater than 'upper'")
+
+            def interval(element):
+                try:
+                    if element < lower:
+                        return _make_difference(element, lower, show_expected)
+                    if element > upper:
+                        return _make_difference(element, upper, show_expected)
+                except TypeError:
+                    return Invalid(element)
+                return True
+        elif left_bounded:
+            def interval(element):
+                try:
+                    if element < lower:
+                        return _make_difference(element, lower, show_expected)
+                except TypeError:
+                    return Invalid(element)
+                return True
+        elif right_bounded:
+            def interval(element):
+                try:
+                    if element > upper:
+                        return _make_difference(element, upper, show_expected)
+                except TypeError:
+                    return Invalid(element)
+                return True
+        else:
+            raise TypeError("must provide at least one: 'lower' or 'upper'")
+
+        self.lower = lower
+        self.upper = upper
+        super(RequiredInterval, self).__init__(interval, show_expected=show_expected)
+
+    def check_group(self, group):
+        differences, _ = super(RequiredInterval, self).check_group(group)
+
+        lower, upper = self.lower, self.upper
+        description = r'elements `x` do not satisfy `{0}x{1}`'.format(
+            '{0!r} <= '.format(lower) if (lower is not None) else '',
+            ' <= {0!r}'.format(upper) if (upper is not None) else '',
+        )
+        return differences, description
+
+
 class RequiredSet(GroupRequirement):
     """A requirement to test data for set membership."""
     def __init__(self, requirement):
