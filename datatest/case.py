@@ -11,6 +11,7 @@ from ._query.query import Result
 
 from .validation import validate
 from .validation import ValidationError
+from .validation import _pytest_tracebackhide
 
 __datatest = True  # Used to detect in-module stack frames (which are
                    # omitted from output).
@@ -25,15 +26,6 @@ from .allowance import allowed_keys
 from .allowance import allowed_args
 from .allowance import allowed_fuzzy
 from .allowance import allowed_limit
-
-
-def _pytest_tracebackhide(excinfo):
-    """Pytest integration for hiding error tracebacks. To use, assign
-    to the special traceback-hide value inside a function or method::
-
-        __tracebackhide__ = _pytest_tracebackhide
-    """
-    return excinfo.errisinstance(ValidationError)
 
 
 class DataTestCase(TestCase):

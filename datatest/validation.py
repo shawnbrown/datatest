@@ -158,6 +158,15 @@ class ValidationError(AssertionError):
         return '{0}({1!r})'.format(cls_name, self.differences)
 
 
+def _pytest_tracebackhide(excinfo):
+    """Pytest integration for hiding error tracebacks. To use, assign
+    to the special traceback-hide value inside a function or method::
+
+        __tracebackhide__ = _pytest_tracebackhide
+    """
+    return excinfo.errisinstance(ValidationError)
+
+
 class ValidateType(object):
     """Raise a :exc:`ValidationError` if *data* does not satisfy
     *requirement* or pass without error if data is valid.
@@ -265,8 +274,7 @@ class ValidateType(object):
         it is used to check data and generate differences directly.
     """
     def __call__(self, data, requirement, msg=None):
-        # Setup traceback-hiding for pytest integration.
-        __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
+        __tracebackhide__ = _pytest_tracebackhide
 
         requirement_object = requirements.get_requirement(requirement)
         result = requirement_object(data)  # <- Apply requirement.
@@ -307,7 +315,7 @@ class ValidateType(object):
         check elements in *data* for matches (see :ref:`predicate
         validation <predicate-validation>` for more details).
         """
-        __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
+        __tracebackhide__ = _pytest_tracebackhide
         factory = requirements.RequiredPredicate
         requirement = self._get_predicate_requirement(requirement, factory)
         self(data, requirement, msg=msg)
@@ -338,7 +346,7 @@ class ValidateType(object):
         undesired-but-acceptible variation, :meth:`allowed.deviation`
         would be more fitting.
         """
-        __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
+        __tracebackhide__ = _pytest_tracebackhide
         factory = partial(requirements.RequiredApprox, places=places, delta=delta)
         requirement = self._get_predicate_requirement(requirement, factory)
         self(data, requirement, msg=msg)
@@ -372,7 +380,7 @@ class ValidateType(object):
 
             validate.fuzzy(data, requirement, cutoff=0.8)
         """
-        __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
+        __tracebackhide__ = _pytest_tracebackhide
         factory = partial(requirements.RequiredFuzzy, cutoff=cutoff)
         requirement = self._get_predicate_requirement(requirement, factory)
         self(data, requirement, msg=msg)
@@ -389,7 +397,7 @@ class ValidateType(object):
 
             validate.interval(data, 5, 15)
         """
-        __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
+        __tracebackhide__ = _pytest_tracebackhide
         requirement = requirements.RequiredInterval(lower, upper)
         self(data, requirement, msg=msg)
 
@@ -398,7 +406,7 @@ class ValidateType(object):
         of elements in *requirement* (applies :ref:`set validation
         <set-validation>` using a *requirement* of any iterable type).
         """
-        __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
+        __tracebackhide__ = _pytest_tracebackhide
 
         requirement = normalize(requirement, lazy_evaluation=False, default_type=set)
 
@@ -425,7 +433,7 @@ class ValidateType(object):
 
             validate.subset(data, requirement)
         """
-        __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
+        __tracebackhide__ = _pytest_tracebackhide
 
         requirement = normalize(requirement, lazy_evaluation=False, default_type=set)
 
@@ -452,7 +460,7 @@ class ValidateType(object):
 
             validate.superset(data, requirement)
         """
-        __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
+        __tracebackhide__ = _pytest_tracebackhide
 
         requirement = normalize(requirement, lazy_evaluation=False, default_type=set)
 
@@ -476,7 +484,7 @@ class ValidateType(object):
 
             validate.unique(data)
         """
-        __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
+        __tracebackhide__ = _pytest_tracebackhide
         self(data, requirements.RequiredUnique(), msg=msg)
 
     def order(self, data, sequence, msg=None):
@@ -528,7 +536,7 @@ class ValidateType(object):
         because their order matches the *requirement*---even though
         their index positions are different.
         """
-        __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
+        __tracebackhide__ = _pytest_tracebackhide
 
         requirement = normalize(sequence, lazy_evaluation=False, default_type=list)
 
@@ -590,7 +598,7 @@ class ValidateType(object):
         is based on "Fine-Tuning Some Resistant Rules for Outlier
         Labeling" by Hoaglin and Iglewicz (1987).
         """
-        __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
+        __tracebackhide__ = _pytest_tracebackhide
 
         if requirement is None:
             requirement = data
