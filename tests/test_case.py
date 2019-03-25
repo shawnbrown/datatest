@@ -231,6 +231,7 @@ class TestValidationWrappers(unittest.TestCase):
             ('predicate', ('aaa', 'aaa'), {}),
             ('approx', ([1.5, 1.5], 1.5), {}),
             ('fuzzy', ('aaa', 'aaa'), {}),
+            ('interval', ([1, 2, 3], 1, 3), {}),
             ('set', ([1, 1, 2, 2], set([1, 2])), {}),
             ('subset', ([1, 2, 3], set([1, 2])), {}),
             ('superset', ([1, 2], set([1, 2, 3])), {}),

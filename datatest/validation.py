@@ -377,6 +377,22 @@ class ValidateType(object):
         requirement = self._get_predicate_requirement(requirement, factory)
         self(data, requirement, msg=msg)
 
+    def interval(self, data, lower=None, upper=None, msg=None):
+        """Check that elements are within the defined interval:
+
+        .. code-block:: python
+            :emphasize-lines: 5
+
+            from datatest import validate
+
+            data = [5, 10, 15, 20]  # <- 20 outside of interval
+
+            validate.interval(data, 5, 15)
+        """
+        __tracebackhide__ = lambda excinfo: excinfo.errisinstance(ValidationError)
+        requirement = requirements.RequiredInterval(lower, upper)
+        self(data, requirement, msg=msg)
+
     def set(self, data, requirement, msg=None):
         """Check that the set of elements in *data* matches the set
         of elements in *requirement* (applies :ref:`set validation

@@ -499,6 +499,23 @@ class TestValidate(unittest.TestCase):
         expected = {'A': Invalid('axx', expected='aaa')}
         self.assertEqual(actual, expected)
 
+    def test_interval_method(self):
+        data = {'A': 5, 'B': 7, 'C': 9}
+        validate.interval(data, 5, 10)
+
+        data = [5, 7, 9]
+        validate.interval(data, 5, 10)
+
+        data = {'A': [7, 8, 9], 'B': [5, 6]}
+        validate.interval(data, 5, 10)
+
+        with self.assertRaises(ValidationError) as cm:
+            data = {'A': 3, 'B': 6, 'C': [6, 7], 'D': [9, 10]}
+            validate.interval(data, 5, 9)
+        actual = cm.exception.differences
+        expected = {'A': Deviation(-2, 5), 'D': [Deviation(+1, 9)]}
+        self.assertEqual(actual, expected)
+
     def test_set_method(self):
         data = [1, 2, 3, 4]
         requirement = Query.from_object([1, 2, 3, 4])
