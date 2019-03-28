@@ -163,7 +163,7 @@ The development repository for ``datatest`` is hosted on
 
 Freely licensed under the Apache License, Version 2.0
 
-Copyright 2014 - 2018 National Committee for an Effective Congress, et al.
+Copyright 2014 - 2019 National Committee for an Effective Congress, et al.
 
 
 ..
