@@ -1191,3 +1191,63 @@ def get_requirement(obj):
         return RequiredSequence(obj)
 
     return RequiredPredicate(obj)
+
+
+def adapts_mapping(cls):
+    """A decorator for group requirement classes that adds handling
+    for mappings::
+
+        from datatest.requirements import adapts_mapping
+        from datatest.requirements import RequiredInterval
+
+
+        @adapts_mapping
+        class CustomInterval(RequiredInterval):
+            def __init__(self, value):
+                half = value / 2.0
+                double = value * 2.0
+                super().__init__(lower=half, upper=double)
+
+    When given a mapping, the decorated class returns a mapping of
+    multiple group requirements::
+
+        requirement = CustomInterval({'A': 10, 'B': 2})
+
+    The adapted mapping in the previous example is equivalent to the
+    following::
+
+        requirement = RequiredMapping({
+            'A': CustomInterval(10),
+            'B': CustomInterval(2),
+        })
+
+    The treatment of non-mapping objects is unchanged by the decorator::
+
+        requirement = CustomInterval(10)
+    """
+    if not issubclass(cls, GroupRequirement):
+        raise TypeError('decorated class must inherit from GroupRequirement')
+
+    orig_new = cls.__new__
+
+    # Discard additional arguments if calling object.__new__().
+    if orig_new is object.__new__:
+        orig_new = lambda C, *args, **kwds: object.__new__(C)
+
+    @wraps(orig_new)
+    def wrapped_new(C, *args, **kwds):
+        if args and isinstance(args[0], (Mapping, IterItems)):
+            obj, args = args[0], args[1:]
+            def factory(val):
+                requirement = orig_new(C, val, *args, **kwds)
+                if isinstance(requirement, C):
+                    requirement.__init__(val, *args, **kwds)
+                return requirement
+            return RequiredMapping(obj, factory)
+        return orig_new(C, *args, **kwds)
+
+    # Needed for Python 2.x, Pypy, and some version of PyPy3.
+    wrapped_new = staticmethod(wrapped_new)
+
+    cls.__new__ = wrapped_new
+    return cls

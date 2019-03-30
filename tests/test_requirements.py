@@ -38,6 +38,7 @@ from datatest.requirements import RequiredApprox
 from datatest.requirements import RequiredOutliers
 from datatest.requirements import RequiredFuzzy
 from datatest.requirements import RequiredInterval
+from datatest.requirements import adapts_mapping
 from datatest.difference import NOVALUE
 
 
@@ -2104,3 +2105,84 @@ class TestGetRequirement(unittest.TestCase):
         existing_requirement = RequiredPredicate('foo')
         requirement = get_requirement(existing_requirement)
         self.assertIs(requirement, existing_requirement)
+
+
+class TestAdaptsMappingDecorator(unittest.TestCase):
+    def setUp(self):
+        @adapts_mapping
+        class RequiredDefaultNew(RequiredPredicate):
+            """Example requirement that doesn't defines its own
+            __new__() method (uses object.__new__ by default).
+            """
+
+        @adapts_mapping
+        class RequiredOtherNew(RequiredPredicate):
+            """Example requirement that defines its own __new__()
+            method and includes some non-standard custom behavior.
+            """
+            def __new__(cls, obj):
+                if isinstance(obj, int):
+                    return RequiredSet(set(str(obj)))  # <- Different type!!!
+                return super(RequiredOtherNew, cls).__new__(cls)
+
+        self.RequiredDefaultNew = RequiredDefaultNew
+        self.RequiredOtherNew = RequiredOtherNew
+
+    def test_default_new_nonmapping(self):
+        requirement = self.RequiredDefaultNew(set(['a', 'b']))
+        self.assertIsNone(requirement(['a', 'b']))
+
+    def test_default_new_mapping(self):
+        requirement = self.RequiredDefaultNew({
+            'A': set(['a', 'b']),
+            'B': set(['a', 'b', 'c']),
+        })
+        self.assertIsNone(requirement({'A': ['a', 'b'], 'B': ['a', 'b', 'c']}))
+
+    def test_other_new_nonmapping(self):
+        requirement = self.RequiredOtherNew('foo')
+        self.assertIsNone(requirement(['foo', 'foo']))
+
+    def test_other_new_mapping(self):
+        requirement = self.RequiredOtherNew({'A': 'foo', 'B': 'bar'})
+        self.assertIsNone(requirement({'A': 'foo', 'B': ['bar', 'bar']}))
+
+    def test_nested_mappings(self):
+        """Nested mappings should not recurse."""
+        requirement = self.RequiredOtherNew({'A': {'foo': 123}, 'B': {'bar': 456}})
+        self.assertIsNone(requirement({'A': {'foo': 123}, 'B': [{'bar': 456}, {'bar': 456}]}))
+
+    def test_nonstandard_new_nonmapping(self):
+        # In this test, the int type triggers non-standard behavior
+        # from __new__().
+        requirement = self.RequiredOtherNew(12)
+        self.assertIsNone(requirement(['1', '2']))
+
+    def test_nonstandard_new_mapping(self):
+        # In this test, the int types trigger non-standard behavior
+        # from __new__().
+        requirement = self.RequiredOtherNew({'A': 34, 'B': 56})
+        self.assertIsNone(requirement({'A': ['3', '4'], 'B': ['5', '6']}))
+
+    def test_bad_type(self):
+        """Should raise error if not a subclass of GroupRequirement."""
+        with self.assertRaises(TypeError):
+            @adapts_mapping
+            class BadType(object):  # <- Not a GroupRequirement!
+                pass
+
+    def test_no_additional_arguments(self):
+        """Decorator should allow classes with no additional arguments."""
+        @adapts_mapping
+        class NoArgs(RequiredPredicate):
+            """Example requirement that defines its own __new__()
+            method and includes some non-standard custom behavior.
+            """
+            def __new__(cls):  # <- No additional arguments!
+                return super(NoArgs, cls).__new__(cls)
+
+            def __init__(self):
+                super(NoArgs, self).__init__(True)
+
+        requirement = NoArgs()
+        self.assertIsNone(requirement('foo'))  # <- Pass without error.
