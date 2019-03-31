@@ -512,7 +512,7 @@ class ValidateType(object):
         self(data, requirements.RequiredUnique(), msg=msg)
 
     def order(self, data, sequence, msg=None):
-        """Check that elements in *data* match the order of elements
+        r"""Check that elements in *data* match the order of elements
         in *sequence*:
 
         .. code-block:: python
@@ -520,9 +520,9 @@ class ValidateType(object):
 
             from datatest import validate
 
-            data = ['A', 'C', 'D', 'F', ...]
+            data = ['A', 'C', 'D', 'E', 'F', ...]
 
-            required_order = ['A', 'B', 'C', 'D', ...]
+            required_order = ['A', 'B', 'C', 'D', 'E', ...]
 
             validate.order(data, required_order)
 
@@ -533,19 +533,29 @@ class ValidateType(object):
         non-matching element itself.
 
         In the given example, *data* is missing ``'B'`` at index 1
-        and contains an extra ``'F'`` at index 3:
+        and contains an extra ``'F'`` at index 4:
 
-        .. code-block:: none
+        .. math::
 
-                                        extra
-                                          |
-                                          v
-                   data: ['A', 'C', 'D', 'F', ...]
-
-            requirement: ['A', 'B', 'C', 'D', ...]
-                                ^
-                                |
-                             missing
+            \begin{array}{cc}
+                \begin{array}{r}
+                    \textrm{data:} \\
+                    \textrm{requirement:}
+                \end{array}
+                &
+                \begin{array}{c}
+                    \begin{array}{cc}
+                           & extra \\
+                           & \downarrow \\
+                        \begin{array}{ccc}\textbf{A} & \textbf{C} & \textbf{D} \end{array}
+                            & \begin{array}{ccc} \textbf{E} & \textbf{F} & ... \end{array} \\
+                        \begin{array}{ccc}\textbf{A} & \textbf{B} & \textbf{C} \end{array}
+                            & \begin{array}{ccc} \textbf{D} & \textbf{E} & ... \end{array} \\
+                         \uparrow &  \\
+                         missing  &  \\
+                    \end{array}
+                \end{array}
+            \end{array}
 
         The validation fails with the following error:
 
@@ -553,11 +563,11 @@ class ValidateType(object):
 
             ValidationError: does not match required order (2 differences): [
                 Missing((1, 'B')),
-                Extra((3, 'F')),
+                Extra((4, 'F')),
             ]
 
-        Notice there are no differences for ``'C'`` and ``'D'``
-        because their order matches the *requirement*---even though
+        Notice there are no differences for ``'C'``, ``'D'``, and ``'E'``
+        because their relative order matches the *requirement*---even though
         their index positions are different.
         """
         __tracebackhide__ = _pytest_tracebackhide
