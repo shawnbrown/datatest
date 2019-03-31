@@ -174,17 +174,6 @@ class DataTestCase(TestCase):
         __tracebackhide__ = _pytest_tracebackhide
         self._apply_validation(validate.order, data, sequence, msg=msg)
 
-    def assertValidOutliers(self, data, requirement=None,
-                            multiplier=2.2, msg=None, rounding=True):
-        """Wrapper for :meth:`validate.outliers`."""
-        __tracebackhide__ = _pytest_tracebackhide
-        self._apply_validation(validate.outliers,
-                               data,
-                               requirement=requirement,
-                               multiplier=multiplier,
-                               msg=msg,
-                               rounding=rounding)
-
     def assertValidPredicate(self, data, requirement, msg=None):
         """Wrapper for :meth:`validate.predicate`."""
         __tracebackhide__ = _pytest_tracebackhide

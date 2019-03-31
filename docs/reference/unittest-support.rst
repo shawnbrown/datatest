@@ -126,8 +126,6 @@ DataTestCase
 
     .. automethod:: assertValidOrder
 
-    .. automethod:: assertValidOutliers
-
     .. attribute:: maxDiff
 
         This attribute controls the maximum length of diffs output by

@@ -237,7 +237,6 @@ class TestValidationWrappers(unittest.TestCase):
             ('superset', ([1, 2], set([1, 2, 3])), {}),
             ('unique', ([1, 2, 3],), {}),
             ('order', (['x', 'y'], ['x', 'y']), {}),
-            ('outliers', ([2, 3, 3, 4]), {}),
         ]
         method_names = set(x[0] for x in method_calls)
         all_names = set(x for x in dir(validate) if not x.startswith('_'))
