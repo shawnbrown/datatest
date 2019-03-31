@@ -10,28 +10,91 @@
 How to Check for Outliers
 #########################
 
-To detect outliers, you can use the :meth:`validate.outliers` method
-which implements an interquartile/*Tukey fence* approach for outlier
-labeling.
+There are many techniques for detecting outliers and no single
+approach can work for all cases. This page describes a commonly
+useful approach based on the interquartile/*Tukey fence* method
+for outlier detection.
 
-Some common methods for outlier detection are sensitive to extreme
+Other common methods for outlier detection are sensitive to extreme
 values and can perform poorly when applied to skewed distributions.
-The Tukey fence method is provided because it's resistant to extreme
-values and applies to both normal and slightly skewed distributions.
+The Tukey fence method is resistant to extreme values and applies
+to both normal and slightly skewed distributions.
+
+You can copy the following ``RequiredOutliers`` class to use in
+your own tests:
+
+.. code-block:: python
+
+    from statistics import median
+    from datatest.requirements import adapts_mapping
+    from datatest.requirements import RequiredInterval
+
+
+    @adapts_mapping
+    class RequiredOutliers(RequiredInterval):
+        """Require that data does not contain outliers."""
+        def __init__(self, values, multiplier=2.2):
+            values = sorted(values)
+
+            if len(values) >= 2:
+                midpoint = int(round(len(values) / 2.0))
+                q1 = median(values[:midpoint])
+                q3 = median(values[midpoint:])
+                iqr = q3 - q1
+                lower = q1 - (iqr * multiplier)
+                upper = q3 + (iqr * multiplier)
+            else:
+                lower = upper = (values[0] if values else 0)
+
+            super().__init__(lower, upper)
+
+In "Exploratory Data Analysis" by John W. Tukey (1977), a multiplier
+of 1.5 was proposed for labeling outliers and 3.0 was proposed for
+labeling "far out" outliers. The default *multiplier* of ``2.2``
+is based on "Fine-Tuning Some Resistant Rules for Outlier Labeling"
+by Hoaglin and Iglewicz (1987).
+
+
+.. note::
+
+    The code above relies on :py:func:`statistics.median` which is new
+    in Python 3.4. If you are running an older version of Python, you
+    can use the following ``median()`` function instead:
+
+    .. code-block:: python
+
+        def median(iterable):
+            values = sorted(iterable)
+            index = (len(values) - 1) / 2.0
+            if index % 1:
+                lower = int(index - 0.5)
+                upper = int(index + 0.5)
+                return (values[lower] + values[upper]) / 2.0
+            return values[int(index)]
+
+
+Example Usage
+=============
+
+Use of ``RequiredOutliers`` is demonstrated below:
 
 .. tabs::
 
     .. group-tab:: Pytest
 
         .. code-block:: python
-            :emphasize-lines: 6,14
+            :emphasize-lines: 8,19
 
             from datatest import validate
 
+            ...
 
             def test_outliers1():
                 data = [54, 44, 42, 46, 87, 48, 56, 52]  # <- 87 is an outlier
-                validate.outliers(data, multiplier=2.2)
+
+                requirement = RequiredOutliers(data, multiplier=2.2)
+
+                validate(data, requirement)
 
 
             def test_outliers2():
@@ -39,42 +102,50 @@ values and applies to both normal and slightly skewed distributions.
                     'A': [54, 44, 42, 46, 87, 48, 56, 52],  # <- 87 is an outlier
                     'B': [87, 83, 60, 85, 97, 91, 95, 93],  # <- 60 is an outlier
                 }
-                validate.outliers(data, multiplier=2.2)
+
+                requirement = RequiredOutliers(data, multiplier=2.2)
+
+                validate(data, requirement)
 
     .. group-tab:: Unittest
 
         .. code-block:: python
-            :emphasize-lines: 7,14
+            :emphasize-lines: 9,19
 
             from datatest import DataTestCase
 
+            ...
 
             class MyTest(DataTestCase):
                 def test_outliers1(self):
                     data = [54, 44, 42, 46, 87, 48, 56, 52]  # <- 87 is an outlier
-                    self.assertValidOutliers(data, multiplier=2.2)
+
+                    requirement = RequiredOutliers(data, multiplier=2.2)
+
+                    self.assertValid(data, requirement)
 
                 def test_outliers2(self):
                     data = {
                         'A': [54, 44, 42, 46, 87, 48, 56, 52],  # <- 87 is an outlier
                         'B': [87, 83, 60, 85, 97, 91, 95, 93],  # <- 60 is an outlier
                     }
-                    self.assertValidOutliers(data, multiplier=2.2)
+
+                    requirement = RequiredOutliers(data, multiplier=2.2)
+
+                    self.assertValid(data, requirement)
 
 Once potential outliers have been identified, you need to decide
-how best to address them---there is no single rule for determining
-what to do. Potential outliers provide a starting point for further
-investigation.
+how best to address them---there is no single best practice for
+determining what to do. Potential outliers provide a starting point
+for further investigation.
 
-In some cases, these extreme values are legitimate and you will want to
-increase the *multiplier* or allow them (see :ref:`allowance-docs`).
-In other cases, you may determine that your data contains values from
-two separate distributions and the test itself needs to be restructured.
-Or you could discover that they represent data processing errors or
-other erroneous values that should be excluded altogether.
-
-For more on multipliers, see the :meth:`outliers() <validate.outliers>`
-reference documentation.
+In some cases, these extreme values are legitimate and you will
+want to increase the *multiplier* or explicitly allow them
+(see :ref:`allowance-docs`). In other cases, you may determine that
+your data contains values from two separate distributions and the
+test itself needs to be restructured. Or you could discover that
+the values represent data processing errors or other special cases
+and they should be excluded altogether.
 
 
 How it Works
@@ -146,4 +217,8 @@ using the same data as the ``test_outliers1()`` example above:
    .. math::
 
         87
+
+..
+    There is no rigorous way to define outliers that is independent of
+    the context in which the data was produced and its intended use.
 
