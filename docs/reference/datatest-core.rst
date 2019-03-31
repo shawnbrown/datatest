@@ -26,6 +26,8 @@ Validation
 
     .. automethod:: fuzzy
 
+    .. automethod:: interval
+
     .. automethod:: set
 
     .. automethod:: subset

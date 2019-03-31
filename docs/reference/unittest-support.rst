@@ -114,6 +114,8 @@ DataTestCase
 
     .. automethod:: assertValidFuzzy
 
+    .. automethod:: assertValidInterval
+
     .. automethod:: assertValidSet
 
     .. automethod:: assertValidSubset

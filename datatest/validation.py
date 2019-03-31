@@ -386,7 +386,7 @@ class ValidateType(object):
         self(data, requirement, msg=msg)
 
     def interval(self, data, lower=None, upper=None, msg=None):
-        """Check that elements are within the defined interval:
+        """Require that values are within the defined interval:
 
         .. code-block:: python
             :emphasize-lines: 5
@@ -396,6 +396,30 @@ class ValidateType(object):
             data = [5, 10, 15, 20]  # <- 20 outside of interval
 
             validate.interval(data, 5, 15)
+
+        Require that values are greater than or equal to *lower*
+        (omitting *upper* creates a left-bounded interval):
+
+        .. code-block:: python
+            :emphasize-lines: 5
+
+            from datatest import validate
+
+            data = [5, 10, 15, 20]
+
+            validate.interval(data, lower=5)
+
+        Require that values are less than or equal to *upper*
+        (omitting *lower* creates a right-bounded interval):
+
+        .. code-block:: python
+            :emphasize-lines: 5
+
+            from datatest import validate
+
+            data = [5, 10, 15, 20]
+
+            validate.interval(data, upper=20)
         """
         __tracebackhide__ = _pytest_tracebackhide
         requirement = requirements.RequiredInterval(lower, upper)
