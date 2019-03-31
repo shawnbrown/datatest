@@ -956,59 +956,6 @@ class RequiredOrder(GroupRequirement):
         return differences, 'does not match required order'
 
 
-class RequiredOutliers(GroupRequirement):
-    """Require that groups do not contain outliers."""
-    def __init__(self, obj, multiplier=2.2, rounding=True):
-        def verify_numeric(x):
-            if not isinstance(x, Number):
-                msg = 'outlier check requires numeric values, got {0}: {1!r}'
-                raise TypeError(msg.format(x.__class__.__name__, x))
-            return x
-
-        group = sorted(obj, key=verify_numeric)
-
-        if len(group) < 2:
-            self.lower = self.upper = (group[0] if group else 0)
-            return  # <- EXIT!
-
-        # Build lower and upper fences.
-        midpoint = int(round(len(group) / 2.0))
-        q1 = median(group[:midpoint])
-        q3 = median(group[midpoint:])
-        iqr = q3 - q1
-        kprime = iqr * multiplier
-        lower = q1 - kprime
-        upper = q3 + kprime
-
-        if iqr and rounding:
-            # Round fences to concise float representations.
-            one_percent_iqr = iqr / 100
-            reciprocal = 1 / one_percent_iqr
-            bit_length = len(bin(int(reciprocal - 1))) - 2  # Py 2.6 compat;
-            next_power_of_2 = 1 << bit_length               # use bit_length()
-            quantile = 1 / next_power_of_2                  # method in 2.7+
-            lower = round(lower / quantile) * quantile
-            upper = round(upper / quantile) * quantile
-
-        self.lower = lower
-        self.upper = upper
-
-    @staticmethod
-    def _generate_differences(group, lower, upper):
-        for element in group:
-            try:
-                if element < lower:
-                    yield Deviation(element - lower, lower)
-                elif element > upper:
-                    yield Deviation(element - upper, upper)
-            except TypeError:
-                yield Invalid(element)
-
-    def check_group(self, group):
-        differences = self._generate_differences(group, self.lower, self.upper)
-        return differences, 'contains outliers'
-
-
 class RequiredSequence(GroupRequirement):
     """A requirement to test elements in data against an *iterable*
     of predicate matches (compared by iteration order).

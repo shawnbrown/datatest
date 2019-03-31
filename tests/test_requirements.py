@@ -35,7 +35,6 @@ from datatest.requirements import RequiredUnique
 from datatest.requirements import RequiredSubset
 from datatest.requirements import RequiredSuperset
 from datatest.requirements import RequiredApprox
-from datatest.requirements import RequiredOutliers
 from datatest.requirements import RequiredFuzzy
 from datatest.requirements import RequiredInterval
 from datatest.requirements import adapts_mapping
@@ -1742,42 +1741,6 @@ class TestRequiredOrder2(unittest.TestCase):
             Extra((4, {'g': 7})),
         ]
         self.assertEqual(list(differences), expected)
-
-
-class TestRequiredOutliers(unittest.TestCase):
-    def test_passing(self):
-        data = [12, 5, 8, 5, 7, 15]
-        requirement = RequiredOutliers(data)
-        result = requirement(data)
-        self.assertIsNone(result)  # True for all, returns None.
-
-    def test_failing_group(self):
-        data = [12, 5, 8, 37, 5, 7, 15]  # <- 37 is an outlier
-        requirement = RequiredOutliers(data)
-        diff, desc = requirement(data)
-        self.assertEqual(list(diff), [Deviation(+2.1875, 34.8125)])
-
-    def test_zero_or_one_value(self):
-        data = []  # <- Zero values.
-        requirement = RequiredOutliers(data)
-        result = requirement(data)
-        self.assertIsNone(result)  # Can have no outliers.
-
-        data = [42]  # <- One value.
-        requirement = RequiredOutliers(data)
-        result = requirement(data)
-        self.assertIsNone(result)  # Can have no outliers.
-
-    def test_nonnumeric_requirement(self):
-        requirement = [12, 5, 8, 'abc', 5, 7, 15]  # <- 'abc' not valid input
-        with self.assertRaises(TypeError):
-            RequiredOutliers(requirement)
-
-    def test_nonnumeric_data(self):
-        requirement = RequiredOutliers([12, 5, 8, 5, 7, 15])
-        data = [12, 5, 8, 'abc', 5, 7, 15]  # <- 'abc' not comparable
-        diff, desc = requirement(data)
-        self.assertEqual(list(diff), [Invalid('abc')])
 
 
 class TestRequiredSequence2(unittest.TestCase):
