@@ -8,6 +8,7 @@ COMING SOON (0.9.4)
 * Added new validate methods (moved from how-to recipes into core module):
     * Added approx() method to require for approximate numeric equality.
     * Added fuzzy() method to require strings by approximate match.
+    * Added interval() method to require elements within a given interval.
     * Added set(), subset(), and superset() methods for explicit membership
       checking.
     * Added unique() method to require unique elements.
