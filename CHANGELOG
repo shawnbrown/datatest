@@ -13,7 +13,6 @@ COMING SOON (0.9.4)
       checking.
     * Added unique() method to require unique elements.
     * Added order() method to require elements by relative order.
-    * Added outlier() method to check numeric data for outliers.
 * Changed default sequence validation to check elements by index position
   rather than checking by relative order.
 * Added fuzzy-matching allowance to allow strings by approximate match.
