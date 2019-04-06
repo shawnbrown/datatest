@@ -752,53 +752,53 @@ class RequiredFuzzy(RequiredPredicate):
 
 class RequiredInterval(RequiredPredicate):
     """Require that values are within given interval."""
-    def __init__(self, lower=None, upper=None, show_expected=False):
-        left_bounded = lower is not None
-        right_bounded = upper is not None
+    def __init__(self, min=None, max=None, show_expected=False):
+        left_bounded = min is not None
+        right_bounded = max is not None
 
         if left_bounded and right_bounded:
-            if lower > upper:
-                raise ValueError("'lower' must not be greater than 'upper'")
+            if min > max:
+                raise ValueError("'min' must not be greater than 'max'")
 
             def interval(element):
                 try:
-                    if element < lower:
-                        return _make_difference(element, lower, show_expected)
-                    if element > upper:
-                        return _make_difference(element, upper, show_expected)
+                    if element < min:
+                        return _make_difference(element, min, show_expected)
+                    if element > max:
+                        return _make_difference(element, max, show_expected)
                 except TypeError:
                     return Invalid(element)
                 return True
         elif left_bounded:
             def interval(element):
                 try:
-                    if element < lower:
-                        return _make_difference(element, lower, show_expected)
+                    if element < min:
+                        return _make_difference(element, min, show_expected)
                 except TypeError:
                     return Invalid(element)
                 return True
         elif right_bounded:
             def interval(element):
                 try:
-                    if element > upper:
-                        return _make_difference(element, upper, show_expected)
+                    if element > max:
+                        return _make_difference(element, max, show_expected)
                 except TypeError:
                     return Invalid(element)
                 return True
         else:
-            raise TypeError("must provide at least one: 'lower' or 'upper'")
+            raise TypeError("must provide at least one: 'min' or 'max'")
 
-        self.lower = lower
-        self.upper = upper
+        self.min = min
+        self.max = max
         super(RequiredInterval, self).__init__(interval, show_expected=show_expected)
 
     def check_group(self, group):
         differences, _ = super(RequiredInterval, self).check_group(group)
 
-        lower, upper = self.lower, self.upper
+        min, max = self.min, self.max
         description = r'elements `x` do not satisfy `{0}x{1}`'.format(
-            '{0!r} <= '.format(lower) if (lower is not None) else '',
-            ' <= {0!r}'.format(upper) if (upper is not None) else '',
+            '{0!r} <= '.format(min) if (min is not None) else '',
+            ' <= {0!r}'.format(max) if (max is not None) else '',
         )
         return differences, description
 

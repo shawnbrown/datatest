@@ -1399,7 +1399,7 @@ class TestRequiredInterval(unittest.TestCase):
         self.assertEqual(desc, r"elements `x` do not satisfy `4 <= x`")
 
     def test_right_bound(self):
-        requirement = RequiredInterval(upper=4)
+        requirement = RequiredInterval(max=4)
         diff, desc = requirement([2, 4, 6])
 
         self.assertEqual(list(diff), [Deviation(+2, 4)])
