@@ -164,10 +164,10 @@ class DataTestCase(TestCase):
         self._apply_validation(validate.fuzzy, data, requirement,
                                cutoff=cutoff, msg=msg)
 
-    def assertValidInterval(self, data, lower=None, upper=None, msg=None):
+    def assertValidInterval(self, data, min=None, max=None, msg=None):
         """Wrapper for :meth:`validate.interval`."""
         __tracebackhide__ = _pytest_tracebackhide
-        self._apply_validation(validate.interval, data, lower, upper, msg=msg)
+        self._apply_validation(validate.interval, data, min, max, msg=msg)
 
     def assertValidOrder(self, data, sequence, msg=None):
         """Wrapper for :meth:`validate.order`."""

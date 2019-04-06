@@ -385,7 +385,7 @@ class ValidateType(object):
         requirement = self._get_predicate_requirement(requirement, factory)
         self(data, requirement, msg=msg)
 
-    def interval(self, data, lower=None, upper=None, msg=None):
+    def interval(self, data, min=None, max=None, msg=None):
         """Require that values are within the defined interval:
 
         .. code-block:: python
@@ -397,8 +397,8 @@ class ValidateType(object):
 
             validate.interval(data, 5, 15)
 
-        Require that values are greater than or equal to *lower*
-        (omitting *upper* creates a left-bounded interval):
+        Require that values are greater than or equal to *min*
+        (omitting *max* creates a left-bounded interval):
 
         .. code-block:: python
             :emphasize-lines: 5
@@ -407,10 +407,10 @@ class ValidateType(object):
 
             data = [5, 10, 15, 20]
 
-            validate.interval(data, lower=5)
+            validate.interval(data, min=5)
 
-        Require that values are less than or equal to *upper*
-        (omitting *lower* creates a right-bounded interval):
+        Require that values are less than or equal to *max*
+        (omitting *min* creates a right-bounded interval):
 
         .. code-block:: python
             :emphasize-lines: 5
@@ -419,10 +419,10 @@ class ValidateType(object):
 
             data = [5, 10, 15, 20]
 
-            validate.interval(data, upper=20)
+            validate.interval(data, max=20)
         """
         __tracebackhide__ = _pytest_tracebackhide
-        requirement = requirements.RequiredInterval(lower, upper)
+        requirement = requirements.RequiredInterval(min, max)
         self(data, requirement, msg=msg)
 
     def set(self, data, requirement, msg=None):
