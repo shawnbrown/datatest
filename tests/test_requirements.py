@@ -1396,14 +1396,14 @@ class TestRequiredInterval(unittest.TestCase):
         diff, desc = requirement([2, 4, 6])
 
         self.assertEqual(list(diff), [Deviation(-2, 4)])
-        self.assertEqual(desc, r"elements `x` do not satisfy `4 <= x`")
+        self.assertEqual(desc, 'less than minimum expected value of 4')
 
     def test_right_bound(self):
         requirement = RequiredInterval(max=4)
         diff, desc = requirement([2, 4, 6])
 
         self.assertEqual(list(diff), [Deviation(+2, 4)])
-        self.assertEqual(desc, r"elements `x` do not satisfy `x <= 4`")
+        self.assertEqual(desc, 'exceeds maximum expected value of 4')
 
     def test_bad_args(self):
         with self.assertRaises(ValueError, msg='lower must not be greater than upper'):

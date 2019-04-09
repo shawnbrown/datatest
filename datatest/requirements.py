@@ -757,8 +757,8 @@ class RequiredInterval(RequiredPredicate):
         right_bounded = max is not None
 
         if left_bounded and right_bounded:
-            if min > max:
-                raise ValueError("'min' must not be greater than 'max'")
+            if max < min:
+                raise ValueError("'max' must not be less than 'min'")
 
             def interval(element):
                 try:
@@ -769,6 +769,10 @@ class RequiredInterval(RequiredPredicate):
                 except TypeError:
                     return Invalid(element)
                 return True
+
+            description = 'elements `x` do not satisfy `{0!r} <= x <= {1!r}`' 
+            description = description.format(min, max)
+
         elif left_bounded:
             def interval(element):
                 try:
@@ -777,6 +781,9 @@ class RequiredInterval(RequiredPredicate):
                 except TypeError:
                     return Invalid(element)
                 return True
+
+            description = 'less than minimum expected value of {0!r}'.format(min)
+
         elif right_bounded:
             def interval(element):
                 try:
@@ -785,22 +792,18 @@ class RequiredInterval(RequiredPredicate):
                 except TypeError:
                     return Invalid(element)
                 return True
+
+            description = 'exceeds maximum expected value of {0!r}'.format(max)
+
         else:
             raise TypeError("must provide at least one: 'min' or 'max'")
 
-        self.min = min
-        self.max = max
+        self._description = description
         super(RequiredInterval, self).__init__(interval, show_expected=show_expected)
 
     def check_group(self, group):
         differences, _ = super(RequiredInterval, self).check_group(group)
-
-        min, max = self.min, self.max
-        description = r'elements `x` do not satisfy `{0}x{1}`'.format(
-            '{0!r} <= '.format(min) if (min is not None) else '',
-            ' <= {0!r}'.format(max) if (max is not None) else '',
-        )
-        return differences, description
+        return differences, self._description
 
 
 class RequiredSet(GroupRequirement):
