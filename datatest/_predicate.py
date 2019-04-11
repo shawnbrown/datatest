@@ -254,7 +254,7 @@ class Predicate(object):
         >>> pred('C')
         True
 
-    If *name* is provided it is used to set the object's ``__name__``
+    If *name* is provided, it is used to set the object's ``__name__``
     attribute.
     """
     def __init__(self, obj, name=None):
