@@ -298,6 +298,22 @@ class TestPredicate(unittest.TestCase):
         pred = ~Predicate('abc')
         self.assertEqual(repr(pred), "~Predicate('abc')")
 
+    def test_optional_name(self):
+        pred1 = Predicate('abc')  # <- No name arg provided.
+        self.assertFalse(hasattr(pred1, '__name__'))
+
+        pred2 = Predicate(pred1)  # <- No name arg inherited from pred1.
+        self.assertFalse(hasattr(pred1, '__name__'))
+
+        pred3 = Predicate('abc', name='pred3_name')  # <- Provides name.
+        self.assertEqual(pred3.__name__, 'pred3_name')
+
+        pred4 = Predicate(pred3)  # <- Inherits name from pred3.
+        self.assertEqual(pred4.__name__, 'pred3_name')
+
+        pred5 = Predicate(pred3, name='pred5_name')  # <- Overrides pred3 name.
+        self.assertEqual(pred5.__name__, 'pred5_name')
+
     def test_str(self):
         pred = Predicate('abc')
         self.assertEqual(str(pred), "'abc'")

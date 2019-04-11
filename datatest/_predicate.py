@@ -253,16 +253,24 @@ class Predicate(object):
         False
         >>> pred('C')
         True
+
+    If *name* is provided it is used to set the object's ``__name__``
+    attribute.
     """
-    def __init__(self, obj):
+    def __init__(self, obj, name=None):
         if isinstance(obj, Predicate):
             self.obj = obj.obj
             self.matcher = obj.matcher
             self._inverted = obj._inverted
+            if hasattr(obj, '__name__'):
+                self.__name__ = obj.__name__
         else:
             self.obj = obj
             self.matcher = get_matcher(obj)
             self._inverted = False
+
+        if name is not None:
+            self.__name__ = name
 
     def __call__(self, other):
         if self._inverted:
