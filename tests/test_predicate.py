@@ -298,6 +298,9 @@ class TestPredicate(unittest.TestCase):
         pred = ~Predicate('abc')
         self.assertEqual(repr(pred), "~Predicate('abc')")
 
+        pred = Predicate('abc', name='custom_name')
+        self.assertEqual(repr(pred), "Predicate('abc', name='custom_name')")
+
     def test_optional_name(self):
         pred1 = Predicate('abc')  # <- No name arg provided.
         self.assertFalse(hasattr(pred1, '__name__'))
