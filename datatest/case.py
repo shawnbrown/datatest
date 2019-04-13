@@ -12,10 +12,6 @@ from ._query.query import Result
 from .validation import validate
 from .validation import ValidationError
 from .validation import _pytest_tracebackhide
-
-__datatest = True  # Used to detect in-module stack frames (which are
-                   # omitted from output).
-
 from .allowance import allowed_missing
 from .allowance import allowed_extra
 from .allowance import allowed_invalid
@@ -26,6 +22,9 @@ from .allowance import allowed_keys
 from .allowance import allowed_args
 from .allowance import allowed_fuzzy
 from .allowance import allowed_limit
+
+
+__unittest = True  # Hides internal stack frames from unittest output.
 
 
 class DataTestCase(TestCase):

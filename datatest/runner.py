@@ -211,7 +211,7 @@ class HideInternalStackFrames(object):
         are_internal = []
         frame = self._tb.tb_next
         while frame:
-            is_internal = '__datatest' in frame.tb_frame.f_globals
+            is_internal = '__unittest' in frame.tb_frame.f_globals
             are_internal.append(is_internal)
             frame = frame.tb_next
 

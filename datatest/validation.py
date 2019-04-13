@@ -22,6 +22,8 @@ __all__ = [
     'ValidationError',
 ]
 
+__unittest = True  # Hides internal stack frames from unittest output.
+
 
 class ValidationError(AssertionError):
     """This exception is raised when data validation fails."""
