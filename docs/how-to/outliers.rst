@@ -43,8 +43,10 @@ your own tests:
                 iqr = q3 - q1
                 lower = q1 - (iqr * multiplier)
                 upper = q3 + (iqr * multiplier)
+            elif values:
+                lower = upper = values[0]
             else:
-                lower = upper = (values[0] if values else 0)
+                lower = upper = 0
 
             super().__init__(lower, upper)
 
