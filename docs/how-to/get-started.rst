@@ -115,14 +115,16 @@ common pandas conventions (e.g., importing pandas as ``pd``, etc.):
                 dt.main()
 
 
-Using a Datatest's Builtin Selector
------------------------------------
+Using Datatest's Built-in Tools
+-------------------------------
 
-This sample uses datatest's :class:`Selector <datatest.Selector>`
-object for loading and querying data. The ``Selector`` syntax tries
-to be friendly by returning data in the same format in which it
-was selected---e.g., selecting ``{'A': ('B', 'C')}`` will return
-a dictionary whose keys are made from column "A" and whose values
+This sample uses datatest's built-in :class:`Selector <datatest.Selector>`
+object for loading and querying data. This does not require any additional
+dependencies
+
+The ``Selector`` syntax tries to be friendly by returning data in the same
+format in which it was selected---e.g., selecting ``{'A': ('B', 'C')}`` will
+return a dictionary whose keys are made from column "A" and whose values
 are two-tuples made from columns "B" and "C":
 
 .. tabs::
