@@ -121,24 +121,24 @@ Selecting & Querying Data
         or rewrapping.
 
 
-**********
-ProxyGroup
-**********
+******************
+RepeatingContainer
+******************
 
-.. autoclass:: ProxyGroup
+.. autoclass:: RepeatingContainer
 
 
-Validating ProxyGroup Results
-=============================
+Validating RepeatingContainer Results
+=====================================
 
 When comparing the data-under-test against a set of similarly-shaped
 reference data, it's common to perform the same operations on both
 data sources. When queries and selections become more complex, this
 duplication can grow cumbersome. But the duplication can be mitigated
-by using a :class:`ProxyGroup`.
+by using a :class:`RepeatingContainer`.
 
-A ProxyGroup can wrap many types of objects (:class:`Selector`,
-pandas ``DataFrame``, etc.). In the following example, a ProxyGroup
+A RepeatingContainer can wrap many types of objects (:class:`Selector`,
+pandas ``DataFrame``, etc.). In the following example, a RepeatingContainer
 is created with two objects. Then, an operation is forwarded to each
 object in the group. Finally, the results are unpacked and validated:
 
@@ -148,14 +148,14 @@ object in the group. Finally, the results are unpacked and validated:
 
         Below, the operation ``...({'A': 'C'}).sum()`` is forwarded to
         each :class:`Selector` and the results are returned inside a
-        new ProxyGroup object:
+        new RepeatingContainer:
 
         .. code-block:: python
             :emphasize-lines: 8
 
             ...
 
-            compare = ProxyGroup([
+            compare = RepeatingContainer([
                 Selector('data_under_test.csv'),
                 Selector('reference_data.csv'),
             ])
@@ -169,14 +169,14 @@ object in the group. Finally, the results are unpacked and validated:
 
         Below, the operation ``...[['A', 'C']].groupby('A').sum()`` is
         forwarded to each ``DataFrame`` and the results are returned
-        inside a new ProxyGroup object:
+        inside a new RepeatingContainer:
 
         .. code-block:: python
             :emphasize-lines: 8
 
             ...
 
-            compare = ProxyGroup([
+            compare = RepeatingContainer([
                 pandas.read_csv('data_under_test.csv'),
                 pandas.read_csv('reference_data.csv'),
             ])
@@ -199,7 +199,7 @@ the result values directly in the :func:`validate` call itself:
 
             ...
 
-            compare = ProxyGroup([
+            compare = RepeatingContainer([
                 Selector('data_under_test.csv'),
                 Selector('reference_data.csv'),
             ])
@@ -213,7 +213,7 @@ the result values directly in the :func:`validate` call itself:
 
             ...
 
-            compare = ProxyGroup([
+            compare = RepeatingContainer([
                 pandas.read_csv('data_under_test.csv'),
                 pandas.read_csv('reference_data.csv'),
             ])

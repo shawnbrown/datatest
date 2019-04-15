@@ -29,7 +29,7 @@ class TestNamespaces(unittest.TestCase):
         self.assertTrue(hasattr(datatest, 'working_directory'))
         self.assertTrue(hasattr(datatest, 'get_reader'))
         self.assertTrue(hasattr(datatest, 'Selector'))
-        self.assertTrue(hasattr(datatest, 'ProxyGroup'))
+        self.assertTrue(hasattr(datatest, 'RepeatingContainer'))
 
         # Unittest-style support.
         self.assertTrue(hasattr(datatest, 'DataTestCase'))
@@ -107,11 +107,11 @@ class TestSelectorIdioms(unittest.TestCase):
 
 class TestValidateIdioms(unittest.TestCase):
     def test_concise_reference_testing(self):
-        """Should be able to use a two-item ProxyGroup to easily
-        compare results by unpacking the ProxyGroup directly in to
-        the validate() function call.
+        """Should be able to use a two-item RepeatingContainer to
+        easily compare results by unpacking the RepeatingContainer
+        directly in to the validate() function call.
         """
-        compare = datatest.ProxyGroup(['foo', 'FOO'])
+        compare = datatest.RepeatingContainer(['foo', 'FOO'])
         datatest.validate(*compare.lower())
 
     def test_mapping_of_sequences_for_order(self):

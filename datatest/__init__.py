@@ -26,7 +26,8 @@ from ._load.working_directory import working_directory
 from ._query.query import Selector
 from ._query.query import Query
 from ._query.query import Result
-from ._proxygroup import ProxyGroup
+from ._repeatingcontainer import RepeatingContainer
+ProxyGroup = RepeatingContainer  # <- Temporary alias.
 
 # Set module explicitly to cleanup reprs and error reporting.
 Selector.__module__ = 'datatest'

@@ -28,6 +28,7 @@ COMING SOON (0.9.4)
 * Added requirement class hierarchy (using BaseRequirement). This gives
   users a cleaner way to implement custom validation behavior and makes
   the underlying codebase easier to maintain.
+* Changed name of ProxyGroup to RepeatingContainer.
 * Changed "How To" examples to use the new validation methods.
 
 
