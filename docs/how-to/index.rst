@@ -32,4 +32,4 @@ How-to Guide
     Phone Numbers <phone-numbers>
     Relative File Paths <relative-file-paths>
     Sequences <sequences>
-    Subsets and Supersets <subset-superset>
+    Sets, Subsets, and Supersets <set-membership>
