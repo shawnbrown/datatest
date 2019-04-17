@@ -1,18 +1,20 @@
-dist: xenial
 language: python
 
-python:
-  - "3.7"
-  - "3.6"
-  - "3.5"
-  - "3.4"
-  - "3.3"
-  - "3.2"
-  - "2.7"
-  - "2.6"
-  - "pypy3"
-  - "pypy"
-#  - "3.1"  # not currently supported by Travis CI
+matrix:
+  include:
+    - python: 3.7
+      dist: xenial
+      sudo: true
+    - python: 3.6
+    - python: 3.5
+    - python: 3.4
+    - python: 3.3
+    - python: 3.2
+#    - python: 3.1  # not currently supported by Travis CI
+    - python: 2.7
+    - python: 2.6
+    - python: pypy3
+    - python: pypy
 
 install: true
 #install:
