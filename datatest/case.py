@@ -299,7 +299,7 @@ class DataTestCase(TestCase):
 
             with self.allowedLimit(2):  # Allows up to two differences.
                 data = ['47306', '1370', 'TX']  # <- '1370' and 'TX' invalid
-                requirement = re.compile('^\d{5}$')
+                requirement = re.compile(r'^\\d{5}$')
                 self.assertValid(data, requirement)
 
         If the count of differences exceeds the given *number*, the

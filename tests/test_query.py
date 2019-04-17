@@ -410,7 +410,7 @@ class TestFilterData(unittest.TestCase):
         result = _filter_data(predicate, [-1, -4, 2, 3, 2])
         self.assertEqual(result.fetch(), [-1, 2, 2])
 
-        predicate = re.compile('^[b]\w\w$')
+        predicate = re.compile(r'^[b]\w\w$')
         result = _filter_data(predicate, ['foo', 'bar', 'baz', 'qux'])
         self.assertEqual(result.fetch(), ['bar', 'baz'])
 

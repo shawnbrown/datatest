@@ -117,7 +117,7 @@ class TestCheckRegex(unittest.TestCase):
         with self.assertRaisesRegex(TypeError, "got int: 123"):
             self.assertFalse(_check_regex(regex, 123))  # Regex fails with TypeError.
 
-        with self.assertRaisesRegex(TypeError, "got tuple: \('a', 'b'\)"):
+        with self.assertRaisesRegex(TypeError, r"got tuple: \('a', 'b'\)"):
             self.assertFalse(_check_regex(regex, ('a', 'b')))
 
     def test_identity(self):

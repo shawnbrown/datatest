@@ -120,8 +120,8 @@ class get_reader(object):
 
     The *obj* type is used to automatically determine the appropriate
     handler. If *obj* is a string, it is treated as a file path whose
-    extension determines its content type. Any *\*args* and *\*\*kwds*
-    are passed to the underlying handler::
+    extension determines its content type. Any *\\*args* and
+    *\\*\\*kwds* are passed to the underlying handler::
 
         # CSV file.
         reader = get_reader('myfile.csv')

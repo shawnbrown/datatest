@@ -1052,7 +1052,7 @@ with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
 
 class Selector(object):
     """A class to quickly load and select tabular data. The given
-    *objs*, *\*args*, and *\*\*kwds*, can be any values supported
+    *objs*, *\\*args*, and *\\*\\*kwds*, can be any values supported
     by :class:`get_reader()`. Additionally, *objs* can be a list
     of supported objects or a string with shell-style wildcards.
     If *objs* is already a reader-like object, it will be used as
@@ -1094,7 +1094,7 @@ class Selector(object):
 
     def load_data(self, objs, *args, **kwds):
         """Load data from one or more objects into the Selector. The
-        given *objs*, *\*args*, and *\*\*kwds*, can be any values
+        given *objs*, *\\*args*, and *\\*\\*kwds*, can be any values
         supported by the :class:`Selector` class initialization.
 
         Load a single file into an empty Selector::
