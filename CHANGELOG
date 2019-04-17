@@ -5,6 +5,7 @@ Datatest Changelog
 COMING SOON (0.9.4)
 -------------------
 
+* Added Python 3.8 testing and support.
 * Added new validate methods (moved from how-to recipes into core module):
     * Added approx() method to require for approximate numeric equality.
     * Added fuzzy() method to require strings by approximate match.

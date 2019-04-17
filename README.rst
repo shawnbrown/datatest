@@ -20,7 +20,7 @@ progress. It encourages a structured approach for checking and
 tidying data.
 
 Datatest has no hard dependencies; supports Python 2.6, 2.7,
-3.1 through 3.7, PyPy, and PyPy3; and is freely available under
+3.1 through 3.8, PyPy, and PyPy3; and is freely available under
 the Apache License, version 2.
 
 .. _pytest: https://pytest.org
@@ -102,7 +102,7 @@ package::
 Supported Versions
 ==================
 
-Tested on Python 2.6, 2.7, 3.1 through 3.7, PyPy, and PyPy3.
+Tested on Python 2.6, 2.7, 3.1 through 3.8, PyPy, and PyPy3.
 Datatest is pure Python and may also run on other implementations
 as well (check using "setup.py test" before installing).
 
