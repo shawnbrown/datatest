@@ -165,8 +165,6 @@ class Predicate(object):
     +-------------------------+-----------------------------------+
     | *obj* type              | matches when                      |
     +=========================+===================================+
-    | set                     | value is a member of the set      |
-    +-------------------------+-----------------------------------+
     | function                | the result of ``function(value)`` |
     |                         | tests as True                     |
     +-------------------------+-----------------------------------+
@@ -175,18 +173,20 @@ class Predicate(object):
     | ``re.compile(pattern)`` | value matches the regular         |
     |                         | expression pattern                |
     +-------------------------+-----------------------------------+
-    | str or non-container    | value is equal to the object      |
-    +-------------------------+-----------------------------------+
-    | tuple of predicates     | tuple of values satisfies         |
-    |                         | corresponding tuple of            |
-    |                         | predicates---each according       |
-    |                         | to their type                     |
-    +-------------------------+-----------------------------------+
     | ``True``                | ``bool(value)`` returns True      |
     |                         | (value is truthy)                 |
     +-------------------------+-----------------------------------+
     | ``False``               | ``bool(value)`` returns False     |
     |                         | (value is falsy)                  |
+    +-------------------------+-----------------------------------+
+    | str or non-container    | value is equal to the object      |
+    +-------------------------+-----------------------------------+
+    | set                     | value is a member of the set      |
+    +-------------------------+-----------------------------------+
+    | tuple of predicates     | tuple of values satisfies         |
+    |                         | corresponding tuple of            |
+    |                         | predicates---each according       |
+    |                         | to their type                     |
     +-------------------------+-----------------------------------+
     | ``...`` (Ellipsis       | (used as a wildcard, matches      |
     | literal)                | any value)                        |
@@ -197,10 +197,6 @@ class Predicate(object):
     +---------------------------+----------------+---------+
     | *obj* example             | value          | matches |
     +===========================+================+=========+
-    | .. code-block:: python    | ``'A'``        | Yes     |
-    |                           +----------------+---------+
-    |     {'A', 'B'}            | ``'C'``        | No      |
-    +---------------------------+----------------+---------+
     | .. code-block:: python    | ``4``          | Yes     |
     |                           +----------------+---------+
     |     def iseven(x):        | ``9``          | No      |
@@ -216,10 +212,6 @@ class Predicate(object):
     |                           +----------------+---------+
     |                           | ``'fake'``     | No      |
     +---------------------------+----------------+---------+
-    | .. code-block:: python    | ``'foo'``      | Yes     |
-    |                           +----------------+---------+
-    |     'foo'                 | ``'bar'``      | No      |
-    +---------------------------+----------------+---------+
     | .. code-block:: python    | ``'x'``        | Yes     |
     |                           +----------------+---------+
     |     True                  | ``''``         | No      |
@@ -227,6 +219,18 @@ class Predicate(object):
     | .. code-block:: python    | ``''``         | Yes     |
     |                           +----------------+---------+
     |     False                 | ``'x'``        | No      |
+    +---------------------------+----------------+---------+
+    | .. code-block:: python    | ``'foo'``      | Yes     |
+    |                           +----------------+---------+
+    |     'foo'                 | ``'bar'``      | No      |
+    +---------------------------+----------------+---------+
+    | .. code-block:: python    | ``'A'``        | Yes     |
+    |                           +----------------+---------+
+    |     {'A', 'B'}            | ``'C'``        | No      |
+    +---------------------------+----------------+---------+
+    | .. code-block:: python    | ``('A', 1.0)`` | Yes     |
+    |                           +----------------+---------+
+    |     ('A', float)          | ``('A', 2)``   | No      |
     +---------------------------+----------------+---------+
     | .. code-block:: python    | ``('A', 'X')`` | Yes     |
     |                           +----------------+---------+
