@@ -2,8 +2,8 @@
 Datatest Changelog
 ==================
 
-COMING SOON (0.9.4)
--------------------
+2019-04-21 (0.9.4)
+------------------
 
 * Added Python 3.8 testing and support.
 * Added new validate methods (moved from how-to recipes into core module):

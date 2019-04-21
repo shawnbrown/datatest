@@ -34,4 +34,4 @@ Selector.__module__ = 'datatest'
 Query.__module__ = 'datatest'
 Result.__module__ = 'datatest'
 
-__version__ = '0.9.4.dev0'
+__version__ = '0.9.4'
