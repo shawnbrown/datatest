@@ -24,9 +24,9 @@ How-to Guide
     Customize Differences <customize-differences>
     Data Types <data-types>
     Date Formats <date-formats>
-    Descriptive Statistics <descriptive-stats>
     Excel Auto-Formatting <excel-auto-formatting>
     File Names <file-names>
+    Fixtures <fixtures/index>
     Fuzzy Matching <fuzzy-matching>
     Outliers <outliers>
     Phone Numbers <phone-numbers>
