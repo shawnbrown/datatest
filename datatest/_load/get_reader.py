@@ -158,7 +158,7 @@ class get_reader(object):
 
             if 'datatest' in sys.modules:
                 datatest = sys.modules['datatest']
-                if isinstance(obj, (datatest.Query, datatest.Selector,
+                if isinstance(obj, (datatest.Query, datatest.Select,
                                     datatest.Result)):
                     return cls.from_datatest(obj, *args, **kwds)
 
@@ -232,19 +232,19 @@ class get_reader(object):
     @staticmethod
     def from_datatest(obj, fieldnames=None):
         """Return a reader object which will iterate over the records
-        returned from a datatest Selector, Query, or Result. If the
+        returned from a datatest Select, Query, or Result. If the
         *fieldnames* argument is not provided, this function tries to
         construct names using the values from the underlying object.
         """
         datatest = sys.modules['datatest']
         if isinstance(obj, datatest.Query):
             query = obj
-        elif isinstance(obj, datatest.Selector):
+        elif isinstance(obj, datatest.Select):
             query = obj(tuple(obj.fieldnames))
         elif isinstance(obj, datatest.Result):
             query = datatest.Query.from_object(obj)
         else:
-            raise TypeError('must be datatest Selector, Query, or Result')
+            raise TypeError('must be datatest Select, Query, or Result')
 
         iterable = query.flatten().execute()
         if not nonstringiter(iterable):

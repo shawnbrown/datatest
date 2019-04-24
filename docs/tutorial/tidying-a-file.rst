@@ -94,8 +94,8 @@ Test "fixtures" are objects or processes that help set up the
 prerequesites needed to run our tests. They can also manage any
 clean-up needed after we are finished testing.
 
-For this example, the script defines a :class:`Selector` containing
-data from the **users.csv** file as our fixture:
+For this example, the script defines a :class:`Select` object
+containing data from the **users.csv** file as our fixture:
 
 .. tabs::
 
@@ -117,7 +117,7 @@ data from the **users.csv** file as our fixture:
 =====================
 
 To check the column names of our file we will compare the :attr:`fieldnames
-<Selector.fieldnames>` property against a :py:class:`set` of required names:
+<Select.fieldnames>` property against a :py:class:`set` of required names:
 
 .. tabs::
 
@@ -135,7 +135,7 @@ To check the column names of our file we will compare the :attr:`fieldnames
 
             _________________________________ test_columns _________________________________
 
-            users = <datatest.Selector object at 0x7fdca2983c18>
+            users = <datatest.Select object at 0x7fdca2983c18>
             Data from 1 source:
              users.csv
 
@@ -215,7 +215,7 @@ values and ``False`` for malformed values.
 
             _________________________________ test_user_id _________________________________
 
-            users = <datatest.Selector object at 0x7f45031b02e8>
+            users = <datatest.Select object at 0x7f45031b02e8>
             Data from 1 source:
              users.csv
 
@@ -286,7 +286,7 @@ For the "active" field, we will check that it contains the values
 
             _________________________________ test_active __________________________________
 
-            users = <datatest.Selector object at 0x7f1ec781a2e8>
+            users = <datatest.Select object at 0x7f1ec781a2e8>
             Data from 1 source:
              users.csv
 

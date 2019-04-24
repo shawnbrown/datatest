@@ -28,7 +28,7 @@ class TestNamespaces(unittest.TestCase):
         # Data handling support.
         self.assertTrue(hasattr(datatest, 'working_directory'))
         self.assertTrue(hasattr(datatest, 'get_reader'))
-        self.assertTrue(hasattr(datatest, 'Selector'))
+        self.assertTrue(hasattr(datatest, 'Select'))
         self.assertTrue(hasattr(datatest, 'RepeatingContainer'))
 
         # Unittest-style support.
@@ -54,16 +54,16 @@ class TestNamespaces(unittest.TestCase):
         self.assertIn('PYTEST_DONT_REWRITE', datatest.__doc__)
 
 
-class TestSelectorIdioms(unittest.TestCase):
+class TestSelectIdioms(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.selector_a = datatest.Selector([
+        cls.select_a = datatest.Select([
             ['A', 'B', 'C'],
             ['x', 1, 100],
             ['y', 2, 200],
             ['z', 3, 300],
         ])
-        cls.selector_b = datatest.Selector([
+        cls.select_b = datatest.Select([
             ['A', 'B'],
             ['x', 1],
             ['y', 2],
@@ -75,13 +75,13 @@ class TestSelectorIdioms(unittest.TestCase):
             self.setUpClass()  # setUpClass() is new in Python 2.7 and 3.2
 
     def test_compare_fieldnames(self):
-        """Should be able to compare ``fieldnames`` between Selectors
+        """Should be able to compare ``fieldnames`` between Selects
         by simply casting the *requirement* as a set and comparing it
         directly against the ``fieldnames`` parameter of the other
-        Selector.
+        Select.
         """
-        a = self.selector_a
-        b = self.selector_b
+        a = self.select_a
+        b = self.select_b
 
         # A case we want to optimize.
         datatest.validate(a.fieldnames, set(a.fieldnames))
@@ -91,11 +91,11 @@ class TestSelectorIdioms(unittest.TestCase):
             datatest.validate(a.fieldnames, set(b.fieldnames))
 
     def test_compare_rows(self):
-        """Should be able to compare rows by calling a selector by
+        """Should be able to compare rows by calling a Select by
         its own fieldnames.
         """
-        a = self.selector_a
-        b = self.selector_b
+        a = self.select_a
+        b = self.select_b
 
         # A case we want to optimize.
         datatest.validate(a(a.fieldnames), a(a.fieldnames))

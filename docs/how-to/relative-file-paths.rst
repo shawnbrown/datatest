@@ -41,14 +41,14 @@ support to reliably use relative file references:
 
             import pytest
             from datatest import working_directory
-            from datatest import Selector
+            from datatest import Select
 
             ...
 
             @pytest.fixture(scope='module')
             @working_directory(__file__)
             def mydata():
-                return Selector('../mydata.csv')
+                return Select('../mydata.csv')
 
             ...
 
@@ -58,14 +58,14 @@ support to reliably use relative file references:
             :emphasize-lines: 8
 
             from datatest import working_directory
-            from datatest import Selector
+            from datatest import Select
 
             ...
 
             def setUpModule():
                 global mydata
                 with working_directory(__file__):
-                    users = Selector('../mydata.csv')
+                    users = Select('../mydata.csv')
 
             ...
 

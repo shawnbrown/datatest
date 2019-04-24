@@ -18,7 +18,7 @@ various fixtures.
 .. toctree::
     :maxdepth: 1
 
-    datatest.Selector <select-fixture>
+    datatest.Select <select-fixture>
     pandas.DataFrame <dataframe-fixture>
     Database Connection <dbapi-fixture>
 

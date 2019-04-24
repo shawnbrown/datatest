@@ -1,13 +1,13 @@
 import pytest
 from datatest import working_directory
-from datatest import Selector
+from datatest import Select
 from datatest import validate
 
 
 @pytest.fixture(scope='module')
 @working_directory(__file__)
 def users():
-    return Selector('users.csv')
+    return Select('users.csv')
 
 
 @pytest.mark.mandatory

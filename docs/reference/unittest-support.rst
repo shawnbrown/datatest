@@ -24,24 +24,24 @@ a CSV file (:download:`mydata.csv </_static/mydata.csv>`):
 
 
     def setUpModule():
-        global source
+        global select
         with datatest.working_directory(__file__):
-            source = datatest.Selector('mydata.csv')
+            select = datatest.Select('mydata.csv')
 
 
     class TestMyData(datatest.DataTestCase):
         def test_header(self):
-            fieldnames = source.fieldnames
+            fieldnames = select.fieldnames
             required_names = ['user_id', 'active']
             self.assertValid(fieldnames, required_names)
 
         def test_active_column(self):
-            active = source({'active'})
+            active = select({'active'})
             accepted_values = {'Y', 'N'}
             self.assertValid(active, accepted_values)
 
         def test_user_id_column(self):
-            user_id = source(['user_id'])
+            user_id = select(['user_id'])
             def positive_int(x):  # <- Helper function.
                 return int(x) > 0
             self.assertValid(user_id, positive_int)

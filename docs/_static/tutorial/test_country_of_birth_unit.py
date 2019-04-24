@@ -1,7 +1,7 @@
 
 import pytest
 from datatest import working_directory
-from datatest import Selector
+from datatest import Select
 from datatest import DataTestCase
 from datatest import mandatory
 from datatest import Missing, Extra, Deviation, Invalid
@@ -14,8 +14,8 @@ def setUpModule():
     global summary
 
     with working_directory(__file__):
-        detail = Selector('country_of_birth.csv')
-        summary = Selector('estimated_totals.csv')
+        detail = Select('country_of_birth.csv')
+        summary = Select('estimated_totals.csv')
 
 
 # Begin tests.

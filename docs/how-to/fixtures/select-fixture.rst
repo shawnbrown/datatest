@@ -2,22 +2,22 @@
 .. module:: datatest
 
 .. meta::
-    :description: How to use a datatest.Selector fixture.
+    :description: How to use a datatest.Select fixture.
     :keywords: datatest, select, fixture
 
 
-############################
-How to Use Selector Fixtures
-############################
+################################
+How to Use Select Class Fixtures
+################################
 
 The following examples demonstrate different ways to use
-the :class:`datatest.Selector` class as a fixture.
+the :class:`datatest.Select` class as a fixture.
 
 
 Inline Data
 ===========
 
-In this example, the :class:`Selector <datatest.Selector>` reads data
+In this example, the :class:`Select <datatest.Select>` reads data
 from a list of records. The fixture is then queried to produce data
 for validation.
 
@@ -31,13 +31,13 @@ for validation.
             import pytest
             from datatest import (
                 validate,
-                Selector,
+                Select,
             )
 
 
             @pytest.fixture(scope='module')
             def mydata():
-                return Selector([
+                return Select([
                     ['A', 'B', 'C'],
                     ['x', 'foo', 20],
                     ['x', 'foo', 30],
@@ -66,13 +66,13 @@ for validation.
 
             from datatest import (
                 DataTestCase,
-                Selector,
+                Select,
             )
 
 
             def setUpModule():
                 global mydata
-                mydata = Selector([
+                mydata = Select([
                     ['A', 'B', 'C'],
                     ['x', 'foo', 20],
                     ['x', 'foo', 30],
@@ -98,7 +98,7 @@ for validation.
 External File
 =============
 
-In this example, the :class:`Selector <datatest.Selector>` reads data
+In this example, the :class:`Select <datatest.Select>` reads data
 from a CSV file (:download:`example.csv </_static/example.csv>`).
 
 
@@ -112,7 +112,7 @@ from a CSV file (:download:`example.csv </_static/example.csv>`).
             import pytest
             from datatest import (
                 validate,
-                Selector,
+                Select,
                 working_directory,
             )
 
@@ -120,7 +120,7 @@ from a CSV file (:download:`example.csv </_static/example.csv>`).
             @pytest.fixture(scope='module')
             @working_directory(__file__)
             def mydata():
-                return Selector('example.csv')
+                return Select('example.csv')
 
 
             def test_total(mydata):
@@ -141,7 +141,7 @@ from a CSV file (:download:`example.csv </_static/example.csv>`).
 
             from datatest import (
                 DataTestCase,
-                Selector,
+                Select,
                 working_directory,
             )
 
@@ -149,7 +149,7 @@ from a CSV file (:download:`example.csv </_static/example.csv>`).
             def setUpModule():
                 global mydata
                 with working_directory(__file__):
-                    mydata = Selector('example.csv')
+                    mydata = Select('example.csv')
 
 
             class MyTest(DataTestCase):
@@ -181,7 +181,7 @@ from the reference data.
             import pytest
             from datatest import (
                 validate,
-                Selector,
+                Select,
                 working_directory,
             )
 
@@ -189,12 +189,12 @@ from the reference data.
             @pytest.fixture(scope='module')
             @working_directory(__file__)
             def mydata():
-                return Selector('example.csv')
+                return Select('example.csv')
 
 
             @pytest.fixture(scope='module')
             def refdata():
-                return Selector([
+                return Select([
                     ['A', 'C'],
                     ['x', 50],
                     ['y', 30],
@@ -221,7 +221,7 @@ from the reference data.
 
             from datatest import (
                 DataTestCase,
-                Selector,
+                Select,
                 working_directory,
             )
 
@@ -231,9 +231,9 @@ from the reference data.
                 global refdata
 
                 with working_directory(__file__):
-                    mydata = Selector('example.csv')
+                    mydata = Select('example.csv')
 
-                refdata = Selector([
+                refdata = Select([
                     ['A', 'C'],
                     ['x', 50],
                     ['y', 30],
@@ -274,7 +274,7 @@ validation call.
             import pytest
             from datatest import (
                 validate,
-                Selector,
+                Select,
                 working_directory,
                 RepeatingContainer,
             )
@@ -283,12 +283,12 @@ validation call.
             @pytest.fixture(scope='module')
             @working_directory(__file__)
             def mydata():
-                return Selector('example.csv')
+                return Select('example.csv')
 
 
             @pytest.fixture(scope='module')
             def refdata():
-                return Selector([
+                return Select([
                     ['A', 'C'],
                     ['x', 50],
                     ['y', 30],
@@ -316,7 +316,7 @@ validation call.
 
             from datatest import (
                 DataTestCase,
-                Selector,
+                Select,
                 working_directory,
                 RepeatingContainer,
             )
@@ -328,9 +328,9 @@ validation call.
                 global compare
 
                 with working_directory(__file__):
-                    mydata = Selector('example.csv')
+                    mydata = Select('example.csv')
 
-                refdata = Selector([
+                refdata = Select([
                     ['A', 'C'],
                     ['x', 50],
                     ['y', 30],

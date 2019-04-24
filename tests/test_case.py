@@ -13,7 +13,7 @@ from . import _unittest as unittest
 # Import code to test.
 from datatest.case import DataTestCase
 
-from datatest._query.query import Selector
+from datatest._query.query import Select
 from datatest._query.query import Query
 from datatest._query.query import Result
 
@@ -156,7 +156,7 @@ class TestAssertValid(DataTestCase):
         self.assertTrue(message.endswith(']'), 'should show full diff when None')
 
     def test_query_objects(self):
-        source = Selector([('A', 'B'), ('1', '2'), ('1', '2')])
+        source = Select([('A', 'B'), ('1', '2'), ('1', '2')])
         query_obj1 = source(['B'])
         query_obj2 = source(['B'])
         self.assertValid(query_obj1, query_obj2)

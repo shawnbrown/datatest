@@ -29,7 +29,7 @@ class DataQuery(datatest.Query):
 datatest.DataQuery = DataQuery
 
 
-class DataSource(datatest.Selector):
+class DataSource(datatest.Select):
     def __init__(self, data, fieldnames=None):
         first_value, iterator = iterpeek(data)
         if isinstance(first_value, dict):

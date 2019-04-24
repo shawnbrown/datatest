@@ -40,7 +40,7 @@ from datatest._query.query import (
     RESULT_TOKEN,
     Query,
     Result,
-    Selector,
+    Select,
 )
 
 
@@ -180,7 +180,7 @@ class TestDictItems(unittest.TestCase):
         self.assertEqual(list(normalized), [('a', 1), ('b', 2)])
 
     def test_Query(self):
-        source = Selector([('A', 'B'), ('x', 1), ('y', 2)])
+        source = Select([('A', 'B'), ('x', 1), ('y', 2)])
         query = source({'A': 'B'}).apply(lambda x: next(x))
         normalized = DictItems(query)
         self.assertEqual(list(normalized), [('x', 1), ('y', 2)])
@@ -989,8 +989,8 @@ class TestQuery(unittest.TestCase):
         query = Query({'foo': ['bar', 'baz']})
         self.assertEqual(query.args[0], {'foo': [['bar', 'baz']]}, 'value should be wrapped as list')
 
-    def test_init_with_selector(self):
-        source = Selector([('A', 'B'), (1, 2), (1, 2)])
+    def test_init_with_select(self):
+        source = Select([('A', 'B'), (1, 2), (1, 2)])
         query = Query(source, ['A'], B=2)
         self.assertEqual(query.source, source)
         self.assertEqual(query.args, (['A'],))
@@ -1042,12 +1042,12 @@ class TestQuery(unittest.TestCase):
             Query()
 
         # Bad "select" field.
-        source = Selector([('A', 'B'), (1, 2), (1, 2)])
+        source = Select([('A', 'B'), (1, 2), (1, 2)])
         with self.assertRaises(LookupError, msg='should fail immediately when fieldname conflicts with provided source'):
             query = Query(source, ['X'], B=2)
 
         # Bad "where" field.
-        source = Selector([('A', 'B'), (1, 2), (1, 2)])
+        source = Select([('A', 'B'), (1, 2), (1, 2)])
         with self.assertRaises(LookupError, msg='should fail immediately when fieldname conflicts with provided "where" field'):
             query = Query(source, ['A'], Y=2)
 
@@ -1081,7 +1081,7 @@ class TestQuery(unittest.TestCase):
         self.assertEqual(copied._query_steps, query._query_steps)
 
         # Source, columns, and keyword.
-        source = Selector([('A', 'B'), (1, 2), (1, 2)])
+        source = Select([('A', 'B'), (1, 2), (1, 2)])
         query = Query(source, ['B'])
         copied = query.__copy__()
         self.assertIs(copied.source, query.source)
@@ -1098,7 +1098,7 @@ class TestQuery(unittest.TestCase):
         self.assertEqual(copied._query_steps, query._query_steps)
 
     def test_fetch_datasource(self):
-        select = Selector([('A', 'B'), ('1', '2'), ('1', '2')])
+        select = Select([('A', 'B'), ('1', '2'), ('1', '2')])
         query = Query(select, ['B'])
         query._query_steps = [
             ('map', (int,), {}),
@@ -1109,7 +1109,7 @@ class TestQuery(unittest.TestCase):
         self.assertEqual(result, 8)
 
     def test_execute_datasource(self):
-        select = Selector([('A', 'B'), ('1', '2'), ('1', '2')])
+        select = Select([('A', 'B'), ('1', '2'), ('1', '2')])
         query = Query(select, ['B'])
         query._query_steps = [
             ('map', (int,), {}),
@@ -1120,7 +1120,7 @@ class TestQuery(unittest.TestCase):
         self.assertEqual(result, 8)
 
         query = Query(['A'])
-        regex = "expected 'Selector', got 'list'"
+        regex = "expected 'Select', got 'list'"
         with self.assertRaisesRegex(TypeError, regex):
             query.execute(['hello', 'world'])  # <- Expects None or Query, not list!
 
@@ -1155,7 +1155,7 @@ class TestQuery(unittest.TestCase):
         query2 = query1.map(int)
         self.assertIsNot(query1, query2, 'should return new object')
 
-        source = Selector([('col1', 'col2'), ('a', '2'), ('b', '2')])
+        source = Select([('col1', 'col2'), ('a', '2'), ('b', '2')])
         result = query2.execute(source)
         self.assertEqual(result.fetch(), [2, 2])
 
@@ -1164,7 +1164,7 @@ class TestQuery(unittest.TestCase):
         query2 = query1.starmap(lambda x, y: x + y)
         self.assertIsNot(query1, query2, 'should return new object')
 
-        source = Selector([('col1', 'col2'), ('a', 1), ('b', 2)])
+        source = Select([('col1', 'col2'), ('a', 1), ('b', 2)])
         result = query2.execute(source)
         self.assertEqual(result.fetch(), [2, 4])
 
@@ -1173,12 +1173,12 @@ class TestQuery(unittest.TestCase):
         query2 = query1.filter(lambda x: x == 'a')
         self.assertIsNot(query1, query2, 'should return new object')
 
-        source = Selector([('col1', 'col2'), ('a', '2'), ('b', '2')])
+        source = Select([('col1', 'col2'), ('a', '2'), ('b', '2')])
         result = query2.execute(source)
         self.assertEqual(result.fetch(), ['a'])
 
         # No filter arg should default to bool()
-        source = Selector([('col1',), (1,), (2,), (0,), (3,)])
+        source = Select([('col1',), (1,), (2,), (0,), (3,)])
         query = Query(set(['col1'])).filter()  # <- No arg!
         result = query.execute(source)
         self.assertEqual(result.fetch(), set([1, 2, 3]))
@@ -1206,7 +1206,7 @@ class TestQuery(unittest.TestCase):
         query2 = query1.flatten()
         self.assertIsNot(query1, query2, 'should return new object')
 
-        source = Selector([('col1', 'col2'), ('a', '2'), ('b', '2')])
+        source = Select([('col1', 'col2'), ('a', '2'), ('b', '2')])
         result = query2.execute(source)
         self.assertEqual(result.fetch(), [('a', '2', '2'), ('b', '2', '2')])
 
@@ -1215,17 +1215,17 @@ class TestQuery(unittest.TestCase):
         query2 = query1.unwrap()
         self.assertIsNot(query1, query2, 'should return new object')
 
-        source = Selector([('col1', 'col2'), ('a', 1), ('b', 2),  ('b', 3)])
+        source = Select([('col1', 'col2'), ('a', 1), ('b', 2),  ('b', 3)])
         result = query2.execute(source)
         self.assertEqual(result.fetch(), {'a': 1, 'b': [2, 3]})
 
     def test_optimize_aggregation(self):
         """
         Unoptimized:
-            Selector._select({'col1': ['values']}, col2='xyz').sum()
+            Select._select({'col1': ['values']}, col2='xyz').sum()
 
         Optimized:
-            Selector._select_aggregate('SUM', {'col1': ['values']}, col2='xyz')
+            Select._select_aggregate('SUM', {'col1': ['values']}, col2='xyz')
         """
         unoptimized = (
             (getattr, (RESULT_TOKEN, '_select'), {}),
@@ -1243,10 +1243,10 @@ class TestQuery(unittest.TestCase):
     def test_optimize_distinct(self):
         """
         Unoptimized:
-            Selector._select({'col1': ['values']}, col2='xyz').distinct()
+            Select._select({'col1': ['values']}, col2='xyz').distinct()
 
         Optimized:
-            Selector._select_distinct({'col1': ['values']}, col2='xyz')
+            Select._select_distinct({'col1': ['values']}, col2='xyz')
         """
         unoptimized = (
             (getattr, (RESULT_TOKEN, '_select'), {}),
@@ -1265,7 +1265,7 @@ class TestQuery(unittest.TestCase):
         query = Query(['col1'])
         expected = """
             Data Source:
-              <none given> (assuming Selector object)
+              <none given> (assuming Select object)
             Execution Plan:
               getattr, (<RESULT>, '_select'), {}
               <RESULT>, (['col1']), {}
@@ -1280,7 +1280,7 @@ class TestQuery(unittest.TestCase):
 
         expected = """
             Data Source:
-              <none given> (assuming Selector object)
+              <none given> (assuming Select object)
             Execution Plan:
               getattr, (<RESULT>, '_select'), {}
               <RESULT>, (['label1']), {}
@@ -1300,25 +1300,25 @@ class TestQuery(unittest.TestCase):
         self.assertEqual(returned_value, expected)
 
     def test_repr(self):
-        # Check "no selector" signature.
+        # Check "no select" signature.
         query = Query(['label1'])
         regex = r"Query\(\[u?'label1'\]\)"
         self.assertRegex(repr(query), regex)
 
-        # Check "no selector" with keyword string.
+        # Check "no select" with keyword string.
         query = Query(['label1'], label2='x')
         regex = r"Query\(\[u?'label1'\], label2='x'\)"
         self.assertRegex(repr(query), regex)
 
-        # Check "no selector" with keyword list.
+        # Check "no select" with keyword list.
         query = Query(['label1'], label2=['x', 'y'])
         regex = r"Query\(\[u?'label1'\], label2=\[u?'x', u?'y'\]\)"
         self.assertRegex(repr(query), regex)
 
-        # Check "selector-provided" signature.
-        select = Selector([('A', 'B'), ('x', 1), ('y', 2), ('z', 3)])
+        # Check "select-provided" signature.
+        select = Select([('A', 'B'), ('x', 1), ('y', 2), ('z', 3)])
         query = Query(select, ['B'])
-        short_repr = super(Selector, select).__repr__()
+        short_repr = super(Select, select).__repr__()
         expected = "Query({0}, {1!r})".format(short_repr, ['B'])
         #print(repr(query))
         self.assertEqual(repr(query), expected)
@@ -1347,7 +1347,7 @@ class TestQuery(unittest.TestCase):
         self.assertRegex(repr(query), regex)
 
 
-class TestSelector(unittest.TestCase):
+class TestSelect(unittest.TestCase):
     def setUp(self):
         data = [['label1', 'label2', 'value'],
                 ['a', 'x', '17'],
@@ -1357,20 +1357,20 @@ class TestSelector(unittest.TestCase):
                 ['b', 'z', '5' ],
                 ['b', 'y', '40'],
                 ['b', 'x', '25']]
-        self.source = Selector(data)
+        self.source = Select(data)
 
-    def test_empty_selector(self):
-        select = Selector()
+    def test_empty_select(self):
+        select = Select()
 
     def test_fieldnames(self):
         expected = ['label1', 'label2', 'value']
         self.assertEqual(self.source.fieldnames, expected)
 
-        select = Selector()  # <- Empty selector.
+        select = Select()  # <- Empty select.
         self.assertEqual(select.fieldnames, [], msg='should be empty list')
 
     def test_load_data(self):
-        select = Selector()  # <- Empty selector.
+        select = Select()  # <- Empty select.
         self.assertEqual(select.fieldnames, [])
 
         readerlike1 = [['col1', 'col2'], ['a', 1], ['b', 2]]
@@ -1384,29 +1384,29 @@ class TestSelector(unittest.TestCase):
     def test_repr(self):
         data = [['A', 'B'], ['x', 100], ['y', 200]]
 
-        # Empty selector.
-        select = Selector()
-        self.assertEqual(repr(select), '<Selector (no data loaded)>')
+        # Empty select.
+        select = Select()
+        self.assertEqual(repr(select), '<Select (no data loaded)>')
 
         # Data-only (no args)
-        select = Selector(data)
-        expected = "<Selector [['A', 'B'], ['x', 100], ['y', 200]]>"
+        select = Select(data)
+        expected = "<Select [['A', 'B'], ['x', 100], ['y', 200]]>"
         self.assertEqual(repr(select), expected)
 
         # Data with args (args don't affect repr)
         iterable = iter(data)
-        select = Selector(iterable, 'foo', bar='baz')
-        regex = '<Selector <[a-z_]+ object at [^\n>]+>>'
+        select = Select(iterable, 'foo', bar='baz')
+        regex = '<Select <[a-z_]+ object at [^\n>]+>>'
         self.assertRegex(repr(select), regex)
 
         # Extended after instantiation.
-        select = Selector()
+        select = Select()
         select.load_data([['A', 'B'], ['z', 300]])
         select.load_data([['A', 'B'], ['y', 200]])
         select.load_data([['A', 'B'], ['x', 100]])
 
         expected = (
-            "<Selector (3 sources):\n"
+            "<Select (3 sources):\n"
             "    [['A', 'B'], ['x', 100]]\n"
             "    [['A', 'B'], ['y', 200]]\n"
             "    [['A', 'B'], ['z', 300]]>"
@@ -1414,18 +1414,18 @@ class TestSelector(unittest.TestCase):
         self.assertEqual(repr(select), expected)
 
         # Test long repr truncation.
-        select = Selector([
+        select = Select([
             ['xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'],
             ['yyyyyyyyyyyyyyyyyyyyyyyyyyyyyy'],
         ])
 
         self.assertEqual(len(repr(select)), 72)
 
-        expected = "<Selector [['xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'], ['yyyyyyyyyyy...yyyyy']]>"
+        expected = "<Select [['xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'], ['yyyyyyyyyyyyy...yyyyy']]>"
         self.assertEqual(repr(select), expected)
 
     def test_create_user_function(self):
-        select = Selector([['A', 'B'], ['x', 1], ['y', 2], ['z', 3]])
+        select = Select([['A', 'B'], ['x', 1], ['y', 2], ['z', 3]])
 
         # Verify that "_user_function_dict" us empty.
         self.assertEqual(select._user_function_dict, dict(), 'should be empty dict')
@@ -1459,7 +1459,7 @@ class TestSelector(unittest.TestCase):
         self.assertEqual(len(select._user_function_dict), 3)
 
     def test_get_user_function(self):
-        select = Selector([['A', 'B'], ['x', 1], ['y', 2], ['z', 3]])
+        select = Select([['A', 'B'], ['x', 1], ['y', 2], ['z', 3]])
 
         # Verify that "_user_function_dict" us empty.
         self.assertEqual(len(select._user_function_dict), 0, 'should be empty dict')
@@ -1478,7 +1478,7 @@ class TestSelector(unittest.TestCase):
         self.assertRegex(func_name, r'FUNC\d+')
 
     def test_build_where_clause(self):
-        select = Selector([['A', 'B'], ['x', 1], ['y', 2], ['z', 3]])
+        select = Select([['A', 'B'], ['x', 1], ['y', 2], ['z', 3]])
 
         result = select._build_where_clause({'A': 'x'})
         expected = ('A=?', ['x'])
@@ -1516,7 +1516,7 @@ class TestSelector(unittest.TestCase):
 
     def test_execute_query(self):
         data = [['A', 'B'], ['x', 101], ['y', 202], ['z', 303]]
-        source = Selector(data)
+        source = Select(data)
 
         # Test where-clause function.
         def isodd(x):
@@ -1756,7 +1756,7 @@ class TestSelector(unittest.TestCase):
 
 class TestQueryToCsv(unittest.TestCase):
     def setUp(self):
-        self.select = Selector([['A', 'B'], ['x', 1], ['y', 2]])
+        self.select = Select([['A', 'B'], ['x', 1], ['y', 2]])
 
     def test_fmtparams(self):
         query = self.select(['A', 'B'])

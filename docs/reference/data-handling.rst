@@ -39,9 +39,9 @@ Loading Data
 Selecting & Querying Data
 *************************
 
-.. autoclass:: Selector
+.. autoclass:: Select
 
-    When multiple sources are loaded into a single Selector,
+    When multiple sources are loaded into a single Select,
     data is aligned by fieldname and missing fields receive
     empty strings:
 
@@ -59,7 +59,7 @@ Selecting & Querying Data
 
 
 .. class:: Query(columns, **where)
-           Query(selector, columns, **where)
+           Query(select, columns, **where)
 
     A class to query data from a source object. Queries can be
     created, modified, and passed around without actually computing
@@ -67,10 +67,10 @@ Selecting & Querying Data
     itself or its :meth:`fetch` method is called.
 
     The given *columns* and *where* arguments can be any values
-    supported by :meth:`Selector.__call__`.
+    supported by :meth:`Select.__call__`.
 
     Although Query objects are usually created by :meth:`calling
-    <datatest.Selector.__call__>` an existing Selector, it's
+    <datatest.Select.__call__>` an existing Select, it's
     possible to create them independent of any single data source::
 
         query = Query('A')
@@ -137,17 +137,17 @@ data sources. When queries and selections become more complex, this
 duplication can grow cumbersome. But the duplication can be mitigated
 by using a :class:`RepeatingContainer`.
 
-A RepeatingContainer can wrap many types of objects (:class:`Selector`,
+A RepeatingContainer can wrap many types of objects (:class:`Select`,
 pandas ``DataFrame``, etc.). In the following example, a RepeatingContainer
 is created with two objects. Then, an operation is forwarded to each
 object in the group. Finally, the results are unpacked and validated:
 
 .. tabs::
 
-    .. group-tab:: Selector Example
+    .. group-tab:: Select Example
 
         Below, the operation ``...({'A': 'C'}).sum()`` is forwarded to
-        each :class:`Selector` and the results are returned inside a
+        each :class:`Select` and the results are returned inside a
         new RepeatingContainer:
 
         .. code-block:: python
@@ -156,8 +156,8 @@ object in the group. Finally, the results are unpacked and validated:
             ...
 
             compare = RepeatingContainer([
-                Selector('data_under_test.csv'),
-                Selector('reference_data.csv'),
+                Select('data_under_test.csv'),
+                Select('reference_data.csv'),
             ])
 
             result = compare({'A': 'C'}).sum()
@@ -192,7 +192,7 @@ the result values directly in the :func:`validate` call itself:
 
 .. tabs::
 
-    .. group-tab:: Selector Example
+    .. group-tab:: Select Example
 
         .. code-block:: python
             :emphasize-lines: 8
@@ -200,8 +200,8 @@ the result values directly in the :func:`validate` call itself:
             ...
 
             compare = RepeatingContainer([
-                Selector('data_under_test.csv'),
-                Selector('reference_data.csv'),
+                Select('data_under_test.csv'),
+                Select('reference_data.csv'),
             ])
 
             validate(*compare({'A': 'C'}).sum())

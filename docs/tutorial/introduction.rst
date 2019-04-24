@@ -502,7 +502,7 @@ Datatest also provides a few utilities for handling data:
     Get a csv.reader-like interface for pandas DataFrames, MS Excel
     worksheets, etc.
 
-:class:`Selector`, :class:`Query`, and :class:`Result`
+:class:`Select`, :class:`Query`, and :class:`Result`
     Select and query tabular data that can be tested for validity.
 
 :class:`RepeatingContainer`

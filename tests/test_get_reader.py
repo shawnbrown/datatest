@@ -279,7 +279,7 @@ class TestFromCsvPath(SampleFilesTestCase):
 
 class TestFromDatatest(unittest.TestCase):
     def setUp(self):
-        self.select = datatest.Selector([['A', 'B'], ['x', 1], ['y', 2]])
+        self.select = datatest.Select([['A', 'B'], ['x', 1], ['y', 2]])
 
     def test_query_multicolumn_implicit_fieldnames(self):
         query = self.select(('B', 'A'))
@@ -291,7 +291,7 @@ class TestFromDatatest(unittest.TestCase):
         reader = get_reader.from_datatest(query, fieldnames=['foo', 'bar'])
         self.assertEqual(list(reader), [['foo', 'bar'], [1, 'x'], [2, 'y']])
 
-    def test_query_multicolumn_non_selector(self):
+    def test_query_multicolumn_non_select(self):
         query = datatest.Query.from_object([['x', 1], ['y', 2]])
 
         reader = get_reader.from_datatest(query)  # <- No fieldnames.
@@ -310,7 +310,7 @@ class TestFromDatatest(unittest.TestCase):
         reader = get_reader.from_datatest(query, fieldnames='foo')
         self.assertEqual(list(reader), [('foo',), ('x',), ('y',)])
 
-    def test_query_singlecolumn_non_selector(self):
+    def test_query_singlecolumn_non_select(self):
         query = datatest.Query.from_object(['x', 'y'])
 
         reader = get_reader.from_datatest(query)  # <- No fieldnames.
@@ -344,7 +344,7 @@ class TestFromDatatest(unittest.TestCase):
         reader = get_reader.from_datatest(query)
         self.assertEqual(list(reader), [('A', 'A', 'B', 'B'), ('x', 'x', 1, 1), ('y', 'y', 2, 2)])
 
-    def test_selector_object(self):
+    def test_select_object(self):
         reader = get_reader.from_datatest(self.select)  # <- No fieldnames specified.
         self.assertEqual(list(reader), [('A', 'B'), ('x', 1), ('y', 2)])
 
@@ -536,13 +536,13 @@ class TestFunctionDispatching(SampleFilesTestCase):
             self.assertEqual(list(reader), expected)
 
     def test_datatest(self):
-        select = datatest.Selector([['A', 'B'], ['x', 1], ['y', 2]])
+        select = datatest.Select([['A', 'B'], ['x', 1], ['y', 2]])
 
         query = select(('A', 'B'))
         reader = get_reader(query)  # <- datatest.Query
         self.assertEqual(list(reader), [('A', 'B'), ('x', 1), ('y', 2)])
 
-        reader = get_reader(select)  # <- datatest.Selector
+        reader = get_reader(select)  # <- datatest.Select
         self.assertEqual(list(reader), [('A', 'B'), ('x', 1), ('y', 2)])
 
         result = select({'A': 'B'}).execute()

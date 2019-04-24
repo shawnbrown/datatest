@@ -108,7 +108,7 @@ following tests:
             import pytest
             from datatest import validate
             from datatest import working_directory
-            from datatest import Selector
+            from datatest import Select
             from datatest import Predicate
 
 
@@ -118,7 +118,7 @@ following tests:
             @pytest.fixture(scope='module')
             @working_directory(__file__)
             def mydata():
-                return Selector('excel_autoformat.csv')
+                return Select('excel_autoformat.csv')
 
 
             def test_column_a(mydata):
@@ -136,7 +136,7 @@ following tests:
             import re
             from datatest import DataTestCase
             from datatest import working_directory
-            from datatest import Selector
+            from datatest import Select
             from datatest import Predicate
 
 
@@ -146,7 +146,7 @@ following tests:
             def setUpModule():
                 global mydata
                 with working_directory(__file__):
-                    mydata = Selector('excel_autoformat.csv')
+                    mydata = Select('excel_autoformat.csv')
 
 
             class TestMyData(DataTestCase):

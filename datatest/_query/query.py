@@ -605,12 +605,12 @@ RESULT_TOKEN = _make_token(
 
 
 ########################################################
-# Main data handling classes (Query and Selector).
+# Main data handling classes (Query and Select).
 ########################################################
 
 class Query(object):
     """Query(columns, **where)
-    Query(selector, columns, **where)
+    Query(select, columns, **where)
 
     A class to query data from a source object.
 
@@ -620,27 +620,27 @@ class Query(object):
         """Initialize self.
 
         Query(columns, **where)
-        Query(selector, columns, **where)
+        Query(select, columns, **where)
         """
         argcount = len(args)
         if argcount == 2:
-            selector, columns = args
-            if not isinstance(selector, Selector):
-                msg = 'selector must be datatest.Selector object, got {0}'
-                raise TypeError(msg.format(selector.__class__.__name__))
+            select, columns = args
+            if not isinstance(select, Select):
+                msg = 'select must be datatest.Select object, got {0}'
+                raise TypeError(msg.format(select.__class__.__name__))
             flattened = _flatten([_parse_columns(columns), where.keys()])
             try:
-                selector._assert_fields_exist(flattened)
+                select._assert_fields_exist(flattened)
             except LookupError:
                 __tracebackhide__ = True
                 raise
         elif argcount == 1:
-            selector, columns = None, args[0]
+            select, columns = None, args[0]
         else:
             msg = 'expects 1 or 2 positional arguments but {0} were given'
             raise TypeError(msg.format(argcount))
 
-        self.source = selector
+        self.source = select
         self.args = (_normalize_columns(columns),)
         self.kwds = where
         self._query_steps = []
@@ -672,9 +672,9 @@ class Query(object):
 
     @staticmethod
     def _validate_source(source):
-        if not isinstance(source, Selector):
+        if not isinstance(source, Select):
             raise TypeError('expected {0!r}, got {1!r}'.format(
-                Selector.__name__,
+                Select.__name__,
                 source.__class__.__name__,
             ))
 
@@ -821,7 +821,7 @@ class Query(object):
         return _execution_step(function, args, {})
 
     def _get_execution_plan(self, source, query_steps):
-        if isinstance(source, Selector):
+        if isinstance(source, Select):
             execution_plan = [
                 _execution_step(getattr, (RESULT_TOKEN, '_select'), {}),
                 _execution_step(RESULT_TOKEN, self.args, self.kwds),
@@ -938,8 +938,8 @@ class Query(object):
             if len(source_repr) > 70:
                 source_repr = source_repr[:67] + '...'
         else:
-            source = Selector([], fieldnames=['dummy_source'])
-            source_repr = '<none given> (assuming Selector object)'
+            source = Select([], fieldnames=['dummy_source'])
+            source_repr = '<none given> (assuming Select object)'
 
         execution_plan = self._get_execution_plan(source, self._query_steps)
 
@@ -965,8 +965,8 @@ class Query(object):
     def __repr__(self):
         class_repr = self.__class__.__name__
 
-        if isinstance(self.source, Selector):
-            source_repr = super(Selector, self.source).__repr__()
+        if isinstance(self.source, Select):
+            source_repr = super(Select, self.source).__repr__()
             is_from_object = False
         elif self.source:
             source_repr = repr(self.source)
@@ -1050,7 +1050,7 @@ with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
     ])
 
 
-class Selector(object):
+class Select(object):
     """A class to quickly load and select tabular data. The given
     *objs*, *\\*args*, and *\\*\\*kwds*, can be any values supported
     by :class:`get_reader()`. Additionally, *objs* can be a list
@@ -1060,11 +1060,11 @@ class Selector(object):
 
     Load a single file::
 
-        select = datatest.Selector('myfile.csv')
+        select = datatest.Select('myfile.csv')
 
     Load a reader-like iterable::
 
-        select = datatest.Selector([
+        select = datatest.Select([
             ['A', 'B'],
             ['x', 100],
             ['y', 200],
@@ -1073,11 +1073,11 @@ class Selector(object):
 
     Load multiple files::
 
-        select = datatest.Selector(['myfile1.csv', 'myfile2.csv'])
+        select = datatest.Select(['myfile1.csv', 'myfile2.csv'])
 
     Load multple files using a shell-style wildcard::
 
-        select = datatest.Selector('*.csv')
+        select = datatest.Select('*.csv')
     """
     def __init__(self, objs=None, *args, **kwds):
         """Initialize self."""
@@ -1093,23 +1093,23 @@ class Selector(object):
                 raise
 
     def load_data(self, objs, *args, **kwds):
-        """Load data from one or more objects into the Selector. The
+        """Load data from one or more objects into the Select. The
         given *objs*, *\\*args*, and *\\*\\*kwds*, can be any values
-        supported by the :class:`Selector` class initialization.
+        supported by the :class:`Select` class initialization.
 
-        Load a single file into an empty Selector::
+        Load a single file into an empty Select::
 
-            select = datatest.Selector()  # <- Empty Selector.
+            select = datatest.Select()  # <- Empty Select.
             select.load_data('myfile.csv')
 
-        Add a single file to an already-populated Selector::
+        Add a single file to an already-populated Select::
 
-            select = datatest.Selector('myfile1.csv')
+            select = datatest.Select('myfile1.csv')
             select.load_data('myfile2.xlsx', worksheet='Sheet2')
 
-        Add multiple files to an already-populated Selector::
+        Add multiple files to an already-populated Select::
 
-            select = datatest.Selector('myfile1.csv')
+            select = datatest.Select('myfile1.csv')
             select.load_data(['myfile2.csv', 'myfile3.csv'])
         """
         if isinstance(objs, string_types):
@@ -1150,23 +1150,23 @@ class Selector(object):
         obj_str = repr(obj)
         obj_str = ' '.join(obj_str.split())  # Normalize whitespace.
 
-        # Truncate to 61 characters. The limit of 61 was chosen
-        # so that the repr for a single-source Selector will never
-        # exceed 72 characters (61 + len of other repr parts = 72).
-        if len(obj_str) > 61:
-            obj_str = '{0}...{1}'.format(obj_str[:50], obj_str[-8:])
+        # Truncate to 63 characters. The limit of 63 was chosen
+        # so that the repr for a single-source Select will never
+        # exceed 72 characters (63 + len of other repr parts = 72).
+        if len(obj_str) > 63:
+            obj_str = '{0}...{1}'.format(obj_str[:52], obj_str[-8:])
 
         self._obj_strings.append(obj_str)
 
     def __repr__(self):
         """Return a string representation of the data source."""
         if not self._obj_strings:
-            return '<Selector (no data loaded)>'
+            return '<Select (no data loaded)>'
 
         if len(self._obj_strings) == 1:
-            return '<Selector {0}>'.format(self._obj_strings[0])
+            return '<Select {0}>'.format(self._obj_strings[0])
 
-        return '<Selector ({0} sources):\n    {1}>'.format(
+        return '<Select ({0} sources):\n    {1}>'.format(
             len(self._obj_strings),
             '\n    '.join(sorted(self._obj_strings)),
         )
@@ -1179,7 +1179,7 @@ class Selector(object):
         return [x[1] for x in cursor]
 
     def __call__(self, columns, **where):
-        """After a Selector has been created, it can be called like a
+        """After a Select has been created, it can be called like a
         function to select fields and return an associated :class:`Query`
         object.
 
@@ -1188,7 +1188,7 @@ class Selector(object):
         in an outer container. When a container is unspecified, a
         :py:class:`list` is used as the default::
 
-            select = datatest.Selector('example.csv')
+            select = datatest.Select('example.csv')
             query = select('A')  # <- selects a list of values from 'A'
 
         When *columns* specifies an outer container, it must hold only
@@ -1212,7 +1212,7 @@ class Selector(object):
         for details). Rows where the predicate is a match are
         selected and rows where it doesn't match are excluded::
 
-            select = datatest.Selector('example.csv')
+            select = datatest.Select('example.csv')
             query = select({'A'}, B='foo')  # <- selects only the rows
                                             #    where 'B' equals 'foo'
 
@@ -1491,7 +1491,7 @@ class Selector(object):
         cursor = self._connection.cursor()
         cursor.execute(statement)
 
-    # NOTE: Do NOT add to_csv() method to Selector. It's simple
+    # NOTE: Do NOT add to_csv() method to Select. It's simple
     # enough to use Query.to_csv() as below:
     #
     #     select(select.fieldnames).to_csv(...)
@@ -1502,20 +1502,20 @@ class Selector(object):
 # that don't have adequate "sqlite3" support (Jython 2.7, Jython
 # 2.5, Python 3.1.4, and Python 2.6.6).
 if not sqlite3:
-    class Selector(object):
+    class Select(object):
         def __init__(self, *args, **kwds):
             msg = (
-                'The Selector class requires SQLite but the standard '
+                'The Select class requires SQLite but the standard '
                 'library "sqlite3" package is missing from the current '
                 'Python installation:\n\nPython {0}'
             ).format(sys.version)
             raise Exception(msg)
 
 elif sqlite3.sqlite_version_info < (3, 6, 8):
-    class Selector(object):
+    class Select(object):
         def __init__(self, *args, **kwds):
             msg = (
-                'The Selector class requires SQLite 3.6.8 or newer but '
+                'The Select class requires SQLite 3.6.8 or newer but '
                 'the current Python installation was built with an old '
                 'version:\n\nPython {0}\nBuilt with SQLite {1}'
             ).format(sys.version, sqlite3.sqlite_version)

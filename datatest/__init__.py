@@ -23,14 +23,14 @@ from .main import main
 # Data Handling API
 from ._load.get_reader import get_reader
 from ._load.working_directory import working_directory
-from ._query.query import Selector
+from ._query.query import Select
 from ._query.query import Query
 from ._query.query import Result
 from ._repeatingcontainer import RepeatingContainer
 ProxyGroup = RepeatingContainer  # <- Temporary alias.
 
 # Set module explicitly to cleanup reprs and error reporting.
-Selector.__module__ = 'datatest'
+Select.__module__ = 'datatest'
 Query.__module__ = 'datatest'
 Result.__module__ = 'datatest'
 

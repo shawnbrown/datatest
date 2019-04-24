@@ -20,8 +20,8 @@ writing unittest-style tests).
 Some Examples
 =============
 
-**Selector:** The columns names of a :class:`datatest.Selector` can be
-accessed with the :attr:`fieldnames <Selector.fieldnames>` attribute.
+**Select:** The columns names of a :class:`datatest.Select` can be
+accessed with the :attr:`fieldnames <Select.fieldnames>` attribute.
 
 .. tabs::
 
@@ -31,12 +31,12 @@ accessed with the :attr:`fieldnames <Selector.fieldnames>` attribute.
             :emphasize-lines: 11
 
             from datatest import validate
-            from datatest import Selector
+            from datatest import Select
 
 
             def test_columns():
 
-                mydata = Selector('mydata.csv')
+                mydata = Select('mydata.csv')
 
                 required_columns = {'A', 'B', 'C'}
 
@@ -49,14 +49,14 @@ accessed with the :attr:`fieldnames <Selector.fieldnames>` attribute.
             :emphasize-lines: 13
 
             from datatest import DataTestCase
-            from datatest import Selector
+            from datatest import Select
 
 
             class TestMyData(DataTestCase):
 
                 def test_columns(self):
 
-                    mydata = Selector('mydata.csv')
+                    mydata = Select('mydata.csv')
 
                     required_columns = {'A', 'B', 'C'}
 
@@ -125,12 +125,12 @@ a set).
             :emphasize-lines: 9
 
             from datatest import validate
-            from datatest import Selector
+            from datatest import Select
 
 
             def test_columns():
 
-                mydata = Selector('mydata.csv')
+                mydata = Select('mydata.csv')
 
                 required_columns = ['A', 'B', 'C']  # <- Checks order.
 
@@ -143,14 +143,14 @@ a set).
             :emphasize-lines: 11
 
             from datatest import DataTestCase
-            from datatest import Selector
+            from datatest import Select
 
 
             class TestMyData(DataTestCase):
 
                 def test_columns(self):
 
-                    mydata = Selector('mydata.csv')
+                    mydata = Select('mydata.csv')
 
                     required_columns = ['A', 'B', 'C']  # <- Checks order.
 
@@ -169,12 +169,12 @@ a predicate **function**:
             :emphasize-lines: 9-11
 
             from datatest import validate
-            from datatest import Selector
+            from datatest import Select
 
 
             def test_columns():
 
-                mydata = Selector('mydata.csv')
+                mydata = Select('mydata.csv')
 
                 def required_format(value):
                     """must be upper case"""
@@ -188,14 +188,14 @@ a predicate **function**:
             :emphasize-lines: 11-13
 
             from datatest import DataTestCase
-            from datatest import Selector
+            from datatest import Select
 
 
             class TestMyData(DataTestCase):
 
                 def test_columns(self):
 
-                    mydata = Selector('mydata.csv')
+                    mydata = Select('mydata.csv')
 
                     def required_format(value):
                         """must be upper case"""

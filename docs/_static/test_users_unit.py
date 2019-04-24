@@ -1,5 +1,5 @@
 from datatest import working_directory
-from datatest import Selector
+from datatest import Select
 from datatest import DataTestCase
 from datatest import mandatory
 
@@ -7,7 +7,7 @@ from datatest import mandatory
 def setUpModule():
     global users
     with working_directory(__file__):
-        users = Selector('users.csv')
+        users = Select('users.csv')
 
 
 class TestUserData(DataTestCase):

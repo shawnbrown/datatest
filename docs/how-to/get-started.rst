@@ -118,11 +118,11 @@ common pandas conventions (e.g., importing pandas as ``pd``, etc.):
 Using Datatest's Built-in Tools
 -------------------------------
 
-This sample uses datatest's built-in :class:`Selector <datatest.Selector>`
+This sample uses datatest's built-in :class:`Select <datatest.Select>`
 object for loading and querying data. This does not require any additional
 dependencies
 
-The ``Selector`` syntax tries to be friendly by returning data in the same
+The ``Select`` syntax tries to be friendly by returning data in the same
 format in which it was selected---e.g., selecting ``{'A': ('B', 'C')}`` will
 return a dictionary whose keys are made from column "A" and whose values
 are two-tuples made from columns "B" and "C":
@@ -138,7 +138,7 @@ are two-tuples made from columns "B" and "C":
             from datatest import (
                 validate,
                 allowed,
-                Selector,
+                Select,
                 working_directory,
             )
 
@@ -146,7 +146,7 @@ are two-tuples made from columns "B" and "C":
             @pytest.fixture(scope='module')
             @working_directory(__file__)
             def select():
-                return Selector('example.csv')
+                return Select('example.csv')
 
 
             def test_column_names(select):
@@ -174,7 +174,7 @@ are two-tuples made from columns "B" and "C":
 
             from datatest import (
                 DataTestCase,
-                Selector,
+                Select,
                 working_directory,
             )
 
@@ -182,7 +182,7 @@ are two-tuples made from columns "B" and "C":
             @working_directory(__file__)
             def setUpModule():
                 global select
-                select = Selector('example.csv')
+                select = Select('example.csv')
 
 
             class TestMyData(DataTestCase):

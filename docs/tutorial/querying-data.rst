@@ -2,9 +2,9 @@
 .. module:: datatest
 
 .. meta::
-    :description: Use datatest's Selector, Query, and Result
+    :description: Use datatest's Select, Query, and Result
                   classes to handle the data under test.
-    :keywords: datatest, Selector, Query, Result, working_directory
+    :keywords: datatest, Select, Query, Result, working_directory
 
 .. highlight:: python
 
@@ -19,7 +19,7 @@ iterating over the data under test. Although users familiar with
 other tools (Pandas, SQLAlchemy, etc.) should feel encouraged
 to use whatever they find to be most productive.
 
-The following examples demonstrate datatest's :class:`Selector`,
+The following examples demonstrate datatest's :class:`Select`,
 :class:`Query`, and :class:`Result` classes. Users can follow along
 and type the commands themselves at Python's interactive prompt
 (``>>>``). For these examples, we will use the following data:
@@ -40,17 +40,17 @@ Loading Data
 ============
 
 You can load the data from a CSV file (:download:`example.csv
-</_static/example.csv>`) into a :class:`Selector`::
+</_static/example.csv>`) into a :class:`Select` object::
 
     >>> import datatest
-    >>> select = datatest.Selector('example.csv')
+    >>> select = datatest.Select('example.csv')
 
 
 Getting Field Names
 ===================
 
 You can get a list of field names with the :attr:`fieldnames
-<Selector.fieldnames>` attribute::
+<Select.fieldnames>` attribute::
 
     >>> select.fieldnames
     ['A', 'B', 'C']
@@ -68,7 +68,7 @@ You can get a list of field names with the :attr:`fieldnames
 Selecting Data
 ==============
 
-Calling our selector like a function returns a :class:`Query`
+Calling our select object like a function returns a :class:`Query`
 for the specified field or fields.
 
 Select elements from column **A**::

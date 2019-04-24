@@ -109,7 +109,7 @@ Step-by-Step Explanation
 0. Fixtures
 ===========
 
-For this example, the script defines two fixtures (one :class:`Selector`
+For this example, the script defines two fixtures (one :class:`Select`
 for each CSV file):
 
 .. tabs::
@@ -135,9 +135,9 @@ for each CSV file):
 ==============
 
 To check the column names of our file, we will compare the
-:attr:`fieldnames <Selector.fieldnames>` property of our
+:attr:`fieldnames <Select.fieldnames>` property of our
 detailed file against a :py:class:`set` of :attr:`fieldnames
-<Selector.fieldnames>` from the summary file:
+<Select.fieldnames>` from the summary file:
 
 .. tabs::
 
@@ -173,8 +173,8 @@ message:
 
             _________________________________ test_columns _________________________________
 
-            detail = <Selector 'country_of_birth.csv'>
-            summary = <Selector 'estimated_totals.csv'>
+            detail = <Select 'country_of_birth.csv'>
+            summary = <Select 'estimated_totals.csv'>
 
                 @pytest.mark.mandatory
                 def test_columns(detail, summary):
@@ -242,8 +242,8 @@ Now when we run our tests, we get the following message:
 
             _________________________________ test_columns _________________________________
 
-            detail = <Selector 'country_of_birth.csv'>
-            summary = <Selector 'estimated_totals.csv'>
+            detail = <Select 'country_of_birth.csv'>
+            summary = <Select 'estimated_totals.csv'>
 
                 @pytest.mark.mandatory
                 def test_columns(detail, summary):
@@ -331,8 +331,8 @@ Running our script now gives the folowing message:
 
             ______________________________ test_state_labels _______________________________
 
-            detail = <Selector 'country_of_birth.csv'>
-            summary = <Selector 'estimated_totals.csv'>
+            detail = <Select 'country_of_birth.csv'>
+            summary = <Select 'estimated_totals.csv'>
 
                 def test_state_labels(detail, summary):
                     data = detail({'state/territory'})
@@ -421,7 +421,7 @@ This test raises the following message:
 
             ____________________________ test_population_format ____________________________
 
-            detail = <Selector 'country_of_birth.csv'>
+            detail = <Select 'country_of_birth.csv'>
 
                 def test_population_format(detail):
                     data = detail({'population'})
@@ -506,8 +506,8 @@ Running this test gives the following message:
 
             _____________________________ test_population_sums _____________________________
 
-            detail = <Selector 'country_of_birth.csv'>
-            summary = <Selector 'estimated_totals.csv'>
+            detail = <Select 'country_of_birth.csv'>
+            summary = <Select 'estimated_totals.csv'>
 
                 def test_population_sums(detail, summary):
                     data = detail({'state/territory': 'population'}).sum()
@@ -610,8 +610,8 @@ Rerunning our script with this new allowance gives the following message:
 
             _____________________________ test_population_sums _____________________________
 
-            detail = <Selector 'country_of_birth.csv'>
-            summary = <Selector 'estimated_totals.csv'>
+            detail = <Select 'country_of_birth.csv'>
+            summary = <Select 'estimated_totals.csv'>
 
                 def test_population_sums(detail, summary):
                     data = detail({'state/territory': 'population'}).sum()
@@ -675,8 +675,8 @@ Running the test script again gives us one final difference to address:
 
             _____________________________ test_population_sums _____________________________
 
-            detail = <Selector 'country_of_birth.csv'>
-            summary = <Selector 'estimated_totals.csv'>
+            detail = <Select 'country_of_birth.csv'>
+            summary = <Select 'estimated_totals.csv'>
 
                 def test_population_sums(detail, summary):
                     data = detail({'state/territory': 'population'}).sum()
