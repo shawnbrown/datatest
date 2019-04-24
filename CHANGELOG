@@ -4,7 +4,8 @@ Datatest Changelog
 
 COMING SOON (0.9.5)
 -------------------
-* Changed name of Selector class to Select.
+* Changed name of Selector class to Select, use of "Selector" is now
+  deprecated.
 
 
 2019-04-21 (0.9.4)

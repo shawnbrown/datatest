@@ -27,7 +27,6 @@ from ._query.query import Select
 from ._query.query import Query
 from ._query.query import Result
 from ._repeatingcontainer import RepeatingContainer
-ProxyGroup = RepeatingContainer  # <- Temporary alias.
 
 # Set module explicitly to cleanup reprs and error reporting.
 Select.__module__ = 'datatest'
@@ -35,3 +34,29 @@ Query.__module__ = 'datatest'
 Result.__module__ = 'datatest'
 
 __version__ = '0.9.5.dev0'
+
+
+#############################################
+# Temporary aliases and deprecation warnings.
+#############################################
+import warnings as _warnings
+
+
+class Selector(Select):
+    def __init__(self, *args, **kwds):
+        _warnings.warn(
+            'Selector has been renamed, use Select instead',
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
+        return super(Selector, self).__init__(*args, **kwds)
+
+
+class ProxyGroup(RepeatingContainer):
+    def __init__(self, *args, **kwds):
+        _warnings.warn(
+            'ProxyGroup has been renamed, use RepeatingContainer instead',
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
+        return super(RepeatingContainer, self).__init__(*args, **kwds)
