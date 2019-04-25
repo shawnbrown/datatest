@@ -154,24 +154,34 @@ class Invalid(BaseDifference):
         ]
     """
     def __init__(self, invalid, expected=None):
-        self.invalid = invalid  #: The invalid value under test.
-        self.expected = expected  #: The expected value.
-
-    def __repr__(self):
-        cls_name = self.__class__.__name__
-        invalid_repr = getattr(self.invalid, '__name__', repr(self.invalid))
-        if self.expected:
-            expected_repr = ', expected={0}'.format(
-                getattr(self.expected, '__name__', repr(self.expected)))
-        else:
-            expected_repr = ''
-        return '{0}({1}{2})'.format(cls_name, invalid_repr, expected_repr)
+        self._invalid = invalid
+        self._expected = expected
 
     @property
     def args(self):
-        if self.expected is None:
-            return (self.invalid,)
-        return (self.invalid, self.expected)
+        if self._expected is None:
+            return (self._invalid,)
+        return (self._invalid, self._expected)
+
+    @property
+    def invalid(self):
+        """The invalid value under test."""
+        return self._invalid
+
+    @property
+    def expected(self):
+        """The expected value."""
+        return self._expected
+
+    def __repr__(self):
+        cls_name = self.__class__.__name__
+        invalid_repr = getattr(self._invalid, '__name__', repr(self._invalid))
+        if self._expected:
+            expected_repr = ', expected={0}'.format(
+                getattr(self._expected, '__name__', repr(self._expected)))
+        else:
+            expected_repr = ''
+        return '{0}({1}{2})'.format(cls_name, invalid_repr, expected_repr)
 
 
 class Deviation(BaseDifference):
@@ -219,20 +229,30 @@ class Deviation(BaseDifference):
                    'expected={1!r}').format(deviation, expected)
             raise ValueError(msg)
 
-        self.deviation = deviation  #: Numeric deviation from expected value.
-        self.expected = expected  #: The expected value.
+        self._deviation = deviation
+        self._expected = expected
 
     @property
     def args(self):
-        return (self.deviation, self.expected)
+        return (self._deviation, self._expected)
+
+    @property
+    def deviation(self):
+        """Numeric deviation from expected value."""
+        return self._deviation
+
+    @property
+    def expected(self):
+        """The expected value."""
+        return self._expected
 
     def __repr__(self):
         cls_name = self.__class__.__name__
         try:
-            devi_repr = '{0:+}'.format(self.deviation)  # Apply +/- sign
+            devi_repr = '{0:+}'.format(self._deviation)  # Apply +/- sign
         except (TypeError, ValueError):
-            devi_repr = repr(self.deviation)
-        return '{0}({1}, {2!r})'.format(cls_name, devi_repr, self.expected)
+            devi_repr = repr(self._deviation)
+        return '{0}({1}, {2!r})'.format(cls_name, devi_repr, self._expected)
 
 
 NOVALUE = _make_token(
