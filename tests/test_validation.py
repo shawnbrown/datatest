@@ -18,9 +18,12 @@ from datatest.validation import valid
 # BaseDifference itself should not be instantiated
 # directly.
 class MinimalDifference(BaseDifference):
+    def __init__(self, *args):
+        self._args = args
+
     @property
     def args(self):
-        return BaseDifference.args.fget(self)
+        return self._args
 
 
 class TestValidationError(unittest.TestCase):

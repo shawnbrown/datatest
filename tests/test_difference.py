@@ -16,9 +16,12 @@ from datatest.difference import NOVALUE
 # BaseDifference itself should not be instantiated
 # directly.
 class MinimalDifference(BaseDifference):
+    def __init__(self, *args):
+        self._args = args
+
     @property
     def args(self):
-        return BaseDifference.args.fget(self)
+        return self._args
 
 
 class TestBaseDifference(unittest.TestCase):
@@ -30,14 +33,10 @@ class TestBaseDifference(unittest.TestCase):
         # Subclass should instantiate normally:
         subclass_instance = MinimalDifference('A')
 
-        regex = 'requires at least 1 argument'
-        with self.assertRaisesRegex(TypeError, regex):
-            MinimalDifference()
-
         # Base class should raise error.
         regex = "Can't instantiate abstract class BaseDifference"
         with self.assertRaisesRegex(TypeError, regex):
-            base_instance = BaseDifference('A')
+            base_instance = BaseDifference()
 
     def test_args(self):
         """Args should be tuple of arguments."""
@@ -178,6 +177,45 @@ class TestDeviation(unittest.TestCase):
 
         diff = Deviation(-1, 100)
         self.assertEqual(diff, eval(repr(diff)))
+
+
+class TestImmutability(unittest.TestCase):
+    """Differences should act like an immutable objects."""
+    def test_missing(self):
+        diff = Missing('foo')
+
+        with self.assertRaises(AttributeError):
+            diff.attr = ('bar',)
+
+        with self.assertRaises(AttributeError):
+            diff.new_attribute = 'baz'
+
+    def test_extra(self):
+        diff = Extra('foo')
+
+        with self.assertRaises(AttributeError):
+            diff.attr = ('bar',)
+
+        with self.assertRaises(AttributeError):
+            diff.new_attribute = 'baz'
+
+    def test_invalid(self):
+        diff = Invalid('foo')
+
+        with self.assertRaises(AttributeError):
+            diff.expected = 'bar'
+
+        with self.assertRaises(AttributeError):
+            diff.new_attribute = 'baz'
+
+    def test_deviation(self):
+        diff = Deviation(+1, 100)
+
+        with self.assertRaises(AttributeError):
+            diff.expected = 101
+
+        with self.assertRaises(AttributeError):
+            diff.new_attribute = 202
 
 
 class TestMakeDifference(unittest.TestCase):

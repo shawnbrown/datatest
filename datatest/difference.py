@@ -35,11 +35,7 @@ class BaseDifference(abc.ABC):
     """The base class for "difference" objects---all other difference
     classes are derived from this base.
     """
-    def __init__(self, *args):
-        if not args:
-            msg = '{0} requires at least 1 argument, got 0'
-            raise TypeError(msg.format(self.__class__.__name__))
-        self._args = args
+    __slots__ = ()
 
     @property
     @abc.abstractmethod
@@ -50,7 +46,7 @@ class BaseDifference(abc.ABC):
         elements of this tuple, while others are called with only
         a single value.
         """
-        return self._args
+        # Concrete method should return tuple of args used in __init__().
 
     def __eq__(self, other):
         if self.__class__ != other.__class__:
@@ -91,6 +87,8 @@ class Missing(BaseDifference):
             Missing('A'),
         ]
     """
+    __slots__ = ('_args',)
+
     def __init__(self, value):
         self._args = (value,)
 
@@ -122,6 +120,8 @@ class Extra(BaseDifference):
             Extra('C'),
         ]
     """
+    __slots__ = ('_args',)
+
     def __init__(self, value):
         self._args = (value,)
 
@@ -153,6 +153,8 @@ class Invalid(BaseDifference):
             Invalid(9),
         ]
     """
+    __slots__ = ('_invalid', '_expected')
+
     def __init__(self, invalid, expected=None):
         self._invalid = invalid
         self._expected = expected
@@ -205,6 +207,8 @@ class Deviation(BaseDifference):
             'C': Deviation(+3, 30),
         }
     """
+    __slots__ = ('_deviation', '_expected')
+
     def __init__(self, deviation, expected):
         isempty = lambda x: x is None or x == ''
 
