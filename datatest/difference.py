@@ -64,7 +64,7 @@ class BaseDifference(abc.ABC):
         except TypeError as err:
             msg = '{0} in args tuple {1!r}'.format(str(err), self.args)
             hashfail = TypeError(msg)
-            hashfail.__cause__ = err.__cause__
+            hashfail.__cause__ = getattr(err, '__cause__', None)  # getattr for 2.x support
             raise hashfail
 
     def __repr__(self):
