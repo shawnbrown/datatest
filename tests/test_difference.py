@@ -218,6 +218,37 @@ class TestImmutability(unittest.TestCase):
             diff.new_attribute = 202
 
 
+class TestHashability(unittest.TestCase):
+    """Built-in differences should be hashable (in the same way that
+    tuples are).
+    """
+    def test_hashable(self):
+        """Differences with hashable *args should be hashable."""
+        # Following should all pass without error.
+        hash(Missing('foo'))
+        hash(Extra('bar'))
+        hash(Invalid('baz'))
+        hash(Invalid('baz', 'qux'))
+        hash(Deviation(-1, 10))
+
+    def test_unhashable_contents(self):
+        """The hash behavior of differences should act like tuples do.
+        When a difference's contents are unhashable, the difference
+        itself becomes unhashable too.
+        """
+        with self.assertRaises(TypeError):
+            hash(Missing(['foo']))
+
+        with self.assertRaises(TypeError):
+            hash(Extra(['bar']))
+
+        with self.assertRaises(TypeError):
+            hash(Invalid(['baz']))
+
+        with self.assertRaises(TypeError):
+            hash(Invalid('baz', ['qux']))
+
+
 class TestMakeDifference(unittest.TestCase):
     def test_numeric_vs_numeric(self):
         diff = _make_difference(5, 6)

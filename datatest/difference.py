@@ -58,6 +58,14 @@ class BaseDifference(abc.ABC):
     def __ne__(self, other):           # <- For Python 2.x support. There is
         return not self.__eq__(other)  #    no implicit relationship between
                                        #    __eq__() and __ne__() in Python 2.
+    def __hash__(self):
+        try:
+            return hash((self.__class__, self.args))
+        except TypeError as err:
+            msg = '{0} in args tuple {1!r}'.format(str(err), self.args)
+            hashfail = TypeError(msg)
+            hashfail.__cause__ = err.__cause__
+            raise hashfail
 
     def __repr__(self):
         cls_name = self.__class__.__name__
