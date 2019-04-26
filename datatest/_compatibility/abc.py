@@ -5,6 +5,7 @@ from abc import *
 
 try:
     ABC  # New in version 3.4.
-except NameError:
-    ABC = ABCMeta('ABC', (object,), {})  # <- Using Python 2 and 3
-                                         #    compatible syntax.
+    ABC.__slots__  # New in version 3.7
+except (NameError, AttributeError):
+    # Using Python 2 and 3 compatible syntax.
+    ABC = ABCMeta('ABC', (object,), {'__slots__': ()})
