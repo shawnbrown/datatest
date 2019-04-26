@@ -59,4 +59,4 @@ class ProxyGroup(RepeatingContainer):
             category=DeprecationWarning,
             stacklevel=2,
         )
-        return super(RepeatingContainer, self).__init__(*args, **kwds)
+        return super(ProxyGroup, self).__init__(*args, **kwds)
