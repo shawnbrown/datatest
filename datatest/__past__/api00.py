@@ -9,7 +9,7 @@ from datatest import DataTestCase
 
 datatest.DataAssertionError = datatest.__past__.api07_error.DataError
 
-# Allowances.
+# Acceptances.
 DataTestCase.allowSpecified = DataTestCase.allowOnly
 DataTestCase.allowUnspecified = DataTestCase.allowAny
 DataTestCase.allowDeviationPercent = DataTestCase.allowPercentDeviation

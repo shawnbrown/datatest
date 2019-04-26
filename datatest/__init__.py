@@ -7,7 +7,7 @@ PYTEST_DONT_REWRITE
 # Datatest Core API (__all__ property defined in submodules)
 from .validation import *  # Validation error and functions.
 from .difference import *  # Difference classes.
-from .allowance import *   # Allowance context mangers.
+from .acceptances import *  # Acceptance context mangers.
 from ._predicate import Predicate
 
 # Unittest-style API

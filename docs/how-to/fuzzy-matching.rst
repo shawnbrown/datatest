@@ -17,7 +17,7 @@ they are exactly the same. Datatest provides options for
 matching").
 
 When checking mappings or sequences of values, you can allow
-approximate matches with the :meth:`allowed.fuzzy` allowance:
+approximate matches with the :meth:`allowed.fuzzy` acceptance:
 
 .. code-block:: python
     :emphasize-lines: 7
@@ -33,7 +33,7 @@ approximate matches with the :meth:`allowed.fuzzy` allowance:
 
 If variation is an inherent, natural feature of the data and
 does not necessarily represent a defect, it may be appropriate
-to use :meth:`validate.fuzzy` instead of the allowance shown
+to use :meth:`validate.fuzzy` instead of the acceptance shown
 previously:
 
 .. code-block:: python

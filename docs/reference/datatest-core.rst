@@ -93,13 +93,13 @@ Concrete Differences
        :annotation:
 
 
-.. _allowance-docs:
+.. _acceptance-docs:
 
-**********
-Allowances
-**********
+***********
+Acceptances
+***********
 
-Allowances are context managers that operate on a :class:`ValidationError`'s
+Acceptances are context managers that operate on a :class:`ValidationError`'s
 collection of differences.
 
 .. autoclass:: allowed
@@ -200,13 +200,13 @@ collection of differences.
 Composability
 =============
 
-Allowances can be combined to create new allowances with modified
+Acceptances can be combined to create new acceptances with modified
 behavior.
 
 The ``&`` operator can be used to create an *intersection* of
-allowance criteria. In the following example, :meth:`allowed.missing`
-and :meth:`allowed.limit` are combined into a single allowance that
-accepts up to five Missing differences:
+acceptance criteria. In the following example, :meth:`allowed.missing`
+and :meth:`allowed.limit` are combined into a single acceptance that
+allows up to five Missing differences:
 
 .. code-block:: python
     :emphasize-lines: 3
@@ -216,9 +216,9 @@ accepts up to five Missing differences:
     with allowed.missing() & allowed.limit(5):
         validate(..., ...)
 
-The ``|`` operator can be used to create *union* of allowance
+The ``|`` operator can be used to create *union* of acceptance
 criteria. In the following example, :meth:`allowed.deviation`
-and :meth:`allowed.percent` are combined into a single allowance
+and :meth:`allowed.percent` are combined into a single acceptance
 that accepts Deviations of ±10 as well as Deviations of ±5%:
 
 .. code-block:: python
@@ -229,7 +229,7 @@ that accepts Deviations of ±10 as well as Deviations of ±5%:
     with allowed.deviation(10) | allowed.percent(0.05):
         validate(..., ...)
 
-And composed allowances, themselves, can be composed to define
+And composed acceptances, themselves, can be composed to define
 increasingly specific criteria:
 
 .. code-block:: python
@@ -248,7 +248,7 @@ increasingly specific criteria:
 Order of Operations
 ===================
 
-Allowance composition uses the following order of
+Acceptance composition uses the following order of
 operations---shown from highest precedence to lowest
 precedence. Operations with the same precedence level
 (appearing in the same cell) are evaluated from left
@@ -266,14 +266,14 @@ to right.
 |       | | :meth:`allowed.missing`,    |                            |
 |       | | :meth:`allowed.extra`,      |                            |
 |       | | :meth:`allowed.invalid`,    |                            |
-|   4   | | :meth:`allowed.keys`,       | Element-wise allowances    |
+|   4   | | :meth:`allowed.keys`,       | Element-wise acceptances   |
 |       | | :meth:`allowed.args`,       |                            |
 |       | | :meth:`allowed.deviation`,  |                            |
 |       | | :meth:`allowed.percent`     |                            |
 +-------+-------------------------------+----------------------------+
-|   5   | | :meth:`allowed.specific`    | Group-wise allowances      |
+|   5   | | :meth:`allowed.specific`    | Group-wise acceptances     |
 +-------+-------------------------------+----------------------------+
-|   6   | | :meth:`allowed.limit`       | Whole-error allowances     |
+|   6   | | :meth:`allowed.limit`       | Whole-error acceptances    |
 +-------+-------------------------------+----------------------------+
 
 
@@ -284,6 +284,6 @@ Predicates
 **********
 
 Datatest can use :class:`Predicate` objects for validation, certain
-allowances, and querying data.
+acceptances, and querying data.
 
 .. autoclass:: Predicate

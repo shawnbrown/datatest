@@ -12,7 +12,7 @@ A Tour of Datatest
 ##################
 
 This document introduces :doc:`datatest </index>`'s support for
-validation, error reporting, and allowance declarations.
+validation, error reporting, and acceptance declarations.
 
 
 **********
@@ -356,9 +356,9 @@ For more information, see :ref:`difference-docs`.
                 python -m datatest test_intro2_unit.py
 
 
-**********
-Allowances
-**********
+***********
+Acceptances
+***********
 
 Sometimes a failing test cannot be addressed by changing the data
 itself. Perhaps two equally-authoritative sources disagree, perhaps
@@ -367,13 +367,13 @@ of information makes correction impossible. For cases like these,
 datatest can allow certain discrepancies when users judge that doing
 so is appropriate.
 
-Allowances are context managers that operate on a ValidationError's
+Acceptances are context managers that operate on a ValidationError's
 collection of differences.
 
 Normally the following test would fail because the value ``'C'``
 is not a member of the set (as shown previously). But if we decide
 that :class:`Extra` differences are acceptible, we can add an
-allowance so the test will pass:
+acceptance so the test will pass:
 
 .. tabs::
 
@@ -424,7 +424,7 @@ allowance so the test will pass:
                         self.assertValid(data, requirement)
 
 
-Datatest provides several different allowances so users can
+Datatest provides several different acceptances so users can
 precisely specify the criteria by which differences should be
 allowed. In the following example, numeric differences are
 allowed by their magnitude:
@@ -485,7 +485,7 @@ allowed by their magnitude:
                     with self.allowedDeviation(5):  # allows ±5
                         self.assertValid(data, requirement)
 
-    For a list of all possible allowances see :ref:`allowance-docs`.
+    For a list of all possible acceptances see :ref:`acceptance-docs`.
 
 
 ***********

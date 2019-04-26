@@ -183,7 +183,7 @@ class TestAllowedKey(unittest.TestCase):
             return key == 'aaa'
 
         with self.assertRaises(ValidationError) as cm:
-            with datatest.allowed_key(function):  # <- Apply allowance!
+            with datatest.allowed_key(function):  # <- Apply acceptance!
                 raise ValidationError(differences, 'some message')
 
         remaining_diffs = cm.exception.differences
@@ -195,7 +195,7 @@ class TestAllowedKey(unittest.TestCase):
             return letter == 'a' and number == 7
 
         with self.assertRaises(ValidationError) as cm:
-            with datatest.allowed_key(function):  # <- Apply allowance!
+            with datatest.allowed_key(function):  # <- Apply acceptance!
                 raise ValidationError(differences, 'some message')
 
         remaining_diffs = cm.exception.differences
@@ -209,7 +209,7 @@ class TestAllowedKey(unittest.TestCase):
             return False  # < Don't match any differences.
 
         with self.assertRaises(ValidationError) as cm:
-            with datatest.allowed_key(function):  # <- Apply allowance!
+            with datatest.allowed_key(function):  # <- Apply acceptance!
                 raise ValidationError(differences, 'some message')
 
         remaining_diffs = cm.exception.differences
@@ -224,7 +224,7 @@ class TestAllowedArgs(unittest.TestCase):
             return arg == 'bbb'
 
         with self.assertRaises(ValidationError) as cm:
-            with datatest.allowed_args(function):  # <- Apply allowance!
+            with datatest.allowed_args(function):  # <- Apply acceptance!
                 raise ValidationError(differences, 'some message')
 
         remaining_diffs = cm.exception.differences
@@ -236,7 +236,7 @@ class TestAllowedArgs(unittest.TestCase):
             return diff < 2 and expected == 5
 
         with self.assertRaises(ValidationError) as cm:
-            with datatest.allowed_args(function):  # <- Apply allowance!
+            with datatest.allowed_args(function):  # <- Apply acceptance!
                 raise ValidationError(differences, 'some message')
 
         remaining_diffs = cm.exception.differences

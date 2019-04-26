@@ -143,7 +143,7 @@ for further investigation.
 
 In some cases, these extreme values are legitimate and you will
 want to increase the *multiplier* or explicitly allow them
-(see :ref:`allowance-docs`). In other cases, you may determine that
+(see :ref:`acceptance-docs`). In other cases, you may determine that
 your data contains values from two separate distributions and the
 test itself needs to be restructured. Or you could discover that
 the values represent data processing errors or other special cases

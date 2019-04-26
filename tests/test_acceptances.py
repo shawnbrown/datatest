@@ -7,27 +7,27 @@ from datatest._compatibility.collections import namedtuple
 from datatest._compatibility.collections.abc import Mapping
 from datatest._compatibility import contextlib
 from datatest._compatibility import itertools
-
-from datatest.allowance import BaseAllowance
-from datatest.allowance import CombinedAllowance
-from datatest.allowance import IntersectedAllowance
-from datatest.allowance import UnionedAllowance
-from datatest.allowance import allowed_missing
-from datatest.allowance import allowed_extra
-from datatest.allowance import allowed_invalid
-from datatest.allowance import allowed_keys
-from datatest.allowance import allowed_args
-from datatest.allowance import allowed_deviation
-from datatest.allowance import allowed_percent
-from datatest.allowance import allowed_fuzzy
-from datatest.allowance import allowed_specific
-from datatest.allowance import allowed_limit
-
 from datatest.validation import ValidationError
 from datatest.difference import Missing
 from datatest.difference import Extra
 from datatest.difference import Invalid
 from datatest.difference import Deviation
+from datatest.acceptances import (
+    BaseAllowance,
+    CombinedAllowance,
+    IntersectedAllowance,
+    UnionedAllowance,
+    allowed_missing,
+    allowed_extra,
+    allowed_invalid,
+    allowed_keys,
+    allowed_args,
+    allowed_deviation,
+    allowed_percent,
+    allowed_fuzzy,
+    allowed_specific,
+    allowed_limit,
+)
 
 
 class MinimalAllowance(BaseAllowance):  # A minimal subclass for
@@ -40,27 +40,27 @@ class MinimalAllowance(BaseAllowance):  # A minimal subclass for
 
 class TestBaseAllowance(unittest.TestCase):
     def test_default_priority(self):
-        class allowed_nothing(MinimalAllowance):
+        class accepts_nothing(MinimalAllowance):
             def call_predicate(_self, item):
                 return False
 
-        allowance = allowed_nothing()
-        self.assertEqual(allowance.priority, 100)
+        acceptance = accepts_nothing()
+        self.assertEqual(acceptance.priority, 100)
 
     def test_preserve_priority(self):
         # Calling the superclass' __init__() should not overwrite
         # the `priority` attribute if it has been previously set by
         # a subclass.
-        class allowed_nothing(MinimalAllowance):
+        class accepts_nothing(MinimalAllowance):
             def __init__(_self, msg=None):
                 _self.priority = 200
-                super(allowed_nothing, _self).__init__(msg)
+                super(accepts_nothing, _self).__init__(msg)
 
             def call_predicate(_self, item):
                 return False
 
-        allowance = allowed_nothing()
-        self.assertEqual(allowance.priority, 200, 'should not overwrite existing `priority`')
+        acceptance = accepts_nothing()
+        self.assertEqual(acceptance.priority, 200, 'should not overwrite existing `priority`')
 
     def test_serialized_items(self):
         item_list = [1, 2]
@@ -110,9 +110,8 @@ class TestBaseAllowance(unittest.TestCase):
         """The __enter__() method should return the object itself
         (see PEP 343 for context manager protocol).
         """
-        allowance = MinimalAllowance()
-        result = allowance.__enter__()
-        self.assertIs(result, allowance)
+        acceptance = MinimalAllowance()
+        self.assertIs(acceptance, acceptance.__enter__())
 
     def test_exit_context(self):
         """The __exit__() method should re-raise exceptions that are
@@ -126,11 +125,11 @@ class TestBaseAllowance(unittest.TestCase):
             type, value, traceback = sys.exc_info()  # Get exception info.
 
         with self.assertRaises(ValidationError) as cm:
-            allowance = MinimalAllowance('allowance message')
-            allowance.__exit__(type, value, traceback)
+            acceptance = MinimalAllowance('acceptance message')
+            acceptance.__exit__(type, value, traceback)
 
         description = cm.exception.description
-        self.assertEqual(description, 'allowance message: error description')
+        self.assertEqual(description, 'acceptance message: error description')
 
         # Test with no error description.
         try:
@@ -139,11 +138,11 @@ class TestBaseAllowance(unittest.TestCase):
             type, value, traceback = sys.exc_info()  # Get exception info.
 
         with self.assertRaises(ValidationError) as cm:
-            allowance = MinimalAllowance('allowance message')
-            allowance.__exit__(type, value, traceback)
+            acceptance = MinimalAllowance('acceptance message')
+            acceptance.__exit__(type, value, traceback)
 
         description = cm.exception.description
-        self.assertEqual(description, 'allowance message')
+        self.assertEqual(description, 'acceptance message')
 
 
 class TestAllowanceProtocol(unittest.TestCase):
@@ -175,9 +174,9 @@ class TestAllowanceProtocol(unittest.TestCase):
 
         self.LoggingAllowance = LoggingAllowance
 
-    def test_allowance_protocol(self):
-        allowed = self.LoggingAllowance()
-        result = allowed._filterfalse([
+    def test_acceptance_protocol(self):
+        accepted = self.LoggingAllowance()
+        result = accepted._filterfalse([
             ('foo', Missing('A')),
             ('foo', Extra('B')),
             ('bar', Missing('C')),
@@ -195,7 +194,7 @@ class TestAllowanceProtocol(unittest.TestCase):
             "end_group('bar')",
             'end_collection()',
         ]
-        self.assertEqual(allowed.log, expected)
+        self.assertEqual(accepted.log, expected)
 
 
 class TestLogicalComposition(unittest.TestCase):
@@ -232,9 +231,9 @@ class TestLogicalComposition(unittest.TestCase):
         self.allowed_missing.priority = 222
         self.allowed_letter_a.priority = 333
 
-        allowance = LogicalAnd(left=self.allowed_missing,
-                               right=self.allowed_letter_a)
-        self.assertEqual(allowance.priority, 333)
+        acceptance = LogicalAnd(left=self.allowed_missing,
+                                right=self.allowed_letter_a)
+        self.assertEqual(acceptance.priority, 333)
 
     def test_IntersectedAllowance(self):
         original_diffs = [Extra('a'), Missing('a'), Missing('b'), Extra('b')]
@@ -245,7 +244,7 @@ class TestLogicalComposition(unittest.TestCase):
         differences = cm.exception.differences
         self.assertEqual(list(differences), [Extra('a'), Missing('b'), Extra('b')])
 
-        # Test with allowances in reverse-order (should give same result).
+        # Test with acceptances in reverse-order (should give same result).
         with self.assertRaises(ValidationError) as cm:
             with IntersectedAllowance(self.allowed_letter_a, self.allowed_missing):
                 raise ValidationError(original_diffs)
@@ -261,7 +260,7 @@ class TestLogicalComposition(unittest.TestCase):
         differences = cm.exception.differences
         self.assertEqual(list(differences), [Extra('b')])
 
-        # Test with allowances in reverse-order (should give same result).
+        # Test with acceptances in reverse-order (should give same result).
         with self.assertRaises(ValidationError) as cm:
             with UnionedAllowance(self.allowed_letter_a, self.allowed_missing):
                 raise ValidationError(original_diffs)
@@ -274,7 +273,7 @@ class TestAllowedMissing(unittest.TestCase):
         differences =  [Missing('X'), Missing('Y'), Extra('X')]
 
         with self.assertRaises(ValidationError) as cm:
-            with allowed_missing():  # <- Apply allowance!
+            with allowed_missing():  # <- Apply acceptance!
                 raise ValidationError(differences)
         remaining_diffs = cm.exception.differences
         self.assertEqual(list(remaining_diffs), [Extra('X')])
@@ -285,7 +284,7 @@ class TestAllowedExtra(unittest.TestCase):
         differences =  [Extra('X'), Extra('Y'), Missing('X')]
 
         with self.assertRaises(ValidationError) as cm:
-            with allowed_extra():  # <- Apply allowance!
+            with allowed_extra():  # <- Apply acceptance!
                 raise ValidationError(differences)
         remaining_diffs = cm.exception.differences
         self.assertEqual(list(remaining_diffs), [Missing('X')])
@@ -296,7 +295,7 @@ class TestAllowedInvalid(unittest.TestCase):
         differences =  [Invalid('X'), Invalid('Y'), Extra('Z')]
 
         with self.assertRaises(ValidationError) as cm:
-            with allowed_invalid():  # <- Apply allowance!
+            with allowed_invalid():  # <- Apply acceptance!
                 raise ValidationError(differences)
         remaining_diffs = cm.exception.differences
         self.assertEqual(list(remaining_diffs), [Extra('Z')])
@@ -307,8 +306,8 @@ class TestAllowedKeys(unittest.TestCase):
         """The internal function object should be a predicate created
         by get_predicate().
         """
-        allowance = allowed_keys('aaa')
-        self.assertEqual(allowance.function.__name__, "'aaa'",
+        acceptance = allowed_keys('aaa')
+        self.assertEqual(acceptance.function.__name__, "'aaa'",
                          msg='predicate set to repr of string')
 
     def test_allow_string(self):
@@ -364,16 +363,16 @@ class TestAllowedKeys(unittest.TestCase):
         self.assertEqual(list(remaining_diffs), [Missing(1), Extra(2)])
 
     def test_repr(self):
-        allowance = allowed_keys('aaa')
-        self.assertEqual(repr(allowance), "allowed_keys('aaa')")
+        acceptance = allowed_keys('aaa')
+        self.assertEqual(repr(acceptance), "allowed_keys('aaa')")
 
-        allowance = allowed_keys(('aaa', 1))
-        self.assertEqual(repr(allowance), "allowed_keys(('aaa', 1))")
+        acceptance = allowed_keys(('aaa', 1))
+        self.assertEqual(repr(acceptance), "allowed_keys(('aaa', 1))")
 
         def helper(x):
             return True
-        allowance = allowed_keys(helper)
-        self.assertEqual(repr(allowance), "allowed_keys(helper)")
+        acceptance = allowed_keys(helper)
+        self.assertEqual(repr(acceptance), "allowed_keys(helper)")
 
 
 class TestAllowedArgs(unittest.TestCase):
@@ -827,12 +826,12 @@ class TestAllowedLimit(unittest.TestCase):
 
 
 class TestUniversalComposability(unittest.TestCase):
-    """Test that allowances are composable with allowances of the
-    same type as well as all other allowance types.
+    """Test that acceptances are composable with acceptances of the
+    same type as well as all other acceptance types.
     """
     def setUp(self):
         ntup = namedtuple('ntup', ('cls', 'args', 'priority'))
-        self.allowances = [
+        self.acceptances = [
             ntup(cls=allowed_missing,   args=tuple(),                  priority=100),
             ntup(cls=allowed_extra,     args=tuple(),                  priority=100),
             ntup(cls=allowed_invalid,   args=tuple(),                  priority=100),
@@ -845,33 +844,33 @@ class TestUniversalComposability(unittest.TestCase):
         ]
 
     def test_completeness(self):
-        """Check that self.allowances contains all of the allowances
+        """Check that self.acceptances contains all of the acceptances
         defined in datatest.
         """
         import datatest
-        actual = datatest.allowance.__all__
+        actual = datatest.acceptances.__all__
         actual.remove('allowed_percent_deviation')  # This is just an alias
                                                     # for allowed_percent().
         actual.remove('allowed')  # Factory class.
-        expected = (x.cls.__name__ for x in self.allowances)
+        expected = (x.cls.__name__ for x in self.acceptances)
         self.assertEqual(set(actual), set(expected))
 
     def test_priority_values(self):
-        for x in self.allowances:
+        for x in self.acceptances:
             instance = x.cls(*x.args)  # <- Initialize class instance.
             actual = instance.priority
             expected = x.priority
             self.assertEqual(actual, expected, x.cls.__name__)
 
     def test_union_and_intersection(self):
-        """Check that all allowance types can be composed with each
+        """Check that all acceptance types can be composed with each
         other without exception.
         """
-        # Create two lists of identical allowances. Even though
+        # Create two lists of identical acceptances. Even though
         # the lists are the same, they should contain separate
         # instances--not simply pointers to the same instances.
-        allow1 = list(x.cls(*x.args) for x in self.allowances)
-        allow2 = list(x.cls(*x.args) for x in self.allowances)
+        allow1 = list(x.cls(*x.args) for x in self.acceptances)
+        allow2 = list(x.cls(*x.args) for x in self.acceptances)
         combinations = list(itertools.product(allow1, allow2))
 
         for a, b in combinations:
@@ -885,7 +884,7 @@ class TestUniversalComposability(unittest.TestCase):
             self.assertEqual(composed.priority, max(a.priority, b.priority))
 
     def test_integration_examples(self):
-        # Test allowance of +/- 2 OR +/- 6%.
+        # Test acceptance of +/- 2 OR +/- 6%.
         with self.assertRaises(ValidationError) as cm:
             differences = [
                 Deviation(+2, 1),   # 200%

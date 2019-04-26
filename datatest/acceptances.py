@@ -63,9 +63,9 @@ class BaseAllowance(abc.ABC):
         msg_part = 'msg={0!r}'.format(self.msg) if self.msg else ''
         return '{0}({1})'.format(cls_name, msg_part)
 
-    ######################################
-    # Hook methods for allowance protocol.
-    ######################################
+    #######################################
+    # Hook methods for acceptance protocol.
+    #######################################
     def start_collection(self):
         """Called first before any group or predicate checking."""
 
@@ -87,9 +87,9 @@ class BaseAllowance(abc.ABC):
     # Methods and operators for union and intersection
     ##################################################
     def intersection(self, other):
-        """Return a new allowance that accepts only those differences
-        allowed by both the current allowance and the given *other*
-        allowance.
+        """Return a new acceptance that allows only those
+        differences allowed by both the current acceptance
+        and the given *other* acceptance.
         """
         return self.__and__(other)
 
@@ -99,8 +99,9 @@ class BaseAllowance(abc.ABC):
         return IntersectedAllowance(self, other)
 
     def union(self, other):
-        """Return a new allowance that accepts any difference allowed
-        by either the current allowance or the given *other* allowance.
+        """Return a new acceptance that allows any difference
+        allowed by either the current acceptance or the given
+        *other* acceptance.
         """
         return self.__or__(other)
 
@@ -183,7 +184,7 @@ class BaseAllowance(abc.ABC):
             if isinstance(differences, BaseDifference):
                 differences = [differences]
 
-        # Extend description with allowance message.
+        # Extend description with acceptance message.
         if self.msg:
             if exc_value.description:
                 message = '{0}: {1}'.format(self.msg, exc_value.description)
@@ -206,7 +207,7 @@ class BaseAllowance(abc.ABC):
 
 
 class CombinedAllowance(BaseAllowance):
-    """Base class for combining allowances using Boolean composition."""
+    """Base class for combining acceptances using Boolean composition."""
     def __init__(self, left, right, msg=None):
         self.left = left
         self.right = right
@@ -232,7 +233,7 @@ class CombinedAllowance(BaseAllowance):
 
 class IntersectedAllowance(CombinedAllowance):
     """Base class to allow only those differences allowed by both
-    given allowances.
+    given acceptances.
     """
     def __repr__(self):
         return '({0!r} & {1!r})'.format(self.left, self.right)
@@ -242,16 +243,16 @@ class IntersectedAllowance(CombinedAllowance):
         if first.priority > second.priority:
             first, second = second, first
 
-        # The allowance protocol is stateful so it's important to use
-        # short-circuit evaluation to avoid calling the second allowance
+        # The acceptance protocol is stateful so it's important to use
+        # short-circuit evaluation to avoid calling the second acceptance
         # unnecessarily. If `first` returns False, then `second` should
         # not be called.
         return first.call_predicate(item) and second.call_predicate(item)
 
 
 class UnionedAllowance(CombinedAllowance):
-    """Base class to allow differences allowed by either given
-    allowance.
+    """Base class to accept differences allowed by either given
+    acceptance.
     """
     def __repr__(self):
         return '({0!r} | {1!r})'.format(self.left, self.right)
@@ -261,8 +262,8 @@ class UnionedAllowance(CombinedAllowance):
         if first.priority > second.priority:
             first, second = second, first
 
-        # The allowance protocol is stateful so it's important to use
-        # short-circuit evaluation to avoid calling the second allowance
+        # The acceptance protocol is stateful so it's important to use
+        # short-circuit evaluation to avoid calling the second acceptance
         # unnecessarily. If `first` returns True, then `second` should
         # not be called.
         return first.call_predicate(item) or second.call_predicate(item)
@@ -348,7 +349,7 @@ class allowed_args(BaseAllowance):
 
 
 def _normalize_deviation_args(lower, upper, msg):
-    """Normalize deviation allowance arguments to support both
+    """Normalize deviation acceptance arguments to support both
     "tolerance" and "lower, upper" signatures. This helper function
     is intended for internal use.
     """
@@ -520,7 +521,7 @@ class allowed_specific(BaseAllowance):
         self.differences = differences
         self.msg = msg
         self._allowed = dict()         # Properties to hold working values
-        self._predicate_keys = dict()  # during allowance checking.
+        self._predicate_keys = dict()  # during acceptance checking.
 
     @property
     def priority(self):
@@ -604,7 +605,7 @@ class allowed_limit(BaseAllowance):
         self.number = number
         self.msg = msg
         self._count = None  # Properties to hold working values
-        self._limit = None  # during allowance checking.
+        self._limit = None  # during acceptance checking.
 
     def __repr__(self):
         cls_name = self.__class__.__name__
@@ -630,7 +631,7 @@ class allowed_limit(BaseAllowance):
 class allowed(abc.ABC):
     """:class:`allowed` is an abstract factory class that can not be
     instantiated directly. It contains several constructors to create
-    allowance objects.
+    acceptance objects.
     """
     def __new__(cls, *args, **kwds):
         msg = ("Can't instantiate abstract class allowed, use constructor "
@@ -832,7 +833,7 @@ class allowed(abc.ABC):
             with known_issues:
                 validate(data, requirement)
 
-        A dictionary of allowances can be used to define individual
+        A dictionary of acceptances can be used to define individual
         sets of differences per group:
 
         .. code-block:: python
@@ -855,7 +856,7 @@ class allowed(abc.ABC):
             with known_issues:
                 validate(data, requirement)
 
-        A dictionary of allowances can use predicate-keys to treat
+        A dictionary of acceptances can use predicate-keys to treat
         multiple groups as a single group (see :ref:`predicate-docs`
         for details):
 

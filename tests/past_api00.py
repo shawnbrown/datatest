@@ -24,7 +24,7 @@ class TestAttributes(unittest.TestCase):
         self.assertTrue(hasattr(datatest.DataTestCase, 'subjectData'))
         self.assertTrue(hasattr(datatest.DataTestCase, 'referenceData'))
 
-        # Allowances.
+        # Acceptance context managers.
         self.assertTrue(hasattr(datatest.DataTestCase, 'allowSpecified'))
         self.assertTrue(hasattr(datatest.DataTestCase, 'allowUnspecified'))
         self.assertTrue(hasattr(datatest.DataTestCase, 'allowDeviationPercent'))

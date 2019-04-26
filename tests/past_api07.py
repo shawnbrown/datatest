@@ -572,7 +572,7 @@ class TestAssertSubjectUnique(datatest.DataTestCase):
 
 
 ########################################################################
-# Test allowances from datatest.allowance sub-package.
+# Test acceptances from datatest.acceptances sub-package.
 ########################################################################
 class TestAllowIter(unittest.TestCase):
     def test_function_all_bad(self):
@@ -582,7 +582,7 @@ class TestAllowIter(unittest.TestCase):
             Extra('bar'),
         ]
         with self.assertRaises(DataError) as cm:
-            with allow_iter(function, 'example allowance'):
+            with allow_iter(function, 'example message'):
                 raise DataError('example error', in_diffs)
 
         rejected = cm.exception.differences
@@ -591,7 +591,7 @@ class TestAllowIter(unittest.TestCase):
     def test_function_all_ok(self):
         function = lambda iterable: list()  # <- Accepts everything.
 
-        with allow_iter(function, 'example allowance'):
+        with allow_iter(function, 'example message'):
             raise DataError('example error', [Missing('foo'), Missing('bar')])
 
     def test_function_some_ok(self):
@@ -601,7 +601,7 @@ class TestAllowIter(unittest.TestCase):
             Missing('bar'),
         ]
         with self.assertRaises(DataError) as cm:
-            with allow_iter(function, 'example allowance'):
+            with allow_iter(function, 'example message'):
                 raise DataError('example error', in_diffs)
 
         rejected = list(cm.exception.differences)
@@ -615,7 +615,7 @@ class TestAllowIter(unittest.TestCase):
         ]
         with self.assertRaises(DataError) as cm:
             # Using keyword bbb='j' should reject all in_diffs.
-            with allow_iter(function, 'example allowance', bbb='j'):
+            with allow_iter(function, 'example message', bbb='j'):
                 raise DataError('example error', in_diffs)
 
         rejected = list(cm.exception.differences)
@@ -628,11 +628,11 @@ class TestAllowIter(unittest.TestCase):
             Missing('bar', aaa='x', bbb='z'),
         ]
         # Using keyword aaa='x' should accept all in_diffs.
-        with allow_iter(function, 'example allowance', aaa='x'):
+        with allow_iter(function, 'example message', aaa='x'):
             raise DataError('example error', in_diffs)
 
         # Using keyword bbb=['y', 'z'] should also accept all in_diffs.
-        with allow_iter(function, 'example allowance', bbb=['y', 'z']):
+        with allow_iter(function, 'example message', bbb=['y', 'z']):
             raise DataError('example error', in_diffs)
 
     def test_kwds_some_ok(self):
@@ -643,7 +643,7 @@ class TestAllowIter(unittest.TestCase):
         ]
         with self.assertRaises(DataError) as cm:
             # Keyword bbb='y' should reject second in_diffs element.
-            with allow_iter(function, 'example allowance', bbb='y'):
+            with allow_iter(function, 'example message', bbb='y'):
                 raise DataError('example error', in_diffs)
 
         rejected = list(cm.exception.differences)
@@ -664,11 +664,11 @@ class TestAllowOnly(unittest.TestCase):
     """Test allow_only() behavior."""
     def test_allow_some(self):
         with self.assertRaises(DataError) as cm:
-            with allow_only(Extra('xxx'), 'example allowance'):
+            with allow_only(Extra('xxx'), 'example message'):
                 raise DataError('example error', [Extra('xxx'), Missing('yyy')])
 
         result_str = str(cm.exception)
-        self.assertEqual("example allowance: example error:\n xMissing('yyy')", result_str)
+        self.assertEqual("example message: example error:\n xMissing('yyy')", result_str)
 
         result_diffs = list(cm.exception.differences)
         self.assertEqual([Missing('yyy')], result_diffs)
@@ -846,14 +846,14 @@ class TestAllowLimit(unittest.TestCase):
 
         with self.assertRaises(DataError) as cm:
             # Allows 2 with aaa='foo' and there are two (only aaa='bar' is rejected).
-            with allow_limit(2, 'example allowance', aaa='foo'):
+            with allow_limit(2, 'example message', aaa='foo'):
                 raise DataError('example error', diff_set)
         rejected = set(cm.exception.differences)
         self.assertEqual(rejected, set([Missing('yyy', aaa='bar')]))
 
         with self.assertRaises(DataError) as cm:
             # Allows 1 with aaa='foo' but there are 2 (all are rejected)!
-            with allow_limit(1, 'example allowance', aaa='foo'):
+            with allow_limit(1, 'example message', aaa='foo'):
                 raise DataError('example error', diff_set)
         rejected = set(cm.exception.differences)
         self.assertEqual(rejected, diff_set)
@@ -890,7 +890,7 @@ class TestAllowExtra(unittest.TestCase):
             Missing('zzz', aaa='foo'),
         ]
         with self.assertRaises(DataError) as cm:
-            with allow_extra('example allowance', aaa='foo'):
+            with allow_extra('example message', aaa='foo'):
                 raise DataError('example error', in_diffs)
 
         rejected = list(cm.exception.differences)
@@ -928,7 +928,7 @@ class TestAllowMissing(unittest.TestCase):
             Extra('zzz', aaa='foo'),
         ]
         with self.assertRaises(DataError) as cm:
-            with allow_missing('example allowance', aaa='foo'):
+            with allow_missing('example message', aaa='foo'):
                 raise DataError('example error', in_diffs)
 
         rejected = list(cm.exception.differences)
@@ -951,11 +951,11 @@ class TestAllowDeviation(unittest.TestCase):
             xDeviation(+3, 10, label='bbb'),  # <- Not in allowed range.
         ]
         with self.assertRaises(DataError) as cm:
-            with allow_deviation(2, 'example allowance'):  # <- Allows +/- 2.
+            with allow_deviation(2, 'example message'):  # <- Allows +/- 2.
                 raise DataError('example error', differences)
 
         result_string = str(cm.exception)
-        self.assertTrue(result_string.startswith('example allowance: example error'))
+        self.assertTrue(result_string.startswith('example message: example error'))
 
         result_diffs = list(cm.exception.differences)
         self.assertEqual([xDeviation(+3, 10, label='bbb')], result_diffs)
@@ -966,16 +966,16 @@ class TestAllowDeviation(unittest.TestCase):
             xDeviation(+3, 10, label='bbb'),
         ]
         with self.assertRaises(DataError) as cm:
-            with allow_deviation(0, 3, 'example allowance'):  # <- Allows from 0 to 3.
+            with allow_deviation(0, 3, 'example message'):  # <- Allows from 0 to 3.
                 raise DataError('example error', differences)
 
         result_string = str(cm.exception)
-        self.assertTrue(result_string.startswith('example allowance: example error'))
+        self.assertTrue(result_string.startswith('example message: example error'))
 
         result_diffs = list(cm.exception.differences)
         self.assertEqual([xDeviation(-1, 10, label='aaa')], result_diffs)
 
-    def test_single_value_allowance(self):
+    def test_single_value_acceptance(self):
         differences = [
             xDeviation(+2.9, 10, label='aaa'),  # <- Not allowed.
             xDeviation(+3.0, 10, label='bbb'),
@@ -1001,7 +1001,7 @@ class TestAllowDeviation(unittest.TestCase):
             xDeviation(+3, 10, label='aaa'),
         ]
         with self.assertRaises(DataError) as cm:
-            with allow_deviation(2, 'example allowance', label='aaa'):  # <- Allows +/- 2.
+            with allow_deviation(2, 'example message', label='aaa'):  # <- Allows +/- 2.
                 raise DataError('example error', differences)
 
         result_set = set(cm.exception.differences)
@@ -1051,11 +1051,11 @@ class TestAllowPercentDeviation(unittest.TestCase):
             xDeviation(+3, 10, label='bbb'),  # <- Not in allowed range.
         ]
         with self.assertRaises(DataError) as cm:
-            with allow_percent_deviation(0.2, 'example allowance'):  # <- Allows +/- 20%.
+            with allow_percent_deviation(0.2, 'example message'):  # <- Allows +/- 20%.
                 raise DataError('example error', differences)
 
         result_string = str(cm.exception)
-        self.assertTrue(result_string.startswith('example allowance: example error'))
+        self.assertTrue(result_string.startswith('example message: example error'))
 
         result_diffs = list(cm.exception.differences)
         self.assertEqual([xDeviation(+3, 10, label='bbb')], result_diffs)
@@ -1066,21 +1066,21 @@ class TestAllowPercentDeviation(unittest.TestCase):
             xDeviation(+3, 10, label='bbb'),
         ]
         with self.assertRaises(DataError) as cm:
-            with allow_percent_deviation(0.0, 0.3, 'example allowance'):  # <- Allows from 0 to 30%.
+            with allow_percent_deviation(0.0, 0.3, 'example message'):  # <- Allows from 0 to 30%.
                 raise DataError('example error', differences)
 
         result_string = str(cm.exception)
-        self.assertTrue(result_string.startswith('example allowance: example error'))
+        self.assertTrue(result_string.startswith('example message: example error'))
 
         result_diffs = list(cm.exception.differences)
         self.assertEqual([xDeviation(-1, 10, label='aaa')], result_diffs)
 
-    def test_single_value_allowance(self):
+    def test_single_value_message(self):
         differences = [
-            xDeviation(+2.9, 10, label='aaa'),  # <- Not allowed.
+            xDeviation(+2.9, 10, label='aaa'),  # <- Not accepted.
             xDeviation(+3.0, 10, label='bbb'),
             xDeviation(+6.0, 20, label='ccc'),
-            xDeviation(+3.1, 10, label='ddd'),  # <- Not allowed.
+            xDeviation(+3.1, 10, label='ddd'),  # <- Not accepted.
         ]
         with self.assertRaises(DataError) as cm:
             with allow_percent_deviation(0.3, 0.3):  # <- Allows +30% only.
@@ -1101,7 +1101,7 @@ class TestAllowPercentDeviation(unittest.TestCase):
             xDeviation(+3, 10, label='aaa'),
         ]
         with self.assertRaises(DataError) as cm:
-            with allow_percent_deviation(0.2, 'example allowance', label='aaa'):  # <- Allows +/- 20%.
+            with allow_percent_deviation(0.2, 'example message', label='aaa'):  # <- Allows +/- 20%.
                 raise DataError('example error', differences)
 
         result_set = set(cm.exception.differences)
@@ -1152,7 +1152,7 @@ class TestAllowAny(unittest.TestCase):
             Missing('zzz', aaa='foo'),
         ]
         with self.assertRaises(DataError) as cm:
-            with allow_any('example allowance', aaa='foo'):
+            with allow_any('example message', aaa='foo'):
                 raise DataError('example error', in_diffs)
 
         rejected = list(cm.exception.differences)
@@ -1164,7 +1164,7 @@ class TestAllowAny(unittest.TestCase):
             Extra('yyy', aaa='bar'),
         ]
         with self.assertRaises(TypeError) as cm:
-            with allow_any('example allowance'):  # <- Missing keyword argument!
+            with allow_any('example message'):  # <- Missing keyword argument!
                 raise DataError('example error', in_diffs)
 
         result = cm.exception
@@ -1189,7 +1189,7 @@ class TestAllowEach(unittest.TestCase):
             Missing('bar'),
         ]
         with self.assertRaises(DataError) as cm:
-            with allow_each(function, 'example allowance'):
+            with allow_each(function, 'example message'):
                 raise DataError('example error', in_diffs)
 
         rejected = list(cm.exception.differences)
@@ -1198,7 +1198,7 @@ class TestAllowEach(unittest.TestCase):
     def test_allow_all(self):
         function = lambda x: isinstance(x, Missing)  # <- Allow only missing.
 
-        with allow_each(function, 'example allowance'):
+        with allow_each(function, 'example message'):
             raise DataError('example error', [Missing('xxx'), Missing('yyy')])
 
     def test_kwds(self):
@@ -1209,7 +1209,7 @@ class TestAllowEach(unittest.TestCase):
         ]
         with self.assertRaises(DataError) as cm:
             # Keyword bbb='y' should reject second in_diffs element.
-            with allow_each(function, 'example allowance', bbb='y'):
+            with allow_each(function, 'example message', bbb='y'):
                 raise DataError('example error', in_diffs)
 
         rejected = list(cm.exception.differences)
@@ -1226,9 +1226,9 @@ class TestAllowEach(unittest.TestCase):
         self.assertEqual('No differences found: <lambda>', str(exc))
 
 
-class TestNestedAllowances(unittest.TestCase):
-    def test_nested_allowances(self):
-        """A quick integration test to make sure allowances nest as
+class TestNestedAcceptances(unittest.TestCase):
+    def test_nested_acceptances(self):
+        """A quick integration test to make sure acceptances nest as
         required.
         """
         with allow_only(xDeviation(-4,  70, label1='b')):  # <- specified diff only

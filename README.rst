@@ -16,7 +16,7 @@ data validation. It supports both pytest_ and unittest_ style
 testing.
 
 It implements a system of validation methods, difference
-classes, and allowance context managers. You can use datatest
+classes, and acceptance context managers. You can use datatest
 for validation, data-wrangling, automating checklists, and
 measuring progress. It encourages a structured approach for
 checking and tidying data.

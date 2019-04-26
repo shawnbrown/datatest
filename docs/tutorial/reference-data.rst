@@ -277,7 +277,7 @@ Now when we run our tests, we get the following message:
     contain more columns than a summary file.
 
 
-To handle this, we add an "allowance" so the extra column won't trigger
+To handle this, we add an "acceptance" so the extra column won't trigger
 a test failure:
 
 .. tabs::
@@ -599,7 +599,7 @@ in our tests, we will allow a percent error of ±3%:
                         self.assertValid(data, requirement)
 
 
-Rerunning our script with this new allowance gives the following message:
+Rerunning our script with this new acceptance gives the following message:
 
 .. tabs::
 
@@ -775,6 +775,6 @@ If you're having trouble replicating the steps above, you can check
 your work against the following files:
 
 * **Detailed File (cleaned):** :download:`modified_country_of_birth.csv </_static/tutorial/modified_country_of_birth.csv>`
-* **Test Script (with allowances):**
+* **Test Script (with acceptances):**
     * :download:`modified_test_country_of_birth.py </_static/tutorial/modified_test_country_of_birth.py>` (for Pytest)
     * :download:`modified_test_country_of_birth_unit.py </_static/tutorial/modified_test_country_of_birth_unit.py>` (for Unittest)

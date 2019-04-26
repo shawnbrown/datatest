@@ -23,15 +23,16 @@ from datatest.difference import Extra
 from datatest.difference import Missing
 from datatest.difference import Invalid
 from datatest.difference import Deviation
-
-from datatest.allowance import allowed_missing
-from datatest.allowance import allowed_extra
-from datatest.allowance import allowed_invalid
-from datatest.allowance import allowed_fuzzy
-from datatest.allowance import allowed_deviation
-from datatest.allowance import allowed_percent
-from datatest.allowance import allowed_limit
-from datatest.allowance import allowed_specific
+from datatest.acceptances import (
+    allowed_missing,
+    allowed_extra,
+    allowed_invalid,
+    allowed_fuzzy,
+    allowed_deviation,
+    allowed_percent,
+    allowed_limit,
+    allowed_specific,
+)
 
 
 class TestHelperCase(unittest.TestCase):
@@ -257,8 +258,8 @@ class TestValidationWrappers(unittest.TestCase):
             self.assertEqual(self.case._applied_function, orig_method, msg=msg)
 
 
-class TestAllowanceWrappers(unittest.TestCase):
-    """Test method wrappers for allowance context managers."""
+class TestAcceptanceWrappers(unittest.TestCase):
+    """Test method wrappers for acceptance context managers."""
     def setUp(self):
         class DummyCase(DataTestCase):
             def runTest(self):

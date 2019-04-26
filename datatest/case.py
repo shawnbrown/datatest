@@ -12,16 +12,18 @@ from ._query.query import Result
 from .validation import validate
 from .validation import ValidationError
 from .validation import _pytest_tracebackhide
-from .allowance import allowed_missing
-from .allowance import allowed_extra
-from .allowance import allowed_invalid
-from .allowance import allowed_deviation
-from .allowance import allowed_percent
-from .allowance import allowed_specific
-from .allowance import allowed_keys
-from .allowance import allowed_args
-from .allowance import allowed_fuzzy
-from .allowance import allowed_limit
+from .acceptances import (
+    allowed_missing,
+    allowed_extra,
+    allowed_invalid,
+    allowed_deviation,
+    allowed_percent,
+    allowed_specific,
+    allowed_keys,
+    allowed_args,
+    allowed_fuzzy,
+    allowed_limit,
+)
 
 
 __unittest = True  # Hides internal stack frames from unittest output.
