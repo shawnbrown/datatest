@@ -42,7 +42,6 @@ __all__ = [
     'AcceptedArgs',
     'AcceptedDeviation',
     'AcceptedPercent',
-    'allowed_percent_deviation',  # alias of AcceptedPercent
     'AcceptedSpecific',
     'AcceptedLimit',
     'AcceptedFuzzy',
@@ -472,8 +471,6 @@ with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
         inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),
         inspect.Parameter('msg', inspect.Parameter.POSITIONAL_OR_KEYWORD),
     ])
-
-allowed_percent_deviation = AcceptedPercent  # Set alias for full name.
 
 
 class AcceptedFuzzy(BaseAcceptance):
