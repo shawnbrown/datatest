@@ -13,7 +13,7 @@ from datatest.difference import Extra
 from datatest.difference import Invalid
 from datatest.difference import Deviation
 from datatest.acceptances import (
-    BaseAllowance,
+    BaseAcceptance,
     CombinedAllowance,
     IntersectedAllowance,
     UnionedAllowance,
@@ -30,15 +30,15 @@ from datatest.acceptances import (
 )
 
 
-class MinimalAllowance(BaseAllowance):  # A minimal subclass for
-    def call_predicate(self, item):     # testing--defines three
-        return False                    # concrete stubs to satisfy
-                                        # abstract method requirement
-    def __repr__(self):                 # of the base class.
+class MinimalAllowance(BaseAcceptance):  # A minimal subclass for
+    def call_predicate(self, item):      # testing--defines three
+        return False                     # concrete stubs to satisfy
+                                         # abstract method requirement
+    def __repr__(self):                  # of the base class.
         return super(MinimalAllowance, self).__repr__()
 
 
-class TestBaseAllowance(unittest.TestCase):
+class TestBaseAcceptance(unittest.TestCase):
     def test_default_priority(self):
         class accepts_nothing(MinimalAllowance):
             def call_predicate(_self, item):
@@ -64,33 +64,33 @@ class TestBaseAllowance(unittest.TestCase):
 
     def test_serialized_items(self):
         item_list = [1, 2]
-        actual = BaseAllowance._serialized_items(item_list)
+        actual = BaseAcceptance._serialized_items(item_list)
         expected = [(None, 1), (None, 2)]
         self.assertEqual(list(actual), expected, 'serialize list of elements')
 
         item_dict = {'A': 'x', 'B': 'y'}
-        actual = BaseAllowance._serialized_items(item_dict)
+        actual = BaseAcceptance._serialized_items(item_dict)
         expected = [('A', 'x'), ('B', 'y')]
         self.assertEqual(sorted(actual), expected, 'serialize mapping of elements')
 
         item_dict = {'A': ['x', 'y'], 'B': ['x', 'y']}
-        actual = BaseAllowance._serialized_items(item_dict)
+        actual = BaseAcceptance._serialized_items(item_dict)
         expected = [('A', 'x'), ('A', 'y'), ('B', 'x'), ('B', 'y')]
         self.assertEqual(sorted(actual), expected, 'serialize mapping of lists')
 
     def test_deserialized_items(self):
         stream = [(None, 1), (None, 2)]
-        actual = BaseAllowance._deserialized_items(stream)
+        actual = BaseAcceptance._deserialized_items(stream)
         expected = {None: [1, 2]}
         self.assertEqual(actual, expected)
 
         stream = [('A', 'x'), ('B', 'y')]
-        actual = BaseAllowance._deserialized_items(stream)
+        actual = BaseAcceptance._deserialized_items(stream)
         expected = {'A': 'x', 'B': 'y'}
         self.assertEqual(actual, expected)
 
         stream = [('A', 'x'), ('A', 'y'), ('B', 'x'), ('B', 'y')]
-        actual = BaseAllowance._deserialized_items(stream)
+        actual = BaseAcceptance._deserialized_items(stream)
         expected = {'A': ['x', 'y'], 'B': ['x', 'y']}
         self.assertEqual(actual, expected)
 

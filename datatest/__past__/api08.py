@@ -16,7 +16,7 @@ from datatest._query.query import BaseElement
 from datatest._utils import file_types
 from datatest._utils import string_types
 from datatest._utils import iterpeek
-from datatest.acceptances import BaseAllowance
+from datatest.acceptances import BaseAcceptance
 from datatest import Invalid
 from datatest.difference import NOVALUE
 
@@ -86,7 +86,7 @@ class DataSource(datatest.Select):
 datatest.DataSource = DataSource
 
 
-class allowed_key(BaseAllowance):
+class allowed_key(BaseAcceptance):
     """The given *function* should accept a number of arguments
     equal the given key elements. If key is a single value (string
     or otherwise), *function* should accept one argument. If key
@@ -110,7 +110,7 @@ class allowed_key(BaseAllowance):
 datatest.allowed_key = allowed_key
 
 
-class allowed_args(BaseAllowance):
+class allowed_args(BaseAcceptance):
     """The given *function* should accept a number of arguments equal
     the given elements in the 'args' attribute. If args is a single
     value (string or otherwise), *function* should accept one argument.

@@ -48,8 +48,8 @@ __all__ = [
 ]
 
 
-class BaseAllowance(abc.ABC):
-    """Context manager base class to allow certain differences without
+class BaseAcceptance(abc.ABC):
+    """Context manager base class to accept certain differences without
     triggering a test failure.
     """
     def __init__(self, msg=None):
@@ -94,7 +94,7 @@ class BaseAllowance(abc.ABC):
         return self.__and__(other)
 
     def __and__(self, other):
-        if not isinstance(other, BaseAllowance):
+        if not isinstance(other, BaseAcceptance):
             return NotImplemented
         return IntersectedAllowance(self, other)
 
@@ -106,7 +106,7 @@ class BaseAllowance(abc.ABC):
         return self.__or__(other)
 
     def __or__(self, other):
-        if not isinstance(other, BaseAllowance):
+        if not isinstance(other, BaseAcceptance):
             return NotImplemented
         return UnionedAllowance(self, other)
 
@@ -206,7 +206,7 @@ class BaseAllowance(abc.ABC):
                               #    effect as "raise ... from None").
 
 
-class CombinedAllowance(BaseAllowance):
+class CombinedAllowance(BaseAcceptance):
     """Base class for combining acceptances using Boolean composition."""
     def __init__(self, left, right, msg=None):
         self.left = left
@@ -269,7 +269,7 @@ class UnionedAllowance(CombinedAllowance):
         return first.call_predicate(item) or second.call_predicate(item)
 
 
-class allowed_missing(BaseAllowance):
+class allowed_missing(BaseAcceptance):
     """Allows :class:`Missing` values without triggering a test failure."""
     def __repr__(self):
         return super(allowed_missing, self).__repr__()
@@ -278,7 +278,7 @@ class allowed_missing(BaseAllowance):
         return isinstance(item[1], Missing)
 
 
-class allowed_extra(BaseAllowance):
+class allowed_extra(BaseAcceptance):
     """Allows :class:`Extra` values without triggering a test failure."""
     def __repr__(self):
         return super(allowed_extra, self).__repr__()
@@ -287,7 +287,7 @@ class allowed_extra(BaseAllowance):
         return isinstance(item[1], Extra)
 
 
-class allowed_invalid(BaseAllowance):
+class allowed_invalid(BaseAcceptance):
     """Allows :class:`Invalid` values without triggering a test failure."""
     def __repr__(self):
         return super(allowed_invalid, self).__repr__()
@@ -296,7 +296,7 @@ class allowed_invalid(BaseAllowance):
         return isinstance(item[1], Invalid)
 
 
-class allowed_keys(BaseAllowance):
+class allowed_keys(BaseAcceptance):
     """Allows differences whose associated keys satisfy the given
     *predicate* (see :ref:`predicate-docs` for details).
     """
@@ -321,7 +321,7 @@ class allowed_keys(BaseAllowance):
         return self.function(key)
 
 
-class allowed_args(BaseAllowance):
+class allowed_args(BaseAcceptance):
     """Allows differences whose 'args' satisfy the given *predicate*
     (see :ref:`predicate-docs` for details).
     """
@@ -372,7 +372,7 @@ def _normalize_deviation_args(lower, upper, msg):
     return (lower, upper, msg)
 
 
-class allowed_deviation(BaseAllowance):
+class allowed_deviation(BaseAcceptance):
     """allowed_deviation(tolerance, /, msg=None)
     allowed_deviation(lower, upper, msg=None)
 
@@ -416,7 +416,7 @@ with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
     ])
 
 
-class allowed_percent(BaseAllowance):
+class allowed_percent(BaseAcceptance):
     """allowed_percent(tolerance, /, msg=None)
     allowed_percent(lower, upper, msg=None)
 
@@ -471,7 +471,7 @@ with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
 allowed_percent_deviation = allowed_percent  # Set alias for full name.
 
 
-class allowed_fuzzy(BaseAllowance):
+class allowed_fuzzy(BaseAcceptance):
     """Context manager that allows Invalid string differences without
     triggering a test failure if the actual value and the expected
     value match with a similarity greater than or equal to *cutoff*
@@ -508,7 +508,7 @@ class allowed_fuzzy(BaseAllowance):
         return similarity >= self.cutoff
 
 
-class allowed_specific(BaseAllowance):
+class allowed_specific(BaseAcceptance):
     """Allows specific *differences* without triggering a
     test failure.
     """
@@ -593,7 +593,7 @@ class allowed_specific(BaseAllowance):
             return False
 
 
-class allowed_limit(BaseAllowance):
+class allowed_limit(BaseAcceptance):
     """Allows up to a given *number* of differences without triggering
     a test failure.
     """
