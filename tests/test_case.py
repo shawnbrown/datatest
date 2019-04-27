@@ -24,14 +24,14 @@ from datatest.difference import Missing
 from datatest.difference import Invalid
 from datatest.difference import Deviation
 from datatest.acceptances import (
-    allowed_missing,
-    allowed_extra,
-    allowed_invalid,
-    allowed_fuzzy,
-    allowed_deviation,
-    allowed_percent,
-    allowed_limit,
-    allowed_specific,
+    AcceptedMissing,
+    AcceptedExtra,
+    AcceptedInvalid,
+    AcceptedFuzzy,
+    AcceptedDeviation,
+    AcceptedPercent,
+    AcceptedLimit,
+    AcceptedSpecific,
 )
 
 
@@ -268,36 +268,36 @@ class TestAcceptanceWrappers(unittest.TestCase):
 
     def test_allowedSpecific(self):
         cm = self.case.allowedSpecific([Missing('foo')])
-        self.assertTrue(isinstance(cm, allowed_specific))
+        self.assertTrue(isinstance(cm, AcceptedSpecific))
 
     def test_allowedMissing(self):
         cm = self.case.allowedMissing()
-        self.assertTrue(isinstance(cm, allowed_missing))
+        self.assertTrue(isinstance(cm, AcceptedMissing))
 
     def test_allowedExtra(self):
         cm = self.case.allowedExtra()
-        self.assertTrue(isinstance(cm, allowed_extra))
+        self.assertTrue(isinstance(cm, AcceptedExtra))
 
     def test_allowedInvalid(self):
         cm = self.case.allowedInvalid()
-        self.assertTrue(isinstance(cm, allowed_invalid))
+        self.assertTrue(isinstance(cm, AcceptedInvalid))
 
     def test_allowedFuzzy(self):
         cm = self.case.allowedFuzzy()
-        self.assertTrue(isinstance(cm, allowed_fuzzy))
+        self.assertTrue(isinstance(cm, AcceptedFuzzy))
 
     def test_allowedDeviation(self):
         cm = self.case.allowedDeviation(5)
-        self.assertTrue(isinstance(cm, allowed_deviation))
+        self.assertTrue(isinstance(cm, AcceptedDeviation))
 
     def test_allowedPercent(self):
         result = self.case.allowedPercent(5)
-        self.assertTrue(isinstance(result, allowed_percent))
+        self.assertTrue(isinstance(result, AcceptedPercent))
 
     def test_allowedPercentDeviation(self):
         result = self.case.allowedPercentDeviation(5)
-        self.assertTrue(isinstance(result, allowed_percent))
+        self.assertTrue(isinstance(result, AcceptedPercent))
 
     def test_allowedLimit(self):
         cm = self.case.allowedLimit(10)
-        self.assertTrue(isinstance(cm, allowed_limit))
+        self.assertTrue(isinstance(cm, AcceptedLimit))

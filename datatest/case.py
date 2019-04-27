@@ -13,16 +13,16 @@ from .validation import validate
 from .validation import ValidationError
 from .validation import _pytest_tracebackhide
 from .acceptances import (
-    allowed_missing,
-    allowed_extra,
-    allowed_invalid,
-    allowed_deviation,
-    allowed_percent,
-    allowed_specific,
-    allowed_keys,
-    allowed_args,
-    allowed_fuzzy,
-    allowed_limit,
+    AcceptedMissing,
+    AcceptedExtra,
+    AcceptedInvalid,
+    AcceptedDeviation,
+    AcceptedPercent,
+    AcceptedSpecific,
+    AcceptedKeys,
+    AcceptedArgs,
+    AcceptedFuzzy,
+    AcceptedLimit,
 )
 
 
@@ -201,7 +201,7 @@ class DataTestCase(TestCase):
         self._apply_validation(validate.unique, data, msg=msg)
 
     def allowedMissing(self, msg=None):
-        """Allows :class:`Missing` elements without triggering a test
+        """Accepts :class:`Missing` elements without triggering a test
         failure::
 
             with self.allowedMissing():
@@ -209,7 +209,7 @@ class DataTestCase(TestCase):
                 requirement = {'A', 'B', 'C'}
                 self.assertValid(data, requirement)
         """
-        return allowed_missing(msg)
+        return AcceptedMissing(msg)
 
     def allowedExtra(self, msg=None):
         """Allows :class:`Extra` elements without triggering a test
@@ -220,7 +220,7 @@ class DataTestCase(TestCase):
                 requirement = {'A', 'B', 'C'}
                 self.assertValid(data, requirement)
         """
-        return allowed_extra(msg)
+        return AcceptedExtra(msg)
 
     def allowedInvalid(self, msg=None):
         """Allows :class:`Invalid` elements without triggering a test
@@ -231,7 +231,7 @@ class DataTestCase(TestCase):
                 requirement = {'xxx': 'A', 'yyy': 'B'}
                 self.assertValid(data, requirement)
         """
-        return allowed_invalid(msg)
+        return AcceptedInvalid(msg)
 
     def allowedDeviation(self, lower, upper=None, msg=None):
         """
@@ -240,7 +240,7 @@ class DataTestCase(TestCase):
 
         See documentation for full details.
         """
-        return allowed_deviation(lower, upper, msg)
+        return AcceptedDeviation(lower, upper, msg)
 
     def allowedPercent(self, lower, upper=None, msg=None):
         """
@@ -249,14 +249,14 @@ class DataTestCase(TestCase):
 
         See documentation for full details.
         """
-        return allowed_percent(lower, upper, msg)
+        return AcceptedPercent(lower, upper, msg)
 
     def allowedPercentDeviation(self, lower, upper=None, msg=None):
         """alias of :meth:`DataTestCase.allowedPercent`"""
         return self.allowedPercent(lower, upper, msg)
 
     def allowedSpecific(self, differences, msg=None):
-        """Allows individually specified *differences* without
+        """Accepts individually specified *differences* without
         triggering a test failure::
 
             two_diffs = self.allowedSpecific([
@@ -271,35 +271,36 @@ class DataTestCase(TestCase):
         The *differences* argument can be a :py:obj:`list` or
         :py:obj:`dict` of differences or a single difference.
         """
-        return allowed_specific(differences, msg)
+        return AcceptedSpecific(differences, msg)
 
     def allowedKeys(self, predicate, msg=None):
-        """Allows differences in a mapping whose keys satisfy the
+        """Accepts differences in a mapping whose keys satisfy the
         given *predicate*.
         """
-        return allowed_keys(predicate, msg)
+        return AcceptedKeys(predicate, msg)
 
     def allowedArgs(self, predicate, msg=None):
-        """Allows differences in a mapping whose args satisfy the
+        """Accepted differences in a mapping whose args satisfy the
         given *predicate*.
         """
-        return allowed_args(predicate, msg)
+        return AcceptedArgs(predicate, msg)
 
     def allowedFuzzy(self, cutoff=0.6, msg=None):
-        """Allows invalid strings that match their expected value with
-        a similarity greater than or equal to *cutoff* (default 0.6).
+        """Accepted invalid strings that match their expected value
+        with a similarity greater than or equal to *cutoff* (default
+        0.6).
 
         Similarity measures are determined using the ratio() method of
         the difflib.SequenceMatcher class. The values range from 1.0
         (exactly the same) to 0.0 (completely different).
         """
-        return allowed_fuzzy(cutoff=cutoff, msg=msg)
+        return AcceptedFuzzy(cutoff=cutoff, msg=msg)
 
     def allowedLimit(self, number, msg=None):
-        """Allows a limited *number* of differences without triggering
-        a test failure::
+        """Accepted a limited *number* of differences without
+        triggering a test failure::
 
-            with self.allowedLimit(2):  # Allows up to two differences.
+            with self.allowedLimit(2):  # Accepts up to two differences.
                 data = ['47306', '1370', 'TX']  # <- '1370' and 'TX' invalid
                 requirement = re.compile(r'^\\d{5}$')
                 self.assertValid(data, requirement)
@@ -308,7 +309,7 @@ class DataTestCase(TestCase):
         test will fail with a :class:`ValidationError` containing all
         observed differences.
         """
-        return allowed_limit(number, msg)
+        return AcceptedLimit(number, msg)
 
 
 # Prettify default signature of methods that accept multiple signatures.

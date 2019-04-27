@@ -216,15 +216,15 @@ class TestAllowedKey(unittest.TestCase):
         self.assertEqual(list(remaining_diffs), [Missing(1), Extra(2)])
 
 
-class TestAllowedArgs(unittest.TestCase):
-    def test_allowed_args(self):
+class TestAcceptedArgs(unittest.TestCase):
+    def test_accepted_args(self):
         # Single argument.
         differences =  [Missing('aaa'), Missing('bbb'), Extra('bbb')]
         def function(arg):
             return arg == 'bbb'
 
         with self.assertRaises(ValidationError) as cm:
-            with datatest.allowed_args(function):  # <- Apply acceptance!
+            with datatest.AcceptedArgs(function):  # <- Apply acceptance!
                 raise ValidationError(differences, 'some message')
 
         remaining_diffs = cm.exception.differences
@@ -236,7 +236,7 @@ class TestAllowedArgs(unittest.TestCase):
             return diff < 2 and expected == 5
 
         with self.assertRaises(ValidationError) as cm:
-            with datatest.allowed_args(function):  # <- Apply acceptance!
+            with datatest.AcceptedArgs(function):  # <- Apply acceptance!
                 raise ValidationError(differences, 'some message')
 
         remaining_diffs = cm.exception.differences

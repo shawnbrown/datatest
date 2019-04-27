@@ -35,16 +35,17 @@ __datatest = True  # Used to detect in-module stack frames (which are
 
 __all__ = [
     'allowed',
-    'allowed_missing',
-    'allowed_extra',
-    'allowed_invalid',
-    'allowed_keys',
-    'allowed_args',
-    'allowed_deviation',
-    'allowed_percent',
-    'allowed_percent_deviation',  # alias of allowed_percent
-    'allowed_specific',
-    'allowed_limit',
+    'AcceptedMissing',
+    'AcceptedExtra',
+    'AcceptedInvalid',
+    'AcceptedKeys',
+    'AcceptedArgs',
+    'AcceptedDeviation',
+    'AcceptedPercent',
+    'allowed_percent_deviation',  # alias of AcceptedPercent
+    'AcceptedSpecific',
+    'AcceptedLimit',
+    'AcceptedFuzzy',
 ]
 
 
@@ -96,7 +97,7 @@ class BaseAcceptance(abc.ABC):
     def __and__(self, other):
         if not isinstance(other, BaseAcceptance):
             return NotImplemented
-        return IntersectedAllowance(self, other)
+        return IntersectedAcceptance(self, other)
 
     def union(self, other):
         """Return a new acceptance that allows any difference
@@ -108,7 +109,7 @@ class BaseAcceptance(abc.ABC):
     def __or__(self, other):
         if not isinstance(other, BaseAcceptance):
             return NotImplemented
-        return UnionedAllowance(self, other)
+        return UnionedAcceptance(self, other)
 
     ###############################################
     # Data handling methods for context management.
@@ -206,7 +207,7 @@ class BaseAcceptance(abc.ABC):
                               #    effect as "raise ... from None").
 
 
-class CombinedAllowance(BaseAcceptance):
+class CombinedAcceptance(BaseAcceptance):
     """Base class for combining acceptances using Boolean composition."""
     def __init__(self, left, right, msg=None):
         self.left = left
@@ -231,8 +232,8 @@ class CombinedAllowance(BaseAcceptance):
         self.right.end_collection()
 
 
-class IntersectedAllowance(CombinedAllowance):
-    """Base class to allow only those differences allowed by both
+class IntersectedAcceptance(CombinedAcceptance):
+    """Base class to accept only those differences allowed by both
     given acceptances.
     """
     def __repr__(self):
@@ -250,7 +251,7 @@ class IntersectedAllowance(CombinedAllowance):
         return first.call_predicate(item) and second.call_predicate(item)
 
 
-class UnionedAllowance(CombinedAllowance):
+class UnionedAcceptance(CombinedAcceptance):
     """Base class to accept differences allowed by either given
     acceptance.
     """
@@ -269,39 +270,43 @@ class UnionedAllowance(CombinedAllowance):
         return first.call_predicate(item) or second.call_predicate(item)
 
 
-class allowed_missing(BaseAcceptance):
-    """Allows :class:`Missing` values without triggering a test failure."""
+class AcceptedMissing(BaseAcceptance):
+    """Accepts :class:`Missing` values without triggering a test
+    failure.
+    """
     def __repr__(self):
-        return super(allowed_missing, self).__repr__()
+        return super(AcceptedMissing, self).__repr__()
 
     def call_predicate(self, item):
         return isinstance(item[1], Missing)
 
 
-class allowed_extra(BaseAcceptance):
-    """Allows :class:`Extra` values without triggering a test failure."""
+class AcceptedExtra(BaseAcceptance):
+    """Accepts :class:`Extra` values without triggering a test failure."""
     def __repr__(self):
-        return super(allowed_extra, self).__repr__()
+        return super(AcceptedExtra, self).__repr__()
 
     def call_predicate(self, item):
         return isinstance(item[1], Extra)
 
 
-class allowed_invalid(BaseAcceptance):
-    """Allows :class:`Invalid` values without triggering a test failure."""
+class AcceptedInvalid(BaseAcceptance):
+    """Accepts :class:`Invalid` values without triggering a test
+    failure.
+    """
     def __repr__(self):
-        return super(allowed_invalid, self).__repr__()
+        return super(AcceptedInvalid, self).__repr__()
 
     def call_predicate(self, item):
         return isinstance(item[1], Invalid)
 
 
-class allowed_keys(BaseAcceptance):
-    """Allows differences whose associated keys satisfy the given
+class AcceptedKeys(BaseAcceptance):
+    """Accepts differences whose associated keys satisfy the given
     *predicate* (see :ref:`predicate-docs` for details).
     """
     def __init__(self, predicate, msg=None):
-        super(allowed_keys, self).__init__(msg)
+        super(AcceptedKeys, self).__init__(msg)
 
         matcher = get_matcher(predicate)
         def function(x):
@@ -321,12 +326,12 @@ class allowed_keys(BaseAcceptance):
         return self.function(key)
 
 
-class allowed_args(BaseAcceptance):
-    """Allows differences whose 'args' satisfy the given *predicate*
+class AcceptedArgs(BaseAcceptance):
+    """Accepted differences whose 'args' satisfy the given *predicate*
     (see :ref:`predicate-docs` for details).
     """
     def __init__(self, predicate, msg=None):
-        super(allowed_args, self).__init__(msg)
+        super(AcceptedArgs, self).__init__(msg)
 
         matcher = get_matcher(predicate)
         def function(x):
@@ -372,11 +377,11 @@ def _normalize_deviation_args(lower, upper, msg):
     return (lower, upper, msg)
 
 
-class allowed_deviation(BaseAcceptance):
-    """allowed_deviation(tolerance, /, msg=None)
-    allowed_deviation(lower, upper, msg=None)
+class AcceptedDeviation(BaseAcceptance):
+    """AcceptedDeviation(tolerance, /, msg=None)
+    AcceptedDeviation(lower, upper, msg=None)
 
-    Context manager that allows Deviations within a given tolerance
+    Context manager that accepts Deviations within a given tolerance
     without triggering a test failure.
 
     See documentation for full details.
@@ -385,7 +390,7 @@ class allowed_deviation(BaseAcceptance):
         lower, upper, msg = _normalize_deviation_args(lower, upper, msg)
         self.lower = lower
         self.upper = upper
-        super(allowed_deviation, self).__init__(msg)
+        super(AcceptedDeviation, self).__init__(msg)
 
     def __repr__(self):
         cls_name = self.__class__.__name__
@@ -409,18 +414,18 @@ class allowed_deviation(BaseAcceptance):
         return self.lower <= deviation <= self.upper
 
 with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
-    allowed_deviation.__init__.__signature__ = inspect.Signature([
+    AcceptedDeviation.__init__.__signature__ = inspect.Signature([
         inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY),
         inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),
         inspect.Parameter('msg', inspect.Parameter.POSITIONAL_OR_KEYWORD),
     ])
 
 
-class allowed_percent(BaseAcceptance):
-    """allowed_percent(tolerance, /, msg=None)
-    allowed_percent(lower, upper, msg=None)
+class AcceptedPercent(BaseAcceptance):
+    """AcceptedPercent(tolerance, /, msg=None)
+    AcceptedPercent(lower, upper, msg=None)
 
-    Context manager that allows Deviations within a given percent
+    Context manager that accepts Deviations within a given percent
     tolerance without triggering a test failure.
 
     See documentation for full details.
@@ -429,7 +434,7 @@ class allowed_percent(BaseAcceptance):
         lower, upper, msg = _normalize_deviation_args(lower, upper, msg)
         self.lower = lower
         self.upper = upper
-        super(allowed_percent, self).__init__(msg)
+        super(AcceptedPercent, self).__init__(msg)
 
     def __repr__(self):
         cls_name = self.__class__.__name__
@@ -462,16 +467,16 @@ class allowed_percent(BaseAcceptance):
         return self.lower <= percent_error <= self.upper
 
 with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
-    allowed_percent.__init__.__signature__ = inspect.Signature([
+    AcceptedPercent.__init__.__signature__ = inspect.Signature([
         inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY),
         inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),
         inspect.Parameter('msg', inspect.Parameter.POSITIONAL_OR_KEYWORD),
     ])
 
-allowed_percent_deviation = allowed_percent  # Set alias for full name.
+allowed_percent_deviation = AcceptedPercent  # Set alias for full name.
 
 
-class allowed_fuzzy(BaseAcceptance):
+class AcceptedFuzzy(BaseAcceptance):
     """Context manager that allows Invalid string differences without
     triggering a test failure if the actual value and the expected
     value match with a similarity greater than or equal to *cutoff*
@@ -483,7 +488,7 @@ class allowed_fuzzy(BaseAcceptance):
     """
     def __init__(self, cutoff=0.6, msg=None):
         self.cutoff = cutoff
-        super(allowed_fuzzy, self).__init__(msg)
+        super(AcceptedFuzzy, self).__init__(msg)
 
     def __repr__(self):
         cls_name = self.__class__.__name__
@@ -508,8 +513,8 @@ class allowed_fuzzy(BaseAcceptance):
         return similarity >= self.cutoff
 
 
-class allowed_specific(BaseAcceptance):
-    """Allows specific *differences* without triggering a
+class AcceptedSpecific(BaseAcceptance):
+    """Accepts specific *differences* without triggering a
     test failure.
     """
     def __init__(self, differences, msg=None):
@@ -593,9 +598,9 @@ class allowed_specific(BaseAcceptance):
             return False
 
 
-class allowed_limit(BaseAcceptance):
-    """Allows up to a given *number* of differences without triggering
-    a test failure.
+class AcceptedLimit(BaseAcceptance):
+    """Accepted up to a given *number* of differences without
+    triggering a test failure.
     """
     def __init__(self, number, msg=None):
         if not isinstance(number, Number):
@@ -640,7 +645,7 @@ class allowed(abc.ABC):
 
     @classmethod
     def missing(cls, msg=None):
-        """Allows :class:`Missing` values without triggering a
+        """Accepts :class:`Missing` values without triggering a
         test failure:
 
         .. code-block:: python
@@ -655,11 +660,11 @@ class allowed(abc.ABC):
             with allowed.missing():
                 validate(data, requirement)  # Raises Missing('A')
         """
-        return allowed_missing(msg)
+        return AcceptedMissing(msg)
 
     @classmethod
     def extra(cls, msg=None):
-        """Allows :class:`Extra` values without triggering a
+        """Accepts :class:`Extra` values without triggering a
         test failure:
 
         .. code-block:: python
@@ -674,7 +679,7 @@ class allowed(abc.ABC):
             with allowed.extra():
                 validate(data, requirement)  # Raises Extra('C')
         """
-        return allowed_extra(msg)
+        return AcceptedExtra(msg)
 
     @classmethod
     def invalid(cls, msg=None):
@@ -693,11 +698,11 @@ class allowed(abc.ABC):
             with allowed.invalid():
                 validate(data, requirement)  # Raises Invalid('B')
         """
-        return allowed_invalid(msg)
+        return AcceptedInvalid(msg)
 
     @classmethod
     def keys(cls, predicate, msg=None):
-        """Allows differences whose associated keys satisfy the given
+        """Accepts differences whose associated keys satisfy the given
         *predicate* (see :ref:`predicate-docs` for details):
 
         .. code-block:: python
@@ -713,11 +718,11 @@ class allowed(abc.ABC):
                 validate(data, requirement)  # Raises dictionary
                                              # {'B': Invalid('y')}
         """
-        return allowed_keys(predicate, msg)
+        return AcceptedKeys(predicate, msg)
 
     @classmethod
     def args(cls, predicate, msg=None):
-        """Allows differences whose :attr:`args <BaseDifference.args>`
+        """Accepts differences whose :attr:`args <BaseDifference.args>`
         satisfy the given *predicate* (see :ref:`predicate-docs` for
         details):
 
@@ -734,12 +739,13 @@ class allowed(abc.ABC):
                 validate(data, requirement)  # Raises dictionary
                                              # {'B': Invalid('y')}
         """
-        return allowed_args(predicate, msg)
+        return AcceptedArgs(predicate, msg)
 
     @classmethod
     def fuzzy(cls, cutoff=0.6, msg=None):
-        """Allows invalid strings that match their expected value with
-        a similarity greater than or equal to *cutoff* (default 0.6).
+        """Accepted invalid strings that match their expected value
+        with a similarity greater than or equal to *cutoff* (default
+        0.6).
 
         Similarity measures are determined using the ratio() method of
         the difflib.SequenceMatcher class. The values range from 1.0
@@ -757,31 +763,31 @@ class allowed(abc.ABC):
             with allowed.fuzzy():
                 validate(data, requirement)
         """
-        return allowed_fuzzy(cutoff=cutoff, msg=msg)
+        return AcceptedFuzzy(cutoff=cutoff, msg=msg)
 
     @classmethod
     def deviation(cls, lower, upper=None, msg=None):
         """allowed.deviation(tolerance, /, msg=None)
         allowed.deviation(lower, upper, msg=None)
 
-        Context manager that allows Deviations within a given
+        Context manager that accepts Deviations within a given
         tolerance without triggering a test failure.
 
         See documentation for full details.
         """
-        return allowed_deviation(lower, upper, msg)
+        return AcceptedDeviation(lower, upper, msg)
 
     @classmethod
     def percent(cls, lower, upper=None, msg=None):
         """allowed.percent(tolerance, /, msg=None)
         allowed.percent(lower, upper, msg=None)
 
-        Context manager that allows Deviations within a given
+        Context manager that accepts Deviations within a given
         percent tolerance without triggering a test failure.
 
         See documentation for full details.
         """
-        return allowed_percent(lower, upper, msg)
+        return AcceptedPercent(lower, upper, msg)
 
     @classmethod
     def percent_deviation(cls, lower, upper=None, msg=None):
@@ -880,11 +886,11 @@ class allowed(abc.ABC):
             with known_issues:
                 validate(data, requirement)
         """
-        return allowed_specific(differences, msg)
+        return AcceptedSpecific(differences, msg)
 
     @classmethod
     def limit(cls, number, msg=None):
-        """Allows up to a given *number* of differences without
+        """Accepts up to a given *number* of differences without
         triggering a test failure:
 
         .. code-block:: python
@@ -904,4 +910,4 @@ class allowed(abc.ABC):
         case will fail with a :class:`ValidationError` containing the
         remaining differences.
         """
-        return allowed_limit(number, msg)
+        return AcceptedLimit(number, msg)
