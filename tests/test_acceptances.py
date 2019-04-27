@@ -30,17 +30,17 @@ from datatest.acceptances import (
 )
 
 
-class MinimalAllowance(BaseAcceptance):  # A minimal subclass for
-    def call_predicate(self, item):      # testing--defines three
-        return False                     # concrete stubs to satisfy
-                                         # abstract method requirement
-    def __repr__(self):                  # of the base class.
-        return super(MinimalAllowance, self).__repr__()
+class MinimalAcceptance(BaseAcceptance):  # A minimal subclass for
+    def call_predicate(self, item):       # testing--defines three
+        return False                      # concrete stubs to satisfy
+                                          # abstract method requirement
+    def __repr__(self):                   # of the base class.
+        return super(MinimalAcceptance, self).__repr__()
 
 
 class TestBaseAcceptance(unittest.TestCase):
     def test_default_priority(self):
-        class accepts_nothing(MinimalAllowance):
+        class accepts_nothing(MinimalAcceptance):
             def call_predicate(_self, item):
                 return False
 
@@ -51,7 +51,7 @@ class TestBaseAcceptance(unittest.TestCase):
         # Calling the superclass' __init__() should not overwrite
         # the `priority` attribute if it has been previously set by
         # a subclass.
-        class accepts_nothing(MinimalAllowance):
+        class accepts_nothing(MinimalAcceptance):
             def __init__(_self, msg=None):
                 _self.priority = 200
                 super(accepts_nothing, _self).__init__(msg)
@@ -95,7 +95,7 @@ class TestBaseAcceptance(unittest.TestCase):
         self.assertEqual(actual, expected)
 
     def test_filterfalse(self):
-        class allowed_missing(MinimalAllowance):
+        class allowed_missing(MinimalAcceptance):
             def call_predicate(_self, item):
                 return isinstance(item[1], Missing)
 
@@ -110,7 +110,7 @@ class TestBaseAcceptance(unittest.TestCase):
         """The __enter__() method should return the object itself
         (see PEP 343 for context manager protocol).
         """
-        acceptance = MinimalAllowance()
+        acceptance = MinimalAcceptance()
         self.assertIs(acceptance, acceptance.__enter__())
 
     def test_exit_context(self):
@@ -125,7 +125,7 @@ class TestBaseAcceptance(unittest.TestCase):
             type, value, traceback = sys.exc_info()  # Get exception info.
 
         with self.assertRaises(ValidationError) as cm:
-            acceptance = MinimalAllowance('acceptance message')
+            acceptance = MinimalAcceptance('acceptance message')
             acceptance.__exit__(type, value, traceback)
 
         description = cm.exception.description
@@ -138,7 +138,7 @@ class TestBaseAcceptance(unittest.TestCase):
             type, value, traceback = sys.exc_info()  # Get exception info.
 
         with self.assertRaises(ValidationError) as cm:
-            acceptance = MinimalAllowance('acceptance message')
+            acceptance = MinimalAcceptance('acceptance message')
             acceptance.__exit__(type, value, traceback)
 
         description = cm.exception.description
@@ -147,7 +147,7 @@ class TestBaseAcceptance(unittest.TestCase):
 
 class TestAllowanceProtocol(unittest.TestCase):
     def setUp(self):
-        class LoggingAllowance(MinimalAllowance):
+        class LoggingAllowance(MinimalAcceptance):
             def __init__(_self, msg=None):
                 _self.log = []
                 super(LoggingAllowance, _self).__init__(msg)
@@ -199,11 +199,11 @@ class TestAllowanceProtocol(unittest.TestCase):
 
 class TestLogicalComposition(unittest.TestCase):
     def setUp(self):
-        class allowed_missing(MinimalAllowance):
+        class allowed_missing(MinimalAcceptance):
             def call_predicate(_self, item):
                 return isinstance(item[1], Missing)
 
-        class allowed_letter_a(MinimalAllowance):
+        class allowed_letter_a(MinimalAcceptance):
             def __init__(_self):
                 _self.priority = 150
 
