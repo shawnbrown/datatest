@@ -3,7 +3,7 @@ import pytest
 from datatest import working_directory
 from datatest import Select
 from datatest import validate
-from datatest import allowed
+from datatest import accepted
 from datatest import Missing, Extra, Deviation, Invalid
 
 

@@ -200,66 +200,66 @@ class DataTestCase(TestCase):
         __tracebackhide__ = _pytest_tracebackhide
         self._apply_validation(validate.unique, data, msg=msg)
 
-    def allowedMissing(self, msg=None):
+    def acceptedMissing(self, msg=None):
         """Accepts :class:`Missing` elements without triggering a test
         failure::
 
-            with self.allowedMissing():
+            with self.acceptedMissing():
                 data = {'A', 'B'}  # <- 'C' is missing
                 requirement = {'A', 'B', 'C'}
                 self.assertValid(data, requirement)
         """
         return AcceptedMissing(msg)
 
-    def allowedExtra(self, msg=None):
+    def acceptedExtra(self, msg=None):
         """Accepts :class:`Extra` elements without triggering a test
         failure::
 
-            with self.allowedExtra():
+            with self.acceptedExtra():
                 data = {'A', 'B', 'C', 'D'}  # <- 'D' is extra
                 requirement = {'A', 'B', 'C'}
                 self.assertValid(data, requirement)
         """
         return AcceptedExtra(msg)
 
-    def allowedInvalid(self, msg=None):
+    def acceptedInvalid(self, msg=None):
         """Accepts :class:`Invalid` elements without triggering a test
         failure::
 
-            with self.allowedInvalid():
+            with self.acceptedInvalid():
                 data = {'xxx': 'A', 'yyy': 'E'}  # <- 'E' is invalid
                 requirement = {'xxx': 'A', 'yyy': 'B'}
                 self.assertValid(data, requirement)
         """
         return AcceptedInvalid(msg)
 
-    def allowedDeviation(self, lower, upper=None, msg=None):
+    def acceptedDeviation(self, lower, upper=None, msg=None):
         """
-        allowedDeviation(tolerance, /, msg=None)
-        allowedDeviation(lower, upper, msg=None)
+        acceptedDeviation(tolerance, /, msg=None)
+        acceptedDeviation(lower, upper, msg=None)
 
         See documentation for full details.
         """
         return AcceptedDeviation(lower, upper, msg)
 
-    def allowedPercent(self, lower, upper=None, msg=None):
+    def acceptedPercent(self, lower, upper=None, msg=None):
         """
-        allowedPercent(tolerance, /, msg=None)
-        allowedPercent(lower, upper, msg=None)
+        acceptedPercent(tolerance, /, msg=None)
+        acceptedPercent(lower, upper, msg=None)
 
         See documentation for full details.
         """
         return AcceptedPercent(lower, upper, msg)
 
-    def allowedPercentDeviation(self, lower, upper=None, msg=None):
-        """alias of :meth:`DataTestCase.allowedPercent`"""
-        return self.allowedPercent(lower, upper, msg)
+    def acceptedPercentDeviation(self, lower, upper=None, msg=None):
+        """alias of :meth:`DataTestCase.acceptedPercent`"""
+        return self.acceptedPercent(lower, upper, msg)
 
-    def allowedSpecific(self, differences, msg=None):
+    def acceptedSpecific(self, differences, msg=None):
         """Accepts individually specified *differences* without
         triggering a test failure::
 
-            two_diffs = self.allowedSpecific([
+            two_diffs = self.acceptedSpecific([
                 Missing('C'),
                 Extra('D'),
             ])
@@ -273,19 +273,19 @@ class DataTestCase(TestCase):
         """
         return AcceptedSpecific(differences, msg)
 
-    def allowedKeys(self, predicate, msg=None):
+    def acceptedKeys(self, predicate, msg=None):
         """Accepts differences in a mapping whose keys satisfy the
         given *predicate*.
         """
         return AcceptedKeys(predicate, msg)
 
-    def allowedArgs(self, predicate, msg=None):
+    def acceptedArgs(self, predicate, msg=None):
         """Accepted differences in a mapping whose args satisfy the
         given *predicate*.
         """
         return AcceptedArgs(predicate, msg)
 
-    def allowedFuzzy(self, cutoff=0.6, msg=None):
+    def acceptedFuzzy(self, cutoff=0.6, msg=None):
         """Accepted invalid strings that match their expected value
         with a similarity greater than or equal to *cutoff* (default
         0.6).
@@ -296,11 +296,11 @@ class DataTestCase(TestCase):
         """
         return AcceptedFuzzy(cutoff=cutoff, msg=msg)
 
-    def allowedLimit(self, number, msg=None):
+    def acceptedLimit(self, number, msg=None):
         """Accepted a limited *number* of differences without
         triggering a test failure::
 
-            with self.allowedLimit(2):  # Accepts up to two differences.
+            with self.acceptedLimit(2):  # Accepts up to two differences.
                 data = ['47306', '1370', 'TX']  # <- '1370' and 'TX' invalid
                 requirement = re.compile(r'^\\d{5}$')
                 self.assertValid(data, requirement)
@@ -316,13 +316,13 @@ class DataTestCase(TestCase):
 # This only works for Python 3.3 and newer--older versions will simply
 # have the original method sigture.
 with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
-    DataTestCase.allowedDeviation.__signature__ = inspect.Signature([
+    DataTestCase.acceptedDeviation.__signature__ = inspect.Signature([
         inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY),
         inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),
         inspect.Parameter('msg', inspect.Parameter.POSITIONAL_OR_KEYWORD),
     ])
 
-    DataTestCase.allowedPercentDeviation.__signature__ = inspect.Signature([
+    DataTestCase.acceptedPercentDeviation.__signature__ = inspect.Signature([
         inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY),
         inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),
         inspect.Parameter('msg', inspect.Parameter.POSITIONAL_OR_KEYWORD),

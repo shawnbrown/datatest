@@ -2,7 +2,7 @@
 
 import re
 from datatest import validate
-from datatest import allowed
+from datatest import accepted
 
 
 def test_using_set():

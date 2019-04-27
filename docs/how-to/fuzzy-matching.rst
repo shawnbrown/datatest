@@ -17,18 +17,18 @@ they are exactly the same. Datatest provides options for
 matching").
 
 When checking mappings or sequences of values, you can accept
-approximate matches with the :meth:`allowed.fuzzy` acceptance:
+approximate matches with the :meth:`accepted.fuzzy` acceptance:
 
 .. code-block:: python
     :emphasize-lines: 7
 
-    from datatest import validate, allowed
+    from datatest import validate, accepted
 
     data = {'A': 'aax', 'B': 'bbx'}
 
     requirement = {'A': 'aaa', 'B': 'bbb'}
 
-    with allowed.fuzzy(cutoff=0.6):
+    with accepted.fuzzy(cutoff=0.6):
         validate(data, requirement)
 
 If variation is an inherent, natural feature of the data and

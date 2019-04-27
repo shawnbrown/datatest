@@ -3,7 +3,7 @@ import pytest
 from datatest import working_directory
 from datatest import Select
 from datatest import validate
-from datatest import allowed
+from datatest import accepted
 from datatest import Missing, Extra, Deviation, Invalid
 
 
@@ -27,7 +27,7 @@ def summary():
 def test_columns(detail, summary):
     required_set = set(summary.fieldnames)
 
-    with allowed.extra():
+    with accepted.extra():
         validate(detail.fieldnames, required_set)
 
 
@@ -35,7 +35,7 @@ def test_state_labels(detail, summary):
     data = detail({'state/territory'})
     requirement = summary({'state/territory'})
 
-    omitted_territory = allowed.specific([
+    omitted_territory = accepted.specific([
         Missing('Jervis Bay Territory'),
     ])
 
@@ -56,9 +56,9 @@ def test_population_sums(detail, summary):
     data = detail({'state/territory': 'population'}).sum()
     requirement = summary({'state/territory': 'population'}).sum()
 
-    omitted_territory = allowed.specific({
+    omitted_territory = accepted.specific({
         'Jervis Bay Territory': Deviation(-388, 388),
     })
 
-    with allowed.percent(0.03) | omitted_territory:
+    with accepted.percent(0.03) | omitted_territory:
         validate(data, requirement)

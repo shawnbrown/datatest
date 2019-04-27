@@ -137,7 +137,7 @@ are two-tuples made from columns "B" and "C":
             import pytest
             from datatest import (
                 validate,
-                allowed,
+                accepted,
                 Select,
                 working_directory,
             )

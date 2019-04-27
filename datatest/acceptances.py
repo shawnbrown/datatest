@@ -34,7 +34,7 @@ __datatest = True  # Used to detect in-module stack frames (which are
 
 
 __all__ = [
-    'allowed',
+    'accepted',
     'AcceptedMissing',
     'AcceptedExtra',
     'AcceptedInvalid',
@@ -627,98 +627,87 @@ class AcceptedLimit(BaseAcceptance):
         return self._count <= self._limit
 
 
-#########################################
-# Factory class for pytest-style testing.
-#########################################
-class allowed(abc.ABC):
-    """:class:`allowed` is an abstract factory class that can not be
-    instantiated directly. It contains several constructors to create
-    acceptance objects.
-    """
-    def __new__(cls, *args, **kwds):
-        msg = ("Can't instantiate abstract class allowed, use constructor "
-               "methods like allowed.missing(), allowed.extra(), etc.")
-        raise TypeError(msg)
+##########################################
+# Factory object for pytest-style testing.
+##########################################
 
-    @classmethod
-    def missing(cls, msg=None):
+class AcceptedType(object):
+    """Accept differences without triggering a test failure."""
+
+    def missing(self, msg=None):
         """Accepts :class:`Missing` values without triggering a
         test failure:
 
         .. code-block:: python
             :emphasize-lines: 7
 
-            from datatest import validate, allowed
+            from datatest import validate, accepted
 
             data = ['B', 'C']
 
             requirement = {'A', 'B', 'C'}
 
-            with allowed.missing():
+            with accepted.missing():
                 validate(data, requirement)  # Raises Missing('A')
         """
         return AcceptedMissing(msg)
 
-    @classmethod
-    def extra(cls, msg=None):
+    def extra(self, msg=None):
         """Accepts :class:`Extra` values without triggering a
         test failure:
 
         .. code-block:: python
             :emphasize-lines: 7
 
-            from datatest import validate, allowed
+            from datatest import validate, accepted
 
             data = ['A', 'B', 'C']
 
             requirement = {'A', 'B'}
 
-            with allowed.extra():
+            with accepted.extra():
                 validate(data, requirement)  # Raises Extra('C')
         """
         return AcceptedExtra(msg)
 
-    @classmethod
-    def invalid(cls, msg=None):
+    def invalid(self, msg=None):
         """Accepts :class:`Invalid` values without triggering a
         test failure:
 
         .. code-block:: python
             :emphasize-lines: 7
 
-            from datatest import validate, allowed
+            from datatest import validate, accepted
 
             data = ['A', 'B', 'A']
 
             requirement = 'A'
 
-            with allowed.invalid():
+            with accepted.invalid():
                 validate(data, requirement)  # Raises Invalid('B')
         """
         return AcceptedInvalid(msg)
 
-    @classmethod
-    def keys(cls, predicate, msg=None):
+    def keys(self, predicate, msg=None):
         """Accepts differences whose associated keys satisfy the given
         *predicate* (see :ref:`predicate-docs` for details):
 
         .. code-block:: python
             :emphasize-lines: 7
 
-            from datatest import validate, allowed
+            from datatest import validate, accepted
 
             data = {'A': 'x', 'B': 'y'}
 
             requirement = 'x'
 
-            with allowed.keys('B'):
+            with accepted.keys('B'):
                 validate(data, requirement)  # Raises dictionary
                                              # {'B': Invalid('y')}
         """
         return AcceptedKeys(predicate, msg)
 
-    @classmethod
-    def args(cls, predicate, msg=None):
+    def args(self, predicate, msg=None):
         """Accepts differences whose :attr:`args <BaseDifference.args>`
         satisfy the given *predicate* (see :ref:`predicate-docs` for
         details):
@@ -726,20 +715,19 @@ class allowed(abc.ABC):
         .. code-block:: python
             :emphasize-lines: 7
 
-            from datatest import validate, allowed
+            from datatest import validate, accepted
 
             data = {'A': 'x', 'B': 'y'}
 
             requirement = 'x'
 
-            with allowed.args('y'):
+            with accepted.args('y'):
                 validate(data, requirement)  # Raises dictionary
                                              # {'B': Invalid('y')}
         """
         return AcceptedArgs(predicate, msg)
 
-    @classmethod
-    def fuzzy(cls, cutoff=0.6, msg=None):
+    def fuzzy(self, cutoff=0.6, msg=None):
         """Accepted invalid strings that match their expected value
         with a similarity greater than or equal to *cutoff* (default
         0.6).
@@ -751,21 +739,20 @@ class allowed(abc.ABC):
         .. code-block:: python
             :emphasize-lines: 7
 
-            from datatest import validate, allowed
+            from datatest import validate, accepted
 
             data = {'A': 'aax', 'B': 'bbx'}
 
             requirement = {'A': 'aaa', 'B': 'bbb'}
 
-            with allowed.fuzzy():
+            with accepted.fuzzy():
                 validate(data, requirement)
         """
         return AcceptedFuzzy(cutoff=cutoff, msg=msg)
 
-    @classmethod
-    def deviation(cls, lower, upper=None, msg=None):
-        """allowed.deviation(tolerance, /, msg=None)
-        allowed.deviation(lower, upper, msg=None)
+    def deviation(self, lower, upper=None, msg=None):
+        """accepted.deviation(tolerance, /, msg=None)
+        accepted.deviation(lower, upper, msg=None)
 
         Context manager that accepts Deviations within a given
         tolerance without triggering a test failure.
@@ -774,10 +761,9 @@ class allowed(abc.ABC):
         """
         return AcceptedDeviation(lower, upper, msg)
 
-    @classmethod
-    def percent(cls, lower, upper=None, msg=None):
-        """allowed.percent(tolerance, /, msg=None)
-        allowed.percent(lower, upper, msg=None)
+    def percent(self, lower, upper=None, msg=None):
+        """accepted.percent(tolerance, /, msg=None)
+        accepted.percent(lower, upper, msg=None)
 
         Context manager that accepts Deviations within a given
         percent tolerance without triggering a test failure.
@@ -786,26 +772,20 @@ class allowed(abc.ABC):
         """
         return AcceptedPercent(lower, upper, msg)
 
-    @classmethod
-    def percent_deviation(cls, lower, upper=None, msg=None):
-        """alias of :meth:`allowed.percent`"""
-        return cls.percent(lower, upper, msg)
-
-    @classmethod
-    def specific(cls, differences, msg=None):
+    def specific(self, differences, msg=None):
         """Accepts specific *differences* without triggering a
         test failure:
 
         .. code-block:: python
             :emphasize-lines: 7-10
 
-            from datatest import validate, allowed, Extra, Missing
+            from datatest import validate, accepted, Extra, Missing
 
             data = ['x', 'y', 'q']
 
             requirement = {'x', 'y', 'z'}
 
-            known_issues = allowed.specific([
+            known_issues = accepted.specific([
                 Extra('q'),
                 Missing('z'),
             ])
@@ -819,7 +799,7 @@ class allowed(abc.ABC):
         .. code-block:: python
             :emphasize-lines: 10-13
 
-            from datatest import validate, allowed, Extra, Missing
+            from datatest import validate, accepted, Extra, Missing
 
             data = {
                 'A': ['x', 'y', 'q'],
@@ -828,9 +808,9 @@ class allowed(abc.ABC):
 
             requirement = {'x', 'y', 'z'}
 
-            known_issues = allowed.specific([  # Accepts all given
-                Extra('q'),                    # differences from
-                Missing('z'),                  # both 'A' and 'B'.
+            known_issues = accepted.specific([  # Accepts all given
+                Extra('q'),                     # differences from
+                Missing('z'),                   # both 'A' and 'B'.
             ])
 
             with known_issues:
@@ -842,7 +822,7 @@ class allowed(abc.ABC):
         .. code-block:: python
             :emphasize-lines: 10-13
 
-            from datatest import validate, allowed, Extra, Missing
+            from datatest import validate, accepted, Extra, Missing
 
             data = {
                 'A': ['x', 'y', 'q'],
@@ -851,9 +831,9 @@ class allowed(abc.ABC):
 
             requirement = {'x', 'y', 'z'}
 
-            known_issues = allowed.specific({     # Using dict
-                'A': [Extra('q'), Missing('z')],  # of accepted
-                'B': Missing('z'),                # differences.
+            known_issues = accepted.specific({     # Using dict
+                'A': [Extra('q'), Missing('z')],   # of accepted
+                'B': Missing('z'),                 # differences.
             })
 
             with known_issues:
@@ -866,7 +846,7 @@ class allowed(abc.ABC):
         .. code-block:: python
             :emphasize-lines: 10-13
 
-            from datatest import validate, allowed
+            from datatest import validate, accepted
 
             data = {
                 'A': ['x', 'y', 'q'],
@@ -875,7 +855,7 @@ class allowed(abc.ABC):
 
             requirement = {'x', 'y', 'z'}
 
-            known_issues = allowed.specific({
+            known_issues = accepted.specific({
                 # Use predicate key, an ellipsis wildcard.
                 ...: [Extra('q'), Missing('z'), Missing('z')]
             })
@@ -885,21 +865,20 @@ class allowed(abc.ABC):
         """
         return AcceptedSpecific(differences, msg)
 
-    @classmethod
-    def limit(cls, number, msg=None):
+    def limit(self, number, msg=None):
         """Accepts up to a given *number* of differences without
         triggering a test failure:
 
         .. code-block:: python
             :emphasize-lines: 7
 
-            from datatest import validate, allowed
+            from datatest import validate, accepted
 
             data = ['A', 'B', 'A', 'C']
 
             requirement = 'A'
 
-            with allowed.limit(2):
+            with accepted.limit(2):
                 validate(data, requirement)  # Raises [Invalid('B'),
                                              #         Invalid('C')]
 
@@ -908,3 +887,6 @@ class allowed(abc.ABC):
         remaining differences.
         """
         return AcceptedLimit(number, msg)
+
+
+accepted = AcceptedType()  # Use as instance.

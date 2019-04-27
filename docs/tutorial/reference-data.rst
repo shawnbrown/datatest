@@ -582,7 +582,7 @@ in our tests, we will accept a percent error of ±3%:
                 data = detail({'state/territory': 'population'}).sum()
                 requirement = summary({'state/territory': 'population'}).sum()
 
-                with allowed.percent(0.03):  # <- Accept +/- 3%
+                with accepted.percent(0.03):  # <- Accept +/- 3%
                     validate(data, requirement)
 
     .. group-tab:: Unittest
@@ -595,7 +595,7 @@ in our tests, we will accept a percent error of ±3%:
                     data = detail({'state/territory': 'population'}).sum()
                     requirement = summary({'state/territory': 'population'}).sum()
 
-                    with self.allowedPercent(0.03):  # <- Accept +/- 3%
+                    with self.acceptedPercent(0.03):  # <- Accept +/- 3%
                         self.assertValid(data, requirement)
 
 
@@ -617,7 +617,7 @@ Rerunning our script with this new acceptance gives the following message:
                     data = detail({'state/territory': 'population'}).sum()
                     requirement = summary({'state/territory': 'population'}).sum()
 
-                    with allowed.percent(0.03):  # <- Accept +/- 3%
+                    with accepted.percent(0.03):  # <- Accept +/- 3%
             >           validate(data, requirement)
             E           ValidationError: does not satisfy mapping requirement (2 differences): {
                             'Jervis Bay Territory': Deviation(-388, 388),
@@ -682,11 +682,11 @@ Running the test script again gives us one final difference to address:
                     data = detail({'state/territory': 'population'}).sum()
                     requirement = summary({'state/territory': 'population'}).sum()
 
-                    omitted_territory = allowed.specific({
+                    omitted_territory = accepted.specific({
                         'Jervis Bay Territory': Deviation(-388, 388),
                     })
 
-                    with allowed.percent(0.03) | omitted_territory:
+                    with accepted.percent(0.03) | omitted_territory:
             >           validate(data, requirement)
             E           ValidationError: does not satisfy mapping requirement (1 difference): {
                             'Tasmania': Deviation(+505685, 514245),

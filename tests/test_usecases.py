@@ -13,7 +13,7 @@ class TestNamespaces(unittest.TestCase):
         """
         # Core objects.
         self.assertTrue(hasattr(datatest, 'validate'))
-        self.assertTrue(hasattr(datatest, 'allowed'))
+        self.assertTrue(hasattr(datatest, 'accepted'))
 
         # Internal sub-module.
         self.assertTrue(hasattr(datatest, 'requirements'))
@@ -87,7 +87,7 @@ class TestSelectIdioms(unittest.TestCase):
         datatest.validate(a.fieldnames, set(a.fieldnames))
 
         # A case we want to optimize.
-        with datatest.allowed.specific(datatest.Extra('C')):
+        with datatest.accepted.specific(datatest.Extra('C')):
             datatest.validate(a.fieldnames, set(b.fieldnames))
 
     def test_compare_rows(self):
@@ -116,12 +116,12 @@ class TestValidateIdioms(unittest.TestCase):
 
     def test_mapping_of_sequences_for_order(self):
         """Should be able to compare mapping of sequences for order and
-        allow differences across keys (e.g., with allowed.extra() and
-        allowed.missing()).
+        accept differences across keys (e.g., with accepted.extra() and
+        accepted.missing()).
         """
         # Pull objects into local name space to improve readability.
         validate = datatest.validation.validate
-        allowed = datatest.allowed
+        accepted = datatest.accepted
         ValidationError = datatest.ValidationError
         Missing = datatest.Missing
         Extra = datatest.Extra
@@ -134,11 +134,11 @@ class TestValidateIdioms(unittest.TestCase):
             'baz': ['a', 'b', 'c', 'd'],  # -> [Extra((3, 'd'))]
         }
 
-        expected_extras = allowed.specific({
+        expected_extras = accepted.specific({
             'foo': [Extra((1, 'x'))],
             'baz': [Extra((3, 'd'))],
         })
-        with allowed.missing() | expected_extras:
+        with accepted.missing() | expected_extras:
             validate.order(data, requirement)
 
     def test_enumerate_to_dict(self):

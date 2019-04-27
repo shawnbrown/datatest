@@ -977,10 +977,10 @@ class TestAllowDeviation(unittest.TestCase):
 
     def test_single_value_acceptance(self):
         differences = [
-            xDeviation(+2.9, 10, label='aaa'),  # <- Not allowed.
+            xDeviation(+2.9, 10, label='aaa'),  # <- Not accepted.
             xDeviation(+3.0, 10, label='bbb'),
             xDeviation(+3.0, 5, label='ccc'),
-            xDeviation(+3.1, 10, label='ddd'),  # <- Not allowed.
+            xDeviation(+3.1, 10, label='ddd'),  # <- Not accepted.
         ]
         with self.assertRaises(DataError) as cm:
             with allow_deviation(3, 3):  # <- Allows +3 only.

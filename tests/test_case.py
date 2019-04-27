@@ -266,38 +266,34 @@ class TestAcceptanceWrappers(unittest.TestCase):
                 pass
         self.case = DummyCase()
 
-    def test_allowedSpecific(self):
-        cm = self.case.allowedSpecific([Missing('foo')])
+    def test_acceptedSpecific(self):
+        cm = self.case.acceptedSpecific([Missing('foo')])
         self.assertTrue(isinstance(cm, AcceptedSpecific))
 
-    def test_allowedMissing(self):
-        cm = self.case.allowedMissing()
+    def test_acceptedMissing(self):
+        cm = self.case.acceptedMissing()
         self.assertTrue(isinstance(cm, AcceptedMissing))
 
-    def test_allowedExtra(self):
-        cm = self.case.allowedExtra()
+    def test_acceptedExtra(self):
+        cm = self.case.acceptedExtra()
         self.assertTrue(isinstance(cm, AcceptedExtra))
 
-    def test_allowedInvalid(self):
-        cm = self.case.allowedInvalid()
+    def test_acceptedInvalid(self):
+        cm = self.case.acceptedInvalid()
         self.assertTrue(isinstance(cm, AcceptedInvalid))
 
-    def test_allowedFuzzy(self):
-        cm = self.case.allowedFuzzy()
+    def test_acceptedFuzzy(self):
+        cm = self.case.acceptedFuzzy()
         self.assertTrue(isinstance(cm, AcceptedFuzzy))
 
-    def test_allowedDeviation(self):
-        cm = self.case.allowedDeviation(5)
+    def test_acceptedDeviation(self):
+        cm = self.case.acceptedDeviation(5)
         self.assertTrue(isinstance(cm, AcceptedDeviation))
 
-    def test_allowedPercent(self):
-        result = self.case.allowedPercent(5)
+    def test_acceptedPercent(self):
+        result = self.case.acceptedPercent(5)
         self.assertTrue(isinstance(result, AcceptedPercent))
 
-    def test_allowedPercentDeviation(self):
-        result = self.case.allowedPercentDeviation(5)
-        self.assertTrue(isinstance(result, AcceptedPercent))
-
-    def test_allowedLimit(self):
-        cm = self.case.allowedLimit(10)
+    def test_acceptedLimit(self):
+        cm = self.case.acceptedLimit(10)
         self.assertTrue(isinstance(cm, AcceptedLimit))

@@ -102,7 +102,7 @@ Acceptances
 Acceptances are context managers that operate on a :class:`ValidationError`'s
 collection of differences.
 
-.. autoclass:: allowed
+.. autoclassinstance:: accepted
 
     .. automethod:: missing
 
@@ -126,13 +126,13 @@ collection of differences.
         .. code-block:: python
             :emphasize-lines: 7
 
-            from datatest import validate, allowed
+            from datatest import validate, accepted
 
             data = {'A': 45, 'B': 205}
 
             requirement = {'A': 50, 'B': 200}
 
-            with allowed.deviation(5):  # <- tolerance of ±5
+            with accepted.deviation(5):  # <- tolerance of ±5
                 validate(data, requirement)  # raises dictionary
                                              # {'A': Deviation(-5, 50),
                                              #  'B': Deviation(+5, 200)}
@@ -142,7 +142,7 @@ collection of differences.
         .. code-block:: python
             :emphasize-lines: 1
 
-            with allowed.deviation(-2, 7):  # <- tolerance from -2 to +7
+            with accepted.deviation(-2, 7):  # <- tolerance from -2 to +7
                 validate(..., ...)
 
         Deviations within the given range are suppressed while those
@@ -162,13 +162,13 @@ collection of differences.
         .. code-block:: python
             :emphasize-lines: 7
 
-            from datatest import validate, allowed
+            from datatest import validate, accepted
 
             data = {'A': 47, 'B': 212}
 
             requirement = {'A': 50, 'B': 200}
 
-            with allowed.percent(0.06):  # <- tolerance of ±6%
+            with accepted.percent(0.06):  # <- tolerance of ±6%
                 validate(data, requirement)  # raises dictionary
                                              # {'A': Deviation(-3, 50),
                                              #  'B': Deviation(+12, 200)}
@@ -178,7 +178,7 @@ collection of differences.
         .. code-block:: python
             :emphasize-lines: 1
 
-            with allowed.percent(-0.02, 0.01):  # <- tolerance from -2% to +1%
+            with accepted.percent(-0.02, 0.01):  # <- tolerance from -2% to +1%
                 validate(..., ...)
 
         Deviations within the given range are suppressed while those
@@ -187,12 +187,7 @@ collection of differences.
         Empty values (None, empty string, etc.) are treated as zeros
         when performing comparisons.
 
-
-    .. automethod:: percent_deviation
-
-
     .. automethod:: specific
-
 
     .. automethod:: limit
 
@@ -204,29 +199,29 @@ Acceptances can be combined to create new acceptances with modified
 behavior.
 
 The ``&`` operator can be used to create an *intersection* of
-acceptance criteria. In the following example, :meth:`allowed.missing`
-and :meth:`allowed.limit` are combined into a single acceptance that
+acceptance criteria. In the following example, :meth:`accepted.missing`
+and :meth:`accepted.limit` are combined into a single acceptance that
 accepts up to five Missing differences:
 
 .. code-block:: python
     :emphasize-lines: 3
 
-    from datatest import validate, allowed
+    from datatest import validate, accepted
 
-    with allowed.missing() & allowed.limit(5):
+    with accepted.missing() & accepted.limit(5):
         validate(..., ...)
 
 The ``|`` operator can be used to create *union* of acceptance
-criteria. In the following example, :meth:`allowed.deviation`
-and :meth:`allowed.percent` are combined into a single acceptance
+criteria. In the following example, :meth:`accepted.deviation`
+and :meth:`accepted.percent` are combined into a single acceptance
 that accepts Deviations of ±10 as well as Deviations of ±5%:
 
 .. code-block:: python
     :emphasize-lines: 3
 
-    from datatest import validate, allowed
+    from datatest import validate, accepted
 
-    with allowed.deviation(10) | allowed.percent(0.05):
+    with accepted.deviation(10) | accepted.percent(0.05):
         validate(..., ...)
 
 And composed acceptances, themselves, can be composed to define
@@ -235,11 +230,11 @@ increasingly specific criteria:
 .. code-block:: python
     :emphasize-lines: 7
 
-    from datatest import validate, allowed
+    from datatest import validate, accepted
 
-    five_missing = allowed.missing() & allowed.limit(5)
+    five_missing = accepted.missing() & accepted.limit(5)
 
-    minor_deviations = allowed.deviation(10) | allowed.percent(0.05)
+    minor_deviations = accepted.deviation(10) | accepted.percent(0.05)
 
     with five_missing | minor_deviations:
         validate(..., ...)
@@ -263,17 +258,17 @@ to right.
 +-------+-------------------------------+----------------------------+
 |   3   | | ``|``                       | Bitwise OR (union)         |
 +-------+-------------------------------+----------------------------+
-|       | | :meth:`allowed.missing`,    |                            |
-|       | | :meth:`allowed.extra`,      |                            |
-|       | | :meth:`allowed.invalid`,    |                            |
-|   4   | | :meth:`allowed.keys`,       | Element-wise acceptances   |
-|       | | :meth:`allowed.args`,       |                            |
-|       | | :meth:`allowed.deviation`,  |                            |
-|       | | :meth:`allowed.percent`     |                            |
+|       | | :meth:`accepted.missing`,   |                            |
+|       | | :meth:`accepted.extra`,     |                            |
+|       | | :meth:`accepted.invalid`,   |                            |
+|   4   | | :meth:`accepted.keys`,      | Element-wise acceptances   |
+|       | | :meth:`accepted.args`,      |                            |
+|       | | :meth:`accepted.deviation`, |                            |
+|       | | :meth:`accepted.percent`    |                            |
 +-------+-------------------------------+----------------------------+
-|   5   | | :meth:`allowed.specific`    | Group-wise acceptances     |
+|   5   | | :meth:`accepted.specific`   | Group-wise acceptances     |
 +-------+-------------------------------+----------------------------+
-|   6   | | :meth:`allowed.limit`       | Whole-error acceptances    |
+|   6   | | :meth:`accepted.limit`      | Whole-error acceptances    |
 +-------+-------------------------------+----------------------------+
 
 
