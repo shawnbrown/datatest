@@ -836,7 +836,7 @@ class TestUniversalComposability(unittest.TestCase):
             ntup(cls=AcceptedExtra,     args=tuple(),                  priority=100),
             ntup(cls=AcceptedInvalid,   args=tuple(),                  priority=100),
             ntup(cls=AcceptedDeviation, args=(5,),                     priority=100),
-            ntup(cls=AcceptedFuzzy,     args=tuple(),                     priority=100),
+            ntup(cls=AcceptedFuzzy,     args=tuple(),                  priority=100),
             ntup(cls=AcceptedPercent,   args=(0.05,),                  priority=100),
             ntup(cls=AcceptedKeys,      args=(lambda args: True,),     priority=100),
             ntup(cls=AcceptedArgs,      args=(lambda *args: True,),    priority=100),
@@ -849,8 +849,8 @@ class TestUniversalComposability(unittest.TestCase):
         defined in datatest.
         """
         import datatest
-        actual = datatest.acceptances.__all__
-        actual.remove('allowed')  # Factory class.
+        actual = list(datatest.acceptances.__all__)  # Get copy of list.
+        actual = [name for name in actual if name.startswith('Accepted')]
         expected = (x.cls.__name__ for x in self.acceptances)
         self.assertEqual(set(actual), set(expected))
 
