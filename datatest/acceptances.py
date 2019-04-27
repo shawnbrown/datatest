@@ -88,7 +88,7 @@ class BaseAcceptance(abc.ABC):
     ##################################################
     def intersection(self, other):
         """Return a new acceptance that allows only those
-        differences allowed by both the current acceptance
+        differences accepted by both the current acceptance
         and the given *other* acceptance.
         """
         return self.__and__(other)
@@ -100,7 +100,7 @@ class BaseAcceptance(abc.ABC):
 
     def union(self, other):
         """Return a new acceptance that allows any difference
-        allowed by either the current acceptance or the given
+        accepted by either the current acceptance or the given
         *other* acceptance.
         """
         return self.__or__(other)
@@ -474,7 +474,7 @@ with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
 
 
 class AcceptedFuzzy(BaseAcceptance):
-    """Context manager that allows Invalid string differences without
+    """Context manager that accepts Invalid string differences without
     triggering a test failure if the actual value and the expected
     value match with a similarity greater than or equal to *cutoff*
     (default 0.6).
@@ -522,7 +522,7 @@ class AcceptedSpecific(BaseAcceptance):
             )
         self.differences = differences
         self.msg = msg
-        self._allowed = dict()         # Properties to hold working values
+        self._accepted = dict()         # Properties to hold working values
         self._predicate_keys = dict()  # during acceptance checking.
 
     @property
@@ -537,34 +537,34 @@ class AcceptedSpecific(BaseAcceptance):
     def start_collection(self):
         self._predicate_keys = dict()  # Clear _predicate_keys
 
-        # Normalize and copy mutable containers, assign to "_allowed".
+        # Normalize and copy mutable containers, assign to "_accepted".
         diffs = self.differences
         if isinstance(diffs, BaseDifference):
-            allowed = defaultdict(lambda: [diffs])
+            accepted = defaultdict(lambda: [diffs])
         elif isinstance(diffs, (list, set)):
-            allowed = defaultdict(lambda: list(diffs))
+            accepted = defaultdict(lambda: list(diffs))
         elif isinstance(diffs, dict):
-            allowed = dict()
+            accepted = dict()
             for key, value in diffs.items():
                 matcher = get_matcher(key)
                 if isinstance(matcher, MatcherBase):
                     self._predicate_keys[key]= matcher
 
                 if isinstance(value, (list, set)):
-                    allowed[key] = list(value)  # Make a copy.
+                    accepted[key] = list(value)  # Make a copy.
                 else:
-                    allowed[key] = [value]
+                    accepted[key] = [value]
         else:
             raise TypeError(
                 'differences must be a list, dict, or a single difference, '
-                'got {0} type instead'.format(allowed.__class__.__name__)
+                'got {0} type instead'.format(accepted.__class__.__name__)
             )
-        self._allowed = allowed
+        self._accepted = accepted
 
     def call_predicate(self, item):
         key, diff = item
         try:
-            self._allowed[key].remove(diff)
+            self._accepted[key].remove(diff)
             return True
         except KeyError:
             matches = dict()
@@ -579,7 +579,7 @@ class AcceptedSpecific(BaseAcceptance):
             elif len(matches) == 1:
                 try:
                     match_key = next(iter(matches.keys()))
-                    self._allowed[match_key].remove(diff)
+                    self._accepted[match_key].remove(diff)
                     return True
                 except ValueError:
                     return False
@@ -680,7 +680,7 @@ class allowed(abc.ABC):
 
     @classmethod
     def invalid(cls, msg=None):
-        """Allows :class:`Invalid` values without triggering a
+        """Accepts :class:`Invalid` values without triggering a
         test failure:
 
         .. code-block:: python
@@ -793,7 +793,7 @@ class allowed(abc.ABC):
 
     @classmethod
     def specific(cls, differences, msg=None):
-        """Allows specific *differences* without triggering a
+        """Accepts specific *differences* without triggering a
         test failure:
 
         .. code-block:: python
@@ -814,7 +814,7 @@ class allowed(abc.ABC):
                 validate(data, requirement)
 
         When data is a mapping, the specified differences are
-        allowed from each group independently:
+        accepted from each group independently:
 
         .. code-block:: python
             :emphasize-lines: 10-13
@@ -828,7 +828,7 @@ class allowed(abc.ABC):
 
             requirement = {'x', 'y', 'z'}
 
-            known_issues = allowed.specific([  # Allows all given
+            known_issues = allowed.specific([  # Accepts all given
                 Extra('q'),                    # differences from
                 Missing('z'),                  # both 'A' and 'B'.
             ])
@@ -852,7 +852,7 @@ class allowed(abc.ABC):
             requirement = {'x', 'y', 'z'}
 
             known_issues = allowed.specific({     # Using dict
-                'A': [Extra('q'), Missing('z')],  # of allowed
+                'A': [Extra('q'), Missing('z')],  # of accepted
                 'B': Missing('z'),                # differences.
             })
 

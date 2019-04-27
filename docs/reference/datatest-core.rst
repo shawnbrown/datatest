@@ -119,7 +119,7 @@ collection of differences.
     .. classmethod:: deviation(tolerance, /, msg=None)
                      deviation(lower, upper, msg=None)
 
-        Allows numeric :class:`Deviations <datatest.Deviation>`
+        Accepts numeric :class:`Deviations <datatest.Deviation>`
         within a given *tolerance* without triggering a test
         failure:
 
@@ -155,7 +155,7 @@ collection of differences.
     .. classmethod:: percent(tolerance, /, msg=None)
                      percent(lower, upper, msg=None)
 
-        Allows :class:`Deviations <datatest.Deviation>` with
+        Accepts :class:`Deviations <datatest.Deviation>` with
         percentages of error within a given *tolerance* without
         triggering a test failure:
 
@@ -206,7 +206,7 @@ behavior.
 The ``&`` operator can be used to create an *intersection* of
 acceptance criteria. In the following example, :meth:`allowed.missing`
 and :meth:`allowed.limit` are combined into a single acceptance that
-allows up to five Missing differences:
+accepts up to five Missing differences:
 
 .. code-block:: python
     :emphasize-lines: 3

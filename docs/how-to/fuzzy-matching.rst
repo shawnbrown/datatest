@@ -16,7 +16,7 @@ they are exactly the same. Datatest provides options for
 *approximate string matching* (also called "fuzzy
 matching").
 
-When checking mappings or sequences of values, you can allow
+When checking mappings or sequences of values, you can accept
 approximate matches with the :meth:`allowed.fuzzy` acceptance:
 
 .. code-block:: python

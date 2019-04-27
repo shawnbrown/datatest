@@ -212,7 +212,7 @@ class DataTestCase(TestCase):
         return AcceptedMissing(msg)
 
     def allowedExtra(self, msg=None):
-        """Allows :class:`Extra` elements without triggering a test
+        """Accepts :class:`Extra` elements without triggering a test
         failure::
 
             with self.allowedExtra():
@@ -223,7 +223,7 @@ class DataTestCase(TestCase):
         return AcceptedExtra(msg)
 
     def allowedInvalid(self, msg=None):
-        """Allows :class:`Invalid` elements without triggering a test
+        """Accepts :class:`Invalid` elements without triggering a test
         failure::
 
             with self.allowedInvalid():

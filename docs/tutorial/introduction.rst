@@ -364,7 +364,7 @@ Sometimes a failing test cannot be addressed by changing the data
 itself. Perhaps two equally-authoritative sources disagree, perhaps
 it's important to keep the original data unchanged, perhaps a lack
 of information makes correction impossible. For cases like these,
-datatest can allow certain discrepancies when users judge that doing
+datatest can accept certain discrepancies when users judge that doing
 so is appropriate.
 
 Acceptances are context managers that operate on a ValidationError's
@@ -380,7 +380,7 @@ acceptance so the test will pass:
     .. group-tab:: Pytest
 
         Calling :meth:`allowed.extra` returns a context manager
-        that allows Extra differences without triggering a test
+        that accepts Extra differences without triggering a test
         failure:
 
         .. code-block:: python
@@ -403,7 +403,7 @@ acceptance so the test will pass:
     .. group-tab:: Unittest
 
         Calling :meth:`self.allowedExtra() <datatest.DataTestCase.allowedExtra>`
-        returns a context manager that allows Extra differences without
+        returns a context manager that accepts Extra differences without
         triggering a test failure:
 
         .. code-block:: python
@@ -426,15 +426,15 @@ acceptance so the test will pass:
 
 Datatest provides several different acceptances so users can
 precisely specify the criteria by which differences should be
-allowed. In the following example, numeric differences are
-allowed by their magnitude:
+accepted. In the following example, numeric differences are
+accepted by their magnitude:
 
 .. tabs::
 
     .. group-tab:: Pytest
 
         Calling :meth:`allowed.deviation(5) <allowed.deviation>`
-        returns a context manager that allows Deviations up to
+        returns a context manager that accepts Deviations up to
         plus-or-minus five without triggering a test failure:
 
         .. code-block:: python
@@ -455,13 +455,13 @@ allowed by their magnitude:
                     'C': 300,
                     'D': 400,
                 }
-                with allowed.deviation(5):  # allows ±5
+                with allowed.deviation(5):  # accepts ±5
                     validate(data, requirement)
 
     .. group-tab:: Unittest
 
         Calling :meth:`self.allowedDeviation(5) <DataTestCase.allowedDeviation>`
-        returns a context manager that allows Deviations up to
+        returns a context manager that accepts Deviations up to
         plus-or-minus five without triggering a test failure:
 
         .. code-block:: python
@@ -482,7 +482,7 @@ allowed by their magnitude:
                         'C': 300,
                         'D': 400,
                     }
-                    with self.allowedDeviation(5):  # allows ±5
+                    with self.allowedDeviation(5):  # accepts ±5
                         self.assertValid(data, requirement)
 
     For a list of all possible acceptances see :ref:`acceptance-docs`.

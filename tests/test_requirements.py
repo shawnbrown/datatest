@@ -1376,11 +1376,11 @@ class TestRequiredInterval(unittest.TestCase):
         self.assertEqual(desc, r"elements `x` do not satisfy `2 <= x <= 8`")
 
     def test_degenrate_interval(self):
-        """Should allow degenerate intervals. If lower and upper bounds
-        are auto-calculated from a collection of values, there are two
-        cases where they could be equal--resulting in a "degenerate"
-        interval: (1) all of the values are equal, (2) the collection
-        only contains a single value.
+        """Should accept degenerate intervals. If lower and upper
+        bounds are auto-calculated from a collection of values,
+        there are two cases where they could be equal--resulting
+        in a "degenerate" interval: (1) all of the values are equal,
+        (2) the collection only contains a single value.
         """
         requirement = RequiredInterval(6, 6)
 

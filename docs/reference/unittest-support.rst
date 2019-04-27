@@ -150,7 +150,7 @@ DataTestCase
     .. method:: allowedDeviation(tolerance, /, msg=None)
                 allowedDeviation(lower, upper, msg=None)
 
-        Allows numeric :class:`Deviations <datatest.Deviation>`
+        Accepts numeric :class:`Deviations <datatest.Deviation>`
         within a given *tolerance* without triggering a test
         failure::
 
@@ -175,7 +175,7 @@ DataTestCase
     .. method:: allowedPercent(tolerance, /, msg=None)
                 allowedPercent(lower, upper, msg=None)
 
-        Allows :class:`Deviations <datatest.Deviation>` with
+        Accepts :class:`Deviations <datatest.Deviation>` with
         percentages of error within a given *tolerance* without
         triggering a test failure::
 

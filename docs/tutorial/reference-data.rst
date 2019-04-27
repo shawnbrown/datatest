@@ -370,7 +370,7 @@ Running our script now gives the folowing message:
 
 
 Since Jervis Bay Territory has such a small population, we are
-going to allow this omission with the following change:
+going to accept this omission with the following change:
 
 .. tabs::
 
@@ -568,7 +568,7 @@ population in the summary file. But our expected population is over
 
 Since we're comparing detailed *counts* against summary *estimates*,
 a small percent error is entirely acceptable. To reflect this decision
-in our tests, we will allow a percent error of ±3%:
+in our tests, we will accept a percent error of ±3%:
 
 .. tabs::
 
@@ -582,7 +582,7 @@ in our tests, we will allow a percent error of ±3%:
                 data = detail({'state/territory': 'population'}).sum()
                 requirement = summary({'state/territory': 'population'}).sum()
 
-                with allowed.percent(0.03):  # <- Allow +/- 3%
+                with allowed.percent(0.03):  # <- Accept +/- 3%
                     validate(data, requirement)
 
     .. group-tab:: Unittest
@@ -595,7 +595,7 @@ in our tests, we will allow a percent error of ±3%:
                     data = detail({'state/territory': 'population'}).sum()
                     requirement = summary({'state/territory': 'population'}).sum()
 
-                    with self.allowedPercent(0.03):  # <- Allow +/- 3%
+                    with self.allowedPercent(0.03):  # <- Accept +/- 3%
                         self.assertValid(data, requirement)
 
 
@@ -617,7 +617,7 @@ Rerunning our script with this new acceptance gives the following message:
                     data = detail({'state/territory': 'population'}).sum()
                     requirement = summary({'state/territory': 'population'}).sum()
 
-                    with allowed.percent(0.03):  # <- Allow +/- 3%
+                    with allowed.percent(0.03):  # <- Accept +/- 3%
             >           validate(data, requirement)
             E           ValidationError: does not satisfy mapping requirement (2 differences): {
                             'Jervis Bay Territory': Deviation(-388, 388),
@@ -644,7 +644,7 @@ Rerunning our script with this new acceptance gives the following message:
 
 
 In a previous test, we established that Jervis Bay Territory is
-a known omission. We can handle this difference by allowing it
+a known omission. We can handle this difference by accepting it
 explicitly:
 
 .. tabs::
