@@ -727,19 +727,19 @@ class TestAcceptedSpecific(unittest.TestCase):
             'bar': [Extra('yyy'), Missing('yyy')],
         }
 
-        def startswith_ba(x):
+        def accepted1(x):
             return x.startswith('ba')
 
-        def equals_bar(x):
+        def accepted2(x):
             return x == 'bar'
 
         accepted = {
-            startswith_ba: Extra('yyy'),
-            equals_bar: Missing('yyy'),
+            accepted1: Extra('yyy'),
+            accepted2: Missing('yyy'),
         }
 
         regex = ("the key 'bar' matches multiple predicates: "
-                 "startswith_ba, equals_bar")
+                 "accepted[12], accepted[12]")
         with self.assertRaisesRegex(KeyError, regex):
             with AcceptedSpecific(accepted):
                 raise ValidationError(differences)
