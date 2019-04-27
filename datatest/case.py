@@ -311,6 +311,60 @@ class DataTestCase(TestCase):
         """
         return AcceptedLimit(number, msg)
 
+    #############################
+    # Deprecated 'allowed...' API
+    #############################
+
+    @staticmethod
+    def _warn(new_name):
+        import warnings
+        message = "'allowed...()' methods are deprecated, use {0} instead"
+        warnings.warn(message.format(new_name), DeprecationWarning, stacklevel=3)
+
+    def allowedMissing(self, msg=None):
+        self._warn('self.acceptedMissing()')
+        return AcceptedMissing(msg)
+
+    def allowedExtra(self, msg=None):
+        self._warn('self.acceptedExtra()')
+        return AcceptedExtra(msg)
+
+    def allowedInvalid(self, msg=None):
+        self._warn('self.acceptedInvalid()')
+        return AcceptedInvalid(msg)
+
+    def allowedDeviation(self, lower, upper=None, msg=None):
+        self._warn('self.acceptedDeviation()')
+        return AcceptedDeviation(lower, upper, msg)
+
+    def allowedPercent(self, lower, upper=None, msg=None):
+        self._warn('self.acceptedPercent()')
+        return AcceptedPercent(lower, upper, msg)
+
+    def allowedPercentDeviation(self, lower, upper=None, msg=None):
+        self._warn('self.acceptedPercent()')
+        return self.allowedPercent(lower, upper, msg)
+
+    def allowedSpecific(self, differences, msg=None):
+        self._warn('self.acceptedSpecific()')
+        return AcceptedSpecific(differences, msg)
+
+    def allowedKeys(self, predicate, msg=None):
+        self._warn('self.acceptedKeys()')
+        return AcceptedKeys(predicate, msg)
+
+    def allowedArgs(self, predicate, msg=None):
+        self._warn('self.acceptedArgs()')
+        return AcceptedArgs(predicate, msg)
+
+    def allowedFuzzy(self, cutoff=0.6, msg=None):
+        self._warn('self.acceptedFuzzy()')
+        return AcceptedFuzzy(cutoff=cutoff, msg=msg)
+
+    def allowedLimit(self, number, msg=None):
+        self._warn('self.acceptedLimit()')
+        return AcceptedLimit(number, msg)
+
 
 # Prettify default signature of methods that accept multiple signatures.
 # This only works for Python 3.3 and newer--older versions will simply
