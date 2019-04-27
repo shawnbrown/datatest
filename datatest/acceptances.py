@@ -45,6 +45,7 @@ __all__ = [
     'AcceptedSpecific',
     'AcceptedLimit',
     'AcceptedFuzzy',
+    'allowed',  # <- Deprecated API.
 ]
 
 
@@ -890,3 +891,75 @@ class AcceptedType(object):
 
 
 accepted = AcceptedType()  # Use as instance.
+
+
+##########################
+# Deprecated 'allowed' API
+##########################
+
+class allowed(abc.ABC):
+    def __new__(cls, *args, **kwds):
+        msg = ("Can't instantiate abstract class allowed, use constructor "
+               "methods like allowed.missing(), allowed.extra(), etc.")
+        raise TypeError(msg)
+
+    @staticmethod
+    def _warn(new_name):
+        import warnings
+        message = "'allowed' API is deprecated, use {0} instead".format(new_name)
+        warnings.warn(message, DeprecationWarning, stacklevel=3)
+
+    @classmethod
+    def missing(cls, msg=None):
+        cls._warn('accepted.missing()')
+        return AcceptedMissing(msg)
+
+    @classmethod
+    def extra(cls, msg=None):
+        cls._warn('accepted.extra()')
+        return AcceptedExtra(msg)
+
+    @classmethod
+    def invalid(cls, msg=None):
+        cls._warn('accepted.invalid()')
+        return AcceptedInvalid(msg)
+
+    @classmethod
+    def keys(cls, predicate, msg=None):
+        cls._warn('accepted.keys()')
+        return AcceptedKeys(predicate, msg)
+
+    @classmethod
+    def args(cls, predicate, msg=None):
+        cls._warn('accepted.args()')
+        return AcceptedArgs(predicate, msg)
+
+    @classmethod
+    def fuzzy(cls, cutoff=0.6, msg=None):
+        cls._warn('accepted.fuzzy()')
+        return AcceptedFuzzy(cutoff=cutoff, msg=msg)
+
+    @classmethod
+    def deviation(cls, lower, upper=None, msg=None):
+        cls._warn('accepted.deviation()')
+        return AcceptedDeviation(lower, upper, msg)
+
+    @classmethod
+    def percent(cls, lower, upper=None, msg=None):
+        cls._warn('accepted.percent()')
+        return AcceptedPercent(lower, upper, msg)
+
+    @classmethod
+    def percent_deviation(cls, lower, upper=None, msg=None):
+        cls._warn('accepted.percent()')
+        return AcceptedPercent(lower, upper, msg)
+
+    @classmethod
+    def specific(cls, differences, msg=None):
+        cls._warn('accepted.specific()')
+        return AcceptedSpecific(differences, msg)
+
+    @classmethod
+    def limit(cls, number, msg=None):
+        cls._warn('accepted.limit()')
+        return AcceptedLimit(number, msg)
