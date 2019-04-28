@@ -77,20 +77,16 @@ Concrete Differences
 
 .. autoclass:: Invalid
 
-    .. autoinstanceattribute:: datatest.difference.Invalid.invalid
-       :annotation:
+    .. autoattribute:: invalid
 
-    .. autoinstanceattribute:: datatest.difference.Invalid.expected
-       :annotation:
+    .. autoattribute:: expected
 
 
 .. autoclass:: Deviation
 
-    .. autoinstanceattribute:: datatest.difference.Deviation.deviation
-       :annotation:
+    .. autoattribute:: deviation
 
-    .. autoinstanceattribute:: datatest.difference.Deviation.expected
-       :annotation:
+    .. autoattribute:: expected
 
 
 .. _acceptance-docs:
