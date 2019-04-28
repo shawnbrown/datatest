@@ -574,7 +574,7 @@ class ValidateType(object):
         """
         __tracebackhide__ = _pytest_tracebackhide
 
-        requirement = normalize(sequence, lazy_evaluation=False, default_type=list)
+        requirement = normalize(requirement, lazy_evaluation=False, default_type=list)
 
         if isinstance(requirement, (Mapping, IterItems)):
             factory = requirements.RequiredOrder
