@@ -229,11 +229,10 @@ class ValidateType(object):
     **Sequence Validation:**
 
         When *requirement* is an iterable type other than a set,
-        mapping, tuple or string, then *data* is validated as a
-        sequence of elements. Elements are checked for predicate
-        matches against required objects of the same position (both
-        *data* and *requirement* should yield values in a predictable
-        order):
+        mapping, tuple or string, then *data* is validated by index
+        position. Elements are checked for predicate matches against
+        required objects of the same index position (both *data* and
+        *requirement* should yield values in a predictable order):
 
         .. code-block:: python
             :emphasize-lines: 7
@@ -273,7 +272,8 @@ class ValidateType(object):
     **Requirement Object Validation:**
 
         When *requirement* is a subclass of :class:`BaseRequirement`,
-        it is used to check data and generate differences directly.
+        then validation and difference generation are delegated to the
+        *requirement* itself.
     """
     def __call__(self, data, requirement, msg=None):
         __tracebackhide__ = _pytest_tracebackhide
@@ -329,7 +329,7 @@ class ValidateType(object):
         Values compare as equal if their difference rounded to the
         given number of decimal places (default 7) equals zero, or
         if the difference between values is less than or equal to
-        the given delta:
+        a given *delta*:
 
         .. code-block:: python
             :emphasize-lines: 7
@@ -513,9 +513,9 @@ class ValidateType(object):
         __tracebackhide__ = _pytest_tracebackhide
         self(data, requirements.RequiredUnique(), msg=msg)
 
-    def order(self, data, sequence, msg=None):
-        r"""Check that elements in *data* match the order of elements
-        in *sequence*:
+    def order(self, data, requirement, msg=None):
+        r"""Check that elements in *data* match the relative order of
+        elements in *requirement*:
 
         .. code-block:: python
             :emphasize-lines: 7
@@ -530,9 +530,9 @@ class ValidateType(object):
 
         If elements do not match the required order, :class:`Missing`
         and :class:`Extra` differences are raised. Each difference
-        will contain a two-tuple whose first value is the index where
-        the difference occurs in *data* and whose second value is the
-        non-matching element itself.
+        will contain a two-tuple whose first value is the index of the
+        position in *data* where the difference occurs and whose second
+        value is the non-matching element itself.
 
         In the given example, *data* is missing ``'B'`` at index 1
         and contains an extra ``'F'`` at index 4:
