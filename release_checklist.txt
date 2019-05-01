@@ -6,7 +6,7 @@ Release Checklist
 1. Check that *packages* argument of setup() is correct. Check with:
 
    >>> import setuptools
-   >>> setuptools.find_packages('.', exclude=['tests'])
+   >>> sorted(setuptools.find_packages('.', exclude=['tests']))
 
 2. Make sure correct version number is set in the following files:
 

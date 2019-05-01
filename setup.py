@@ -127,11 +127,11 @@ if __name__ == '__main__':
             url='https://pypi.org/project/datatest/',
             packages=[
                 'datatest',
+                'datatest.__past__',
                 'datatest._compatibility',
                 'datatest._compatibility.collections',
                 'datatest._load',
                 'datatest._query',
-                'datatest.__past__',
             ],
             # Additional fields:
             description='Test driven data-wrangling and data validation.',
