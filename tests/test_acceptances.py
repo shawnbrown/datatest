@@ -7,6 +7,7 @@ from datatest._compatibility.collections import namedtuple
 from datatest._compatibility.collections.abc import Mapping
 from datatest._compatibility import contextlib
 from datatest._compatibility import itertools
+from datatest._utils import nonstringiter
 from datatest.validation import ValidationError
 from datatest.difference import Missing
 from datatest.difference import Extra
@@ -17,6 +18,7 @@ from datatest.acceptances import (
     CombinedAcceptance,
     IntersectedAcceptance,
     UnionedAcceptance,
+    AcceptedDifferences,
     AcceptedMissing,
     AcceptedExtra,
     AcceptedInvalid,
@@ -266,6 +268,154 @@ class TestLogicalComposition(unittest.TestCase):
                 raise ValidationError(original_diffs)
         differences = cm.exception.differences
         self.assertEqual(list(differences), [Extra('b')])
+
+
+class TestAcceptedDifferences(unittest.TestCase):
+    def assertAcceptance(self, differences, acceptance, expected):
+        """Helper method to test acceptances."""
+        with self.assertRaises(ValidationError) as cm:
+            with acceptance:  # <- Apply acceptance!
+                raise ValidationError(differences)
+        remaining_diffs = cm.exception.differences
+
+        if isinstance(differences, Mapping):
+            remaining_diffs = dict(remaining_diffs)
+        elif nonstringiter(remaining_diffs):
+            remaining_diffs = list(remaining_diffs)
+        self.assertEqual(remaining_diffs, expected)
+
+    def test_mapping_vs_mapping(self):
+        differences = {
+            'a': [Missing('X'), Missing('X')],
+            'b': [Missing('Y'), Missing('X')],
+        }
+
+        # Defaults to element-wise scope.
+        acceptance = AcceptedDifferences({'a': Missing('X'), 'b': Missing('Y')})
+        expected = {'b': Missing('X')}
+        self.assertAcceptance(differences, acceptance, expected)
+
+        # Defaults to group-wise scope.
+        acceptance = AcceptedDifferences({'a': [Missing('X')], 'b': [Missing('Y')]})
+        expected = {'a': Missing('X'), 'b': Missing('X')}
+        self.assertAcceptance(differences, acceptance, expected)
+
+    def test_mapping_vs_list(self):
+        differences = {
+            'a': [Missing('X')],
+            'b': [Missing('Y'), Missing('X')],
+            'c': [Missing('Y'), Missing('X'), Missing('X')],
+        }
+
+        acceptance = AcceptedDifferences([Missing('X')])
+        expected = {'b': Missing('Y'), 'c': [Missing('Y'), Missing('X')]}
+        self.assertAcceptance(differences, acceptance, expected)
+
+        acceptance = AcceptedDifferences([Missing('X')], scope='element')
+        expected = {'b': Missing('Y'), 'c': Missing('Y')}
+        self.assertAcceptance(differences, acceptance, expected)
+
+    def test_mapping_vs_difference(self):
+        differences = {
+            'a': [Missing('X')],
+            'b': [Missing('Y'), Missing('X')],
+        }
+        acceptance = AcceptedDifferences(Missing('X'))
+        expected = {'b': Missing('Y')}
+        self.assertAcceptance(differences, acceptance, expected)
+
+    def test_mapping_vs_type(self):
+        differences = {
+            'a': [Missing('X')],
+            'b': [Missing('Y'), Extra('X')],
+            'c': Missing('X'),
+        }
+        acceptance = AcceptedDifferences(Missing)
+        expected = {'b': Extra('X')}
+        self.assertAcceptance(differences, acceptance, expected)
+
+    def test_nonmapping_vs_mapping(self):
+        """A mapping accpetance will not accept any non-mapping differences."""
+
+        differences = [Missing('Y'), Extra('X')]
+        acceptance = AcceptedDifferences({'a': Extra('X')})
+        self.assertAcceptance(differences, acceptance, differences)
+
+        differences = Extra('X')
+        acceptance = AcceptedDifferences({'a': Extra('X')})
+        self.assertAcceptance(differences, acceptance, [differences])
+
+    def test_list_vs_list(self):
+        differences =  [Missing('X'), Missing('Y'), Missing('X')]
+        acceptance = AcceptedDifferences([Missing('Y'), Missing('X')])  # <- Accept list of differences.
+        expected = [Missing('X')]
+        self.assertAcceptance(differences, acceptance, expected)
+
+    def test_list_vs_difference(self):
+        differences =  [Missing('X'), Missing('Y'), Missing('X')]
+        acceptance = AcceptedDifferences(Missing('X'))
+        expected = [Missing('Y')]
+        self.assertAcceptance(differences, acceptance, expected)
+
+    def test_list_vs_type(self):
+        differences =  [Missing('X'), Missing('Y'), Extra('X')]
+        acceptance = AcceptedDifferences(Missing)
+        expected = [Extra('X')]
+        self.assertAcceptance(differences, acceptance, expected)
+
+    def test_difference_vs_list(self):
+        differences =  Missing('X')
+        acceptance = AcceptedDifferences([Missing('Y'), Missing('Z')])
+        expected = [Missing('X')]
+        self.assertAcceptance(differences, acceptance, expected)
+
+        differences =  Missing('X')
+        acceptance = AcceptedDifferences([Missing('X'), Missing('Y')])
+        with acceptance:  # <- No error, all diffs accepted
+            raise ValidationError(differences)
+
+    def test_difference_vs_difference(self):
+        differences =  Missing('X')
+        acceptance = AcceptedDifferences(Missing('Y'))
+        expected = [Missing('X')]
+        self.assertAcceptance(differences, acceptance, expected)
+
+        differences =  Missing('X')
+        acceptance = AcceptedDifferences(Missing('X'))
+        with acceptance:  # <- No error, all diffs accepted
+            raise ValidationError(differences)
+
+    def test_difference_vs_type(self):
+        differences =  Missing('X')
+        acceptance = AcceptedDifferences(Extra)
+        expected = [Missing('X')]
+        self.assertAcceptance(differences, acceptance, expected)
+
+        differences =  Missing('X')
+        acceptance = AcceptedDifferences(Missing)
+        with acceptance:  # <- No error, all diffs accepted
+            raise ValidationError(differences)
+
+    def test_specified_scopes(self):
+        # list vs difference, scope
+        differences = {
+            'a': [Missing('X'), Missing('X')],
+            'b': [Missing('Y'), Missing('X')],
+        }
+
+        acceptance = AcceptedDifferences(
+            {'a': [Missing('X')], 'b': [Missing('Y')]},
+            scope='element',  # <- Element-wise scope.
+        )
+        expected = {'b': Missing('X')}
+        self.assertAcceptance(differences, acceptance, expected)
+
+        acceptance = AcceptedDifferences(
+            {'a': Missing('X'), 'b': Missing('Y')},
+            scope='group',  # <- Group-wise scope.
+        )
+        expected = {'a': Missing('X'), 'b': Missing('X')}
+        self.assertAcceptance(differences, acceptance, expected)
 
 
 class TestAcceptedMissing(unittest.TestCase):

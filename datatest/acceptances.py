@@ -13,6 +13,7 @@ from ._compatibility import functools
 from ._compatibility import itertools
 
 from ._utils import exhaustible
+from ._utils import nonstringiter
 from ._predicate import MatcherBase
 from ._predicate import get_matcher
 from ._utils import _get_arg_lengths
@@ -509,6 +510,81 @@ class AcceptedFuzzy(BaseAcceptance):
             return False  # <- EXIT!
 
         return similarity >= self.cutoff
+
+
+class AcceptedDifferences(BaseAcceptance):
+    """Accepts differences that match *obj* without triggering a test
+    failure. The given *obj* can be a difference class, a difference
+    instance, or a container of difference instances.
+
+    When *obj* is a class, differences are accepted if they are
+    instances of the class. When *obj* is a difference or collection
+    of differences, then an error's differences are accepted if they
+    compare as equal to one of the accepted differences.
+
+    If given, the *scope* can be ``'element'``, ``'group'``, or
+    ``'whole'``. An element-wise scope will accept any difference that
+    has a match in *obj*. A group-wise scope will accept one difference
+    per match in *obj* per group. A whole-error scope will accept one
+    difference per match in *obj* over the ValidationError as a whole.
+
+    If unspecified, *scope* will default to ``'element'`` if *obj* is a
+    single element and ``'group'`` if *obj* is a container of elements.
+    If *obj* is a mapping, the scope is applied for each key/value
+    pair (and whole-error scopes are, instead, treated as group-wise
+    scopes).
+    """
+    def __init__(self, obj, msg=None, scope=None):
+        if scope not in (None, 'element', 'group', 'whole'):
+            message = "scope may be 'element', 'group', or 'whole', got {0}"
+            raise ValueError(message.format(scope))
+
+        super(AcceptedDifferences, self).__init__(msg)
+        self._scope = scope
+
+        if isinstance(obj, Mapping):
+            self._obj = obj
+        elif nonstringiter(obj) and (scope is None or scope == 'group'):
+            self._obj = defaultdict(lambda: list(obj))  # Copy for each group.
+        else:  # For 'element' or 'whole' scopes.
+            self._obj = defaultdict(lambda: obj)  # Single persistent object.
+
+    def start_group(self, key):
+        """Called before processing each group."""
+        try:
+            current_allowance = self._obj[key]  # Can't use get() with defaultdict.
+        except KeyError:
+            current_allowance = []
+
+        if isinstance(current_allowance, type):
+            default_scope = 'element'
+            current_allowance = [current_allowance]
+            current_check = \
+                lambda x: current_allowance and isinstance(x, current_allowance[0])
+        else:
+            if nonstringiter(current_allowance):
+                default_scope = 'group'
+            else:
+                default_scope = 'element'
+                current_allowance = [current_allowance]
+            current_check = lambda x: x in current_allowance
+
+        self._current_scope = self._scope or default_scope
+        self._current_allowance = current_allowance
+        self._current_check = current_check
+
+    def call_predicate(self, item):
+        """Call once for each element."""
+        _, diff = item
+
+        if self._current_check(diff):
+            if self._current_scope != 'element':
+                self._current_allowance.remove(diff)
+            return True
+        return False
+
+    def __repr__(self):
+        return super(AcceptedDifferences, self).__repr__()
 
 
 class AcceptedSpecific(BaseAcceptance):
