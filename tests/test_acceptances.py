@@ -418,6 +418,43 @@ class TestAcceptedDifferences(unittest.TestCase):
         self.assertAcceptance(differences, acceptance, expected)
 
 
+class TestAcceptedDifferencesByType(unittest.TestCase):
+    """These tests were taken from older AcceptedMissing,
+    AcceptedExtra, and AcceptedInvalid acceptances.
+
+    These checks may overlap ones in TestAcceptedDifferences.
+    Once the new interface has proven to be an adequate replacement
+    for the old interface, the duplicate checks should be removed
+    and the unique ones should be moved to an appropriate location.
+    """
+    def test_accepted_missing(self):
+        differences =  [Missing('X'), Missing('Y'), Extra('X')]
+
+        with self.assertRaises(ValidationError) as cm:
+            with AcceptedDifferences(Missing):  # <- Apply acceptance!
+                raise ValidationError(differences)
+        remaining_diffs = cm.exception.differences
+        self.assertEqual(list(remaining_diffs), [Extra('X')])
+
+    def test_accepted_extra(self):
+        differences =  [Extra('X'), Extra('Y'), Missing('X')]
+
+        with self.assertRaises(ValidationError) as cm:
+            with AcceptedDifferences(Extra):  # <- Apply acceptance!
+                raise ValidationError(differences)
+        remaining_diffs = cm.exception.differences
+        self.assertEqual(list(remaining_diffs), [Missing('X')])
+
+    def test_accepted_invalid(self):
+        differences =  [Invalid('X'), Invalid('Y'), Extra('Z')]
+
+        with self.assertRaises(ValidationError) as cm:
+            with AcceptedDifferences(Invalid):  # <- Apply acceptance!
+                raise ValidationError(differences)
+        remaining_diffs = cm.exception.differences
+        self.assertEqual(list(remaining_diffs), [Extra('Z')])
+
+
 class TestAcceptedMissing(unittest.TestCase):
     def test_accepted_missing(self):
         differences =  [Missing('X'), Missing('Y'), Extra('X')]
