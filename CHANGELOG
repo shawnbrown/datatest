@@ -2,10 +2,17 @@
 Datatest Changelog
 ==================
 
-COMING SOON (0.9.5)
--------------------
-* Changed name of Selector class to Select, use of "Selector" is now
-  deprecated.
+2019-05-01 (0.9.5)
+------------------
+
+* Changed difference objects to make them hashable (can now be defined
+  as members of a set or used as dictionary keys).
+* Added __slots__ to difference objects to reduce memory consumption.
+* Changed name of Selector class to Select (Selector" now deprecated).
+* Changed language and class names from "allowed & allowance" to
+  "accepted & acceptance" to bring datatest more inline with
+  manufacturing and engineering terminology. The existing "allowed"
+  API is now deprecated.
 
 
 2019-04-21 (0.9.4)
