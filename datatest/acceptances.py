@@ -708,7 +708,7 @@ class AcceptedLimit(BaseAcceptance):
 # Factory object for pytest-style testing.
 ##########################################
 
-class AcceptedType(object):
+class AcceptedFactoryType(object):
     """Accept differences without triggering a test failure."""
 
     def missing(self, msg=None):
@@ -966,7 +966,7 @@ class AcceptedType(object):
         return AcceptedLimit(number, msg)
 
 
-accepted = AcceptedType()  # Use as instance.
+accepted = AcceptedFactoryType()  # Use as instance.
 
 
 ##########################
