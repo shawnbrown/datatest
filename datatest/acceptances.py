@@ -475,6 +475,73 @@ with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
     ])
 
 
+class AcceptedTolerance(BaseAcceptance):
+    """AcceptedTolerance(tolerance, /, msg=None, *, percent=False)
+    AcceptedTolerance(lower, upper, msg=None, *, percent=False)
+
+    Context manager that accepts numeric differences within a given
+    tolerance without triggering a test failure.
+
+    See documentation for full details.
+    """
+    def __init__(self, lower, upper=None, msg=None, percent=False):  # TODO: Make percent kwonly.
+        lower, upper, msg = _normalize_deviation_args(lower, upper, msg)
+        self.lower = lower
+        self.upper = upper
+        self.percent = percent
+        super(AcceptedTolerance, self).__init__(msg)
+
+    def __repr__(self):
+        cls_name = self.__class__.__name__
+        msg_part = ', msg={0!r}'.format(self.msg) if self.msg else ''
+        if -self.lower ==  self.upper:
+            return '{0}({1!r}{2})'.format(cls_name, self.upper, msg_part)
+        return '{0}(lower={1!r}, upper={2!r}{3})'.format(cls_name,
+                                                         self.lower,
+                                                         self.upper,
+                                                         msg_part)
+
+    def call_predicate(self, item):
+        _, diff = item  # Unpack item (discarding key).
+
+        # Get deviation and expected value if type and values are compatible.
+        try:
+            deviation = diff.deviation
+            expected = diff.expected
+        except AttributeError:
+            args = diff.args
+            len_args = len(args)
+            if (isinstance(diff, Missing)
+                    and len_args == 1
+                    and isinstance(args[0], Number)):
+                deviation = -args[0]
+                expected = args[0]
+            elif (isinstance(diff, (Extra, Invalid))
+                    and len_args == 1
+                    and isinstance(args[0], Number)):
+                deviation = args[0]
+                expected = 0
+            elif (isinstance(diff, Invalid)
+                    and len_args == 2
+                    and isinstance(args[0], Number)
+                    and isinstance(args[1], Number)):
+                deviation = args[0] - args[1]  # Get difference.
+                expected = args[1]
+            else:
+                return False  # <- EXIT!
+
+        error = deviation or 0
+        if self.percent:
+            if not expected:
+                return not error  # <- EXIT!
+            error = error / expected  # Make percent error.
+
+        if isnan(error):
+            return False  # <- EXIT!
+
+        return self.lower <= error <= self.upper
+
+
 class AcceptedFuzzy(BaseAcceptance):
     """Context manager that accepts Invalid string differences without
     triggering a test failure if the actual value and the expected

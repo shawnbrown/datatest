@@ -9,6 +9,7 @@ from datatest._compatibility import contextlib
 from datatest._compatibility import itertools
 from datatest._utils import nonstringiter
 from datatest.validation import ValidationError
+from datatest.difference import BaseDifference
 from datatest.difference import Missing
 from datatest.difference import Extra
 from datatest.difference import Invalid
@@ -26,6 +27,7 @@ from datatest.acceptances import (
     AcceptedArgs,
     AcceptedDeviation,
     AcceptedPercent,
+    AcceptedTolerance,
     AcceptedFuzzy,
     AcceptedSpecific,
     AcceptedLimit,
@@ -748,6 +750,145 @@ class TestAcceptedPercent(unittest.TestCase):
 
         uncaught_diffs = cm.exception.differences
         self.assertEqual(diffs, uncaught_diffs)
+
+
+class TestAcceptedTolerance(unittest.TestCase):
+    def setUp(self):
+        self.differences = {
+            'aaa': Deviation(-1, 16),  # -6.25%
+            'bbb': Deviation(+4, 16),  # +25.0%
+            'ccc': Deviation(+2, 16),  # +12.5%
+        }
+
+    @unittest.skip('Not implemented.')
+    def test_function_signature(self):
+        with contextlib.suppress(AttributeError):       # Python 3.2 and older
+            sig = inspect.signature(AcceptedTolerance)  # use ugly signatures.
+            parameters = list(sig.parameters)
+            self.assertEqual(parameters, ['tolerance', 'msg'])
+
+    def test_tolerance_syntax(self):
+        with self.assertRaises(ValidationError) as cm:
+            with AcceptedTolerance(2):  # <- Accepts +/- 2.
+                raise ValidationError(self.differences)
+        remaining = cm.exception.differences
+        self.assertEqual(remaining, {'bbb': Deviation(+4, 16)})
+
+    def test_lower_upper_syntax(self):
+        with self.assertRaises(ValidationError) as cm:
+            with AcceptedTolerance(0, 4):  # <- Accepts from 0 to 4.
+                raise ValidationError(self.differences)
+        result_diffs = cm.exception.differences
+        self.assertEqual({'aaa': Deviation(-1, 16)}, result_diffs)
+
+    def test_same_value_case(self):
+        with self.assertRaises(ValidationError) as cm:
+            with AcceptedTolerance(4, 4):  # <- Accepts off-by-4 only.
+                raise ValidationError(self.differences)
+        result_diffs = cm.exception.differences
+        self.assertEqual({'aaa': Deviation(-1, 16), 'ccc': Deviation(+2, 16)}, result_diffs)
+
+    def test_invalid_arguments(self):
+        with self.assertRaises(ValueError) as cm:
+            with AcceptedTolerance(-5):  # <- invalid
+                pass
+        exc = str(cm.exception)
+        self.assertTrue(exc.startswith('tolerance should not be negative'))
+
+        with self.assertRaises(ValueError) as cm:
+            with AcceptedTolerance(4, 2):  # <- invalid
+                pass
+        exc = str(cm.exception)
+        expected = 'lower must not be greater than upper, got 4 (lower) and 2 (upper)'
+        self.assertEqual(exc, expected)
+
+    def test_empty_string(self):
+        with AcceptedTolerance(0):  # <- Pass without failure.
+            raise ValidationError(Deviation('', 0))
+
+        with AcceptedTolerance(0):  # <- Pass without failure.
+            raise ValidationError(Deviation(0, ''))
+
+    def test_NaN_values(self):
+        with self.assertRaises(ValidationError):  # <- NaN values should not be caught!
+            with AcceptedTolerance(0):
+                raise ValidationError(Deviation(float('nan'), 0))
+
+    def test_duck_typing(self):
+        """If it looks like a Deviation, it should be treated like a Deviation."""
+        # Define a non-deviation class that "looks" like a deviation.
+        class DeviationLike(BaseDifference):
+            def __init__(self, a, b):
+                self.deviation = a
+                self.expected = b
+
+            @property
+            def args(self):
+                return (self.expected, self.deviation)
+
+        # Check that Deviation-like differences are treated as Deviations.
+        with self.assertRaises(ValidationError) as cm:
+            with AcceptedTolerance(2):  # <- Accepts +/- 2.
+                raise ValidationError([
+                    DeviationLike(-1, 16),
+                    DeviationLike(+4, 16),
+                    DeviationLike(+2, 16),
+                ])
+        remaining = cm.exception.differences
+        self.assertEqual(remaining, [DeviationLike(+4, 16)])
+
+    @unittest.skip('TODO: Finish this test.')
+    def test_nonnumeric_but_compatible(self):
+        pass
+
+    @unittest.skip('TODO: Finish this test.')
+    def test_numeric_but_not_deviation(self):
+        pass
+
+    @unittest.skip('TODO: Finish this test.')
+    def test_nonnumeric_diffs(self):
+        pass
+
+    def test_percent_error(self):
+        # Test "tolerance" syntax.
+        with self.assertRaises(ValidationError) as cm:
+            with AcceptedTolerance(0.2, percent=True):  # <- Accepts +/- 20%.
+                raise ValidationError(self.differences)
+        remaining = cm.exception.differences
+        self.assertEqual(remaining, {'bbb': Deviation(+4, 16)})
+
+        # Test "upper/lower" syntax.
+        with self.assertRaises(ValidationError) as cm:
+            with AcceptedTolerance(0.0, 0.3, percent=True):  # <- Accepts from 0 to 30%.
+                raise ValidationError(self.differences)
+        result_diffs = cm.exception.differences
+        self.assertEqual({'aaa': Deviation(-1, 16)}, result_diffs)
+
+    def test_percent_empty_value_handling(self):
+        # Test empty deviation cases--should pass without error.
+        with AcceptedTolerance(0, percent=True):  # <- Accepts empty deviations only.
+            raise ValidationError([
+                Deviation(None, 0),
+                Deviation('', 0),
+            ])
+
+        # Test diffs that can not be accepted as percentages.
+        with self.assertRaises(ValidationError) as cm:
+            with AcceptedTolerance(2.00, percent=True):  # <- Accepts +/- 200%.
+                raise ValidationError([
+                    Deviation(None, 0),           # 0%
+                    Deviation(0, None),           # 0%
+                    Deviation(+2, 0),             # Can not be accepted by percent.
+                    Deviation(+2, None),          # Can not be accepted by percent.
+                    Deviation(float('nan'), 16),  # Not a number.
+                ])
+        actual = cm.exception.differences
+        expected = [
+            Deviation(+2, 0),             # Can not be accepted by percent.
+            Deviation(+2, None),          # Can not be accepted by percent.
+            Deviation(float('nan'), 16),  # Not a number.
+        ]
+        self.assertEqual(actual, expected)
 
 
 class TestAcceptedFuzzy(unittest.TestCase):
