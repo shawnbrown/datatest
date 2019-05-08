@@ -521,12 +521,16 @@ class AcceptedTolerance(BaseAcceptance):
                     and isinstance(args[0], Number)):
                 deviation = args[0]
                 expected = 0
-            elif (isinstance(diff, Invalid)
-                    and len_args == 2
-                    and isinstance(args[0], Number)
-                    and isinstance(args[1], Number)):
-                deviation = args[0] - args[1]  # Get difference.
-                expected = args[1]
+            elif isinstance(diff, Invalid) and len_args == 2:
+                try:
+                    expected = args[1]
+                    deviation = args[0] - expected
+                except TypeError:
+                    try:
+                        expected = args[1] or 0
+                        deviation = (args[0] or 0) - expected
+                    except TypeError:
+                        return False
             else:
                 return False  # <- EXIT!
 

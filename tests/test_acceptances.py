@@ -893,6 +893,66 @@ class TestAcceptedTolerance(unittest.TestCase):
         remaining = cm.exception.differences
         self.assertEqual(remaining, [Missing((1, 2)), Missing('abc')])
 
+    def test_invalid_deviation_single_arg(self):
+        """Single argument Invalid differences treated the same as
+        Extra differences.
+        """
+        with self.assertRaises(ValidationError) as cm:
+            with AcceptedTolerance(-2, 1):  # <- Accepts from -2 to +1.
+                raise ValidationError([
+                    Invalid(-3),      # <- Rejected: Outside accepted range.
+                    Invalid(-2),      # <- ACCEPTED!
+                    Invalid(0),       # <- ACCEPTED!
+                    Invalid(1),       # <- ACCEPTED!
+                    Invalid(2),       # <- Rejected: Outside accepted range.
+                    Invalid((1, 2)),  # <- Rejected: Wrong type.
+                    Invalid('abc'),   # <- Rejected: Wrong type.
+                ])
+        remaining = cm.exception.differences
+        self.assertEqual(remaining, [Invalid(-3), Invalid(2), Invalid((1, 2)), Invalid('abc')])
+
+        # Check error percent.
+        with self.assertRaises(ValidationError) as cm:
+            with AcceptedTolerance(2.0, percent=True):  # <- Accepts +/- 200%.
+                raise ValidationError([
+                    Invalid(-1),  # <- Rejected: Can not be accepted by percent.
+                    Invalid(0),   # <- ACCEPTED!
+                    Invalid(2),   # <- Rejected: Can not be accepted by percent.
+                ])
+        remaining = cm.exception.differences
+        self.assertEqual(remaining, [Invalid(-1), Invalid(2)])
+
+    def test_invalid_deviation_multiple_args(self):
+        """Two-element Invalid differences are normalized and treated
+        like Deviation differences.
+        """
+        with self.assertRaises(ValidationError) as cm:
+            with AcceptedTolerance(-2, 1):  # <- Accepts from -2 to +1.
+                raise ValidationError([
+                    Invalid(-3, 0),         # <- Rejected: -3 is outside accepted range.
+                    Invalid(5, 7),          # <- ACCEPTED: -2 deviation.
+                    Invalid(0, ''),         # <- ACCEPTED.
+                    Invalid(11, 10),        # <- ACCEPTED: +1 deviation.
+                    Invalid(12, 10),        # <- Rejected: +2 is outside accepted range.
+                    Invalid((1,), (3,)),    # <- Rejected: Wrong type.
+                    Invalid('abc', 'def'),  # <- Rejected: Wrong type.
+                ])
+        remaining = cm.exception.differences
+        self.assertEqual(remaining, [Invalid(-3, 0), Invalid(12, 10), Invalid((1,), (3,)), Invalid('abc', 'def')])
+
+        # Check error percent.
+        with self.assertRaises(ValidationError) as cm:
+            with AcceptedTolerance(0.5, percent=True):  # <- Accepts +/- 50%.
+                raise ValidationError([
+                    Invalid(50, 100),   # <- ACCEPTED: -50% deviation.
+                    Invalid(150, 100),  # <- ACCEPTED: +50% deviation.
+                    Invalid(0, 0),      # <- ACCEPTED!
+                    Invalid(0.5, 0),    # <- Rejected: Can not be accepted by percent.
+                    Invalid(4, 2),      # <- Rejected: +100% is outside range.
+                ])
+        remaining = cm.exception.differences
+        self.assertEqual(remaining, [Invalid(0.5, 0), Invalid(4, 2)])
+
     @unittest.skip('TODO: Finish this test.')
     def test_nonnumeric_but_compatible(self):
         pass
