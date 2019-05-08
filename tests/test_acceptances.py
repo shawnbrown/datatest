@@ -839,9 +839,59 @@ class TestAcceptedTolerance(unittest.TestCase):
         remaining = cm.exception.differences
         self.assertEqual(remaining, [DeviationLike(+4, 16)])
 
-    @unittest.skip('TODO: Finish this test.')
-    def test_nonnumeric_but_compatible(self):
-        pass
+    def test_extra_deviation(self):
+        with self.assertRaises(ValidationError) as cm:
+            with AcceptedTolerance(-2, 1):  # <- Accepts from -2 to +1.
+                raise ValidationError([
+                    Extra(-3),      # <- Rejected: Outside accepted range.
+                    Extra(-2),      # <- ACCEPTED!
+                    Extra(0),       # <- ACCEPTED!
+                    Extra(1),       # <- ACCEPTED!
+                    Extra(2),       # <- Rejected: Outside accepted range.
+                    Extra((1, 2)),  # <- Rejected: Too many args.
+                    Extra('abc'),   # <- Rejected: Wrong type.
+                ])
+        remaining = cm.exception.differences
+        self.assertEqual(remaining, [Extra(-3), Extra(2), Extra((1, 2)), Extra('abc')])
+
+        # Check error percent.
+        with self.assertRaises(ValidationError) as cm:
+            with AcceptedTolerance(2.0, percent=True):  # <- Accepts +/- 200%.
+                raise ValidationError([
+                    Extra(-1),  # <- Rejected: Can not be accepted by percent.
+                    Extra(0),   # <- ACCEPTED!
+                    Extra(2),   # <- Rejected: Can not be accepted by percent.
+                ])
+        remaining = cm.exception.differences
+        self.assertEqual(remaining, [Extra(-1), Extra(2)])
+
+    def test_missing_deviation(self):
+        with self.assertRaises(ValidationError) as cm:
+            with AcceptedTolerance(-2, 1):  # <- Accepts from -2 to +1.
+                raise ValidationError([
+                    Missing(-3),      # <- Rejected: Outside accepted range.
+                    Missing(-2),      # <- Rejected: Outside accepted range.
+                    Missing(0),       # <- ACCEPTED!
+                    Missing(1),       # <- ACCEPTED!
+                    Missing(2),       # <- ACCEPTED!
+                    Missing((1, 2)),  # <- Rejected: Too many args.
+                    Missing('abc'),   # <- Rejected: Wrong type.
+                ])
+        remaining = cm.exception.differences
+        self.assertEqual(remaining, [Missing(-3), Missing(-2), Missing((1, 2)), Missing('abc')])
+
+        # Check error percent.
+        with self.assertRaises(ValidationError) as cm:
+            with AcceptedTolerance(1.0, percent=True):  # <- Accepts +/- 100%.
+                raise ValidationError([
+                    Missing(-1),  # <- ACCEPTED!
+                    Missing(0),   # <- ACCEPTED!
+                    Missing(2),   # <- ACCEPTED!
+                    Missing((1, 2)),  # <- Rejected: Too many args.
+                    Missing('abc'),   # <- Rejected: Wrong type.
+                ])
+        remaining = cm.exception.differences
+        self.assertEqual(remaining, [Missing((1, 2)), Missing('abc')])
 
     @unittest.skip('TODO: Finish this test.')
     def test_nonnumeric_but_compatible(self):
