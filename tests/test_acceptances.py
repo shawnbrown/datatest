@@ -874,7 +874,7 @@ class TestAcceptedTolerance(unittest.TestCase):
                     Missing(0),       # <- ACCEPTED!
                     Missing(1),       # <- ACCEPTED!
                     Missing(2),       # <- ACCEPTED!
-                    Missing((1, 2)),  # <- Rejected: Too many args.
+                    Missing((1, 2)),  # <- Rejected: Wrong type.
                     Missing('abc'),   # <- Rejected: Wrong type.
                 ])
         remaining = cm.exception.differences
@@ -887,7 +887,7 @@ class TestAcceptedTolerance(unittest.TestCase):
                     Missing(-1),  # <- ACCEPTED!
                     Missing(0),   # <- ACCEPTED!
                     Missing(2),   # <- ACCEPTED!
-                    Missing((1, 2)),  # <- Rejected: Too many args.
+                    Missing((1, 2)),  # <- Rejected: Wrong type.
                     Missing('abc'),   # <- Rejected: Wrong type.
                 ])
         remaining = cm.exception.differences
