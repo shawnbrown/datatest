@@ -815,7 +815,9 @@ class TestAcceptedTolerance(unittest.TestCase):
                 raise ValidationError(Deviation(float('nan'), 0))
 
     def test_duck_typing(self):
-        """If it looks like a Deviation, it should be treated like a Deviation."""
+        """If it looks like a Deviation, it should be treated like a
+        Deviation.
+        """
         # Define a non-deviation class that "looks" like a deviation.
         class DeviationLike(BaseDifference):
             def __init__(self, a, b):
@@ -842,11 +844,11 @@ class TestAcceptedTolerance(unittest.TestCase):
         pass
 
     @unittest.skip('TODO: Finish this test.')
-    def test_numeric_but_not_deviation(self):
+    def test_nonnumeric_but_compatible(self):
         pass
 
     @unittest.skip('TODO: Finish this test.')
-    def test_nonnumeric_diffs(self):
+    def test_incompatible_diffs(self):
         pass
 
     def test_percent_error(self):
