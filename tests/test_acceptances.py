@@ -967,10 +967,6 @@ class TestAcceptedTolerance(unittest.TestCase):
         self.assertEqual(remaining, [Invalid(datetime.datetime(1989, 2, 24, 15, 10),
                                              expected=datetime.datetime(1989, 2, 24, 11, 30))])
 
-    @unittest.skip('TODO: Finish this test.')
-    def test_incompatible_diffs(self):
-        pass
-
     def test_percent_error(self):
         # Test "tolerance" syntax.
         with self.assertRaises(ValidationError) as cm:
