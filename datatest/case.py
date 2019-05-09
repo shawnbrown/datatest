@@ -373,11 +373,11 @@ with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
     DataTestCase.acceptedDeviation.__signature__ = inspect.Signature([
         inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY),
         inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),
-        inspect.Parameter('msg', inspect.Parameter.POSITIONAL_OR_KEYWORD),
+        inspect.Parameter('msg', inspect.Parameter.POSITIONAL_OR_KEYWORD, default=None),
     ])
 
     DataTestCase.acceptedPercentDeviation.__signature__ = inspect.Signature([
         inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY),
         inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),
-        inspect.Parameter('msg', inspect.Parameter.POSITIONAL_OR_KEYWORD),
+        inspect.Parameter('msg', inspect.Parameter.POSITIONAL_OR_KEYWORD, default=None),
     ])

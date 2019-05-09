@@ -416,7 +416,7 @@ with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
     AcceptedDeviation.__init__.__signature__ = inspect.Signature([
         inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY),
         inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),
-        inspect.Parameter('msg', inspect.Parameter.POSITIONAL_OR_KEYWORD),
+        inspect.Parameter('msg', inspect.Parameter.POSITIONAL_OR_KEYWORD, default=None),
     ])
 
 
@@ -469,7 +469,7 @@ with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
     AcceptedPercent.__init__.__signature__ = inspect.Signature([
         inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY),
         inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),
-        inspect.Parameter('msg', inspect.Parameter.POSITIONAL_OR_KEYWORD),
+        inspect.Parameter('msg', inspect.Parameter.POSITIONAL_OR_KEYWORD, default=None),
     ])
 
 
