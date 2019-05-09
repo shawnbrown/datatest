@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import datetime
 import inspect
 import sys
 from . import _unittest as unittest
@@ -953,9 +954,18 @@ class TestAcceptedTolerance(unittest.TestCase):
         remaining = cm.exception.differences
         self.assertEqual(remaining, [Invalid(0.5, 0), Invalid(4, 2)])
 
-    @unittest.skip('TODO: Finish this test.')
     def test_nonnumeric_but_compatible(self):
-        pass
+        with self.assertRaises(ValidationError) as cm:
+            with AcceptedTolerance(datetime.timedelta(hours=2)):  # <- Accepts +/- 2 hours.
+                raise ValidationError([
+                    Invalid(datetime.datetime(1989, 2, 24, hour=10, minute=30),
+                            datetime.datetime(1989, 2, 24, hour=11, minute=30)),
+                    Invalid(datetime.datetime(1989, 2, 24, hour=15, minute=10),
+                            datetime.datetime(1989, 2, 24, hour=11, minute=30))
+                ])
+        remaining = cm.exception.differences
+        self.assertEqual(remaining, [Invalid(datetime.datetime(1989, 2, 24, 15, 10),
+                                             expected=datetime.datetime(1989, 2, 24, 11, 30))])
 
     @unittest.skip('TODO: Finish this test.')
     def test_incompatible_diffs(self):

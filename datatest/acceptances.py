@@ -364,14 +364,12 @@ def _normalize_deviation_args(lower, upper, msg):
 
     if upper == None:
         tolerance = lower
-        if tolerance < 0:
+        if tolerance != abs(tolerance):
             raise ValueError('tolerance should not be negative, '
                              'for full control of lower and upper '
                              'bounds, use "lower, upper" syntax')
         lower, upper = -tolerance, tolerance
 
-    lower = _make_decimal(lower)
-    upper = _make_decimal(upper)
     if lower > upper:
         raise ValueError('lower must not be greater than upper, got '
                          '{0} (lower) and {1} (upper)'.format(lower, upper))
@@ -539,9 +537,6 @@ class AcceptedTolerance(BaseAcceptance):
             if not expected:
                 return not error  # <- EXIT!
             error = error / expected  # Make percent error.
-
-        if isnan(error):
-            return False  # <- EXIT!
 
         return self.lower <= error <= self.upper
 
