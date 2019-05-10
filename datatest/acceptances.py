@@ -777,6 +777,12 @@ class AcceptedLimit(BaseAcceptance):
 class AcceptedFactoryType(object):
     """Accept differences without triggering a test failure."""
 
+    def __repr__(self):
+        default_repr = super(AcceptedFactoryType, self).__repr__()
+        name_start = default_repr.index(self.__class__.__name__)
+        no_module_prefix = default_repr[name_start:]  # Slice-off module.
+        return '<' + no_module_prefix
+
     def missing(self, msg=None):
         """Accepts :class:`Missing` values without triggering a
         test failure:
