@@ -1008,6 +1008,19 @@ class TestAcceptedTolerance(unittest.TestCase):
         ]
         self.assertEqual(actual, expected)
 
+    def test_repr(self):
+        acceptance = AcceptedTolerance(0.5)
+        self.assertEqual(repr(acceptance), 'AcceptedTolerance(0.5)')
+
+        acceptance = AcceptedTolerance(0.5, msg='some message')
+        self.assertEqual(repr(acceptance), "AcceptedTolerance(0.5, msg='some message')")
+
+        acceptance = AcceptedTolerance(-0.25, 0.5)
+        self.assertEqual(repr(acceptance), 'AcceptedTolerance(lower=-0.25, upper=0.5)')
+
+        acceptance = AcceptedTolerance(0.5, percent=True)
+        self.assertEqual(repr(acceptance), 'AcceptedTolerance(0.5, percent=True)')
+
 
 class TestAcceptedFuzzy(unittest.TestCase):
     def setUp(self):

@@ -491,13 +491,33 @@ class AcceptedTolerance(BaseAcceptance):
 
     def __repr__(self):
         cls_name = self.__class__.__name__
-        msg_part = ', msg={0!r}'.format(self.msg) if self.msg else ''
-        if -self.lower ==  self.upper:
-            return '{0}({1!r}{2})'.format(cls_name, self.upper, msg_part)
-        return '{0}(lower={1!r}, upper={2!r}{3})'.format(cls_name,
-                                                         self.lower,
-                                                         self.upper,
-                                                         msg_part)
+
+        if self.msg:
+            msg_repr = ', msg={0!r}'.format(self.msg)
+        else:
+            msg_repr = ''
+
+        if self.percent:
+            percent_repr = ', percent={0!r}'.format(self.percent)
+        else:
+            percent_repr = ''
+
+        if -self.lower == self.upper:
+            repr_string = '{0}({1!r}{2}{3})'.format(
+                cls_name,
+                self.upper,
+                msg_repr,
+                percent_repr,
+            )
+        else:
+            repr_string = '{0}(lower={1!r}, upper={2!r}{3}{4})'.format(
+                cls_name,
+                self.lower,
+                self.upper,
+                msg_repr,
+                percent_repr,
+            )
+        return repr_string
 
     def call_predicate(self, item):
         _, diff = item  # Unpack item (discarding key).
