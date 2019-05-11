@@ -47,6 +47,7 @@ class BaseDifference(abc.ABC):
         a single value.
         """
         # Concrete method should return tuple of args used in __init__().
+        raise NotImplementedError
 
     def __eq__(self, other):
         if self.__class__ != other.__class__:
