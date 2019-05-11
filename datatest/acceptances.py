@@ -528,11 +528,12 @@ class AcceptedTolerance(BaseAcceptance):
     def call_predicate(self, item):
         _, diff = item  # Unpack item (discarding key).
 
-        # Get deviation and expected value if type and values are compatible.
         try:
+            # If diff is Deviation-like, get `deviation` and `expected`.
             deviation = diff.deviation
             expected = diff.expected
         except AttributeError:
+            # Else, try to derive `deviation` and `expected`.
             args = diff.args
             len_args = len(args)
             if (isinstance(diff, Missing)
@@ -554,11 +555,12 @@ class AcceptedTolerance(BaseAcceptance):
                         expected = args[1] or 0
                         deviation = (args[0] or 0) - expected
                     except TypeError:
-                        return False
+                        return False  # <- EXIT!
             else:
                 return False  # <- EXIT!
 
         error = deviation or 0
+
         if self.percent:
             if not expected:
                 return not error  # <- EXIT!
