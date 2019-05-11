@@ -668,21 +668,23 @@ class AcceptedDifferences(BaseAcceptance):
 
         super(AcceptedDifferences, self).__init__(msg)
         self._scope = scope
-
-        if isinstance(obj, Mapping):
-            self._obj = obj
-        elif nonstringiter(obj) and (scope is None or scope == 'group'):
-            self._obj = defaultdict(lambda: list(obj))  # Copy for each group.
-        else:  # For 'element' or 'whole' scopes.
-            self._obj = defaultdict(lambda: obj)  # Single persistent object.
+        self._obj = obj
 
     def start_group(self, key):
         """Called before processing each group."""
-        try:
-            current_allowance = self._obj[key]  # Can't use get() with defaultdict.
-        except KeyError:
-            current_allowance = []
+        # Get current allowance object.
+        obj = self._obj
+        if isinstance(obj, Mapping):
+            current_allowance = obj.get(key, [])
+        elif nonstringiter(obj):
+            if self._scope == 'whole':
+                current_allowance = obj  # Use a single persistent object.
+            else:
+                current_allowance = list(obj)  # Make a copy for each group.
+        else:
+            current_allowance = obj
 
+        # Get current scope and check function.
         if isinstance(current_allowance, type):
             default_scope = 'element'
             current_allowance = [current_allowance]
