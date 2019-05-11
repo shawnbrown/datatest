@@ -57,8 +57,30 @@ class BaseAcceptance(abc.ABC):
     def __init__(self, msg=None):
         """Initialize object values."""
         self.msg = msg
-        self.priority = getattr(self, 'priority', 4)  # Use existing priority
-                                                      # if already defined.
+
+    @property
+    def priority(self):
+        """The priority relative to other acceptance instances.
+
+        This is used internally to resolve the order of operations
+        when multiple acceptances are composed with intersection or
+        union operations. Datatest's built-in acceptances use the
+        following convention for priority scores:
+
+            =======  ========
+            Scope    Priority
+            =======  ========
+            element  4
+            group    32
+            whole    256
+            =======  ========
+
+        Individual acceptance priorities should always be a power of 2.
+        Composed acceptances derive their priority by combining the
+        individual priorities together with a bitwise-OR operation.
+        """
+        return 4
+
     @abc.abstractmethod
     def __repr__(self):
         cls_name = self.__class__.__name__

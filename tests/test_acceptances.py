@@ -52,21 +52,6 @@ class TestBaseAcceptance(unittest.TestCase):
         acceptance = accepts_nothing()
         self.assertEqual(acceptance.priority, 4)
 
-    def test_preserve_priority(self):
-        # Calling the superclass' __init__() should not overwrite
-        # the `priority` attribute if it has been previously set by
-        # a subclass.
-        class accepts_nothing(MinimalAcceptance):
-            def __init__(_self, msg=None):
-                _self.priority = 200
-                super(accepts_nothing, _self).__init__(msg)
-
-            def call_predicate(_self, item):
-                return False
-
-        acceptance = accepts_nothing()
-        self.assertEqual(acceptance.priority, 200, 'should not overwrite existing `priority`')
-
     def test_serialized_items(self):
         item_list = [1, 2]
         actual = BaseAcceptance._serialized_items(item_list)
@@ -205,15 +190,17 @@ class TestAcceptanceProtocol(unittest.TestCase):
 class TestLogicalComposition(unittest.TestCase):
     def setUp(self):
         class accepted_missing(MinimalAcceptance):
-            def __init__(_self):
-                _self.priority = 4
+            @property
+            def priority(self):
+                return 4
 
             def call_predicate(_self, item):
                 return isinstance(item[1], Missing)
 
         class accepted_letter_a(MinimalAcceptance):
-            def __init__(_self):
-                _self.priority = 8
+            @property
+            def priority(self):
+                return 8
 
             def start_collection(_self):
                 _self._not_used = True
