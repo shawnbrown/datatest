@@ -482,7 +482,13 @@ class AcceptedTolerance(BaseAcceptance):
 
     See documentation for full details.
     """
-    def __init__(self, lower, upper=None, msg=None, percent=False):  # TODO: Make percent kwonly.
+    def __init__(self, lower, upper=None, msg=None, **kwds):
+        percent = kwds.pop('percent', False)  # Get keyword-only argument.
+        if kwds:
+            unexpected = next(iter(a.keys()))
+            message = 'got an unexpected keyword argument {0!r}'
+            raise TypeError(message.format(unexpected))
+
         lower, upper, msg = _normalize_deviation_args(lower, upper, msg)
         self.lower = lower
         self.upper = upper
@@ -559,6 +565,14 @@ class AcceptedTolerance(BaseAcceptance):
             error = error / expected  # Make percent error.
 
         return self.lower <= error <= self.upper
+
+with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
+    AcceptedTolerance.__init__.__signature__ = inspect.Signature([
+        inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY),
+        inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),
+        inspect.Parameter('msg', inspect.Parameter.POSITIONAL_OR_KEYWORD, default=None),
+        inspect.Parameter('percent', inspect.Parameter.KEYWORD_ONLY, default=False),
+    ])
 
 
 class AcceptedFuzzy(BaseAcceptance):

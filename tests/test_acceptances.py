@@ -761,12 +761,11 @@ class TestAcceptedTolerance(unittest.TestCase):
             'ccc': Deviation(+2, 16),  # +12.5%
         }
 
-    @unittest.skip('Not implemented.')
     def test_function_signature(self):
         with contextlib.suppress(AttributeError):       # Python 3.2 and older
             sig = inspect.signature(AcceptedTolerance)  # use ugly signatures.
             parameters = list(sig.parameters)
-            self.assertEqual(parameters, ['tolerance', 'msg'])
+            self.assertEqual(parameters, ['tolerance', 'msg', 'percent'])
 
     def test_tolerance_syntax(self):
         with self.assertRaises(ValidationError) as cm:
