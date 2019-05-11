@@ -57,8 +57,8 @@ class BaseAcceptance(abc.ABC):
     def __init__(self, msg=None):
         """Initialize object values."""
         self.msg = msg
-        self.priority = getattr(self, 'priority', 100)  # Use existing priority
-                                                        # if already defined.
+        self.priority = getattr(self, 'priority', 4)  # Use existing priority
+                                                      # if already defined.
     @abc.abstractmethod
     def __repr__(self):
         cls_name = self.__class__.__name__
@@ -214,7 +214,10 @@ class CombinedAcceptance(BaseAcceptance):
         self.left = left
         self.right = right
         self.msg = msg
-        self.priority = max(left.priority, right.priority)
+
+    @property
+    def priority(self):
+        return self.left.priority | self.right.priority
 
     def start_collection(self):
         self.left.start_collection()
@@ -706,7 +709,7 @@ class AcceptedSpecific(BaseAcceptance):
 
     @property
     def priority(self):
-        return 200
+        return 32
 
     def __repr__(self):
         cls_name = self.__class__.__name__
@@ -795,7 +798,7 @@ class AcceptedLimit(BaseAcceptance):
 
     @property
     def priority(self):
-        return 300
+        return 256
 
     def start_collection(self):
         self._limit = self.number

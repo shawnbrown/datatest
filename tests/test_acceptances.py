@@ -50,7 +50,7 @@ class TestBaseAcceptance(unittest.TestCase):
                 return False
 
         acceptance = accepts_nothing()
-        self.assertEqual(acceptance.priority, 100)
+        self.assertEqual(acceptance.priority, 4)
 
     def test_preserve_priority(self):
         # Calling the superclass' __init__() should not overwrite
@@ -205,12 +205,15 @@ class TestAcceptanceProtocol(unittest.TestCase):
 class TestLogicalComposition(unittest.TestCase):
     def setUp(self):
         class accepted_missing(MinimalAcceptance):
+            def __init__(_self):
+                _self.priority = 4
+
             def call_predicate(_self, item):
                 return isinstance(item[1], Missing)
 
         class accepted_letter_a(MinimalAcceptance):
             def __init__(_self):
-                _self.priority = 150
+                _self.priority = 8
 
             def start_collection(_self):
                 _self._not_used = True
@@ -233,12 +236,9 @@ class TestLogicalComposition(unittest.TestCase):
             def __repr__(_self):
                 return super(LogicalAnd, _self).__repr__()
 
-        self.accepted_missing.priority = 222
-        self.accepted_letter_a.priority = 333
-
         acceptance = LogicalAnd(left=self.accepted_missing,
                                 right=self.accepted_letter_a)
-        self.assertEqual(acceptance.priority, 333)
+        self.assertEqual(acceptance.priority, 12, 'bit-wise OR of 4 and 8')
 
     def test_IntersectedAcceptance(self):
         original_diffs = [Extra('a'), Missing('a'), Missing('b'), Extra('b')]
@@ -1290,16 +1290,16 @@ class TestUniversalComposability(unittest.TestCase):
     def setUp(self):
         ntup = namedtuple('ntup', ('cls', 'args', 'priority'))
         self.acceptances = [
-            ntup(cls=AcceptedMissing,   args=tuple(),                  priority=100),
-            ntup(cls=AcceptedExtra,     args=tuple(),                  priority=100),
-            ntup(cls=AcceptedInvalid,   args=tuple(),                  priority=100),
-            ntup(cls=AcceptedDeviation, args=(5,),                     priority=100),
-            ntup(cls=AcceptedFuzzy,     args=tuple(),                  priority=100),
-            ntup(cls=AcceptedPercent,   args=(0.05,),                  priority=100),
-            ntup(cls=AcceptedKeys,      args=(lambda args: True,),     priority=100),
-            ntup(cls=AcceptedArgs,      args=(lambda *args: True,),    priority=100),
-            ntup(cls=AcceptedSpecific,  args=({'X': [Invalid('A')]},), priority=200),
-            ntup(cls=AcceptedLimit,     args=(4,),                     priority=300),
+            ntup(cls=AcceptedMissing,   args=tuple(),                  priority=4),
+            ntup(cls=AcceptedExtra,     args=tuple(),                  priority=4),
+            ntup(cls=AcceptedInvalid,   args=tuple(),                  priority=4),
+            ntup(cls=AcceptedDeviation, args=(5,),                     priority=4),
+            ntup(cls=AcceptedFuzzy,     args=tuple(),                  priority=4),
+            ntup(cls=AcceptedPercent,   args=(0.05,),                  priority=4),
+            ntup(cls=AcceptedKeys,      args=(lambda args: True,),     priority=4),
+            ntup(cls=AcceptedArgs,      args=(lambda *args: True,),    priority=4),
+            ntup(cls=AcceptedSpecific,  args=({'X': [Invalid('A')]},), priority=32),
+            ntup(cls=AcceptedLimit,     args=(4,),                     priority=256),
         ]
 
     def test_completeness(self):
@@ -1333,12 +1333,16 @@ class TestUniversalComposability(unittest.TestCase):
         for a, b in combinations:
             composed = a | b  # <- Union!
             self.assertIsInstance(composed, UnionedAcceptance)
-            self.assertEqual(composed.priority, max(a.priority, b.priority))
+            self.assertEqual(composed.priority, (a.priority | b.priority))
 
         for a, b in combinations:
             composed = a & b  # <- Intersection!
             self.assertIsInstance(composed, IntersectedAcceptance)
-            self.assertEqual(composed.priority, max(a.priority, b.priority))
+            self.assertEqual(composed.priority, (a.priority | b.priority), 'bitwise OR of component priorities')
+
+        # The composed priority should always be the bitwise OR of component
+        # priorities (regardless of whether or not it was composed as a UNION
+        # or an INTERSECTION).
 
     def test_integration_examples(self):
         # Test acceptance of +/- 2 OR +/- 6%.
