@@ -129,24 +129,24 @@ def _make_decimal(d):
     return d.normalize()
 
 
-def _make_token(name, description=None):
-    """Return a new object instance to use as a symbol for representing
+def _make_sentinel(name, reprstring, docstring):
+    """Return a new object instance to use as a sentinel to represent
     an entity that cannot be used directly because of some logical
     reason or implementation detail.
 
-    * Query uses a token for the result data when optimizing
-      queries because the result does not exist until the query is
-      actually executed.
-    * _get_error() uses a token to build an appropriate error when
-      objects normally required for processing are not found.
-    * DataError uses a token to compare float('nan') objects because
-      they are not considered to be equal when directly compared.
+    * Query uses a sentinel for the result data when optimizing
+      queries because the result does not exist until the query
+      is actually executed.
+    * _get_error() uses a sentinel to build an appropriate error
+      when objects normally required for processing are not found.
+    * DataError uses a sentinel to compare float('nan') objects
+      because they are not considered to be equal when directly
+      compared.
     """
-    class TOKEN(object):
-        def __repr__(self):
-            return '<{0}>'.format(name)
-    TOKEN.description = description
-    return TOKEN()
+    return type(name, (object,), {
+        '__repr__': lambda self: reprstring,
+        '__doc__': docstring,
+    })()
 
 
 def _get_arg_lengths(func):

@@ -30,7 +30,7 @@ from .._utils import iterpeek
 from .._utils import nonstringiter
 from .._utils import sortable
 from .._utils import exhaustible
-from .._utils import _make_token
+from .._utils import _make_sentinel
 from .._utils import _unique_everseen
 from .._utils import file_types
 from .._utils import string_types
@@ -598,8 +598,9 @@ _execution_step = namedtuple(
     field_names=('function', 'args', 'kwds')
 )
 
-RESULT_TOKEN = _make_token(
-    'RESULT',
+RESULT_TOKEN = _make_sentinel(
+    'ResultSentinelType',
+    '<RESULT>',
     'Token for representing a data result when optimizing execution plan.',
 )
 

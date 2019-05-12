@@ -7,7 +7,7 @@ from ._compatibility.builtins import *
 from ._compatibility import abc
 from ._compatibility import contextlib
 from ._compatibility.decimal import Decimal
-from ._utils import _make_token
+from ._utils import _make_sentinel
 
 
 __all__ = [
@@ -19,9 +19,10 @@ __all__ = [
 ]
 
 
-NANTOKEN = _make_token(
-    'NANTOKEN',
-    'Token for comparing differences that contain not-a-number values.'
+NANTOKEN = _make_sentinel(
+    'NanSentinelType',
+    '<nan sentinel>',
+    'Token for comparing differences that contain not-a-number values.',
 )
 
 def _nan_to_token(x):
@@ -268,9 +269,10 @@ class Deviation(BaseDifference):
         return '{0}({1}, {2!r})'.format(cls_name, devi_repr, self._expected)
 
 
-NOVALUE = _make_token(
-    'NOVALUE',
-    'Token for handling comparisons against a value that does not exist.'
+NOVALUE = _make_sentinel(
+    'NoValueType',
+    '<no value>',
+    'Sentinel to mark when a value does not exist.',
 )
 
 
