@@ -407,6 +407,37 @@ class TestAcceptedDifferences(unittest.TestCase):
         expected = {'a': Missing('X'), 'b': Missing('X')}
         self.assertAcceptance(differences, acceptance, expected)
 
+    def test_nonremovable_containers(self):
+        """Allowance containers with no remove() method should be
+        converted to lists.
+        """
+        # Mapping vs iter.
+        differences = {
+            'a': iter([Missing('X'), Missing('X')]),
+            'b': iter([Missing('Y'), Missing('X')]),
+        }
+        acceptance = AcceptedDifferences(iter([Missing('X'), Missing('Y')]))
+        expected = {'a': Missing('X')}
+        self.assertAcceptance(differences, acceptance, expected)
+
+        # Defaults to element-wise scope.
+        differences = {
+            'a': iter([Missing('X'), Missing('X')]),
+            'b': iter([Missing('Y'), Missing('X')]),
+        }
+        acceptance = AcceptedDifferences({'a': Missing('X'), 'b': Missing('Y')})
+        expected = {'b': Missing('X')}
+        self.assertAcceptance(differences, acceptance, expected)
+
+        # Defaults to group-wise scope.
+        differences = {
+            'a': iter([Missing('X'), Missing('X')]),
+            'b': iter([Missing('Y'), Missing('X')]),
+        }
+        acceptance = AcceptedDifferences({'a': iter([Missing('X')]), 'b': tuple([Missing('Y')])})
+        expected = {'a': Missing('X'), 'b': Missing('X')}
+        self.assertAcceptance(differences, acceptance, expected)
+
 
 class TestAcceptedDifferencesByType(unittest.TestCase):
     """These tests were taken from older AcceptedMissing,

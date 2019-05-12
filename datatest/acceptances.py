@@ -668,6 +668,10 @@ class AcceptedDifferences(BaseAcceptance):
 
         super(AcceptedDifferences, self).__init__(msg)
         self._scope = scope
+
+        if (nonstringiter(obj) and not isinstance(obj, Mapping)
+                and not hasattr(obj, 'remove')):
+            obj = list(obj)
         self._obj = obj
 
     def start_group(self, key):
@@ -693,6 +697,8 @@ class AcceptedDifferences(BaseAcceptance):
         else:
             if nonstringiter(current_allowance):
                 default_scope = 'group'
+                if not hasattr(current_allowance, 'remove'):
+                    current_allowance = list(current_allowance)
             else:
                 default_scope = 'element'
                 current_allowance = [current_allowance]
