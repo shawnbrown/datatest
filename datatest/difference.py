@@ -19,11 +19,20 @@ __all__ = [
 ]
 
 
+NOVALUE = _make_sentinel(
+    'NoValueType',
+    '<no value>',
+    'Sentinel to mark when a value does not exist.',
+    truthy=False,
+)
+
+
 NANTOKEN = _make_sentinel(
     'NanSentinelType',
     '<nan sentinel>',
     'Token for comparing differences that contain not-a-number values.',
 )
+
 
 def _nan_to_token(x):
     with contextlib.suppress(TypeError):
@@ -165,13 +174,13 @@ class Invalid(BaseDifference):
     """
     __slots__ = ('_invalid', '_expected')
 
-    def __init__(self, invalid, expected=None):
+    def __init__(self, invalid, expected=NOVALUE):
         self._invalid = invalid
         self._expected = expected
 
     @property
     def args(self):
-        if self._expected is None:
+        if self._expected is NOVALUE:
             return (self._invalid,)
         return (self._invalid, self._expected)
 
@@ -188,7 +197,7 @@ class Invalid(BaseDifference):
     def __repr__(self):
         cls_name = self.__class__.__name__
         invalid_repr = getattr(self._invalid, '__name__', repr(self._invalid))
-        if self._expected:
+        if self._expected is not NOVALUE:
             expected_repr = ', expected={0}'.format(
                 getattr(self._expected, '__name__', repr(self._expected)))
         else:
@@ -267,13 +276,6 @@ class Deviation(BaseDifference):
         except (TypeError, ValueError):
             devi_repr = repr(self._deviation)
         return '{0}({1}, {2!r})'.format(cls_name, devi_repr, self._expected)
-
-
-NOVALUE = _make_sentinel(
-    'NoValueType',
-    '<no value>',
-    'Sentinel to mark when a value does not exist.',
-)
 
 
 def _make_difference(actual, expected, show_expected=True):

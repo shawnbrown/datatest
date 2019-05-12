@@ -98,6 +98,9 @@ class TestInvalid(unittest.TestCase):
         diff = Invalid('foo', 'bar')
         self.assertEqual(repr(diff), "Invalid('foo', expected='bar')")
 
+        diff = Invalid('foo', None)
+        self.assertEqual(repr(diff), "Invalid('foo', expected=None)")
+
     def test_repr_with_callables(self):
         def myfunc(x):
             return True
