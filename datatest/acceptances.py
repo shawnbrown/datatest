@@ -883,7 +883,12 @@ class AcceptedLimit(BaseAcceptance):
 ##########################################
 
 class AcceptedFactoryType(object):
-    """Accept differences without triggering a test failure."""
+    """Accepts differences that match *obj* without triggering a test
+    failure. The given *obj* can be a difference class, a difference
+    instance, or a container of difference instances.
+    """
+    def __call__(self, obj, msg=None, scope=None):
+        return AcceptedDifferences(obj, msg=msg, scope=scope)
 
     def __repr__(self):
         default_repr = super(AcceptedFactoryType, self).__repr__()

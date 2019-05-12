@@ -13,6 +13,7 @@ from .validation import validate
 from .validation import ValidationError
 from .validation import _pytest_tracebackhide
 from .acceptances import (
+    AcceptedDifferences,
     AcceptedMissing,
     AcceptedExtra,
     AcceptedInvalid,
@@ -200,6 +201,13 @@ class DataTestCase(TestCase):
         """Wrapper for :meth:`validate.unique`."""
         __tracebackhide__ = _pytest_tracebackhide
         self._apply_validation(validate.unique, data, msg=msg)
+
+    def acceptedDifferences(self, obj, msg=None, scope=None):
+        """Accepts differences that match *obj* without triggering a test
+        failure. The given *obj* can be a difference class, a difference
+        instance, or a container of difference instances.
+        """
+        return AcceptedDifferences(obj, msg=msg, scope=scope)
 
     def acceptedMissing(self, msg=None):
         """Accepts :class:`Missing` elements without triggering a test
