@@ -850,13 +850,20 @@ class AcceptedCount(BaseAcceptance):
     """Accepted up to a given *number* of differences without
     triggering a test failure.
     """
-    def __init__(self, number, msg=None):
+    def __init__(self, number, msg=None, scope=None):
         if not isinstance(number, Number):
             err_msg = 'number must be a numeric type, got {0}'
             raise TypeError(err_msg.format(number.__class__.__name__))
 
+        if scope not in (None, 'group', 'whole'):
+            if scope == 'element':
+                raise ValueError("count does not accept 'element' scope")
+            message = "scope may be 'group' or 'whole', got {0}"
+            raise ValueError(message.format(scope))
+
         self.number = number
         self.msg = msg
+        self._scope = scope
         self._count = None  # Properties to hold working values
         self._limit = None  # during acceptance checking.
 
@@ -867,11 +874,18 @@ class AcceptedCount(BaseAcceptance):
 
     @property
     def priority(self):
+        if self._scope == 'group':
+            return 32
         return 256
 
     def start_collection(self):
         self._limit = self.number
         self._count = 0
+
+    def start_group(self, key):
+        if self._scope == 'group':
+            self._limit = self.number
+            self._count = 0
 
     def call_predicate(self, item):
         self._count += 1

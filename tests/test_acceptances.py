@@ -1340,6 +1340,18 @@ class TestAcceptedCount(unittest.TestCase):
         self.assertIsInstance(remaining, Mapping)
         self.assertEqual(len(remaining), 1)
 
+    def test_scope(self):
+        with self.assertRaises(ValidationError) as cm:
+            with AcceptedCount(2, scope='group'):  # <- Accepts 2 per group.
+                raise ValidationError({
+                    'foo': [Extra('xxx'), Extra('yyy')],
+                    'bar': [Missing('xxx'), Missing('yyy')],
+                    'baz': [Invalid('xxx'), Invalid('yyy'), Invalid('zzz')],
+                })
+
+        remaining = cm.exception.differences
+        self.assertEqual(remaining, {'baz': Invalid('zzz')})
+
 
 class TestUniversalComposability(unittest.TestCase):
     """Test that acceptances are composable with acceptances of the
