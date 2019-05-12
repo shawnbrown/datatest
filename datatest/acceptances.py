@@ -870,7 +870,8 @@ class AcceptedCount(BaseAcceptance):
     def __repr__(self):
         cls_name = self.__class__.__name__
         msg_part = ', msg={0!r}'.format(self.msg) if self.msg else ''
-        return '{0}({1!r}{2})'.format(cls_name, self.number, msg_part)
+        scope_part = ', scope={0!r}'.format(self._scope) if self._scope else ''
+        return '{0}({1!r}{2}{3})'.format(cls_name, self.number, msg_part, scope_part)
 
     @property
     def priority(self):

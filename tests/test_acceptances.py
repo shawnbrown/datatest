@@ -1352,6 +1352,16 @@ class TestAcceptedCount(unittest.TestCase):
         remaining = cm.exception.differences
         self.assertEqual(remaining, {'baz': Invalid('zzz')})
 
+    def test_repr(self):
+        acceptance = AcceptedCount(2)
+        self.assertEqual(repr(acceptance), "AcceptedCount(2)")
+
+        acceptance = AcceptedCount(2, msg='Some message.')
+        self.assertEqual(repr(acceptance), "AcceptedCount(2, msg='Some message.')")
+
+        acceptance = AcceptedCount(2, scope='group')
+        self.assertEqual(repr(acceptance), "AcceptedCount(2, scope='group')")
+
 
 class TestUniversalComposability(unittest.TestCase):
     """Test that acceptances are composable with acceptances of the
