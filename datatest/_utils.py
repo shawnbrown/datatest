@@ -129,7 +129,7 @@ def _make_decimal(d):
     return d.normalize()
 
 
-def _make_sentinel(name, reprstring, docstring):
+def _make_sentinel(name, reprstring, docstring, truthy=True):
     """Return a new object instance to use as a sentinel to represent
     an entity that cannot be used directly because of some logical
     reason or implementation detail.
@@ -143,10 +143,16 @@ def _make_sentinel(name, reprstring, docstring):
       because they are not considered to be equal when directly
       compared.
     """
-    return type(name, (object,), {
+    cls_dict = {
         '__repr__': lambda self: reprstring,
         '__doc__': docstring,
-    })()
+    }
+
+    if not truthy:  # Make object falsy.
+        cls_dict['__bool__'] = lambda self: False
+        cls_dict['__nonzero__'] = lambda self: False
+
+    return type(name, (object,), cls_dict)()
 
 
 def _get_arg_lengths(func):

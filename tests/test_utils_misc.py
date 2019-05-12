@@ -164,3 +164,20 @@ class TestIterItems(unittest.TestCase):
 
         IterItems.register(OtherClass)  # <- Register virtual subclass.
         self.assertIsInstance(oth_cls, IterItems)
+
+
+class TestMakeSentinel(unittest.TestCase):
+    def test_basic(self):
+        sentinel = _utils._make_sentinel(
+            'TheName', '<the repr>', 'The docstring.'
+        )
+        self.assertEqual(sentinel.__class__.__name__, 'TheName')
+        self.assertEqual(repr(sentinel), '<the repr>')
+        self.assertEqual(sentinel.__doc__, 'The docstring.')
+        self.assertTrue(bool(sentinel))
+
+    def test_falsy(self):
+        sentinel = _utils._make_sentinel(
+            'TheName', '<the repr>', 'The docstring.', truthy=False
+        )
+        self.assertFalse(bool(sentinel))
