@@ -990,6 +990,17 @@ class AcceptedFactoryType(object):
         """
         return AcceptedFuzzy(cutoff=cutoff, msg=msg)
 
+    def tolerance(self, lower, upper=None, msg=None, **kwds):
+        """accepted.tolerance(tolerance, /, msg=None, *, percent=False)
+        accepted.tolerance(lower, upper, msg=None, *, percent=False)
+
+        Context manager that accepts quantative differences within a
+        given tolerance without triggering a test failure.
+
+        See documentation for full details.
+        """
+        return AcceptedTolerance(lower, upper=upper, msg=msg, **kwds)
+
     def deviation(self, lower, upper=None, msg=None):
         """accepted.deviation(tolerance, /, msg=None)
         accepted.deviation(lower, upper, msg=None)
@@ -1127,6 +1138,15 @@ class AcceptedFactoryType(object):
         remaining differences.
         """
         return AcceptedLimit(number, msg)
+
+
+with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
+    AcceptedFactoryType.tolerance.__signature__ = inspect.Signature([
+        inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY),
+        inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),
+        inspect.Parameter('msg', inspect.Parameter.POSITIONAL_OR_KEYWORD, default=None),
+        inspect.Parameter('percent', inspect.Parameter.KEYWORD_ONLY, default=False),
+    ])
 
 
 accepted = AcceptedFactoryType()  # Use as instance.

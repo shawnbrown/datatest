@@ -16,6 +16,7 @@ from .acceptances import (
     AcceptedMissing,
     AcceptedExtra,
     AcceptedInvalid,
+    AcceptedTolerance,
     AcceptedDeviation,
     AcceptedPercent,
     AcceptedSpecific,
@@ -233,6 +234,15 @@ class DataTestCase(TestCase):
         """
         return AcceptedInvalid(msg)
 
+    def acceptedTolerance(self, lower, upper=None, msg=None, **kwds):
+        """
+        acceptedTolerance(tolerance, /, msg=None, *, percent=False)
+        acceptedTolerance(lower, upper, msg=None, *, percent=False)
+
+        See documentation for full details.
+        """
+        return AcceptedTolerance(lower, upper=upper, msg=msg, **kwds)
+
     def acceptedDeviation(self, lower, upper=None, msg=None):
         """
         acceptedDeviation(tolerance, /, msg=None)
@@ -370,6 +380,13 @@ class DataTestCase(TestCase):
 # This only works for Python 3.3 and newer--older versions will simply
 # have the original method sigture.
 with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
+    DataTestCase.acceptedTolerance.__signature__ = inspect.Signature([
+        inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY),
+        inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),
+        inspect.Parameter('msg', inspect.Parameter.POSITIONAL_OR_KEYWORD, default=None),
+        inspect.Parameter('percent', inspect.Parameter.KEYWORD_ONLY, default=False),
+    ])
+
     DataTestCase.acceptedDeviation.__signature__ = inspect.Signature([
         inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY),
         inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),
