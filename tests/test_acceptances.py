@@ -1339,6 +1339,9 @@ class TestUniversalComposability(unittest.TestCase):
             ntup(cls=AcceptedArgs,      args=(lambda *args: True,),    priority=4),
             ntup(cls=AcceptedSpecific,  args=({'X': [Invalid('A')]},), priority=32),
             ntup(cls=AcceptedLimit,     args=(4,),                     priority=256),
+            ntup(cls=AcceptedDifferences, args=(Invalid('A'),),        priority=4),
+            ntup(cls=AcceptedDifferences, args=([Invalid('A')],),      priority=32),
+            ntup(cls=AcceptedDifferences, args=([Invalid('A')], None, 'whole'), priority=256),
         ]
 
     def test_completeness(self):

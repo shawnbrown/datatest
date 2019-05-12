@@ -36,6 +36,7 @@ __datatest = True  # Used to detect in-module stack frames (which are
 
 __all__ = [
     'accepted',
+    'AcceptedDifferences',
     'AcceptedMissing',
     'AcceptedExtra',
     'AcceptedInvalid',
