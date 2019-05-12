@@ -2,6 +2,38 @@
 Datatest Changelog
 ==================
 
+COMING SOON (0.9.6)
+-------------------
+
+* Add accepted.tolerance() and self.acceptedTolerance() methods to
+  handle quantative differences.
+* Change acceptance API for specific, type-based, and deviation-based
+  acceptances to be less verbose and more expressive:
+
+    =======================  =====================================
+    Old                      New
+    =======================  =====================================
+    accepted.specific(...)   accepted(...)
+    accepted.missing()       accepted(Missing)
+    accepted.extra()         accepted(Extra)
+    *No Equivalent*          accepted(CustomDifferenceClass)
+    accepted.deviation(...)  accepted.tolerance(...)
+    accepted.percent(...)    accepted.tolerance(..., percent=True)
+    accepted.limit(...)      accepted.count(...)
+    *No Equivalent*          accepted.count(..., scope='group')
+    =======================  =====================================
+
+  Other methods--accepted.args(), accepted.keys(), etc.--are
+  unchanged.
+
+* Removed acceptance classes from datatest namespace--these were
+  inadvertently added in a previous version but were never part
+  of the documented API. They can still be referenced via the
+  `acceptances` module::
+
+    from datatest.acceptances import ...
+
+
 2019-05-01 (0.9.5)
 ------------------
 
