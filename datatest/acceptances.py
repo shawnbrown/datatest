@@ -674,6 +674,27 @@ class AcceptedDifferences(BaseAcceptance):
             obj = list(obj)
         self._obj = obj
 
+    @property
+    def priority(self):
+        scope = self._scope
+
+        if not scope:
+            if nonstringiter(self._obj):
+                scope = 'group'
+            else:
+                scope = 'element'
+
+        if scope == 'element':
+            return 4
+
+        if scope == 'group':
+            return 32
+
+        if scope == 'whole':
+            return 256
+
+        raise Exception('unhandled scope: {0!r}'.format(scope))
+
     def start_group(self, key):
         """Called before processing each group."""
         # Get current allowance object.

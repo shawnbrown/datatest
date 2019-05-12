@@ -438,6 +438,27 @@ class TestAcceptedDifferences(unittest.TestCase):
         expected = {'a': Missing('X'), 'b': Missing('X')}
         self.assertAcceptance(differences, acceptance, expected)
 
+    def test_priority(self):
+        """Priority is determined by scope."""
+        acceptance = AcceptedDifferences(Extra)
+        self.assertEqual(acceptance.priority, 4)
+
+        acceptance = AcceptedDifferences(Extra('foo'))
+        self.assertEqual(acceptance.priority, 4)
+
+        acceptance = AcceptedDifferences([Extra('foo')], scope='element')
+        self.assertEqual(acceptance.priority, 4)
+
+        acceptance = AcceptedDifferences([Extra('foo')])  # Defaults to 'group' scope.
+        self.assertEqual(acceptance.priority, 32)
+
+        acceptance = AcceptedDifferences([Extra('foo')], scope='whole')
+        self.assertEqual(acceptance.priority, 256)
+
+        # Mapping of differences defaults to 'group' scope, too.
+        acceptance = AcceptedDifferences({'a': Extra('foo')})
+        self.assertEqual(acceptance.priority, 32)
+
 
 class TestAcceptedDifferencesByType(unittest.TestCase):
     """These tests were taken from older AcceptedMissing,
