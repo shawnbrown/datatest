@@ -741,7 +741,24 @@ class AcceptedDifferences(BaseAcceptance):
         return False
 
     def __repr__(self):
-        return super(AcceptedDifferences, self).__repr__()
+        cls_name = self.__class__.__name__
+
+        if isinstance(self._obj, type):
+            obj_part = self._obj.__name__
+        else:
+            obj_part = repr(self._obj)
+
+        if self.msg:
+            msg_part = ', msg={0!r}'.format(self.msg)
+        else:
+            msg_part = ''
+
+        if self._scope:
+            scope_part = ', scope={0!r}'.format(self._scope)
+        else:
+            scope_part = ''
+
+        return '{0}({1}{2}{3})'.format(cls_name, obj_part, msg_part, scope_part)
 
 
 class AcceptedSpecific(BaseAcceptance):

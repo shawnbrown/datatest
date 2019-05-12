@@ -459,6 +459,25 @@ class TestAcceptedDifferences(unittest.TestCase):
         acceptance = AcceptedDifferences({'a': Extra('foo')})
         self.assertEqual(acceptance.priority, 32)
 
+    def test_repr(self):
+        acceptance = AcceptedDifferences(Extra)
+        self.assertEqual(repr(acceptance), 'AcceptedDifferences(Extra)')
+
+        acceptance = AcceptedDifferences(Extra('foo'))
+        self.assertEqual(repr(acceptance), "AcceptedDifferences(Extra('foo'))")
+
+        acceptance = AcceptedDifferences([Extra('foo')], scope='element')
+        self.assertEqual(repr(acceptance), "AcceptedDifferences([Extra('foo')], scope='element')")
+
+        acceptance = AcceptedDifferences([Extra('foo')])  # Defaults to 'group' scope.
+        self.assertEqual(repr(acceptance), "AcceptedDifferences([Extra('foo')])")
+
+        acceptance = AcceptedDifferences([Extra('foo')], scope='whole')
+        self.assertEqual(repr(acceptance), "AcceptedDifferences([Extra('foo')], scope='whole')")
+
+        acceptance = AcceptedDifferences({'a': Extra('foo')})
+        self.assertEqual(repr(acceptance), "AcceptedDifferences({'a': Extra('foo')})")
+
 
 class TestAcceptedDifferencesByType(unittest.TestCase):
     """These tests were taken from older AcceptedMissing,
