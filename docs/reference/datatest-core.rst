@@ -185,7 +185,7 @@ collection of differences.
 
     .. automethod:: specific
 
-    .. automethod:: limit
+    .. automethod:: count
 
 
 Composability
@@ -196,7 +196,7 @@ behavior.
 
 The ``&`` operator can be used to create an *intersection* of
 acceptance criteria. In the following example, :meth:`accepted.missing`
-and :meth:`accepted.limit` are combined into a single acceptance that
+and :meth:`accepted.count` are combined into a single acceptance that
 accepts up to five Missing differences:
 
 .. code-block:: python
@@ -204,7 +204,7 @@ accepts up to five Missing differences:
 
     from datatest import validate, accepted
 
-    with accepted.missing() & accepted.limit(5):
+    with accepted.missing() & accepted.count(5):
         validate(..., ...)
 
 The ``|`` operator can be used to create *union* of acceptance
@@ -228,7 +228,7 @@ increasingly specific criteria:
 
     from datatest import validate, accepted
 
-    five_missing = accepted.missing() & accepted.limit(5)
+    five_missing = accepted.missing() & accepted.count(5)
 
     minor_deviations = accepted.deviation(10) | accepted.percent(0.05)
 
@@ -264,7 +264,7 @@ to right.
 +-------+-------------------------------+----------------------------+
 |   5   | | :meth:`accepted.specific`   | Group-wise acceptances     |
 +-------+-------------------------------+----------------------------+
-|   6   | | :meth:`accepted.limit`      | Whole-error acceptances    |
+|   6   | | :meth:`accepted.count`      | Whole-error acceptances    |
 +-------+-------------------------------+----------------------------+
 
 

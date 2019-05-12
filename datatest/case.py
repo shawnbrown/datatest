@@ -24,7 +24,7 @@ from .acceptances import (
     AcceptedKeys,
     AcceptedArgs,
     AcceptedFuzzy,
-    AcceptedLimit,
+    AcceptedCount,
 )
 
 
@@ -314,11 +314,11 @@ class DataTestCase(TestCase):
         """
         return AcceptedFuzzy(cutoff=cutoff, msg=msg)
 
-    def acceptedLimit(self, number, msg=None):
+    def acceptedCount(self, number, msg=None):
         """Accepted a limited *number* of differences without
         triggering a test failure::
 
-            with self.acceptedLimit(2):  # Accepts up to two differences.
+            with self.acceptedCount(2):  # Accepts up to two differences.
                 data = ['47306', '1370', 'TX']  # <- '1370' and 'TX' invalid
                 requirement = re.compile(r'^\\d{5}$')
                 self.assertValid(data, requirement)
@@ -327,7 +327,7 @@ class DataTestCase(TestCase):
         test will fail with a :class:`ValidationError` containing all
         observed differences.
         """
-        return AcceptedLimit(number, msg)
+        return AcceptedCount(number, msg)
 
     #############################
     # Deprecated 'allowed...' API
@@ -380,8 +380,8 @@ class DataTestCase(TestCase):
         return AcceptedFuzzy(cutoff=cutoff, msg=msg)
 
     def allowedLimit(self, number, msg=None):
-        self._warn('self.acceptedLimit()')
-        return AcceptedLimit(number, msg)
+        self._warn('self.acceptedCount()')
+        return AcceptedCount(number, msg)
 
 
 # Prettify default signature of methods that accept multiple signatures.

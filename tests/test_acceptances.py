@@ -31,7 +31,7 @@ from datatest.acceptances import (
     AcceptedTolerance,
     AcceptedFuzzy,
     AcceptedSpecific,
-    AcceptedLimit,
+    AcceptedCount,
 )
 
 
@@ -1301,39 +1301,39 @@ class TestAcceptedSpecific(unittest.TestCase):
         self.assertEqual(actual, {'baz': Extra('zzz')})
 
 
-class TestAcceptedLimit(unittest.TestCase):
+class TestAcceptedCount(unittest.TestCase):
     def test_bad_arg(self):
-        """An old version of AcceptedLimit() used to support dict
+        """An old version of AcceptedCount() used to support dict
         arguments but this behavior has been removed. It should now
         raise a TypeError.
         """
         with self.assertRaises(TypeError):
-            AcceptedLimit(dict())
+            AcceptedCount(dict())
 
     def test_under_limit(self):
-        with AcceptedLimit(3):  # <- Accepts 3 and there are only 2.
+        with AcceptedCount(3):  # <- Accepts 3 and there are only 2.
             raise ValidationError([Extra('xxx'), Missing('yyy')])
 
-        with AcceptedLimit(3):  # <- Accepts 3 and there are only 2.
+        with AcceptedCount(3):  # <- Accepts 3 and there are only 2.
             raise ValidationError({'foo': Extra('xxx'), 'bar': Missing('yyy')})
 
     def test_at_limit(self):
-        with AcceptedLimit(2):  # <- Accepts 2 and there are 2.
+        with AcceptedCount(2):  # <- Accepts 2 and there are 2.
             raise ValidationError([Extra('xxx'), Missing('yyy')])
 
-        with AcceptedLimit(3):  # <- Accepts 2 and there are 2.
+        with AcceptedCount(3):  # <- Accepts 2 and there are 2.
             raise ValidationError({'foo': Extra('xxx'), 'bar': Missing('yyy')})
 
     def test_over_limit(self):
         with self.assertRaises(ValidationError) as cm:
-            with AcceptedLimit(1):  # <- Accepts 1 but there are 2.
+            with AcceptedCount(1):  # <- Accepts 1 but there are 2.
                 raise ValidationError([Extra('xxx'), Missing('yyy')])
 
         remaining = list(cm.exception.differences)
         self.assertEqual(remaining, [Missing('yyy')])
 
         with self.assertRaises(ValidationError) as cm:
-            with AcceptedLimit(1):  # <- Accepts 1 and there are 2.
+            with AcceptedCount(1):  # <- Accepts 1 and there are 2.
                 raise ValidationError({'foo': Extra('xxx'), 'bar': Missing('yyy')})
 
         remaining = cm.exception.differences
@@ -1357,7 +1357,7 @@ class TestUniversalComposability(unittest.TestCase):
             ntup(cls=AcceptedKeys,      args=(lambda args: True,),     priority=4),
             ntup(cls=AcceptedArgs,      args=(lambda *args: True,),    priority=4),
             ntup(cls=AcceptedSpecific,  args=({'X': [Invalid('A')]},), priority=32),
-            ntup(cls=AcceptedLimit,     args=(4,),                     priority=256),
+            ntup(cls=AcceptedCount,     args=(4,),                     priority=256),
             ntup(cls=AcceptedDifferences, args=(Invalid('A'),),        priority=4),
             ntup(cls=AcceptedDifferences, args=([Invalid('A')],),      priority=32),
             ntup(cls=AcceptedDifferences, args=([Invalid('A')], None, 'whole'), priority=256),
@@ -1440,7 +1440,7 @@ class TestUniversalComposability(unittest.TestCase):
                 Extra('C'),
                 Missing('D'),
             ]
-            with AcceptedLimit(1) | AcceptedMissing():
+            with AcceptedCount(1) | AcceptedMissing():
                 raise ValidationError(differences)
 
         remaining = cm.exception.differences
@@ -1453,7 +1453,7 @@ class TestUniversalComposability(unittest.TestCase):
                 Missing('B'),
                 Missing('C'),
             ]
-            with AcceptedLimit(1) & AcceptedMissing():  # Accepts only 1 missing.
+            with AcceptedCount(1) & AcceptedMissing():  # Accepts only 1 missing.
                 raise ValidationError(differences)
 
         remaining = cm.exception.differences
@@ -1467,7 +1467,7 @@ class TestUniversalComposability(unittest.TestCase):
                 Extra('C'),
                 Missing('D'),
             ]
-            with AcceptedLimit(1) | AcceptedSpecific(Extra('A')):
+            with AcceptedCount(1) | AcceptedSpecific(Extra('A')):
                 raise ValidationError(differences)
 
         remaining = cm.exception.differences

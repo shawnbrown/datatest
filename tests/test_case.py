@@ -30,7 +30,7 @@ from datatest.acceptances import (
     AcceptedFuzzy,
     AcceptedDeviation,
     AcceptedPercent,
-    AcceptedLimit,
+    AcceptedCount,
     AcceptedSpecific,
 )
 
@@ -294,6 +294,6 @@ class TestAcceptanceWrappers(unittest.TestCase):
         result = self.case.acceptedPercent(5)
         self.assertTrue(isinstance(result, AcceptedPercent))
 
-    def test_acceptedLimit(self):
-        cm = self.case.acceptedLimit(10)
-        self.assertTrue(isinstance(cm, AcceptedLimit))
+    def test_acceptedCount(self):
+        cm = self.case.acceptedCount(10)
+        self.assertTrue(isinstance(cm, AcceptedCount))

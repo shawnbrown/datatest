@@ -45,7 +45,7 @@ __all__ = [
     'AcceptedDeviation',
     'AcceptedPercent',
     'AcceptedSpecific',
-    'AcceptedLimit',
+    'AcceptedCount',
     'AcceptedFuzzy',
     'allowed',  # <- Deprecated API.
 ]
@@ -846,7 +846,7 @@ class AcceptedSpecific(BaseAcceptance):
             return False
 
 
-class AcceptedLimit(BaseAcceptance):
+class AcceptedCount(BaseAcceptance):
     """Accepted up to a given *number* of differences without
     triggering a test failure.
     """
@@ -1138,7 +1138,7 @@ class AcceptedFactoryType(object):
         """
         return AcceptedSpecific(differences, msg)
 
-    def limit(self, number, msg=None):
+    def count(self, number, msg=None):
         """Accepts up to a given *number* of differences without
         triggering a test failure:
 
@@ -1151,7 +1151,7 @@ class AcceptedFactoryType(object):
 
             requirement = 'A'
 
-            with accepted.limit(2):
+            with accepted.count(2):
                 validate(data, requirement)  # Raises [Invalid('B'),
                                              #         Invalid('C')]
 
@@ -1159,7 +1159,17 @@ class AcceptedFactoryType(object):
         case will fail with a :class:`ValidationError` containing the
         remaining differences.
         """
-        return AcceptedLimit(number, msg)
+        return AcceptedCount(number, msg)
+
+    @staticmethod
+    def _warn(new_name):
+        import warnings
+        message = "method is deprecated, use {0} instead".format(new_name)
+        warnings.warn(message, DeprecationWarning, stacklevel=3)
+
+    def limit(self, number, msg=None):
+        cls._warn('accepted.count()')
+        return AcceptedCount(number, msg)
 
 
 with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
@@ -1242,5 +1252,5 @@ class allowed(abc.ABC):
 
     @classmethod
     def limit(cls, number, msg=None):
-        cls._warn('accepted.limit()')
-        return AcceptedLimit(number, msg)
+        cls._warn('accepted.count()')
+        return AcceptedCount(number, msg)

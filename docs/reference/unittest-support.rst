@@ -203,7 +203,7 @@ DataTestCase
 
     .. automethod:: acceptedArgs
 
-    .. automethod:: acceptedLimit
+    .. automethod:: acceptedCount
 
 
 *******************
