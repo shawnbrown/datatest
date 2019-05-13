@@ -1183,7 +1183,7 @@ class AcceptedFactoryType(object):
         warnings.warn(message, DeprecationWarning, stacklevel=3)
 
     def limit(self, number, msg=None):
-        cls._warn('accepted.count()')
+        self._warn('accepted.count()')
         return AcceptedCount(number, msg)
 
 
