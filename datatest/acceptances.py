@@ -446,59 +446,6 @@ with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
     ])
 
 
-class AcceptedPercent(BaseAcceptance):
-    """AcceptedPercent(tolerance, /, msg=None)
-    AcceptedPercent(lower, upper, msg=None)
-
-    Context manager that accepts Deviations within a given percent
-    tolerance without triggering a test failure.
-
-    See documentation for full details.
-    """
-    def __init__(self, lower, upper=None, msg=None):
-        lower, upper, msg = _normalize_deviation_args(lower, upper, msg)
-        self.lower = lower
-        self.upper = upper
-        super(AcceptedPercent, self).__init__(msg)
-
-    def __repr__(self):
-        cls_name = self.__class__.__name__
-        msg_part = ', msg={0!r}'.format(self.msg) if self.msg else ''
-        if -self.lower ==  self.upper:
-            return '{0}({1!r}{2})'.format(cls_name, self.upper, msg_part)
-        return '{0}(lower={1!r}, upper={2!r}{3})'.format(cls_name,
-                                                         self.lower,
-                                                         self.upper,
-                                                         msg_part)
-
-    def call_predicate(self, item):
-        diff = item[1]
-
-        try:
-            deviation = diff.deviation
-            expected = diff.expected
-        except AttributeError:
-            return False
-
-        if expected:
-            percent_error = (deviation or 0) / expected
-        elif not deviation:
-            percent_error = 0
-        else:
-            return False  # <- EXIT!
-
-        if isnan(percent_error):
-            return False
-        return self.lower <= percent_error <= self.upper
-
-with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
-    AcceptedPercent.__init__.__signature__ = inspect.Signature([
-        inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY),
-        inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),
-        inspect.Parameter('msg', inspect.Parameter.POSITIONAL_OR_KEYWORD, default=None),
-    ])
-
-
 class AcceptedTolerance(BaseAcceptance):
     """AcceptedTolerance(tolerance, /, msg=None)
     AcceptedTolerance(lower, upper, msg=None)
@@ -580,9 +527,37 @@ class AcceptedTolerance(BaseAcceptance):
             return False  # <- EXIT!
         return self.lower <= deviation <= self.upper
 
-
 with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
     AcceptedTolerance.__init__.__signature__ = inspect.Signature([
+        inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY),
+        inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),
+        inspect.Parameter('msg', inspect.Parameter.POSITIONAL_OR_KEYWORD, default=None),
+    ])
+
+
+class AcceptedPercent(AcceptedTolerance):
+    """AcceptedPercent(tolerance, /, msg=None)
+    AcceptedPercent(lower, upper, msg=None)
+
+    Context manager that accepts Deviations within a given percent
+    tolerance without triggering a test failure.
+
+    See documentation for full details.
+    """
+    def call_predicate(self, item):
+        _, diff = item  # Unpack item (discarding key).
+        try:
+            deviation, expected = self._get_deviation_expected(diff)
+        except TypeError:
+            return False  # <- EXIT!
+
+        if not expected:
+            return not deviation  # <- EXIT!
+        percent_error = deviation / expected  # Make percent error.
+        return self.lower <= percent_error <= self.upper
+
+with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
+    AcceptedPercent.__init__.__signature__ = inspect.Signature([
         inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY),
         inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),
         inspect.Parameter('msg', inspect.Parameter.POSITIONAL_OR_KEYWORD, default=None),
