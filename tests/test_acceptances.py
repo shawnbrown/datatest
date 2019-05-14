@@ -819,6 +819,88 @@ class TestAcceptedTolerance(unittest.TestCase):
             'ccc': Deviation(+2, 16),  # +12.5%
         }
 
+    def test_get_deviation_expected_blanks(self):
+        func = AcceptedTolerance._get_deviation_expected
+        self.assertEqual(func(Deviation('', 0)), (0, 0))
+        self.assertEqual(func(Deviation(0, '')), (0, 0))
+
+    def test_get_deviation_expected_missing(self):
+        func = AcceptedTolerance._get_deviation_expected
+        self.assertEqual(func(Missing(2)), (-2, 2))
+        self.assertEqual(func(Missing(-2)), (2, -2))
+        self.assertEqual(func(Missing(0)), (0, 0))
+
+        with self.assertRaises(TypeError):
+            func(Missing((1, 2)))
+
+        with self.assertRaises(TypeError):
+            func(Missing('abc'))
+
+    def test_get_deviation_expected_extra_or_single_arg_invalid(self):
+        """Extra and single-argument Invalid differences should be
+        treated the same.
+        """
+        func = AcceptedTolerance._get_deviation_expected
+
+        self.assertEqual(func(Extra(2)), (2, 0))
+        self.assertEqual(func(Invalid(2)), (2, 0))
+
+        self.assertEqual(func(Extra(-2)), (-2, 0))
+        self.assertEqual(func(Invalid(-2)), (-2, 0))
+
+        self.assertEqual(func(Extra(0)), (0, 0))
+        self.assertEqual(func(Invalid(0)), (0, 0))
+
+        with self.assertRaises(TypeError):
+            func(Extra((1, 2)))
+
+        with self.assertRaises(TypeError):
+            func(Invalid((1, 2)))
+
+        with self.assertRaises(TypeError):
+            func(Extra('abc'))
+
+        with self.assertRaises(TypeError):
+            func(Invalid('abc'))
+
+    def test_get_deviation_expected_invalid_two_args(self):
+        """Two-argument Invalid differences are used to make a
+        deviation value.
+        """
+        func = AcceptedTolerance._get_deviation_expected
+        self.assertEqual(func(Invalid(5, 7)), (-2, 7))
+        self.assertEqual(func(Invalid(7, 5)), (+2, 5))
+        self.assertEqual(func(Invalid(0, '')), (0, 0))
+
+        with self.assertRaises(TypeError):
+            func(Invalid((1,), (2,)))
+
+        with self.assertRaises(TypeError):
+            func(Invalid('abc', 'def'))
+
+        # Test non-numeric but compatible.
+        date = Invalid(datetime.datetime(1989, 2, 24, hour=10, minute=30),
+                           datetime.datetime(1989, 2, 24, hour=11, minute=30))
+        self.assertEqual(func(date), (datetime.timedelta(hours=-1), datetime.datetime(1989, 2, 24, hour=11, minute=30)))
+
+    def test_get_deviation_expected_duck_typing(self):
+        """If it looks like a Deviation, it should be treated like a
+        Deviation.
+        """
+        func = AcceptedTolerance._get_deviation_expected
+
+        # Define a non-deviation class that "looks" like a deviation.
+        class DeviationLike(BaseDifference):
+            def __init__(self, a, b):
+                self.deviation = a
+                self.expected = b
+
+            @property
+            def args(self):
+                return (self.expected, self.deviation)
+
+        self.assertEqual(func(DeviationLike(-3, 9)), (-3, 9))
+
     def test_function_signature(self):
         with contextlib.suppress(AttributeError):       # Python 3.2 and older
             sig = inspect.signature(AcceptedTolerance)  # use ugly signatures.
@@ -871,97 +953,6 @@ class TestAcceptedTolerance(unittest.TestCase):
         with self.assertRaises(ValidationError):  # <- NaN values should not be caught!
             with AcceptedTolerance(0):
                 raise ValidationError(Deviation(float('nan'), 0))
-
-    def test_duck_typing(self):
-        """If it looks like a Deviation, it should be treated like a
-        Deviation.
-        """
-        # Define a non-deviation class that "looks" like a deviation.
-        class DeviationLike(BaseDifference):
-            def __init__(self, a, b):
-                self.deviation = a
-                self.expected = b
-
-            @property
-            def args(self):
-                return (self.expected, self.deviation)
-
-        # Check that Deviation-like differences are treated as Deviations.
-        with self.assertRaises(ValidationError) as cm:
-            with AcceptedTolerance(2):  # <- Accepts +/- 2.
-                raise ValidationError([
-                    DeviationLike(-1, 16),
-                    DeviationLike(+4, 16),
-                    DeviationLike(+2, 16),
-                ])
-        remaining = cm.exception.differences
-        self.assertEqual(remaining, [DeviationLike(+4, 16)])
-
-    def test_extra_deviation(self):
-        with self.assertRaises(ValidationError) as cm:
-            with AcceptedTolerance(-2, 1):  # <- Accepts from -2 to +1.
-                raise ValidationError([
-                    Extra(-3),      # <- Rejected: Outside accepted range.
-                    Extra(-2),      # <- ACCEPTED!
-                    Extra(0),       # <- ACCEPTED!
-                    Extra(1),       # <- ACCEPTED!
-                    Extra(2),       # <- Rejected: Outside accepted range.
-                    Extra((1, 2)),  # <- Rejected: Too many args.
-                    Extra('abc'),   # <- Rejected: Wrong type.
-                ])
-        remaining = cm.exception.differences
-        self.assertEqual(remaining, [Extra(-3), Extra(2), Extra((1, 2)), Extra('abc')])
-
-    def test_missing_deviation(self):
-        with self.assertRaises(ValidationError) as cm:
-            with AcceptedTolerance(-2, 1):  # <- Accepts from -2 to +1.
-                raise ValidationError([
-                    Missing(-3),      # <- Rejected: Outside accepted range.
-                    Missing(-2),      # <- Rejected: Outside accepted range.
-                    Missing(0),       # <- ACCEPTED!
-                    Missing(1),       # <- ACCEPTED!
-                    Missing(2),       # <- ACCEPTED!
-                    Missing((1, 2)),  # <- Rejected: Wrong type.
-                    Missing('abc'),   # <- Rejected: Wrong type.
-                ])
-        remaining = cm.exception.differences
-        self.assertEqual(remaining, [Missing(-3), Missing(-2), Missing((1, 2)), Missing('abc')])
-
-    def test_invalid_deviation_single_arg(self):
-        """Single argument Invalid differences treated the same as
-        Extra differences.
-        """
-        with self.assertRaises(ValidationError) as cm:
-            with AcceptedTolerance(-2, 1):  # <- Accepts from -2 to +1.
-                raise ValidationError([
-                    Invalid(-3),      # <- Rejected: Outside accepted range.
-                    Invalid(-2),      # <- ACCEPTED!
-                    Invalid(0),       # <- ACCEPTED!
-                    Invalid(1),       # <- ACCEPTED!
-                    Invalid(2),       # <- Rejected: Outside accepted range.
-                    Invalid((1, 2)),  # <- Rejected: Wrong type.
-                    Invalid('abc'),   # <- Rejected: Wrong type.
-                ])
-        remaining = cm.exception.differences
-        self.assertEqual(remaining, [Invalid(-3), Invalid(2), Invalid((1, 2)), Invalid('abc')])
-
-    def test_invalid_deviation_multiple_args(self):
-        """Two-element Invalid differences are normalized and treated
-        like Deviation differences.
-        """
-        with self.assertRaises(ValidationError) as cm:
-            with AcceptedTolerance(-2, 1):  # <- Accepts from -2 to +1.
-                raise ValidationError([
-                    Invalid(-3, 0),         # <- Rejected: -3 is outside accepted range.
-                    Invalid(5, 7),          # <- ACCEPTED: -2 deviation.
-                    Invalid(0, ''),         # <- ACCEPTED.
-                    Invalid(11, 10),        # <- ACCEPTED: +1 deviation.
-                    Invalid(12, 10),        # <- Rejected: +2 is outside accepted range.
-                    Invalid((1,), (3,)),    # <- Rejected: Wrong type.
-                    Invalid('abc', 'def'),  # <- Rejected: Wrong type.
-                ])
-        remaining = cm.exception.differences
-        self.assertEqual(remaining, [Invalid(-3, 0), Invalid(12, 10), Invalid((1,), (3,)), Invalid('abc', 'def')])
 
     def test_nonnumeric_but_compatible(self):
         with self.assertRaises(ValidationError) as cm:
