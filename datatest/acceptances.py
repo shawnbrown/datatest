@@ -1156,6 +1156,13 @@ with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
         inspect.Parameter('percent', inspect.Parameter.KEYWORD_ONLY, default=False),
     ])
 
+    AcceptedFactoryType.percent.__signature__ = inspect.Signature([
+        inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY),
+        inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),
+        inspect.Parameter('msg', inspect.Parameter.POSITIONAL_OR_KEYWORD, default=None),
+        inspect.Parameter('percent', inspect.Parameter.KEYWORD_ONLY, default=False),
+    ])
+
 
 accepted = AcceptedFactoryType()  # Use as instance.
 
