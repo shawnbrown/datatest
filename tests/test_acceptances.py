@@ -823,7 +823,7 @@ class TestAcceptedTolerance(unittest.TestCase):
         with contextlib.suppress(AttributeError):       # Python 3.2 and older
             sig = inspect.signature(AcceptedTolerance)  # use ugly signatures.
             parameters = list(sig.parameters)
-            self.assertEqual(parameters, ['tolerance', 'msg', 'percent'])
+            self.assertEqual(parameters, ['tolerance', 'msg'])
 
     def test_tolerance_syntax(self):
         with self.assertRaises(ValidationError) as cm:
@@ -846,7 +846,7 @@ class TestAcceptedTolerance(unittest.TestCase):
         result_diffs = cm.exception.differences
         self.assertEqual({'aaa': Deviation(-1, 16), 'ccc': Deviation(+2, 16)}, result_diffs)
 
-    def test_invalid_arguments(self):
+    def test_malformed_arguments(self):
         with self.assertRaises(ValueError) as cm:
             with AcceptedTolerance(-5):  # <- invalid
                 pass
@@ -912,17 +912,6 @@ class TestAcceptedTolerance(unittest.TestCase):
         remaining = cm.exception.differences
         self.assertEqual(remaining, [Extra(-3), Extra(2), Extra((1, 2)), Extra('abc')])
 
-        # Check error percent.
-        with self.assertRaises(ValidationError) as cm:
-            with AcceptedTolerance(2.0, percent=True):  # <- Accepts +/- 200%.
-                raise ValidationError([
-                    Extra(-1),  # <- Rejected: Can not be accepted by percent.
-                    Extra(0),   # <- ACCEPTED!
-                    Extra(2),   # <- Rejected: Can not be accepted by percent.
-                ])
-        remaining = cm.exception.differences
-        self.assertEqual(remaining, [Extra(-1), Extra(2)])
-
     def test_missing_deviation(self):
         with self.assertRaises(ValidationError) as cm:
             with AcceptedTolerance(-2, 1):  # <- Accepts from -2 to +1.
@@ -937,19 +926,6 @@ class TestAcceptedTolerance(unittest.TestCase):
                 ])
         remaining = cm.exception.differences
         self.assertEqual(remaining, [Missing(-3), Missing(-2), Missing((1, 2)), Missing('abc')])
-
-        # Check error percent.
-        with self.assertRaises(ValidationError) as cm:
-            with AcceptedTolerance(1.0, percent=True):  # <- Accepts +/- 100%.
-                raise ValidationError([
-                    Missing(-1),  # <- ACCEPTED!
-                    Missing(0),   # <- ACCEPTED!
-                    Missing(2),   # <- ACCEPTED!
-                    Missing((1, 2)),  # <- Rejected: Wrong type.
-                    Missing('abc'),   # <- Rejected: Wrong type.
-                ])
-        remaining = cm.exception.differences
-        self.assertEqual(remaining, [Missing((1, 2)), Missing('abc')])
 
     def test_invalid_deviation_single_arg(self):
         """Single argument Invalid differences treated the same as
@@ -969,17 +945,6 @@ class TestAcceptedTolerance(unittest.TestCase):
         remaining = cm.exception.differences
         self.assertEqual(remaining, [Invalid(-3), Invalid(2), Invalid((1, 2)), Invalid('abc')])
 
-        # Check error percent.
-        with self.assertRaises(ValidationError) as cm:
-            with AcceptedTolerance(2.0, percent=True):  # <- Accepts +/- 200%.
-                raise ValidationError([
-                    Invalid(-1),  # <- Rejected: Can not be accepted by percent.
-                    Invalid(0),   # <- ACCEPTED!
-                    Invalid(2),   # <- Rejected: Can not be accepted by percent.
-                ])
-        remaining = cm.exception.differences
-        self.assertEqual(remaining, [Invalid(-1), Invalid(2)])
-
     def test_invalid_deviation_multiple_args(self):
         """Two-element Invalid differences are normalized and treated
         like Deviation differences.
@@ -998,19 +963,6 @@ class TestAcceptedTolerance(unittest.TestCase):
         remaining = cm.exception.differences
         self.assertEqual(remaining, [Invalid(-3, 0), Invalid(12, 10), Invalid((1,), (3,)), Invalid('abc', 'def')])
 
-        # Check error percent.
-        with self.assertRaises(ValidationError) as cm:
-            with AcceptedTolerance(0.5, percent=True):  # <- Accepts +/- 50%.
-                raise ValidationError([
-                    Invalid(50, 100),   # <- ACCEPTED: -50% deviation.
-                    Invalid(150, 100),  # <- ACCEPTED: +50% deviation.
-                    Invalid(0, 0),      # <- ACCEPTED!
-                    Invalid(0.5, 0),    # <- Rejected: Can not be accepted by percent.
-                    Invalid(4, 2),      # <- Rejected: +100% is outside range.
-                ])
-        remaining = cm.exception.differences
-        self.assertEqual(remaining, [Invalid(0.5, 0), Invalid(4, 2)])
-
     def test_nonnumeric_but_compatible(self):
         with self.assertRaises(ValidationError) as cm:
             with AcceptedTolerance(datetime.timedelta(hours=2)):  # <- Accepts +/- 2 hours.
@@ -1024,47 +976,6 @@ class TestAcceptedTolerance(unittest.TestCase):
         self.assertEqual(remaining, [Invalid(datetime.datetime(1989, 2, 24, 15, 10),
                                              expected=datetime.datetime(1989, 2, 24, 11, 30))])
 
-    def test_percent_error(self):
-        # Test "tolerance" syntax.
-        with self.assertRaises(ValidationError) as cm:
-            with AcceptedTolerance(0.2, percent=True):  # <- Accepts +/- 20%.
-                raise ValidationError(self.differences)
-        remaining = cm.exception.differences
-        self.assertEqual(remaining, {'bbb': Deviation(+4, 16)})
-
-        # Test "upper/lower" syntax.
-        with self.assertRaises(ValidationError) as cm:
-            with AcceptedTolerance(0.0, 0.3, percent=True):  # <- Accepts from 0 to 30%.
-                raise ValidationError(self.differences)
-        result_diffs = cm.exception.differences
-        self.assertEqual({'aaa': Deviation(-1, 16)}, result_diffs)
-
-    def test_percent_empty_value_handling(self):
-        # Test empty deviation cases--should pass without error.
-        with AcceptedTolerance(0, percent=True):  # <- Accepts empty deviations only.
-            raise ValidationError([
-                Deviation(None, 0),
-                Deviation('', 0),
-            ])
-
-        # Test diffs that can not be accepted as percentages.
-        with self.assertRaises(ValidationError) as cm:
-            with AcceptedTolerance(2.00, percent=True):  # <- Accepts +/- 200%.
-                raise ValidationError([
-                    Deviation(None, 0),           # 0%
-                    Deviation(0, None),           # 0%
-                    Deviation(+2, 0),             # Can not be accepted by percent.
-                    Deviation(+2, None),          # Can not be accepted by percent.
-                    Deviation(float('nan'), 16),  # Not a number.
-                ])
-        actual = cm.exception.differences
-        expected = [
-            Deviation(+2, 0),             # Can not be accepted by percent.
-            Deviation(+2, None),          # Can not be accepted by percent.
-            Deviation(float('nan'), 16),  # Not a number.
-        ]
-        self.assertEqual(actual, expected)
-
     def test_repr(self):
         acceptance = AcceptedTolerance(0.5)
         self.assertEqual(repr(acceptance), 'AcceptedTolerance(0.5)')
@@ -1074,9 +985,6 @@ class TestAcceptedTolerance(unittest.TestCase):
 
         acceptance = AcceptedTolerance(-0.25, 0.5)
         self.assertEqual(repr(acceptance), 'AcceptedTolerance(lower=-0.25, upper=0.5)')
-
-        acceptance = AcceptedTolerance(0.5, percent=True)
-        self.assertEqual(repr(acceptance), 'AcceptedTolerance(0.5, percent=True)')
 
 
 class TestAcceptedFuzzy(unittest.TestCase):

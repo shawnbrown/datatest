@@ -500,25 +500,18 @@ with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
 
 
 class AcceptedTolerance(BaseAcceptance):
-    """AcceptedTolerance(tolerance, /, msg=None, *, percent=False)
-    AcceptedTolerance(lower, upper, msg=None, *, percent=False)
+    """AcceptedTolerance(tolerance, /, msg=None)
+    AcceptedTolerance(lower, upper, msg=None)
 
     Context manager that accepts numeric differences within a given
     tolerance without triggering a test failure.
 
     See documentation for full details.
     """
-    def __init__(self, lower, upper=None, msg=None, **kwds):
-        percent = kwds.pop('percent', False)  # Get keyword-only argument.
-        if kwds:
-            unexpected = next(iter(a.keys()))
-            message = 'got an unexpected keyword argument {0!r}'
-            raise TypeError(message.format(unexpected))
-
+    def __init__(self, lower, upper=None, msg=None):
         lower, upper, msg = _normalize_deviation_args(lower, upper, msg)
         self.lower = lower
         self.upper = upper
-        self.percent = percent
         super(AcceptedTolerance, self).__init__(msg)
 
     def __repr__(self):
@@ -529,31 +522,26 @@ class AcceptedTolerance(BaseAcceptance):
         else:
             msg_repr = ''
 
-        if self.percent:
-            percent_repr = ', percent={0!r}'.format(self.percent)
-        else:
-            percent_repr = ''
-
         if -self.lower == self.upper:
-            repr_string = '{0}({1!r}{2}{3})'.format(
+            repr_string = '{0}({1!r}{2})'.format(
                 cls_name,
                 self.upper,
                 msg_repr,
-                percent_repr,
             )
         else:
-            repr_string = '{0}(lower={1!r}, upper={2!r}{3}{4})'.format(
+            repr_string = '{0}(lower={1!r}, upper={2!r}{3})'.format(
                 cls_name,
                 self.lower,
                 self.upper,
                 msg_repr,
-                percent_repr,
             )
         return repr_string
 
-    def call_predicate(self, item):
-        _, diff = item  # Unpack item (discarding key).
-
+    @staticmethod
+    def _get_deviation_expected(diff):
+        """Takes a difference object and returns a tuple containing its
+        *deviation* and *expected* values or raises a TypeError.
+        """
         try:
             # If diff is Deviation-like, get `deviation` and `expected`.
             deviation = diff.deviation
@@ -577,29 +565,27 @@ class AcceptedTolerance(BaseAcceptance):
                     expected = args[1]
                     deviation = args[0] - expected
                 except TypeError:
-                    try:
-                        expected = args[1] or 0
-                        deviation = (args[0] or 0) - expected
-                    except TypeError:
-                        return False  # <- EXIT!
+                    expected = args[1] or 0
+                    deviation = (args[0] or 0) - expected
             else:
-                return False  # <- EXIT!
+                raise TypeError
 
-        error = deviation or 0
+        return deviation or 0, expected or 0
 
-        if self.percent:
-            if not expected:
-                return not error  # <- EXIT!
-            error = error / expected  # Make percent error.
+    def call_predicate(self, item):
+        _, diff = item  # Unpack item (discarding key).
+        try:
+            deviation, _ = self._get_deviation_expected(diff)
+        except TypeError:
+            return False  # <- EXIT!
+        return self.lower <= deviation <= self.upper
 
-        return self.lower <= error <= self.upper
 
 with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
     AcceptedTolerance.__init__.__signature__ = inspect.Signature([
         inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY),
         inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),
         inspect.Parameter('msg', inspect.Parameter.POSITIONAL_OR_KEYWORD, default=None),
-        inspect.Parameter('percent', inspect.Parameter.KEYWORD_ONLY, default=False),
     ])
 
 
@@ -1027,16 +1013,16 @@ class AcceptedFactoryType(object):
         """
         return AcceptedFuzzy(cutoff=cutoff, msg=msg)
 
-    def tolerance(self, lower, upper=None, msg=None, **kwds):
-        """accepted.tolerance(tolerance, /, msg=None, *, percent=False)
-        accepted.tolerance(lower, upper, msg=None, *, percent=False)
+    def tolerance(self, lower, upper=None, msg=None):
+        """accepted.tolerance(tolerance, /, msg=None)
+        accepted.tolerance(lower, upper, msg=None)
 
         Context manager that accepts quantative differences within a
         given tolerance without triggering a test failure.
 
         See documentation for full details.
         """
-        return AcceptedTolerance(lower, upper=upper, msg=msg, **kwds)
+        return AcceptedTolerance(lower, upper=upper, msg=msg)
 
     def deviation(self, lower, upper=None, msg=None):
         """accepted.deviation(tolerance, /, msg=None)
