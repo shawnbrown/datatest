@@ -87,7 +87,7 @@ class TestSelectIdioms(unittest.TestCase):
         datatest.validate(a.fieldnames, set(a.fieldnames))
 
         # A case we want to optimize.
-        with datatest.accepted.specific(datatest.Extra('C')):
+        with datatest.accepted(datatest.Extra('C')):
             datatest.validate(a.fieldnames, set(b.fieldnames))
 
     def test_compare_rows(self):
@@ -134,11 +134,11 @@ class TestValidateIdioms(unittest.TestCase):
             'baz': ['a', 'b', 'c', 'd'],  # -> [Extra((3, 'd'))]
         }
 
-        expected_extras = accepted.specific({
+        expected_extras = accepted({
             'foo': [Extra((1, 'x'))],
             'baz': [Extra((3, 'd'))],
         })
-        with accepted.missing() | expected_extras:
+        with accepted(Missing) | expected_extras:
             validate.order(data, requirement)
 
     def test_enumerate_to_dict(self):

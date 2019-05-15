@@ -26,6 +26,7 @@ from .acceptances import (
     AcceptedFuzzy,
     AcceptedCount,
 )
+from . import difference as differences
 
 
 __unittest = True  # Hides internal stack frames from unittest output.
@@ -209,56 +210,14 @@ class DataTestCase(TestCase):
         """
         return AcceptedDifferences(obj, msg=msg, scope=scope)
 
-    def acceptedMissing(self, msg=None):
-        """Accepts :class:`Missing` elements without triggering a test
-        failure::
-
-            with self.acceptedMissing():
-                data = {'A', 'B'}  # <- 'C' is missing
-                requirement = {'A', 'B', 'C'}
-                self.assertValid(data, requirement)
+    def acceptedTolerance(self, lower, upper=None, msg=None):
         """
-        return AcceptedMissing(msg)
-
-    def acceptedExtra(self, msg=None):
-        """Accepts :class:`Extra` elements without triggering a test
-        failure::
-
-            with self.acceptedExtra():
-                data = {'A', 'B', 'C', 'D'}  # <- 'D' is extra
-                requirement = {'A', 'B', 'C'}
-                self.assertValid(data, requirement)
-        """
-        return AcceptedExtra(msg)
-
-    def acceptedInvalid(self, msg=None):
-        """Accepts :class:`Invalid` elements without triggering a test
-        failure::
-
-            with self.acceptedInvalid():
-                data = {'xxx': 'A', 'yyy': 'E'}  # <- 'E' is invalid
-                requirement = {'xxx': 'A', 'yyy': 'B'}
-                self.assertValid(data, requirement)
-        """
-        return AcceptedInvalid(msg)
-
-    def acceptedTolerance(self, lower, upper=None, msg=None, **kwds):
-        """
-        acceptedTolerance(tolerance, /, msg=None, *, percent=False)
-        acceptedTolerance(lower, upper, msg=None, *, percent=False)
+        acceptedTolerance(tolerance, /, msg=None)
+        acceptedTolerance(lower, upper, msg=None)
 
         See documentation for full details.
         """
-        return AcceptedTolerance(lower, upper=upper, msg=msg, **kwds)
-
-    def acceptedDeviation(self, lower, upper=None, msg=None):
-        """
-        acceptedDeviation(tolerance, /, msg=None)
-        acceptedDeviation(lower, upper, msg=None)
-
-        See documentation for full details.
-        """
-        return AcceptedDeviation(lower, upper, msg)
+        return AcceptedTolerance(lower, upper=upper, msg=msg)
 
     def acceptedPercent(self, lower, upper=None, msg=None):
         """
@@ -268,28 +227,6 @@ class DataTestCase(TestCase):
         See documentation for full details.
         """
         return AcceptedPercent(lower, upper, msg)
-
-    def acceptedPercentDeviation(self, lower, upper=None, msg=None):
-        """alias of :meth:`DataTestCase.acceptedPercent`"""
-        return self.acceptedPercent(lower, upper, msg)
-
-    def acceptedSpecific(self, differences, msg=None):
-        """Accepts individually specified *differences* without
-        triggering a test failure::
-
-            two_diffs = self.acceptedSpecific([
-                Missing('C'),
-                Extra('D'),
-            ])
-            with two_diffs:
-                data = {'A', 'B', 'D'}  # <- 'D' extra, 'C' missing
-                requirement = {'A', 'B', 'C'}
-                self.assertValid(data, requirement)
-
-        The *differences* argument can be a :py:obj:`list` or
-        :py:obj:`dict` of differences or a single difference.
-        """
-        return AcceptedSpecific(differences, msg)
 
     def acceptedKeys(self, predicate, msg=None):
         """Accepts differences in a mapping whose keys satisfy the
@@ -336,36 +273,68 @@ class DataTestCase(TestCase):
     @staticmethod
     def _warn(new_name):
         import warnings
-        message = "'allowed...()' methods are deprecated, use {0} instead"
+        message = "this method is deprecated, use {0} instead"
         warnings.warn(message.format(new_name), DeprecationWarning, stacklevel=3)
 
+    # Deprecated since 0.9.6
+
+    def acceptedSpecific(self, differences, msg=None):
+        self._warn('self.acceptedDifferences(...)')
+        return AcceptedDifferences(differences, msg)
+
+    def acceptedPercentDeviation(self, lower, upper=None, msg=None):
+        self._warn('self.acceptedPercent(...)')
+        return self.acceptedPercent(lower, upper, msg)
+
+    def acceptedDeviation(self, lower, upper=None, msg=None):
+        self._warn('self.acceptedTolerance(...)')
+        return AcceptedTolerance(lower, upper, msg)
+
+    def acceptedMissing(self, msg=None):
+        self._warn('self.acceptedDifferences(Missing)')
+        return self.acceptedDifferences(differences.Missing, msg=msg)
+
+    def acceptedExtra(self, msg=None):
+        self._warn('self.acceptedDifferences(Extra)')
+        return self.acceptedDifferences(differences.Extra, msg=msg)
+
+    def acceptedInvalid(self, msg=None):
+        self._warn('self.acceptedDifferences(Invalid)')
+        return self.acceptedDifferences(differences.Invalid, msg=msg)
+
+    def acceptedLimit(self, number, msg=None):
+        self._warn('self.acceptedCount()')
+        return AcceptedCount(number, msg)
+
+    # Deprecated since 0.9.5
+
     def allowedMissing(self, msg=None):
-        self._warn('self.acceptedMissing()')
-        return AcceptedMissing(msg)
+        self._warn('self.acceptedDifferences(Missing)')
+        return self.acceptedDifferences(differences.Missing, msg=msg)
 
     def allowedExtra(self, msg=None):
-        self._warn('self.acceptedExtra()')
-        return AcceptedExtra(msg)
+        self._warn('self.acceptedDifferences(Extra)')
+        return self.acceptedDifferences(differences.Extra, msg=msg)
 
     def allowedInvalid(self, msg=None):
-        self._warn('self.acceptedInvalid()')
-        return AcceptedInvalid(msg)
+        self._warn('self.acceptedDifferences(Invalid)')
+        return self.acceptedDifferences(differences.Invalid, msg=msg)
 
     def allowedDeviation(self, lower, upper=None, msg=None):
-        self._warn('self.acceptedDeviation()')
-        return AcceptedDeviation(lower, upper, msg)
+        self._warn('self.acceptedTolerance(...)')
+        return AcceptedTolerance(lower, upper, msg)
 
     def allowedPercent(self, lower, upper=None, msg=None):
-        self._warn('self.acceptedPercent()')
-        return AcceptedPercent(lower, upper, msg)
+        self._warn('self.acceptedPercent(...)')
+        return self.acceptedPercent(lower, upper, msg)
 
     def allowedPercentDeviation(self, lower, upper=None, msg=None):
-        self._warn('self.acceptedPercent()')
-        return self.allowedPercent(lower, upper, msg)
+        self._warn('self.acceptedPercent(...)')
+        return self.acceptedPercent(lower, upper, msg)
 
     def allowedSpecific(self, differences, msg=None):
         self._warn('self.acceptedSpecific()')
-        return AcceptedSpecific(differences, msg)
+        return self.acceptedDifferences(differences, msg)
 
     def allowedKeys(self, predicate, msg=None):
         self._warn('self.acceptedKeys()')
@@ -392,16 +361,9 @@ with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
         inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY),
         inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),
         inspect.Parameter('msg', inspect.Parameter.POSITIONAL_OR_KEYWORD, default=None),
-        inspect.Parameter('percent', inspect.Parameter.KEYWORD_ONLY, default=False),
     ])
 
-    DataTestCase.acceptedDeviation.__signature__ = inspect.Signature([
-        inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY),
-        inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),
-        inspect.Parameter('msg', inspect.Parameter.POSITIONAL_OR_KEYWORD, default=None),
-    ])
-
-    DataTestCase.acceptedPercentDeviation.__signature__ = inspect.Signature([
+    DataTestCase.acceptedPercent.__signature__ = inspect.Signature([
         inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY),
         inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),
         inspect.Parameter('msg', inspect.Parameter.POSITIONAL_OR_KEYWORD, default=None),

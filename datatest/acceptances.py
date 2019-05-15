@@ -872,60 +872,6 @@ class AcceptedFactoryType(object):
         no_module_prefix = default_repr[name_start:]  # Slice-off module.
         return '<' + no_module_prefix
 
-    def missing(self, msg=None):
-        """Accepts :class:`Missing` values without triggering a
-        test failure:
-
-        .. code-block:: python
-            :emphasize-lines: 7
-
-            from datatest import validate, accepted
-
-            data = ['B', 'C']
-
-            requirement = {'A', 'B', 'C'}
-
-            with accepted.missing():
-                validate(data, requirement)  # Raises Missing('A')
-        """
-        return AcceptedMissing(msg)
-
-    def extra(self, msg=None):
-        """Accepts :class:`Extra` values without triggering a
-        test failure:
-
-        .. code-block:: python
-            :emphasize-lines: 7
-
-            from datatest import validate, accepted
-
-            data = ['A', 'B', 'C']
-
-            requirement = {'A', 'B'}
-
-            with accepted.extra():
-                validate(data, requirement)  # Raises Extra('C')
-        """
-        return AcceptedExtra(msg)
-
-    def invalid(self, msg=None):
-        """Accepts :class:`Invalid` values without triggering a
-        test failure:
-
-        .. code-block:: python
-            :emphasize-lines: 7
-
-            from datatest import validate, accepted
-
-            data = ['A', 'B', 'A']
-
-            requirement = 'A'
-
-            with accepted.invalid():
-                validate(data, requirement)  # Raises Invalid('B')
-        """
-        return AcceptedInvalid(msg)
-
     def keys(self, predicate, msg=None):
         """Accepts differences whose associated keys satisfy the given
         *predicate* (see :ref:`predicate-docs` for details):
@@ -999,17 +945,6 @@ class AcceptedFactoryType(object):
         """
         return AcceptedTolerance(lower, upper=upper, msg=msg)
 
-    def deviation(self, lower, upper=None, msg=None):
-        """accepted.deviation(tolerance, /, msg=None)
-        accepted.deviation(lower, upper, msg=None)
-
-        Context manager that accepts Deviations within a given
-        tolerance without triggering a test failure.
-
-        See documentation for full details.
-        """
-        return AcceptedDeviation(lower, upper, msg)
-
     def percent(self, lower, upper=None, msg=None):
         """accepted.percent(tolerance, /, msg=None)
         accepted.percent(lower, upper, msg=None)
@@ -1020,99 +955,6 @@ class AcceptedFactoryType(object):
         See documentation for full details.
         """
         return AcceptedPercent(lower, upper, msg)
-
-    def specific(self, differences, msg=None):
-        """Accepts specific *differences* without triggering a
-        test failure:
-
-        .. code-block:: python
-            :emphasize-lines: 7-10
-
-            from datatest import validate, accepted, Extra, Missing
-
-            data = ['x', 'y', 'q']
-
-            requirement = {'x', 'y', 'z'}
-
-            known_issues = accepted.specific([
-                Extra('q'),
-                Missing('z'),
-            ])
-
-            with known_issues:
-                validate(data, requirement)
-
-        When data is a mapping, the specified differences are
-        accepted from each group independently:
-
-        .. code-block:: python
-            :emphasize-lines: 10-13
-
-            from datatest import validate, accepted, Extra, Missing
-
-            data = {
-                'A': ['x', 'y', 'q'],
-                'B': ['x', 'y'],
-            }
-
-            requirement = {'x', 'y', 'z'}
-
-            known_issues = accepted.specific([  # Accepts all given
-                Extra('q'),                     # differences from
-                Missing('z'),                   # both 'A' and 'B'.
-            ])
-
-            with known_issues:
-                validate(data, requirement)
-
-        A dictionary of acceptances can be used to define individual
-        sets of differences per group:
-
-        .. code-block:: python
-            :emphasize-lines: 10-13
-
-            from datatest import validate, accepted, Extra, Missing
-
-            data = {
-                'A': ['x', 'y', 'q'],
-                'B': ['x', 'y'],
-            }
-
-            requirement = {'x', 'y', 'z'}
-
-            known_issues = accepted.specific({     # Using dict
-                'A': [Extra('q'), Missing('z')],   # of accepted
-                'B': Missing('z'),                 # differences.
-            })
-
-            with known_issues:
-                validate(data, requirement)
-
-        A dictionary of acceptances can use predicate-keys to treat
-        multiple groups as a single group (see :ref:`predicate-docs`
-        for details):
-
-        .. code-block:: python
-            :emphasize-lines: 10-13
-
-            from datatest import validate, accepted
-
-            data = {
-                'A': ['x', 'y', 'q'],
-                'B': ['x', 'y'],
-            }
-
-            requirement = {'x', 'y', 'z'}
-
-            known_issues = accepted.specific({
-                # Use predicate key, an ellipsis wildcard.
-                ...: [Extra('q'), Missing('z'), Missing('z')]
-            })
-
-            with known_issues:
-                validate(data, requirement)
-        """
-        return AcceptedSpecific(differences, msg)
 
     def count(self, number, msg=None):
         """Accepts up to a given *number* of differences without
@@ -1143,9 +985,29 @@ class AcceptedFactoryType(object):
         message = "method is deprecated, use {0} instead".format(new_name)
         warnings.warn(message, DeprecationWarning, stacklevel=3)
 
+    def specific(self, differences, msg=None):
+        self._warn('accepted(...)')
+        return self(differences, msg=msg)
+
+    def deviation(self, lower, upper=None, msg=None):
+        self._warn('accepted.tolerance(...)')
+        return self.tolerance(lower, upper, msg)
+
+    def missing(self, msg=None):
+        self._warn('accepted(Missing)')
+        return self(Missing, msg=msg)
+
+    def extra(self, msg=None):
+        self._warn('accepted(Extra)')
+        return self(Extra, msg=msg)
+
+    def invalid(self, msg=None):
+        self._warn('accepted(Invalid)')
+        return self(Invalid, msg=msg)
+
     def limit(self, number, msg=None):
-        self._warn('accepted.count()')
-        return AcceptedCount(number, msg)
+        self._warn('accepted.count(...)')
+        return self.count(number, msg)
 
 
 with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
@@ -1185,55 +1047,55 @@ class allowed(abc.ABC):
 
     @classmethod
     def missing(cls, msg=None):
-        cls._warn('accepted.missing()')
-        return AcceptedMissing(msg)
+        cls._warn('accepted(Missing)')
+        return accepted(Missing)
 
     @classmethod
     def extra(cls, msg=None):
-        cls._warn('accepted.extra()')
-        return AcceptedExtra(msg)
+        cls._warn('accepted(Extra)')
+        return accepted(Extra)
 
     @classmethod
     def invalid(cls, msg=None):
-        cls._warn('accepted.invalid()')
-        return AcceptedInvalid(msg)
+        cls._warn('accepted(Invalid)')
+        return accepted(Invalid)
 
     @classmethod
     def keys(cls, predicate, msg=None):
-        cls._warn('accepted.keys()')
-        return AcceptedKeys(predicate, msg)
+        cls._warn('accepted.keys(...)')
+        return accepted.keys(predicate, msg)
 
     @classmethod
     def args(cls, predicate, msg=None):
-        cls._warn('accepted.args()')
-        return AcceptedArgs(predicate, msg)
+        cls._warn('accepted.args(...)')
+        return accepted.args(predicate, msg)
 
     @classmethod
     def fuzzy(cls, cutoff=0.6, msg=None):
-        cls._warn('accepted.fuzzy()')
-        return AcceptedFuzzy(cutoff=cutoff, msg=msg)
+        cls._warn('accepted.fuzzy(...)')
+        return accepted.fuzzy(cutoff=cutoff, msg=msg)
 
     @classmethod
     def deviation(cls, lower, upper=None, msg=None):
-        cls._warn('accepted.deviation()')
-        return AcceptedDeviation(lower, upper, msg)
+        cls._warn('accepted.tolerance(...)')
+        return accepted.tolerance(lower, upper, msg)
 
     @classmethod
     def percent(cls, lower, upper=None, msg=None):
-        cls._warn('accepted.percent()')
-        return AcceptedPercent(lower, upper, msg)
+        cls._warn('accepted.percent(...)')
+        return accepted.percent(lower, upper, msg)
 
     @classmethod
     def percent_deviation(cls, lower, upper=None, msg=None):
-        cls._warn('accepted.percent()')
-        return AcceptedPercent(lower, upper, msg)
+        cls._warn('accepted.percent(...)')
+        return accepted.percent(lower, upper, msg)
 
     @classmethod
     def specific(cls, differences, msg=None):
-        cls._warn('accepted.specific()')
-        return AcceptedSpecific(differences, msg)
+        cls._warn('accepted(...)')
+        return accepted(differences, msg=msg)
 
     @classmethod
     def limit(cls, number, msg=None):
-        cls._warn('accepted.count()')
-        return AcceptedCount(number, msg)
+        cls._warn('accepted.count(...)')
+        return accepted.count(number, msg)

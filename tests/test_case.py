@@ -2,6 +2,7 @@
 import inspect
 import re
 import textwrap
+import warnings
 from sys import version_info as _version_info
 from unittest import TestCase as _TestCase  # Originial TestCase, not
                                             # compatibility layer.
@@ -24,14 +25,13 @@ from datatest.difference import Missing
 from datatest.difference import Invalid
 from datatest.difference import Deviation
 from datatest.acceptances import (
-    AcceptedMissing,
-    AcceptedExtra,
-    AcceptedInvalid,
+    AcceptedDifferences,
+    AcceptedArgs,
+    AcceptedKeys,
+    AcceptedTolerance,
     AcceptedFuzzy,
-    AcceptedDeviation,
     AcceptedPercent,
     AcceptedCount,
-    AcceptedSpecific,
 )
 
 
@@ -266,29 +266,25 @@ class TestAcceptanceWrappers(unittest.TestCase):
                 pass
         self.case = DummyCase()
 
-    def test_acceptedSpecific(self):
-        cm = self.case.acceptedSpecific([Missing('foo')])
-        self.assertTrue(isinstance(cm, AcceptedSpecific))
+    def test_acceptedDifferences(self):
+        cm = self.case.acceptedDifferences([Missing('foo')])
+        self.assertTrue(isinstance(cm, AcceptedDifferences))
 
-    def test_acceptedMissing(self):
-        cm = self.case.acceptedMissing()
-        self.assertTrue(isinstance(cm, AcceptedMissing))
+    def test_acceptedArgs(self):
+        cm = self.case.acceptedArgs('foo')
+        self.assertTrue(isinstance(cm, AcceptedArgs))
 
-    def test_acceptedExtra(self):
-        cm = self.case.acceptedExtra()
-        self.assertTrue(isinstance(cm, AcceptedExtra))
-
-    def test_acceptedInvalid(self):
-        cm = self.case.acceptedInvalid()
-        self.assertTrue(isinstance(cm, AcceptedInvalid))
+    def test_acceptedKeys(self):
+        cm = self.case.acceptedKeys('foo')
+        self.assertTrue(isinstance(cm, AcceptedKeys))
 
     def test_acceptedFuzzy(self):
         cm = self.case.acceptedFuzzy()
         self.assertTrue(isinstance(cm, AcceptedFuzzy))
 
-    def test_acceptedDeviation(self):
-        cm = self.case.acceptedDeviation(5)
-        self.assertTrue(isinstance(cm, AcceptedDeviation))
+    def test_acceptedTolerance(self):
+        cm = self.case.acceptedTolerance(5)
+        self.assertTrue(isinstance(cm, AcceptedTolerance))
 
     def test_acceptedPercent(self):
         result = self.case.acceptedPercent(5)
@@ -297,3 +293,39 @@ class TestAcceptanceWrappers(unittest.TestCase):
     def test_acceptedCount(self):
         cm = self.case.acceptedCount(10)
         self.assertTrue(isinstance(cm, AcceptedCount))
+
+    # Deprecated since 0.9.6
+
+    def assertDeprecatedWrapper(self, func, expected_class):
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter('always')
+            cm = func()
+            self.assertTrue(isinstance(cm, expected_class),
+                            msg='expected {0}, got {1}'.format(expected_class.__name__,
+                                                               cm.__class__.__name__))
+        self.assertEqual(len(w), 1, msg='expects 1 warning, got {0}'.format(len(w)))
+        self.assertTrue(issubclass(w[0].category, DeprecationWarning))
+
+    def test_acceptedSpecific(self):
+        func = lambda: self.case.acceptedSpecific([Missing('foo')])
+        self.assertDeprecatedWrapper(func, AcceptedDifferences)
+
+    def test_acceptedMissing(self):
+        func = lambda: self.case.acceptedMissing()
+        self.assertDeprecatedWrapper(func, AcceptedDifferences)
+
+    def test_acceptedExtra(self):
+        func = lambda: self.case.acceptedExtra()
+        self.assertDeprecatedWrapper(func, AcceptedDifferences)
+
+    def test_acceptedInvalid(self):
+        func = lambda: self.case.acceptedInvalid()
+        self.assertDeprecatedWrapper(func, AcceptedDifferences)
+
+    def test_acceptedDeviation(self):
+        func = lambda: self.case.acceptedDeviation(5)
+        self.assertDeprecatedWrapper(func, AcceptedTolerance)
+
+    def test_acceptedLimit(self):
+        func = lambda: self.case.acceptedLimit(10)
+        self.assertDeprecatedWrapper(func, AcceptedCount)
