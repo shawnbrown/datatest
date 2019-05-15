@@ -55,6 +55,7 @@ COMING SOON (0.9.6)
 
 * Added Python 3.8 testing and support.
 * Added new validate methods (moved from how-to recipes into core module):
+
     * Added approx() method to require for approximate numeric equality.
     * Added fuzzy() method to require strings by approximate match.
     * Added interval() method to require elements within a given interval.
@@ -62,16 +63,19 @@ COMING SOON (0.9.6)
       checking.
     * Added unique() method to require unique elements.
     * Added order() method to require elements by relative order.
+
 * Changed default sequence validation to check elements by index position
   rather than checking by relative order.
 * Added fuzzy-matching allowance to allow strings by approximate match.
 * Added Predicate class to formalize behavior--also provides inverse-matching
   with the inversion operator (~).
 * Added new methods to Query class:
+
     * Added unwrap() to remove single-element containers and return their
       unwrapped contents.
     * Added starmap() to unpack grouped arguments when applying a function
       to elements.
+
 * Fixed improper use of assert statements with appropriate conditional
   checks and error behavior.
 * Added requirement class hierarchy (using BaseRequirement). This gives
@@ -85,6 +89,7 @@ COMING SOON (0.9.6)
 ------------------
 
 * Changed bundled pytest plugin to version 0.1.3:
+
     * This update adds testing and support for latest versions of Pytest
       and Python (now tested using Pytest 3.3 to 4.1 and Python 2.7 to 3.7).
     * Changed handling for 'mandatory' marker to support older and newer
@@ -96,11 +101,13 @@ COMING SOON (0.9.6)
 
 * Improved data handling features and support for Python 3.7.
 * Changed Query class:
+
     * Added flatten() method to serialize dictionary results.
     * Added to_csv() method to quickly save results as a CSV file.
     * Changed reduce() method to accept "initializer_factory" as
       an optional argument.
     * Changed filter() method to support predicate matching.
+
 * Added True and False as predicates to support "truth value testing" on
   arbitrary objects (to match on truthy or falsy).
 * Added ProxyGroup class for performing the same operations on groups of
@@ -118,6 +125,7 @@ COMING SOON (0.9.6)
 
 * Added impoved docstrings and other documentation.
 * Changed bundled pytest plugin to version 0.1.2:
+
     * Added handling for a 'mandatory' marker to support
       incremental testing (stops session early when a mandatory
       test fails).
