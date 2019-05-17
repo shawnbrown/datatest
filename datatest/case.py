@@ -198,7 +198,7 @@ class DataTestCase(TestCase):
         __tracebackhide__ = _pytest_tracebackhide
         self._apply_validation(validate.unique, data, msg=msg)
 
-    def acceptedDifferences(self, obj, msg=None, scope=None):
+    def accepted(self, obj, msg=None, scope=None):
         """Accepts differences that match *obj* without triggering a test
         failure. The given *obj* can be a difference class, a difference
         instance, or a container of difference instances.
@@ -274,8 +274,8 @@ class DataTestCase(TestCase):
     # Deprecated since 0.9.6
 
     def acceptedSpecific(self, differences, msg=None):
-        self._warn('self.acceptedDifferences(...)')
-        return AcceptedDifferences(differences, msg)
+        self._warn('self.accepted(...)')
+        return self.accepted(differences, msg=msg)
 
     def acceptedPercentDeviation(self, lower, upper=None, msg=None):
         self._warn('self.acceptedPercent(...)')
@@ -286,16 +286,16 @@ class DataTestCase(TestCase):
         return AcceptedTolerance(lower, upper, msg)
 
     def acceptedMissing(self, msg=None):
-        self._warn('self.acceptedDifferences(Missing)')
-        return self.acceptedDifferences(differences.Missing, msg=msg)
+        self._warn('self.accepted(Missing)')
+        return self.accepted(differences.Missing, msg=msg)
 
     def acceptedExtra(self, msg=None):
-        self._warn('self.acceptedDifferences(Extra)')
-        return self.acceptedDifferences(differences.Extra, msg=msg)
+        self._warn('self.accepted(Extra)')
+        return self.accepted(differences.Extra, msg=msg)
 
     def acceptedInvalid(self, msg=None):
-        self._warn('self.acceptedDifferences(Invalid)')
-        return self.acceptedDifferences(differences.Invalid, msg=msg)
+        self._warn('self.accepted(Invalid)')
+        return self.accepted(differences.Invalid, msg=msg)
 
     def acceptedLimit(self, number, msg=None):
         self._warn('self.acceptedCount()')
@@ -304,16 +304,16 @@ class DataTestCase(TestCase):
     # Deprecated since 0.9.5
 
     def allowedMissing(self, msg=None):
-        self._warn('self.acceptedDifferences(Missing)')
-        return self.acceptedDifferences(differences.Missing, msg=msg)
+        self._warn('self.accepted(Missing)')
+        return self.accepted(differences.Missing, msg=msg)
 
     def allowedExtra(self, msg=None):
-        self._warn('self.acceptedDifferences(Extra)')
-        return self.acceptedDifferences(differences.Extra, msg=msg)
+        self._warn('self.accepted(Extra)')
+        return self.accepted(differences.Extra, msg=msg)
 
     def allowedInvalid(self, msg=None):
-        self._warn('self.acceptedDifferences(Invalid)')
-        return self.acceptedDifferences(differences.Invalid, msg=msg)
+        self._warn('self.accepted(Invalid)')
+        return self.accepted(differences.Invalid, msg=msg)
 
     def allowedDeviation(self, lower, upper=None, msg=None):
         self._warn('self.acceptedTolerance(...)')
@@ -329,7 +329,7 @@ class DataTestCase(TestCase):
 
     def allowedSpecific(self, differences, msg=None):
         self._warn('self.acceptedSpecific()')
-        return self.acceptedDifferences(differences, msg)
+        return self.accepted(differences, msg)
 
     def allowedKeys(self, predicate, msg=None):
         self._warn('self.acceptedKeys()')

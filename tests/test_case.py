@@ -266,8 +266,8 @@ class TestAcceptanceWrappers(unittest.TestCase):
                 pass
         self.case = DummyCase()
 
-    def test_acceptedDifferences(self):
-        cm = self.case.acceptedDifferences([Missing('foo')])
+    def test_accepted(self):
+        cm = self.case.accepted([Missing('foo')])
         self.assertTrue(isinstance(cm, AcceptedDifferences))
 
     def test_acceptedArgs(self):
