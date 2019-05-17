@@ -23,8 +23,8 @@ from datatest.acceptances import (
     AcceptedDifferences,
     AcceptedKeys,
     AcceptedArgs,
-    AcceptedPercent,
     AcceptedTolerance,
+    AcceptedPercent,
     AcceptedFuzzy,
     AcceptedCount,
 )
@@ -1089,16 +1089,16 @@ class TestUniversalComposability(unittest.TestCase):
     def setUp(self):
         ntup = namedtuple('ntup', ('cls', 'args', 'priority'))
         self.acceptances = [
-            ntup(cls=AcceptedFuzzy,     args=tuple(),                  priority=4),
-            ntup(cls=AcceptedTolerance, args=(10,),                    priority=4),
-            ntup(cls=AcceptedPercent,   args=(0.05,),                  priority=4),
-            ntup(cls=AcceptedKeys,      args=(lambda args: True,),     priority=4),
-            ntup(cls=AcceptedArgs,      args=(lambda *args: True,),    priority=4),
-            ntup(cls=AcceptedCount,     args=(4,),                     priority=256),
             ntup(cls=AcceptedDifferences, args=(Invalid('A'),),        priority=4),
             ntup(cls=AcceptedDifferences, args=([Invalid('A')],),      priority=32),
             ntup(cls=AcceptedDifferences, args=({'X': [Invalid('A')]},), priority=32),
             ntup(cls=AcceptedDifferences, args=([Invalid('A')], None, 'whole'), priority=256),
+            ntup(cls=AcceptedKeys,      args=(lambda args: True,),     priority=4),
+            ntup(cls=AcceptedArgs,      args=(lambda *args: True,),    priority=4),
+            ntup(cls=AcceptedTolerance, args=(10,),                    priority=4),
+            ntup(cls=AcceptedPercent,   args=(0.05,),                  priority=4),
+            ntup(cls=AcceptedFuzzy,     args=tuple(),                  priority=4),
+            ntup(cls=AcceptedCount,     args=(4,),                     priority=256),
         ]
 
     def test_completeness(self):

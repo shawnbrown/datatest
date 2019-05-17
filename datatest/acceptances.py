@@ -293,6 +293,127 @@ class UnionedAcceptance(CombinedAcceptance):
         return first.call_predicate(item) or second.call_predicate(item)
 
 
+class AcceptedDifferences(BaseAcceptance):
+    """Accepts differences that match *obj* without triggering a test
+    failure. The given *obj* can be a difference class, a difference
+    instance, or a container of difference instances.
+
+    When *obj* is a class, differences are accepted if they are
+    instances of the class. When *obj* is a difference or collection
+    of differences, then an error's differences are accepted if they
+    compare as equal to one of the accepted differences.
+
+    If given, the *scope* can be ``'element'``, ``'group'``, or
+    ``'whole'``. An element-wise scope will accept any difference that
+    has a match in *obj*. A group-wise scope will accept one difference
+    per match in *obj* per group. A whole-error scope will accept one
+    difference per match in *obj* over the ValidationError as a whole.
+
+    If unspecified, *scope* will default to ``'element'`` if *obj* is a
+    single element and ``'group'`` if *obj* is a container of elements.
+    If *obj* is a mapping, the scope is applied for each key/value
+    pair (and whole-error scopes are, instead, treated as group-wise
+    scopes).
+    """
+    def __init__(self, obj, msg=None, scope=None):
+        if scope not in (None, 'element', 'group', 'whole'):
+            message = "scope may be 'element', 'group', or 'whole', got {0}"
+            raise ValueError(message.format(scope))
+
+        super(AcceptedDifferences, self).__init__(msg)
+        self._scope = scope
+
+        if (nonstringiter(obj) and not isinstance(obj, Mapping)
+                and not hasattr(obj, 'remove')):
+            obj = list(obj)
+        self._obj = obj
+
+    @property
+    def priority(self):
+        scope = self._scope
+
+        if not scope:
+            if nonstringiter(self._obj):
+                scope = 'group'
+            else:
+                scope = 'element'
+
+        if scope == 'element':
+            return 4
+
+        if scope == 'group':
+            return 32
+
+        if scope == 'whole':
+            return 256
+
+        raise Exception('unhandled scope: {0!r}'.format(scope))
+
+    def start_group(self, key):
+        """Called before processing each group."""
+        # Get current allowance object.
+        obj = self._obj
+        if isinstance(obj, Mapping):
+            current_allowance = obj.get(key, [])
+        elif nonstringiter(obj):
+            if self._scope == 'whole':
+                current_allowance = obj  # Use a single persistent object.
+            else:
+                current_allowance = list(obj)  # Make a copy for each group.
+        else:
+            current_allowance = obj
+
+        # Get current scope and check function.
+        if isinstance(current_allowance, type):
+            default_scope = 'element'
+            current_allowance = [current_allowance]
+            current_check = \
+                lambda x: current_allowance and isinstance(x, current_allowance[0])
+        else:
+            if nonstringiter(current_allowance):
+                default_scope = 'group'
+                if not hasattr(current_allowance, 'remove'):
+                    current_allowance = list(current_allowance)
+            else:
+                default_scope = 'element'
+                current_allowance = [current_allowance]
+            current_check = lambda x: x in current_allowance
+
+        self._current_scope = self._scope or default_scope
+        self._current_allowance = current_allowance
+        self._current_check = current_check
+
+    def call_predicate(self, item):
+        """Call once for each element."""
+        _, diff = item
+
+        if self._current_check(diff):
+            if self._current_scope != 'element':
+                self._current_allowance.remove(diff)
+            return True
+        return False
+
+    def __repr__(self):
+        cls_name = self.__class__.__name__
+
+        if isinstance(self._obj, type):
+            obj_part = self._obj.__name__
+        else:
+            obj_part = repr(self._obj)
+
+        if self.msg:
+            msg_part = ', msg={0!r}'.format(self.msg)
+        else:
+            msg_part = ''
+
+        if self._scope:
+            scope_part = ', scope={0!r}'.format(self._scope)
+        else:
+            scope_part = ''
+
+        return '{0}({1}{2}{3})'.format(cls_name, obj_part, msg_part, scope_part)
+
+
 class AcceptedKeys(BaseAcceptance):
     """Accepts differences whose associated keys satisfy the given
     *predicate* (see :ref:`predicate-docs` for details).
@@ -522,127 +643,6 @@ class AcceptedFuzzy(BaseAcceptance):
         return similarity >= self.cutoff
 
 
-class AcceptedDifferences(BaseAcceptance):
-    """Accepts differences that match *obj* without triggering a test
-    failure. The given *obj* can be a difference class, a difference
-    instance, or a container of difference instances.
-
-    When *obj* is a class, differences are accepted if they are
-    instances of the class. When *obj* is a difference or collection
-    of differences, then an error's differences are accepted if they
-    compare as equal to one of the accepted differences.
-
-    If given, the *scope* can be ``'element'``, ``'group'``, or
-    ``'whole'``. An element-wise scope will accept any difference that
-    has a match in *obj*. A group-wise scope will accept one difference
-    per match in *obj* per group. A whole-error scope will accept one
-    difference per match in *obj* over the ValidationError as a whole.
-
-    If unspecified, *scope* will default to ``'element'`` if *obj* is a
-    single element and ``'group'`` if *obj* is a container of elements.
-    If *obj* is a mapping, the scope is applied for each key/value
-    pair (and whole-error scopes are, instead, treated as group-wise
-    scopes).
-    """
-    def __init__(self, obj, msg=None, scope=None):
-        if scope not in (None, 'element', 'group', 'whole'):
-            message = "scope may be 'element', 'group', or 'whole', got {0}"
-            raise ValueError(message.format(scope))
-
-        super(AcceptedDifferences, self).__init__(msg)
-        self._scope = scope
-
-        if (nonstringiter(obj) and not isinstance(obj, Mapping)
-                and not hasattr(obj, 'remove')):
-            obj = list(obj)
-        self._obj = obj
-
-    @property
-    def priority(self):
-        scope = self._scope
-
-        if not scope:
-            if nonstringiter(self._obj):
-                scope = 'group'
-            else:
-                scope = 'element'
-
-        if scope == 'element':
-            return 4
-
-        if scope == 'group':
-            return 32
-
-        if scope == 'whole':
-            return 256
-
-        raise Exception('unhandled scope: {0!r}'.format(scope))
-
-    def start_group(self, key):
-        """Called before processing each group."""
-        # Get current allowance object.
-        obj = self._obj
-        if isinstance(obj, Mapping):
-            current_allowance = obj.get(key, [])
-        elif nonstringiter(obj):
-            if self._scope == 'whole':
-                current_allowance = obj  # Use a single persistent object.
-            else:
-                current_allowance = list(obj)  # Make a copy for each group.
-        else:
-            current_allowance = obj
-
-        # Get current scope and check function.
-        if isinstance(current_allowance, type):
-            default_scope = 'element'
-            current_allowance = [current_allowance]
-            current_check = \
-                lambda x: current_allowance and isinstance(x, current_allowance[0])
-        else:
-            if nonstringiter(current_allowance):
-                default_scope = 'group'
-                if not hasattr(current_allowance, 'remove'):
-                    current_allowance = list(current_allowance)
-            else:
-                default_scope = 'element'
-                current_allowance = [current_allowance]
-            current_check = lambda x: x in current_allowance
-
-        self._current_scope = self._scope or default_scope
-        self._current_allowance = current_allowance
-        self._current_check = current_check
-
-    def call_predicate(self, item):
-        """Call once for each element."""
-        _, diff = item
-
-        if self._current_check(diff):
-            if self._current_scope != 'element':
-                self._current_allowance.remove(diff)
-            return True
-        return False
-
-    def __repr__(self):
-        cls_name = self.__class__.__name__
-
-        if isinstance(self._obj, type):
-            obj_part = self._obj.__name__
-        else:
-            obj_part = repr(self._obj)
-
-        if self.msg:
-            msg_part = ', msg={0!r}'.format(self.msg)
-        else:
-            msg_part = ''
-
-        if self._scope:
-            scope_part = ', scope={0!r}'.format(self._scope)
-        else:
-            scope_part = ''
-
-        return '{0}({1}{2}{3})'.format(cls_name, obj_part, msg_part, scope_part)
-
-
 class AcceptedCount(BaseAcceptance):
     """Accepted up to a given *number* of differences without
     triggering a test failure.
@@ -702,12 +702,6 @@ class AcceptedFactoryType(object):
     def __call__(self, obj, msg=None, scope=None):
         return AcceptedDifferences(obj, msg=msg, scope=scope)
 
-    def __repr__(self):
-        default_repr = super(AcceptedFactoryType, self).__repr__()
-        name_start = default_repr.index(self.__class__.__name__)
-        no_module_prefix = default_repr[name_start:]  # Slice-off module.
-        return '<' + no_module_prefix
-
     def keys(self, predicate, msg=None):
         """Accepts differences whose associated keys satisfy the given
         *predicate* (see :ref:`predicate-docs` for details):
@@ -747,6 +741,28 @@ class AcceptedFactoryType(object):
         """
         return AcceptedArgs(predicate, msg)
 
+    def tolerance(self, lower, upper=None, msg=None):
+        """accepted.tolerance(tolerance, /, msg=None)
+        accepted.tolerance(lower, upper, msg=None)
+
+        Context manager that accepts quantative differences within a
+        given tolerance without triggering a test failure.
+
+        See documentation for full details.
+        """
+        return AcceptedTolerance(lower, upper=upper, msg=msg)
+
+    def percent(self, lower, upper=None, msg=None):
+        """accepted.percent(tolerance, /, msg=None)
+        accepted.percent(lower, upper, msg=None)
+
+        Context manager that accepts Deviations within a given
+        percent tolerance without triggering a test failure.
+
+        See documentation for full details.
+        """
+        return AcceptedPercent(lower, upper, msg)
+
     def fuzzy(self, cutoff=0.6, msg=None):
         """Accepted invalid strings that match their expected value
         with a similarity greater than or equal to *cutoff* (default
@@ -769,28 +785,6 @@ class AcceptedFactoryType(object):
                 validate(data, requirement)
         """
         return AcceptedFuzzy(cutoff=cutoff, msg=msg)
-
-    def tolerance(self, lower, upper=None, msg=None):
-        """accepted.tolerance(tolerance, /, msg=None)
-        accepted.tolerance(lower, upper, msg=None)
-
-        Context manager that accepts quantative differences within a
-        given tolerance without triggering a test failure.
-
-        See documentation for full details.
-        """
-        return AcceptedTolerance(lower, upper=upper, msg=msg)
-
-    def percent(self, lower, upper=None, msg=None):
-        """accepted.percent(tolerance, /, msg=None)
-        accepted.percent(lower, upper, msg=None)
-
-        Context manager that accepts Deviations within a given
-        percent tolerance without triggering a test failure.
-
-        See documentation for full details.
-        """
-        return AcceptedPercent(lower, upper, msg)
 
     def count(self, number, msg=None):
         """Accepts up to a given *number* of differences without
@@ -815,6 +809,14 @@ class AcceptedFactoryType(object):
         """
         return AcceptedCount(number, msg)
 
+    def __repr__(self):
+        default_repr = super(AcceptedFactoryType, self).__repr__()
+        name_start = default_repr.index(self.__class__.__name__)
+        no_module_prefix = default_repr[name_start:]  # Slice-off module.
+        return '<' + no_module_prefix
+
+    # Following methods deprecated in 0.9.6
+
     @staticmethod
     def _warn(new_name):
         import warnings
@@ -824,10 +826,6 @@ class AcceptedFactoryType(object):
     def specific(self, differences, msg=None):
         self._warn('accepted(...)')
         return self(differences, msg=msg)
-
-    def deviation(self, lower, upper=None, msg=None):
-        self._warn('accepted.tolerance(...)')
-        return self.tolerance(lower, upper, msg)
 
     def missing(self, msg=None):
         self._warn('accepted(Missing)')
@@ -840,6 +838,10 @@ class AcceptedFactoryType(object):
     def invalid(self, msg=None):
         self._warn('accepted(Invalid)')
         return self(Invalid, msg=msg)
+
+    def deviation(self, lower, upper=None, msg=None):
+        self._warn('accepted.tolerance(...)')
+        return self.tolerance(lower, upper, msg)
 
     def limit(self, number, msg=None):
         self._warn('accepted.count(...)')
@@ -865,9 +867,9 @@ with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
 accepted = AcceptedFactoryType()  # Use as instance.
 
 
-##########################
-# Deprecated 'allowed' API
-##########################
+#####################
+# Deprecated in 0.9.5
+#####################
 
 class allowed(abc.ABC):
     def __new__(cls, *args, **kwds):
@@ -880,6 +882,11 @@ class allowed(abc.ABC):
         import warnings
         message = "'allowed' API is deprecated, use {0} instead".format(new_name)
         warnings.warn(message, DeprecationWarning, stacklevel=3)
+
+    @classmethod
+    def specific(cls, differences, msg=None):
+        cls._warn('accepted(...)')
+        return accepted(differences, msg=msg)
 
     @classmethod
     def missing(cls, msg=None):
@@ -925,11 +932,6 @@ class allowed(abc.ABC):
     def percent_deviation(cls, lower, upper=None, msg=None):
         cls._warn('accepted.percent(...)')
         return accepted.percent(lower, upper, msg)
-
-    @classmethod
-    def specific(cls, differences, msg=None):
-        cls._warn('accepted(...)')
-        return accepted(differences, msg=msg)
 
     @classmethod
     def limit(cls, number, msg=None):

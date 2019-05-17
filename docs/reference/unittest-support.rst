@@ -143,6 +143,10 @@ DataTestCase
 
     .. automethod:: accepted
 
+    .. automethod:: acceptedKeys
+
+    .. automethod:: acceptedArgs
+
     .. method:: acceptedTolerance(tolerance, /, msg=None)
                 acceptedTolerance(lower, upper, msg=None)
 
@@ -193,9 +197,7 @@ DataTestCase
         Empty values (None, empty string, etc.) are treated as zeros
         when performing comparisons.
 
-    .. automethod:: acceptedKeys
-
-    .. automethod:: acceptedArgs
+    .. automethod:: acceptedFuzzy
 
     .. automethod:: acceptedCount
 

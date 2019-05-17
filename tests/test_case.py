@@ -278,10 +278,6 @@ class TestAcceptanceWrappers(unittest.TestCase):
         cm = self.case.acceptedKeys('foo')
         self.assertTrue(isinstance(cm, AcceptedKeys))
 
-    def test_acceptedFuzzy(self):
-        cm = self.case.acceptedFuzzy()
-        self.assertTrue(isinstance(cm, AcceptedFuzzy))
-
     def test_acceptedTolerance(self):
         cm = self.case.acceptedTolerance(5)
         self.assertTrue(isinstance(cm, AcceptedTolerance))
@@ -289,6 +285,10 @@ class TestAcceptanceWrappers(unittest.TestCase):
     def test_acceptedPercent(self):
         result = self.case.acceptedPercent(5)
         self.assertTrue(isinstance(result, AcceptedPercent))
+
+    def test_acceptedFuzzy(self):
+        cm = self.case.acceptedFuzzy()
+        self.assertTrue(isinstance(cm, AcceptedFuzzy))
 
     def test_acceptedCount(self):
         cm = self.case.acceptedCount(10)

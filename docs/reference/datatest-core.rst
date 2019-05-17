@@ -104,8 +104,6 @@ collection of differences.
 
     .. automethod:: args
 
-    .. automethod:: fuzzy
-
     .. method:: tolerance(tolerance, /, msg=None)
                 tolerance(lower, upper, msg=None)
 
@@ -175,6 +173,8 @@ collection of differences.
 
         Empty values (None, empty string, etc.) are treated as zeros
         when performing comparisons.
+
+    .. automethod:: fuzzy
 
     .. automethod:: count
 

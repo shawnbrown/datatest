@@ -205,6 +205,18 @@ class DataTestCase(TestCase):
         """
         return AcceptedDifferences(obj, msg=msg, scope=scope)
 
+    def acceptedKeys(self, predicate, msg=None):
+        """Accepts differences in a mapping whose keys satisfy the
+        given *predicate*.
+        """
+        return AcceptedKeys(predicate, msg)
+
+    def acceptedArgs(self, predicate, msg=None):
+        """Accepted differences in a mapping whose args satisfy the
+        given *predicate*.
+        """
+        return AcceptedArgs(predicate, msg)
+
     def acceptedTolerance(self, lower, upper=None, msg=None):
         """
         acceptedTolerance(tolerance, /, msg=None)
@@ -222,18 +234,6 @@ class DataTestCase(TestCase):
         See documentation for full details.
         """
         return AcceptedPercent(lower, upper, msg)
-
-    def acceptedKeys(self, predicate, msg=None):
-        """Accepts differences in a mapping whose keys satisfy the
-        given *predicate*.
-        """
-        return AcceptedKeys(predicate, msg)
-
-    def acceptedArgs(self, predicate, msg=None):
-        """Accepted differences in a mapping whose args satisfy the
-        given *predicate*.
-        """
-        return AcceptedArgs(predicate, msg)
 
     def acceptedFuzzy(self, cutoff=0.6, msg=None):
         """Accepted invalid strings that match their expected value
@@ -261,9 +261,9 @@ class DataTestCase(TestCase):
         """
         return AcceptedCount(number, msg)
 
-    #############################
-    # Deprecated 'allowed...' API
-    #############################
+    ####################
+    # Deprecated methods
+    ####################
 
     @staticmethod
     def _warn(new_name):
@@ -277,14 +277,6 @@ class DataTestCase(TestCase):
         self._warn('self.accepted(...)')
         return self.accepted(differences, msg=msg)
 
-    def acceptedPercentDeviation(self, lower, upper=None, msg=None):
-        self._warn('self.acceptedPercent(...)')
-        return self.acceptedPercent(lower, upper, msg)
-
-    def acceptedDeviation(self, lower, upper=None, msg=None):
-        self._warn('self.acceptedTolerance(...)')
-        return AcceptedTolerance(lower, upper, msg)
-
     def acceptedMissing(self, msg=None):
         self._warn('self.accepted(Missing)')
         return self.accepted(differences.Missing, msg=msg)
@@ -297,11 +289,23 @@ class DataTestCase(TestCase):
         self._warn('self.accepted(Invalid)')
         return self.accepted(differences.Invalid, msg=msg)
 
+    def acceptedDeviation(self, lower, upper=None, msg=None):
+        self._warn('self.acceptedTolerance(...)')
+        return AcceptedTolerance(lower, upper, msg)
+
+    def acceptedPercentDeviation(self, lower, upper=None, msg=None):
+        self._warn('self.acceptedPercent(...)')
+        return self.acceptedPercent(lower, upper, msg)
+
     def acceptedLimit(self, number, msg=None):
         self._warn('self.acceptedCount()')
         return AcceptedCount(number, msg)
 
     # Deprecated since 0.9.5
+
+    def allowedSpecific(self, differences, msg=None):
+        self._warn('self.acceptedSpecific()')
+        return self.accepted(differences, msg)
 
     def allowedMissing(self, msg=None):
         self._warn('self.accepted(Missing)')
@@ -315,6 +319,14 @@ class DataTestCase(TestCase):
         self._warn('self.accepted(Invalid)')
         return self.accepted(differences.Invalid, msg=msg)
 
+    def allowedKeys(self, predicate, msg=None):
+        self._warn('self.acceptedKeys()')
+        return AcceptedKeys(predicate, msg)
+
+    def allowedArgs(self, predicate, msg=None):
+        self._warn('self.acceptedArgs()')
+        return AcceptedArgs(predicate, msg)
+
     def allowedDeviation(self, lower, upper=None, msg=None):
         self._warn('self.acceptedTolerance(...)')
         return AcceptedTolerance(lower, upper, msg)
@@ -326,18 +338,6 @@ class DataTestCase(TestCase):
     def allowedPercentDeviation(self, lower, upper=None, msg=None):
         self._warn('self.acceptedPercent(...)')
         return self.acceptedPercent(lower, upper, msg)
-
-    def allowedSpecific(self, differences, msg=None):
-        self._warn('self.acceptedSpecific()')
-        return self.accepted(differences, msg)
-
-    def allowedKeys(self, predicate, msg=None):
-        self._warn('self.acceptedKeys()')
-        return AcceptedKeys(predicate, msg)
-
-    def allowedArgs(self, predicate, msg=None):
-        self._warn('self.acceptedArgs()')
-        return AcceptedArgs(predicate, msg)
 
     def allowedFuzzy(self, cutoff=0.6, msg=None):
         self._warn('self.acceptedFuzzy()')
