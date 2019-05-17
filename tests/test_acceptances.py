@@ -1359,18 +1359,14 @@ class TestUniversalComposability(unittest.TestCase):
     def setUp(self):
         ntup = namedtuple('ntup', ('cls', 'args', 'priority'))
         self.acceptances = [
-            ntup(cls=AcceptedMissing,   args=tuple(),                  priority=4),
-            ntup(cls=AcceptedExtra,     args=tuple(),                  priority=4),
-            ntup(cls=AcceptedInvalid,   args=tuple(),                  priority=4),
-            ntup(cls=AcceptedDeviation, args=(5,),                     priority=4),
             ntup(cls=AcceptedFuzzy,     args=tuple(),                  priority=4),
             ntup(cls=AcceptedPercent,   args=(0.05,),                  priority=4),
             ntup(cls=AcceptedKeys,      args=(lambda args: True,),     priority=4),
             ntup(cls=AcceptedArgs,      args=(lambda *args: True,),    priority=4),
-            ntup(cls=AcceptedSpecific,  args=({'X': [Invalid('A')]},), priority=32),
             ntup(cls=AcceptedCount,     args=(4,),                     priority=256),
             ntup(cls=AcceptedDifferences, args=(Invalid('A'),),        priority=4),
             ntup(cls=AcceptedDifferences, args=([Invalid('A')],),      priority=32),
+            ntup(cls=AcceptedDifferences, args=({'X': [Invalid('A')]},), priority=32),
             ntup(cls=AcceptedDifferences, args=([Invalid('A')], None, 'whole'), priority=256),
         ]
 
@@ -1424,7 +1420,7 @@ class TestUniversalComposability(unittest.TestCase):
                 Deviation(+4, 8),   #  50%
                 Deviation(+8, 32),  #  25%
             ]
-            with AcceptedDeviation(2) | AcceptedPercent(0.25):
+            with AcceptedTolerance(2) | AcceptedPercent(0.25):
                 raise ValidationError(differences)
 
         remaining = cm.exception.differences
@@ -1437,7 +1433,7 @@ class TestUniversalComposability(unittest.TestCase):
                 Missing('B'),
                 Extra('C'),
             ]
-            with AcceptedMissing() & AcceptedArgs(lambda x: x == 'A'):
+            with AcceptedDifferences(Missing) & AcceptedArgs(lambda x: x == 'A'):
                 raise ValidationError(differences)
 
         remaining = cm.exception.differences
@@ -1451,7 +1447,7 @@ class TestUniversalComposability(unittest.TestCase):
                 Extra('C'),
                 Missing('D'),
             ]
-            with AcceptedCount(1) | AcceptedMissing():
+            with AcceptedCount(1) | AcceptedDifferences(Missing):
                 raise ValidationError(differences)
 
         remaining = cm.exception.differences
@@ -1464,7 +1460,7 @@ class TestUniversalComposability(unittest.TestCase):
                 Missing('B'),
                 Missing('C'),
             ]
-            with AcceptedCount(1) & AcceptedMissing():  # Accepts only 1 missing.
+            with AcceptedCount(1) & AcceptedDifferences(Missing):  # Accepts only 1 missing.
                 raise ValidationError(differences)
 
         remaining = cm.exception.differences
@@ -1478,7 +1474,7 @@ class TestUniversalComposability(unittest.TestCase):
                 Extra('C'),
                 Missing('D'),
             ]
-            with AcceptedCount(1) | AcceptedSpecific(Extra('A')):
+            with AcceptedCount(1) | AcceptedDifferences(Extra('A')):
                 raise ValidationError(differences)
 
         remaining = cm.exception.differences

@@ -14,13 +14,8 @@ from .validation import ValidationError
 from .validation import _pytest_tracebackhide
 from .acceptances import (
     AcceptedDifferences,
-    AcceptedMissing,
-    AcceptedExtra,
-    AcceptedInvalid,
     AcceptedTolerance,
-    AcceptedDeviation,
     AcceptedPercent,
-    AcceptedSpecific,
     AcceptedKeys,
     AcceptedArgs,
     AcceptedFuzzy,
