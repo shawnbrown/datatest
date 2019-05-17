@@ -1090,6 +1090,7 @@ class TestUniversalComposability(unittest.TestCase):
         ntup = namedtuple('ntup', ('cls', 'args', 'priority'))
         self.acceptances = [
             ntup(cls=AcceptedFuzzy,     args=tuple(),                  priority=4),
+            ntup(cls=AcceptedTolerance, args=(10,),                    priority=4),
             ntup(cls=AcceptedPercent,   args=(0.05,),                  priority=4),
             ntup(cls=AcceptedKeys,      args=(lambda args: True,),     priority=4),
             ntup(cls=AcceptedArgs,      args=(lambda *args: True,),    priority=4),

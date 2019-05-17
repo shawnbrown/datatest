@@ -39,6 +39,7 @@ __all__ = [
     'AcceptedDifferences',
     'AcceptedKeys',
     'AcceptedArgs',
+    'AcceptedTolerance',
     'AcceptedPercent',
     'AcceptedCount',
     'AcceptedFuzzy',
