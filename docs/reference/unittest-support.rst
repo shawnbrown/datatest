@@ -141,27 +141,23 @@ DataTestCase
         inherited methods like assertSequenceEqual(), assertDictEqual()
         and assertMultiLineEqual().
 
-    .. automethod:: acceptedMissing
+    .. automethod:: accepted
 
-    .. automethod:: acceptedExtra
-
-    .. automethod:: acceptedInvalid
-
-    .. method:: acceptedDeviation(tolerance, /, msg=None)
-                acceptedDeviation(lower, upper, msg=None)
+    .. method:: acceptedTolerance(tolerance, /, msg=None)
+                acceptedTolerance(lower, upper, msg=None)
 
         Accepts numeric :class:`Deviations <datatest.Deviation>`
         within a given *tolerance* without triggering a test
         failure::
 
-            with self.acceptedDeviation(5):  # tolerance of +/- 5
+            with self.acceptedTolerance(5):  # tolerance of +/- 5
                 data = ...
                 requirement = ...
                 self.assertValid(data, requirement)
 
         Specifying different *lower* and *upper* bounds::
 
-            with self.acceptedDeviation(-2, 3):  # tolerance from -2 to +3
+            with self.acceptedTolerance(-2, 3):  # tolerance from -2 to +3
                 data = ...
                 requirement = ...
                 self.assertValid(data, requirement)
@@ -196,8 +192,6 @@ DataTestCase
 
         Empty values (None, empty string, etc.) are treated as zeros
         when performing comparisons.
-
-    .. automethod:: acceptedSpecific
 
     .. automethod:: acceptedKeys
 

@@ -100,20 +100,14 @@ collection of differences.
 
 .. autoclassinstance:: accepted
 
-    .. automethod:: missing
-
-    .. automethod:: extra
-
-    .. automethod:: invalid
-
     .. automethod:: keys
 
     .. automethod:: args
 
     .. automethod:: fuzzy
 
-    .. classmethod:: deviation(tolerance, /, msg=None)
-                     deviation(lower, upper, msg=None)
+    .. method:: tolerance(tolerance, /, msg=None)
+                tolerance(lower, upper, msg=None)
 
         Accepts numeric :class:`Deviations <datatest.Deviation>`
         within a given *tolerance* without triggering a test
@@ -128,7 +122,7 @@ collection of differences.
 
             requirement = {'A': 50, 'B': 200}
 
-            with accepted.deviation(5):  # <- tolerance of ±5
+            with accepted.tolerance(5):  # <- tolerance of ±5
                 validate(data, requirement)  # raises dictionary
                                              # {'A': Deviation(-5, 50),
                                              #  'B': Deviation(+5, 200)}
@@ -138,7 +132,7 @@ collection of differences.
         .. code-block:: python
             :emphasize-lines: 1
 
-            with accepted.deviation(-2, 7):  # <- tolerance from -2 to +7
+            with accepted.tolerance(-2, 7):  # <- tolerance from -2 to +7
                 validate(..., ...)
 
         Deviations within the given range are suppressed while those
@@ -147,9 +141,8 @@ collection of differences.
         Empty values (None, empty string, etc.) are treated as zeros
         when performing comparisons.
 
-
-    .. classmethod:: percent(tolerance, /, msg=None)
-                     percent(lower, upper, msg=None)
+    .. method:: percent(tolerance, /, msg=None)
+                percent(lower, upper, msg=None)
 
         Accepts :class:`Deviations <datatest.Deviation>` with
         percentages of error within a given *tolerance* without
@@ -182,8 +175,6 @@ collection of differences.
 
         Empty values (None, empty string, etc.) are treated as zeros
         when performing comparisons.
-
-    .. automethod:: specific
 
     .. automethod:: count
 
