@@ -292,37 +292,6 @@ class UnionedAcceptance(CombinedAcceptance):
         return first.call_predicate(item) or second.call_predicate(item)
 
 
-class AcceptedMissing(BaseAcceptance):
-    """Accepts :class:`Missing` values without triggering a test
-    failure.
-    """
-    def __repr__(self):
-        return super(AcceptedMissing, self).__repr__()
-
-    def call_predicate(self, item):
-        return isinstance(item[1], Missing)
-
-
-class AcceptedExtra(BaseAcceptance):
-    """Accepts :class:`Extra` values without triggering a test failure."""
-    def __repr__(self):
-        return super(AcceptedExtra, self).__repr__()
-
-    def call_predicate(self, item):
-        return isinstance(item[1], Extra)
-
-
-class AcceptedInvalid(BaseAcceptance):
-    """Accepts :class:`Invalid` values without triggering a test
-    failure.
-    """
-    def __repr__(self):
-        return super(AcceptedInvalid, self).__repr__()
-
-    def call_predicate(self, item):
-        return isinstance(item[1], Invalid)
-
-
 class AcceptedKeys(BaseAcceptance):
     """Accepts differences whose associated keys satisfy the given
     *predicate* (see :ref:`predicate-docs` for details).
@@ -395,50 +364,6 @@ def _normalize_deviation_args(lower, upper, msg):
         raise ValueError('lower must not be greater than upper, got '
                          '{0} (lower) and {1} (upper)'.format(lower, upper))
     return (lower, upper, msg)
-
-
-class AcceptedDeviation(BaseAcceptance):
-    """AcceptedDeviation(tolerance, /, msg=None)
-    AcceptedDeviation(lower, upper, msg=None)
-
-    Context manager that accepts Deviations within a given tolerance
-    without triggering a test failure.
-
-    See documentation for full details.
-    """
-    def __init__(self, lower, upper=None, msg=None):
-        lower, upper, msg = _normalize_deviation_args(lower, upper, msg)
-        self.lower = lower
-        self.upper = upper
-        super(AcceptedDeviation, self).__init__(msg)
-
-    def __repr__(self):
-        cls_name = self.__class__.__name__
-        msg_part = ', msg={0!r}'.format(self.msg) if self.msg else ''
-        if -self.lower ==  self.upper:
-            return '{0}({1!r}{2})'.format(cls_name, self.upper, msg_part)
-        return '{0}(lower={1!r}, upper={2!r}{3})'.format(cls_name,
-                                                         self.lower,
-                                                         self.upper,
-                                                         msg_part)
-
-    def call_predicate(self, item):
-        diff = item[1]
-        try:
-            deviation = diff.deviation or 0
-        except AttributeError:
-            return False
-
-        if isnan(deviation) or isnan(diff.expected or 0):
-            return False
-        return self.lower <= deviation <= self.upper
-
-with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
-    AcceptedDeviation.__init__.__signature__ = inspect.Signature([
-        inspect.Parameter('self', inspect.Parameter.POSITIONAL_ONLY),
-        inspect.Parameter('tolerance', inspect.Parameter.POSITIONAL_ONLY),
-        inspect.Parameter('msg', inspect.Parameter.POSITIONAL_OR_KEYWORD, default=None),
-    ])
 
 
 class AcceptedTolerance(BaseAcceptance):
@@ -715,91 +640,6 @@ class AcceptedDifferences(BaseAcceptance):
             scope_part = ''
 
         return '{0}({1}{2}{3})'.format(cls_name, obj_part, msg_part, scope_part)
-
-
-class AcceptedSpecific(BaseAcceptance):
-    """Accepts specific *differences* without triggering a
-    test failure.
-    """
-    def __init__(self, differences, msg=None):
-        if not isinstance(differences, (BaseDifference, list, set, dict)):
-            raise TypeError(
-                'differences must be a list, dict, or a single difference, '
-                'got {0} type instead'.format(differences.__class__.__name__)
-            )
-        self.differences = differences
-        self.msg = msg
-        self._accepted = dict()         # Properties to hold working values
-        self._predicate_keys = dict()  # during acceptance checking.
-
-    @property
-    def priority(self):
-        return 32
-
-    def __repr__(self):
-        cls_name = self.__class__.__name__
-        msg_part = ', msg={0!r}'.format(self.msg) if self.msg else ''
-        return '{0}({1!r}{2})'.format(cls_name, self.differences, msg_part)
-
-    def start_collection(self):
-        self._predicate_keys = dict()  # Clear _predicate_keys
-
-        # Normalize and copy mutable containers, assign to "_accepted".
-        diffs = self.differences
-        if isinstance(diffs, BaseDifference):
-            accepted = defaultdict(lambda: [diffs])
-        elif isinstance(diffs, (list, set)):
-            accepted = defaultdict(lambda: list(diffs))
-        elif isinstance(diffs, dict):
-            accepted = dict()
-            for key, value in diffs.items():
-                matcher = get_matcher(key)
-                if isinstance(matcher, MatcherBase):
-                    self._predicate_keys[key]= matcher
-
-                if isinstance(value, (list, set)):
-                    accepted[key] = list(value)  # Make a copy.
-                else:
-                    accepted[key] = [value]
-        else:
-            raise TypeError(
-                'differences must be a list, dict, or a single difference, '
-                'got {0} type instead'.format(accepted.__class__.__name__)
-            )
-        self._accepted = accepted
-
-    def call_predicate(self, item):
-        key, diff = item
-        try:
-            self._accepted[key].remove(diff)
-            return True
-        except KeyError:
-            matches = dict()
-
-            # See if key compares as equal to any predicate-keys.
-            for match_key, match_pred in self._predicate_keys.items():
-                if match_pred == key:
-                    matches[match_key] = match_pred
-
-            if not matches:
-                return False
-            elif len(matches) == 1:
-                try:
-                    match_key = next(iter(matches.keys()))
-                    self._accepted[match_key].remove(diff)
-                    return True
-                except ValueError:
-                    return False
-            else:
-                msg = (
-                    'the key {0!r} matches multiple predicates: {1}'
-                ).format(key, ', '.join(repr(x) for x in matches.values()))
-                exc = KeyError(msg)
-                exc.__cause__ = None
-                raise exc
-
-        except ValueError:
-            return False
 
 
 class AcceptedCount(BaseAcceptance):

@@ -21,16 +21,11 @@ from datatest.acceptances import (
     IntersectedAcceptance,
     UnionedAcceptance,
     AcceptedDifferences,
-    AcceptedMissing,
-    AcceptedExtra,
-    AcceptedInvalid,
     AcceptedKeys,
     AcceptedArgs,
-    AcceptedDeviation,
     AcceptedPercent,
     AcceptedTolerance,
     AcceptedFuzzy,
-    AcceptedSpecific,
     AcceptedCount,
 )
 
@@ -277,7 +272,7 @@ class TestAcceptedDifferences(unittest.TestCase):
     def test_mapping_vs_mapping(self):
         differences = {
             'a': [Missing('X'), Missing('X')],
-            'b': [Missing('Y'), Missing('X')],
+            'b': [Missing('X'), Missing('Y'), Missing('Y')],
         }
 
         # Defaults to element-wise scope.
@@ -287,7 +282,7 @@ class TestAcceptedDifferences(unittest.TestCase):
 
         # Defaults to group-wise scope.
         acceptance = AcceptedDifferences({'a': [Missing('X')], 'b': [Missing('Y')]})
-        expected = {'a': Missing('X'), 'b': Missing('X')}
+        expected = {'a': Missing('X'), 'b': [Missing('X'), Missing('Y')]}
         self.assertAcceptance(differences, acceptance, expected)
 
     def test_mapping_vs_list(self):
@@ -438,6 +433,22 @@ class TestAcceptedDifferences(unittest.TestCase):
         expected = {'a': Missing('X'), 'b': Missing('X')}
         self.assertAcceptance(differences, acceptance, expected)
 
+    def test_combination_of_cases(self):
+        """This is a bit of an integration test."""
+        differences = {
+            'foo': [Extra('xxx'), Missing('yyy')],
+            'bar': [Extra('xxx')],
+            'baz': [Extra('xxx'), Missing('yyy'), Extra('zzz')],
+        }
+        #accepted = {Ellipsis: [Extra('xxx'), Missing('yyy')]}
+        accepted = [Extra('xxx'), Missing('yyy')]
+        with self.assertRaises(ValidationError) as cm:
+            with AcceptedDifferences(accepted):
+                raise ValidationError(differences)
+
+        actual = cm.exception.differences
+        self.assertEqual(actual, {'baz': Extra('zzz')})
+
     def test_priority(self):
         """Priority is determined by scope."""
         acceptance = AcceptedDifferences(Extra)
@@ -485,7 +496,7 @@ class TestAcceptedDifferencesByType(unittest.TestCase):
 
     These checks may overlap ones in TestAcceptedDifferences.
     Once the new interface has proven to be an adequate replacement
-    for the old interface, the duplicate checks should be removed
+    for the old interface, the duplicate checks can be removed
     and the unique ones should be moved to an appropriate location.
     """
     def test_accepted_missing(self):
@@ -511,39 +522,6 @@ class TestAcceptedDifferencesByType(unittest.TestCase):
 
         with self.assertRaises(ValidationError) as cm:
             with AcceptedDifferences(Invalid):  # <- Apply acceptance!
-                raise ValidationError(differences)
-        remaining_diffs = cm.exception.differences
-        self.assertEqual(list(remaining_diffs), [Extra('Z')])
-
-
-class TestAcceptedMissing(unittest.TestCase):
-    def test_accepted_missing(self):
-        differences =  [Missing('X'), Missing('Y'), Extra('X')]
-
-        with self.assertRaises(ValidationError) as cm:
-            with AcceptedMissing():  # <- Apply acceptance!
-                raise ValidationError(differences)
-        remaining_diffs = cm.exception.differences
-        self.assertEqual(list(remaining_diffs), [Extra('X')])
-
-
-class TestAcceptedExtra(unittest.TestCase):
-    def test_accepted_extra(self):
-        differences =  [Extra('X'), Extra('Y'), Missing('X')]
-
-        with self.assertRaises(ValidationError) as cm:
-            with AcceptedExtra():  # <- Apply acceptance!
-                raise ValidationError(differences)
-        remaining_diffs = cm.exception.differences
-        self.assertEqual(list(remaining_diffs), [Missing('X')])
-
-
-class TestAcceptedInvalid(unittest.TestCase):
-    def test_accepted_invalid(self):
-        differences =  [Invalid('X'), Invalid('Y'), Extra('Z')]
-
-        with self.assertRaises(ValidationError) as cm:
-            with AcceptedInvalid():  # <- Apply acceptance!
                 raise ValidationError(differences)
         remaining_diffs = cm.exception.differences
         self.assertEqual(list(remaining_diffs), [Extra('Z')])
@@ -667,77 +645,6 @@ class TestAcceptedArgs(unittest.TestCase):
 
         remaining_diffs = cm.exception.differences
         self.assertEqual(list(remaining_diffs), [Deviation(+2, 5)])
-
-
-class TestAcceptedDeviation(unittest.TestCase):
-    def setUp(self):
-        self.differences = {
-            'aaa': Deviation(-1, 10),
-            'bbb': Deviation(+3, 10),
-            'ccc': Deviation(+2, 10),
-        }
-
-    def test_function_signature(self):
-        with contextlib.suppress(AttributeError):       # Python 3.2 and older
-            sig = inspect.signature(AcceptedDeviation)  # use ugly signatures.
-            parameters = list(sig.parameters)
-            self.assertEqual(parameters, ['tolerance', 'msg'])
-
-    def test_tolerance_syntax(self):
-        with self.assertRaises(ValidationError) as cm:
-            with AcceptedDeviation(2):  # <- Accepts +/- 2.
-                raise ValidationError(self.differences)
-        remaining = cm.exception.differences
-        self.assertEqual(remaining, {'bbb': Deviation(+3, 10)})
-
-    def test_lower_upper_syntax(self):
-        with self.assertRaises(ValidationError) as cm:
-            with AcceptedDeviation(0, 3):  # <- Accepts from 0 to 3.
-                raise ValidationError(self.differences)
-        result_diffs = cm.exception.differences
-        self.assertEqual({'aaa': Deviation(-1, 10)}, result_diffs)
-
-    def test_same_value_case(self):
-        with self.assertRaises(ValidationError) as cm:
-            with AcceptedDeviation(3, 3):  # <- Accepts off-by-3 only.
-                raise ValidationError(self.differences)
-        result_diffs = cm.exception.differences
-        self.assertEqual({'aaa': Deviation(-1, 10), 'ccc': Deviation(+2, 10)}, result_diffs)
-
-    def test_invalid_arguments(self):
-        with self.assertRaises(ValueError) as cm:
-            with AcceptedDeviation(-5):  # <- invalid
-                pass
-        exc = str(cm.exception)
-        self.assertTrue(exc.startswith('tolerance should not be negative'))
-
-        with self.assertRaises(ValueError) as cm:
-            with AcceptedDeviation(3, 2):  # <- invalid
-                pass
-        exc = str(cm.exception)
-        expected = 'lower must not be greater than upper, got 3 (lower) and 2 (upper)'
-        self.assertEqual(exc, expected)
-
-    def test_empty_string(self):
-        with AcceptedDeviation(0):  # <- Pass without failure.
-            raise ValidationError(Deviation('', 0))
-
-        with AcceptedDeviation(0):  # <- Pass without failure.
-            raise ValidationError(Deviation(0, ''))
-
-    def test_NaN_values(self):
-        with self.assertRaises(ValidationError):  # <- NaN values should not be caught!
-            with AcceptedDeviation(0):
-                raise ValidationError(Deviation(float('nan'), 0))
-
-    def test_non_deviation_diffs(self):
-        diffs = [Missing('foo'), Extra('bar'), Invalid('baz')]
-        with self.assertRaises(ValidationError) as cm:
-            with AcceptedDeviation(5):
-                raise ValidationError(diffs)
-
-        uncaught_diffs = cm.exception.differences
-        self.assertEqual(diffs, uncaught_diffs)
 
 
 class TestAcceptedTolerance(unittest.TestCase):
@@ -1111,183 +1018,6 @@ class TestAcceptedFuzzy(unittest.TestCase):
 
         remaining = cm.exception.differences
         self.assertEqual(remaining, incompatible_diffs)
-
-
-class TestAcceptedSpecific(unittest.TestCase):
-    def test_list_and_list(self):
-        differences = [Extra('xxx'), Missing('yyy')]
-        accepted = [Extra('xxx')]
-        expected = [Missing('yyy')]
-
-        with self.assertRaises(ValidationError) as cm:
-            with AcceptedSpecific(accepted):
-                raise ValidationError(differences)
-
-        actual = list(cm.exception.differences)
-        self.assertEqual(actual, expected)
-
-    def test_list_and_diff(self):
-        differences = [Extra('xxx'), Missing('yyy')]
-        accepted = Extra('xxx')  # <- Single diff, not in a container.
-
-        with self.assertRaises(ValidationError) as cm:
-            with AcceptedSpecific(accepted):
-                raise ValidationError(differences)
-
-        actual = list(cm.exception.differences)
-        expected = [Missing('yyy')]
-        self.assertEqual(actual, expected)
-
-    def test_excess_accepted(self):
-        diffs = [Extra('xxx')]
-        accepted = [Extra('xxx'), Missing('yyy')]  # <- More accepted than
-        with AcceptedSpecific(accepted):           #    are actually found.
-            raise ValidationError(diffs)
-
-    def test_duplicates(self):
-        # Three of the exact-same differences.
-        differences = [Extra('xxx'), Extra('xxx'), Extra('xxx')]
-
-        # Only accept one of them.
-        with self.assertRaises(ValidationError) as cm:
-            accepted = [Extra('xxx')]
-            with AcceptedSpecific(accepted):
-                raise ValidationError(differences)
-
-        actual = list(cm.exception.differences)
-        expected = [Extra('xxx'), Extra('xxx')]  # Expect two remaining.
-        self.assertEqual(actual, expected)
-
-        # Only accept two of them.
-        with self.assertRaises(ValidationError) as cm:
-            accepted = [Extra('xxx'), Extra('xxx')]
-            with AcceptedSpecific(accepted):
-                raise ValidationError(differences)
-
-        actual = list(cm.exception.differences)
-        expected = [Extra('xxx')]  # Expect one remaining.
-        self.assertEqual(actual, expected)
-
-        # Accept all three.
-        accepted = [Extra('xxx'), Extra('xxx'), Extra('xxx')]
-        with AcceptedSpecific(accepted):
-            raise ValidationError(differences)
-
-    def test_dict_and_list(self):
-        """List of accepted differences applied to each group separately."""
-        differences = {'foo': Extra('xxx'), 'bar': [Extra('xxx'), Missing('yyy')]}
-        accepted = [Extra('xxx')]
-
-        with self.assertRaises(ValidationError) as cm:
-            with AcceptedSpecific(accepted):
-                raise ValidationError(differences)
-
-        actual = cm.exception.differences
-        expected = {'bar': Missing('yyy')}
-        self.assertEqual(actual, expected)
-
-    def test_dict_and_dict(self):
-        differences = {'foo': Extra('xxx'), 'bar': [Extra('xxx'), Missing('yyy')]}
-        accepted = {'bar': Extra('xxx')}
-
-        with self.assertRaises(ValidationError) as cm:
-            with AcceptedSpecific(accepted):
-                raise ValidationError(differences)
-
-        actual = cm.exception.differences
-        expected = {'foo': Extra('xxx'), 'bar': Missing('yyy')}
-        self.assertEqual(actual, expected)
-
-    def test_dict_with_predicates(self):
-        """Ellipsis wildcard key matches all, treats as a single group."""
-        differences = {
-            'foo': Extra('xxx'),
-            'bar': [Extra('yyy'), Missing('yyy')],
-            'baz': [Extra('zzz'), Missing('zzz')],
-        }
-
-        accepted = {
-            lambda x: x.startswith('ba'): [
-                Extra('yyy'),
-                Extra('zzz'),
-            ],
-        }
-
-        with self.assertRaises(ValidationError) as cm:
-            with AcceptedSpecific(accepted):
-                raise ValidationError(differences)
-
-        actual = cm.exception.differences
-        expected = {
-            'foo': Extra('xxx'),
-            'bar': Missing('yyy'),
-            'baz': Missing('zzz'),
-        }
-        self.assertEqual(actual, expected)
-
-    def test_predicate_collision(self):
-        """Ellipsis wildcard key matches all, treats as a single group."""
-        differences = {
-            'foo': Extra('xxx'),
-            'bar': [Extra('yyy'), Missing('yyy')],
-        }
-
-        def accepted1(x):
-            return x.startswith('ba')
-
-        def accepted2(x):
-            return x == 'bar'
-
-        accepted = {
-            accepted1: Extra('yyy'),
-            accepted2: Missing('yyy'),
-        }
-
-        regex = ("the key 'bar' matches multiple predicates: "
-                 "accepted[12], accepted[12]")
-        with self.assertRaisesRegex(KeyError, regex):
-            with AcceptedSpecific(accepted):
-                raise ValidationError(differences)
-
-    def test_dict_global_wildcard_predicate(self):
-        """Ellipsis wildcard key matches all, treats as a single group."""
-        differences = {'foo': Extra('xxx'), 'bar': [Extra('xxx'), Missing('yyy')]}
-        accepted = {Ellipsis: Extra('xxx')}
-
-        with self.assertRaises(ValidationError) as cm:
-            with AcceptedSpecific(accepted):
-                raise ValidationError(differences)
-
-        actual = cm.exception.differences
-        # Actual result can vary with unordered dictionaries.
-        if len(actual) == 1:
-            expected = {'bar': [Extra('xxx'), Missing('yyy')]}
-        else:
-            expected = {'foo': Extra('xxx'), 'bar': Missing('yyy')}
-        self.assertEqual(actual, expected)
-
-    def test_all_accepted(self):
-        differences = {'foo': Extra('xxx'), 'bar': Missing('yyy')}
-        accepted = {'foo': Extra('xxx'), 'bar': Missing('yyy')}
-
-        with AcceptedSpecific(accepted):  # <- Accepts all differences, no error!
-            raise ValidationError(differences)
-
-    def test_combination_of_cases(self):
-        """This is a bit of an integration test."""
-        differences = {
-            'foo': [Extra('xxx'), Missing('yyy')],
-            'bar': [Extra('xxx')],
-            'baz': [Extra('xxx'), Missing('yyy'), Extra('zzz')],
-        }
-        #accepted = {Ellipsis: [Extra('xxx'), Missing('yyy')]}
-        accepted = [Extra('xxx'), Missing('yyy')]
-        with self.assertRaises(ValidationError) as cm:
-            with AcceptedSpecific(accepted):
-                raise ValidationError(differences)
-
-        actual = cm.exception.differences
-        self.assertEqual(actual, {'baz': Extra('zzz')})
 
 
 class TestAcceptedCount(unittest.TestCase):
