@@ -786,7 +786,7 @@ class AcceptedFactoryType(object):
         """
         return AcceptedFuzzy(cutoff=cutoff, msg=msg)
 
-    def count(self, number, msg=None):
+    def count(self, number, msg=None, scope=None):
         """Accepts up to a given *number* of differences without
         triggering a test failure:
 
@@ -807,7 +807,7 @@ class AcceptedFactoryType(object):
         case will fail with a :class:`ValidationError` containing the
         remaining differences.
         """
-        return AcceptedCount(number, msg)
+        return AcceptedCount(number, msg=msg, scope=scope)
 
     def __repr__(self):
         default_repr = super(AcceptedFactoryType, self).__repr__()

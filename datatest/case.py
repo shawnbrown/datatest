@@ -246,7 +246,7 @@ class DataTestCase(TestCase):
         """
         return AcceptedFuzzy(cutoff=cutoff, msg=msg)
 
-    def acceptedCount(self, number, msg=None):
+    def acceptedCount(self, number, msg=None, scope=None):
         """Accepted a limited *number* of differences without
         triggering a test failure::
 
@@ -259,7 +259,7 @@ class DataTestCase(TestCase):
         test will fail with a :class:`ValidationError` containing all
         observed differences.
         """
-        return AcceptedCount(number, msg)
+        return AcceptedCount(number, msg=msg, scope=scope)
 
     ####################
     # Deprecated methods
