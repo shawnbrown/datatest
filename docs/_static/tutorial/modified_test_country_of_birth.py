@@ -27,7 +27,7 @@ def summary():
 def test_columns(detail, summary):
     required_set = set(summary.fieldnames)
 
-    with accepted.extra():
+    with accepted(Extra):
         validate(detail.fieldnames, required_set)
 
 
@@ -35,7 +35,7 @@ def test_state_labels(detail, summary):
     data = detail({'state/territory'})
     requirement = summary({'state/territory'})
 
-    omitted_territory = accepted.specific([
+    omitted_territory = accepted([
         Missing('Jervis Bay Territory'),
     ])
 
@@ -56,7 +56,7 @@ def test_population_sums(detail, summary):
     data = detail({'state/territory': 'population'}).sum()
     requirement = summary({'state/territory': 'population'}).sum()
 
-    omitted_territory = accepted.specific({
+    omitted_territory = accepted({
         'Jervis Bay Territory': Deviation(-388, 388),
     })
 

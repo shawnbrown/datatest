@@ -186,20 +186,20 @@ Acceptances can be combined to create new acceptances with modified
 behavior.
 
 The ``&`` operator can be used to create an *intersection* of
-acceptance criteria. In the following example, :meth:`accepted.missing`
-and :meth:`accepted.count` are combined into a single acceptance that
-accepts up to five Missing differences:
+acceptance criteria. In the following example, :meth:`accepted(Missing)
+<accepted>` and :meth:`accepted.count(5) <accepted.count>` are combined
+into a single acceptance that accepts up to five Missing differences:
 
 .. code-block:: python
     :emphasize-lines: 3
 
     from datatest import validate, accepted
 
-    with accepted.missing() & accepted.count(5):
+    with accepted(Missing) & accepted.count(5):
         validate(..., ...)
 
 The ``|`` operator can be used to create *union* of acceptance
-criteria. In the following example, :meth:`accepted.deviation`
+criteria. In the following example, :meth:`accepted.tolerance`
 and :meth:`accepted.percent` are combined into a single acceptance
 that accepts Deviations of ±10 as well as Deviations of ±5%:
 
@@ -208,7 +208,7 @@ that accepts Deviations of ±10 as well as Deviations of ±5%:
 
     from datatest import validate, accepted
 
-    with accepted.deviation(10) | accepted.percent(0.05):
+    with accepted.tolerance(10) | accepted.percent(0.05):
         validate(..., ...)
 
 And composed acceptances, themselves, can be composed to define
@@ -219,9 +219,9 @@ increasingly specific criteria:
 
     from datatest import validate, accepted
 
-    five_missing = accepted.missing() & accepted.count(5)
+    five_missing = accepted(Missing) & accepted.count(5)
 
-    minor_deviations = accepted.deviation(10) | accepted.percent(0.05)
+    minor_deviations = accepted.tolerance(10) | accepted.percent(0.05)
 
     with five_missing | minor_deviations:
         validate(..., ...)
@@ -236,27 +236,37 @@ precedence. Operations with the same precedence level
 (appearing in the same cell) are evaluated from left
 to right.
 
-+-------+-------------------------------+----------------------------+
-| Order | Operation                     | Description                |
-+=======+===============================+============================+
-|   1   | | ``()``                      | Parentheses                |
-+-------+-------------------------------+----------------------------+
-|   2   | | ``&``                       | Bitwise AND (intersection) |
-+-------+-------------------------------+----------------------------+
-|   3   | | ``|``                       | Bitwise OR (union)         |
-+-------+-------------------------------+----------------------------+
-|       | | :meth:`accepted.missing`,   |                            |
-|       | | :meth:`accepted.extra`,     |                            |
-|       | | :meth:`accepted.invalid`,   |                            |
-|   4   | | :meth:`accepted.keys`,      | Element-wise acceptances   |
-|       | | :meth:`accepted.args`,      |                            |
-|       | | :meth:`accepted.deviation`, |                            |
-|       | | :meth:`accepted.percent`    |                            |
-+-------+-------------------------------+----------------------------+
-|   5   | | :meth:`accepted.specific`   | Group-wise acceptances     |
-+-------+-------------------------------+----------------------------+
-|   6   | | :meth:`accepted.count`      | Whole-error acceptances    |
-+-------+-------------------------------+----------------------------+
+.. table::
+    :widths: auto
+
+    +-------+-----------------------------------+----------------------------+
+    | Order | Operation                         | Description                |
+    +=======+===================================+============================+
+    |   1   | | ``()``                          | Parentheses                |
+    +-------+-----------------------------------+----------------------------+
+    |   2   | | ``&``                           | Bitwise AND (intersection) |
+    +-------+-----------------------------------+----------------------------+
+    |   3   | | ``|``                           | Bitwise OR (union)         |
+    +-------+-----------------------------------+----------------------------+
+    |       | | :class:`accepted(...)           |                            |
+    |       |   <accepted>`                     |                            |
+    |       | | :class:`accepted.keys(...)      |                            |
+    |       |   <accepted.keys>`                |                            |
+    |       | | :class:`accepted.args(...)      |                            |
+    |   4   |   <accepted.args>`                | Element-wise acceptances   |
+    |       | | :class:`accepted.tolerance(...) |                            |
+    |       |   <accepted.tolerance>`           |                            |
+    |       | | :class:`accepted.percent(...)   |                            |
+    |       |   <accepted.percent>`             |                            |
+    |       | | :class:`accepted.fuzzy(...)     |                            |
+    |       |   <accepted.fuzzy>`               |                            |
+    +-------+-----------------------------------+----------------------------+
+    |   5   | | :class:`accepted([...])         | Group-wise acceptances     |
+    |       |   <accepted>`                     |                            |
+    +-------+-----------------------------------+----------------------------+
+    |   6   | | :class:`accepted.count(...)     | Whole-error acceptances    |
+    |       |   <accepted.count>`               |                            |
+    +-------+-----------------------------------+----------------------------+
 
 
 .. _predicate-docs:

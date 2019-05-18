@@ -26,14 +26,14 @@ class TestPopulation(DataTestCase):
     def test_columns(self):
         required_set = set(summary.fieldnames)
 
-        with self.acceptedExtra():
+        with self.accepted(Extra):
             self.assertValid(detail.fieldnames, required_set)
 
     def test_state_labels(self):
         data = detail({'state/territory'})
         requirement = summary({'state/territory'})
 
-        omitted_territory = self.acceptedSpecific([
+        omitted_territory = self.accepted([
             Missing('Jervis Bay Territory'),
         ])
 
@@ -52,7 +52,7 @@ class TestPopulation(DataTestCase):
         data = detail({'state/territory': 'population'}).sum()
         requirement = summary({'state/territory': 'population'}).sum()
 
-        omitted_territory = self.acceptedSpecific({
+        omitted_territory = self.accepted({
             'Jervis Bay Territory': Deviation(-388, 388),
         })
 

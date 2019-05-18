@@ -379,9 +379,9 @@ acceptance so the test will pass:
 
     .. group-tab:: Pytest
 
-        Calling :meth:`accepted.extra` returns a context manager
-        that accepts Extra differences without triggering a test
-        failure:
+        Calling :meth:`accepted(Extra) <accepted>` returns a context
+        manager that accepts Extra differences without triggering a
+        test failure:
 
         .. code-block:: python
             :emphasize-lines: 11
@@ -397,12 +397,12 @@ acceptance so the test will pass:
 
                 requirement = {'A', 'B'}
 
-                with accepted.extra():
+                with accepted(Extra):
                     validate(data, requirement)
 
     .. group-tab:: Unittest
 
-        Calling :meth:`self.acceptedExtra() <datatest.DataTestCase.acceptedExtra>`
+        Calling :meth:`self.accepted(Extra) <datatest.DataTestCase.accepted>`
         returns a context manager that accepts Extra differences without
         triggering a test failure:
 
@@ -420,7 +420,7 @@ acceptance so the test will pass:
 
                     requirement = {'A', 'B'}
 
-                    with self.acceptedExtra():
+                    with self.accepted(Extra):
                         self.assertValid(data, requirement)
 
 
@@ -433,7 +433,7 @@ accepted by their magnitude:
 
     .. group-tab:: Pytest
 
-        Calling :meth:`accepted.deviation(5) <accepted.deviation>`
+        Calling :meth:`accepted.tolerance(5) <accepted.tolerance>`
         returns a context manager that accepts Deviations up to
         plus-or-minus five without triggering a test failure:
 
@@ -455,12 +455,12 @@ accepted by their magnitude:
                     'C': 300,
                     'D': 400,
                 }
-                with accepted.deviation(5):  # accepts ±5
+                with accepted.tolerance(5):  # accepts ±5
                     validate(data, requirement)
 
     .. group-tab:: Unittest
 
-        Calling :meth:`self.acceptedDeviation(5) <DataTestCase.acceptedDeviation>`
+        Calling :meth:`self.acceptedTolerance(5) <DataTestCase.acceptedTolerance>`
         returns a context manager that accepts Deviations up to
         plus-or-minus five without triggering a test failure:
 
@@ -482,7 +482,7 @@ accepted by their magnitude:
                         'C': 300,
                         'D': 400,
                     }
-                    with self.acceptedDeviation(5):  # accepts ±5
+                    with self.acceptedTolerance(5):  # accepts ±5
                         self.assertValid(data, requirement)
 
     For a list of all possible acceptances see :ref:`acceptance-docs`.

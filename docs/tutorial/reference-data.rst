@@ -682,7 +682,7 @@ Running the test script again gives us one final difference to address:
                     data = detail({'state/territory': 'population'}).sum()
                     requirement = summary({'state/territory': 'population'}).sum()
 
-                    omitted_territory = accepted.specific({
+                    omitted_territory = accepted({
                         'Jervis Bay Territory': Deviation(-388, 388),
                     })
 

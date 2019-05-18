@@ -37,8 +37,8 @@ a CSV file (:download:`mydata.csv </_static/mydata.csv>`):
 
         def test_active_column(self):
             active = select({'active'})
-            accepted_values = {'Y', 'N'}
-            self.assertValid(active, accepted_values)
+            expected_values = {'Y', 'N'}
+            self.assertValid(active, expected_values)
 
         def test_user_id_column(self):
             user_id = select(['user_id'])
