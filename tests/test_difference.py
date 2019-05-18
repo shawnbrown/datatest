@@ -259,18 +259,17 @@ class TestMakeDifference(unittest.TestCase):
 
     def test_numeric_vs_none(self):
         diff = _make_difference(5, None)
-        self.assertEqual(diff, Deviation(+5, None))
+        self.assertEqual(diff, Invalid(5, None))
 
         diff = _make_difference(0, None)
-        self.assertEqual(diff, Deviation(+0, None))
+        self.assertEqual(diff, Invalid(0, None))
 
     def test_none_vs_numeric(self):
-        diff = _make_difference(None, 6)          # For None vs non-zero,
-        self.assertEqual(diff, Deviation(-6, 6))  # difference is calculated
-                                                  # as 0 - other.
+        diff = _make_difference(None, 6)
+        self.assertEqual(diff, Invalid(None, 6))
 
-        diff = _make_difference(None, 0)            # For None vs zero,
-        self.assertEqual(diff, Deviation(None, 0))  # difference remains None.
+        diff = _make_difference(None, 0)
+        self.assertEqual(diff, Invalid(None, 0))
 
     def test_object_vs_object(self):
         """Non-numeric comparisons return Invalid type."""
@@ -301,22 +300,20 @@ class TestMakeDifference(unittest.TestCase):
         diff = _make_difference('a', NOVALUE)
         self.assertEqual(diff, Extra('a'))
 
-        diff = _make_difference(NOVALUE, 'b')
-        self.assertEqual(diff, Missing('b'))
-
-        # For numeric comparisons, NOVALUE behaves like None.
         diff = _make_difference(5, NOVALUE)
-        self.assertEqual(diff, Deviation(+5, None))
+        self.assertEqual(diff, Extra(5))
 
         diff = _make_difference(0, NOVALUE)
-        self.assertEqual(diff, Deviation(0, None))
+        self.assertEqual(diff, Extra(0))
 
-        diff = _make_difference(NOVALUE, 6)
-        self.assertEqual(diff, Deviation(-6, 6))  # <- Asymmetric behavior
-                                                  #    (see None vs numeric)!
+        diff = _make_difference(NOVALUE, 'a')
+        self.assertEqual(diff, Missing('a'))
+
+        diff = _make_difference(NOVALUE, 5)
+        self.assertEqual(diff, Missing(5))
 
         diff = _make_difference(NOVALUE, 0)
-        self.assertEqual(diff, Deviation(None, 0))
+        self.assertEqual(diff, Missing(0))
 
     def test_show_expected(self):
         """If requirement is common it should be omitted from Invalid
@@ -328,8 +325,12 @@ class TestMakeDifference(unittest.TestCase):
         diff = _make_difference('a', 6, show_expected=False)
         self.assertEqual(diff, Invalid('a'))
 
+        # Show expected has no value with Missing or Extra differences.
         diff = _make_difference(NOVALUE, 6, show_expected=False)
-        self.assertEqual(diff, Deviation(-6, 6))
+        self.assertEqual(diff, Missing(6))
+
+        diff = _make_difference(6, NOVALUE, show_expected=False)
+        self.assertEqual(diff, Extra(6))
 
     def test_same(self):
         """The _make_difference() function returns differences for

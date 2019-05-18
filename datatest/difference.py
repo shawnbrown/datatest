@@ -297,25 +297,6 @@ def _make_difference(actual, expected, show_expected=True):
         diff = actual - expected
         return Deviation(diff, expected)
 
-    # Numeric vs empty (or NOVALUE).
-    if first_isnum and (not expected or expected is NOVALUE):
-        if expected is NOVALUE:
-            expected = None
-
-        diff = actual - 0
-        return Deviation(diff, expected)
-
-    # Empty (or NOVALUE) vs numeric.
-    if (not actual or actual is NOVALUE) and second_isnum:
-        if actual is NOVALUE:
-            actual = None
-
-        if expected == 0:
-            diff = actual
-        else:
-            diff = 0 - expected
-        return Deviation(diff, expected)
-
     # Object vs NOVALUE.
     if expected is NOVALUE:
         return Extra(actual)

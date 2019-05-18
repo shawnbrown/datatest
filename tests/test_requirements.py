@@ -1085,13 +1085,13 @@ class TestRequiredPredicate2(unittest.TestCase):
         data = [123, 'abc']
         requirement = RequiredPredicate(NOVALUE)
         diff, desc = requirement(data)
-        self.assertEqual(list(diff), [Deviation(+123, None), Extra('abc')])
+        self.assertEqual(list(diff), [Extra(+123), Extra('abc')])
         #self.assertEqual(desc, 'does not satisfy requirement')
 
         data = [10, NOVALUE]
         requirement = RequiredPredicate(10)
         diff, desc = requirement(data)
-        self.assertEqual(list(diff), [Deviation(-10, 10)])
+        self.assertEqual(list(diff), [Missing(10)])
         self.assertEqual(desc, 'does not satisfy 10')
 
         data = ['abc', NOVALUE]
@@ -1255,7 +1255,7 @@ class TestRequiredApprox(unittest.TestCase):
         data = [10.00000001, NOVALUE]
         requirement = RequiredApprox(10)
         diff, desc = requirement(data)
-        self.assertEqual(list(diff), [Deviation(-10, 10)])
+        self.assertEqual(list(diff), [Missing(10)])
         self.assertEqual(desc, 'not equal within 7 decimal places')
 
 
@@ -1331,12 +1331,12 @@ class TestRequiredFuzzy(unittest.TestCase):
         data = [123, 'abc']
         requirement = RequiredFuzzy(NOVALUE)
         diff, desc = requirement(data)
-        self.assertEqual(list(diff), [Deviation(+123, None), Extra('abc')])
+        self.assertEqual(list(diff), [Extra(123), Extra('abc')])
 
         data = [10, NOVALUE]
         requirement = RequiredFuzzy(10)
         diff, desc = requirement(data)
-        self.assertEqual(list(diff), [Deviation(-10, 10)])
+        self.assertEqual(list(diff), [Missing(10)])
         self.assertEqual(desc, 'does not satisfy 10, fuzzy matching at ratio 0.6 or greater')
 
         data = ['abc', NOVALUE]
@@ -1883,7 +1883,7 @@ class TestRequiredMapping(unittest.TestCase):
         })
         diff, desc = requirement({'a': 'j'})
         expected = [
-            ('b', Deviation(-9, 9)),
+            ('b', Missing(9)),
             ('c', Missing('x')),
             ('d', [Missing('y')]),
         ]
@@ -1900,8 +1900,8 @@ class TestRequiredMapping(unittest.TestCase):
             'e': set(['y']),
         })
         expected = [
-            ('b', Deviation(+9, None)),
-            ('c', [Deviation(+10, None), Deviation(+11, None)]),
+            ('b', Extra(9)),
+            ('c', [Extra(10), Extra(11)]),
             ('d', Extra('x')),
             ('e', [Extra('y')]),
         ]
