@@ -657,8 +657,8 @@ class TestAcceptedTolerance(unittest.TestCase):
 
     def test_get_deviation_expected_blanks(self):
         func = AcceptedTolerance._get_deviation_expected
-        self.assertEqual(func(Deviation('', 0)), (0, 0))
-        self.assertEqual(func(Deviation(0, '')), (0, 0))
+        self.assertEqual(func(Invalid('', 0)), (0, 0))
+        self.assertEqual(func(Invalid(0, '')), (0, 0))
 
     def test_get_deviation_expected_missing(self):
         func = AcceptedTolerance._get_deviation_expected
@@ -707,6 +707,8 @@ class TestAcceptedTolerance(unittest.TestCase):
         self.assertEqual(func(Invalid(5, 7)), (-2, 7))
         self.assertEqual(func(Invalid(7, 5)), (+2, 5))
         self.assertEqual(func(Invalid(0, '')), (0, 0))
+        self.assertEqual(func(Invalid(None, 0)), (0, 0))
+        self.assertEqual(func(Invalid(0, None)), (0, 0))
 
         with self.assertRaises(TypeError):
             func(Invalid((1,), (2,)))
@@ -780,10 +782,10 @@ class TestAcceptedTolerance(unittest.TestCase):
 
     def test_empty_string(self):
         with AcceptedTolerance(0):  # <- Pass without failure.
-            raise ValidationError(Deviation('', 0))
+            raise ValidationError(Invalid('', 0))
 
         with AcceptedTolerance(0):  # <- Pass without failure.
-            raise ValidationError(Deviation(0, ''))
+            raise ValidationError(Invalid(0, ''))
 
     def test_NaN_values(self):
         with self.assertRaises(ValidationError):  # <- NaN values should not be caught!
@@ -853,24 +855,24 @@ class TestAcceptedPercent(unittest.TestCase):
         # Test empty deviation cases--should pass without error.
         with AcceptedPercent(0):  # <- Accepts empty deviations only.
             raise ValidationError([
-                Deviation(None, 0),
-                Deviation('', 0),
+                Invalid(None, 0),
+                Invalid('', 0),
             ])
 
         # Test diffs that can not be accepted as percentages.
         with self.assertRaises(ValidationError) as cm:
             with AcceptedPercent(2.00):  # <- Accepts +/- 200%.
                 raise ValidationError([
-                    Deviation(None, 0),           # 0%
-                    Deviation(0, None),           # 0%
+                    Invalid(None, 0),             # 0%
+                    Invalid(0, None),             # 0%
                     Deviation(+2, 0),             # Can not be accepted by percent.
-                    Deviation(+2, None),          # Can not be accepted by percent.
+                    Invalid(+2, None),            # Can not be accepted by percent.
                     Deviation(float('nan'), 16),  # Not a number.
                 ])
         actual = cm.exception.differences
         expected = [
             Deviation(+2, 0),             # Can not be accepted by percent.
-            Deviation(+2, None),          # Can not be accepted by percent.
+            Invalid(+2, None),            # Can not be accepted by percent.
             Deviation(float('nan'), 16),  # Not a number.
         ]
         self.assertEqual(actual, expected)
@@ -926,7 +928,6 @@ class TestAcceptedPercent(unittest.TestCase):
                 raise ValidationError([
                     Invalid(50, 100),   # <- ACCEPTED: -50% deviation.
                     Invalid(150, 100),  # <- ACCEPTED: +50% deviation.
-                    Invalid(0, 0),      # <- ACCEPTED!
                     Invalid(0.5, 0),    # <- Rejected: Can not be accepted by percent.
                     Invalid(4, 2),      # <- Rejected: +100% is outside range.
                 ])
@@ -952,24 +953,24 @@ class TestAcceptedPercent(unittest.TestCase):
         # Test empty deviation cases--should pass without error.
         with AcceptedPercent(0):  # <- Accepts empty deviations only.
             raise ValidationError([
-                Deviation(None, 0),
-                Deviation('', 0),
+                Invalid(None, 0),
+                Invalid('', 0),
             ])
 
         # Test diffs that can not be accepted as percentages.
         with self.assertRaises(ValidationError) as cm:
             with AcceptedPercent(2.00):  # <- Accepts +/- 200%.
                 raise ValidationError([
-                    Deviation(None, 0),           # 0%
-                    Deviation(0, None),           # 0%
+                    Invalid(None, 0),             # 0%
+                    Invalid(0, None),             # 0%
                     Deviation(+2, 0),             # Can not be accepted by percent.
-                    Deviation(+2, None),          # Can not be accepted by percent.
+                    Invalid(+2, None),            # Can not be accepted by percent.
                     Deviation(float('nan'), 16),  # Not a number.
                 ])
         actual = cm.exception.differences
         expected = [
             Deviation(+2, 0),             # Can not be accepted by percent.
-            Deviation(+2, None),          # Can not be accepted by percent.
+            Invalid(2, None),             # Can not be accepted by percent.
             Deviation(float('nan'), 16),  # Not a number.
         ]
         self.assertEqual(actual, expected)

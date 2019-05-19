@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import datetime
 import re
 import textwrap
 from . import _unittest as unittest
@@ -139,25 +140,17 @@ class TestDeviation(unittest.TestCase):
         diff = Deviation(-1, 100)  # Simple negative.
         self.assertEqual(repr(diff), "Deviation(-1, 100)")
 
-        diff = Deviation(1, None)  # None reference.
-        self.assertEqual(repr(diff), "Deviation(+1, None)")
+        diff = Deviation(float('nan'), 100)  # None reference.
+        self.assertEqual(repr(diff), "Deviation(float('nan'), 100)")
 
     def test_zero_and_empty_value_handling(self):
         """Empty values receive special handling."""
         # Expected 0 (pass without error).
         Deviation(+5, 0)
         Deviation(-5, 0)
-        Deviation(None, 0)
-        Deviation('', 0)
         Deviation(float('nan'), 0)
         with self.assertRaises(ValueError):
             Deviation(0, 0)
-
-        # Expected empty value (pass without error).
-        Deviation(0, None)
-        Deviation(5, None)
-        Deviation(0, '')
-        Deviation(5, '')
 
         # Expected numeric value (pass without error).
         Deviation(+1, 5)
@@ -167,22 +160,31 @@ class TestDeviation(unittest.TestCase):
         # Expected non-zero, with empty or zero deviation.
         with self.assertRaises(ValueError):
             Deviation(0, 5)
-        with self.assertRaises(ValueError):
+
+        with self.assertRaises(TypeError):
             Deviation(None, 5)
-        with self.assertRaises(ValueError):
+
+        with self.assertRaises(TypeError):
             Deviation('', 5)
 
-        # Expected NaN.
-        with self.assertRaises(ValueError):  # When the expected value
-            Deviation(0, float('nan'))       # is not a number, it is
-        with self.assertRaises(ValueError):  # not possible to compute
-            Deviation(5, float('nan'))       # a numeric difference.
+        with self.assertRaises(TypeError):
+            Deviation(5, None)
+
+        with self.assertRaises(TypeError):
+            Deviation(5, '')
+
+        # NaN handling.
+        Deviation(float('nan'), 0)
+        Deviation(0, float('nan'))
 
     def test_repr_eval(self):
         diff = Deviation(+1, 100)
         self.assertEqual(diff, eval(repr(diff)))
 
         diff = Deviation(-1, 100)
+        self.assertEqual(diff, eval(repr(diff)))
+
+        diff = Deviation(float('nan'), 100)
         self.assertEqual(diff, eval(repr(diff)))
 
 

@@ -209,7 +209,7 @@ class Invalid(BaseDifference):
 
 
 class Deviation(BaseDifference):
-    """Created when a numeric value deviates from its expected value.
+    """Created when a quantative value deviates from its expected value.
 
     In the following example, the dictionary item ``'C': 33`` does
     not satisfy the required item ``'C': 30``::
@@ -232,28 +232,17 @@ class Deviation(BaseDifference):
     __slots__ = ('_deviation', '_expected')
 
     def __init__(self, deviation, expected):
-        isempty = lambda x: x is None or x == ''
-
-        if expected == 0:
-            args_ok = (
-                deviation != 0
-                and (isinstance(deviation, Number) or isempty(deviation))
-            )
-        elif isempty(expected):
-            args_ok = isinstance(deviation, Number)
-        elif isinstance(expected, Number):
-            args_ok = (
-                (not isnan(expected))
-                and isinstance(deviation, Number)
-                and deviation != 0
-            )
-        else:
-            args_ok = False
-
-        if not args_ok:
-            msg = ('invalid Deviation arguments, got deviation={0!r}, '
-                   'expected={1!r}').format(deviation, expected)
-            raise ValueError(msg)
+        try:
+            if deviation + expected == expected:
+                msg = 'deviation quantity must not be empty, got {0!r}'
+                exc = ValueError(msg.format(deviation))
+                raise exc
+        except TypeError:
+            msg = ('Deviation arguments must be quantitative, '
+                   'got deviation={0!r}, expected={1!r}')
+            exc = TypeError(msg.format(deviation, expected))
+            exc.__cause__ = None
+            raise exc
 
         self._deviation = deviation
         self._expected = expected
@@ -274,11 +263,23 @@ class Deviation(BaseDifference):
 
     def __repr__(self):
         cls_name = self.__class__.__name__
-        try:
-            devi_repr = '{0:+}'.format(self._deviation)  # Apply +/- sign
-        except (TypeError, ValueError):
-            devi_repr = repr(self._deviation)
-        return '{0}({1}, {2!r})'.format(cls_name, devi_repr, self._expected)
+
+        deviation = self._deviation
+        if isnan(deviation):
+            deviation_repr = "float('nan')"
+        else:
+            try:
+                deviation_repr = '{0:+}'.format(deviation)  # Apply +/- sign
+            except (TypeError, ValueError):
+                deviation_repr = repr(deviation)
+
+        expected = self._expected
+        if isnan(expected):
+            expected_repr = "float('nan')"
+        else:
+            expected_repr = repr(expected)
+
+        return '{0}({1}, {2})'.format(cls_name, deviation_repr, expected_repr)
 
 
 def _make_difference(actual, expected, show_expected=True):
