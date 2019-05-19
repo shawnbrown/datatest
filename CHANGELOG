@@ -5,15 +5,15 @@ Datatest Changelog
 COMING SOON (0.9.6)
 -------------------
 
-* Change acceptance API to make it both less verbose and more
+* Changed acceptance API to make it both less verbose and more
   expressive:
 
-    * Consolidate specific and type-based acceptances into
-      a single interface.
-    * Add a new accepted.tolerance() method that subsumes the
-      behavior of accepted.deviation() and also supports a wider
-      variety of quantites--like datetimes (not just Deviation
-      objects).
+  * Consolidated specific and type-based acceptances into a
+    single interface.
+  * Added a new accepted.tolerance() method that subsumes the
+    behavior of accepted.deviation() by supporting Missing and
+    Extra quantities in addition to Deviation objects.
+  * Deprecated old methods:
 
     =======================  ==================================
     Old Syntax               New Syntax
@@ -21,14 +21,18 @@ COMING SOON (0.9.6)
     accepted.specific(...)   accepted(...)
     accepted.missing()       accepted(Missing)
     accepted.extra()         accepted(Extra)
-    *No Equivalent*          accepted(CustomDifferenceClass)
+    *NO EQUIVALENT*          accepted(CustomDifferenceClass)
     accepted.deviation(...)  accepted.tolerance(...)
     accepted.limit(...)      accepted.count(...)
-    *No Equivalent*          accepted.count(..., scope='group')
+    *NO EQUIVALENT*          accepted.count(..., scope='group')
     =======================  ==================================
 
-  Other methods--accepted.args(), accepted.keys(), etc.--are
-  unchanged.
+    Other methods--accepted.args(), accepted.keys(), etc.--remain
+    unchanged.
+
+* Changed validation to generate Deviation objects for a broader
+  definition of quantitative values (like datetime objects)--not
+  just for subclasses of numbers.Number.
 * Removed acceptance classes from datatest namespace--these were
   inadvertently added in a previous version but were never part
   of the documented API. They can still be referenced via the
