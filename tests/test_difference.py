@@ -263,6 +263,20 @@ class TestMakeDifference(unittest.TestCase):
         diff = _make_difference(5, 6)
         self.assertEqual(diff, Deviation(-1, 6))
 
+    def test_datetime_vs_datetime(self):
+        diff = _make_difference(
+            datetime.datetime(1989, 2, 24, hour=10, minute=30),
+            datetime.datetime(1989, 2, 24, hour=11, minute=30),
+        )
+
+        self.assertEqual(
+            diff,
+            Deviation(
+                datetime.timedelta(hours=-1),
+                datetime.datetime(1989, 2, 24, hour=11, minute=30),
+            ),
+        )
+
     def test_numeric_vs_none(self):
         diff = _make_difference(5, None)
         self.assertEqual(diff, Invalid(5, None))
@@ -289,10 +303,10 @@ class TestMakeDifference(unittest.TestCase):
         self.assertEqual(diff, Invalid('a', 6))
 
         diff = _make_difference(float('nan'), 6)
-        self.assertEqual(diff, Invalid(float('nan'), 6))
+        self.assertEqual(diff, Deviation(float('nan'), 6))
 
         diff = _make_difference(5, float('nan'))
-        self.assertEqual(diff, Invalid(5, float('nan')))
+        self.assertEqual(diff, Deviation(float('nan'), float('nan')))
 
         fn = lambda x: True
         diff = _make_difference('a', fn)
@@ -339,12 +353,11 @@ class TestMakeDifference(unittest.TestCase):
         self.assertEqual(diff, Extra(6))
 
     def test_same(self):
-        """The _make_difference() function returns differences for
-        objects that are KNOWN TO BE DIFFERENT--it does not test
-        for differences itself.
-        """
-        diff = _make_difference('a', 'a')
-        self.assertEqual(diff, Invalid('a', 'a'))
+        with self.assertRaises(ValueError):
+            diff = _make_difference('a', 'a')
 
-        diff = _make_difference(None, None)
-        self.assertEqual(diff, Invalid(None, None))
+        with self.assertRaises(ValueError):
+            diff = _make_difference(None, None)
+
+        # NaN should work though.
+        _make_difference(float('nan'), float('nan'))

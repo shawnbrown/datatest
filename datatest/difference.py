@@ -291,25 +291,16 @@ def _make_difference(actual, expected, show_expected=True):
     (this is useful for reducing duplication when validating data
     against a single function or object).
     """
-    # Prepare for numeric comparisons.
-    _isnum = lambda x: isinstance(x, Number) and not isnan(x)
-    first_isnum = _isnum(actual)
-    second_isnum = _isnum(expected)
-
-    # Numeric vs numeric.
-    if first_isnum and second_isnum:
-        diff = actual - expected
-        return Deviation(diff, expected)
-
-    # Object vs NOVALUE.
-    if expected is NOVALUE:
-        return Extra(actual)
-
-    # NOVALUE vs object.
     if actual is NOVALUE:
         return Missing(expected)
 
-    # All other pairs of objects.
-    if show_expected:
-        return Invalid(actual, expected)
-    return Invalid(actual)
+    if expected is NOVALUE:
+        return Extra(actual)
+
+    try:
+        deviation = actual - expected
+        return Deviation(deviation, expected)
+    except (TypeError, ValueError):
+        if show_expected:
+            return Invalid(actual, expected)
+        return Invalid(actual)
