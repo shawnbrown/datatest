@@ -120,6 +120,10 @@ class TestInvalid(unittest.TestCase):
         diff = Invalid(MyClass, 'bar')
         self.assertEqual(repr(diff), "Invalid(MyClass, expected='bar')")
 
+    def test_same_values(self):
+        with self.assertRaises(ValueError):
+            Invalid('foo', 'foo')
+
 
 class TestDeviation(unittest.TestCase):
     def test_instantiation(self):
