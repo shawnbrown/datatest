@@ -5,8 +5,8 @@ Datatest Changelog
 COMING SOON (0.9.6)
 -------------------
 
-* Changed acceptance API to make it both less verbose and more
-  expressive:
+* Changed acceptance API to make it both less verbose and
+  more expressive:
 
   * Consolidated specific and type-based acceptances into a
     single interface.

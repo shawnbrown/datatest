@@ -17,10 +17,10 @@ automate a diciplined approach for an often messy process.
 Datatest can help you:
 
 * Save time when cleaning and wrangling data.
+* Maintain a record of checks and decisions regarding important data sets.
 * Distinguish between ideal and acceptible criteria.
 * Measure progress of data preparation tasks.
 * On-board new team members with an explicit and structured process.
-* Maintain a record of checks and decisions made regarding a data set.
 
 Datatest supports both pytest_ and unittest_ style testing.
 It implements a system of validation methods, difference
