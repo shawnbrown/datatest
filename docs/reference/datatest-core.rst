@@ -66,9 +66,6 @@ Differences
     .. autoattribute:: args
 
 
-Concrete Differences
-====================
-
 .. autoclass:: Missing
 
 
