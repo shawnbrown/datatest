@@ -613,9 +613,9 @@ class AcceptedFuzzy(BaseAcceptance):
     value match with a similarity greater than or equal to *cutoff*
     (default 0.6).
 
-    Similarity measures are determined using the ratio() method
-    of the difflib.SequenceMatcher class. The values range from
-    1.0 (exactly the same) to 0.0 (completely different).
+    Similarity measures are determined using the ratio() method of
+    the :py:class:`difflib.SequenceMatcher` class. The values range
+    from 0.0 (completely different) to 1.0 (exactly the same):
     """
     def __init__(self, cutoff=0.6, msg=None):
         self.cutoff = cutoff
@@ -835,8 +835,17 @@ class AcceptedFactoryType(object):
             requirement = 'x'
 
             with accepted.keys('B'):
-                validate(data, requirement)  # Raises dictionary
-                                             # {'B': Invalid('y')}
+                validate(data, requirement)
+
+        The example above accepts differences associated with the key
+        ``'B'``. Without this acceptance, the validation would have
+        failed with the following error:
+
+        .. code-block:: none
+
+            ValidationError: does not satisfy 'x' (1 difference): {
+                'B': Invalid('y'),
+            }
         """
         return AcceptedKeys(predicate, msg)
 
@@ -855,8 +864,17 @@ class AcceptedFactoryType(object):
             requirement = 'x'
 
             with accepted.args('y'):
-                validate(data, requirement)  # Raises dictionary
-                                             # {'B': Invalid('y')}
+                validate(data, requirement)
+
+        The example above accepts differences that contain the value
+        ``'y'``. Without this acceptance, the validation would have
+        failed with the following error:
+
+        .. code-block:: none
+
+            ValidationError: does not satisfy 'x' (1 difference): {
+                'B': Invalid('y'),
+            }
         """
         return AcceptedArgs(predicate, msg)
 
@@ -875,8 +893,8 @@ class AcceptedFactoryType(object):
         """accepted.percent(tolerance, /, msg=None)
         accepted.percent(lower, upper, msg=None)
 
-        Context manager that accepts Deviations within a given
-        percent tolerance without triggering a test failure.
+        Context manager that accepts percentages of error within a
+        given tolerance without triggering a test failure:
 
         See documentation for full details.
         """
@@ -888,8 +906,8 @@ class AcceptedFactoryType(object):
         0.6).
 
         Similarity measures are determined using the ratio() method of
-        the difflib.SequenceMatcher class. The values range from 1.0
-        (exactly the same) to 0.0 (completely different):
+        the :py:class:`difflib.SequenceMatcher` class. The values range
+        from 0.0 (completely different) to 1.0 (exactly the same):
 
         .. code-block:: python
             :emphasize-lines: 7
@@ -900,14 +918,29 @@ class AcceptedFactoryType(object):
 
             requirement = {'A': 'aaa', 'B': 'bbb'}
 
-            with accepted.fuzzy():
+            with accepted.fuzzy(cutoff=0.6):
                 validate(data, requirement)
+
+        The example above accepts string differences that match with
+        a ratio of ``0.6`` or greater. Without this acceptance, the
+        validation would have failed with the following error:
+
+        .. code-block:: none
+
+            ValidationError: does not satisfy mapping requirements (2 differences): {
+                'A': Invalid('aax', expected='aaa'),
+                'B': Invalid('bbx', expected='bbb'),
+            }
         """
         return AcceptedFuzzy(cutoff=cutoff, msg=msg)
 
     def count(self, number, msg=None, scope=None):
         """Accepts up to a given *number* of differences without
-        triggering a test failure:
+        triggering a test failure.
+
+        If the count of differences exceeds the given *number*, the
+        test case will fail with a :class:`ValidationError` containing
+        the remaining differences.
 
         .. code-block:: python
             :emphasize-lines: 7
@@ -919,12 +952,18 @@ class AcceptedFactoryType(object):
             requirement = 'A'
 
             with accepted.count(2):
-                validate(data, requirement)  # Raises [Invalid('B'),
-                                             #         Invalid('C')]
+                validate(data, requirement)
 
-        If the count of differences exceeds the given *number*, the test
-        case will fail with a :class:`ValidationError` containing the
-        remaining differences.
+        The example above accepts up to ``2`` differences. Without
+        this acceptance, the validation would have failed with the
+        following error:
+
+        .. code-block:: none
+
+            ValidationError: does not satisfy 'A' (2 differences): [
+                Invalid('B'),
+                Invalid('C'),
+            ]
         """
         return AcceptedCount(number, msg=msg, scope=scope)
 

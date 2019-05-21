@@ -107,9 +107,8 @@ collection of differences.
     .. method:: tolerance(tolerance, /, msg=None)
                 tolerance(lower, upper, msg=None)
 
-        Accepts numeric :class:`Deviations <datatest.Deviation>`
-        within a given *tolerance* without triggering a test
-        failure:
+        Accepts quantitative differences within a given *tolerance*
+        without triggering a test failure:
 
         .. code-block:: python
             :emphasize-lines: 7
@@ -120,10 +119,19 @@ collection of differences.
 
             requirement = {'A': 50, 'B': 200}
 
-            with accepted.tolerance(5):  # <- tolerance of ±5
-                validate(data, requirement)  # raises dictionary
-                                             # {'A': Deviation(-5, 50),
-                                             #  'B': Deviation(+5, 200)}
+            with accepted.tolerance(5):
+                validate(data, requirement)
+
+        The example above accepts differences within a tolerance
+        of ±5. Without this acceptance, the validation would have
+        failed with the following error:
+
+        .. code-block:: none
+
+            ValidationError: does not satisfy mapping requirements (2 differences): {
+                'A': Deviation(-5, 50),
+                'B': Deviation(+5, 200),
+            }
 
         Specifying different *lower* and *upper* bounds:
 
@@ -136,14 +144,10 @@ collection of differences.
         Deviations within the given range are suppressed while those
         outside the range will trigger a test failure.
 
-        Empty values (None, empty string, etc.) are treated as zeros
-        when performing comparisons.
-
     .. method:: percent(tolerance, /, msg=None)
                 percent(lower, upper, msg=None)
 
-        Accepts :class:`Deviations <datatest.Deviation>` with
-        percentages of error within a given *tolerance* without
+        Accepts percentages of error within a given *tolerance* without
         triggering a test failure:
 
         .. code-block:: python
@@ -151,14 +155,23 @@ collection of differences.
 
             from datatest import validate, accepted
 
-            data = {'A': 47, 'B': 212}
+            data = {'A': 47, 'B': 318}
 
-            requirement = {'A': 50, 'B': 200}
+            requirement = {'A': 50, 'B': 300}
 
-            with accepted.percent(0.06):  # <- tolerance of ±6%
-                validate(data, requirement)  # raises dictionary
-                                             # {'A': Deviation(-3, 50),
-                                             #  'B': Deviation(+12, 200)}
+            with accepted.percent(0.06):
+                validate(data, requirement)
+
+        The example above accepts differences within a tolerance
+        of ±6%. Without this acceptance, the validation would have
+        failed with the following error:
+
+        .. code-block:: none
+
+            ValidationError: does not satisfy mapping requirements (2 differences): {
+                'A': Deviation(-3, 50),
+                'B': Deviation(+18, 300),
+            }
 
         Specifying different *lower* and *upper* bounds:
 
@@ -170,9 +183,6 @@ collection of differences.
 
         Deviations within the given range are suppressed while those
         outside the range will trigger a test failure.
-
-        Empty values (None, empty string, etc.) are treated as zeros
-        when performing comparisons.
 
     .. automethod:: fuzzy
 
