@@ -304,16 +304,17 @@ class AcceptedDifferences(BaseAcceptance):
     compare as equal to one of the accepted differences.
 
     If given, the *scope* can be ``'element'``, ``'group'``, or
-    ``'whole'``. An element-wise scope will accept any difference that
-    has a match in *obj*. A group-wise scope will accept one difference
-    per match in *obj* per group. A whole-error scope will accept one
-    difference per match in *obj* over the ValidationError as a whole.
+    ``'whole'``. An element-wise scope will accept all differences
+    that have a match in *obj*. A group-wise scope will accept one
+    difference per match in *obj* per group. A whole-error scope will
+    accept one difference per match in *obj* over the ValidationError
+    as a whole.
 
-    If unspecified, *scope* will default to ``'element'`` if *obj* is a
-    single element and ``'group'`` if *obj* is a container of elements.
-    If *obj* is a mapping, the scope is applied for each key/value
-    pair (and whole-error scopes are, instead, treated as group-wise
-    scopes).
+    If unspecified, *scope* will default to ``'element'`` if *obj* is
+    a single element and ``'group'`` if *obj* is a container of
+    elements. If *obj* is a mapping, the scope is limited to the group
+    of differences associated with a given key (which effectively
+    treats whole-error scopes the same as group-wise scopes).
     """
     def __init__(self, obj, msg=None, scope=None):
         if scope not in (None, 'element', 'group', 'whole'):
@@ -698,6 +699,124 @@ class AcceptedFactoryType(object):
     """Accepts differences that match *obj* without triggering a test
     failure. The given *obj* can be a difference class, a difference
     instance, or a container of difference instances.
+
+    When *obj* is a class, differences are accepted if they are
+    instances of the class. When *obj* is a difference or collection
+    of differences, then an error's differences are accepted if they
+    compare as equal to one of the accepted differences.
+
+    If given, the *scope* can be ``'element'``, ``'group'``, or
+    ``'whole'``. An element-wise scope will accept all differences
+    that have a match in *obj*. A group-wise scope will accept one
+    difference per match in *obj* per group. A whole-error scope will
+    accept one difference per match in *obj* over the ValidationError
+    as a whole.
+
+    If unspecified, *scope* will default to ``'element'`` if *obj* is
+    a single element and ``'group'`` if *obj* is a container of
+    elements. If *obj* is a mapping, the scope is limited to the group
+    of differences associated with a given key (which effectively
+    treats whole-error scopes the same as group-wise scopes).
+
+    **Type Acceptance:**
+
+        When *obj* is a class, differences are accepted if they are
+        instances of the class:
+
+        .. code-block:: python
+            :emphasize-lines: 7
+
+            from datatest import validate, accepted, Missing
+
+            data = ['B', 'C']
+
+            requirement = {'A', 'B', 'C'}
+
+            with accepted(Missing):
+                validate(data, requirement)
+
+        The example above accepts all instances of the :class:`Missing`
+        class. Without this acceptance, the validation would have
+        failed with the following error:
+
+        .. code-block:: none
+
+            ValidationError: does not satisfy set membership (1 difference): [
+                Missing('A'),
+            ]
+
+    **Instance Acceptance:**
+
+        When *obj* is an instance, differences are accepted if they
+        match the instance exactly:
+
+        .. code-block:: python
+            :emphasize-lines: 7
+
+            from datatest import validate, accepted, Extra
+
+            data = ['A', 'B', 'C', 'D']
+
+            requirement = {'A', 'B', 'C'}
+
+            with accepted(Extra('D')):
+                validate(data, requirement)
+
+        The example above accepts all differences that match
+        ``Extra('D')`` exactly. Without this acceptance, the
+        validation would have failed with the following error:
+
+        .. code-block:: none
+
+            ValidationError: does not satisfy set membership (1 difference): [
+                Extra('D'),
+            ]
+
+    **Container Acceptance:**
+
+        When *obj* is a container of differences, then an error's
+        differences are accepted if they match a difference in the
+        given collection:
+
+        .. code-block:: python
+            :emphasize-lines: 7-10
+
+            from datatest import validate, accepted, Missing, Extra
+
+            data = ['x', 'y', 'q']
+
+            requirement = {'x', 'y', 'z'}
+
+            known_issues = accepted([
+                Extra('q'),
+                Missing('z'),
+            ])
+
+            with known_issues:
+                validate(data, requirement)
+
+        A dictionary of acceptances can accept groups of differences
+        by matching key:
+
+        .. code-block:: python
+            :emphasize-lines: 10-13
+
+            from datatest import validate, accepted, Missing, Extra
+
+            data = {
+                'A': ['x', 'y', 'q'],
+                'B': ['x', 'y'],
+            }
+
+            requirement = {'x', 'y', 'z'}
+
+            known_issues = accepted({
+                'A': [Extra('q'), Missing('z')],
+                'B': [Missing('z')],
+            })
+
+            with known_issues:
+                validate(data, requirement)
     """
     def __call__(self, obj, msg=None, scope=None):
         return AcceptedDifferences(obj, msg=msg, scope=scope)
