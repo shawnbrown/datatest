@@ -84,8 +84,9 @@ the following data files and one of the tests scripts:
 * **Detailed File:** :download:`country_of_birth.csv </_static/tutorial/country_of_birth.csv>`
 * **Summary File:** :download:`estimated_totals.csv </_static/tutorial/estimated_totals.csv>`
 * **Test Script (download one):**
-    * :download:`test_country_of_birth.py </_static/tutorial/test_country_of_birth.py>` (for Pytest)
-    * :download:`test_country_of_birth_unit.py </_static/tutorial/test_country_of_birth_unit.py>` (for Unittest)
+
+  * :download:`test_country_of_birth.py </_static/tutorial/test_country_of_birth.py>` (for Pytest)
+  * :download:`test_country_of_birth_unit.py </_static/tutorial/test_country_of_birth_unit.py>` (for Unittest)
 
 
 To run the tests, use the following command:
@@ -776,5 +777,6 @@ your work against the following files:
 
 * **Detailed File (cleaned):** :download:`modified_country_of_birth.csv </_static/tutorial/modified_country_of_birth.csv>`
 * **Test Script (with acceptances):**
-    * :download:`modified_test_country_of_birth.py </_static/tutorial/modified_test_country_of_birth.py>` (for Pytest)
-    * :download:`modified_test_country_of_birth_unit.py </_static/tutorial/modified_test_country_of_birth_unit.py>` (for Unittest)
+
+  * :download:`modified_test_country_of_birth.py </_static/tutorial/modified_test_country_of_birth.py>` (for Pytest)
+  * :download:`modified_test_country_of_birth_unit.py </_static/tutorial/modified_test_country_of_birth_unit.py>` (for Unittest)s
