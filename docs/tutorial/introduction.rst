@@ -105,31 +105,32 @@ is valid when it matches the given pattern:
             :lineno-match:
 
 
-For a complete list of available types and behaviors, see :ref:`predicate-docs`.
-
+More Information
+----------------
 
 .. tabs::
 
     .. group-tab:: Pytest
 
-        Download a collection of examples:
+        * For a complete list of validation behaviors see :func:`validate`.
+        * For a complete list of predicate objects, see :ref:`predicate-docs`.
+        * Download a collection of examples:
+          :download:`test_intro1.py </_static/tutorial/test_intro1.py>`
+        * Run the examples with the following command:
 
-            :download:`test_intro1.py </_static/tutorial/test_intro1.py>`
+            .. code-block:: none
 
-        Run them with the following command:
-
-        .. code-block:: none
-
-            pytest test_intro1.py
+                pytest test_intro1.py
 
 
     .. group-tab:: Unittest
 
-        Download a collection of examples:
-
-            :download:`test_intro1_unit.py </_static/tutorial/test_intro1_unit.py>`
-
-        Run them with the following command:
+        * For a complete list of validation behaviors see :meth:`self.assertValid()
+          <DataTestCase.assertValid>`.
+        * For a complete list of predicate objects, see :ref:`predicate-docs`.
+        * Download a collection of examples:
+          :download:`test_intro1_unit.py </_static/tutorial/test_intro1_unit.py>`
+        * Run the examples with the following command:
 
             .. code-block:: none
 
