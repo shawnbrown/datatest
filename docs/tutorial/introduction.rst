@@ -430,17 +430,18 @@ an acceptance so the test will pass:
 
 
 Datatest provides several different acceptances so users can
-precisely specify the criteria by which differences should be
-accepted. In the following example, numeric differences are
-accepted by their magnitude:
+precisely define the criteria by which differences should be
+accepted. In the following example, quantitative differences
+are accepted by their degree of error:
 
 .. tabs::
 
     .. group-tab:: Pytest
 
         Calling :meth:`accepted.tolerance(5) <accepted.tolerance>`
-        returns a context manager that accepts Deviations up to
-        plus-or-minus five without triggering a test failure:
+        returns a context manager that accepts differences within
+        a tolerance of plus-or-minus five without triggering a test
+        failure:
 
         .. code-block:: python
             :emphasize-lines: 15
@@ -466,8 +467,9 @@ accepted by their magnitude:
     .. group-tab:: Unittest
 
         Calling :meth:`self.acceptedTolerance(5) <DataTestCase.acceptedTolerance>`
-        returns a context manager that accepts Deviations up to
-        plus-or-minus five without triggering a test failure:
+        returns a context manager that accepts differences within
+        a tolerance of plus-or-minus five without triggering a test
+        failure:
 
         .. code-block:: python
             :emphasize-lines: 15
