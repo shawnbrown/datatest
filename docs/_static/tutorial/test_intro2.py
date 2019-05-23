@@ -7,7 +7,7 @@ from datatest import accepted
 
 def test_using_set():
     """Check for set membership."""
-    data = ['A', 'B', 'C']
+    data = ['A', 'B', 'C', 'D']
 
     requirement = {'A', 'B'}
 
@@ -51,7 +51,7 @@ def test_using_tuple():
     """Check that tuples of values satisfy corresponding tuple of
     requirements.
     """
-    data = [('A', 0.0), ('A', 1.0), ('A', 2)]
+    data = [('A', 1.0), ('A', 2), ('B', 3.0)]
 
     requirement = ('A', float)
 

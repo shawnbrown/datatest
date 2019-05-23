@@ -145,10 +145,10 @@ raised. A ValidationError contains a collection of
 difference objects---one difference for each element
 in *data* that fails to satisfy the *requirement*.
 
-In the following test, we assert that values in the list
-``['A', 'B', 'C']`` are members of the set ``{'A', 'B'}``.
-This test fails because the value ``'C'`` is not a member
-of the set:
+In the following test, we assert that values in the
+list ``['A', 'B', 'C', 'D']`` are members of the set
+``{'A', 'B'}``. This test fails because the values
+``'C'`` and ``'D'`` are not members of the set:
 
 .. tabs::
 
@@ -161,19 +161,20 @@ of the set:
         The test fails with the following message:
 
         .. code-block:: none
-            :emphasize-lines: 10-12
+            :emphasize-lines: 10-13
 
             _____________________________ test_set_membership ______________________________
 
                 def test_set_membership():
                     """Check for set membership."""
-                    data = ['A', 'B', 'C']
+                    data = ['A', 'B', 'C', 'D']
 
                     requirement = {'A', 'B'}
 
             >       validate(data, required_elements)
-            E       ValidationError: does not satisfy set membership (1 difference): [
+            E       ValidationError: does not satisfy set membership (2 differences): [
                         Extra('C'),
+                        Extra('D'),
                     ]
 
             test_example.py:14: ValidationError
@@ -188,7 +189,7 @@ of the set:
         The test fails with the following message:
 
         .. code-block:: none
-            :emphasize-lines: 7-9
+            :emphasize-lines: 7-10
 
             ======================================================================
             FAIL: test_set_membership (test_unittesting.MyTest)
@@ -196,8 +197,9 @@ of the set:
             Traceback (most recent call last):
               File "/my/projects/folder/test_example.py", line 14, in test_set_membership
                 self.assertValid(data, requirement)
-            datatest.ValidationError: does not satisfy set membership (1 difference): [
+            datatest.ValidationError: does not satisfy set membership (2 differences): [
                 Extra('C'),
+                Extra('D'),
             ]
 
 
@@ -221,7 +223,7 @@ raises an :class:`Invalid` difference:
             :lineno-match:
 
         .. code-block:: none
-            :emphasize-lines: 12-14
+            :emphasize-lines: 12-15
 
             _______________________________ test_using_tuple _______________________________
 
@@ -229,13 +231,14 @@ raises an :class:`Invalid` difference:
                     """Check that tuples of values satisfy corresponding tuple of
                     requirements.
                     """
-                    data = [('A', 0.0), ('A', 1.0), ('A', 2)]
+                    data = [('A', 1.0), ('A', 2), ('B', 3.0)]
 
                     requirement = ('A', float)
 
             >       validate(data, requirement)
-            E       ValidationError: does not satisfy requirement (1 difference): [
+            E       ValidationError: does not satisfy requirement (2 differences): [
                         Invalid(('A', 2)),
+                        Invalid(('B', 3.0)),
                     ]
 
             test_intro2.py:58: ValidationError
@@ -248,7 +251,7 @@ raises an :class:`Invalid` difference:
             :lineno-match:
 
         .. code-block:: none
-            :emphasize-lines: 8-10
+            :emphasize-lines: 8-11
 
             ======================================================================
             FAIL: test_using_tuple (test_intro2_unit.ExampleTests)
@@ -257,8 +260,9 @@ raises an :class:`Invalid` difference:
             Traceback (most recent call last):
               File "/my/projects/folder/test_intro2_unit.py", line 53, in test_using_tuple
                 self.assertValid(data, requirement)
-            datatest.ValidationError: does not satisfy requirement (1 difference): [
+            datatest.ValidationError: does not satisfy requirement (2 differences): [
                 Invalid(('A', 2)),
+                Invalid(('B', 3.0)),
             ]
 
 
@@ -370,10 +374,10 @@ so is appropriate.
 Acceptances are context managers that operate on a ValidationError's
 collection of differences.
 
-Normally the following test would fail because the value ``'C'``
-is not a member of the set (as shown previously). But if we decide
-that :class:`Extra` differences are acceptible, we can add an
-acceptance so the test will pass:
+Normally the following test would fail because the values ``'C'``
+and ``'D'`` are not members of the set (as shown previously). But if
+we decide that :class:`Extra` differences are acceptible, we can add
+an acceptance so the test will pass:
 
 .. tabs::
 
@@ -393,7 +397,7 @@ acceptance so the test will pass:
 
             def test_using_set():
                 """Check for set membership."""
-                data = ['A', 'B', 'C']
+                data = ['A', 'B', 'C', 'D']
 
                 requirement = {'A', 'B'}
 
@@ -416,7 +420,7 @@ acceptance so the test will pass:
             class ExampleTests(datatest.DataTestCase):
                 def test_using_set(self):
                     """Check for set membership."""
-                    data = ['A', 'B', 'C']
+                    data = ['A', 'B', 'C', 'D']
 
                     requirement = {'A', 'B'}
 
