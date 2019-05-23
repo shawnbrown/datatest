@@ -123,7 +123,6 @@ class Extra(BaseDifference):
     In the following example, the value ``'C'`` is found in the data
     under test but it's not part of the required values::
 
-
         data = ['A', 'B', 'C']
 
         requirement = {'A', 'B'}
