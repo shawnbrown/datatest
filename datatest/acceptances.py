@@ -296,12 +296,12 @@ class UnionedAcceptance(CombinedAcceptance):
 class AcceptedDifferences(BaseAcceptance):
     """Accepts differences that match *obj* without triggering a test
     failure. The given *obj* can be a difference class, a difference
-    instance, or a container of difference instances.
+    instance, or a collection of instances.
 
-    When *obj* is a class, differences are accepted if they are
-    instances of the class. When *obj* is a difference or collection
-    of differences, then an error's differences are accepted if they
-    compare as equal to one of the accepted differences.
+    When *obj* is a difference class, differences are accepted if they
+    are instances of the class. When *obj* is a difference instance or
+    collection of instances, then differences are accepted if they
+    compare as equal to one of the accepted instances.
 
     If given, the *scope* can be ``'element'``, ``'group'``, or
     ``'whole'``. An element-wise scope will accept all differences
@@ -311,7 +311,7 @@ class AcceptedDifferences(BaseAcceptance):
     as a whole.
 
     If unspecified, *scope* will default to ``'element'`` if *obj* is
-    a single element and ``'group'`` if *obj* is a container of
+    a single element and ``'group'`` if *obj* is a collection of
     elements. If *obj* is a mapping, the scope is limited to the group
     of differences associated with a given key (which effectively
     treats whole-error scopes the same as group-wise scopes).
@@ -441,7 +441,7 @@ class AcceptedKeys(BaseAcceptance):
 
 
 class AcceptedArgs(BaseAcceptance):
-    """Accepted differences whose 'args' satisfy the given *predicate*
+    """Accepts differences whose 'args' satisfy the given *predicate*
     (see :ref:`predicate-docs` for details).
     """
     def __init__(self, predicate, msg=None):
@@ -696,14 +696,15 @@ class AcceptedCount(BaseAcceptance):
 ##########################################
 
 class AcceptedFactoryType(object):
-    """Accepts differences that match *obj* without triggering a test
-    failure. The given *obj* can be a difference class, a difference
-    instance, or a container of difference instances.
+    """Returns a context manager that accepts differences that match
+    *obj* without triggering a test failure. The given *obj* can be a
+    difference class, a difference instance, or a collection of
+    instances.
 
-    When *obj* is a class, differences are accepted if they are
-    instances of the class. When *obj* is a difference or collection
-    of differences, then an error's differences are accepted if they
-    compare as equal to one of the accepted differences.
+    When *obj* is a difference class, differences are accepted if they
+    are instances of the class. When *obj* is a difference instance or
+    collection of instances, then differences are accepted if they
+    compare as equal to one of the accepted instances.
 
     If given, the *scope* can be ``'element'``, ``'group'``, or
     ``'whole'``. An element-wise scope will accept all differences
@@ -713,42 +714,48 @@ class AcceptedFactoryType(object):
     as a whole.
 
     If unspecified, *scope* will default to ``'element'`` if *obj* is
-    a single element and ``'group'`` if *obj* is a container of
+    a single element and ``'group'`` if *obj* is a collection of
     elements. If *obj* is a mapping, the scope is limited to the group
     of differences associated with a given key (which effectively
     treats whole-error scopes the same as group-wise scopes).
 
-    **Type Acceptance:**
+    **Accepted Type:**
 
-        When *obj* is a class, differences are accepted if they are
-        instances of the class:
+        When *obj* is a class (:class:`Missing`, :class:`Extra`,
+        :class:`Deviation`, :class:`Invalid`, etc.), differences
+        are accepted if they are instances of the class.
+
+        The following example accepts all instances of the ``Missing``
+        class:
 
         .. code-block:: python
             :emphasize-lines: 7
 
             from datatest import validate, accepted, Missing
 
-            data = ['B', 'C']
+            data = ['A', 'B']
 
             requirement = {'A', 'B', 'C'}
 
             with accepted(Missing):
                 validate(data, requirement)
 
-        The example above accepts all instances of the :class:`Missing`
-        class. Without this acceptance, the validation would have
-        failed with the following error:
+        Without this acceptance, the validation would have failed with
+        the following error:
 
         .. code-block:: none
 
             ValidationError: does not satisfy set membership (1 difference): [
-                Missing('A'),
+                Missing('C'),
             ]
 
-    **Instance Acceptance:**
+    **Accepted Difference:**
 
-        When *obj* is an instance, differences are accepted if they
-        match the instance exactly:
+        When *obj* is an instance, differences are accepted if
+        they match the instance exactly.
+
+        The following example accepts all differences that match
+        ``Extra('D')``:
 
         .. code-block:: python
             :emphasize-lines: 7
@@ -762,9 +769,8 @@ class AcceptedFactoryType(object):
             with accepted(Extra('D')):
                 validate(data, requirement)
 
-        The example above accepts all differences that match
-        ``Extra('D')`` exactly. Without this acceptance, the
-        validation would have failed with the following error:
+        Without this acceptance, the validation would have failed
+        with the following error:
 
         .. code-block:: none
 
@@ -772,11 +778,11 @@ class AcceptedFactoryType(object):
                 Extra('D'),
             ]
 
-    **Container Acceptance:**
+    **Accepted Collection:**
 
-        When *obj* is a container of differences, then an error's
-        differences are accepted if they match a difference in the
-        given collection:
+        When *obj* is a collection of difference instances, then an
+        error's differences are accepted if they match an instance in
+        the given collection:
 
         .. code-block:: python
             :emphasize-lines: 7-10
@@ -822,8 +828,12 @@ class AcceptedFactoryType(object):
         return AcceptedDifferences(obj, msg=msg, scope=scope)
 
     def keys(self, predicate, msg=None):
-        """Accepts differences whose associated keys satisfy the given
-        *predicate* (see :ref:`predicate-docs` for details):
+        """Returns a context manager that accepts differences whose
+        associated keys satisfy the given *predicate* (see
+        :ref:`predicate-docs` for details).
+
+        The following example accepts differences associated with the
+        key ``'B'``:
 
         .. code-block:: python
             :emphasize-lines: 7
@@ -837,9 +847,8 @@ class AcceptedFactoryType(object):
             with accepted.keys('B'):
                 validate(data, requirement)
 
-        The example above accepts differences associated with the key
-        ``'B'``. Without this acceptance, the validation would have
-        failed with the following error:
+        Without this acceptance, the validation would have failed with
+        the following error:
 
         .. code-block:: none
 
@@ -850,9 +859,12 @@ class AcceptedFactoryType(object):
         return AcceptedKeys(predicate, msg)
 
     def args(self, predicate, msg=None):
-        """Accepts differences whose :attr:`args <BaseDifference.args>`
-        satisfy the given *predicate* (see :ref:`predicate-docs` for
-        details):
+        """Returns a context manager that accepts differences whose
+        :attr:`args <BaseDifference.args>` satisfy the given
+        *predicate* (see :ref:`predicate-docs` for details).
+
+        The example below accepts differences that contain the value
+        ``'y'``:
 
         .. code-block:: python
             :emphasize-lines: 7
@@ -866,9 +878,8 @@ class AcceptedFactoryType(object):
             with accepted.args('y'):
                 validate(data, requirement)
 
-        The example above accepts differences that contain the value
-        ``'y'``. Without this acceptance, the validation would have
-        failed with the following error:
+        Without this acceptance, the validation would have failed with
+        the following error:
 
         .. code-block:: none
 
@@ -882,8 +893,8 @@ class AcceptedFactoryType(object):
         """accepted.tolerance(tolerance, /, msg=None)
         accepted.tolerance(lower, upper, msg=None)
 
-        Context manager that accepts quantative differences within a
-        given tolerance without triggering a test failure.
+        Returns a context manager that accepts quantative differences
+        within a given tolerance without triggering a test failure.
 
         See documentation for full details.
         """
@@ -893,21 +904,23 @@ class AcceptedFactoryType(object):
         """accepted.percent(tolerance, /, msg=None)
         accepted.percent(lower, upper, msg=None)
 
-        Context manager that accepts percentages of error within a
-        given tolerance without triggering a test failure:
+        Returns a context manager that accepts percentages of error
+        within a given tolerance without triggering a test failure:
 
         See documentation for full details.
         """
         return AcceptedPercent(lower, upper, msg)
 
     def fuzzy(self, cutoff=0.6, msg=None):
-        """Accepted invalid strings that match their expected value
-        with a similarity greater than or equal to *cutoff* (default
-        0.6).
+        """Returns a context manager that accepts invalid strings
+        that match their expected value with a similarity greater
+        than or equal to *cutoff* (default 0.6). Similarity measures
+        are determined using the ratio() method of the
+        :py:class:`difflib.SequenceMatcher` class. The values range
+        from 0.0 (completely different) to 1.0 (exactly the same).
 
-        Similarity measures are determined using the ratio() method of
-        the :py:class:`difflib.SequenceMatcher` class. The values range
-        from 0.0 (completely different) to 1.0 (exactly the same):
+        The following example accepts string differences that match
+        with a ratio of ``0.6`` or greater:
 
         .. code-block:: python
             :emphasize-lines: 7
@@ -921,9 +934,8 @@ class AcceptedFactoryType(object):
             with accepted.fuzzy(cutoff=0.6):
                 validate(data, requirement)
 
-        The example above accepts string differences that match with
-        a ratio of ``0.6`` or greater. Without this acceptance, the
-        validation would have failed with the following error:
+        Without this acceptance, the validation would have failed with
+        the following error:
 
         .. code-block:: none
 
@@ -935,12 +947,13 @@ class AcceptedFactoryType(object):
         return AcceptedFuzzy(cutoff=cutoff, msg=msg)
 
     def count(self, number, msg=None, scope=None):
-        """Accepts up to a given *number* of differences without
-        triggering a test failure.
+        """Returns a context manager that accepts up to a given
+        *number* of differences without triggering a test failure. If
+        the count of differences exceeds the given *number*, the test
+        case will fail with a :class:`ValidationError` containing the
+        remaining differences.
 
-        If the count of differences exceeds the given *number*, the
-        test case will fail with a :class:`ValidationError` containing
-        the remaining differences.
+        The following example accepts up to ``2`` differences:
 
         .. code-block:: python
             :emphasize-lines: 7
@@ -954,9 +967,8 @@ class AcceptedFactoryType(object):
             with accepted.count(2):
                 validate(data, requirement)
 
-        The example above accepts up to ``2`` differences. Without
-        this acceptance, the validation would have failed with the
-        following error:
+        Without this acceptance, the validation would have failed with
+        the following error:
 
         .. code-block:: none
 
