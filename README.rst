@@ -12,9 +12,9 @@ datatest: Test driven data-wrangling and data validation
 .. start-inclusion-marker-description
 
 Datatest helps speed up and formalize data-wrangling and data
-validation tasks. It repurposes software testing practices to
-automate a diciplined approach for an often messy process.
-Datatest can help you:
+validation tasks. It repurposes software testing practices for
+data preparation and quality assurance projects. Datatest can
+help you:
 
 * Save time when cleaning and wrangling data.
 * Maintain a record of checks and decisions regarding important data sets.
