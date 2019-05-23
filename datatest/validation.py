@@ -345,7 +345,7 @@ class ValidateType(object):
         It is appropriate to use :meth:`validate.approx` when checking
         for nominal values---where some deviation is considered an
         intrinsic feature of the data. But when deviations represent an
-        undesired-but-acceptible variation, :meth:`accepted.deviation`
+        undesired-but-acceptible variation, :meth:`accepted.tolerance`
         would be more fitting.
         """
         __tracebackhide__ = _pytest_tracebackhide
