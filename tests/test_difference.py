@@ -4,14 +4,15 @@ import re
 import textwrap
 from . import _unittest as unittest
 
-from datatest.difference import BaseDifference
-from datatest.difference import Missing
-from datatest.difference import Extra
-from datatest.difference import Invalid
-from datatest.difference import Deviation
-from datatest.difference import _make_difference
-from datatest.difference import NOVALUE
-
+from datatest.differences import (
+    BaseDifference,
+    Missing,
+    Extra,
+    Invalid,
+    Deviation,
+    _make_difference,
+    NOVALUE,
+)
 
 # FOR TESTING: A minimal subclass of BaseDifference.
 # BaseDifference itself should not be instantiated

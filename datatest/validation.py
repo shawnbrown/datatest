@@ -6,7 +6,7 @@ from ._compatibility.collections.abc import Iterator
 from ._compatibility.collections.abc import Mapping
 from ._compatibility.collections.abc import Set
 from ._compatibility.functools import partial
-from .difference import BaseDifference
+from .differences import BaseDifference
 from ._normalize import normalize
 from ._query.query import BaseElement
 from . import requirements

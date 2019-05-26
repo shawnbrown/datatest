@@ -3,7 +3,7 @@ import re
 from ._compatibility.builtins import *
 from ._compatibility import abc
 from ._utils import regex_types
-from .difference import BaseDifference
+from .differences import BaseDifference
 
 
 class MatcherBase(abc.ABC):

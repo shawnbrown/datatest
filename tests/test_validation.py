@@ -1,11 +1,13 @@
 """Tests for validation and comparison functions."""
 import textwrap
 from . import _unittest as unittest
-from datatest.difference import BaseDifference
-from datatest.difference import Extra
-from datatest.difference import Missing
-from datatest.difference import Invalid
-from datatest.difference import Deviation
+from datatest.differences import (
+    BaseDifference,
+    Missing,
+    Extra,
+    Invalid,
+    Deviation,
+)
 from datatest._query.query import Query
 from datatest._utils import IterItems
 

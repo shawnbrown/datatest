@@ -10,11 +10,13 @@ from datatest._compatibility import contextlib
 from datatest._compatibility import itertools
 from datatest._utils import nonstringiter
 from datatest.validation import ValidationError
-from datatest.difference import BaseDifference
-from datatest.difference import Missing
-from datatest.difference import Extra
-from datatest.difference import Invalid
-from datatest.difference import Deviation
+from datatest.differences import (
+    BaseDifference,
+    Missing,
+    Extra,
+    Invalid,
+    Deviation,
+)
 from datatest.acceptances import (
     BaseAcceptance,
     CombinedAcceptance,

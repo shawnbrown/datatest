@@ -6,7 +6,7 @@ from . import _unittest as unittest
 import datatest
 from datatest.__past__ import api08  # <- MONKEY PATCH!!!
 
-from datatest.difference import NOVALUE
+from datatest.differences import NOVALUE
 from datatest.validation import _require_sequence
 
 

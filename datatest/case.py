@@ -21,7 +21,7 @@ from .acceptances import (
     AcceptedFuzzy,
     AcceptedCount,
 )
-from . import difference as differences
+from . import differences
 
 
 __unittest = True  # Hides internal stack frames from unittest output.

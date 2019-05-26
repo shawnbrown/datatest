@@ -4,8 +4,10 @@ from numbers import Number
 from .._utils import _make_decimal
 
 import datatest
-from datatest.difference import NANTOKEN
-from datatest.difference import _nan_to_token
+from datatest.differences import (
+    NANTOKEN,
+    _nan_to_token,
+)
 
 
 class xBaseDifference(object):
@@ -49,10 +51,10 @@ class xBaseDifference(object):
 
     def __eq__(self, other):
         diff_lookup = {
-            xMissing: datatest.difference.Missing,
-            xExtra: datatest.difference.Extra,
-            xDeviation: datatest.difference.Deviation,
-            xInvalid: datatest.difference.Invalid,
+            xMissing: datatest.differences.Missing,
+            xExtra: datatest.differences.Extra,
+            xDeviation: datatest.differences.Deviation,
+            xInvalid: datatest.differences.Invalid,
         }
         self_class = self.__class__
         self_class = diff_lookup.get(self_class, self_class)

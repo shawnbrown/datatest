@@ -23,11 +23,13 @@ from ._utils import string_types
 from ._query.query import BaseElement
 
 from .validation import ValidationError
-from .difference import BaseDifference
-from .difference import Missing
-from .difference import Extra
-from .difference import Invalid
-from .difference import Deviation
+from .differences import (
+    BaseDifference,
+    Missing,
+    Extra,
+    Invalid,
+    Deviation,
+)
 
 
 __datatest = True  # Used to detect in-module stack frames (which are

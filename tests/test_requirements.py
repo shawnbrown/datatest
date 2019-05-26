@@ -38,7 +38,7 @@ from datatest.requirements import RequiredApprox
 from datatest.requirements import RequiredFuzzy
 from datatest.requirements import RequiredInterval
 from datatest.requirements import adapts_mapping
-from datatest.difference import NOVALUE
+from datatest.differences import NOVALUE
 
 
 class TestBuildDescription(unittest.TestCase):

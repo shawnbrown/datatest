@@ -17,13 +17,15 @@ from ._compatibility.functools import wraps
 from ._compatibility.itertools import chain
 from ._compatibility.itertools import zip_longest
 from ._compatibility.statistics import median
-from .difference import BaseDifference
-from .difference import Deviation
-from .difference import Extra
-from .difference import Invalid
-from .difference import Missing
-from .difference import _make_difference
-from .difference import NOVALUE
+from .differences import (
+    BaseDifference,
+    Deviation,
+    Extra,
+    Invalid,
+    Missing,
+    _make_difference,
+    NOVALUE,
+)
 from ._normalize import normalize
 from ._predicate import Predicate
 from ._query.query import BaseElement

@@ -18,7 +18,7 @@ from datatest._utils import string_types
 from datatest._utils import iterpeek
 from datatest.acceptances import BaseAcceptance
 from datatest import Invalid
-from datatest.difference import NOVALUE
+from datatest.differences import NOVALUE
 
 datatest.DataResult = datatest.Result
 

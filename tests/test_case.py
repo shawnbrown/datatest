@@ -20,10 +20,12 @@ from datatest._query.query import Result
 
 from datatest.validation import validate
 from datatest.validation import ValidationError
-from datatest.difference import Extra
-from datatest.difference import Missing
-from datatest.difference import Invalid
-from datatest.difference import Deviation
+from datatest.differences import (
+    Missing,
+    Extra,
+    Invalid,
+    Deviation,
+)
 from datatest.acceptances import (
     AcceptedDifferences,
     AcceptedArgs,
