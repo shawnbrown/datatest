@@ -59,33 +59,34 @@ class BaseAcceptance(abc.ABC):
     @abc.abstractmethod
     def scope(self):
         """Return a set of scope strings associated with the
-        acceptance. The recognized scope strings are: "element",
-        "group", and "whole".
+        acceptance.
         """
         raise NotImplementedError
 
-    @property
-    def priority(self):
-        """The priority relative to other acceptance instances.
+    # Scope precedence determines order of operations.
+    # The currently recognized scopes are "element",
+    # "group", and "whole".
+    _precedence = {
+        frozenset(['element']): 1,
+        frozenset(['group', 'element']): 2,
+        frozenset(['group']): 3,
+        frozenset(['whole', 'element']): 4,
+        frozenset(['whole', 'group', 'element']): 5,
+        frozenset(['whole', 'group']): 6,
+        frozenset(['whole']): 7,
+    }
 
-        This is used internally to resolve the order of operations
-        when multiple acceptances are composed with intersection or
-        union operations. Datatest's built-in acceptances use the
-        following convention for priority scores:
-
-            =======  ========
-            Scope    Priority
-            =======  ========
-            element  4
-            group    32
-            whole    256
-            =======  ========
-
-        Individual acceptance priorities should always be a power of 2.
-        Composed acceptances derive their priority by combining the
-        individual priorities together with a bitwise-OR operation.
-        """
-        return 4
+    @classmethod
+    def _get_precedence(cls, acceptance):
+        """Return numeric precedence for given acceptance object."""
+        try:
+            number = cls._precedence[frozenset(acceptance.scope)]
+        except KeyError:
+            import warnings
+            message = 'unrecognized scope {0!r}'.format(acceptance.scope)
+            warnings.warn(message.format(message), UserWarning)
+            number = 0
+        return number
 
     @abc.abstractmethod
     def __repr__(self):
@@ -248,10 +249,6 @@ class CombinedAcceptance(BaseAcceptance):
         """Return a combined set scope strings."""
         return self.left.scope | self.right.scope
 
-    @property
-    def priority(self):
-        return self.left.priority | self.right.priority
-
     def start_collection(self):
         self.left.start_collection()
         self.right.start_collection()
@@ -278,7 +275,10 @@ class IntersectedAcceptance(CombinedAcceptance):
 
     def call_predicate(self, item):
         first, second = self.left, self.right
-        if first.priority > second.priority:
+
+        # Acceptances with a larger precedence number must go on the
+        # right-hand side to ensure proper short-circuit behavior.
+        if self._get_precedence(first) > self._get_precedence(second):
             first, second = second, first
 
         # The acceptance protocol is stateful so it's important to use
@@ -297,7 +297,10 @@ class UnionedAcceptance(CombinedAcceptance):
 
     def call_predicate(self, item):
         first, second = self.left, self.right
-        if first.priority > second.priority:
+
+        # Acceptances with a larger precedence number must go on the
+        # right-hand side to ensure proper short-circuit behavior.
+        if self._get_precedence(first) > self._get_precedence(second):
             first, second = second, first
 
         # The acceptance protocol is stateful so it's important to use
@@ -355,27 +358,6 @@ class AcceptedDifferences(BaseAcceptance):
                 scope = 'element'
 
         return frozenset([scope])
-
-    @property
-    def priority(self):
-        scope = self._scope
-
-        if not scope:
-            if nonstringiter(self._obj):
-                scope = 'group'
-            else:
-                scope = 'element'
-
-        if scope == 'element':
-            return 4
-
-        if scope == 'group':
-            return 32
-
-        if scope == 'whole':
-            return 256
-
-        raise Exception('unhandled scope: {0!r}'.format(scope))
 
     def start_group(self, key):
         """Called before processing each group."""
@@ -722,12 +704,6 @@ class AcceptedCount(BaseAcceptance):
         msg_part = ', msg={0!r}'.format(self.msg) if self.msg else ''
         scope_part = ', scope={0!r}'.format(self._scope) if self._scope else ''
         return '{0}({1!r}{2}{3})'.format(cls_name, self.number, msg_part, scope_part)
-
-    @property
-    def priority(self):
-        if self._scope == 'group':
-            return 32
-        return 256
 
     def start_collection(self):
         self._limit = self.number

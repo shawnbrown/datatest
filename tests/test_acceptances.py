@@ -42,14 +42,6 @@ class MinimalAcceptance(BaseAcceptance):  # A minimal subclass for
 
 
 class TestBaseAcceptance(unittest.TestCase):
-    def test_default_priority(self):
-        class accepts_nothing(MinimalAcceptance):
-            def call_predicate(_self, item):
-                return False
-
-        acceptance = accepts_nothing()
-        self.assertEqual(acceptance.priority, 4)
-
     def test_serialized_items(self):
         item_list = [1, 2]
         actual = BaseAcceptance._serialized_items(item_list)
@@ -192,10 +184,6 @@ class TestLogicalComposition(unittest.TestCase):
             def scope(self):
                 return set(['element'])
 
-            @property
-            def priority(self):
-                return 4
-
             def call_predicate(_self, item):
                 return isinstance(item[1], Missing)
 
@@ -203,10 +191,6 @@ class TestLogicalComposition(unittest.TestCase):
             @property
             def scope(self):
                 return set(['group'])
-
-            @property
-            def priority(self):
-                return 8
 
             def start_collection(_self):
                 _self._not_used = True
@@ -231,7 +215,6 @@ class TestLogicalComposition(unittest.TestCase):
 
         acceptance = LogicalAnd(left=self.accepted_missing,
                                 right=self.accepted_letter_a)
-        self.assertEqual(acceptance.priority, 12, 'bit-wise OR of 4 and 8')
         self.assertEqual(acceptance.scope, set(['element', 'group']))
 
     def test_IntersectedAcceptance(self):
@@ -480,27 +463,6 @@ class TestAcceptedDifferences(unittest.TestCase):
         # Mapping of differences defaults to 'group' scope, too.
         acceptance = AcceptedDifferences({'a': Extra('foo')})
         self.assertEqual(acceptance.scope, set(['group']))
-
-    def test_priority(self):
-        """Priority is determined by scope."""
-        acceptance = AcceptedDifferences(Extra)
-        self.assertEqual(acceptance.priority, 4)
-
-        acceptance = AcceptedDifferences(Extra('foo'))
-        self.assertEqual(acceptance.priority, 4)
-
-        acceptance = AcceptedDifferences([Extra('foo')], scope='element')
-        self.assertEqual(acceptance.priority, 4)
-
-        acceptance = AcceptedDifferences([Extra('foo')])  # Defaults to 'group' scope.
-        self.assertEqual(acceptance.priority, 32)
-
-        acceptance = AcceptedDifferences([Extra('foo')], scope='whole')
-        self.assertEqual(acceptance.priority, 256)
-
-        # Mapping of differences defaults to 'group' scope, too.
-        acceptance = AcceptedDifferences({'a': Extra('foo')})
-        self.assertEqual(acceptance.priority, 32)
 
     def test_repr(self):
         acceptance = AcceptedDifferences(Extra)
@@ -1246,3 +1208,43 @@ class TestUniversalComposability(unittest.TestCase):
 
         remaining = cm.exception.differences
         self.assertEqual(remaining, [Extra('C'), Missing('D')])
+
+    def assertPrecedenceLess(self, a, b):
+        if not BaseAcceptance._get_precedence(a) < BaseAcceptance._get_precedence(b):
+            message = 'precedence of %r not less than %r' % (a.scope, b.scope)
+            self.fail(message)
+
+    def test_precedence_relations(self):
+        """Should implement specified precedence order for element (e),
+        group (g), and whole (w) scoped acceptances:
+
+            e < ge < g < we < wge < wg < w
+        """
+        element = AcceptedDifferences([Missing(1)], scope='element')
+        group = AcceptedDifferences([Missing(1)], scope='group')
+        whole = AcceptedDifferences([Missing(1)], scope='whole')
+
+        self.assertPrecedenceLess(
+            element,
+            (group | element),
+        )
+        self.assertPrecedenceLess(
+            (group | element),
+            group,
+        )
+        self.assertPrecedenceLess(
+            group,
+            (whole | element),
+        )
+        self.assertPrecedenceLess(
+            (whole | element),
+            (whole | group | element),
+        )
+        self.assertPrecedenceLess(
+            (whole | group | element),
+            (whole | group),
+        )
+        self.assertPrecedenceLess(
+            (whole | group),
+            whole,
+        )
