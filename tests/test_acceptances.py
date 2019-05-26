@@ -34,7 +34,10 @@ class MinimalAcceptance(BaseAcceptance):  # A minimal subclass for
     def call_predicate(self, item):       # testing--defines three
         return False                      # concrete stubs to satisfy
                                           # abstract method requirement
-    def __repr__(self):                   # of the base class.
+    def scope(self):                      # of the base class.
+        return set(['element'])
+
+    def __repr__(self):
         return super(MinimalAcceptance, self).__repr__()
 
 
@@ -186,6 +189,10 @@ class TestLogicalComposition(unittest.TestCase):
     def setUp(self):
         class accepted_missing(MinimalAcceptance):
             @property
+            def scope(self):
+                return set(['element'])
+
+            @property
             def priority(self):
                 return 4
 
@@ -193,6 +200,10 @@ class TestLogicalComposition(unittest.TestCase):
                 return isinstance(item[1], Missing)
 
         class accepted_letter_a(MinimalAcceptance):
+            @property
+            def scope(self):
+                return set(['group'])
+
             @property
             def priority(self):
                 return 8
@@ -221,6 +232,7 @@ class TestLogicalComposition(unittest.TestCase):
         acceptance = LogicalAnd(left=self.accepted_missing,
                                 right=self.accepted_letter_a)
         self.assertEqual(acceptance.priority, 12, 'bit-wise OR of 4 and 8')
+        self.assertEqual(acceptance.scope, set(['element', 'group']))
 
     def test_IntersectedAcceptance(self):
         original_diffs = [Extra('a'), Missing('a'), Missing('b'), Extra('b')]
@@ -448,6 +460,26 @@ class TestAcceptedDifferences(unittest.TestCase):
 
         actual = cm.exception.differences
         self.assertEqual(actual, {'baz': Extra('zzz')})
+
+    def test_scope(self):
+        acceptance = AcceptedDifferences(Extra)
+        self.assertEqual(acceptance.scope, set(['element']))
+
+        acceptance = AcceptedDifferences(Extra('foo'))
+        self.assertEqual(acceptance.scope, set(['element']))
+
+        acceptance = AcceptedDifferences([Extra('foo')], scope='element')
+        self.assertEqual(acceptance.scope, set(['element']))
+
+        acceptance = AcceptedDifferences([Extra('foo')])  # Defaults to 'group' scope.
+        self.assertEqual(acceptance.scope, set(['group']))
+
+        acceptance = AcceptedDifferences([Extra('foo')], scope='whole')
+        self.assertEqual(acceptance.scope, set(['whole']))
+
+        # Mapping of differences defaults to 'group' scope, too.
+        acceptance = AcceptedDifferences({'a': Extra('foo')})
+        self.assertEqual(acceptance.scope, set(['group']))
 
     def test_priority(self):
         """Priority is determined by scope."""
@@ -1088,18 +1120,18 @@ class TestUniversalComposability(unittest.TestCase):
     same type as well as all other acceptance types.
     """
     def setUp(self):
-        ntup = namedtuple('ntup', ('cls', 'args', 'priority'))
+        ntup = namedtuple('ntup', ('cls', 'args', 'scope'))
         self.acceptances = [
-            ntup(cls=AcceptedDifferences, args=(Invalid('A'),),        priority=4),
-            ntup(cls=AcceptedDifferences, args=([Invalid('A')],),      priority=32),
-            ntup(cls=AcceptedDifferences, args=({'X': [Invalid('A')]},), priority=32),
-            ntup(cls=AcceptedDifferences, args=([Invalid('A')], None, 'whole'), priority=256),
-            ntup(cls=AcceptedKeys,      args=(lambda args: True,),     priority=4),
-            ntup(cls=AcceptedArgs,      args=(lambda *args: True,),    priority=4),
-            ntup(cls=AcceptedTolerance, args=(10,),                    priority=4),
-            ntup(cls=AcceptedPercent,   args=(0.05,),                  priority=4),
-            ntup(cls=AcceptedFuzzy,     args=tuple(),                  priority=4),
-            ntup(cls=AcceptedCount,     args=(4,),                     priority=256),
+            ntup(cls=AcceptedDifferences, args=(Invalid('A'),),        scope=set(['element'])),
+            ntup(cls=AcceptedDifferences, args=([Invalid('A')],),      scope=set(['group'])),
+            ntup(cls=AcceptedDifferences, args=({'X': [Invalid('A')]},), scope=set(['group'])),
+            ntup(cls=AcceptedDifferences, args=([Invalid('A')], None, 'whole'), scope=set(['whole'])),
+            ntup(cls=AcceptedKeys,      args=(lambda args: True,),     scope=set(['element'])),
+            ntup(cls=AcceptedArgs,      args=(lambda *args: True,),    scope=set(['element'])),
+            ntup(cls=AcceptedTolerance, args=(10,),                    scope=set(['element'])),
+            ntup(cls=AcceptedPercent,   args=(0.05,),                  scope=set(['element'])),
+            ntup(cls=AcceptedFuzzy,     args=tuple(),                  scope=set(['element'])),
+            ntup(cls=AcceptedCount,     args=(4,),                     scope=set(['whole'])),
         ]
 
     def test_completeness(self):
@@ -1112,11 +1144,12 @@ class TestUniversalComposability(unittest.TestCase):
         expected = (x.cls.__name__ for x in self.acceptances)
         self.assertEqual(set(actual), set(expected))
 
-    def test_priority_values(self):
+    def test_scope(self):
         for x in self.acceptances:
             instance = x.cls(*x.args)  # <- Initialize class instance.
-            actual = instance.priority
-            expected = x.priority
+            actual = instance.scope
+            expected = x.scope
+            self.assertIsInstance(actual, frozenset)
             self.assertEqual(actual, expected, x.cls.__name__)
 
     def test_union_and_intersection(self):
@@ -1133,16 +1166,18 @@ class TestUniversalComposability(unittest.TestCase):
         for a, b in combinations:
             composed = a | b  # <- Union!
             self.assertIsInstance(composed, UnionedAcceptance)
-            self.assertEqual(composed.priority, (a.priority | b.priority))
+            self.assertIsInstance(composed.scope, frozenset)
+            self.assertEqual(composed.scope, (a.scope | b.scope))
 
         for a, b in combinations:
             composed = a & b  # <- Intersection!
             self.assertIsInstance(composed, IntersectedAcceptance)
-            self.assertEqual(composed.priority, (a.priority | b.priority), 'bitwise OR of component priorities')
+            self.assertIsInstance(composed.scope, frozenset)
+            self.assertEqual(composed.scope, (a.scope | b.scope), 'UNION of component scopes')
 
-        # The composed priority should always be the bitwise OR of component
-        # priorities (regardless of whether or not it was composed as a UNION
-        # or an INTERSECTION).
+        # The composed scope should always be the UNION of component
+        # scopes (regardless of whether or not it was composed as a
+        # UNION or an INTERSECTION).
 
     def test_integration_examples(self):
         # Test acceptance of +/- 2 OR +/- 6%.

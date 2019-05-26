@@ -56,6 +56,15 @@ class BaseAcceptance(abc.ABC):
         self.msg = msg
 
     @property
+    @abc.abstractmethod
+    def scope(self):
+        """Return a set of scope strings associated with the
+        acceptance. The recognized scope strings are: "element",
+        "group", and "whole".
+        """
+        raise NotImplementedError
+
+    @property
     def priority(self):
         """The priority relative to other acceptance instances.
 
@@ -235,6 +244,11 @@ class CombinedAcceptance(BaseAcceptance):
         self.msg = msg
 
     @property
+    def scope(self):
+        """Return a combined set scope strings."""
+        return self.left.scope | self.right.scope
+
+    @property
     def priority(self):
         return self.left.priority | self.right.priority
 
@@ -328,6 +342,19 @@ class AcceptedDifferences(BaseAcceptance):
                 and not hasattr(obj, 'remove')):
             obj = list(obj)
         self._obj = obj
+
+    @property
+    def scope(self):
+        """Return scope as a frozenset."""
+        scope = self._scope
+
+        if not scope:
+            if nonstringiter(self._obj):
+                scope = 'group'
+            else:
+                scope = 'element'
+
+        return frozenset([scope])
 
     @property
     def priority(self):
@@ -429,6 +456,11 @@ class AcceptedKeys(BaseAcceptance):
 
         self.function = function
 
+    @property
+    def scope(self):
+        """Return scope as a frozenset."""
+        return frozenset(['element'])
+
     def __repr__(self):
         cls_name = self.__class__.__name__
         msg_part = ', msg={0!r}'.format(self.msg) if self.msg else ''
@@ -453,6 +485,11 @@ class AcceptedArgs(BaseAcceptance):
         function.__name__ = repr(matcher)
 
         self.function = function
+
+    @property
+    def scope(self):
+        """Return scope as a frozenset."""
+        return frozenset(['element'])
 
     def __repr__(self):
         cls_name = self.__class__.__name__
@@ -503,6 +540,11 @@ class AcceptedTolerance(BaseAcceptance):
         self.lower = lower
         self.upper = upper
         super(AcceptedTolerance, self).__init__(msg)
+
+    @property
+    def scope(self):
+        """Return scope as a frozenset."""
+        return frozenset(['element'])
 
     def __repr__(self):
         cls_name = self.__class__.__name__
@@ -621,6 +663,11 @@ class AcceptedFuzzy(BaseAcceptance):
         self.cutoff = cutoff
         super(AcceptedFuzzy, self).__init__(msg)
 
+    @property
+    def scope(self):
+        """Return scope as a frozenset."""
+        return frozenset(['element'])
+
     def __repr__(self):
         cls_name = self.__class__.__name__
         msg_part = ', msg={0!r}'.format(self.msg) if self.msg else ''
@@ -664,6 +711,11 @@ class AcceptedCount(BaseAcceptance):
         self._scope = scope
         self._count = None  # Properties to hold working values
         self._limit = None  # during acceptance checking.
+
+    @property
+    def scope(self):
+        """Return scope as a frozenset."""
+        return frozenset([self._scope or 'whole'])
 
     def __repr__(self):
         cls_name = self.__class__.__name__

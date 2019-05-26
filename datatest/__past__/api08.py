@@ -96,6 +96,10 @@ class allowed_key(BaseAcceptance):
         super(allowed_key, self).__init__(msg)
         self.function = function
 
+    @property
+    def scope(self):
+        return frozenset(['element'])
+
     def __repr__(self):
         cls_name = self.__class__.__name__
         msg_part = ', msg={0!r}'.format(self.msg) if self.msg else ''
@@ -119,6 +123,10 @@ class AcceptedArgs(BaseAcceptance):
     def __init__(self, function, msg=None):
         super(AcceptedArgs, self).__init__(msg)
         self.function = function
+
+    @property
+    def scope(self):
+        return frozenset(['element'])
 
     def __repr__(self):
         cls_name = self.__class__.__name__
