@@ -33,6 +33,8 @@ COMING SOON (0.9.6)
 * Changed validation to generate Deviation objects for a broader
   definition of quantitative values (like datetime objects)--not
   just for subclasses of numbers.Number.
+* Changed handling for pandas.Series objects to treat them as
+  sequences instead of mappings.
 * Removed acceptance classes from datatest namespace--these were
   inadvertently added in a previous version but were never part
   of the documented API. They can still be referenced via the

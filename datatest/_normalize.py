@@ -21,23 +21,16 @@ def _normalize_lazy(obj):
         return obj  # <- EXIT!
 
     pandas = sys.modules.get('pandas', None)
-    if pandas:
-        is_series = isinstance(obj, pandas.Series)
-        is_dataframe = isinstance(obj, pandas.DataFrame)
-
-        if (is_series or is_dataframe) and not obj.index.is_unique:
+    if pandas and isinstance(obj, pandas.DataFrame):
+        if not obj.index.is_unique:
             cls_name = obj.__class__.__name__
             raise ValueError(('{0} index contains duplicates, must '
                               'be unique').format(cls_name))
 
-        if is_series:
-            return IterItems(obj.iteritems())  # <- EXIT!
-
-        if is_dataframe:
-            gen = ((x[0], x[1:]) for x in obj.itertuples())
-            if len(obj.columns) == 1:
-                gen = ((k, v[0]) for k, v in gen)  # Unwrap if 1-tuple.
-            return IterItems(gen)  # <- EXIT!
+        gen = ((x[0], x[1:]) for x in obj.itertuples())
+        if len(obj.columns) == 1:
+            gen = ((k, v[0]) for k, v in gen)  # Unwrap if 1-tuple.
+        return IterItems(gen)  # <- EXIT!
 
     numpy = sys.modules.get('numpy', None)
     if numpy and isinstance(obj, numpy.ndarray):

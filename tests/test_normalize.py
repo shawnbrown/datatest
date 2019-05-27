@@ -67,19 +67,18 @@ class TestNormalizeLazy(unittest.TestCase):
 
     @unittest.skipIf(not pandas, 'pandas not found')
     def test_normalize_pandas_series(self):
+        # Simple, implicit index.
         s = pandas.Series(['x', 'y', 'z'])
         result = _normalize_lazy(s)
-        self.assertIsInstance(result, IterItems)
-        expected = {0: 'x', 1: 'y', 2: 'z'}
-        self.assertEqual(dict(result), expected)
+        self.assertIsInstance(result, pandas.Series)
+        self.assertTrue(s.equals(result))
 
         # Multi-index.
         s = pandas.Series(['x', 'y', 'z'])
         s.index = pandas.MultiIndex.from_tuples([(0, 0), (0, 1), (1, 0)])
         result = _normalize_lazy(s)
-        self.assertIsInstance(result, IterItems)
-        expected = {(0, 0): 'x', (0, 1): 'y', (1, 0): 'z'}
-        self.assertEqual(dict(result), expected, 'multi-index should be tuples')
+        self.assertIsInstance(result, pandas.Series)
+        self.assertTrue(s.equals(result))
 
     @unittest.skipIf(not numpy, 'numpy not found')
     def test_normalize_numpy(self):
