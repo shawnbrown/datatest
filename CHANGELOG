@@ -8,8 +8,8 @@ COMING SOON (0.9.6)
 * Changed acceptance API to make it both less verbose and
   more expressive:
 
-  * Consolidated specific and type-based acceptances into a
-    single interface.
+  * Consolidated specific-instance and class-based acceptances
+    into a single interface.
   * Added a new accepted.tolerance() method that subsumes the
     behavior of accepted.deviation() by supporting Missing and
     Extra quantities in addition to Deviation objects.
