@@ -7,6 +7,7 @@ from ._query.query import BaseElement
 from ._query.query import Query
 from ._query.query import Result
 from ._utils import exhaustible
+from ._utils import iterpeek
 from ._utils import IterItems
 
 
@@ -46,6 +47,23 @@ def _normalize_lazy(obj):
             else:
                 obj = iter(obj)
             return Result(obj, evaluation_type=list)  # <- EXIT!
+
+    # Check for cursor-like object (if obj has DBAPI2 cursor attributes).
+    if all(hasattr(obj, n) for n in ('fetchone', 'execute',
+                                     'rowcount', 'description')):
+        if not isinstance(obj, Iterable):
+            def cursor_to_gen(cursor):       # While most cursor objects are
+                while True:                  # iterable, it is not required
+                    row = cursor.fetchone()  # by the DBAPI2 specification.
+                    if row is None:
+                        break
+                    yield row
+            obj = cursor_to_gen(obj)
+
+        first, obj = iterpeek(obj)
+        if first and len(first) == 1:
+            obj = iter(x[0] for x in obj)  # Unwrap single-value records.
+        return obj  # <- EXIT!
 
     return obj
 

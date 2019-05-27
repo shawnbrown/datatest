@@ -35,6 +35,8 @@ COMING SOON (0.9.6)
   just for subclasses of numbers.Number.
 * Changed handling for pandas.Series objects to treat them as
   sequences instead of mappings.
+* Added handling for DBAPI2 cursor objects to automatically
+  unwrap single-value rows.
 * Removed acceptance classes from datatest namespace--these were
   inadvertently added in a previous version but were never part
   of the documented API. They can still be referenced via the

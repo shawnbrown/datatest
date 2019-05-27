@@ -1,4 +1,5 @@
 """Tests for normalization functions."""
+import sqlite3
 from . import _unittest as unittest
 from datatest._query.query import DictItems
 from datatest._query.query import Result
@@ -127,6 +128,31 @@ class TestNormalizeLazy(unittest.TestCase):
         result = _normalize_lazy(arr)
         self.assertIs(result, arr, msg='unsupported, returns unchanged')
 
+    def test_normalize_dbapi2_cursor(self):
+        conn = sqlite3.connect(':memory:')
+        conn.executescript('''
+            CREATE TABLE mydata(A, B, C);
+            INSERT INTO mydata VALUES('x', 'foo', 20);
+            INSERT INTO mydata VALUES('x', 'foo', 30);
+            INSERT INTO mydata VALUES('y', 'foo', 10);
+            INSERT INTO mydata VALUES('y', 'bar', 20);
+            INSERT INTO mydata VALUES('z', 'bar', 10);
+            INSERT INTO mydata VALUES('z', 'bar', 10);
+        ''')
+        cursor = conn.cursor()
+
+        cursor.execute('SELECT A, B FROM mydata;')
+        result = _normalize_lazy(cursor)
+        self.assertEqual(
+            list(result),
+            [('x', 'foo'), ('x', 'foo'), ('y', 'foo'),
+             ('y', 'bar'), ('z', 'bar'), ('z', 'bar')],
+        )
+
+        # Check for single-value record unpacking.
+        cursor.execute('SELECT C FROM mydata;')
+        result = _normalize_lazy(cursor)
+        self.assertEqual(list(result), [20, 30, 10, 20, 10, 10])
 
 class TestNormalizeEager(unittest.TestCase):
     def test_unchanged(self):

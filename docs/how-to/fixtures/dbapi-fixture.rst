@@ -53,7 +53,7 @@ work with any :pep:`DBAPI2 <249>` compatible connection.
             def test_total(cursor):
                 cursor.execute('SELECT SUM(C) FROM mydata;')
                 requirement = 100
-                validate(cursor.fetchone()[0], requirement)
+                validate(cursor, requirement)
 
 
             def test_subtotals(cursor):
@@ -102,7 +102,7 @@ work with any :pep:`DBAPI2 <249>` compatible connection.
                 def test_total(self):
                     self.cursor.execute('SELECT SUM(C) FROM mydata;')
                     requirement = 100
-                    self.assertValid(self.cursor.fetchone()[0], requirement)
+                    self.assertValid(self.cursor, requirement)
 
                 def test_subtotals(self):
                     self.cursor.execute('SELECT A, SUM(C) FROM mydata GROUP BY A;')
