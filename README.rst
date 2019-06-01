@@ -16,11 +16,12 @@ validation tasks. It repurposes software testing practices for
 data preparation and quality assurance projects. Datatest can
 help you:
 
-* Save time when cleaning and wrangling data.
+* Clean and wrangle data faster and more accurately.
 * Maintain a record of checks and decisions regarding important data sets.
-* Distinguish between ideal and acceptible criteria.
+* Distinguish between ideal criteria and acceptible deviation.
 * Measure progress of data preparation tasks.
 * On-board new team members with an explicit and structured process.
+* Test data pipeline components and end-to-end behavior.
 
 Datatest supports both pytest_ and unittest_ style testing.
 It implements a system of validation methods, difference

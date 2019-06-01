@@ -2,7 +2,7 @@
 
 .. meta::
     :description: Table of Contents for Datatest.
-    :keywords:
+    :keywords: datatest, validation, wrangling, data pipeline, testing
     :title: Index
 
 .. module:: datatest
