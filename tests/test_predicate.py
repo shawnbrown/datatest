@@ -112,13 +112,10 @@ class TestCheckRegex(unittest.TestCase):
         self.assertTrue(function('Happy Chanukah'))
         self.assertFalse(function('Merry Christmas'))
 
-    def test_error(self):
+    def test_incompatible_types(self):
         regex = re.compile('abc')
-        with self.assertRaisesRegex(TypeError, "got int: 123"):
-            self.assertFalse(_check_regex(regex, 123))  # Regex fails with TypeError.
-
-        with self.assertRaisesRegex(TypeError, r"got tuple: \('a', 'b'\)"):
-            self.assertFalse(_check_regex(regex, ('a', 'b')))
+        self.assertFalse(_check_regex(regex, 123))
+        self.assertFalse(_check_regex(regex, ('a', 'b')))
 
     def test_identity(self):
         regex = re.compile('abc')
@@ -273,6 +270,11 @@ class TestGetMatcher(unittest.TestCase):
 class TestPredicate(unittest.TestCase):
     def test_predicate_function(self):
         pred = Predicate('abc')
+        self.assertTrue(pred('abc'))
+        self.assertFalse(pred('def'))
+        self.assertFalse(pred(123))
+
+        pred = Predicate(re.compile('^abc$'))
         self.assertTrue(pred('abc'))
         self.assertFalse(pred('def'))
         self.assertFalse(pred(123))

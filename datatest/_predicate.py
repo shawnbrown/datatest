@@ -70,16 +70,7 @@ def _check_regex(regex, value):
     try:
         return regex.search(value) is not None
     except TypeError:
-        if value is regex:
-            return True  # <- EXIT!
-
-        value_repr = repr(value)
-        if len(value_repr) > 45:
-            value_repr = value_repr[:42] + '...'
-        msg = 'expected string or bytes-like object, got {0}: {1}'
-        exc = TypeError(msg.format(value.__class__.__name__, value_repr))
-        exc.__cause__ = None
-        raise exc
+        return value is regex
 
 
 def _check_set(set_, value):
@@ -173,11 +164,11 @@ class Predicate(object):
     | ``re.compile(pattern)`` | value matches the regular         |
     |                         | expression pattern                |
     +-------------------------+-----------------------------------+
-    | ``True``                | ``bool(value)`` returns True      |
-    |                         | (value is truthy)                 |
+    | ``True``                | value is truthy (``bool(value)``  |
+    |                         | returns True)                     |
     +-------------------------+-----------------------------------+
-    | ``False``               | ``bool(value)`` returns False     |
-    |                         | (value is falsy)                  |
+    | ``False``               | value is falsy (``bool(value)``   |
+    |                         | returns False)                    |
     +-------------------------+-----------------------------------+
     | str or non-container    | value is equal to the object      |
     +-------------------------+-----------------------------------+
