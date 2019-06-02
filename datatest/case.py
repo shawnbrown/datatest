@@ -178,6 +178,11 @@ class DataTestCase(TestCase):
         __tracebackhide__ = _pytest_tracebackhide
         self._apply_validation(validate.predicate, data, requirement, msg=msg)
 
+    def assertValidRegex(self, data, requirement, flags=0, msg=None):
+        """Wrapper for :meth:`validate.regex`."""
+        __tracebackhide__ = _pytest_tracebackhide
+        self._apply_validation(validate.regex, data, requirement, flags=flags, msg=msg)
+
     def assertValidSet(self, data, requirement, msg=None):
         """Wrapper for :meth:`validate.set`."""
         __tracebackhide__ = _pytest_tracebackhide

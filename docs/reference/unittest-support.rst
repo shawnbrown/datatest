@@ -110,6 +110,8 @@ DataTestCase
 
     .. automethod:: assertValidPredicate
 
+    .. automethod:: assertValidRegex
+
     .. automethod:: assertValidApprox
 
     .. automethod:: assertValidFuzzy

@@ -470,6 +470,22 @@ class TestValidate(unittest.TestCase):
         }
         self.assertEqual(actual, expected)
 
+    def test_predicate_regex(self):
+        data = {'A': 'Alpha', 'B': ['Beta', 'Gamma']}
+        requirement = Query.from_object({'A': r'^[A-Z]', 'B': r'^[A-Z]'})
+        validate.regex(data, requirement)
+
+        with self.assertRaises(ValidationError) as cm:
+            data = {'A': 'Alpha', 'B': ['Beta', 'gamma'], 'C': ('b', 2)}
+            requirement = Query.from_object({'A': r'^[A-Z]', 'B': r'^[A-Z]', 'C': r'\d'})
+            validate.regex(data, requirement)
+        actual = cm.exception.differences
+        expected = {
+            'B': [Invalid('gamma')],
+            'C': Invalid(('b', 2), expected=r'\d'),
+        }
+        self.assertEqual(actual, expected)
+
     def test_approx_method(self):
         data = {'A': 5.00000001, 'B': 10.00000001}
         requirement = Query.from_object({'A': 5, 'B': 10})

@@ -22,6 +22,8 @@ Validation
 
     .. automethod:: predicate
 
+    .. automethod:: regex
+
     .. automethod:: approx
 
     .. automethod:: fuzzy

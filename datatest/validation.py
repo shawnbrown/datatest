@@ -322,6 +322,36 @@ class ValidateType(object):
         requirement = self._get_predicate_requirement(requirement, factory)
         self(data, requirement, msg=msg)
 
+    def regex(self, data, requirement, flags=0, msg=None):
+        r"""Require that string values match a given regular
+        expression:
+
+        .. code-block:: python
+            :emphasize-lines: 5
+
+            from datatest import validate
+
+            data = ['46532', '43206', '60632']
+
+            validate.regex(data, r'^\d{5}$')
+
+        The example above is roughly equivalent to:
+
+        .. code-block:: python
+            :emphasize-lines: 6
+
+            import re
+            from datatest import validate
+
+            data = ['46532', '43206', '60632']
+
+            validate(data, re.compile(r'^\d{5}$'))
+        """
+        __tracebackhide__ = _pytest_tracebackhide
+        factory = partial(requirements.RequiredRegex, flags=flags)
+        requirement = self._get_predicate_requirement(requirement, factory)
+        self(data, requirement, msg=msg)
+
     def approx(self, data, requirement, places=None, msg=None, delta=None):
         """Require that numeric values are approximately equal. The
         given *requirement* can be a single element or a mapping.

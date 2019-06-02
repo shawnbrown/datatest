@@ -232,6 +232,7 @@ class TestValidationWrappers(unittest.TestCase):
         """
         method_calls = [
             ('predicate', ('aaa', 'aaa'), {}),
+            ('regex', (['a', 'b'], '[ab]'), {}),
             ('approx', ([1.5, 1.5], 1.5), {}),
             ('fuzzy', ('aaa', 'aaa'), {}),
             ('interval', ([1, 2, 3], 1, 3), {}),
