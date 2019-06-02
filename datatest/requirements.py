@@ -3,6 +3,7 @@
 from __future__ import division
 
 import difflib
+import re
 from numbers import Number
 from types import FunctionType
 from ._compatibility.builtins import *
@@ -652,6 +653,28 @@ class RequiredPredicate(GroupRequirement):
 
         description = _build_description(obj)
         return differences, description
+
+
+class RequiredRegex(RequiredPredicate):
+    """Require that strings match the given regular expression."""
+    def __init__(self, obj, flags=0, show_expected=False):
+        self.flags = flags
+        super(RequiredRegex, self).__init__(obj, show_expected=show_expected)
+
+    def predicate_factory(self, obj):
+        """Return Predicate object where string components have been
+        replaced with compiled regular expression objects.
+        """
+        flags = self.flags
+
+        def regex_or_orig(a):
+            if isinstance(a, string_types):
+                return re.compile(a, flags)
+            return a
+
+        if isinstance(obj, tuple):
+            return Predicate(tuple(regex_or_orig(x) for x in obj))
+        return Predicate(regex_or_orig(obj))
 
 
 class RequiredApprox(RequiredPredicate):

@@ -36,6 +36,7 @@ from datatest.requirements import (
     RequiredSequence,
     RequiredSet,
     get_requirement,
+    RequiredRegex,
     RequiredUnique,
     RequiredSubset,
     RequiredSuperset,
@@ -1145,6 +1146,82 @@ class TestRequiredPredicate2(unittest.TestCase):
         expected = [
             ('A', [Invalid(5)]),
             ('C', Invalid(7)),
+        ]
+        self.assertEqual(evaluate_items(diff), expected)
+
+
+class TestRequiredRegex(unittest.TestCase):
+    def test_all_true(self):
+        data = iter(['abx', 'aby', 'abz'])
+        requirement = RequiredRegex(r'^a\w\w$')
+        result = requirement(data)
+        self.assertIsNone(result)  # True for all elements, returns None.
+
+    def test_some_false(self):
+        """When the regex predicate returns False, values should be
+        returned as Invalid() differences.
+        """
+        data = ['abx', 'aby', 'xy']
+
+        requirement = RequiredRegex(r'^a\w\w$')
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Invalid('xy')])
+
+    def test_tuple_comparison(self):
+        """Should work on string elements within tuples."""
+        data = [(1, 'abx'), (2, 'abcx'), (1, 'xy')]
+
+        requirement = RequiredRegex((1, r'^a\w\w$'))
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Invalid((2, 'abcx')), Invalid((1, 'xy'))])
+
+    def test_show_expected(self):
+        data = ['abx', 'aby', 'xy']
+
+        requirement = RequiredRegex(r'^a\w\w$', show_expected=True)
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Invalid('xy', expected=r'^a\w\w$')])
+
+    def test_empty_iterable(self):
+        requirement = RequiredRegex(r'^a\w\w$')
+        result = requirement([])
+        self.assertIsNone(result)
+
+    def test_nonstring_value(self):
+        """When the RequiredRegex is given non-string values, the normal
+        predicate differences should be returned (e.g., Deviation, for
+        numeric comparisons).
+        """
+        data = [10, 10, 12]
+        requirement = RequiredRegex(10)
+
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Deviation(+2, 10)])
+
+    def test_novalue_token(self):
+        data = [123, 'abc']
+        requirement = RequiredRegex(NOVALUE)
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Extra(123), Extra('abc')])
+
+        data = [10, NOVALUE]
+        requirement = RequiredRegex(10)
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Missing(10)])
+
+        data = ['abc', NOVALUE]
+        requirement = RequiredRegex(r'^a\w\w$')
+        diff, desc = requirement(data)
+        self.assertEqual(list(diff), [Missing(r'^a\w\w$')])
+
+    def test_items(self):
+        requirement = RequiredRegex(r'^a\w\w$')
+
+        data = {'A': ['abx', 'abx', 'xxx'], 'B': 'abc', 'C': 'yyyy'}
+        diff, desc = requirement(data)
+        expected = [
+            ('A', [Invalid('xxx')]),
+            ('C', Invalid('yyyy')),
         ]
         self.assertEqual(evaluate_items(diff), expected)
 
