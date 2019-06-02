@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
+import re
 from . import _unittest as unittest
 from datatest._compatibility.collections.abc import Iterable
 from datatest._compatibility.collections.abc import Iterator
@@ -1161,11 +1162,16 @@ class TestRequiredRegex(unittest.TestCase):
         """When the regex predicate returns False, values should be
         returned as Invalid() differences.
         """
-        data = ['abx', 'aby', 'xy']
+        data = ['abx', 'aby', 'Axy']
 
         requirement = RequiredRegex(r'^a\w\w$')
         diff, desc = requirement(data)
-        self.assertEqual(list(diff), [Invalid('xy')])
+        self.assertEqual(list(diff), [Invalid('Axy')])
+
+        # Test regular expression flags.
+        requirement = RequiredRegex(r'^a\w\w$', flags=re.IGNORECASE)
+        result = requirement(data)
+        self.assertIsNone(result)  # True for all elements, returns None.
 
     def test_tuple_comparison(self):
         """Should work on string elements within tuples."""
