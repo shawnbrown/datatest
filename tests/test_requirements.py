@@ -3,41 +3,47 @@ from __future__ import absolute_import
 from . import _unittest as unittest
 from datatest._compatibility.collections.abc import Iterable
 from datatest._compatibility.collections.abc import Iterator
-from datatest._utils import exhaustible
-from datatest._utils import nonstringiter
-from datatest._utils import sortable
-from datatest import Missing
-from datatest import Extra
-from datatest import Deviation
-from datatest import Invalid
+from datatest._utils import (
+    exhaustible,
+    nonstringiter,
+    sortable,
+)
+from datatest import (
+    Missing,
+    Extra,
+    Deviation,
+    Invalid,
+)
 from datatest._predicate import Predicate
-from datatest.requirements import _build_description
-from datatest.requirements import _wrap_differences
-from datatest.requirements import group_requirement
-from datatest.requirements import required_predicate
-from datatest.requirements import required_set
-from datatest.requirements import required_sequence
-from datatest.requirements import _get_group_requirement
-from datatest.requirements import _data_vs_requirement
-from datatest.requirements import _datadict_vs_requirement
-from datatest.requirements import _datadict_vs_requirementdict
-from datatest.requirements import _normalize_requirement_result
-from datatest.requirements import BaseRequirement
-from datatest.requirements import ItemsRequirement
-from datatest.requirements import GroupRequirement
-from datatest.requirements import RequiredMapping
-from datatest.requirements import RequiredOrder
-from datatest.requirements import RequiredPredicate
-from datatest.requirements import RequiredSequence
-from datatest.requirements import RequiredSet
-from datatest.requirements import get_requirement
-from datatest.requirements import RequiredUnique
-from datatest.requirements import RequiredSubset
-from datatest.requirements import RequiredSuperset
-from datatest.requirements import RequiredApprox
-from datatest.requirements import RequiredFuzzy
-from datatest.requirements import RequiredInterval
-from datatest.requirements import adapts_mapping
+from datatest.requirements import (
+    _build_description,
+    _wrap_differences,
+    group_requirement,
+    required_predicate,
+    required_set,
+    required_sequence,
+    _get_group_requirement,
+    _data_vs_requirement,
+    _datadict_vs_requirement,
+    _datadict_vs_requirementdict,
+    _normalize_requirement_result,
+    BaseRequirement,
+    ItemsRequirement,
+    GroupRequirement,
+    RequiredMapping,
+    RequiredOrder,
+    RequiredPredicate,
+    RequiredSequence,
+    RequiredSet,
+    get_requirement,
+    RequiredUnique,
+    RequiredSubset,
+    RequiredSuperset,
+    RequiredApprox,
+    RequiredFuzzy,
+    RequiredInterval,
+    adapts_mapping,
+)
 from datatest.differences import NOVALUE
 
 
