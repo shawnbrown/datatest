@@ -219,11 +219,11 @@ class TestValidationWrappers(unittest.TestCase):
             name = 'assertValid{0}'.format(method.title())
             msg = 'DataTestCase does not have method named {0!r}'.format(name)
             if not hasattr(self.case, name):
-                foo = '  {0}() -> {1}()'.format(method, name)
+                foo = '  validate.{0}() <-> DataTestCase.{1}()'.format(method, name)
                 missing_methods.append(foo)
 
-        msg = ('validate() and DataTestCase should have matching '
-               'validation methods:\n{0}').format('\n'.join(missing_methods))
+        msg = ('validate and DataTestCase should have matching '
+               'validation methods:\n\n{0}').format('\n'.join(missing_methods))
         self.assertTrue(len(missing_methods) == 0, msg=msg)
 
     def test_methods_wrappers(self):
