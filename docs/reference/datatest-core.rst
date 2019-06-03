@@ -188,6 +188,8 @@ collection of differences.
     .. automethod:: count
 
 
+.. _composability-docs:
+
 Composability
 =============
 
@@ -235,6 +237,8 @@ increasingly specific criteria:
     with five_missing | minor_deviations:
         validate(..., ...)
 
+
+.. _order-of-operations-docs:
 
 Order of Operations
 ===================

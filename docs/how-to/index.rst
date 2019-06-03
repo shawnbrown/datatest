@@ -31,5 +31,6 @@ How-to Guide
     Outliers <outliers>
     Phone Numbers <phone-numbers>
     Relative File Paths <relative-file-paths>
+    Re-order Acceptances <reorder-acceptances>
     Sequences <sequences>
     Sets, Subsets, and Supersets <set-membership>
