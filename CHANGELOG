@@ -2,8 +2,8 @@
 Datatest Changelog
 ==================
 
-COMING SOON (0.9.6)
--------------------
+2019.06.03 (0.9.6)
+------------------
 
 * Changed acceptance API to make it both less verbose and
   more expressive:
