@@ -50,7 +50,12 @@ Release Checklist
       Iterate version number to differentiate development version
       from latest release.
 
-13. Publish update announcement to relevant mailing lists:
+13. Make sure the documentation reflects the new versions:
+
+    * https://datatest.readthedocs.io/ (stable)
+    * https://datatest.readthedocs.io/en/latest/ (latest)
+
+14. Publish update announcement to relevant mailing lists:
 
   python-announce-list@python.org
   testing-in-python@lists.idyll.org
