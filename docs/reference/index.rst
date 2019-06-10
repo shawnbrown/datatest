@@ -18,6 +18,7 @@ Reference
     :maxdepth: 2
 
     Datatest Core <datatest-core>
+    pandas-integration
     Data Handling <data-handling>
     unittest-support
 

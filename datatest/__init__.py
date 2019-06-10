@@ -14,6 +14,9 @@ from .acceptances import (  # Acceptance context manger API.
 
 from ._predicate import Predicate
 
+# Pandas extensions.
+from ._pandas_integration import register_accessors
+
 # Unittest-style API
 from .case import DataTestCase
 from .runner import mandatory
