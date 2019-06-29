@@ -24,7 +24,7 @@ class ValidationAccessor(object):
             raise err
 
     def predicate(self, requirement, msg=None):
-        """Check that data satisfies predicate requirement."""
+        """Check that elements satisfy predicate requirement."""
         try:
             return validate.predicate(self._data, requirement, msg=msg)
         except ValidationError as err:
@@ -34,7 +34,7 @@ class ValidationAccessor(object):
             raise err
 
     def regex(self, requirement, flags=0, msg=None):
-        """Check that data matches regex requirement."""
+        """Check that elements match regex requirement."""
         try:
             return validate.regex(self._data, requirement, flags=flags, msg=msg)
         except ValidationError as err:
@@ -44,7 +44,7 @@ class ValidationAccessor(object):
             raise err
 
     def approx(self, requirement, places=None, msg=None, delta=None):
-        """Check that data approximately matches requirement."""
+        """Check that elements approximately match requirement."""
         try:
             return validate.approx(self._data, requirement, places=places, msg=msg, delta=delta)
         except ValidationError as err:
@@ -54,8 +54,10 @@ class ValidationAccessor(object):
             raise err
 
     def fuzzy(self, requirement, cutoff=0.6, msg=None):
-        """Check that strings match with a similarity greater than or
-        equal to cutoff (default 0.6).
+        """Check that strings are similar to requirement strings.
+        Strings are considered similar if they measure equal to or
+        greater than cutoff (default 0.6) as determined by the
+        difflib.SequenceMatcher class (from the Standard Library).
         """
         try:
             return validate.fuzzy(self._data, requirement, cutoff=cutoff, msg=msg)
@@ -66,7 +68,7 @@ class ValidationAccessor(object):
             raise err
 
     def interval(self, min=None, max=None, msg=None):
-        """Check that values are within the given interval."""
+        """Check that element values are within the given interval."""
         try:
             return validate.interval(self._data, min=min, max=max, msg=msg)
         except ValidationError as err:
@@ -76,9 +78,7 @@ class ValidationAccessor(object):
             raise err
 
     def set(self, requirement, msg=None):
-        """Check that the set of elements in data matches the set of
-        elements in requirement.
-        """
+        """Check that element set equals requirement set."""
         try:
             return validate.set(self._data, requirement, msg=msg)
         except ValidationError as err:
@@ -88,7 +88,7 @@ class ValidationAccessor(object):
             raise err
 
     def subset(self, requirement, msg=None):
-        """Check that requirement is a subset of the values in data."""
+        """Check that element set contains requirement subset."""
         try:
             return validate.subset(self._data, requirement, msg=msg)
         except ValidationError as err:
@@ -98,7 +98,7 @@ class ValidationAccessor(object):
             raise err
 
     def superset(self, requirement, msg=None):
-        """Check that requirement is a superset of the values in data."""
+        """Check that element set is contained in requirement superset."""
         try:
             return validate.superset(self._data, requirement, msg=msg)
         except ValidationError as err:
@@ -108,7 +108,7 @@ class ValidationAccessor(object):
             raise err
 
     def unique(self, msg=None):
-        """Check that elements in data are unique."""
+        """Check that elements are unique."""
         try:
             return validate.unique(self._data, msg=msg)
         except ValidationError as err:
@@ -118,8 +118,8 @@ class ValidationAccessor(object):
             raise err
 
     def order(self, requirement, msg=None):
-        """Check that elements in data match the relative order of
-        elements in requirement.
+        """Check that elements match the relative order of requirement
+        elements.
         """
         try:
             return validate.order(self._data, requirement, msg=msg)
