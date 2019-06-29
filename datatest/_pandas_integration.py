@@ -157,8 +157,9 @@ class ValadateIndex(ValidationAccessor):
 ##############################################
 
 def register_accessors():
-    """Register "validate" accessors for :class:`pandas.DataFrame`,
-    :class:`pandas.Series`, and :class:`pandas.Index` objects:
+    """Register "validate" accessors for pandas :class:`DataFrame
+    <pandas.DataFrame>`, :class:`Series <pandas.Series>`, and
+    :class:`Index <pandas.Index>` objects:
 
     .. code-block:: python
         :emphasize-lines: 4
@@ -169,16 +170,8 @@ def register_accessors():
         dt.register_accessors()
         ...
 
-    After registering the accessors, ``validate`` can be used as a
-    method of :class:`DataFrame <pandas.DataFrame>`, :class:`Series
-    <pandas.Series>`,and :class:`Index <pandas.Index>` objects:
-
-    .. code-block:: python
-        :emphasize-lines: 3
-
-        ...
-        df = pd.read_csv('example.csv')
-        df['A'].validate(int)
+    After registering, the "validate" accessor maps calls to
+    :func:`validate`.
     """
     global ValidateDataFrame
     global ValidateSeries
