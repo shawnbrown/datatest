@@ -18,7 +18,7 @@ Tutorials
     :maxdepth: 2
 
     introduction
-    DataFrames <dataframe>
+    testing-pandas
     querying-data
     Tidying a File <tidying-a-file.rst>
     Using Reference Data <reference-data.rst>
