@@ -6,25 +6,24 @@
     :keywords: datatest, pandas, DataFrame
 
 
-#######################
-Using DataFrame Objects
-#######################
+###################
+Testing With Pandas
+###################
 
-Datatest can validate :class:`pandas.DataFrame`, :class:`pandas.Series`,
-and :class:`pandas.Index` objects the same way it does with built-in
-types like :py:class:`dict` and :py:class:`list`.
+Datatest can validate :mod:`pandas` objects (:class:`DataFrame
+<pandas.DataFrame>`, :class:`Series <pandas.Series>`, and
+:class:`Index <pandas.Index>`) the same way it does with
+built-in types.
 
 
 =============
-Example Files
+Some Examples
 =============
 
-This example uses a :class:`DataFrame <pandas.DataFrame>` to load and
-inspect data from a CSV file.
-
-
-The :download:`movies.csv </_static/tutorial/movies.csv>` file uses
-the following format:
+This example uses a :class:`DataFrame <pandas.DataFrame>` to
+load and inspect data from a CSV file (:download:`movies.csv
+</_static/tutorial/movies.csv>`). The CSV file uses the
+following format:
 
 .. csv-table::
     :header: title, rating, year, runtime
@@ -32,6 +31,7 @@ the following format:
     Almost Famous, R, 2000, 122
     American Pie, R, 1999, 95
     Back to the Future, PG, 1985, 116
+    Blade Runner, R, 1982, 117
     ..., ..., ..., ...
 
 
@@ -40,7 +40,7 @@ the following format:
     .. group-tab:: Pytest
 
         The :download:`test_movies_df.py </_static/tutorial/test_movies_df.py>`
-        script uses pytest-style tests:
+        script demonstrates pytest-style tests:
 
         .. literalinclude:: /_static/tutorial/test_movies_df.py
             :language: python
@@ -49,7 +49,7 @@ the following format:
     .. group-tab:: Unittest
 
         The :download:`test_movies_df_unit.py </_static/tutorial/test_movies_df_unit.py>`
-        script uses unittest-style tests:
+        script demonstrates unittest-style tests:
 
         .. literalinclude:: /_static/tutorial/test_movies_df_unit.py
             :language: python
@@ -200,4 +200,17 @@ Check that values in the **year** and **runtime** columns are integers:
         .. literalinclude:: /_static/tutorial/test_movies_df_unit.py
             :pyobject: TestMovies.test_runtime
             :lineno-match:
+
+
+================
+More Information
+================
+
+.. seealso::
+
+    See the :doc:`../reference/pandas-integration` reference docs
+    for more information and examples.
+
+    See :ref:`pandas-accessor-docs` to learn about the alternate
+    validation syntax provided by pandas **accessor extensions**.
 
