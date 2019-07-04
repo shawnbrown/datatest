@@ -24,7 +24,7 @@ class TestMovies(dt.DataTestCase):
     def test_rating(self):
         self.assertValidSuperset(
             df['rating'],
-            {'G', 'PG', 'PG-13', 'R', 'NC-17'},
+            {'G', 'PG', 'PG-13', 'R', 'NC-17', 'Not Rated'},
         )
 
     def test_year(self):
@@ -32,4 +32,3 @@ class TestMovies(dt.DataTestCase):
 
     def test_runtime(self):
         self.assertValid(df['runtime'], int)
-

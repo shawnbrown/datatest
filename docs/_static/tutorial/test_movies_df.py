@@ -26,7 +26,7 @@ def test_title(df):
 def test_rating(df):
     dt.validate.superset(
         df['rating'],
-        {'G', 'PG', 'PG-13', 'R', 'NC-17'},
+        {'G', 'PG', 'PG-13', 'R', 'NC-17', 'Not Rated'},
     )
 
 
@@ -36,4 +36,3 @@ def test_year(df):
 
 def test_runtime(df):
     dt.validate(df['runtime'], int)
-
