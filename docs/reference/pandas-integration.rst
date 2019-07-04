@@ -172,14 +172,19 @@ This is roughly equivalent to:
 Accessors
 *********
 
+Accessors provide an alternate syntax for validation. They do
+not provide additional functionality but some users may prefer
+the more-integrated style.
+
+
 .. autofunction:: register_accessors
 
 
 Accessor Examples
 =================
 
-The following examples demonstrate the use of the "validate"
-accessor for Index, Series, and DataFrame objects:
+The following examples demonstrate the "validate" accessor for
+Index, Series, and DataFrame objects:
 
 .. code-block:: python
 
