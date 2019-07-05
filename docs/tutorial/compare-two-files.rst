@@ -9,7 +9,7 @@
 .. _comparing-files:
 
 ##########################################
-Using Reference Data (Comparing Two Files)
+Comparing Two Files (Using Reference Data)
 ##########################################
 
 This tutorial demonstrates how to compare a detailed file

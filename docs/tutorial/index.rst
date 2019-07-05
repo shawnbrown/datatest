@@ -21,4 +21,4 @@ Tutorials
     testing-pandas
     querying-data
     Tidying a File <tidying-a-file.rst>
-    Using Reference Data <reference-data.rst>
+    Comparing Two Files <compare-two-files.rst>
