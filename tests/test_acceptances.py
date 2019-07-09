@@ -378,6 +378,62 @@ class TestAcceptedDifferences(unittest.TestCase):
         with acceptance:  # <- No error, all diffs accepted
             raise ValidationError(differences)
 
+    def test_normalize_differences(self):
+        normalize = AcceptedDifferences._normalize_differences
+
+        self.assertEqual(normalize(Missing), Missing)
+
+        self.assertEqual(normalize(Missing('X')), Missing('X'))
+
+        self.assertEqual(
+            normalize([Missing('X'), Missing('Y')]),
+            [Missing('X'), Missing('Y')],
+        )
+
+        self.assertEqual(
+            normalize(set([Missing('X'), Missing('Y')])),
+            set([Missing('X'), Missing('Y')]),
+        )
+
+        self.assertEqual(
+            normalize(iter([Missing('X'), Missing('Y')])),
+            [Missing('X'), Missing('Y')],
+        )
+
+        with self.assertRaises(TypeError):
+            normalize(int)
+
+        with self.assertRaises(TypeError):
+            normalize(123)
+
+        with self.assertRaises(TypeError):
+            normalize(['AAA', Missing('X')])
+
+        with self.assertRaises(TypeError):
+            normalize([Missing, Missing('X')])
+
+        with self.assertRaises(TypeError):
+            normalize({'A': Missing('X')}, msg='normalize can not accept mappings')
+
+    def test_non_difference_error(self):
+        """Init should only accept difference instances."""
+        differences =  [Missing('X'), Missing('Y'), Missing('X')]
+
+        with self.assertRaises(TypeError, msg='type must be BaseDifference subclass'):
+            acceptance = AcceptedDifferences(int)
+
+        with self.assertRaises(TypeError, msg='123 is not a difference'):
+            acceptance = AcceptedDifferences(123)
+
+        with self.assertRaises(TypeError, msg="'AAA' not a difference"):
+            acceptance = AcceptedDifferences(['AAA', Missing('X')])
+
+        with self.assertRaises(TypeError, msg='must be instance, not type'):
+            acceptance = AcceptedDifferences([Missing, Missing('X')])
+
+        with self.assertRaises(TypeError, msg='container values must be instances, not types'):
+            acceptance = AcceptedDifferences({'A': [Missing, Missing('X')]})
+
     def test_specified_scopes(self):
         # list vs difference, scope
         differences = {

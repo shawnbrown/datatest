@@ -343,10 +343,44 @@ class AcceptedDifferences(BaseAcceptance):
         super(AcceptedDifferences, self).__init__(msg)
         self._scope = scope
 
-        if (nonstringiter(obj) and not isinstance(obj, Mapping)
-                and not hasattr(obj, 'remove')):
-            obj = list(obj)
-        self._obj = obj
+        normalize = self._normalize_differences
+        if isinstance(obj, Mapping):
+            if hasattr(obj, 'iteritems'):
+                items = obj.iteritems()
+            else:
+                items = obj.items()
+            self._obj = dict((k, normalize(v)) for k, v in items)
+        else:
+            self._obj = normalize(obj)
+
+    @staticmethod
+    def _normalize_differences(obj):
+        """Raise a TypeError if *obj* is anything other than a
+        difference type, a difference instance, or a collection
+        of difference instances. If *obj* is verified, pass without
+        error (returns implicit None).
+        """
+        if not nonstringiter(obj):
+            if isinstance(obj, type):
+                if not issubclass(obj, BaseDifference):
+                    msg = 'type must be subclass of BaseDifference, got {0}'
+                    raise TypeError(msg.format(obj.__name__))
+            elif not isinstance(obj, BaseDifference):
+                msg = 'instance must be difference, got {0!r} ({1})'
+                raise TypeError(msg.format(obj, obj.__class__.__name__))
+        elif isinstance(obj, Mapping):
+            msg = 'expected difference or non-mapping of differences, got mapping {0!r}'
+            raise TypeError(msg.format(obj))
+        else:
+            if nonstringiter(obj) and \
+                    (exhaustible(obj) or not hasattr(obj, 'remove')):
+                obj = list(obj)  # <- Normalize *obj* container.
+
+            for val in obj:
+                if not isinstance(val, BaseDifference):
+                    msg = 'must contain difference instances, got {0!r} ({1})'
+                    raise TypeError(msg.format(val, val.__class__.__name__))
+        return obj
 
     @property
     def scope(self):
