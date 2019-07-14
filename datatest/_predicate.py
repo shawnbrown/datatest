@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import re
+from math import isnan
 from ._compatibility.builtins import *
 from ._compatibility import abc
 from ._utils import regex_types
@@ -65,6 +66,14 @@ def _check_falsy(value):
     return not bool(value)
 
 
+def _check_nan(value):
+    """Return true if *value* is NaN (not a number)."""
+    try:
+        return isnan(value)
+    except TypeError:
+        return False
+
+
 def _check_regex(regex, value):
     """Return true if *value* matches regex."""
     try:
@@ -104,6 +113,9 @@ def _get_matcher_parts(obj):
     elif obj is False:
         pred_handler = _check_falsy
         repr_string = 'False'
+    elif _check_nan(obj):
+        pred_handler = _check_nan
+        repr_string = "float('nan')"
     elif isinstance(obj, regex_types):
         pred_handler = lambda x: _check_regex(obj, x)
         repr_string = 're.compile({0!r})'.format(obj.pattern)

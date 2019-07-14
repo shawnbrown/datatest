@@ -9,6 +9,7 @@ from datatest._predicate import (
     _check_wildcard,
     _check_truthy,
     _check_falsy,
+    _check_nan,
     _check_regex,
     _check_set,
     _get_matcher_parts,
@@ -174,6 +175,11 @@ class TestGetMatcherParts(unittest.TestCase):
         self.assertIs(pred_handler, _check_falsy)
         self.assertEqual(repr_string, 'False')
 
+    def test_nan(self):
+        pred_handler, repr_string = _get_matcher_parts(float('nan'))
+        self.assertIs(pred_handler, _check_nan)
+        self.assertEqual(repr_string, "float('nan')")
+
     def test_regex(self):
         regex = re.compile('ab[cd]')
 
@@ -287,6 +293,11 @@ class TestPredicate(unittest.TestCase):
         pred = Predicate(('abc', int))
         self.assertTrue(pred(('abc', 1)))
         self.assertFalse(pred(('abc', 1.0)))
+
+        pred = Predicate((str, float('nan')))
+        self.assertTrue(pred(('abc', float('nan'))))
+        self.assertFalse(pred(('abc', 1.0)))
+        self.assertFalse(pred(('abc', 'xyz')))
 
     def test_inverted_logic(self):
         pred = ~Predicate('abc')
