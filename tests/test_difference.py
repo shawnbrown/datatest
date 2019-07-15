@@ -65,6 +65,15 @@ class TestBaseDifference(unittest.TestCase):
         diff = MinimalDifference('A', MyClass)
         self.assertEqual(repr(diff), "MinimalDifference('A', MyClass)")
 
+    def test_numbers_equal(self):
+        first = MinimalDifference(1)
+        second = MinimalDifference(1.0)
+        self.assertEqual(first, second)
+
+        first = MinimalDifference(1)
+        second = MinimalDifference(2)
+        self.assertNotEqual(first, second)
+
     def test_string_equal(self):
         first = MinimalDifference('A')
         second = MinimalDifference('A')
