@@ -2,7 +2,7 @@
 from math import isnan
 from ._compatibility.builtins import *
 from ._compatibility import abc
-from ._compatibility import contextlib
+from ._compatibility.contextlib import suppress
 from ._compatibility.decimal import Decimal
 from ._utils import _make_sentinel
 
@@ -32,7 +32,7 @@ NANTOKEN = _make_sentinel(
 
 
 def _nan_to_token(x):
-    with contextlib.suppress(TypeError):
+    with suppress(TypeError):
         if isnan(x):
             return NANTOKEN
     return x
