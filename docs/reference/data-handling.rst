@@ -99,6 +99,8 @@ Selecting & Querying Data
 
     .. automethod:: flatten
 
+    .. automethod:: unwrap
+
     .. automethod:: execute
 
     .. automethod:: fetch
