@@ -3,7 +3,18 @@
 that we want make sure are as convinient as possible for users.
 """
 from . import _unittest as unittest
+import math
 import datatest
+
+try:
+    import pandas
+except ImportError:
+    pandas = None
+
+try:
+    import numpy
+except ImportError:
+    numpy = None
 
 
 class TestNamespaces(unittest.TestCase):
@@ -159,3 +170,71 @@ class TestValidateIdioms(unittest.TestCase):
             4: Missing('e'),
         }
         self.assertEqual(differences, expected)
+
+
+class TestNanHandling(unittest.TestCase):
+    def test_accepting_builtin(self):
+        data = ['a', 'a', 'b', 'b', float('nan')]
+
+        with datatest.accepted(datatest.Invalid(float('nan'))):
+            datatest.validate(data, str)
+
+        with datatest.accepted(datatest.Extra(float('nan'))):
+            datatest.validate(data, set(['a', 'b']))
+
+        with datatest.accepted.args(float('nan')):
+            datatest.validate(data, set(['a', 'b']))
+
+    @unittest.skipUnless(pandas and numpy, 'requires pandas and numpy')
+    def test_accepting_pandas_numpy(self):
+        data = pandas.Series([1, 1, 2, 2, numpy.float64('nan')], dtype='float64')
+
+        with datatest.accepted(datatest.Extra(numpy.float64('nan'))):
+            datatest.validate(data, set([1.0, 2.0]))
+
+        with datatest.accepted(datatest.Extra(numpy.nan)):
+            datatest.validate(data, set([1.0, 2.0]))
+
+        with datatest.accepted(datatest.Extra(float('nan'))):
+            datatest.validate(data, set([1.0, 2.0]))
+
+    def test_validating_builtin(self):
+        """NaN values do not compare as equal, to use them for set membership
+        or other types of validation, replace the NaN with a token that can
+        be tested for equality, membership, etc.
+        """
+        nantoken = type(
+            'nantoken',
+            (object,),
+            {'__repr__': (lambda x: '<nantoken>')},
+        )()
+        data = ['a', 'a', 'b', 'b', float('nan')]
+
+        def nan_to_token(x):
+            try:
+                return nantoken if math.isnan(x) else x
+            except TypeError:
+                return x
+
+        data = [nan_to_token(x) for x in data]
+        datatest.validate.superset(data, set(['a', 'b', nantoken]))
+
+    @unittest.skipUnless(pandas and numpy, 'requires pandas and numpy')
+    def test_validating_pandas_numpy(self):
+        # Using numpy.nan with dtype='object' works because the nan
+        # object is a single instance and pandas does not perform
+        # special type coersion when dtype is 'object.
+        data = pandas.Series(['a', 'a', 'b', 'b', numpy.nan], dtype='object')
+        datatest.validate.superset(data, set(['a', 'b', numpy.nan]))
+
+        # Other NaN types are multiple instances with the same
+        # value--need to be normalized before validation.
+        data = pandas.Series([1, 1, 2, 2, numpy.float64('nan')], dtype='float64')
+
+        nantoken = type(
+            'nantoken',
+            (object,),
+            {'__repr__': (lambda x: '<nantoken>')},
+        )()
+        data = data.fillna(nantoken)  # <- Normalized!
+        datatest.validate.superset(data, set([1, 2, nantoken]))
