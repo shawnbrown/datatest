@@ -31,11 +31,17 @@ NANTOKEN = _make_sentinel(
 )
 
 
-def _nan_to_token(x):
-    with suppress(TypeError):
-        if isnan(x):
-            return NANTOKEN
-    return x
+def _nan_to_token(value):
+    """Return NANTOKEN if *value* is NaN else return value unchanged."""
+    def func(x):
+        with suppress(TypeError):
+            if isnan(x):
+                return NANTOKEN
+        return x
+
+    if isinstance(value, tuple):
+        return tuple(func(x) for x in value)
+    return func(value)
 
 
 class BaseDifference(abc.ABC):

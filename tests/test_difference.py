@@ -85,6 +85,11 @@ class TestBaseDifference(unittest.TestCase):
         second = MinimalDifference(float('nan'))
         self.assertEqual(first, second)
 
+        # NaNs nested in a tuple should also test as equal.
+        first = MinimalDifference(('abc', float('nan')))
+        second = MinimalDifference(('abc', float('nan')))
+        self.assertEqual(first, second)
+
     def test_comparing_different_types(self):
         diff = MinimalDifference('X')
         self.assertNotEqual(diff, Exception('X'))
