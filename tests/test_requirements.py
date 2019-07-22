@@ -1452,16 +1452,20 @@ class TestRequiredInterval(unittest.TestCase):
         result = requirement([2, 4, 6, 8])
         self.assertIsNone(result)  # All elements are valid, returns None.
 
-    def test_deviations(self):
+    def test_differences(self):
         """If an element are less than the lower bound, the lower bound
         should be used as the expected value. If an element is greater
         than the upper bound, the upper bound should be used as the
         expected value.
         """
         requirement = RequiredInterval(2, 8)
-        diff, desc = requirement([0, 2, 4, 6, 8, 10])
 
+        diff, desc = requirement([0, 2, 4, 6, 8, 10])
         self.assertEqual(list(diff), [Deviation(-2, 2), Deviation(+2, 8)])
+        self.assertEqual(desc, r"elements `x` do not satisfy `2 <= x <= 8`")
+
+        diff, desc = requirement([2, 4, 6, float('nan'), 8])
+        self.assertEqual(list(diff), [Invalid(float('nan'))])
         self.assertEqual(desc, r"elements `x` do not satisfy `2 <= x <= 8`")
 
     def test_degenrate_interval(self):
@@ -1482,28 +1486,39 @@ class TestRequiredInterval(unittest.TestCase):
 
     def test_left_bound(self):
         requirement = RequiredInterval(4)
-        diff, desc = requirement([2, 4, 6])
 
+        diff, desc = requirement([2, 4, 6])
         self.assertEqual(list(diff), [Deviation(-2, 4)])
-        self.assertEqual(desc, 'less than minimum expected value of 4')
+        self.assertEqual(desc, 'does not satisfy minimum expected value of 4')
+
+        diff, desc = requirement([4, float('nan'), 6])
+        self.assertEqual(list(diff), [Invalid(float('nan'))])
+        self.assertEqual(desc, 'does not satisfy minimum expected value of 4')
 
     def test_right_bound(self):
         requirement = RequiredInterval(max=4)
-        diff, desc = requirement([2, 4, 6])
 
+        diff, desc = requirement([2, 4, 6])
         self.assertEqual(list(diff), [Deviation(+2, 4)])
-        self.assertEqual(desc, 'exceeds maximum expected value of 4')
+        self.assertEqual(desc, 'does not satisfy maximum expected value of 4')
+
+        diff, desc = requirement([2, float('nan'), 4])
+        self.assertEqual(list(diff), [Invalid(float('nan'))])
+        self.assertEqual(desc, 'does not satisfy maximum expected value of 4')
 
     def test_bad_args(self):
-        with self.assertRaises(ValueError, msg='must not accept NaN'):
-            requirement = RequiredInterval(5, float('nan'))
-
         with self.assertRaises(ValueError, msg='lower must not be greater than upper'):
             requirement = RequiredInterval(6, 5)
 
         if not sortable([6, 'a']):
             with self.assertRaises(TypeError, msg='unsortable args should raise error'):
                 requirement = RequiredInterval(6, 'a')
+
+        with self.assertRaises(ValueError, msg='must not accept NaN'):
+            requirement = RequiredInterval(5, float('nan'))
+
+        with self.assertRaises(ValueError, msg='must not accept NaN'):
+            requirement = RequiredInterval(float('nan'), 6)
 
     def test_non_numeric(self):
         """Should work for any sortable types."""

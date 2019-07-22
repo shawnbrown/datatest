@@ -787,13 +787,15 @@ class RequiredInterval(RequiredPredicate):
 
             def interval(element):
                 try:
+                    if min <= element <= max:
+                        return True
                     if element < min:
                         return _make_difference(element, min, show_expected)
                     if element > max:
                         return _make_difference(element, max, show_expected)
                 except TypeError:
-                    return Invalid(element)
-                return True
+                    pass
+                return Invalid(element)
 
             description = 'elements `x` do not satisfy `{0!r} <= x <= {1!r}`' 
             description = description.format(min, max)
@@ -801,24 +803,28 @@ class RequiredInterval(RequiredPredicate):
         elif left_bounded:
             def interval(element):
                 try:
+                    if min <= element:
+                        return True
                     if element < min:
                         return _make_difference(element, min, show_expected)
                 except TypeError:
-                    return Invalid(element)
-                return True
+                    pass
+                return Invalid(element)
 
-            description = 'less than minimum expected value of {0!r}'.format(min)
+            description = 'does not satisfy minimum expected value of {0!r}'.format(min)
 
         elif right_bounded:
             def interval(element):
                 try:
+                    if element <= max:
+                        return True
                     if element > max:
                         return _make_difference(element, max, show_expected)
                 except TypeError:
-                    return Invalid(element)
-                return True
+                    pass
+                return Invalid(element)
 
-            description = 'exceeds maximum expected value of {0!r}'.format(max)
+            description = 'does not satisfy maximum expected value of {0!r}'.format(max)
 
         else:
             raise TypeError("must provide at least one: 'min' or 'max'")
