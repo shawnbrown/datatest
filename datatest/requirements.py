@@ -782,8 +782,8 @@ class RequiredInterval(RequiredPredicate):
         right_bounded = max is not None
 
         if left_bounded and right_bounded:
-            if max < min:
-                raise ValueError("'max' must not be less than 'min'")
+            if not min <= max:
+                raise ValueError("'min' must not be greater than 'max'")
 
             def interval(element):
                 try:

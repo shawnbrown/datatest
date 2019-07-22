@@ -1495,6 +1495,9 @@ class TestRequiredInterval(unittest.TestCase):
         self.assertEqual(desc, 'exceeds maximum expected value of 4')
 
     def test_bad_args(self):
+        with self.assertRaises(ValueError, msg='must not accept NaN'):
+            requirement = RequiredInterval(5, float('nan'))
+
         with self.assertRaises(ValueError, msg='lower must not be greater than upper'):
             requirement = RequiredInterval(6, 5)
 
