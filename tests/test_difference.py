@@ -90,6 +90,11 @@ class TestBaseDifference(unittest.TestCase):
         second = MinimalDifference(('abc', float('nan')))
         self.assertEqual(first, second)
 
+        # Complex numbers, too.
+        first = MinimalDifference(float('nan'))
+        second = MinimalDifference(complex(float('nan')))
+        self.assertEqual(first, second)
+
     def test_comparing_different_types(self):
         diff = MinimalDifference('X')
         self.assertNotEqual(diff, Exception('X'))

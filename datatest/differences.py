@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from math import isnan
+from cmath import isnan
 from ._compatibility.builtins import *
 from ._compatibility import abc
 from ._compatibility.contextlib import suppress
