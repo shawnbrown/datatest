@@ -2,24 +2,17 @@
 from __future__ import division
 import difflib
 import inspect
-from math import isnan
 from numbers import Number
 from ._compatibility.builtins import *
 from ._compatibility import abc
 from ._compatibility.collections import defaultdict
 from ._compatibility.collections.abc import Mapping
 from ._compatibility import contextlib
-from ._compatibility import functools
 from ._compatibility import itertools
 
 from ._utils import exhaustible
 from ._utils import nonstringiter
-from ._predicate import MatcherBase
 from ._predicate import get_matcher
-from ._utils import _get_arg_lengths
-from ._utils import _expects_multiple_params
-from ._utils import _make_decimal
-from ._utils import string_types
 from ._query.query import BaseElement
 
 from .validation import ValidationError
@@ -28,7 +21,6 @@ from .differences import (
     Missing,
     Extra,
     Invalid,
-    Deviation,
 )
 
 
