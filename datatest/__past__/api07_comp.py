@@ -1,6 +1,8 @@
 """Comparison objects returned by data source queries."""
+import inspect
 import re
 from numbers import Number
+from sys import version_info as _version_info
 
 from .._compatibility.builtins import *
 from .._compatibility.collections.abc import Iterable
@@ -10,7 +12,6 @@ from .._compatibility.collections.abc import Set
 from .._compatibility import functools
 from .._compatibility import itertools
 
-from .._utils import _expects_multiple_params
 from .._utils import nonstringiter
 from .._utils import iterpeek
 from .._utils import _unique_everseen
@@ -25,6 +26,71 @@ from .api07_diffs import _xgetdiff
 from .api07_diffs import _xNOTFOUND
 
 _regex_type = type(re.compile(''))
+
+
+def _get_arg_lengths(func):
+    """Returns a two-tuple containing the number of positional arguments
+    as the first item and the number of variable positional arguments as
+    the second item.
+    """
+    try:
+        funcsig = inspect.signature(func)
+        params_dict = funcsig.parameters
+        parameters = params_dict.values()
+        args_type = (inspect._POSITIONAL_OR_KEYWORD, inspect._POSITIONAL_ONLY)
+        args = [x for x in parameters if x.kind in args_type]
+        vararg = [x for x in parameters if x.kind == inspect._VAR_POSITIONAL]
+        vararg = vararg.pop() if vararg else None
+    except AttributeError:
+        try:
+            try:  # For Python 3.2 and earlier.
+                args, vararg = inspect.getfullargspec(func)[:2]
+            except AttributeError:  # For Python 2.7 and earlier.
+                args, vararg = inspect.getargspec(func)[:2]
+        except TypeError:     # In 3.2 and earlier, raises TypeError
+            raise ValueError  # but 3.3 and later raise a ValueError.
+    return (len(args), (1 if vararg else 0))
+
+
+if _version_info[:2] == (3, 4):  # For version 3.4 only!
+    _builtin_objects = set([
+        abs, all, any, ascii, bin, bool, bytearray, bytes, callable, chr,
+        classmethod, compile, complex, delattr, dict, dir, divmod, enumerate,
+        eval, filter, float, format, frozenset, getattr, globals, hasattr,
+        hash, help, hex, id, input, int, isinstance, issubclass, iter, len,
+        list, locals, map, max, memoryview, min, next, object, oct, open, ord,
+        pow, property, range, repr, reversed, round, set, setattr, slice,
+        sorted, staticmethod, str, sum, super, tuple, type, vars, zip,
+        __import__,
+    ])
+    try:
+        eval('_builtin_objects.add(exec)')   # Using eval prevents SyntaxError
+        eval('_builtin_objects.add(print)')  # when parsing in 2.7 and earlier.
+    except SyntaxError:
+        pass
+    _get_arg_lengths_orig = _get_arg_lengths
+    def _get_arg_lengths(func):
+        # In Python 3.4, an empty signature is returned for built-in
+        # functions and types--but this is wrong! If this happens,
+        # an error should be raised.
+        lengths = _get_arg_lengths_orig(func)
+        if lengths == (0, 0) and func in _builtin_objects:
+            raise ValueError('cannot get lengths of builtin callables')
+        return lengths
+
+
+def _expects_multiple_params(func):
+    """Returns True if *func* accepts multiple positional arguments and
+    returns False if it accepts one or zero arguments.
+
+    Returns None if the number of arguments cannot be determined--this
+    is usually the case for built-in functions and types.
+    """
+    try:
+        arglen, vararglen = _get_arg_lengths(func)
+    except ValueError:
+        return None
+    return (arglen > 1) or (vararglen > 0)
 
 
 def _compare_sequence(data, required):

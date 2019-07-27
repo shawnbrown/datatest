@@ -1,7 +1,10 @@
 """Comparison objects and differences."""
+import platform
 import re
 from . import _unittest as unittest
 
+from datatest.__past__.api07_comp import _get_arg_lengths
+from datatest.__past__.api07_comp import _expects_multiple_params
 from datatest.__past__.api07_comp import _coerce_other
 from datatest.__past__.api07_comp import CompareSet
 from datatest.__past__.api07_comp import CompareDict
@@ -16,6 +19,78 @@ from datatest.__past__.api07_diffs import xInvalid
 from datatest.__past__.api07_diffs import xDeviation
 from datatest.__past__.api07_diffs import xNotProperSubset
 from datatest.__past__.api07_diffs import xNotProperSuperset
+
+
+_PYPY = platform.python_implementation() == 'PyPy'
+
+
+class TestGetArgLengths(unittest.TestCase):
+    def test_positional(self):
+        def userfunc(a, b, c):
+            return True
+        args, vararg = _get_arg_lengths(userfunc)
+        self.assertEqual((args, vararg), (3, 0))
+
+    def test_positional_and_keyword(self):
+        def userfunc(a, b, c=True):
+            return True
+        args, vararg = _get_arg_lengths(userfunc)
+        self.assertEqual((args, vararg), (3, 0))
+
+    def test_varargs(self):
+        def userfunc(*args):
+            return True
+        args, vararg = _get_arg_lengths(userfunc)
+        self.assertEqual((args, vararg), (0, 1))
+
+    def test_builtin_type(self):
+        with self.assertRaises(ValueError):
+            _get_arg_lengths(int)
+
+    def test_builtin_function(self):
+        if _PYPY:
+            args, vararg = _get_arg_lengths(max)       # Built-in functions
+            self.assertEqual((args, vararg), (0, 1))   # only work in PyPy.
+        else:
+            with self.assertRaises(ValueError):
+                _get_arg_lengths(max)
+
+
+class TestExpectsMultipleParams(unittest.TestCase):
+    def test_zero(self):
+        def userfunc():
+            return True
+        expects_multiple = _expects_multiple_params(userfunc)
+        self.assertIs(expects_multiple, False)
+
+    def test_one_positional(self):
+        def userfunc(a):
+            return True
+        expects_multiple = _expects_multiple_params(userfunc)
+        self.assertIs(expects_multiple, False)
+
+    def test_multiple_positional(self):
+        def userfunc(a, b, c):
+            return True
+        expects_multiple = _expects_multiple_params(userfunc)
+        self.assertIs(expects_multiple, True)
+
+    def test_varargs(self):
+        def userfunc(*args):
+            return True
+        expects_multiple = _expects_multiple_params(userfunc)
+        self.assertIs(expects_multiple, True)
+
+    def test_builtin_type(self):
+        expects_multiple = _expects_multiple_params(int)
+        self.assertIsNone(expects_multiple)
+
+    def test_builtin_function(self):
+        expects_multiple = _expects_multiple_params(max)
+        if _PYPY:
+            self.assertIs(expects_multiple, True)  # Works in PyPy.
+        else:
+            pass  # Should, at least, not fail on other Pythons.
 
 
 class Test_compare_sequence(unittest.TestCase):
