@@ -28,6 +28,7 @@ How-to Guide
     File Names <file-names>
     Fixtures <fixtures/index>
     Fuzzy Matching <fuzzy-matching>
+    NaN Values <nan-values>
     Outliers <outliers>
     Phone Numbers <phone-numbers>
     Relative File Paths <relative-file-paths>
