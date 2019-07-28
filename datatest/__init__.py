@@ -3,6 +3,7 @@
 
 PYTEST_DONT_REWRITE
 """
+from __future__ import absolute_import
 
 # Datatest Core API (__all__ property defined in submodules)
 from .validation import *   # Validation error and functions.
@@ -12,7 +13,7 @@ from .acceptances import (  # Acceptance context manger API.
     allowed,  # <- Deprecated since 0.9.5
 )
 
-from ._predicate import Predicate
+from ._vendor.predicate import Predicate
 
 # Pandas extensions.
 from ._pandas_integration import register_accessors

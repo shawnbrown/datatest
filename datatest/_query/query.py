@@ -48,7 +48,7 @@ from .._load.temptable import (
     savepoint,
     table_exists,
 )
-from .._predicate import (
+from .._vendor.predicate import (
     MatcherObject,
     MatcherTuple,
     get_matcher,

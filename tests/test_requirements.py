@@ -15,7 +15,7 @@ from datatest import (
     Deviation,
     Invalid,
 )
-from datatest._predicate import Predicate
+from datatest._vendor.predicate import Predicate
 from datatest.requirements import (
     _build_description,
     _wrap_differences,

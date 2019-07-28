@@ -3,7 +3,7 @@
 from . import _unittest as unittest
 import re
 
-from datatest._predicate import (
+from datatest._vendor.predicate import (
     _check_type,
     _check_callable,
     _check_wildcard,

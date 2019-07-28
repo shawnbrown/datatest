@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 from __future__ import division
 import difflib
 import inspect
@@ -12,7 +13,7 @@ from ._compatibility import itertools
 
 from ._utils import exhaustible
 from ._utils import nonstringiter
-from ._predicate import get_matcher
+from ._vendor.predicate import get_matcher
 from ._query.query import BaseElement
 
 from .validation import ValidationError

@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 import re
 from math import isnan
-from ._compatibility.builtins import *
-from ._compatibility import abc
-from ._utils import regex_types
+from .._compatibility.builtins import *
+from .._compatibility import abc
+from .._utils import regex_types
 
 
 class MatcherBase(abc.ABC):

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """This module defines requirement classes used internally by datatest."""
+from __future__ import absolute_import
 from __future__ import division
 
 import difflib
@@ -26,7 +27,7 @@ from .differences import (
     NOVALUE,
 )
 from ._normalize import normalize
-from ._predicate import Predicate
+from ._vendor.predicate import Predicate
 from ._query.query import BaseElement
 from ._utils import IterItems
 from ._utils import iterpeek
