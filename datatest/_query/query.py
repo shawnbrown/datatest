@@ -11,39 +11,48 @@ from glob import glob
 from numbers import Number
 
 from .._compatibility.builtins import *
-from .._compatibility import abc
 from .._compatibility.collections import namedtuple
-from .._compatibility.collections.abc import Collection
-from .._compatibility.collections.abc import Hashable
-from .._compatibility.collections.abc import Iterable
-from .._compatibility.collections.abc import Iterator
-from .._compatibility.collections.abc import Mapping
-from .._compatibility.collections.abc import Sequence
-from .._compatibility.collections.abc import Set
-from .._compatibility.collections.abc import Sized
-from .._compatibility import contextlib
-from .._compatibility import functools
-from .._compatibility import itertools
-from .._utils import _flatten
-from .._utils import IterItems
-from .._utils import iterpeek
-from .._utils import nonstringiter
-from .._utils import sortable
-from .._utils import exhaustible
-from .._utils import _make_sentinel
-from .._utils import _unique_everseen
-from .._utils import file_types
-from .._utils import string_types
+from .._compatibility.collections.abc import (
+    Collection,
+    Hashable,
+    Iterable,
+    Iterator,
+    Mapping,
+    Sequence,
+    Set,
+    Sized,
+)
+from .._compatibility import (
+    abc,
+    contextlib,
+    functools,
+    itertools,
+)
+from .._utils import (
+    _flatten,
+    IterItems,
+    iterpeek,
+    nonstringiter,
+    sortable,
+    exhaustible,
+    _make_sentinel,
+    _unique_everseen,
+    file_types,
+    string_types,
+)
 from .._load.get_reader import get_reader
 from .._load.load_csv import load_csv
-from .._load.temptable import drop_table
-from .._load.temptable import load_data
-from .._load.temptable import new_table_name
-from .._load.temptable import savepoint
-from .._load.temptable import table_exists
-from .._predicate import MatcherObject
-from .._predicate import MatcherTuple
-from .._predicate import get_matcher
+from .._load.temptable import (
+    load_data,
+    new_table_name,
+    savepoint,
+    table_exists,
+)
+from .._predicate import (
+    MatcherObject,
+    MatcherTuple,
+    get_matcher,
+)
 
 try:
     FileNotFoundError  # New in Python 3.3.
