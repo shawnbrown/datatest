@@ -221,14 +221,14 @@ class TestNanHandling(unittest.TestCase):
 
     @unittest.skipUnless(pandas and numpy, 'requires pandas and numpy')
     def test_validating_pandas_numpy(self):
-        # Using numpy.nan with dtype='object' works because the nan
-        # object is a single instance and pandas does not perform
-        # special type coersion when dtype is 'object.
-        data = pandas.Series(['a', 'a', 'b', 'b', numpy.nan], dtype='object')
-        datatest.validate.superset(data, set(['a', 'b', numpy.nan]))
+        # While the following example works for 'object' dtypes but
+        # the pattern should be avoided because it is not reliable
+        # when working with other dtypes. DO NOT use it in practice:
+        #
+        #    data = pandas.Series(['a', 'a', 'b', 'b', numpy.nan], dtype='object')
+        #    datatest.validate.superset(data, set(['a', 'b', numpy.nan]))
 
-        # Other NaN types are multiple instances with the same
-        # value--need to be normalized before validation.
+        # A more reliable method is to replace NaNs with a token value.
         data = pandas.Series([1, 1, 2, 2, numpy.float64('nan')], dtype='float64')
 
         nantoken = type(
