@@ -3,7 +3,6 @@ from cmath import isnan
 from ._compatibility.builtins import *
 from ._compatibility import abc
 from ._compatibility.contextlib import suppress
-from ._compatibility.decimal import Decimal
 from ._utils import _make_sentinel
 
 

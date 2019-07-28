@@ -1,6 +1,4 @@
 """Adds "validate" accessors to pandas DataFrame, Series, and Index."""
-import inspect
-from ._compatibility import contextlib
 from .validation import ValidationError
 from .validation import validate
 

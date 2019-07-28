@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """Validation and comparison handling."""
-import sys
 from ._compatibility.collections.abc import Iterable
-from ._compatibility.collections.abc import Iterator
 from ._compatibility.collections.abc import Mapping
 from ._compatibility.collections.abc import Set
 from ._compatibility.functools import partial

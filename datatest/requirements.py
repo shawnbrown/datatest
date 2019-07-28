@@ -17,10 +17,8 @@ from ._compatibility.functools import partial
 from ._compatibility.functools import wraps
 from ._compatibility.itertools import chain
 from ._compatibility.itertools import zip_longest
-from ._compatibility.statistics import median
 from .differences import (
     BaseDifference,
-    Deviation,
     Extra,
     Invalid,
     Missing,

@@ -3,7 +3,6 @@ import sys
 from ._compatibility.collections.abc import Collection
 from ._compatibility.collections.abc import Iterable
 from ._compatibility.collections.abc import Mapping
-from ._query.query import BaseElement
 from ._query.query import Query
 from ._query.query import Result
 from ._utils import exhaustible
