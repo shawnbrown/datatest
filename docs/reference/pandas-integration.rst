@@ -168,46 +168,49 @@ This is roughly equivalent to:
 
 .. _pandas-accessor-docs:
 
-*********
-Accessors
-*********
+***************************************
+Accessors (Alternate Validation Syntax)
+***************************************
 
-Accessors provide an alternate syntax for validation. They do
-not provide additional functionality but some users may prefer
-the more-integrated style.
-
+Accessors provide an alternate syntax for validation. While
+they do not provide additional functionality, some users may
+prefer the more integrated style.
 
 .. autofunction:: register_accessors
 
 
-Accessor Examples
-=================
+Accessor Equivalencies
+======================
 
 The following examples demonstrate the "validate" accessor for
-Index, Series, and DataFrame objects:
+Index, Series, and DataFrame objects. The equivalent non-accessor
+syntax is included for comparison:
 
-.. code-block:: python
+.. tabs::
 
-    df.columns.validate({'A', 'B', 'C'})  # Index accessor
+    .. group-tab:: Accessor Syntax
 
-    df['A'].validate({'x', 'y', 'z'})     # Series accessor
+        .. code-block:: python
 
-    df['C'].validate.interval(10, 30)     # Series accessor
+            df.columns.validate({'A', 'B', 'C'})  # Index accessor
 
-    df[['A', 'C']].validate((str, int))   # DataFrame accessor
+            df['A'].validate({'x', 'y', 'z'})     # Series accessor
 
-These expressions are equivalent to the following non-accessor
-expressions:
+            df['C'].validate.interval(10, 30)     # Series accessor
 
-.. code-block:: python
+            df[['A', 'C']].validate((str, int))   # DataFrame accessor
 
-    dt.validate(df.columns, {'A', 'B', 'C'})
+    .. group-tab:: Non-accessor Syntax
 
-    dt.validate(df['A'], {'x', 'y', 'z'})
+        .. code-block:: python
 
-    dt.validate.interval(df['C'], 10, 30)
+            dt.validate(df.columns, {'A', 'B', 'C'})
 
-    dt.validate(df[['A', 'C']], (str, int))
+            dt.validate(df['A'], {'x', 'y', 'z'})
+
+            dt.validate.interval(df['C'], 10, 30)
+
+            dt.validate(df[['A', 'C']], (str, int))
 
 
 Here is the full list of accessor equivalencies:

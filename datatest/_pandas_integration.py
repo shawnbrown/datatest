@@ -168,8 +168,15 @@ def register_accessors():
         dt.register_accessors()
         ...
 
-    After registering, the "validate" accessor maps calls to
-    :func:`validate`.
+    After registration, the "validate" accessor maps calls to
+    :func:`validate`::
+
+        ...
+        # Check a column's values using the "validate" accessor.
+        df['A'].validate({'x', 'y', 'z'})
+
+        # Check a column's values using equivalent non-accessor syntax.
+        validate(df['A'], {'x', 'y', 'z'})
     """
     global ValidateDataFrame
     global ValidateSeries
