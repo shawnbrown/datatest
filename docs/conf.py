@@ -54,6 +54,7 @@ if 'sphinx.ext.autodoc' in extensions:
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
     'pandas': ('https://pandas.pydata.org/pandas-docs/stable/', None),
+    'numpy': ('https://docs.scipy.org/doc/numpy/', None),
 }
 
 # autodoc settings
