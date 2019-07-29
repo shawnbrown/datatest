@@ -3,9 +3,9 @@ import warnings
 from .._utils import exhaustible
 from .._utils import seekable
 from .._utils import file_types
-from .._vendor.get_reader import get_reader
-from .._vendor.temptable import load_data
-from .._vendor.temptable import savepoint
+from .get_reader import get_reader
+from .temptable import load_data
+from .temptable import savepoint
 
 
 preferred_encoding = 'utf-8'

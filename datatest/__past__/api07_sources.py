@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
-from .._load.load_csv import load_csv
+from .._vendor.load_csv import load_csv
 from .._vendor.temptable import (
     load_data,
     new_table_name,

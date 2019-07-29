@@ -41,7 +41,7 @@ from .._utils import (
     string_types,
 )
 from .._vendor.get_reader import get_reader
-from .._load.load_csv import load_csv
+from .._vendor.load_csv import load_csv
 from .._vendor.temptable import (
     load_data,
     new_table_name,

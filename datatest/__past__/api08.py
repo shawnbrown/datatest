@@ -6,7 +6,7 @@ import datatest
 from datatest._compatibility import itertools
 from datatest._compatibility.collections.abc import Sequence
 from datatest._vendor.get_reader import get_reader
-from datatest._load.load_csv import load_csv
+from datatest._vendor.load_csv import load_csv
 from datatest._vendor.temptable import (
     load_data,
     new_table_name,

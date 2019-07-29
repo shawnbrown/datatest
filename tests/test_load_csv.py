@@ -7,7 +7,7 @@ from . import _io as io
 from . import _unittest as unittest
 from datatest._compatibility.builtins import *
 
-from datatest._load.load_csv import load_csv
+from datatest._vendor.load_csv import load_csv
 
 try:
     from StringIO import StringIO
