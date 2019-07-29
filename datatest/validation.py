@@ -6,7 +6,7 @@ from ._compatibility.collections.abc import Set
 from ._compatibility.functools import partial
 from .differences import BaseDifference
 from ._normalize import normalize
-from ._query.query import BaseElement
+from ._vendor.squint.query import BaseElement
 from . import requirements
 from ._utils import IterItems
 from ._utils import exhaustible

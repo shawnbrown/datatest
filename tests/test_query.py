@@ -17,7 +17,7 @@ from datatest._utils import IterItems
 from datatest._utils import nonstringiter
 
 from datatest._working_directory import working_directory
-from datatest._query.query import (
+from datatest._vendor.squint.query import (
     BaseElement,
     _is_collection_of_items,
     DictItems,

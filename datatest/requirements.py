@@ -28,7 +28,7 @@ from .differences import (
 )
 from ._normalize import normalize
 from ._vendor.predicate import Predicate
-from ._query.query import BaseElement
+from ._vendor.squint.query import BaseElement
 from ._utils import IterItems
 from ._utils import iterpeek
 from ._utils import nonstringiter

@@ -6,7 +6,7 @@ from .._vendor.temptable import (
     new_table_name,
     savepoint,
 )
-from .._query.query import DEFAULT_CONNECTION
+from .._vendor.squint.query import DEFAULT_CONNECTION
 
 
 def _load_temp_sqlite_table(columns, records):

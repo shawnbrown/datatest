@@ -14,10 +14,11 @@ from . import _unittest as unittest
 # Import code to test.
 from datatest.case import DataTestCase
 
-from datatest._query.query import Select
-from datatest._query.query import Query
-from datatest._query.query import Result
-
+from datatest._vendor.squint.query import (
+    Select,
+    Query,
+    Result,
+)
 from datatest.validation import validate
 from datatest.validation import ValidationError
 from datatest.differences import (

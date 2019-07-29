@@ -10,9 +10,9 @@ import sys
 from glob import glob
 from numbers import Number
 
-from .._compatibility.builtins import *
-from .._compatibility.collections import namedtuple
-from .._compatibility.collections.abc import (
+from ..._compatibility.builtins import *
+from ..._compatibility.collections import namedtuple
+from ..._compatibility.collections.abc import (
     Collection,
     Hashable,
     Iterable,
@@ -22,13 +22,13 @@ from .._compatibility.collections.abc import (
     Set,
     Sized,
 )
-from .._compatibility import (
+from ..._compatibility import (
     abc,
     contextlib,
     functools,
     itertools,
 )
-from .._utils import (
+from ..._utils import (
     _flatten,
     IterItems,
     iterpeek,
@@ -40,15 +40,15 @@ from .._utils import (
     file_types,
     string_types,
 )
-from .._vendor.get_reader import get_reader
-from .._vendor.load_csv import load_csv
-from .._vendor.temptable import (
+from ..get_reader import get_reader
+from ..load_csv import load_csv
+from ..temptable import (
     load_data,
     new_table_name,
     savepoint,
     table_exists,
 )
-from .._vendor.predicate import (
+from ..predicate import (
     MatcherObject,
     MatcherTuple,
     get_matcher,

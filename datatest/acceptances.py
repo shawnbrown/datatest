@@ -14,7 +14,7 @@ from ._compatibility import itertools
 from ._utils import exhaustible
 from ._utils import nonstringiter
 from ._vendor.predicate import get_matcher
-from ._query.query import BaseElement
+from ._vendor.squint.query import BaseElement
 
 from .validation import ValidationError
 from .differences import (
