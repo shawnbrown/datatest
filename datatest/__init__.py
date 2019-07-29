@@ -34,7 +34,7 @@ from ._load.working_directory import working_directory
 from ._query.query import Select
 from ._query.query import Query
 from ._query.query import Result
-from ._repeatingcontainer import RepeatingContainer
+from ._vendor.repeatingcontainer import RepeatingContainer
 
 # Set module explicitly to cleanup reprs and error reporting.
 Select.__module__ = 'datatest'

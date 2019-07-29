@@ -9,7 +9,7 @@ except ImportError:
 
 from datatest._compatibility.collections.abc import Iterator
 from datatest._utils import IterItems
-from datatest._repeatingcontainer import RepeatingContainer
+from datatest._vendor.repeatingcontainer import RepeatingContainer
 
 
 class TestRepeatingContainer(unittest.TestCase):

@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 import operator
-from ._compatibility.collections.abc import Iterable
-from ._compatibility.collections.abc import Mapping
-from ._compatibility.functools import partial
-from ._compatibility.functools import partialmethod
-from ._compatibility.itertools import chain
-from ._utils import IterItems
+from .._compatibility.collections.abc import Iterable
+from .._compatibility.collections.abc import Mapping
+from .._compatibility.functools import partial
+from .._compatibility.functools import partialmethod
+from .._compatibility.itertools import chain
+from .._utils import IterItems
 
 
 class RepeatingContainerBase(Iterable):
