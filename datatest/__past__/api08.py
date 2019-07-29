@@ -7,10 +7,12 @@ from datatest._compatibility import itertools
 from datatest._compatibility.collections.abc import Sequence
 from datatest._vendor.get_reader import get_reader
 from datatest._load.load_csv import load_csv
-from datatest._load.temptable import load_data
-from datatest._load.temptable import new_table_name
-from datatest._load.temptable import savepoint
-from datatest._load.temptable import table_exists
+from datatest._vendor.temptable import (
+    load_data,
+    new_table_name,
+    savepoint,
+    table_exists,
+)
 from datatest._query.query import DEFAULT_CONNECTION
 from datatest._query.query import BaseElement
 from datatest._utils import file_types

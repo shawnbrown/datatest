@@ -3,9 +3,9 @@ import itertools
 import sqlite3
 import unittest
 
-import datatest._load.temptable as temptable
+import datatest._vendor.temptable as temptable
 from datatest._compatibility import collections
-from datatest._load.temptable import (
+from datatest._vendor.temptable import (
     table_exists,
     new_table_name,
     normalize_names,
