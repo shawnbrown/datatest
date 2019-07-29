@@ -16,7 +16,7 @@ from datatest._compatibility.collections.abc import Mapping
 from datatest._utils import IterItems
 from datatest._utils import nonstringiter
 
-from datatest._load.working_directory import working_directory
+from datatest._working_directory import working_directory
 from datatest._query.query import (
     BaseElement,
     _is_collection_of_items,

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
-from .._compatibility import contextlib
+from ._compatibility import contextlib
 
 
 class working_directory(contextlib.ContextDecorator):
