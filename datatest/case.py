@@ -2,12 +2,8 @@
 from __future__ import division
 import inspect
 from unittest import TestCase
-
 from ._compatibility.builtins import *
 from ._compatibility import contextlib
-
-from ._query.query import Query
-from ._query.query import Result
 
 from .validation import validate
 from .validation import ValidationError
