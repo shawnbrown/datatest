@@ -40,7 +40,7 @@ from .._utils import (
     file_types,
     string_types,
 )
-from .._load.get_reader import get_reader
+from .._vendor.get_reader import get_reader
 from .._load.load_csv import load_csv
 from .._load.temptable import (
     load_data,

@@ -29,7 +29,7 @@ from .main import DataTestProgram
 from .main import main
 
 # Data Handling API
-from ._load.get_reader import get_reader
+from ._vendor.get_reader import get_reader
 from ._load.working_directory import working_directory
 from ._query.query import Select
 from ._query.query import Query

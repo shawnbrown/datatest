@@ -24,7 +24,7 @@ try:
 except ImportError:
     dbfread = None
 
-from datatest._load.get_reader import (
+from datatest._vendor.get_reader import (
     get_reader,
     _from_csv_iterable,
     _from_csv_path,
