@@ -14,7 +14,7 @@ from datatest._vendor.temptable import (
     table_exists,
 )
 from datatest._vendor.squint.query import DEFAULT_CONNECTION
-from datatest._vendor.squint.query import BaseElement
+from datatest._vendor.squint import BaseElement
 from datatest._utils import file_types
 from datatest._utils import string_types
 from datatest._utils import iterpeek

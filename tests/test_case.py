@@ -14,7 +14,7 @@ from . import _unittest as unittest
 # Import code to test.
 from datatest.case import DataTestCase
 
-from datatest._vendor.squint.query import (
+from datatest._vendor.squint import (
     Select,
     Query,
     Result,

@@ -8,7 +8,7 @@ from datatest.differences import (
     Invalid,
     Deviation,
 )
-from datatest._vendor.squint.query import Query
+from datatest._vendor.squint import Query
 from datatest._utils import IterItems
 
 from datatest.validation import ValidationError

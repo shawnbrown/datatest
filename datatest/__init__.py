@@ -31,9 +31,9 @@ from .main import main
 # Data Handling API
 from ._vendor.get_reader import get_reader
 from ._working_directory import working_directory
-from ._vendor.squint.query import Select
-from ._vendor.squint.query import Query
-from ._vendor.squint.query import Result
+from ._vendor.squint import Select
+from ._vendor.squint import Query
+from ._vendor.squint import Result
 from ._vendor.repeatingcontainer import RepeatingContainer
 
 # Set module explicitly to cleanup reprs and error reporting.

@@ -1,7 +1,7 @@
 """Tests for normalization functions."""
 import sqlite3
 from . import _unittest as unittest
-from datatest._vendor.squint.query import Result
+from datatest._vendor.squint import Result
 from datatest.requirements import BaseRequirement
 from datatest._utils import IterItems
 
