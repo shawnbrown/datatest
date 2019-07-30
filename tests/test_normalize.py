@@ -1,7 +1,6 @@
 """Tests for normalization functions."""
 import sqlite3
 from . import _unittest as unittest
-from datatest._vendor.squint.query import DictItems
 from datatest._vendor.squint.query import Result
 from datatest.requirements import BaseRequirement
 from datatest._utils import IterItems
@@ -33,7 +32,7 @@ class TestNormalizeLazy(unittest.TestCase):
         self.assertIs(_normalize_lazy(data), data, 'should return original object')
 
     def test_requirement(self):
-        result = Result(DictItems([('a', 1), ('b', 2)]), evaluation_type=dict)
+        result = Result(IterItems([('a', 1), ('b', 2)]), evaluation_type=dict)
         normalized = _normalize_lazy(result)
         self.assertIsInstance(normalized, IterItems)
 
