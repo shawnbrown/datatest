@@ -53,7 +53,7 @@ class TestPopulation(DataTestCase):
         requirement = summary({'state/territory': 'population'}).sum()
 
         omitted_territory = self.accepted({
-            'Jervis Bay Territory': Deviation(-388, 388),
+            'Jervis Bay Territory': Missing(388),
         })
 
         with self.acceptedPercent(0.03) | omitted_territory:

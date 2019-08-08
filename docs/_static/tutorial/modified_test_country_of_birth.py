@@ -57,7 +57,7 @@ def test_population_sums(detail, summary):
     requirement = summary({'state/territory': 'population'}).sum()
 
     omitted_territory = accepted({
-        'Jervis Bay Territory': Deviation(-388, 388),
+        'Jervis Bay Territory': Missing(388),
     })
 
     with accepted.percent(0.03) | omitted_territory:

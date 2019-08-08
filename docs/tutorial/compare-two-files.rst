@@ -517,7 +517,7 @@ Running this test gives the following message:
             >       validate(data, requirement)
             E       ValidationError: does not satisfy mapping requirement (9 differences): {
                         'Australian Capital Territory': Deviation(+7612, 389785),
-                        'Jervis Bay Territory': Deviation(-388, 388),
+                        'Jervis Bay Territory': Missing(388),
                         'New South Wales': Deviation(-27122, 7507350),
                         'Northern Territory': Deviation(+2421, 226412),
                         'Queensland': Deviation(-18310, 4721503),
@@ -543,7 +543,7 @@ Running this test gives the following message:
                 self.assertValid(data, requirement)
             ValidationError: does not satisfy mapping requirement (9 differences): {
                 'Australian Capital Territory': Deviation(+7612, 389785),
-                'Jervis Bay Territory': Deviation(-388, 388),
+                'Jervis Bay Territory': Missing(388),
                 'New South Wales': Deviation(-27122, 7507350),
                 'Northern Territory': Deviation(+2421, 226412),
                 'Queensland': Deviation(-18310, 4721503),
@@ -621,7 +621,7 @@ Rerunning our script with this new acceptance gives the following message:
                     with accepted.percent(0.03):  # <- Accept +/- 3%
             >           validate(data, requirement)
             E           ValidationError: does not satisfy mapping requirement (2 differences): {
-                            'Jervis Bay Territory': Deviation(-388, 388),
+                            'Jervis Bay Territory': Missing(388),
                             'Tasmania': Deviation(+505685, 514245),
                         }
 
@@ -639,7 +639,7 @@ Rerunning our script with this new acceptance gives the following message:
               File "~/australian_population/test_country_of_birth_unit.py", line 56, in test_population_sums
                 self.assertValid(data, requirement)
             ValidationError: does not satisfy mapping requirement (2 differences): {
-                'Jervis Bay Territory': Deviation(-388, 388),
+                'Jervis Bay Territory': Missing(388),
                 'Tasmania': Deviation(+505685, 514245),
             }
 
@@ -684,7 +684,7 @@ Running the test script again gives us one final difference to address:
                     requirement = summary({'state/territory': 'population'}).sum()
 
                     omitted_territory = accepted({
-                        'Jervis Bay Territory': Deviation(-388, 388),
+                        'Jervis Bay Territory': Missing(388),
                     })
 
                     with accepted.percent(0.03) | omitted_territory:
