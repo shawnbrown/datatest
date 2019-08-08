@@ -72,7 +72,7 @@ class TestCommand(Command):
             args.append('--failfast')
 
         # Run tests.
-        exit(subprocess.call(args))
+        sys.exit(subprocess.call(args))
 
     def _get_missing_optionals(self):
         # Returns a list of missing optional packages.
