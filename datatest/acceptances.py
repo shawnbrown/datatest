@@ -541,8 +541,8 @@ class AcceptedTolerance(BaseAcceptance):
     """AcceptedTolerance(tolerance, /, msg=None)
     AcceptedTolerance(lower, upper, msg=None)
 
-    Context manager that accepts numeric differences within a given
-    tolerance without triggering a test failure.
+    Context manager that accepts quantative differences within a
+    given tolerance without triggering a test failure.
 
     See documentation for full details.
     """
@@ -635,8 +635,8 @@ class AcceptedPercent(AcceptedTolerance):
     """AcceptedPercent(tolerance, /, msg=None)
     AcceptedPercent(lower, upper, msg=None)
 
-    Context manager that accepts Deviations within a given percent
-    tolerance without triggering a test failure.
+    Context manager that accepts percentages of error within a
+    given tolerance without triggering a test failure:
 
     See documentation for full details.
     """
