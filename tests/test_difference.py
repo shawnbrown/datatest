@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import datetime
+import decimal
 import re
 import textwrap
 from . import _unittest as unittest
@@ -153,6 +154,10 @@ class TestDeviation(unittest.TestCase):
         with self.assertRaises(ValueError):
             Deviation(0, 100)  # Deviation should not be zero.
 
+    def test_nonquantitative(self):
+        with self.assertRaises(TypeError):
+            Deviation({3}, {1,2})
+
     def test_repr(self):
         diff = Deviation(1, 100)  # Simple positive.
         self.assertEqual(repr(diff), "Deviation(+1, 100)")
@@ -282,6 +287,10 @@ class TestMakeDifference(unittest.TestCase):
     def test_numeric_vs_numeric(self):
         diff = _make_difference(5, 6)
         self.assertEqual(diff, Deviation(-1, 6))
+
+    def test_decimal_vs_float(self):
+        diff = _make_difference(decimal.Decimal('5'), 6.0)
+        self.assertEqual(diff, Invalid(decimal.Decimal('5'), expected=6.0))
 
     def test_datetime_vs_datetime(self):
         diff = _make_difference(
