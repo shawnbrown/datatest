@@ -1,5 +1,5 @@
 
-.. module:: datatest
+.. currentmodule:: datatest
 
 .. meta::
     :description: Datatest Core API Reference

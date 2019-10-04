@@ -1,5 +1,5 @@
 
-.. module:: datatest
+.. currentmodule:: datatest
 
 .. meta::
     :description: datatest API for unittest-style testing

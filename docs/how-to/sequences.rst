@@ -1,5 +1,5 @@
 
-.. module:: datatest
+.. py:currentmodule:: datatest
 
 .. meta::
     :description: How to validate sequences.

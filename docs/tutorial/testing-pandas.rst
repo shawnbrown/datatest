@@ -1,6 +1,4 @@
 
-.. module:: datatest
-
 .. meta::
     :description: Datatest examples demonstrating use of pandas DataFrame objects.
     :keywords: datatest, pandas, DataFrame

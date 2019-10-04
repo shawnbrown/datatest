@@ -1,5 +1,5 @@
 
-.. module:: datatest
+.. currentmodule:: datatest
 
 .. meta::
     :description: How to get started.

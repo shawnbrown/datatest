@@ -1,5 +1,5 @@
 
-.. module:: datatest
+.. py:currentmodule:: datatest
 
 .. meta::
     :description: How to assert subset and superset relations.

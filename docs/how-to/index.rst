@@ -4,8 +4,7 @@
     :keywords:
     :title: How-to Guide
 
-.. module:: datatest
-    :synopsis: Test driven data-wrangling and validation.
+.. py:currentmodule:: datatest
 .. moduleauthor:: Shawn Brown <sbrown@ncecservices.com>
 .. sectionauthor:: Shawn Brown <sbrown@ncecservices.com>
 

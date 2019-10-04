@@ -1,6 +1,6 @@
 
 
-.. module:: datatest
+.. py:currentmodule:: datatest
 
 .. meta::
     :description: How to handle relative file paths when testing.

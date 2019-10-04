@@ -1,5 +1,5 @@
 
-.. module:: datatest
+.. currentmodule:: datatest
 
 .. meta::
     :description: How to assert data types.

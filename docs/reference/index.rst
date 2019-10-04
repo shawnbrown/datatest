@@ -1,9 +1,4 @@
 
-.. module:: datatest
-    :synopsis: Test driven data-wrangling and analysis.
-.. moduleauthor:: Shawn Brown <sbrown@ncecservices.com>
-.. sectionauthor:: Shawn Brown <sbrown@ncecservices.com>
-
 .. meta::
     :description: Table of Contents for Reference.
     :keywords:

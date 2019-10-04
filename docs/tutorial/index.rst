@@ -4,9 +4,6 @@
     :keywords:
     :title: Tutorials
 
-.. module:: datatest
-    :synopsis: Tutorials for datatest.
-.. moduleauthor:: Shawn Brown <sbrown@ncecservices.com>
 .. sectionauthor:: Shawn Brown <sbrown@ncecservices.com>
 
 

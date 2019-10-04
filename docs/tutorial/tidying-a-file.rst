@@ -1,6 +1,4 @@
 
-.. module:: datatest
-
 .. meta::
     :description: Test-driven data preparation can provide much-needed
                   structure to guide the workflow of data preparation,
