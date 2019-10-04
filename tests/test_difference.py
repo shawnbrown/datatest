@@ -156,7 +156,7 @@ class TestDeviation(unittest.TestCase):
 
     def test_nonquantitative(self):
         with self.assertRaises(TypeError):
-            Deviation({3}, {1,2})
+            Deviation(set([3]), set([1, 2]))
 
     def test_repr(self):
         diff = Deviation(1, 100)  # Simple positive.
