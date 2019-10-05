@@ -44,23 +44,21 @@ class AlternateMethodDocumenter(MethodDocumenter):
     Alternative documenter for methods of classes and class instances.
     """
     def add_directive_header(self, sig):
-        if not isinstance(self.parent, type):  # If class instance.
-            # Call grandparent method.
+        if isinstance(self.parent, type):
+            # If parent is a class definition, then add header as normal.
+            super(AlternateMethodDocumenter, self).add_directive_header(sig)
+        else:
+            # When parent is an instance, then add a special header
+            # (calls superclass' superclass method).
             super(MethodDocumenter, self).add_directive_header(sig)
 
-            # Tag as "async" if appropriate.
-            sourcename = self.get_sourcename()
+            # Tag async methods but do not tag abstract, class, or
+            # static methods.
             parentclass = self.parent.__class__
             obj = parentclass.__dict__.get(self.object_name, self.object)
             if inspect.iscoroutinefunction(obj):
+                sourcename = self.get_sourcename()
                 self.add_line('   :async:', sourcename)
-
-            # Note: The method types like abstractmethod, classmethod,
-            # and instancemethod are NOT tagged as such on instances.
-
-        else:  # Else normal class.
-            # Call parent method.
-            super(AlternateMethodDocumenter, self).add_directive_header(sig)
 
 
 def setup(app):
