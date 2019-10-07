@@ -36,9 +36,8 @@ from ._utils import string_types
 
 
 def _build_description(obj):
-    """Build failure description for required_predicate() or
-    for a group-requirement function that does not return its
-    own description.
+    """Build a default failure description for requirement classes
+    that do not return their own descriptions.
     """
     if obj is NOVALUE:
         return obj  # <- EXIT!
