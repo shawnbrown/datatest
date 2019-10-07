@@ -161,6 +161,26 @@ def _is_collection_of_items(obj):
     return isinstance(obj, IterItems)
 
 
+# Temporary code for datatest deprecation warnings.
+_NO_WARNINGS = False
+def _warn(instance, stacklevel=3):
+    if _NO_WARNINGS:
+        return  # <- EXIT!
+
+    import warnings
+    cls_name = instance.__class__.__name__
+    message = (
+        "This functionality is being moved into the 'squint' package.\n\n"
+        "See squint on PyPI:\n"
+        "  https://pypi.org/project/squint/\n\n"
+        "Install with:\n"
+        "  pip install squint\n\n"
+        "'datatest.{0}' will be deprecated in version 0.9.8 and "
+        "removed in later versions--use 'squint.{0}' instead."
+    ).format(cls_name)
+    warnings.warn(message, PendingDeprecationWarning, stacklevel=stacklevel)
+
+
 class Result(Iterator):
     """A simple iterator that wraps the results of :class:`Query`
     execution. This iterator is used to facilitate the lazy evaluation
@@ -183,6 +203,7 @@ class Result(Iterator):
         contain unique key-value pairs or a mapping.
     """
     def __init__(self, iterable, evaluation_type):
+        _warn(self)  # Issue pending deprecation warning.
         if not isinstance(evaluation_type, type):
             msg = 'evaluation_type must be a type, found instance of {0}'
             raise TypeError(msg.format(evaluation_type.__class__.__name__))
@@ -632,6 +653,7 @@ class Query(object):
         Query(columns, **where)
         Query(select, columns, **where)
         """
+        _warn(self)  # Issue pending deprecation warning.
         argcount = len(args)
         if argcount == 2:
             select, columns = args
@@ -1091,6 +1113,7 @@ class Select(object):
     """
     def __init__(self, objs=None, *args, **kwds):
         """Initialize self."""
+        _warn(self)  # Issue pending deprecation warning.
         self._connection = DEFAULT_CONNECTION
         self._user_function_dict = dict()  # User-defined SQLite functions.
         self._table = None  # Table name.

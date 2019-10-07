@@ -44,6 +44,11 @@ from datatest._vendor.squint.query import (
 )
 
 
+# TEMP: Set "_NO_WARNINGS" flag to turn-off deprecation warnings.
+from datatest._vendor import squint
+squint.query._NO_WARNINGS = True
+
+
 class TestWorkingDirectory(unittest.TestCase):
     def setUp(self):
         self.original_dir = os.getcwd()
