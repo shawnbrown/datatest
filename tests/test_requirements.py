@@ -18,22 +18,27 @@ from datatest import (
 from datatest._vendor.predicate import Predicate
 from datatest.requirements import (
     _build_description,
+
+    # Abstract Requirement Classes
     BaseRequirement,
     ItemsRequirement,
     GroupRequirement,
-    RequiredMapping,
-    RequiredOrder,
+
+    # Concrete Requirement Classes
     RequiredPredicate,
-    RequiredSequence,
-    RequiredSet,
-    get_requirement,
     RequiredRegex,
-    RequiredUnique,
-    RequiredSubset,
-    RequiredSuperset,
     RequiredApprox,
     RequiredFuzzy,
     RequiredInterval,
+    RequiredSet,
+    RequiredSubset,
+    RequiredSuperset,
+    RequiredUnique,
+    RequiredOrder,
+    RequiredSequence,
+    RequiredMapping,
+
+    get_requirement,
     adapts_mapping,
 )
 from datatest.differences import NOVALUE
