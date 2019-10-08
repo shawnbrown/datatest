@@ -12,6 +12,7 @@ from ._utils import IterItems
 
 def _normalize_lazy(obj):
     """ Make Result for lazy evaluation."""
+    # Vendored Squint objects (will be deprecated in 0.9.8).
     if isinstance(obj, Query):
         obj = obj.execute()
 
@@ -19,6 +20,17 @@ def _normalize_lazy(obj):
         if issubclass(obj.evaluation_type, Mapping):
             obj = IterItems(obj)
         return obj  # <- EXIT!
+
+    # Separate Squint module.
+    squint = sys.modules.get('squint', None)
+    if squint:
+        if isinstance(obj, squint.Query):
+            obj = obj.execute()
+
+        if isinstance(obj, squint.Result):
+            if issubclass(obj.evaluation_type, Mapping):
+                obj = IterItems(obj)
+            return obj  # <- EXIT!
 
     pandas = sys.modules.get('pandas', None)
     if pandas and isinstance(obj, pandas.DataFrame):
@@ -73,6 +85,11 @@ def _normalize_eager(obj, default_type=None):
     must be a collection type (a sized iterable container).
     """
     if isinstance(obj, Result):
+        return obj.fetch()
+
+    # Separate Squint module.
+    squint = sys.modules.get('squint', None)
+    if squint and isinstance(obj, squint.Result):
         return obj.fetch()
 
     if isinstance(obj, IterItems):

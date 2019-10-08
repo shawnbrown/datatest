@@ -7,6 +7,11 @@ import math
 import datatest
 
 try:
+    import squint
+except ImportError:
+    squint = None
+
+try:
     import pandas
 except ImportError:
     pandas = None
@@ -65,16 +70,17 @@ class TestNamespaces(unittest.TestCase):
         self.assertIn('PYTEST_DONT_REWRITE', datatest.__doc__)
 
 
-class TestSelectIdioms(unittest.TestCase):
+@unittest.skipUnless(squint, 'requires squint')
+class TestSquintIdioms(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.select_a = datatest.Select([
+        cls.select_a = squint.Select([
             ['A', 'B', 'C'],
             ['x', 1, 100],
             ['y', 2, 200],
             ['z', 3, 300],
         ])
-        cls.select_b = datatest.Select([
+        cls.select_b = squint.Select([
             ['A', 'B'],
             ['x', 1],
             ['y', 2],
@@ -102,7 +108,7 @@ class TestSelectIdioms(unittest.TestCase):
             datatest.validate(a.fieldnames, set(b.fieldnames))
 
     def test_compare_rows(self):
-        """Should be able to compare rows by calling a Select by
+        """Should be able to compare rows by calling a Select using
         its own fieldnames.
         """
         a = self.select_a
