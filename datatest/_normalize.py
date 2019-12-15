@@ -28,7 +28,7 @@ def _normalize_lazy(obj):
             obj = obj.execute()
 
         if isinstance(obj, squint.Result):
-            if issubclass(obj.evaluation_type, Mapping):
+            if issubclass(obj.evaltype, Mapping):
                 obj = IterItems(obj)
             return obj  # <- EXIT!
 

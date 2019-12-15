@@ -36,8 +36,9 @@ class TestNormalizeLazy(unittest.TestCase):
         data = Result(iter([1, 2, 3]), evaluation_type=tuple)
         self.assertIs(_normalize_lazy(data), data, 'should return original object')
 
+    @unittest.skipIf(not squint, 'squint not found')
     def test_requirement(self):
-        result = Result(IterItems([('a', 1), ('b', 2)]), evaluation_type=dict)
+        result = squint.Result(IterItems([('a', 1), ('b', 2)]), evaltype=dict)
         normalized = _normalize_lazy(result)
         self.assertIsInstance(normalized, IterItems)
 
@@ -46,11 +47,11 @@ class TestNormalizeLazy(unittest.TestCase):
         query = squint.Query.from_object([1, 2, 3, 4])
         normalized = _normalize_lazy(query)
         self.assertIsInstance(normalized, squint.Result)
-        self.assertEqual(normalized.evaluation_type, list)
+        self.assertEqual(normalized.evaltype, list)
 
     @unittest.skipIf(not squint, 'squint not found')
     def test_normalize_squint_result(self):
-        result = squint.Result(IterItems([('a', 1), ('b', 2)]), evaluation_type=dict)
+        result = squint.Result(IterItems([('a', 1), ('b', 2)]), evaltype=dict)
         normalized = _normalize_lazy(result)
         self.assertIsInstance(normalized, IterItems)
 
@@ -205,7 +206,7 @@ class TestNormalizeEager(unittest.TestCase):
 
     @unittest.skipIf(not squint, 'squint not found')
     def test_squint_object(self):
-        result_obj = squint.Result(iter([1, 2, 3]), evaluation_type=tuple)
+        result_obj = squint.Result(iter([1, 2, 3]), evaltype=tuple)
         output = _normalize_eager(result_obj)
         self.assertIsInstance(output, tuple)
         self.assertEqual(output, (1, 2, 3))
