@@ -77,7 +77,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'datatest'
-copyright = '2014 - 2019, National Committee for an Effective Congress, et al.'
+copyright = '2014 - 2020, National Committee for an Effective Congress, et al.'
 author = 'Shawn Brown'
 
 # The version info for the project you're documenting, acts as replacement for
