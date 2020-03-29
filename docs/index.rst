@@ -26,8 +26,18 @@ file for full details regarding supported versions, backward
 compatibility, and more.
 
 
+=================
+Table of Contents
+=================
+
 .. toctree::
     :caption: Documentation
+    :hidden:
+
+    Introduction <self>
+
+
+.. toctree::
     :maxdepth: 2
 
     tutorial/index
