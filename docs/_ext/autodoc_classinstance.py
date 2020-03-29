@@ -7,6 +7,12 @@ from sphinx.ext.autodoc import MethodDocumenter
 from sphinx.util import inspect
 
 
+try:
+    iscoroutinefunction = inspect.iscoroutinefunction  # New in Sphinx v2.1.0
+except AttributeError:
+    iscoroutinefunction = lambda x: False  # Dummy lambda if not supported.
+
+
 class PyClassInstance(PyClasslike):
     """
     Description of a class-instance object.
@@ -56,7 +62,7 @@ class AlternateMethodDocumenter(MethodDocumenter):
             # static methods.
             parentclass = self.parent.__class__
             obj = parentclass.__dict__.get(self.object_name, self.object)
-            if inspect.iscoroutinefunction(obj):
+            if iscoroutinefunction(obj):
                 sourcename = self.get_sourcename()
                 self.add_line('   :async:', sourcename)
 
