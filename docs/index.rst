@@ -30,10 +30,10 @@ compatibility, and more.
     :caption: Documentation
     :maxdepth: 2
 
-    tutorial/index.rst
-    how-to/index.rst
-    reference/index.rst
-    Discussion <discussion/data-wrangling.rst>
+    tutorial/index
+    how-to/index
+    reference/index
+    Discussion <discussion/data-wrangling>
 
 
 .. note::
