@@ -6,9 +6,12 @@
 #
 # The following dependencies are only required for
 # testing, building, and documentation generation.
+#
+# pip install -r requirements-dev.txt
 
 dbfread
 pandas
+squint
 xlrd
 sphinx
 sphinx-tabs
