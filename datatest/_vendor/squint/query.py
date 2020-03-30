@@ -175,10 +175,10 @@ def _warn(instance, stacklevel=3):
         "  https://pypi.org/project/squint/\n\n"
         "Install with:\n"
         "  pip install squint\n\n"
-        "'datatest.{0}' will be deprecated in version 0.9.8 and "
-        "removed in later versions--use 'squint.{0}' instead."
+        "'datatest.{0}' will be removed in the future "
+        "(use 'squint.{0}' instead)"
     ).format(cls_name)
-    warnings.warn(message, PendingDeprecationWarning, stacklevel=stacklevel)
+    warnings.warn(message, DeprecationWarning, stacklevel=stacklevel)
 
 
 class Result(Iterator):
@@ -203,7 +203,7 @@ class Result(Iterator):
         contain unique key-value pairs or a mapping.
     """
     def __init__(self, iterable, evaluation_type):
-        _warn(self)  # Issue pending deprecation warning.
+        _warn(self)  # Issue deprecation warning.
         if not isinstance(evaluation_type, type):
             msg = 'evaluation_type must be a type, found instance of {0}'
             raise TypeError(msg.format(evaluation_type.__class__.__name__))
@@ -653,7 +653,7 @@ class Query(object):
         Query(columns, **where)
         Query(select, columns, **where)
         """
-        _warn(self)  # Issue pending deprecation warning.
+        _warn(self)  # Issue deprecation warning.
         argcount = len(args)
         if argcount == 2:
             select, columns = args
@@ -1113,7 +1113,7 @@ class Select(object):
     """
     def __init__(self, objs=None, *args, **kwds):
         """Initialize self."""
-        _warn(self)  # Issue pending deprecation warning.
+        _warn(self)  # Issue deprecation warning.
         self._connection = DEFAULT_CONNECTION
         self._user_function_dict = dict()  # User-defined SQLite functions.
         self._table = None  # Table name.
