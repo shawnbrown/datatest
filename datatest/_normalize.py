@@ -2,6 +2,7 @@
 import sys
 from ._compatibility.collections.abc import Collection
 from ._compatibility.collections.abc import Iterable
+from ._compatibility.collections.abc import Iterator
 from ._compatibility.collections.abc import Mapping
 from ._vendor.squint import Query
 from ._vendor.squint import Result
@@ -10,8 +11,31 @@ from ._utils import iterpeek
 from ._utils import IterItems
 
 
+class TypedIterator(Iterator):
+    def __init__(self, iterable, evaltype):
+        self._iterator = iter(iterable)
+        self.evaltype = evaltype
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        return next(self._iterator)
+
+    def next(self):  # Python 2.x support.
+        return self.__next__()
+
+    def fetch(self):
+        return self.evaltype(self._iterator)
+
+
 def _normalize_lazy(obj):
-    """ Make Result for lazy evaluation."""
+    """Return an iterator for lazy evaluation."""
+    if isinstance(obj, TypedIterator):
+        if issubclass(obj.evaltype, Mapping):
+            obj = IterItems(obj)
+        return obj  # <- EXIT!
+
     # Vendored Squint objects (will be deprecated in 0.9.8).
     if isinstance(obj, Query):
         obj = obj.execute()
@@ -49,7 +73,7 @@ def _normalize_lazy(obj):
         # Two-dimentional array, recarray, or structured array.
         if obj.ndim == 2 or (obj.ndim == 1 and len(obj.dtype) > 1):
             obj = (tuple(x) for x in obj)
-            return Result(obj, evaluation_type=list)  # <- EXIT!
+            return TypedIterator(obj, evaltype=list)  # <- EXIT!
 
         # One-dimentional array, recarray, or structured array.
         if obj.ndim == 1:
@@ -57,7 +81,7 @@ def _normalize_lazy(obj):
                 obj = (x[0] for x in obj)  # or structured array.
             else:
                 obj = iter(obj)
-            return Result(obj, evaluation_type=list)  # <- EXIT!
+            return TypedIterator(obj, evaltype=list)  # <- EXIT!
 
     # Check for cursor-like object (if obj has DBAPI2 cursor attributes).
     if all(hasattr(obj, n) for n in ('fetchone', 'execute',
@@ -84,6 +108,10 @@ def _normalize_eager(obj, default_type=None):
     a *default_type* must be specified. When provided, *default_type*
     must be a collection type (a sized iterable container).
     """
+    if isinstance(obj, TypedIterator):
+        return obj.fetch()
+
+    # Vendored Squint objects (will be deprecated in 0.9.8).
     if isinstance(obj, Result):
         return obj.fetch()
 

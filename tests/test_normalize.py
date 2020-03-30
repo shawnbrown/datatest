@@ -5,6 +5,7 @@ from datatest._vendor.squint import Result
 from datatest.requirements import BaseRequirement
 from datatest._utils import IterItems
 
+from datatest._normalize import TypedIterator
 from datatest._normalize import _normalize_lazy
 from datatest._normalize import _normalize_eager
 from datatest._normalize import normalize
@@ -33,7 +34,7 @@ class TestNormalizeLazy(unittest.TestCase):
         data = iter([1, 2, 3])
         self.assertIs(_normalize_lazy(data), data, 'should return original object')
 
-        data = Result(iter([1, 2, 3]), evaluation_type=tuple)
+        data = TypedIterator(iter([1, 2, 3]), evaltype=tuple)
         self.assertIs(_normalize_lazy(data), data, 'should return original object')
 
     @unittest.skipIf(not squint, 'squint not found')
@@ -104,41 +105,41 @@ class TestNormalizeLazy(unittest.TestCase):
         # Two-dimentional array.
         arr = numpy.array([['a', 'x'], ['b', 'y']])
         lazy = _normalize_lazy(arr)
-        self.assertIsInstance(lazy, Result)
+        self.assertIsInstance(lazy, TypedIterator)
         self.assertEqual(lazy.fetch(), [('a', 'x'), ('b', 'y')])
 
         # Two-valued structured array.
         arr = numpy.array([('a', 1), ('b', 2)],
                           dtype=[('one', 'U10'), ('two', 'i4')])
         lazy = _normalize_lazy(arr)
-        self.assertIsInstance(lazy, Result)
+        self.assertIsInstance(lazy, TypedIterator)
         self.assertEqual(lazy.fetch(), [('a', 1), ('b', 2)])
 
         # Two-valued recarray (record array).
         arr = numpy.rec.array([('a', 1), ('b', 2)],
                               dtype=[('one', 'U10'), ('two', 'i4')])
         lazy = _normalize_lazy(arr)
-        self.assertIsInstance(lazy, Result)
+        self.assertIsInstance(lazy, TypedIterator)
         self.assertEqual(lazy.fetch(), [('a', 1), ('b', 2)])
 
         # One-dimentional array.
         arr = numpy.array(['x', 'y', 'z'])
         lazy = _normalize_lazy(arr)
-        self.assertIsInstance(lazy, Result)
+        self.assertIsInstance(lazy, TypedIterator)
         self.assertEqual(lazy.fetch(), ['x', 'y', 'z'])
 
         # Single-valued structured array.
         arr = numpy.array([('x',), ('y',), ('z',)],
                           dtype=[('one', 'U10')])
         lazy = _normalize_lazy(arr)
-        self.assertIsInstance(lazy, Result)
+        self.assertIsInstance(lazy, TypedIterator)
         self.assertEqual(lazy.fetch(), ['x', 'y', 'z'])
 
         # Single-valued recarray (record array).
         arr = numpy.rec.array([('x',), ('y',), ('z',)],
                               dtype=[('one', 'U10')])
         lazy = _normalize_lazy(arr)
-        self.assertIsInstance(lazy, Result)
+        self.assertIsInstance(lazy, TypedIterator)
         self.assertEqual(lazy.fetch(), ['x', 'y', 'z'])
 
         # Three-dimentional array--conversion is not supported.
