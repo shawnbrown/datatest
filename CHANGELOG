@@ -2,6 +2,42 @@
 Datatest Changelog
 ==================
 
+COMING SOON (0.9.7)
+-------------------
+
+* Added pandas accessors to provide alternate validation syntax for
+  `DataFrame`, `Series`, `Index` and `MultiIndex` objects:
+
+      import datatest as dt
+      ...
+      dt.register_accessors()  # <- Register pandas accessors.
+
+  Once registered, you can test your existing pandas objects using
+  the `validate` accessor:
+
+      df[['A', 'B']].validate((str, int))
+
+* Added improved NaN Handling:
+
+  * Added NaN support to `accepted.keys()`, `accepted.args()`, and
+    `validate.interval()`.
+  * Improved existing NaN support for difference comparisons.
+  * Added how-to documentation for NaN handling.
+
+* Added deprecation warnings for soon-to-be-removed functions and classes:
+
+  * Added DeprecationWarning to `get_reader` function. This function
+    is now available from the **get-reader** package on PyPI:
+
+    https://pypi.org/project/get-reader/
+
+  * Added DeprecationWarning to `Select`, `Query`, and `Result` classes.
+    These classes will be deprecated in the next release but are now
+    available from the **squint** package on PyPI:
+
+    https://pypi.org/project/squint/
+
+
 2019-06-03 (0.9.6)
 ------------------
 
