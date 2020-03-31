@@ -5,19 +5,20 @@ Datatest Changelog
 COMING SOON (0.9.7)
 -------------------
 
-* Added pandas accessors to provide alternate validation syntax for
-  `DataFrame`, `Series`, `Index` and `MultiIndex` objects:
+* Added pandas integration for `DataFrame`, `Series`, `Index` and
+  `MultiIndex` objects. After calling the new register_accessors()
+  function, you can check your existing pandas objects using the
+  'validate' accessor:
 
+      import padas as pd
       import datatest as dt
-      ...
-      dt.register_accessors()  # <- Register pandas accessors.
 
-  Once registered, you can test your existing pandas objects using
-  the `validate` accessor:
+      dt.register_accessors()  # <- Activate pandas integration.
 
-      df[['A', 'B']].validate((str, int))
+      df = pd.DataFrame(...)
+      df[['A', 'B']].validate((str, int))  # <- Use 'validate' accessor.
 
-* Added improved NaN Handling:
+* Added improved NaN handling:
 
   * Added NaN support to `accepted.keys()`, `accepted.args()`, and
     `validate.interval()`.
