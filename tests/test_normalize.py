@@ -26,17 +26,25 @@ except ImportError:
     numpy = None
 
 
-class TestNormalizeLazy(unittest.TestCase):
-    def test_unchanged(self):
+class TestNormalizeLazyUnchanged(unittest.TestCase):
+    """Test objects that should be returned unchanged."""
+    def test_nonexhaustible_iterable(self):
         data = [1, 2, 3]
-        self.assertIs(_normalize_lazy(data), data, 'should return original object')
+        self.assertIs(_normalize_lazy(data), data)
 
+        data = (1, 2, 3)
+        self.assertIs(_normalize_lazy(data), data)
+
+    def test_exhaustible_iterator(self):
         data = iter([1, 2, 3])
-        self.assertIs(_normalize_lazy(data), data, 'should return original object')
+        self.assertIs(_normalize_lazy(data), data)
 
+    def test_typediterator(self):
         data = TypedIterator(iter([1, 2, 3]), evaltype=tuple)
-        self.assertIs(_normalize_lazy(data), data, 'should return original object')
+        self.assertIs(_normalize_lazy(data), data)
 
+
+class TestNormalizeLazy(unittest.TestCase):
     @unittest.skipIf(not squint, 'squint not found')
     def test_requirement(self):
         result = squint.Result(IterItems([('a', 1), ('b', 2)]), evaltype=dict)
