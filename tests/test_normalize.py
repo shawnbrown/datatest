@@ -44,26 +44,27 @@ class TestNormalizeLazyUnchanged(unittest.TestCase):
         self.assertIs(_normalize_lazy(data), data)
 
 
-class TestNormalizeLazy(unittest.TestCase):
-    @unittest.skipIf(not squint, 'squint not found')
-    def test_requirement(self):
-        result = squint.Result(IterItems([('a', 1), ('b', 2)]), evaltype=dict)
-        normalized = _normalize_lazy(result)
+@unittest.skipIf(not squint, 'squint not found')
+class TestNormalizeLazySquint(unittest.TestCase):
+    """Test squint package's `Result` and `Query` objects."""
+    def test_sequence_result(self):
+        result_object = squint.Result([1, 2, 3, 4], evaltype=list)
+        normalized = _normalize_lazy(result_object)
+        self.assertIs(normalized, result_object, msg='should return original object')
+
+    def test_iteritems_result(self):
+        result_object = squint.Result(IterItems([('a', 1), ('b', 2)]), evaltype=dict)
+        normalized = _normalize_lazy(result_object)
         self.assertIsInstance(normalized, IterItems)
 
-    @unittest.skipIf(not squint, 'squint not found')
-    def test_normalize_squint_query(self):
-        query = squint.Query.from_object([1, 2, 3, 4])
-        normalized = _normalize_lazy(query)
+    def test_query(self):
+        query_object = squint.Query.from_object([1, 2, 3, 4])
+        normalized = _normalize_lazy(query_object)
         self.assertIsInstance(normalized, squint.Result)
         self.assertEqual(normalized.evaltype, list)
 
-    @unittest.skipIf(not squint, 'squint not found')
-    def test_normalize_squint_result(self):
-        result = squint.Result(IterItems([('a', 1), ('b', 2)]), evaltype=dict)
-        normalized = _normalize_lazy(result)
-        self.assertIsInstance(normalized, IterItems)
 
+class TestNormalizeLazy(unittest.TestCase):
     @unittest.skipIf(not pandas, 'pandas not found')
     def test_normalize_pandas_dataframe(self):
         df = pandas.DataFrame([(1, 'a'), (2, 'b'), (3, 'c')])
