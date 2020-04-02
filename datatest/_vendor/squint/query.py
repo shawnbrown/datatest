@@ -2,6 +2,8 @@
 from __future__ import absolute_import
 import csv
 import inspect
+import warnings
+
 try:
     import sqlite3
 except ImportError:
@@ -167,7 +169,6 @@ def _warn(instance, stacklevel=3):
     if _NO_WARNINGS:
         return  # <- EXIT!
 
-    import warnings
     cls_name = instance.__class__.__name__
     message = (
         "This functionality is being moved into the 'squint' package.\n\n"
@@ -179,6 +180,14 @@ def _warn(instance, stacklevel=3):
         "(use 'squint.{0}' instead)"
     ).format(cls_name)
     warnings.warn(message, DeprecationWarning, stacklevel=stacklevel)
+
+
+class suppress_deprecation(warnings.catch_warnings):
+    """Context manager to suppress DeprecationWarning messages."""
+    def __enter__(self):
+        cm = super(suppress_deprecation, self).__enter__()
+        warnings.simplefilter('ignore', category=DeprecationWarning)
+        return cm
 
 
 class Result(Iterator):
