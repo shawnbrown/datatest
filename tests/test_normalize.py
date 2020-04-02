@@ -160,8 +160,8 @@ class TestNormalizeLazyNumpy(unittest.TestCase):
         self.assertIs(result, arr, msg='unsupported, returns unchanged')
 
 
-class TestNormalizeLazy(unittest.TestCase):
-    def test_normalize_dbapi2_cursor(self):
+class TestNormalizeLazyDBAPI2Cursor(unittest.TestCase):
+    def setUp(self):
         conn = sqlite3.connect(':memory:')
         conn.executescript('''
             CREATE TABLE mydata(A, B, C);
@@ -172,20 +172,23 @@ class TestNormalizeLazy(unittest.TestCase):
             INSERT INTO mydata VALUES('z', 'bar', 10);
             INSERT INTO mydata VALUES('z', 'bar', 10);
         ''')
-        cursor = conn.cursor()
+        self.cursor = conn.cursor()
 
-        cursor.execute('SELECT A, B FROM mydata;')
-        result = _normalize_lazy(cursor)
+    def test_multiple_coumns(self):
+        self.cursor.execute('SELECT A, B FROM mydata;')
+        result = _normalize_lazy(self.cursor)
         self.assertEqual(
             list(result),
             [('x', 'foo'), ('x', 'foo'), ('y', 'foo'),
              ('y', 'bar'), ('z', 'bar'), ('z', 'bar')],
         )
 
-        # Check for single-value record unpacking.
-        cursor.execute('SELECT C FROM mydata;')
-        result = _normalize_lazy(cursor)
+    def test_single_column(self):
+        """Single column selections should be unwrapped."""
+        self.cursor.execute('SELECT C FROM mydata;')
+        result = _normalize_lazy(self.cursor)
         self.assertEqual(list(result), [20, 30, 10, 20, 10, 10])
+
 
 class TestNormalizeEager(unittest.TestCase):
     def test_unchanged(self):
