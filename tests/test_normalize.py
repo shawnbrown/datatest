@@ -111,54 +111,56 @@ class TestNormalizeLazyPandas(unittest.TestCase):
         self.assertTrue(s.equals(result))
 
 
-class TestNormalizeLazy(unittest.TestCase):
-    @unittest.skipIf(not numpy, 'numpy not found')
-    def test_normalize_numpy(self):
-        # Two-dimentional array.
+@unittest.skipIf(not numpy, 'numpy not found')
+class TestNormalizeLazyNumpy(unittest.TestCase):
+    def test_two_dimentional_array(self):
         arr = numpy.array([['a', 'x'], ['b', 'y']])
         lazy = _normalize_lazy(arr)
         self.assertIsInstance(lazy, TypedIterator)
         self.assertEqual(lazy.fetch(), [('a', 'x'), ('b', 'y')])
 
-        # Two-valued structured array.
+    def test_two_valued_structured_array(self):
         arr = numpy.array([('a', 1), ('b', 2)],
                           dtype=[('one', 'U10'), ('two', 'i4')])
         lazy = _normalize_lazy(arr)
         self.assertIsInstance(lazy, TypedIterator)
         self.assertEqual(lazy.fetch(), [('a', 1), ('b', 2)])
 
-        # Two-valued recarray (record array).
+    def test_two_valued_recarray_array(self):  # record array
         arr = numpy.rec.array([('a', 1), ('b', 2)],
                               dtype=[('one', 'U10'), ('two', 'i4')])
         lazy = _normalize_lazy(arr)
         self.assertIsInstance(lazy, TypedIterator)
         self.assertEqual(lazy.fetch(), [('a', 1), ('b', 2)])
 
-        # One-dimentional array.
+    def test_one_dimentional_array(self):
         arr = numpy.array(['x', 'y', 'z'])
         lazy = _normalize_lazy(arr)
         self.assertIsInstance(lazy, TypedIterator)
         self.assertEqual(lazy.fetch(), ['x', 'y', 'z'])
 
-        # Single-valued structured array.
+    def test_single_valued_structured_array(self):
         arr = numpy.array([('x',), ('y',), ('z',)],
                           dtype=[('one', 'U10')])
         lazy = _normalize_lazy(arr)
         self.assertIsInstance(lazy, TypedIterator)
         self.assertEqual(lazy.fetch(), ['x', 'y', 'z'])
 
-        # Single-valued recarray (record array).
+    def test_single_valued_recarray_array(self):  # record array
         arr = numpy.rec.array([('x',), ('y',), ('z',)],
                               dtype=[('one', 'U10')])
         lazy = _normalize_lazy(arr)
         self.assertIsInstance(lazy, TypedIterator)
         self.assertEqual(lazy.fetch(), ['x', 'y', 'z'])
 
-        # Three-dimentional array--conversion is not supported.
+    def test_three_dimentional_array(self):
+        """Three-dimentional array normalization is not supported."""
         arr = numpy.array([[[1, 3], ['a', 'x']], [[2, 4], ['b', 'y']]])
         result = _normalize_lazy(arr)
         self.assertIs(result, arr, msg='unsupported, returns unchanged')
 
+
+class TestNormalizeLazy(unittest.TestCase):
     def test_normalize_dbapi2_cursor(self):
         conn = sqlite3.connect(':memory:')
         conn.executescript('''
