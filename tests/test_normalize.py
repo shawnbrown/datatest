@@ -217,7 +217,9 @@ class TestNormalizeEager(unittest.TestCase):
         self.assertEqual(output, set([1, 2, 3]))
 
     def test_result_object(self):
-        result_obj = Result(iter([1, 2, 3]), evaluation_type=tuple)
+        with self.assertWarns(DeprecationWarning):
+            result_obj = Result(iter([1, 2, 3]), evaluation_type=tuple)
+
         output = _normalize_eager(result_obj)
         self.assertIsInstance(output, tuple)
         self.assertEqual(output, (1, 2, 3))
