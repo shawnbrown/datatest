@@ -64,51 +64,54 @@ class TestNormalizeLazySquint(unittest.TestCase):
         self.assertEqual(normalized.evaltype, list)
 
 
-class TestNormalizeLazy(unittest.TestCase):
-    @unittest.skipIf(not pandas, 'pandas not found')
-    def test_normalize_pandas_dataframe(self):
+@unittest.skipIf(not pandas, 'pandas not found')
+class TestNormalizeLazyPandas(unittest.TestCase):
+    def test_dataframe_multiple_columns(self):
         df = pandas.DataFrame([(1, 'a'), (2, 'b'), (3, 'c')])
         result = _normalize_lazy(df)
         self.assertIsInstance(result, IterItems)
         expected = {0: (1, 'a'), 1: (2, 'b'), 2: (3, 'c')}
         self.assertEqual(dict(result), expected)
 
-        # Single column.
+    def test_dataframe_single_column(self):
+        """Single column DataFrame values should be unwrapped."""
         df = pandas.DataFrame([('x',), ('y',), ('z',)])
         result = _normalize_lazy(df)
         self.assertIsInstance(result, IterItems)
         expected = {0: 'x', 1: 'y', 2: 'z'}
-        self.assertEqual(dict(result), expected, 'single column should be unwrapped')
+        self.assertEqual(dict(result), expected)
 
-        # Multi-index.
+    def test_dataframe_multiindex(self):
+        """Multi-index values should be tuples."""
         df = pandas.DataFrame([('x',), ('y',), ('z',)])
         df.index = pandas.MultiIndex.from_tuples([(0, 0), (0, 1), (1, 0)])
         result = _normalize_lazy(df)
         self.assertIsInstance(result, IterItems)
         expected = {(0, 0): 'x', (0, 1): 'y', (1, 0): 'z'}
-        self.assertEqual(dict(result), expected, 'multi-index should be tuples')
+        self.assertEqual(dict(result), expected)
 
-        # Indexes must contain unique values, no duplicates
+    def test_dataframe_index_error(self):
+        """Indexes must contain unique values, no duplicates."""
         df = pandas.DataFrame([('x',), ('y',), ('z',)])
         df.index = pandas.Index([0, 0, 1])  # <- Duplicate values.
         with self.assertRaises(ValueError):
             _normalize_lazy(df)
 
-    @unittest.skipIf(not pandas, 'pandas not found')
-    def test_normalize_pandas_series(self):
-        # Simple, implicit index.
+    def test_series_rangeindex(self):
         s = pandas.Series(['x', 'y', 'z'])
         result = _normalize_lazy(s)
         self.assertIsInstance(result, pandas.Series)
         self.assertTrue(s.equals(result))
 
-        # Multi-index.
+    def test_series_multiindex(self):
         s = pandas.Series(['x', 'y', 'z'])
         s.index = pandas.MultiIndex.from_tuples([(0, 0), (0, 1), (1, 0)])
         result = _normalize_lazy(s)
         self.assertIsInstance(result, pandas.Series)
         self.assertTrue(s.equals(result))
 
+
+class TestNormalizeLazy(unittest.TestCase):
     @unittest.skipIf(not numpy, 'numpy not found')
     def test_normalize_numpy(self):
         # Two-dimentional array.
