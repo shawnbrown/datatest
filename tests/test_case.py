@@ -10,6 +10,7 @@ from unittest import TestCase as _TestCase  # Originial TestCase, not
 # Import compatiblity layers.
 from . import _io as io
 from . import _unittest as unittest
+from .common import ignore_deprecations
 
 # Import code to test.
 from datatest.case import DataTestCase
@@ -59,6 +60,7 @@ class TestSubclass(TestHelperCase):
         self.assertTrue(issubclass(DataTestCase, _TestCase))
 
 
+@ignore_deprecations
 class TestAssertValid(DataTestCase):
     """
     +-------------------------------------------------------------+

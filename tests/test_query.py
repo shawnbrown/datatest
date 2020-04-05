@@ -8,6 +8,7 @@ import sqlite3
 import tempfile
 import textwrap
 from . import _io as io
+from .common import ignore_deprecations
 
 from . import _unittest as unittest
 from datatest._compatibility.builtins import *
@@ -42,11 +43,6 @@ from datatest._vendor.squint.query import (
     Result,
     Select,
 )
-
-
-# TEMP: Set "_NO_WARNINGS" flag to turn-off deprecation warnings.
-from datatest._vendor import squint
-squint.query._NO_WARNINGS = True
 
 
 class TestWorkingDirectory(unittest.TestCase):
@@ -130,6 +126,7 @@ def convert_iter_to_type(iterable, target_type):
     return output
 
 
+@ignore_deprecations
 class TestResult(unittest.TestCase):
     def test_nonmappings(self):
         """Check collection types (i.e., sized, iterable containers)."""
@@ -162,6 +159,7 @@ class TestResult(unittest.TestCase):
             typed = Result([1, 2, 3], [1])
 
 
+@ignore_deprecations
 class TestDictItems(unittest.TestCase):
     def test_list_of_items(self):
         items = DictItems([('a', 1), ('b', 2)])
@@ -216,6 +214,7 @@ class TestIsCollectionOfItems(unittest.TestCase):
         self.assertTrue(_is_collection_of_items(dict_items))
 
 
+@ignore_deprecations
 class TestMapData(unittest.TestCase):
     def test_dataiter_list(self):
         iterable = Result([1, 2, 3], list)
@@ -280,6 +279,7 @@ class TestMapData(unittest.TestCase):
         self.assertEqual(result, 0.125)
 
 
+@ignore_deprecations
 class TestStarmapData(unittest.TestCase):
     def test_iter_of_tuples(self):
         data = Result([(1, 1), (2, 2)], list)
@@ -371,6 +371,7 @@ class TestStarmapData(unittest.TestCase):
             result.fetch()
 
 
+@ignore_deprecations
 class TestFilterData(unittest.TestCase):
     def test_return_type(self):
         func = lambda x: True
@@ -428,6 +429,7 @@ class TestFilterData(unittest.TestCase):
         self.assertEqual(result.fetch(), [0, '', tuple()])
 
 
+@ignore_deprecations
 class TestFlattenData(unittest.TestCase):
     def test_nonmapping_iters(self):
         """Non-mapping iterables should be returned unchanged."""
@@ -511,6 +513,7 @@ class TestFlattenData(unittest.TestCase):
         )
 
 
+@ignore_deprecations
 class TestUnwrapData(unittest.TestCase):
     def test_multiple_item_containers(self):
         """Containers with multiple items should be returned unchanged."""
@@ -593,6 +596,7 @@ class TestUnwrapData(unittest.TestCase):
         self.assertEqual(result.fetch(), expected)
 
 
+@ignore_deprecations
 class TestReduceData(unittest.TestCase):
     def test_list_iter(self):
         iterable = Result([1, 2, 3], list)
@@ -642,6 +646,7 @@ class TestReduceData(unittest.TestCase):
         self.assertEqual(result, {'a': 2, 'b': 1, 'c': 3})
 
 
+@ignore_deprecations
 class TestGroupwiseApply(unittest.TestCase):
     def test_dataiter_list(self):
         iterable = Result([1, 2, 3], list)
@@ -675,6 +680,7 @@ class TestGroupwiseApply(unittest.TestCase):
         self.assertEqual(result.fetch(), {'a': 4, 'b': 6})
 
 
+@ignore_deprecations
 class TestSumData(unittest.TestCase):
     def test_list_iter(self):
         iterable = Result([1, 2, 3], list)
@@ -706,6 +712,7 @@ class TestSumData(unittest.TestCase):
         self.assertEqual(result.fetch(), {'a': 2, 'b': 3})
 
 
+@ignore_deprecations
 class TestCountData(unittest.TestCase):
     def test_list_iter(self):
         iterable = Result(['a', None, 3], list)
@@ -739,6 +746,7 @@ class TestCountData(unittest.TestCase):
         self.assertEqual(result.fetch(), {'a': 1, 'b': 0, 'c': 1})
 
 
+@ignore_deprecations
 class TestAvgData(unittest.TestCase):
     def test_list_iter(self):
         iterable = Result([1, 2, 3, 4], list)
@@ -773,6 +781,7 @@ class TestAvgData(unittest.TestCase):
         self.assertEqual(result.fetch(), {'a': 2, 'b': 3, 'c': None})
 
 
+@ignore_deprecations
 class TestMinData(unittest.TestCase):
     def test_list_iter(self):
         iterable = Result([1, 2, 3, 4], list)
@@ -807,6 +816,7 @@ class TestMinData(unittest.TestCase):
         self.assertEqual(result.fetch(), {'a': 2, 'b': 3, 'c': None})
 
 
+@ignore_deprecations
 class TestMaxData(unittest.TestCase):
     def test_list_iter(self):
         iterable = Result([1, 2, 3, 4], list)
@@ -841,6 +851,7 @@ class TestMaxData(unittest.TestCase):
         self.assertEqual(result.fetch(), {'a': 2, 'b': 3, 'c': None})
 
 
+@ignore_deprecations
 class TestDistinctData(unittest.TestCase):
     def test_list_iter(self):
         iterable = Result([1, 2, 1, 2, 3], list)
@@ -960,6 +971,7 @@ class Test_select_functions(unittest.TestCase):
         self.assertEqual(value, ['C'])
 
 
+@ignore_deprecations
 class TestQuery(unittest.TestCase):
     def test_init_no_data(self):
         # Use column and where syntax.
@@ -1352,6 +1364,7 @@ class TestQuery(unittest.TestCase):
         self.assertRegex(repr(query), regex)
 
 
+@ignore_deprecations
 class TestSelect(unittest.TestCase):
     def setUp(self):
         data = [['label1', 'label2', 'value'],
@@ -1759,6 +1772,7 @@ class TestSelect(unittest.TestCase):
         self.assertEqual(query.fetch(), expected)
 
 
+@ignore_deprecations
 class TestQueryToCsv(unittest.TestCase):
     def setUp(self):
         self.select = Select([['A', 'B'], ['x', 1], ['y', 2]])

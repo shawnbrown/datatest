@@ -5,8 +5,10 @@ import sys
 
 from datatest._compatibility import textwrap
 from . import _unittest as unittest
+from .common import ignore_deprecations
 
 
+@ignore_deprecations
 class TestBackwardsCompatibility(unittest.TestCase):
     def assertSubprocess(self, module):
         """Run given *module* in separate process--fails if return code

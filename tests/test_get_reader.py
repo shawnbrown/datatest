@@ -8,6 +8,7 @@ import datatest
 from datatest._compatibility.builtins import *
 from datatest._compatibility.collections import namedtuple
 from . import _unittest as unittest
+from .common import ignore_deprecations
 
 try:
     import pandas
@@ -277,6 +278,7 @@ class TestFromCsvPath(SampleFilesTestCase):
             list(reader)  # Trigger evaluation.
 
 
+@ignore_deprecations
 class TestFromDatatest(unittest.TestCase):
     def setUp(self):
         self.select = datatest.Select([['A', 'B'], ['x', 1], ['y', 2]])
@@ -535,6 +537,7 @@ class TestFunctionDispatching(SampleFilesTestCase):
             ]
             self.assertEqual(list(reader), expected)
 
+    @ignore_deprecations
     def test_datatest(self):
         select = datatest.Select([['A', 'B'], ['x', 1], ['y', 2]])
 
