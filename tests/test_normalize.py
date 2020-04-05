@@ -107,18 +107,32 @@ class TestNormalizeLazyPandas(unittest.TestCase):
         self.assertIsInstance(result, IterItems)
         self.assertEqual(dict(result), expected)
 
-    @unittest.skip('skipped while changing behavior')
     def test_dataframe_multiple_columns(self):
-        df = pandas.DataFrame([(1, 'a'), (2, 'b'), (3, 'c')])
+        data = [(1, 'a'), (2, 'b'), (3, 'c')]
+
+        # RangeIndex index
+        df = pandas.DataFrame(data)
+        result = _normalize_lazy(df)
+        self.assertEqual(list(result), data)
+
+        # Int64Index index
+        df = pandas.DataFrame(data, index=[0, 1, 2])
         result = _normalize_lazy(df)
         self.assertIsInstance(result, IterItems)
         expected = {0: (1, 'a'), 1: (2, 'b'), 2: (3, 'c')}
         self.assertEqual(dict(result), expected)
 
-    @unittest.skip('skipped while changing behavior')
     def test_dataframe_single_column(self):
         """Single column DataFrame values should be unwrapped."""
-        df = pandas.DataFrame([('x',), ('y',), ('z',)])
+        data = [('x',), ('y',), ('z',)]
+
+        # RangeIndex index
+        df = pandas.DataFrame(data)
+        result = _normalize_lazy(df)
+        self.assertEqual(list(result), ['x', 'y', 'z'])
+
+        # Int64Index index
+        df = pandas.DataFrame(data, index=[0, 1, 2])
         result = _normalize_lazy(df)
         self.assertIsInstance(result, IterItems)
         expected = {0: 'x', 1: 'y', 2: 'z'}

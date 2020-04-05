@@ -60,7 +60,10 @@ def _normalize_lazy(obj):
     if pandas and isinstance(obj, pandas.DataFrame):
         # DataFrame with RangeIndex is treated as a sequence.
         if isinstance(obj.index, pandas.RangeIndex):
-            return (tuple(x) for x in obj.values)  # <- EXIT!
+            if len(obj.columns) == 1:
+                return (x[0] for x in obj.values)  # <- EXIT!
+            else:
+                return (tuple(x) for x in obj.values)  # <- EXIT!
 
         # DataFrame with another index type is treated as a mapping.
         if not obj.index.is_unique:
