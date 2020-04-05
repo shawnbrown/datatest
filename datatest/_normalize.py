@@ -58,6 +58,11 @@ def _normalize_lazy(obj):
 
     pandas = sys.modules.get('pandas', None)
     if pandas and isinstance(obj, pandas.DataFrame):
+        # DataFrame with RangeIndex is treated as a sequence.
+        if isinstance(obj.index, pandas.RangeIndex):
+            return (tuple(x) for x in obj.values)  # <- EXIT!
+
+        # DataFrame with another index type is treated as a mapping.
         if not obj.index.is_unique:
             cls_name = obj.__class__.__name__
             raise ValueError(('{0} index contains duplicates, must '
