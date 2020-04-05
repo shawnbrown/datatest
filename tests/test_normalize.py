@@ -138,21 +138,20 @@ class TestNormalizeLazyPandas(unittest.TestCase):
         expected = {0: 'x', 1: 'y', 2: 'z'}
         self.assertEqual(dict(result), expected)
 
-    @unittest.skip('skipped while changing behavior')
     def test_dataframe_multiindex(self):
         """Multi-index values should be tuples."""
-        df = pandas.DataFrame([('x',), ('y',), ('z',)])
-        df.index = pandas.MultiIndex.from_tuples([(0, 0), (0, 1), (1, 0)])
+        df = pandas.DataFrame(
+            data=[('x',), ('y',), ('z',)],
+            index=pandas.MultiIndex.from_tuples([(0, 0), (0, 1), (1, 0)]),
+        )
         result = _normalize_lazy(df)
         self.assertIsInstance(result, IterItems)
         expected = {(0, 0): 'x', (0, 1): 'y', (1, 0): 'z'}
         self.assertEqual(dict(result), expected)
 
-    @unittest.skip('skipped while changing behavior')
     def test_dataframe_index_error(self):
         """Indexes must contain unique values, no duplicates."""
-        df = pandas.DataFrame([('x',), ('y',), ('z',)])
-        df.index = pandas.Index([0, 0, 1])  # <- Duplicate values.
+        df = pandas.DataFrame([('x',), ('y',), ('z',)], index=[0, 0, 1])
         with self.assertRaises(ValueError):
             _normalize_lazy(df)
 
