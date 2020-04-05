@@ -8,7 +8,6 @@ from datatest.differences import (
     Invalid,
     Deviation,
 )
-from datatest._vendor.squint import Query
 from datatest._utils import IterItems
 
 from datatest.validation import ValidationError
@@ -456,12 +455,12 @@ class TestValidate(unittest.TestCase):
 
     def test_predicate_method(self):
         data = {'A': 'aaa', 'B': [1, 2, 3], 'C': ('a', 1)}
-        requirement = Query.from_object({'A': set(['aaa', 'bbb']), 'B': int, 'C': ('a', 1)})
+        requirement = {'A': set(['aaa', 'bbb']), 'B': int, 'C': ('a', 1)}
         validate.predicate(data, requirement)
 
         with self.assertRaises(ValidationError) as cm:
             data = {'A': 'aaa', 'B': [1, 2, 3.5], 'C': ('b', 2)}
-            requirement = Query.from_object({'A': set(['aaa', 'bbb']), 'B': int, 'C': ('a', 1)})
+            requirement = {'A': set(['aaa', 'bbb']), 'B': int, 'C': ('a', 1)}
             validate.predicate(data, requirement)
         actual = cm.exception.differences
         expected = {
@@ -472,12 +471,12 @@ class TestValidate(unittest.TestCase):
 
     def test_predicate_regex(self):
         data = {'A': 'Alpha', 'B': ['Beta', 'Gamma']}
-        requirement = Query.from_object({'A': r'^[A-Z]', 'B': r'^[A-Z]'})
+        requirement = {'A': r'^[A-Z]', 'B': r'^[A-Z]'}
         validate.regex(data, requirement)
 
         with self.assertRaises(ValidationError) as cm:
             data = {'A': 'Alpha', 'B': ['Beta', 'gamma'], 'C': ('b', 2)}
-            requirement = Query.from_object({'A': r'^[A-Z]', 'B': r'^[A-Z]', 'C': r'\d'})
+            requirement = {'A': r'^[A-Z]', 'B': r'^[A-Z]', 'C': r'\d'}
             validate.regex(data, requirement)
         actual = cm.exception.differences
         expected = {
@@ -488,15 +487,15 @@ class TestValidate(unittest.TestCase):
 
     def test_approx_method(self):
         data = {'A': 5.00000001, 'B': 10.00000001}
-        requirement = Query.from_object({'A': 5, 'B': 10})
+        requirement = {'A': 5, 'B': 10}
         validate.approx(data, requirement)
 
         data = [5.00000001, 10.00000001]
-        requirement = Query.from_object([5, 10])
+        requirement = [5, 10]
         validate.approx(data, requirement)
 
         data = {'A': [5.00000001, 10.00000001], 'B': [5.00000001, 10.00000001]}
-        requirement = Query.from_object({'A': [5, 10], 'B': [5, 10]})
+        requirement = {'A': [5, 10], 'B': [5, 10]}
         validate.approx(data, requirement)
 
         with self.assertRaises(ValidationError) as cm:
@@ -509,12 +508,12 @@ class TestValidate(unittest.TestCase):
 
     def test_fuzzy_method(self):
         data = {'A': 'aaa', 'B': 'bbx'}
-        requirement = Query.from_object({'A': 'aaa', 'B': 'bbb'})
+        requirement = {'A': 'aaa', 'B': 'bbb'}
         validate.fuzzy(data, requirement)
 
         with self.assertRaises(ValidationError) as cm:
             data = {'A': 'axx', 'B': 'bbx'}
-            requirement = Query.from_object({'A': 'aaa', 'B': 'bbb'})
+            requirement = {'A': 'aaa', 'B': 'bbb'}
             validate.fuzzy(data, requirement)
         actual = cm.exception.differences
         expected = {'A': Invalid('axx', expected='aaa')}
@@ -539,7 +538,7 @@ class TestValidate(unittest.TestCase):
 
     def test_set_method(self):
         data = [1, 2, 3, 4]
-        requirement = Query.from_object([1, 2, 3, 4])
+        requirement = [1, 2, 3, 4]
         validate.set(data, requirement)
 
         with self.assertRaises(ValidationError) as cm:
@@ -560,7 +559,7 @@ class TestValidate(unittest.TestCase):
 
     def test_subset_method(self):
         data = [1, 2, 3, 4]
-        subset = Query.from_object([1, 2, 3])
+        subset = [1, 2, 3]
         validate.subset(data, subset)
 
         with self.assertRaises(ValidationError) as cm:
@@ -581,7 +580,7 @@ class TestValidate(unittest.TestCase):
 
     def test_superset_method(self):
         data = [1, 2, 3]
-        superset = Query.from_object([1, 2, 3, 4])
+        superset = [1, 2, 3, 4]
         validate.superset(data, superset)
 
         with self.assertRaises(ValidationError) as cm:
@@ -607,12 +606,12 @@ class TestValidate(unittest.TestCase):
         validate.order(data, requirement)
 
         data = ['A', 'B', 'C', 'D']
-        requirement = Query.from_object(['A', 'B', 'C', 'D'])
+        requirement = ['A', 'B', 'C', 'D']
         validate.order(data, requirement)
 
         with self.assertRaises(ValidationError) as cm:
             data = ['A', 'C', 'D', 'F']
-            requirement = Query.from_object(iter(['A', 'B', 'C', 'D']))
+            requirement = iter(['A', 'B', 'C', 'D'])
             validate.order(data, requirement)
         actual = cm.exception.differences
         expected = [Missing((1, 'B')), Extra((3, 'F'))]
@@ -620,7 +619,7 @@ class TestValidate(unittest.TestCase):
 
         with self.assertRaises(ValidationError) as cm:
             data = {'x': ['A'], 'y': ['B', 'C', 'D']}
-            requirement = Query.from_object({'x': ['A', 'B'], 'y': ['C', 'D']})
+            requirement = {'x': ['A', 'B'], 'y': ['C', 'D']}
             validate.order(data, requirement)
         actual = cm.exception.differences
         expected = {'x': [Missing((1, 'B'))], 'y': [Extra((0, 'B'))]}
