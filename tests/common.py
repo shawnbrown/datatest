@@ -2,7 +2,10 @@
 import glob
 import os
 import shutil
+import sys
 import tempfile
+import warnings
+from functools import wraps
 
 from . import _io as io
 from . import _unittest as unittest
@@ -31,6 +34,29 @@ class MkdtempTestCase(unittest.TestCase):
             else:
                 os.remove(path)
         os.chdir(self._orig_dir)
+
+
+def ignore_deprecations(obj):
+    """A class and function decorator to ignore DeprecationWarnings."""
+    def decorate(func):
+        @wraps(func)
+        def wrapper(*args, **kwds):
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', DeprecationWarning)
+                return func(*args, **kwds)
+        return wrapper
+
+    if isinstance(obj, type):
+        # If object is a class, decorate its methods.
+        for key, val in obj.__dict__.items():
+            if callable(val):
+                setattr(obj, key, decorate(val))
+    else:
+        # Else decorate the object itself.
+        obj = decorate(obj)
+
+    return obj
+
 
 try:
     unittest.TestCase.setUpClass  # New in 2.7
