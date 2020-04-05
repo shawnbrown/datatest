@@ -1,6 +1,7 @@
 """Tests for normalization functions."""
 import sqlite3
 from . import _unittest as unittest
+from datatest._vendor.squint import Query
 from datatest._vendor.squint import Result
 from datatest.requirements import BaseRequirement
 from datatest._utils import IterItems
@@ -62,6 +63,13 @@ class TestNormalizeLazySquint(unittest.TestCase):
         normalized = _normalize_lazy(query_object)
         self.assertIsInstance(normalized, squint.Result)
         self.assertEqual(normalized.evaltype, list)
+
+    def test_deprecated_query_object(self):
+        with self.assertWarns(DeprecationWarning):
+            query_object = Query.from_object([1, 2, 3, 4])
+        normalized = _normalize_lazy(query_object)
+        self.assertIsInstance(normalized, Result)
+        self.assertEqual(normalized.evaluation_type, list)
 
 
 @unittest.skipIf(not pandas, 'pandas not found')
@@ -216,7 +224,7 @@ class TestNormalizeEager(unittest.TestCase):
         output = _normalize_eager(iter([1, 2, 3]), default_type=set)
         self.assertEqual(output, set([1, 2, 3]))
 
-    def test_result_object(self):
+    def test_deprecated_result_object(self):
         with self.assertWarns(DeprecationWarning):
             result_obj = Result(iter([1, 2, 3]), evaluation_type=tuple)
 
