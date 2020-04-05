@@ -297,7 +297,9 @@ def _make_dataresult(iterable):
         return iterable
 
     eval_type = _get_evaluation_type(iterable)
-    return Result(iterable, eval_type)
+
+    with suppress_deprecation():
+        return Result(iterable, eval_type)
 
 
 def _apply_to_data(function, data_iterator):
@@ -306,7 +308,8 @@ def _apply_to_data(function, data_iterator):
     """
     if _is_collection_of_items(data_iterator):
         result = DictItems((k, function(v)) for k, v in data_iterator)
-        return Result(result, _get_evaluation_type(data_iterator))
+        with suppress_deprecation():
+            return Result(result, _get_evaluation_type(data_iterator))
     return function(data_iterator)
 
 
@@ -318,7 +321,8 @@ def _map_data(function, iterable):
         evaluation_type = _get_evaluation_type(iterable)
         if issubclass(evaluation_type, Set):
             evaluation_type = list
-        return Result(map(function, iterable), evaluation_type)
+        with suppress_deprecation():
+            return Result(map(function, iterable), evaluation_type)
 
     return _apply_to_data(wrapper, iterable)
 
@@ -334,7 +338,8 @@ def _starmap_data(function, iterable):
         if issubclass(evaluation_type, Set):
             evaluation_type = list
         iterable = (x if isinstance(x, Iterable) else (x,) for x in iterable)
-        return Result(itertools.starmap(function, iterable), evaluation_type)
+        with suppress_deprecation():
+            return Result(itertools.starmap(function, iterable), evaluation_type)
 
     return _apply_to_data(wrapper, iterable)
 
@@ -369,7 +374,8 @@ def _filter_data(predicate, iterable):
             raise TypeError(('filter expects a collection of data elements, '
                              'got 1 data element: {0}').format(iterable))
         filtered_data = filter(function, iterable)
-        return Result(filtered_data, _get_evaluation_type(iterable))
+        with suppress_deprecation():
+            return Result(filtered_data, _get_evaluation_type(iterable))
 
     return _apply_to_data(wrapper, iterable)
 
@@ -401,7 +407,8 @@ def _flatten_data(iterable):
                 for x in v:
                     yield combined(k, x)
 
-    return Result(flatten(iterable), list)
+    with suppress_deprecation():
+        return Result(flatten(iterable), list)
 
 
 def _unwrap_data(iterable):
@@ -419,7 +426,8 @@ def _unwrap_data(iterable):
         if exhaustible(iterable):
             evaluation_type = _get_evaluation_type(iterable)
             iterable = itertools.chain(first_values, iterable)
-            return Result(iterable, evaluation_type)  # <- EXIT!
+            with suppress_deprecation():
+                return Result(iterable, evaluation_type)  # <- EXIT!
 
         return iterable
 
@@ -535,11 +543,13 @@ def _sqlite_distinct(iterable):
     def dodistinct(itr):
         if isinstance(itr, BaseElement):
             return itr
-        return Result(_unique_everseen(itr), _get_evaluation_type(itr))
+        with suppress_deprecation():
+            return Result(_unique_everseen(itr), _get_evaluation_type(itr))
 
     if _is_collection_of_items(iterable):
         result = DictItems((k, dodistinct(v)) for k, v in iterable)
-        return Result(result, _get_evaluation_type(iterable))
+        with suppress_deprecation():
+            return Result(result, _get_evaluation_type(iterable))
     return dodistinct(iterable)
 
 
@@ -698,6 +708,7 @@ class Query(object):
         If *obj* is a Query itself, a copy of the original query
         is created.
         """
+        _warn(cls)  # Issue deprecation warning.
         if isinstance(obj, Query):
             return obj.__copy__()
 
@@ -979,7 +990,8 @@ class Query(object):
             if len(source_repr) > 70:
                 source_repr = source_repr[:67] + '...'
         else:
-            source = Select([], fieldnames=['dummy_source'])
+            with suppress_deprecation():
+                source = Select([], fieldnames=['dummy_source'])
             source_repr = '<none given> (assuming Select object)'
 
         execution_plan = self._get_execution_plan(source, self._query_steps)
@@ -1262,7 +1274,8 @@ class Select(object):
         examples.
         """
         try:
-            return Query(self, columns, **where)
+            with suppress_deprecation():
+                return Query(self, columns, **where)
         except LookupError:
             __tracebackhide__ = True
             raise
@@ -1377,7 +1390,9 @@ class Select(object):
             result = (inner_type(*x) for x in cursor)  # If namedtuple.
         else:
             result = (inner_type(x) for x in cursor)
-        return Result(result, evaluation_type=outer_type) # <- EXIT!
+
+        with suppress_deprecation():
+            return Result(result, evaluation_type=outer_type) # <- EXIT!
 
     def _format_results(self, columns, cursor):
         """Return an iterator of results formatted by *columns*
@@ -1408,7 +1423,9 @@ class Select(object):
             sliced = ((k, (x[-index:] for x in g)) for k, g in grouped)
             formatted = ((k, self._format_result_group(value, g)) for k, g in sliced)
             dictitems =  DictItems(formatted)
-            return Result(dictitems, evaluation_type=result_type) # <- EXIT!
+
+            with suppress_deprecation():
+                return Result(dictitems, evaluation_type=result_type) # <- EXIT!
 
         raise TypeError('type {0!r} not supported'.format(type(columns)))
 

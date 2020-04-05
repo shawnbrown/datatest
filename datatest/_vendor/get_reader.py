@@ -2,6 +2,7 @@
 import csv
 import io
 import sys
+import warnings
 
 from .._compatibility.itertools import chain
 from .._compatibility.collections.abc import Iterable
@@ -242,7 +243,9 @@ class get_reader(object):
         elif isinstance(obj, datatest.Select):
             query = obj(tuple(obj.fieldnames))
         elif isinstance(obj, datatest.Result):
-            query = datatest.Query.from_object(obj)
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', DeprecationWarning)
+                query = datatest.Query.from_object(obj)
         else:
             raise TypeError('must be datatest Select, Query, or Result')
 
@@ -260,7 +263,9 @@ class get_reader(object):
                 fieldnames = (fieldnames,)
         else:
             if query.args:
-                fieldnames = query.__class__.from_object(query.args[0])
+                with warnings.catch_warnings():
+                    warnings.simplefilter('ignore', DeprecationWarning)
+                    fieldnames = query.__class__.from_object(query.args[0])
                 (fieldnames,) = fieldnames.flatten().fetch()
                 if not nonstringiter(fieldnames):
                     fieldnames = (fieldnames,)
