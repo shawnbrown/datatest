@@ -64,7 +64,22 @@ class TestNormalizeLazySquint(unittest.TestCase):
         self.assertIsInstance(normalized, squint.Result)
         self.assertEqual(normalized.evaltype, list)
 
-    def test_deprecated_query_object(self):
+
+class TestNormalizeLazyResultAndQuery(unittest.TestCase):
+    """Test deprecated `Result` and `Query` objects."""
+    def test_sequence_result(self):
+        with self.assertWarns(DeprecationWarning):
+            result_object = Result([1, 2, 3, 4], evaluation_type=list)
+        normalized = _normalize_lazy(result_object)
+        self.assertIs(normalized, result_object, msg='should return original object')
+
+    def test_iteritems_result(self):
+        with self.assertWarns(DeprecationWarning):
+            result_object = Result(IterItems([('a', 1), ('b', 2)]), evaluation_type=dict)
+        normalized = _normalize_lazy(result_object)
+        self.assertIsInstance(normalized, IterItems)
+
+    def test_query(self):
         with self.assertWarns(DeprecationWarning):
             query_object = Query.from_object([1, 2, 3, 4])
         normalized = _normalize_lazy(query_object)
