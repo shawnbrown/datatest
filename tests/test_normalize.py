@@ -156,19 +156,43 @@ class TestNormalizeLazyPandas(unittest.TestCase):
             _normalize_lazy(df)
 
     @unittest.skip('skipped while changing behavior')
-    def test_series_rangeindex(self):
-        s = pandas.Series(['x', 'y', 'z'])
+    def test_series_with_rangeindex(self):
+        """Series using a RangeIndex should be treated as sequences."""
+        data = ['x', 'y', 'z']
+        s = pandas.Series(data)  # Pandas auto-assigns a RangeIndex.
         result = _normalize_lazy(s)
-        self.assertIsInstance(result, pandas.Series)
-        self.assertTrue(s.equals(result))
+
+        self.assertEqual(list(data), data)
+
+    @unittest.skip('skipped while changing behavior')
+    def test_series_with_otherindex(self):
+        """Series using other index types should be treated as mappings."""
+        data = ['x', 'y', 'z']
+        s = pandas.Series(data, index=[0, 1, 2])  # Defines an Int64Index.
+        result = _normalize_lazy(s)
+
+        expected = {0: 'x', 1: 'y', 2: 'z'}
+        self.assertIsInstance(result, IterItems)
+        self.assertEqual(dict(result), expected)
 
     @unittest.skip('skipped while changing behavior')
     def test_series_multiindex(self):
-        s = pandas.Series(['x', 'y', 'z'])
-        s.index = pandas.MultiIndex.from_tuples([(0, 0), (0, 1), (1, 0)])
+        """Multi-index values should be tuples."""
+        s = pandas.Series(
+            data=['x', 'y', 'z'],
+            index=pandas.MultiIndex.from_tuples([(0, 0), (0, 1), (1, 0)]),
+        )
         result = _normalize_lazy(s)
-        self.assertIsInstance(result, pandas.Series)
-        self.assertTrue(s.equals(result))
+        self.assertIsInstance(result, IterItems)
+        expected = {(0, 0): 'x', (0, 1): 'y', (1, 0): 'z'}
+        self.assertEqual(dict(result), expected)
+
+    @unittest.skip('skipped while changing behavior')
+    def test_series_index_error(self):
+        """Indexes must contain unique values, no duplicates."""
+        s = pandas.Series(['x', 'y', 'z'], index=[0, 0, 1])
+        with self.assertRaises(ValueError):
+            _normalize_lazy(s)
 
 
 @unittest.skipIf(not numpy, 'numpy not found')
