@@ -58,12 +58,11 @@ def _normalize_lazy(obj):
 
     pandas = sys.modules.get('pandas', None)
     if pandas:
-        if isinstance(obj, (pandas.DataFrame, pandas.Series)) and \
-                (not obj.index.is_unique):
-            msg = '{0} index contains duplicates, must be unique'
-            raise ValueError(msg.format(obj.__class__.__name__))
-
         if isinstance(obj, pandas.DataFrame):
+            if not obj.index.is_unique:
+                msg = '{0} index contains duplicates, must be unique'
+                raise ValueError(msg.format(obj.__class__.__name__))
+
             if isinstance(obj.index, pandas.RangeIndex):
                 # DataFrame with RangeIndex is treated as an iterator.
                 if len(obj.columns) == 1:
@@ -78,6 +77,10 @@ def _normalize_lazy(obj):
                     gen = ((x[0], tuple(x[1:])) for x in obj.itertuples())
                 return IterItems(gen)  # <- EXIT!
         elif isinstance(obj, pandas.Series):
+            if not obj.index.is_unique:
+                msg = '{0} index contains duplicates, must be unique'
+                raise ValueError(msg.format(obj.__class__.__name__))
+
             if isinstance(obj.index, pandas.RangeIndex):
                 # Series with RangeIndex is treated as an iterator.
                 return iter(obj.values)  # <- EXIT!
