@@ -57,36 +57,37 @@ def _normalize_lazy(obj):
             return obj  # <- EXIT!
 
     pandas = sys.modules.get('pandas', None)
-    if pandas and isinstance(obj, pandas.DataFrame):
-        if not obj.index.is_unique:
-            msg = '{0} index contains duplicates, must be unique'
-            raise ValueError(msg.format(obj.__class__.__name__))
+    if pandas:
+        if isinstance(obj, pandas.DataFrame):
+            if not obj.index.is_unique:
+                msg = '{0} index contains duplicates, must be unique'
+                raise ValueError(msg.format(obj.__class__.__name__))
 
-        # DataFrame with RangeIndex is treated as an iterator.
-        if isinstance(obj.index, pandas.RangeIndex):
+            if isinstance(obj.index, pandas.RangeIndex):
+                # DataFrame with RangeIndex is treated as an iterator.
+                if len(obj.columns) == 1:
+                    return (x[0] for x in obj.values)  # <- EXIT!
+                else:
+                    return (tuple(x) for x in obj.values)  # <- EXIT!
+
+            # DataFrame with another index type is treated as a mapping.
             if len(obj.columns) == 1:
-                return (x[0] for x in obj.values)  # <- EXIT!
+                gen = ((x[0], x[1]) for x in obj.itertuples())
             else:
-                return (tuple(x) for x in obj.values)  # <- EXIT!
+                gen = ((x[0], tuple(x[1:])) for x in obj.itertuples())
+            return IterItems(gen)  # <- EXIT!
 
-        # DataFrame with another index type is treated as a mapping.
-        if len(obj.columns) == 1:
-            gen = ((x[0], x[1]) for x in obj.itertuples())
-        else:
-            gen = ((x[0], tuple(x[1:])) for x in obj.itertuples())
-        return IterItems(gen)  # <- EXIT!
+        if isinstance(obj, pandas.Series):
+            if not obj.index.is_unique:
+                msg = '{0} index contains duplicates, must be unique'
+                raise ValueError(msg.format(obj.__class__.__name__))
 
-    if pandas and isinstance(obj, pandas.Series):
-        if not obj.index.is_unique:
-            msg = '{0} index contains duplicates, must be unique'
-            raise ValueError(msg.format(obj.__class__.__name__))
-
-        if isinstance(obj.index, pandas.RangeIndex):
-            # Series with RangeIndex is treated as an iterator.
-            return iter(obj.values)  # <- EXIT!
-        else:
-            # Series with another index type is treated as a mapping.
-            return IterItems(obj.iteritems())  # <- EXIT!
+            if isinstance(obj.index, pandas.RangeIndex):
+                # Series with RangeIndex is treated as an iterator.
+                return iter(obj.values)  # <- EXIT!
+            else:
+                # Series with another index type is treated as a mapping.
+                return IterItems(obj.iteritems())  # <- EXIT!
 
     numpy = sys.modules.get('numpy', None)
     if numpy and isinstance(obj, numpy.ndarray):
