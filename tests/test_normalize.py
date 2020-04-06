@@ -155,7 +155,6 @@ class TestNormalizeLazyPandas(unittest.TestCase):
         with self.assertRaises(ValueError):
             _normalize_lazy(df)
 
-    @unittest.skip('skipped while changing behavior')
     def test_series_with_rangeindex(self):
         """Series using a RangeIndex should be treated as sequences."""
         data = ['x', 'y', 'z']
@@ -164,7 +163,6 @@ class TestNormalizeLazyPandas(unittest.TestCase):
 
         self.assertEqual(list(data), data)
 
-    @unittest.skip('skipped while changing behavior')
     def test_series_with_otherindex(self):
         """Series using other index types should be treated as mappings."""
         data = ['x', 'y', 'z']
@@ -175,7 +173,6 @@ class TestNormalizeLazyPandas(unittest.TestCase):
         self.assertIsInstance(result, IterItems)
         self.assertEqual(dict(result), expected)
 
-    @unittest.skip('skipped while changing behavior')
     def test_series_multiindex(self):
         """Multi-index values should be tuples."""
         s = pandas.Series(
@@ -187,7 +184,6 @@ class TestNormalizeLazyPandas(unittest.TestCase):
         expected = {(0, 0): 'x', (0, 1): 'y', (1, 0): 'z'}
         self.assertEqual(dict(result), expected)
 
-    @unittest.skip('skipped while changing behavior')
     def test_series_index_error(self):
         """Indexes must contain unique values, no duplicates."""
         s = pandas.Series(['x', 'y', 'z'], index=[0, 0, 1])

@@ -76,6 +76,18 @@ def _normalize_lazy(obj):
             gen = ((x[0], tuple(x[1:])) for x in obj.itertuples())
         return IterItems(gen)  # <- EXIT!
 
+    if pandas and isinstance(obj, pandas.Series):
+        if not obj.index.is_unique:
+            msg = '{0} index contains duplicates, must be unique'
+            raise ValueError(msg.format(obj.__class__.__name__))
+
+        if isinstance(obj.index, pandas.RangeIndex):
+            # Series with RangeIndex is treated as an iterator.
+            return iter(obj.values)  # <- EXIT!
+        else:
+            # Series with another index type is treated as a mapping.
+            return IterItems(obj.iteritems())  # <- EXIT!
+
     numpy = sys.modules.get('numpy', None)
     if numpy and isinstance(obj, numpy.ndarray):
         # Two-dimentional array, recarray, or structured array.
