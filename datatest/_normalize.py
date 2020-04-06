@@ -70,15 +70,14 @@ def _normalize_lazy(obj):
                     return (x[0] for x in obj.values)  # <- EXIT!
                 else:
                     return (tuple(x) for x in obj.values)  # <- EXIT!
-
-            # DataFrame with another index type is treated as a mapping.
-            if len(obj.columns) == 1:
-                gen = ((x[0], x[1]) for x in obj.itertuples())
             else:
-                gen = ((x[0], tuple(x[1:])) for x in obj.itertuples())
-            return IterItems(gen)  # <- EXIT!
-
-        if isinstance(obj, pandas.Series):
+                # DataFrame with another index type is treated as a mapping.
+                if len(obj.columns) == 1:
+                    gen = ((x[0], x[1]) for x in obj.itertuples())
+                else:
+                    gen = ((x[0], tuple(x[1:])) for x in obj.itertuples())
+                return IterItems(gen)  # <- EXIT!
+        elif isinstance(obj, pandas.Series):
             if isinstance(obj.index, pandas.RangeIndex):
                 # Series with RangeIndex is treated as an iterator.
                 return iter(obj.values)  # <- EXIT!
