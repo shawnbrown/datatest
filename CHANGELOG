@@ -18,6 +18,16 @@ COMING SOON (0.9.7)
       df = pd.DataFrame(...)
       df[['A', 'B']].validate((str, int))  # <- Use 'validate' accessor.
 
+* Changed pandas validation behavior:
+
+  * `DataFrame` and `Series` objects are validated as sequences when
+    they use the `RangeIndex` type (this is the default type assigned
+    when no index is specified).
+  * `DataFrame` and `Series` objects are validated as dictionaries if
+    they use an index of any other type--the index's values are used
+    as the dictionary's keys.
+  * All index objects themselves are validated as sequences.
+
 * Added improved NaN handling:
 
   * Added NaN support to `accepted.keys()`, `accepted.args()`, and
