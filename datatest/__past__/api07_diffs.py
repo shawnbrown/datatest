@@ -130,10 +130,10 @@ class xDeviation(xBaseDifference):
         if (not empty(required) and empty(value)) or (required == 0 and value == 0):
             raise ValueError('numeric deviation must be positive or negative')
 
-        if value or value is 0:
+        if value or value == 0:
             value = _make_decimal(value)
 
-        if required or required is 0:
+        if required or required == 0:
             required = _make_decimal(required)
 
         super(xDeviation, self).__init__(value, required, **kwds)
