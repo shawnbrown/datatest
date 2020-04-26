@@ -505,13 +505,6 @@ Datatest also provides a few utilities for handling data:
     Context manager and decorator to temporarily set a working
     directory.
 
-:class:`get_reader() <datatest.get_reader>`
-    Get a csv.reader-like interface for pandas DataFrames, MS Excel
-    worksheets, etc.
-
-:class:`Select`, :class:`Query`, and :class:`Result`
-    Select and query tabular data that can be tested for validity.
-
 :class:`RepeatingContainer`
     Operate on a group of objects together instead of repeating
     the same methods and operations on each individual object
