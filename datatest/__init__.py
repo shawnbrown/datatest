@@ -45,6 +45,14 @@ __version__ = '0.9.7.dev0'
 
 
 #############################################
+# Register traceback formatting handler.
+#############################################
+from . import _excepthook
+import sys as _sys
+_sys.excepthook = _excepthook.excepthook
+
+
+#############################################
 # Temporary aliases and deprecation warnings.
 #############################################
 import warnings as _warnings
