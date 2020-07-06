@@ -11,6 +11,8 @@ Datatest Core API Reference
 ###########################
 
 
+.. _validation-docs:
+
 **********
 Validation
 **********
