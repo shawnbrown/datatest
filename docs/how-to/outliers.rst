@@ -11,7 +11,7 @@ How to Check for Outliers
 #########################
 
 There are many techniques for detecting outliers and no single
-approach can work for all cases. This page describes a commonly
+approach can work for all cases. This page describes an often
 useful approach based on the interquartile/*Tukey fence* method
 for outlier detection.
 
