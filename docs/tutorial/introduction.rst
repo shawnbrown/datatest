@@ -19,346 +19,343 @@ validation, error reporting, and acceptance declarations.
 Validation
 **********
 
-In this example, we assert that the data values are members of
-the *requirement* **set**:
+The validation process works by comparing some *data* to a given
+*requirement*. If the requirement is satisfied, the data is considered
+valid. But if the requirement is not satisfied, a :exc:`ValidationError`
+is raised.
+
+The :func:`validate` function checks that the *data* under test
+satisfies a given *requirement*:
+
+.. code-block:: python
+    :linenos:
+    :emphasize-lines: 5
+
+    from datatest import validate
+
+    data = ...
+    requirement = ...
+    validate(data, requirement)
+
+
+Smart Comparisons
+-----------------
+
+The :func:`validate` function implements smart comparisons and will
+use different validation methods for different *requirement* types.
+
+
+For example, when *requirement* is a :py:class:`set`, validation
+checks that elements in *data* are members of the required set:
+
+.. code-block:: python
+    :linenos:
+    :emphasize-lines: 4
+
+    from datatest import validate
+
+    data = ['A', 'B', 'A']
+    requirement = {'A', 'B'}
+    validate(data, requirement)
+
+
+When *requirement* is a **function**, validation checks that
+the function returns True when applied to each element in *data*:
+
+.. code-block:: python
+    :linenos:
+    :emphasize-lines: 5-6
+
+    from datatest import validate
+
+    data = [2, 4, 6, 8]
+
+    def iseven(x):
+        return x % 2 == 0
+
+    validate(data, requirement=iseven)
+
+
+When *requirement* is a **type**, validation checks that the
+elements in *data* are an instances of that type:
+
+.. code-block:: python
+    :linenos:
+    :emphasize-lines: 4
+
+    from datatest import validate
+
+    data = [2, 4, 6, 8]
+    requirement = int
+    validate(data, requirement)
+
+
+And when *requirement* is a :py:class:`tuple`, validation
+checks for tuple elements in *data* using multiple methods
+at the same time---one method for each item in the required
+tuple:
+
+.. code-block:: python
+    :linenos:
+    :emphasize-lines: 8
+
+    from datatest import validate
+
+    data = [('a', 2), ('b', 4), ('c', 6)]
+
+    def iseven(x):
+        return x % 2 == 0
+
+    requirement = (str, iseven)
+    validate(data, requirement)
+
+In addition to the examples above, several other validation
+behaviors are available. For a complete listing with detailed
+examples, see :ref:`validation-docs`.
+
+
+Automatic Data Handling
+-----------------------
+
+Along with the smart comparison behavior, validation can apply
+a given *requirement* to *data* objects of different formats.
+
+The following examples perform type-checking to see if elements
+are :py:class:`int` values. Switch between the different tabs
+below and notice that the same *requirement* works for all of the
+different *data* formats:
 
 .. tabs::
 
-    .. group-tab:: Pytest
+    .. group-tab:: Element
 
-        The :func:`validate` function checks that the *data* under
-        test satisfies a given *requirement*:
+        An individual element:
 
-        .. literalinclude:: /_static/tutorial/test_intro1.py
-            :lines: 4-13
-            :lineno-match:
-            :emphasize-lines: 10
+        .. code-block:: python
+            :linenos:
+            :emphasize-lines: 3,4
 
-    .. group-tab:: Unittest
+            from datatest import validate
 
-        The :meth:`self.assertValid() <DataTestCase.assertValid>`
-        method checks that the *data* under test satisfies a given
-        *requirement*:
+            data = 42
+            requirement = int
+            validate(data, requirement)
 
-        .. literalinclude:: /_static/tutorial/test_intro1_unit.py
-            :lines: 4-15
-            :lineno-match:
-            :emphasize-lines: 12
+        A *data* value is treated as single element if it's a string, tuple,
+        or non-iterable object.
 
+    .. group-tab:: Group
 
-**The requirement's type determines how the data is validated---changing
-the type will change the method of validation.** Above, we checked for
-set membership by providing a :py:class:`set` requirement.
+        A group of elements:
 
+        .. code-block:: python
+            :linenos:
+            :emphasize-lines: 3,4
 
-When *requirement* is a **function**, data is valid when the function
-returns True:
+            from datatest import validate
 
-.. tabs::
+            data = [1, 2, 3]
+            requirement = int
+            validate(data, requirement)
 
-    .. group-tab:: Pytest
+        A *data* value is treated as a group of elements if it's any iterable
+        other than a string, tuple, or mapping (e.g., in this case a
+        :py:class:`list`).
 
-        .. literalinclude:: /_static/tutorial/test_intro1.py
-            :pyobject: test_using_function
-            :lineno-match:
+    .. group-tab:: Mapping
 
-    .. group-tab:: Unittest
+        A mapping of elements:
 
-        .. literalinclude:: /_static/tutorial/test_intro1_unit.py
-            :pyobject: ExampleTests.test_using_function
-            :lineno-match:
+        .. code-block:: python
+            :linenos:
+            :emphasize-lines: 3,4
 
+            from datatest import validate
 
-When *requirement* is a **type**, data is valid when values are
-instances of the given type:
+            data = {'A': 1, 'B': 2, 'C': 3}
+            requirement = int
+            validate(data, requirement)
 
-.. tabs::
+    .. group-tab:: Mapping of Groups
 
-    .. group-tab:: Pytest
+        A mapping of groups of elements:
 
-        .. literalinclude:: /_static/tutorial/test_intro1.py
-            :pyobject: test_using_type
-            :lineno-match:
+        .. code-block:: python
+            :linenos:
+            :emphasize-lines: 3,4
 
-    .. group-tab:: Unittest
+            from datatest import validate
 
-        .. literalinclude:: /_static/tutorial/test_intro1_unit.py
-            :pyobject: ExampleTests.test_using_type
-            :lineno-match:
-
-
-When *requirement* is a **regular expression** pattern, data
-is valid when it matches the given pattern:
-
-.. tabs::
-
-    .. group-tab:: Pytest
-
-        .. literalinclude:: /_static/tutorial/test_intro1.py
-            :pyobject: test_using_regex
-            :lineno-match:
-
-    .. group-tab:: Unittest
-
-        .. literalinclude:: /_static/tutorial/test_intro1_unit.py
-            :pyobject: ExampleTests.test_using_regex
-            :lineno-match:
+            data = {'X': [1, 2, 3], 'Y': [4, 5, 6], 'Z': [7, 8, 9]}
+            requirement = int
+            validate(data, requirement)
 
 
-More Information
-----------------
+Automatic data handling is also supported for :mod:`pandas` objects,
+:mod:`numpy` arrays, and :mod:`squint` objects.
 
-.. tabs::
-
-    .. group-tab:: Pytest
-
-        * For a complete list of validation behaviors see :func:`validate`.
-        * For a complete list of predicate objects, see :ref:`predicate-docs`.
-        * Download a collection of examples:
-          :download:`test_intro1.py </_static/tutorial/test_intro1.py>`
-        * Run the examples with the following command:
-
-            .. code-block:: none
-
-                pytest test_intro1.py
+Of course, not all formats are comparable. When *requirement* is itself
+a mapping, there's no clear way to handle validation if *data* is a
+single element or a non-mapping container. In cases like this, the
+validation process will error-out before the data elements can be
+checked.
 
 
-    .. group-tab:: Unittest
+******
+Errors
+******
 
-        * For a complete list of validation behaviors see :meth:`self.assertValid()
-          <DataTestCase.assertValid>`.
-        * For a complete list of predicate objects, see :ref:`predicate-docs`.
-        * Download a collection of examples:
-          :download:`test_intro1_unit.py </_static/tutorial/test_intro1_unit.py>`
-        * Run the examples with the following command:
-
-            .. code-block:: none
-
-                python -m datatest test_intro1_unit.py
-
-
-********
-Failures
-********
-
-When validation fails, a :class:`ValidationError` is
-raised. A ValidationError contains a collection of
-difference objects---one difference for each element
+When validation fails, a :class:`ValidationError` is raised. A ValidationError
+contains a collection of difference objects---one difference for each element
 in *data* that fails to satisfy the *requirement*.
 
-In the following test, we assert that values in the
-list ``['A', 'B', 'C', 'D']`` are members of the set
-``{'A', 'B'}``. This test fails because the values
-``'C'`` and ``'D'`` are not members of the set:
-
-.. tabs::
-
-    .. group-tab:: Pytest
-
-        .. literalinclude:: /_static/tutorial/test_intro2.py
-            :lines: 4-14
-            :lineno-match:
-
-        The test fails with the following message:
-
-        .. code-block:: none
-            :emphasize-lines: 10-13
-
-            _____________________________ test_set_membership ______________________________
-
-                def test_set_membership():
-                    """Check for set membership."""
-                    data = ['A', 'B', 'C', 'D']
-
-                    requirement = {'A', 'B'}
-
-            >       validate(data, required_elements)
-            E       ValidationError: does not satisfy set membership (2 differences): [
-                        Extra('C'),
-                        Extra('D'),
-                    ]
-
-            test_example.py:14: ValidationError
+Difference objects can be one of of four types: :class:`Missing`,
+:class:`Extra`, :class:`Deviation` or :class:`Invalid`.
 
 
-    .. group-tab:: Unittest
+"Missing" Differences
+---------------------
 
-        .. literalinclude:: /_static/tutorial/test_intro2_unit.py
-            :lines: 4-14
-            :lineno-match:
+In this example, we check that the list ``['A', 'B']`` contains members
+of the set ``{'A', 'B', 'C', 'D'}``:
 
-        The test fails with the following message:
+.. code-block:: python
+    :linenos:
 
-        .. code-block:: none
-            :emphasize-lines: 7-10
+    from datatest import validate
 
-            ======================================================================
-            FAIL: test_set_membership (test_unittesting.MyTest)
-            ----------------------------------------------------------------------
-            Traceback (most recent call last):
-              File "/my/projects/folder/test_example.py", line 14, in test_set_membership
-                self.assertValid(data, requirement)
-            datatest.ValidationError: does not satisfy set membership (2 differences): [
-                Extra('C'),
-                Extra('D'),
-            ]
+    data = ['A', 'B']
+    requirement = {'A', 'B', 'C', 'D'}
+    validate(data, requirement)
 
+This fails because the elements ``'C'`` and ``'D'`` are not present in
+*data*. They appear below as :class:`Missing` differences:
 
-**Difference objects describe each invalid element and can
-be one of of four types:** :class:`Missing`, :class:`Extra`,
-:class:`Deviation` or :class:`Invalid`. The error above included
-an Extra difference but other validation methods (determined by
-the *requirement* type) can give other differences.
+.. code-block:: none
+    :emphasize-lines: 4-7
 
-
-The following test performs a tuple comparison but it fails on
-``('A', 2)`` because the ``2`` is not a float type. This failure
-raises an :class:`Invalid` difference:
-
-.. tabs::
-
-    .. group-tab:: Pytest
-
-        .. literalinclude:: /_static/tutorial/test_intro2.py
-            :pyobject: test_using_tuple
-            :lineno-match:
-
-        .. code-block:: none
-            :emphasize-lines: 12-15
-
-            _______________________________ test_using_tuple _______________________________
-
-                def test_using_tuple():
-                    """Check that tuples of values satisfy corresponding tuple of
-                    requirements.
-                    """
-                    data = [('A', 1.0), ('A', 2), ('B', 3.0)]
-
-                    requirement = ('A', float)
-
-            >       validate(data, requirement)
-            E       ValidationError: does not satisfy requirement (2 differences): [
-                        Invalid(('A', 2)),
-                        Invalid(('B', 3.0)),
-                    ]
-
-            test_intro2.py:58: ValidationError
+    Traceback (most recent call last):
+      File "example.py", line 5, in <module>
+        validate(data, requirement)
+    datatest.ValidationError: does not satisfy set membership (2 differences): [
+        Missing('C'),
+        Missing('D'),
+    ]
 
 
-    .. group-tab:: Unittest
+"Extra" Differences
+-------------------
 
-        .. literalinclude:: /_static/tutorial/test_intro2_unit.py
-            :pyobject: ExampleTests.test_using_tuple
-            :lineno-match:
+In this next example, we will reverse the previous situation by checking
+that elements in the list ``['A', 'B', 'C', 'D']`` are members of the set
+``{'A', 'B'}``:
 
-        .. code-block:: none
-            :emphasize-lines: 8-11
+.. code-block:: python
+    :linenos:
 
-            ======================================================================
-            FAIL: test_using_tuple (test_intro2_unit.ExampleTests)
-            Check that tuples of values satisfy corresponding tuple of
-            ----------------------------------------------------------------------
-            Traceback (most recent call last):
-              File "/my/projects/folder/test_intro2_unit.py", line 53, in test_using_tuple
-                self.assertValid(data, requirement)
-            datatest.ValidationError: does not satisfy requirement (2 differences): [
-                Invalid(('A', 2)),
-                Invalid(('B', 3.0)),
-            ]
+    from datatest import validate
+
+    data = ['A', 'B', 'C', 'D']
+    requirement = {'A', 'B'}
+    validate(data, requirement)
+
+Of course, this validation fails because the elements ``'C'`` and ``'D'``
+are not members of the *requirement* set. They appear below as :class:`Extra`
+differences:
+
+.. code-block:: none
+    :emphasize-lines: 4-7
+
+    Traceback (most recent call last):
+      File "example.py", line 5, in <module>
+        validate(data, requirement)
+    datatest.ValidationError: does not satisfy set membership (2 differences): [
+        Extra('C'),
+        Extra('D'),
+    ]
 
 
-The following test compares the values of corresponding dictionary keys.
-It fails because some of the values don't match (for "C": ``299`` ≠ ``300``
-and "D": ``405`` ≠ ``400``). Failed numeric comparisons raise
+"Invalid" Differences
+---------------------
+
+In this next example, the *requirement* is a tuple, ``(str, iseven)``.
+It checks for tuple elements where the first value is a string and the
+second value is an even number:
+
+.. code-block:: python
+    :linenos:
+
+    from datatest import validate
+
+    data = [('a', 2), ('b', 4), ('c', 6), (1.25, 8), ('e', 9)]
+
+    def iseven(x):
+        return x % 2 == 0
+
+    requirement = (str, iseven)
+    validate(data, requirement)
+
+Two of the elements in *data* fail to satisfy the *requirement*: ``(1.25, 8)``
+fails because 1.25 is not a string and ``('e', 9)`` fails because 9 is
+not an even number. These are represented in the error as :class:`Invalid`
+differences:
+
+.. code-block:: none
+    :emphasize-lines: 4-8
+
+    Traceback (most recent call last):
+      File "example.py", line 9, in <module>
+        validate(data, requirement)
+    datatest.ValidationError: does not satisfy (<class 'str'>, <function iseven
+    at 0x3f75ca26>) (2 differences): [
+        Invalid((1.25, 8)),
+        Invalid(('e', 9)),
+    ]
+
+
+"Deviation" Differences
+-----------------------
+
+In the following example, the *requirement* is a dictionary of numbers.
+The *data* elements are checked against *reqirement* elements of the
+same key:
+
+.. code-block:: python
+    :linenos:
+
+    from datatest import validate
+
+    data = {
+        'A': 100,
+        'B': 200,
+        'C': 299,
+        'D': 405,
+    }
+
+    requirement = {
+        'A': 100,
+        'B': 200,
+        'C': 300,
+        'D': 400,
+    }
+
+    validate(data, requirement)
+
+
+This validation fails because some of the values don't match (C: ``299``
+≠ ``300`` and D: ``405`` ≠ ``400``). Failed quantitative comparisons raise
 :class:`Deviation` differences:
 
-.. tabs::
+.. code-block:: none
+    :emphasize-lines: 4-7
 
-    .. group-tab:: Pytest
-
-        .. literalinclude:: /_static/tutorial/test_intro2.py
-            :pyobject: test_using_dict
-            :lineno-match:
-
-        .. code-block:: none
-            :emphasize-lines: 18-21
-
-            _______________________________ test_using_dict ________________________________
-
-                def test_using_dict():
-                    """Check that values satisfy requirements of matching keys."""
-                    data = {
-                        'A': 100,
-                        'B': 200,
-                        'C': 299,
-                        'D': 405,
-                    }
-                    requirement = {
-                        'A': 100,
-                        'B': 200,
-                        'C': 300,
-                        'D': 400,
-                    }
-            >       validate(data, requirement)
-            E       ValidationError: does not satisfy mapping requirement (2 differences): {
-                        'C': Deviation(-1, 300),
-                        'D': Deviation(+5, 400),
-                    }
-
-            test_intro2.py:75: ValidationError
-
-
-    .. group-tab:: Unittest
-
-        .. literalinclude:: /_static/tutorial/test_intro2_unit.py
-            :pyobject: ExampleTests.test_using_dict
-            :lineno-match:
-
-        .. code-block:: none
-            :emphasize-lines: 8-11
-
-            ======================================================================
-            FAIL: test_using_dict (test_intro2_unit.ExampleTests)
-            Check that values satisfy requirements of matching keys.
-            ----------------------------------------------------------------------
-            Traceback (most recent call last):
-              File "/my/projects/folder/test_intro2_unit.py", line 69, in test_using_dict
-                self.assertValid(data, requirement)
-            ValidationError: does not satisfy mapping requirement (2 differences): {
-                'C': Deviation(-1, 300),
-                'D': Deviation(+5, 400),
-            }
-
-
-For more information, see :ref:`difference-docs`.
-
-
-.. tabs::
-
-    .. group-tab:: Pytest
-
-        Download a collection of failure examples:
-
-            :download:`test_intro2.py </_static/tutorial/test_intro2.py>`
-
-        Run them with the following command:
-
-        .. code-block:: none
-
-            pytest test_intro2.py
-
-
-    .. group-tab:: Unittest
-
-        Download a collection of failure examples:
-
-            :download:`test_intro2_unit.py </_static/tutorial/test_intro2_unit.py>`
-
-        Run them with the following command:
-
-            .. code-block:: none
-
-                python -m datatest test_intro2_unit.py
+    Traceback (most recent call last):
+      File "example.py", line 17, in <module>
+        validate(data, requirement)
+    datatest.ValidationError: does not satisfy mapping requirements (2 differences): {
+        'C': Deviation(-1, 300),
+        'D': Deviation(+5, 400),
+    }
 
 
 ***********
@@ -367,137 +364,273 @@ Acceptances
 
 Sometimes a failing test cannot be addressed by changing the data
 itself. Perhaps two equally-authoritative sources disagree, perhaps
-it's important to keep the original data unchanged, perhaps a lack
+it's important to keep the original data unchanged, or perhaps a lack
 of information makes correction impossible. For cases like these,
 datatest can accept certain discrepancies when users judge that doing
 so is appropriate.
 
-Acceptances are context managers that operate on a ValidationError's
-collection of differences.
+The :func:`accepted` function returns a context manager that operates
+on a ValidationError's collection of differences.
 
-Normally the following test would fail because the values ``'C'``
-and ``'D'`` are not members of the set (as shown previously). But if
-we decide that :class:`Extra` differences are acceptible, we can add
-an acceptance so the test will pass:
+
+Accepted Type
+-------------
+
+Without an acceptance, the following validation would fail because the
+values ``'C'`` and ``'D'`` are not members of the set (see the following
+example). But if we decide that :class:`Extra` differences are acceptible,
+we can use ``accepted(Extra)``:
 
 .. tabs::
 
-    .. group-tab:: Pytest
-
-        Calling :meth:`accepted(Extra) <accepted>` returns a context
-        manager that accepts Extra differences without triggering a
-        test failure:
+    .. group-tab:: Using Acceptance
 
         .. code-block:: python
-            :emphasize-lines: 11
-            :lineno-start: 4
+            :linenos:
+            :emphasize-lines: 9
+
+            from datatest import (
+                validate,
+                accepted,
+                Extra,
+            )
+
+            data = ['A', 'B', 'C', 'D']
+            requirement = {'A', 'B'}
+            with accepted(Extra):
+                validate(data, requirement)
+
+    .. group-tab:: No Acceptance
+
+        .. code-block:: python
+            :linenos:
+
+            from datatest import (
+                validate,
+                accepted,
+                Extra,
+            )
+
+            data = ['A', 'B', 'C', 'D']
+            requirement = {'A', 'B'}
+            validate(data, requirement)
+
+        .. code-block:: none
+            :emphasize-lines: 5-6
+
+            Traceback (most recent call last):
+              File "example.py", line 9, in <module>
+                validate(data, requirement)
+            datatest.ValidationError: does not satisfy set membership (2 differences): [
+                Extra('C'),
+                Extra('D'),
+            ]
+
+Using the acceptance, we suppress the error caused by all of
+the :class:`Extra` differences. But without the acceptance, the
+ValidationError is raised.
+
+
+Accepted Difference
+-------------------
+
+If we want more precision, we can accept a specific difference---rather
+than all differences of a given type. For example, if the difference
+:class:`Extra('C') <Extra>` is acceptible, we can use
+``accepted(Extra('C'))``:
+
+.. tabs::
+
+    .. group-tab:: Using Acceptance
+
+        .. code-block:: python
+            :linenos:
+            :emphasize-lines: 9
+
+            from datatest import (
+                validate,
+                accepted,
+                Extra,
+            )
+
+            data = ['A', 'B', 'C', 'D']
+            requirement = {'A', 'B'}
+            with accepted(Extra('C')):
+                validate(data, requirement)
+
+        .. code-block:: none
+
+            Traceback (most recent call last):
+              File "example.py", line 10, in <module>
+                validate(data, requirement)
+            datatest.ValidationError: does not satisfy set membership (1 difference): [
+                Extra('D'),
+            ]
+
+    .. group-tab:: No Acceptance
+
+        .. code-block:: python
+            :linenos:
+
+            from datatest import (
+                validate,
+                accepted,
+                Extra,
+            )
+
+            data = ['A', 'B', 'C', 'D']
+            requirement = {'A', 'B'}
+            validate(data, requirement)
+
+        .. code-block:: none
+            :emphasize-lines: 5
+
+            Traceback (most recent call last):
+              File "example.py", line 9, in <module>
+                validate(data, requirement)
+            datatest.ValidationError: does not satisfy set membership (2 differences): [
+                Extra('C'),
+                Extra('D'),
+            ]
+
+This acceptance suppresses the extra ``'C'`` but does not address
+the extra ``'D'``. So the ValidationError for both code samples
+includes the extra ``'D'`` difference.
+
+
+Accepted Group of Differences
+-----------------------------
+
+We can also accept multiple specific differences by defining a
+container of difference objects. To build on the previous example,
+we can use ``accepted([Extra('C'), Extra('D')])`` to accept both
+differences:
+
+.. tabs::
+
+    .. group-tab:: Using Acceptance
+
+        .. code-block:: python
+            :linenos:
+            :emphasize-lines: 9
+
+            from datatest import (
+                validate,
+                accepted,
+                Extra,
+            )
+
+            data = ['A', 'B', 'C', 'D']
+            requirement = {'A', 'B'}
+            with accepted([Extra('C'), Extra('D')]):
+                validate(data, requirement)
+
+    .. group-tab:: No Acceptance
+
+        .. code-block:: python
+            :linenos:
+
+            from datatest import (
+                validate,
+                accepted,
+                Extra,
+            )
+
+            data = ['A', 'B', 'C', 'D']
+            requirement = {'A', 'B'}
+            validate(data, requirement)
+
+        .. code-block:: none
+            :emphasize-lines: 5-6
+
+            Traceback (most recent call last):
+              File "example.py", line 9, in <module>
+                validate(data, requirement)
+            datatest.ValidationError: does not satisfy set membership (2 differences): [
+                Extra('C'),
+                Extra('D'),
+            ]
+
+
+Accepted Tolerance
+------------------
+
+When comparing quantative values, you may decide that
+deviations of a certain magnitude are acceptible. Calling
+:meth:`accepted.tolerance(5) <accepted.tolerance>` returns
+a context manager that accepts differences within a tolerance
+of plus-or-minus five without triggering a test failure:
+
+.. tabs::
+
+    .. group-tab:: Using Acceptance
+
+        .. code-block:: python
+            :linenos:
+            :emphasize-lines: 16
 
             from datatest import validate
             from datatest import accepted
 
+            data = {
+                'A': 100,
+                'B': 200,
+                'C': 299,
+                'D': 405,
+            }
+            requirement = {
+                'A': 100,
+                'B': 200,
+                'C': 300,
+                'D': 400,
+            }
+            with accepted.tolerance(5):  # accepts ±5
+                validate(data, requirement)
 
-            def test_using_set():
-                """Check for set membership."""
-                data = ['A', 'B', 'C', 'D']
-
-                requirement = {'A', 'B'}
-
-                with accepted(Extra):
-                    validate(data, requirement)
-
-    .. group-tab:: Unittest
-
-        Calling :meth:`self.accepted(Extra) <datatest.DataTestCase.accepted>`
-        returns a context manager that accepts Extra differences without
-        triggering a test failure:
-
-        .. code-block:: python
-            :emphasize-lines: 11
-            :lineno-start: 4
-
-            import datatest
-
-
-            class ExampleTests(datatest.DataTestCase):
-                def test_using_set(self):
-                    """Check for set membership."""
-                    data = ['A', 'B', 'C', 'D']
-
-                    requirement = {'A', 'B'}
-
-                    with self.accepted(Extra):
-                        self.assertValid(data, requirement)
-
-
-Datatest provides several different acceptances so users can
-precisely define the criteria by which differences should be
-accepted. In the following example, quantitative differences
-are accepted by their degree of error:
-
-.. tabs::
-
-    .. group-tab:: Pytest
-
-        Calling :meth:`accepted.tolerance(5) <accepted.tolerance>`
-        returns a context manager that accepts differences within
-        a tolerance of plus-or-minus five without triggering a test
-        failure:
+    .. group-tab:: No Acceptance
 
         .. code-block:: python
-            :emphasize-lines: 15
-            :lineno-start: 61
+            :linenos:
 
-            def test_using_dict():
-                """Check that values satisfy requirements of matching keys."""
-                data = {
-                    'A': 100,
-                    'B': 200,
-                    'C': 299,
-                    'D': 405,
-                }
-                requirement = {
-                    'A': 100,
-                    'B': 200,
-                    'C': 300,
-                    'D': 400,
-                }
-                with accepted.tolerance(5):  # accepts ±5
-                    validate(data, requirement)
+            from datatest import validate
+            from datatest import accepted
 
-    .. group-tab:: Unittest
-
-        Calling :meth:`self.acceptedTolerance(5) <DataTestCase.acceptedTolerance>`
-        returns a context manager that accepts differences within
-        a tolerance of plus-or-minus five without triggering a test
-        failure:
-
-        .. code-block:: python
-            :emphasize-lines: 15
-            :lineno-start: 55
-
-                def test_using_dict(self):
-                    """Check that values satisfy requirements of matching keys."""
-                    data = {
-                        'A': 100,
-                        'B': 200,
-                        'C': 299,
-                        'D': 405,
-                    }
-                    requirement = {
-                        'A': 100,
-                        'B': 200,
-                        'C': 300,
-                        'D': 400,
-                    }
-                    with self.acceptedTolerance(5):  # accepts ±5
-                        self.assertValid(data, requirement)
-
-    For a list of all possible acceptances see :ref:`acceptance-docs`.
+            data = {
+                'A': 100,
+                'B': 200,
+                'C': 299,
+                'D': 405,
+            }
+            requirement = {
+                'A': 100,
+                'B': 200,
+                'C': 300,
+                'D': 400,
+            }
+            validate(data, requirement)
 
 
-***********
-Other Tools
-***********
+        .. code-block:: none
+            :emphasize-lines: 5-6
+
+            Traceback (most recent call last):
+              File "example.py", line 16, in <module>
+                validate(data, requirement)
+            datatest.ValidationError: does not satisfy mapping requirements (2 differences): {
+                'C': Deviation(-1, 300),
+                'D': Deviation(+5, 400),
+            }
+
+
+Other Acceptances
+-----------------
+
+For a list of all possible acceptances, see :ref:`acceptance-docs`.
+
+
+*******************
+Data Handling Tools
+*******************
 
 Datatest also provides a few utilities for handling data:
 
