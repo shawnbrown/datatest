@@ -16,7 +16,8 @@ def _next_is_internal(tb):
     tb_next = tb.tb_next
     if not tb_next:
         return False
-    return tb_next.tb_frame.f_globals.get('__unittest', False)
+    return (tb_next.tb_frame.f_globals.get('__datatest', False)
+            or tb_next.tb_frame.f_globals.get('__unittest', False))
 
 
 def excepthook(err_type, err_value, err_traceback):
