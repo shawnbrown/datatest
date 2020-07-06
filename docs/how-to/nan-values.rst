@@ -217,9 +217,10 @@ matching NaN values, this approach is not reliable in practice.
 To optimize performance, Numpy and Pandas must tightly controll
 their internal data representations. When :data:`numpy.nan` is
 inserted into an :class:`array <numpy.array>` or :class:`Series
-<pandas.Series>`, the value may be coerced into a compatible
-``dtype`` if necessary. When a NaN's type is coerced, a separate
-instance is created which no longer matches the original value::
+<pandas.Series>`, the value is coerced into a compatible ``dtype``
+when necessary. When a NaN's type is coerced, a separate instance
+is created and the ability to match using the ``is`` operator
+no longer works as you might expect::
 
     >>> import pandas as pd
     >>> import numpy as np
