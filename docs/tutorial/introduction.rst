@@ -204,6 +204,128 @@ single element or a non-mapping container. In cases like this, the
 validation process will error-out before the data elements can be
 checked.
 
+In addition to built-in generic types, Datatest also provides automatic
+handling for several third-party data types.
+
+.. tabs::
+
+    .. group-tab:: Pandas
+
+        Datatest can work with :mod:`pandas` DataFrame, Series, Index,
+        and MultiIndex objects:
+
+        .. code-block:: python
+            :linenos:
+            :emphasize-lines: 9
+
+            import pandas as pd
+            import datatest as dt
+
+            df = pd.DataFrame([('x', 1, 12.25),
+                               ('y', 2, 33.75),
+                               ('z', 3, 101.5)],
+                              columns=['A', 'B', 'C'])
+
+            dt.validate(df[['A', 'B']], (str, int))
+
+    .. group-tab:: Pandas (integrated API)
+
+        For users who prefer a more tightly integrated API, Datatest
+        provides pandas `accessor extensions
+        <https://pandas.pydata.org/pandas-docs/stable/reference/extensions.html>`_:
+
+        .. code-block:: python
+            :linenos:
+            :emphasize-lines: 4, 11
+
+            import pandas as pd
+            import datatest as dt
+
+            dt.register_accessors()
+
+            df = pd.DataFrame([('x', 1, 12.25),
+                               ('y', 2, 33.75),
+                               ('z', 3, 101.5)],
+                              columns=['A', 'B', 'C'])
+
+            df[['A', 'B']].validate((str, int))
+
+        After calling the :func:`register_accessors` function, you
+        can use :func:`validate` as a *method* of your existing
+        DataFrame, Series, Index, and MultiIndex objects.
+
+    .. group-tab:: NumPy
+
+        Handling is also supported for :mod:`numpy` objects including one-
+        or two-dimentional array, recarray, and structured array objects.
+
+        .. code-block:: python
+            :linenos:
+            :emphasize-lines: 9
+
+            import numpy as np
+            import datatest as dt
+
+            a = np.array([('x', 1, 12.25),
+                          ('y', 2, 33.75),
+                          ('z', 3, 101.5)],
+                         dtype='U10, int32, float32')
+
+            dt.validate(a[['f0','f1']], (np.str_, np.int32))
+
+
+    .. group-tab:: Squint
+
+        Datatest also works well with :mod:`squint` Select, Query, and Result
+        objects:
+
+        .. code-block:: python
+            :linenos:
+            :emphasize-lines: 9
+
+            from squint import Select
+            from datatest import validate
+
+            select = Select([('A', 'B', 'C'),
+                             ('x', 1, 12.25),
+                             ('y', 2, 33.75),
+                             ('z', 3, 101.5)])
+
+            validate(select(('A', 'B')), (str, int))
+
+        .. admonition:: Origins
+            :class: note
+
+            Squint was originally part of Datatest itself---it grew out
+            of Datatest's old validation API. But as Datatest matured,
+            the need for a built-in query interface stoped making sense.
+            This *simple query interface* was named "Squint" and the
+            code was moved into its own project.
+
+    .. group-tab:: Databases
+
+        Database queries can be validated directly as long as the cursor
+        object conforms to the :pep:`DBAPI2 <249>` specification:
+
+        .. code-block:: python
+            :linenos:
+            :emphasize-lines: 13-14
+
+            import sqlite3
+            from datatest import validate
+
+            conn = sqlite3.connect(':memory:', isolation_level=None)
+            conn.executescript('''
+                CREATE TABLE mydata(A, B, C);
+                INSERT INTO mydata VALUES('x', 1, 12.25);
+                INSERT INTO mydata VALUES('y', 2, 33.75);
+                INSERT INTO mydata VALUES('z', 3, 101.5);
+            ''')
+            cursor = conn.cursor()
+
+            cursor.execute('SELECT A, B FROM mydata;')
+            validate(cursor, (str, int))
+
 
 ******
 Errors
