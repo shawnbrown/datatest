@@ -557,8 +557,8 @@ the :class:`Extra` differences. But without the acceptance, the
 ValidationError is raised.
 
 
-Accepted Difference
--------------------
+Accepted Instance
+-----------------
 
 If we want more precision, we can accept a specific difference---rather
 than all differences of a given type. For example, if the difference
@@ -624,13 +624,13 @@ the extra ``'D'``. So the ValidationError for both code samples
 includes the extra ``'D'`` difference.
 
 
-Accepted Group of Differences
------------------------------
+Accepted Container of Instances
+-------------------------------
 
 We can also accept multiple specific differences by defining a
 container of difference objects. To build on the previous example,
-we can use ``accepted([Extra('C'), Extra('D')])`` to accept both
-differences:
+we can use ``accepted([Extra('C'), Extra('D')])`` to accept the
+two differences explicitly:
 
 .. tabs::
 
@@ -751,7 +751,10 @@ of plus-or-minus five without triggering a test failure:
 Other Acceptances
 -----------------
 
-For a list of all possible acceptances, see :ref:`acceptance-docs`.
+In addtion to the previous examples, there are other acceptances
+available for specific cases---:meth:`accepted.keys`, :meth:`accepted.args`,
+:meth:`accepted.percent`, etc. For a list of all possible acceptances, see
+:ref:`acceptance-docs`.
 
 
 *******************
