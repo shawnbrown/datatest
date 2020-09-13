@@ -761,7 +761,7 @@ available for specific cases---:meth:`accepted.keys`, :meth:`accepted.args`,
 Data Handling Tools
 *******************
 
-Datatest also provides a few utilities for handling data:
+Datatest also provides utilities for other kinds of data handling:
 
 :class:`working_directory`
     Context manager and decorator to temporarily set a working
