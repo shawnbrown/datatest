@@ -64,6 +64,12 @@ class TestNormalizeLazySquint(unittest.TestCase):
         self.assertIsInstance(normalized, squint.Result)
         self.assertEqual(normalized.evaltype, list)
 
+    def test_select(self):
+        select_object = squint.Select([['A'], [1], [2], [3], [4]])
+        normalized = _normalize_lazy(select_object)
+        self.assertIsInstance(normalized, squint.Result)
+        self.assertEqual(normalized.evaltype, list)
+
 
 class TestNormalizeLazyResultAndQuery(unittest.TestCase):
     """Test deprecated `Result` and `Query` objects."""

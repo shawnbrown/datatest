@@ -49,12 +49,15 @@ def _normalize_lazy(obj):
     squint = sys.modules.get('squint', None)
     if squint:
         if isinstance(obj, squint.Query):
-            obj = obj.execute()
+            return obj.execute()  # <- EXIT!
 
         if isinstance(obj, squint.Result):
             if issubclass(obj.evaltype, Mapping):
                 obj = IterItems(obj)
             return obj  # <- EXIT!
+
+        if isinstance(obj, squint.Select):
+            return obj().execute()  # <- EXIT!
 
     pandas = sys.modules.get('pandas', None)
     if pandas:
