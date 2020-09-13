@@ -122,8 +122,8 @@ a given *requirement* to *data* objects of different formats.
 
 The following examples perform type-checking to see if elements
 are :py:class:`int` values. Switch between the different tabs
-below and notice that the same *requirement* works for all of the
-different *data* formats:
+below and notice that the same *requirement* (``requirement = int``)
+works for all of the different *data* formats:
 
 .. tabs::
 
@@ -138,7 +138,7 @@ different *data* formats:
             from datatest import validate
 
             data = 42
-            requirement = int
+            requirement = int  # <- Same for all formats.
             validate(data, requirement)
 
         A *data* value is treated as single element if it's a string, tuple,
@@ -155,7 +155,7 @@ different *data* formats:
             from datatest import validate
 
             data = [1, 2, 3]
-            requirement = int
+            requirement = int  # <- Same for all formats.
             validate(data, requirement)
 
         A *data* value is treated as a group of elements if it's any iterable
@@ -173,8 +173,12 @@ different *data* formats:
             from datatest import validate
 
             data = {'A': 1, 'B': 2, 'C': 3}
-            requirement = int
+            requirement = int  # <- Same for all formats.
             validate(data, requirement)
+
+        When *data* is a mapping, its values are checked as individual
+        elements if they are strings, tuples, non-iterable objects, or
+        nested mappings.
 
     .. group-tab:: Mapping of Groups
 
@@ -187,12 +191,12 @@ different *data* formats:
             from datatest import validate
 
             data = {'X': [1, 2, 3], 'Y': [4, 5, 6], 'Z': [7, 8, 9]}
-            requirement = int
+            requirement = int  # <- Same for all formats.
             validate(data, requirement)
 
-
-Automatic data handling is also supported for :mod:`pandas` objects,
-:mod:`numpy` arrays, and :mod:`squint` objects.
+        A mapping's values are treated as a group of individual elements
+        when they are any iterable other than a string, tuple, or another
+        nested mapping.
 
 Of course, not all formats are comparable. When *requirement* is itself
 a mapping, there's no clear way to handle validation if *data* is a
