@@ -11,7 +11,7 @@ datatest: Test driven data-wrangling and data validation
 
 .. start-inclusion-marker-description
 
-Datatest helps speed up and formalize data-wrangling and data
+Datatest helps to speed up and formalize data-wrangling and data
 validation tasks. It repurposes software testing practices for
 data preparation and quality assurance projects. Datatest can
 help you:
@@ -23,9 +23,10 @@ help you:
 * Measure progress of data preparation tasks.
 * On-board new team members with an explicit and structured process.
 
-Datatest supports both pytest_ and unittest_ style testing.
-It implements a system of validation methods, difference
-classes, and acceptance context managers.
+Datatest can be used directly in your own projects or as part of
+a testing framework like pytest_ or unittest_. It implements a
+system of validation methods, difference classes, and acceptance
+context managers.
 
 Datatest has no hard dependencies; supports Python 2.6, 2.7,
 3.1 through 3.8, PyPy, and PyPy3; and is freely available under
