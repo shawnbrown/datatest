@@ -290,7 +290,7 @@ to right.
 Predicates
 **********
 
-Datatest can use :class:`Predicate` objects for validation, certain
-acceptances, and querying data.
+Datatest can use :class:`Predicate` objects for validation and to define
+certain acceptances.
 
 .. autoclass:: Predicate
