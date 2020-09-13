@@ -36,7 +36,7 @@ def _normalize_lazy(obj):
             obj = IterItems(obj)
         return obj  # <- EXIT!
 
-    # Vendored Squint objects (will be deprecated in 0.9.8).
+    # Vendored Squint objects (will be deprecated in 0.9.7).
     if isinstance(obj, Query):
         obj = obj.execute()
 
