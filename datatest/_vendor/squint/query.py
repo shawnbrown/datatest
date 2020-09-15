@@ -210,6 +210,9 @@ class Result(Iterator):
         duplicate or unhashable values. When the *evaluation_type*
         is a :py:class:`dict` or other mapping, the *iterable* must
         contain unique key-value pairs or a mapping.
+
+    .. deprecated:: 0.9.7
+        Use the :mod:`squint` project instead.
     """
     def __init__(self, iterable, evaluation_type):
         _warn(self)  # Issue deprecation warning.
@@ -665,6 +668,9 @@ class Query(object):
     A class to query data from a source object.
 
     See documentation for full details.
+
+    .. deprecated:: 0.9.7
+        Use the :mod:`squint` project instead.
     """
     def __init__(self, *args, **where):
         """Initialize self.
@@ -1131,6 +1137,27 @@ class Select(object):
     Load multple files using a shell-style wildcard::
 
         select = datatest.Select('*.csv')
+
+    .. deprecated:: 0.9.7
+        Use the :mod:`squint` project instead.
+
+    .. admonition:: Deprecation Notice
+        :class: warning
+
+        The existing ``Select``, ``Query``, and ``Result`` classes have
+        been moved into their own project called "squint". Squint is
+        described as a *simple query interface* for tabular data. For
+        full documentation, see :mod:`squint`.
+
+        You can install it from PyPI using pip:
+
+        .. code-block:: console
+
+            python -m pip install squint
+
+        Squint implements the same selection and querying interfaces
+        established in earlier versions of Datatest. It can serve as
+        a drop-in replacement for these now-deprecated classes.
     """
     def __init__(self, objs=None, *args, **kwds):
         """Initialize self."""
