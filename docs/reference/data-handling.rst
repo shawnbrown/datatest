@@ -11,116 +11,11 @@ Data Handling API Reference
 ###########################
 
 
-************
-Loading Data
-************
+*****************
+working_directory
+*****************
 
 .. autoclass:: working_directory
-
-
-.. autoclass:: get_reader(obj, *args, **kwds)
-
-    .. automethod:: from_csv
-
-    .. automethod:: from_dicts
-
-    .. automethod:: from_namedtuples
-
-    .. automethod:: from_datatest
-
-    .. automethod:: from_pandas
-
-    .. automethod:: from_excel
-
-    .. automethod:: from_dbf
-
-
-*************************
-Selecting & Querying Data
-*************************
-
-.. autoclass:: Select
-
-    When multiple sources are loaded into a single Select,
-    data is aligned by fieldname and missing fields receive
-    empty strings:
-
-    .. figure:: /_static/multisource.svg
-       :figwidth: 75%
-       :alt: Data can be loaded from multiple files.
-
-    .. automethod:: load_data
-
-    .. autoattribute:: fieldnames
-
-    .. automethod:: __call__
-
-    .. automethod:: create_index
-
-
-.. class:: Query(columns, **where)
-           Query(select, columns, **where)
-
-    A class to query data from a source object. Queries can be
-    created, modified, and passed around without actually computing
-    the result---computation doesn't occur until the query object
-    itself or its :meth:`fetch` method is called.
-
-    The given *columns* and *where* arguments can be any values
-    supported by :meth:`Select.__call__`.
-
-    Although Query objects are usually created by :meth:`calling
-    <datatest.Select.__call__>` an existing Select, it's
-    possible to create them independent of any single data source::
-
-        query = Query('A')
-
-    .. automethod:: from_object
-
-    .. automethod:: sum
-
-    .. automethod:: count
-
-    .. automethod:: avg
-
-    .. automethod:: min
-
-    .. automethod:: max
-
-    .. automethod:: distinct
-
-    .. automethod:: apply
-
-    .. automethod:: map
-
-    .. automethod:: filter
-
-    .. automethod:: reduce
-
-    .. automethod:: flatten
-
-    .. automethod:: unwrap
-
-    .. automethod:: execute
-
-    .. automethod:: fetch
-
-    .. automethod:: to_csv
-
-
-.. autoclass:: Result
-
-    .. attribute:: evaluation_type
-
-        The type of instance returned by the
-        :meth:`fetch <Result.fetch>` method.
-
-    .. automethod:: fetch
-
-    .. attribute:: __wrapped__
-
-        The underlying iterator---useful when introspecting
-        or rewrapping.
 
 
 ******************
@@ -222,3 +117,102 @@ the result values directly in the :func:`validate` call itself:
 
             validate(*compare[['A', 'C']].groupby('A').sum())
 
+
+*******************
+Deprecated Features
+*******************
+
+.. autoclass:: get_reader(obj, *args, **kwds)
+
+    .. automethod:: from_csv
+
+    .. automethod:: from_dicts
+
+    .. automethod:: from_namedtuples
+
+    .. automethod:: from_datatest
+
+    .. automethod:: from_pandas
+
+    .. automethod:: from_excel
+
+    .. automethod:: from_dbf
+
+
+.. autoclass:: Select
+
+    .. automethod:: load_data
+
+    .. autoattribute:: fieldnames
+
+    .. automethod:: __call__
+
+    .. automethod:: create_index
+
+
+.. class:: Query(columns, **where)
+           Query(select, columns, **where)
+
+    A class to query data from a source object. Queries can be
+    created, modified, and passed around without actually computing
+    the result---computation doesn't occur until the query object
+    itself or its :meth:`fetch` method is called.
+
+    The given *columns* and *where* arguments can be any values
+    supported by :meth:`Select.__call__`.
+
+    Although Query objects are usually created by :meth:`calling
+    <datatest.Select.__call__>` an existing Select, it's
+    possible to create them independent of any single data source::
+
+        query = Query('A')
+
+    .. deprecated:: 0.9.7
+        Use the :mod:`squint` project instead.
+
+    .. automethod:: from_object
+
+    .. automethod:: sum
+
+    .. automethod:: count
+
+    .. automethod:: avg
+
+    .. automethod:: min
+
+    .. automethod:: max
+
+    .. automethod:: distinct
+
+    .. automethod:: apply
+
+    .. automethod:: map
+
+    .. automethod:: filter
+
+    .. automethod:: reduce
+
+    .. automethod:: flatten
+
+    .. automethod:: unwrap
+
+    .. automethod:: execute
+
+    .. automethod:: fetch
+
+    .. automethod:: to_csv
+
+
+.. autoclass:: Result
+
+    .. attribute:: evaluation_type
+
+        The type of instance returned by the
+        :meth:`fetch <Result.fetch>` method.
+
+    .. automethod:: fetch
+
+    .. attribute:: __wrapped__
+
+        The underlying iterator---useful when introspecting
+        or rewrapping.

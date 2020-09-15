@@ -1138,6 +1138,14 @@ class Select(object):
 
         select = datatest.Select('*.csv')
 
+    When multiple sources are loaded into a single Select,
+    data is aligned by fieldname and missing fields receive
+    empty strings:
+
+    .. figure:: /_static/multisource.svg
+       :figwidth: 75%
+       :alt: Data can be loaded from multiple files.
+
     .. deprecated:: 0.9.7
         Use the :mod:`squint` project instead.
 
