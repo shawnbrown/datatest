@@ -11,16 +11,22 @@ class working_directory(contextlib.ContextDecorator):
     location.
 
     Use the global ``__file__`` variable to load data relative to
-    test file's current directory::
+    a file's current directory::
 
-        with datatest.working_directory(__file__):
-            select = datatest.Select('myfile.csv')
+        from datatest import working_directory
+        import pandas as pd
+
+        with working_directory(__file__):
+            my_df = pd.read_csv('myfile.csv')
 
     This context manager can also be used as a decorator::
 
-        @datatest.working_directory(__file__)
-        def myfile():
-            return datatest.Select('myfile.csv')
+        from datatest import working_directory
+        import pandas as pd
+
+        @working_directory(__file__)
+        def my_df():
+            return pd.read_csv('myfile.csv')
     """
     def __init__(self, path):
         if os.path.isfile(path):
