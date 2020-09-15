@@ -28,29 +28,55 @@ RepeatingContainer
 Validating RepeatingContainer Results
 =====================================
 
-When comparing the data-under-test against a set of similarly-shaped
-reference data, it's common to perform the same operations on both
+When comparing the *data under test* against a set of similarly-shaped
+*reference data*, it's common to perform the same operations on both
 data sources. When queries and selections become more complex, this
-duplication can grow cumbersome. But the duplication can be mitigated
-by using a :class:`RepeatingContainer`.
+duplication can grow cumbersome. But duplication can be mitigated by
+using a :class:`RepeatingContainer` object.
 
-A RepeatingContainer can wrap many types of objects (:class:`Select`,
-pandas ``DataFrame``, etc.). In the following example, a RepeatingContainer
-is created with two objects. Then, an operation is forwarded to each
-object in the group. Finally, the results are unpacked and validated:
+A RepeatingContainer is compatible with many types of
+objects---:class:`pandas.DataFrame`, :class:`squint.Select`, etc.
+
+In the following example, a RepeatingContainer is created with two
+objects. Then, an operation is forwarded to each object in the group.
+Finally, the results are unpacked and validated:
 
 .. tabs::
 
-    .. group-tab:: Select Example
+    .. group-tab:: With Pandas
 
-        Below, the operation ``...({'A': 'C'}).sum()`` is forwarded to
-        each :class:`Select` and the results are returned inside a
+        Below, the indexing and method calls
+        ``...[['A', 'C']].groupby('A').sum()`` are forwarded to each
+        :class:`pandas.DataFrame` and the results are returned inside
+        a new RepeatingContainer:
+
+        .. code-block:: python
+            :emphasize-lines: 9
+
+            import datatest as dt
+            import pandas as pd
+
+            compare = RepeatingContainer([
+                pd.read_csv('data_under_test.csv'),
+                pd.read_csv('reference_data.csv'),
+            ])
+
+            result = compare[['A', 'C']].groupby('A').sum()
+
+            data, requirement = result
+            dt.validate(data, requirement)
+
+    .. group-tab:: With Squint
+
+        Below, the method calls ``...({'A': 'C'}).sum()`` are forwarded to
+        each :class:`squint.Select` and the results are returned inside a
         new RepeatingContainer:
 
         .. code-block:: python
-            :emphasize-lines: 8
+            :emphasize-lines: 9
 
-            ...
+            from datatest import validate
+            from squint import Select
 
             compare = RepeatingContainer([
                 Select('data_under_test.csv'),
@@ -62,39 +88,35 @@ object in the group. Finally, the results are unpacked and validated:
             data, requirement = result
             validate(data, requirement)
 
-    .. group-tab:: DataFrame Example
 
-        Below, the operation ``...[['A', 'C']].groupby('A').sum()`` is
-        forwarded to each ``DataFrame`` and the results are returned
-        inside a new RepeatingContainer:
-
-        .. code-block:: python
-            :emphasize-lines: 8
-
-            ...
-
-            compare = RepeatingContainer([
-                pandas.read_csv('data_under_test.csv'),
-                pandas.read_csv('reference_data.csv'),
-            ])
-
-            result = compare[['A', 'C']].groupby('A').sum()
-
-            data, requirement = result
-            validate(data, requirement)
-
-
-The example above can be expressed even more concisely by unpacking
-the result values directly in the :func:`validate` call itself:
+The example above can be expressed even more concisely using
+Python's asterisk unpacking (``*``) to unpack the values directly
+inside the :func:`validate` call itself:
 
 .. tabs::
 
-    .. group-tab:: Select Example
+    .. group-tab:: With Pandas
 
         .. code-block:: python
-            :emphasize-lines: 8
+            :emphasize-lines: 9
 
-            ...
+            import datatest as dt
+            import pandas as pd
+
+            compare = RepeatingContainer([
+                pd.read_csv('data_under_test.csv'),
+                pd.read_csv('reference_data.csv'),
+            ])
+
+            dt.validate(*compare[['A', 'C']].groupby('A').sum())
+
+    .. group-tab:: With Squint
+
+        .. code-block:: python
+            :emphasize-lines: 9
+
+            from datatest import validate
+            from squint import Select
 
             compare = RepeatingContainer([
                 Select('data_under_test.csv'),
@@ -102,20 +124,6 @@ the result values directly in the :func:`validate` call itself:
             ])
 
             validate(*compare({'A': 'C'}).sum())
-
-    .. group-tab:: DataFrame Example
-
-        .. code-block:: python
-            :emphasize-lines: 8
-
-            ...
-
-            compare = RepeatingContainer([
-                pandas.read_csv('data_under_test.csv'),
-                pandas.read_csv('reference_data.csv'),
-            ])
-
-            validate(*compare[['A', 'C']].groupby('A').sum())
 
 
 *******************
