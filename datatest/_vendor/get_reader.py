@@ -138,6 +138,38 @@ class get_reader(object):
     must call the appropriate handler explicitly (for example
     :meth:`get_reader.from_csv`, :meth:`get_reader.from_pandas`,
     etc.).
+
+    .. deprecated:: 0.9.7
+        Use the `get-reader <https://pypi.org/project/get-reader/>`_ project instead.
+
+    .. admonition:: Deprecation Notice
+        :class: warning
+
+        The :func:`get_reader` function has been moved into its own project.
+        See the `get-reader <https://pypi.org/project/get-reader/>`_ package
+        on PyPI for more details.
+
+        You can install it from PyPI using pip:
+
+        .. code-block:: console
+
+            python -m pip install get-reader
+
+        It uses the same interface:
+
+        .. code-block:: python
+
+            from get_reader import get_reader
+
+            # CSV file.
+            reader = get_reader('myfile.csv')
+
+            # Excel file.
+            reader = get_reader('myfile.xlsx', worksheet='Sheet2')
+
+            # Pandas DataFrame.
+            df = pandas.DataFrame([...])
+            reader = get_reader(df)
     """
     def __new__(cls, obj, *args, **kwds):
         if isinstance(obj, string_types):
