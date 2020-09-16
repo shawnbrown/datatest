@@ -37,13 +37,13 @@ following files:
 
     .. group-tab:: Pytest
 
-        * **Test Script:** :download:`test_users.py <../_static/test_users.py>`
-        * **Messy CSV File:** :download:`users.csv <../_static/users.csv>`
+        * **Test Script:** :download:`test_users.py </_static/test_users.py>`
+        * **Messy CSV File:** :download:`users.csv </_static/users.csv>`
 
     .. group-tab:: Unittest
 
-        * **Test Script:** :download:`test_users_unit.py <../_static/test_users_unit.py>`
-        * **Messy CSV File:** :download:`users.csv <../_static/users.csv>`
+        * **Test Script:** :download:`test_users_unit.py </_static/test_users_unit.py>`
+        * **Messy CSV File:** :download:`users.csv </_static/users.csv>`
 
 
 *****************
