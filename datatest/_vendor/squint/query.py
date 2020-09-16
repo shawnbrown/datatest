@@ -1304,9 +1304,6 @@ class Select(object):
             select = datatest.Select('example.csv')
             query = select({'A'}, B='foo')  # <- selects only the rows
                                             #    where 'B' equals 'foo'
-
-        See the :ref:`querying-data` tutorial for step-by-step
-        examples.
         """
         try:
             with suppress_deprecation():
