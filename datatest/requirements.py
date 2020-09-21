@@ -660,7 +660,10 @@ class RequiredOrder(GroupRequirement):
 
 class RequiredSequence(GroupRequirement):
     """A requirement to test elements in data against an *iterable*
-    of predicate matches (compared by iteration order).
+    of predicate matches (compared by iteration order). If *factory*
+    is given, it should be a callable object of one argument that
+    accepts the data under test and returns a requirement instance
+    that is a subclass of GroupRequirement.
     """
     def __init__(self, iterable, factory=None):
         if not nonstringiter(iterable):
@@ -705,13 +708,10 @@ class RequiredSequence(GroupRequirement):
 
 
 class RequiredMapping(ItemsRequirement):
-    """A requirement to test a mapping of data against a *mapping*
-    of required objects.
-
-    If given, an *abstract_factory* should be a callable of one
-    argument that accepts a value and returns an appropriate
-    GroupRequirement factory or None. If None is returned, the
-    default auto-detection is used instead.
+    """A requirement to test a mapping of data against a *mapping* of
+    required objects. If *factory* is given, it should be a callable
+    object of one argument that accepts the data under test and returns
+    a requirement instance that is a subclass of GroupRequirement.
     """
     def __init__(self, mapping, factory=None):
         if not isinstance(mapping, Mapping):
