@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 import re
-from math import isnan
+from cmath import isnan
 from .._compatibility.builtins import *
 from .._compatibility import abc
 from .._utils import regex_types
@@ -115,7 +115,7 @@ def _get_matcher_parts(obj):
         repr_string = 'False'
     elif _check_nan(obj):
         pred_handler = _check_nan
-        repr_string = "float('nan')"
+        repr_string = 'NaN'
     elif isinstance(obj, regex_types):
         pred_handler = lambda x: _check_regex(obj, x)
         repr_string = 're.compile({0!r})'.format(obj.pattern)
