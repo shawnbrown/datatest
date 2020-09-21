@@ -269,6 +269,10 @@ class RequiredPredicate(GroupRequirement):
         self.show_expected = show_expected
 
     def predicate_factory(self, obj):
+        """Accepts an object *obj* and returns an appropriate predicate
+        function. Typically, this method is called once per instance
+        during initialization---see the __init__() method.
+        """
         if isinstance(obj, Predicate):
             return obj
         return Predicate(obj)
