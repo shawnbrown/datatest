@@ -1,7 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from . import _unittest as unittest
+import cmath
+import decimal
+import math
 import re
+
+try:
+    import numpy
+except ImportError:
+    numpy = False
 
 from datatest._vendor.predicate import (
     _check_type,
@@ -104,6 +112,29 @@ class TestCheckFalsy(unittest.TestCase):
         self.assertFalse(_check_falsy(range(1)))
 
 
+class TestCheckNaN(unittest.TestCase):
+    def test_matches(self):
+        self.assertTrue(_check_nan(float('NaN')))
+        self.assertTrue(_check_nan(complex(float('NaN'))))
+        self.assertTrue(_check_nan(decimal.Decimal('NaN')))
+        if hasattr(math, 'nan'):  # New in version 3.5
+            self.assertTrue(_check_nan(math.nan))
+        if hasattr(cmath, 'nan'):  # New in version 3.6
+            self.assertTrue(_check_nan(cmath.nan))
+
+    def test_nonmatches(self):
+        self.assertFalse(_check_nan('x'))
+        self.assertFalse(_check_nan(1))
+        self.assertFalse(_check_nan(1.0))
+        self.assertFalse(_check_nan(complex(1)))
+        self.assertFalse(_check_nan(decimal.Decimal('1.123')))
+
+    @unittest.skipIf(not numpy, 'numpy not found')
+    def test_numpy_cases(self):
+        self.assertTrue(_check_nan(numpy.nan))
+        self.assertFalse(_check_nan(numpy.int64(123)))
+
+
 class TestCheckRegex(unittest.TestCase):
     def test_function(self):
         regex = re.compile('(Ch|H)ann?ukk?ah?')
@@ -178,7 +209,7 @@ class TestGetMatcherParts(unittest.TestCase):
     def test_nan(self):
         pred_handler, repr_string = _get_matcher_parts(float('nan'))
         self.assertIs(pred_handler, _check_nan)
-        self.assertEqual(repr_string, "float('nan')")
+        self.assertEqual(repr_string, 'NaN')
 
     def test_regex(self):
         regex = re.compile('ab[cd]')
