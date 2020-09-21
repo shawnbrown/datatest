@@ -671,10 +671,10 @@ class RequiredSequence(GroupRequirement):
         self.iterable = iterable
         if not factory:
             factory = RequiredPredicate
-        self.factory = factory
+        self._grouprequirement_factory = factory
 
     def _generate_differences(self, group):
-        factory = self.factory
+        factory = self._grouprequirement_factory
 
         zipped = zip_longest(group, self.iterable, fillvalue=NOVALUE)
         for actual, expected in zipped:
@@ -717,14 +717,14 @@ class RequiredMapping(ItemsRequirement):
         if not isinstance(mapping, Mapping):
             mapping = dict(mapping)
         self.mapping = mapping
-        self._factory = factory
+        self._grouprequirement_factory = factory
 
     def abstract_factory(self, obj):
         """Return a group requirement type appropriate for the given
         *obj* or None if *obj* is already a GroupRequirement instance.
         """
-        if self._factory:
-            return self._factory
+        if self._grouprequirement_factory:
+            return self._grouprequirement_factory
 
         if isinstance(obj, GroupRequirement):
             return None
