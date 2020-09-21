@@ -671,7 +671,9 @@ class RequiredSequence(GroupRequirement):
 
         zipped = zip_longest(group, self.iterable, fillvalue=NOVALUE)
         for actual, expected in zipped:
-            if factory is RequiredPredicate:
+            if factory is RequiredPredicate:  # <- IMPORTANT: It is correct
+                                              #    to use `is` here, do NOT
+                                              #    check using isinstance().
                 pred = Predicate(expected)
                 result = pred(actual)
                 if not result:
@@ -762,7 +764,9 @@ class RequiredMapping(ItemsRequirement):
             factory = self.abstract_factory(expected)
 
             if isinstance(value, BaseElement):
-                if factory is RequiredPredicate:
+                if factory is RequiredPredicate:  # <- IMPORTANT: It is correct
+                                                  #    to use `is` here, do NOT
+                                                  #    check using isinstance().
                     # Skip requirement and use Predicate directly.
                     # Note: Performance benchmarking shows that this
                     # optimization can finish in 72% of the time it
