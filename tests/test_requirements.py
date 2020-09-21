@@ -1148,7 +1148,7 @@ class TestRequiredOrder2(unittest.TestCase):
         self.assertEqual(list(differences), expected)
 
 
-class TestRequiredSequence2(unittest.TestCase):
+class TestRequiredSequence(unittest.TestCase):
     def test_passing(self):
         requirement = RequiredSequence(['a', 'b', 'c', 'd'])
         self.assertIsNone(requirement(['a', 'b', 'c', 'd']))
