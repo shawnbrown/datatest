@@ -261,7 +261,7 @@ handling for several third-party data types.
 
         .. code-block:: python
             :linenos:
-            :emphasize-lines: 9
+            :emphasize-lines: 9-10
 
             import numpy as np
             import datatest as dt
@@ -271,8 +271,9 @@ handling for several third-party data types.
                           ('z', 3, 101.5)],
                          dtype='U10, int32, float32')
 
-            dt.validate(a[['f0','f1']], (np.str_, np.int32))
-
+            data = a[['f0','f1']]
+            requirement = (np.str_, np.int32)
+            dt.validate(data, requirement)
 
     .. group-tab:: Squint
 
@@ -304,8 +305,7 @@ handling for several third-party data types.
 
     .. group-tab:: Databases
 
-        Database queries can be validated directly as long as the cursor
-        object conforms to the :pep:`DBAPI2 <249>` specification:
+        Database queries can also be validated directly:
 
         .. code-block:: python
             :linenos:
@@ -314,7 +314,7 @@ handling for several third-party data types.
             import sqlite3
             from datatest import validate
 
-            conn = sqlite3.connect(':memory:', isolation_level=None)
+            conn = sqlite3.connect(':memory:')
             conn.executescript('''
                 CREATE TABLE mydata(A, B, C);
                 INSERT INTO mydata VALUES('x', 1, 12.25);
@@ -325,6 +325,10 @@ handling for several third-party data types.
 
             cursor.execute('SELECT A, B FROM mydata;')
             validate(cursor, (str, int))
+
+        This requires a ``cursor`` object to conform to Python's DBAPI2
+        specification (see :pep:`249`). Most of Python's database packages
+        support this interface.
 
 
 ******
