@@ -59,11 +59,11 @@ class TestCommand(Command):
 
         # Prepare test command.
         if sys.version_info[:2] in [(2, 6), (3, 1)]:
-            args = [sys.executable, '-B', '-O', 'tests/discover.py',
-                    '-t', WORKING_DIR, '-s', 'tests']
+            args = [sys.executable, '-B', '-O', '-W default',
+                    'tests/discover.py', '-t', WORKING_DIR, '-s' ,'tests']
         else:
-            args = [sys.executable, '-B', '-O', '-m', 'unittest', 'discover',
-                    '-t', WORKING_DIR, '-s', 'tests']
+            args = [sys.executable, '-B', '-O', '-W default', '-m', 'unittest',
+                    'discover', '-t', WORKING_DIR, '-s', 'tests']
 
         if self.verbose:
             args.append('--verbose')
@@ -160,6 +160,7 @@ if __name__ == '__main__':
                 'Programming Language :: Python :: 3.6',
                 'Programming Language :: Python :: 3.7',
                 'Programming Language :: Python :: 3.8',
+                'Programming Language :: Python :: 3.9',
                 'Programming Language :: Python :: Implementation :: CPython',
                 'Programming Language :: Python :: Implementation :: PyPy',
             ],
