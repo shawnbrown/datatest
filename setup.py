@@ -78,7 +78,9 @@ class TestCommand(Command):
         # Returns a list of missing optional packages.
         optional_packages = [
             'dbfread',
+            'numpy',
             'pandas',
+            'squint',
             'xlrd',  # <- support for MS Excel files
         ]
         missing_optionals = []
