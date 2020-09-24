@@ -8,7 +8,7 @@ COMING SOON (0.9.7)
 * Added pandas integration for `DataFrame`, `Series`, `Index` and
   `MultiIndex` objects. After calling the new register_accessors()
   function, you can check your existing pandas objects using the
-  'validate' accessor:
+  'validate' accessor method:
 
       import padas as pd
       import datatest as dt
@@ -16,7 +16,7 @@ COMING SOON (0.9.7)
       dt.register_accessors()  # <- Activate pandas integration.
 
       df = pd.DataFrame(...)
-      df[['A', 'B']].validate((str, int))  # <- Use 'validate' accessor.
+      df[['A', 'B']].validate((str, int))  # <- New accessor method.
 
 * Changed pandas validation behavior:
 
