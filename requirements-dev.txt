@@ -10,6 +10,7 @@
 # pip install -r requirements-dev.txt
 
 dbfread
+numpy
 pandas
 squint
 xlrd
