@@ -330,6 +330,29 @@ class TestPredicate(unittest.TestCase):
         self.assertFalse(pred(('abc', 1.0)))
         self.assertFalse(pred(('abc', 'xyz')))
 
+    @unittest.skipIf(not numpy, 'numpy not found')
+    def test_numpy_types(self):
+        """Check that built-in types can match numpy types."""
+        # Match numpy.character sub-types.
+        pred = Predicate(str)
+        self.assertTrue(pred(numpy.str_('abc')))
+        self.assertTrue(pred(numpy.unicode_('def')))
+
+        # Match numpy.integer sub-types.
+        pred = Predicate(int)
+        self.assertTrue(pred(numpy.int8(123)))
+        self.assertTrue(pred(numpy.uint64(456)))
+
+        # Match numpy.floating sub-types.
+        pred = Predicate(float)
+        self.assertTrue(pred(numpy.float32(1.0)))
+        self.assertTrue(pred(numpy.float64(2.0)))
+
+        # Match numpy.complexfloating sub-types.
+        pred = Predicate(complex)
+        self.assertTrue(pred(numpy.complex64(1.0)))
+        self.assertTrue(pred(numpy.complex128(2.0)))
+
     def test_inverted_logic(self):
         pred = ~Predicate('abc')
         self.assertFalse(pred('abc'))

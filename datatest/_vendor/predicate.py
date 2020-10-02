@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 import re
+import sys
 from cmath import isnan
 from .._compatibility.builtins import *
 from .._compatibility import abc
@@ -99,7 +100,20 @@ def _get_matcher_parts(obj):
     and requires no other special handling.
     """
     if isinstance(obj, type):
-        pred_handler = lambda x: _check_type(obj, x)
+        if 'numpy' in sys.modules:
+            if obj is str:
+                alt_obj = (str, sys.modules['numpy'].character)
+            elif obj is int:
+                alt_obj = (int, sys.modules['numpy'].integer)
+            elif obj is float:
+                alt_obj = (float, sys.modules['numpy'].floating)
+            elif obj is complex:
+                alt_obj = (complex, sys.modules['numpy'].complexfloating)
+            else:
+                alt_obj = obj
+        else:
+            alt_obj = obj
+        pred_handler = lambda x: _check_type(alt_obj, x)
         repr_string = getattr(obj, '__name__', repr(obj))
     elif callable(obj):
         pred_handler = lambda x: _check_callable(obj, x)
