@@ -145,7 +145,7 @@ class ValidateSeries(ValidationAccessor):
     pass
 
 
-class ValadateIndex(ValidationAccessor):
+class ValidateIndex(ValidationAccessor):
     """Check that values in Index satisfy the *requirement*."""
     pass
 
@@ -180,7 +180,7 @@ def register_accessors():
     """
     global ValidateDataFrame
     global ValidateSeries
-    global ValadateIndex
+    global ValidateIndex
 
     try:
         import pandas
@@ -197,9 +197,9 @@ def register_accessors():
                 ValidateSeries = decorator(ValidateSeries)
 
             accessor = getattr(pandas.Index, 'validate', None)
-            if not (accessor and issubclass(accessor, ValadateIndex)):
+            if not (accessor and issubclass(accessor, ValidateIndex)):
                 decorator = pandas.api.extensions.register_index_accessor('validate')
-                ValadateIndex = decorator(ValadateIndex)
+                ValidateIndex = decorator(ValidateIndex)
 
         except AttributeError:
             import warnings
