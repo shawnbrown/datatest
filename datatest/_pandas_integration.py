@@ -3,6 +3,12 @@ from .validation import ValidationError
 from .validation import validate
 
 
+# To learn how Pandas integration works, see "Registering custom accessors"
+# on the following page:
+#
+#   https://pandas.pydata.org/pandas-docs/stable/development/extending.html
+
+
 class ValidationAccessor(object):
     def __init__(self, pandas_obj):
         self._data = pandas_obj
