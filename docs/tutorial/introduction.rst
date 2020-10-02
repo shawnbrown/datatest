@@ -261,7 +261,7 @@ handling for several third-party data types.
 
         .. code-block:: python
             :linenos:
-            :emphasize-lines: 9-10
+            :emphasize-lines: 9
 
             import numpy as np
             import datatest as dt
@@ -271,9 +271,7 @@ handling for several third-party data types.
                           ('z', 3, 101.5)],
                          dtype='U10, int32, float32')
 
-            data = a[['f0','f1']]
-            requirement = (np.str_, np.int32)
-            dt.validate(data, requirement)
+            dt.validate(a[['f0', 'f1']], (str, int))
 
     .. group-tab:: Squint
 
