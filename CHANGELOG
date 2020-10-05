@@ -30,6 +30,9 @@ COMING SOON (0.9.7)
 
   * `Index` and `MultiIndex`: These objects are treated as sequences.
 
+* Added Predicate matching support for NumPy types `np.character`,
+  `np.integer`, `np.floating`, and `np.complexfloating`.
+
 * Added improved NaN handling:
 
   * Added NaN support to `accepted.keys()`, `accepted.args()`, and
