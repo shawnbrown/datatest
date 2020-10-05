@@ -759,6 +759,32 @@ available for specific cases---:meth:`accepted.keys`, :meth:`accepted.args`,
 :ref:`acceptance-docs`.
 
 
+Combining Acceptances
+---------------------
+
+Acceptances can also be combined using the operators ``&`` and ``|``
+to define more complex criteria:
+
+.. code-block:: python
+    :emphasize-lines: 7, 11
+
+    from datatest import (
+        validate,
+        accepted,
+    )
+
+    # Accept up to five missing differences.
+    with accepted(Missing) & accepted.count(5):
+        validate(..., ...)
+
+    # Accept differences of ±10 or ±5%.
+    with accepted.tolerance(10) | accepted.percent(0.05):
+        validate(..., ...)
+
+To learn more about these features, see :ref:`composability-docs` and
+:ref:`order-of-operations-docs`.
+
+
 *******************
 Data Handling Tools
 *******************
