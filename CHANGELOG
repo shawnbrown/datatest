@@ -40,6 +40,8 @@ COMING SOON (0.9.7)
   * Improved existing NaN support for difference comparisons.
   * Added how-to documentation for NaN handling.
 
+* Added data handling support for `squint.Select` objects.
+
 * Added deprecation warnings for soon-to-be-removed functions and classes:
 
   * Added DeprecationWarning to `get_reader` function. This function
