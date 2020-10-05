@@ -5,28 +5,30 @@ Datatest Changelog
 COMING SOON (0.9.7)
 -------------------
 
-* Added pandas integration for `DataFrame`, `Series`, `Index` and
-  `MultiIndex` objects. After calling the new register_accessors()
-  function, you can check your existing pandas objects using the
-  'validate' accessor method:
+* Added tighter Pandas integration using Pandas' extension API.
+
+  After calling the new "register_accessors()" function, your existing
+  `DataFrame`, `Series`, `Index`, and `MultiIndex` objects will have
+  a validate() method that can be used instead of the validate()
+  function:
 
       import padas as pd
       import datatest as dt
 
-      dt.register_accessors()  # <- Activate pandas integration.
+      dt.register_accessors()  # <- Activate Pandas integration.
 
       df = pd.DataFrame(...)
       df[['A', 'B']].validate((str, int))  # <- New accessor method.
 
-* Changed pandas validation behavior:
+* Changed Pandas validation behavior:
 
-  * `DataFrame` and `Series` objects are validated as sequences when
-    they use the `RangeIndex` type (this is the default type assigned
-    when no index is specified).
-  * `DataFrame` and `Series` objects are validated as dictionaries if
-    they use an index of any other type--the index's values are used
-    as the dictionary's keys.
-  * All index objects themselves are validated as sequences.
+  * `DataFrame` and `Series`: These objects are treated as *sequences*
+    when they use a `RangeIndex` index (this is the default type
+    assigned when no index is specified). And they are treated as
+    *dictionaries* when they use an index of any other type--the
+    index values become the dictionary keys.
+
+  * `Index` and `MultiIndex`: These objects are treated as sequences.
 
 * Added improved NaN handling:
 
