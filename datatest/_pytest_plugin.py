@@ -2,39 +2,90 @@
 """
 A pytest plugin for test driven data-wrangling with datatest.
 
-This plugin is bundled with the ``datatest`` package however,
-it's developed separately as ``pytest_datatest``.
-
 IMPORTANT: Users of Datatest should only install ``datatest``
-itself, not this separate package. But developers of the Datatest
-project should install both ``datatest`` and ``pytest_datatest``.
+itself, not the ``pytest_datatest`` development package.
 
-When both packages are installed, ``pytest_datatest`` is used
-in place of the bundled version.
+This plugin is bundled with the datatest however, it's developed
+separately. This is done for a few reasons:
 
-This is done for a few reasons:
+1. Datatest should work as expected out-of-the-box. The plugin
+   code is small enough that including it does not impact the
+   user experience for non-pytest users. Offering the plugin as
+   an optional dependency would add a step to the installation
+   process for no real benefit.
+2. Following pytest's plugin submission guidelines seems like
+   good practice for long-term maintenance. But the guidelines
+   aren't easily implemented for datatest as a whole. Maintaining
+   the plugin in a separate repository makes it easier to follow
+   the guidelines without having to retool the main datatest
+   project.
+3. Datatest supports more versions of Python than does Pytest
+   or tox. The separate repository provides a clean separation
+   between the two sets of test requirements.
 
-1. It's desirable for the plugin to follow the Pytest project's
-   plugin submission guidelines. Even if this plugin is never
-   submitted to the pytest-dev organisation, it's still good
-   practice to follow the guidelines used by official plugins.
-2. Datatest should work as expected out-of-the-box and the extra
-   code (a single script) is easy to bundle and it's so small
-   that there is no impact on user experience.
-3. Datatest supports more version of Python than does Pytest
-   or tox. It is helpful to keep the testing of the larger
-   datatest project separate from the testing of the pytest
-   plugin component.
+Developers of the Datatest project should install both
+``datatest`` and ``pytest_datatest``. When both packages
+are installed, ``pytest_datatest`` is used in place of
+the bundled version.
 """
 
+import itertools
 import re
-from _pytest._code.code import ReprEntry
-from _pytest.assertion.truncate import _should_truncate_item
-from _pytest.assertion.truncate import DEFAULT_MAX_LINES
-from _pytest.assertion.truncate import DEFAULT_MAX_CHARS
-from _pytest.assertion.truncate import USAGE_MSG
-from pytest import hookimpl
+import warnings
+
+import pytest
+import _pytest  # Non-public API.
 from datatest import ValidationError
+
+
+def _warn_import_fallback(name):
+    message = 'could not import {0}; using fallback'.format(name)
+    warnings.warn(message, stacklevel=2)
+
+
+try:
+    from _pytest.assertion.truncate import _should_truncate_item
+except ImportError:
+    import os
+
+    _warn_import_fallback('_should_truncate_item')
+
+    def _should_truncate_item(item):  # Adapted from pytest 6.1.1.
+        verbose = item.config.option.verbose
+        return verbose < 2 and not _running_on_ci()
+
+    def _running_on_ci():  # Adapted from pytest 6.1.1.
+        env_vars = ['CI', 'BUILD_NUMBER']
+        return any(var in os.environ for var in env_vars)
+
+
+try:
+    from _pytest.assertion.truncate import DEFAULT_MAX_LINES
+except ImportError:
+    _warn_import_fallback('DEFAULT_MAX_LINES')
+    DEFAULT_MAX_LINES = 8  # Adapted from pytest 6.1.1.
+
+
+try:
+    from _pytest.assertion.truncate import DEFAULT_MAX_CHARS
+except ImportError:
+    _warn_import_fallback('DEFAULT_MAX_CHARS')
+    DEFAULT_MAX_CHARS = 8 * 80  # Adapted from pytest 6.1.1.
+
+
+try:
+    from _pytest.assertion.truncate import USAGE_MSG
+except ImportError:
+    _warn_import_fallback('USAGE_MSG')
+    USAGE_MSG = "use '-vv' to show"  # Adapted from pytest 6.1.1.
+
+
+try:
+    _fail_marker = _pytest._code.code.FormattedExcinfo.fail_marker
+except AttributeError:
+    warnings.warn('could not reference fail_marker; using fallback')
+    _fail_marker = 'E'
+
 
 if __name__ == 'pytest_datatest':
     from datatest._pytest_plugin import version_info as _bundled_version_info
@@ -42,8 +93,10 @@ else:
     _bundled_version_info = (0, 0, 0)
 
 
-version = '0.1.3'
-version_info = (0, 1, 3)
+version = '0.1.4'
+version_info = (0, 1, 4)
+
+PYTEST54 = str(pytest.__version__[:3]) == '5.4'
 
 _idconfig_session_dict = {}  # Dictionary to store ``session`` reference.
 
@@ -89,87 +142,139 @@ def pytest_collection_modifyitems(session, config, items):
     _idconfig_session_dict[id(config)] = session
 
 
-# Compile regex patterns to match error message text.
+# Compile regex pattern and get fail_marker.
 _diff_start_regex = re.compile(
     r'^E\s+(?:datatest.)?ValidationError:.+\d+ difference[s]?.*: [\[{]$')
-_diff_stop_regex = re.compile(r'^E\s+(?:\}|\]|\.\.\.)$')
 
 
-class DatatestReprEntry(ReprEntry):
-    """Wrapper for ReprEntry to change behavior of toterminal() method."""
-    def __init__(self, entry):
-        if not isinstance(entry, ReprEntry):
-            cls_name = entry.__class__.__name__
-            raise ValueError('expected ReprEntry, got {0}'.format(cls_name))
-
-        super(DatatestReprEntry, self).__init__(
-            getattr(entry, 'lines', []),
-            getattr(entry, 'reprfuncargs', None),
-            getattr(entry, 'reprlocals', None),
-            getattr(entry, 'reprfileloc', None),
-            getattr(entry, 'style', None),
-        )
-
-    @staticmethod
-    def _find_diff_start(lines):
-        """Returns index of line where ValidationError differences begin."""
-        for index, line in enumerate(lines):
+def _find_validationerror_position(lines):
+    """Return the index position where a ValidationError begins in the
+    given list of *lines*. Return -1 if no ValidationError is found.
+    """
+    for position, line in enumerate(lines):
+        if line.startswith(_fail_marker):
             if _diff_start_regex.search(line) is not None:
-                return index
-        return None
+                return position  # <- EXIT!
+            break  # Stop after 1st fail_marker regardless of match.
+    return -1
 
-    @staticmethod
-    def _find_diff_stop(lines):
-        """Returns index of line after ValidationError differences have
-        ended.
-        """
-        for index, line in enumerate(reversed(lines)):
-            if _diff_stop_regex.search(line) is not None:
-                return len(lines) - index
-        return None
 
-    def _writelines(self, tw):
-        """If row contains a difference item, trim the "E   " prefix
-        and indent with four spaces (but still print in red).
-        """
-        lines = list(self.lines)
+def _formatted_lines_generator(lines, position):
+    """Return a generator of formatted *lines* that contain a
+    ValidationError at the given *position*.
 
-        diff_start = self._find_diff_start(lines)
-        diff_stop = self._find_diff_stop(lines)
+    The resulting lines will have an unqualified class name (simply
+    "ValidationError") and the fail markers ("E") will be replaced
+    with spaces.
+    """
+    lines = iter(lines)
 
-        if isinstance(diff_start, int) and isinstance(diff_stop, int):
-            lines[diff_start] = lines[diff_start].replace(
-                'datatest.ValidationError', 'ValidationError')
+    # Yield lines up to the given index position without changes.
+    for line in itertools.islice(lines, 0, position):
+        yield line
 
-            for index, line in enumerate(lines):
-                red = line.startswith('E   ')
-                if diff_start < index < diff_stop:
-                    line = ' ' + line[1:]  # Replace "E" prefix with space.
-                tw.line(line, bold=True, red=red)
+    # Yield first failure-line, removing "datatest." and keeping fail_marker.
+    fail_line = next(lines)
+    yield fail_line.replace('datatest.ValidationError', 'ValidationError', 1)
+
+    # Yield subsequent failure-lines, replacing fail_marker with spaces.
+    marker_length = len(_fail_marker)
+    marker_spaces = ' ' * marker_length
+    for line in lines:
+        if line.startswith(_fail_marker):
+            yield marker_spaces + line[marker_length:]  # <- Replaces fail_marker.
         else:
-            for line in lines:
-                red = line.startswith('E   ')
-                tw.line(line, bold=True, red=red)
+            yield line
+            break  # Stop checking for fail_marker after first line without a fail_marker.
 
-    def toterminal(self, tw):
-        if self.style == 'short':
-            self.reprfileloc.toterminal(tw)
-            self._writelines(tw)  # <- Calls tw.line() method.
-            return
+    # Yield any remaining lines without changes.
+    for line in lines:
+        yield line
 
-        if self.reprfuncargs:
-            self.reprfuncargs.toterminal(tw)
 
-        self._writelines(tw)  # <- Calls tw.line() method.
+if PYTEST54:
+    class ReprEntry(_pytest._code.code.ReprEntry):
+        """Custom ReprEntry--USE ONLY WITH PYTEST 5.4.X VERSIONS."""
+        def __init__(self, reprentry):
+            self.lines = reprentry.lines
+            self.reprfuncargs = reprentry.reprfuncargs
+            self.reprlocals = reprentry.reprlocals
+            self.reprfileloc = reprentry.reprfileloc
+            self.style = reprentry.style
 
-        if self.reprlocals:
-            tw.line('')
-            self.reprlocals.toterminal(tw)
+        def _write_entry_lines(self, tw):
+            """This method is adapted from Pytest version 6.1.1."""
 
-        if self.reprfileloc:
-            if self.lines:
-                tw.line('')
-            self.reprfileloc.toterminal(tw)
+            if not self.lines:
+                return
+
+            fail_marker = "{0}   ".format(
+                _pytest._code.code.FormattedExcinfo.fail_marker)
+            indent_size = len(fail_marker)
+            indents = []
+            source_lines = []
+            failure_lines = []
+            for index, line in enumerate(self.lines):
+                is_failure_line = line.startswith(fail_marker)
+                if is_failure_line:
+                    # from this point on all lines are considered part of the failure
+                    failure_lines.extend(self.lines[index:])
+                    break
+                else:
+                    if self.style == "value":
+                        source_lines.append(line)
+                    else:
+                        indents.append(line[:indent_size])
+                        source_lines.append(line[indent_size:])
+
+            tw._write_source(source_lines, indents)
+
+            # failure lines are always completely red and bold
+            for line in failure_lines:
+                tw.line(line, bold=True, red=True)
+
+
+def _format_reprtraceback(reprtraceback):
+    for reprentry in reprtraceback.reprentries:
+        try:
+            lines = reprentry.lines
+            position = _find_validationerror_position(lines)
+            if position != -1:
+                lines = _formatted_lines_generator(lines, position)
+                reprentry.lines = list(lines)
+        except AttributeError:
+            # On pytest versions 3.3 through 3.6, sessions using `xdist`
+            # return `dict` instances instead of ReprEntry instances.
+            lines = reprentry['lines']
+            position = _find_validationerror_position(lines)
+            if position != -1:
+                lines = _formatted_lines_generator(lines, position)
+                reprentry['lines'] = list(lines)
+
+    if PYTEST54:
+        reprtraceback.reprentries = \
+            [ReprEntry(entry) for entry in reprtraceback.reprentries]
+
+
+def pytest_runtest_logreport(report):
+    """Hook to format the ReprEntry lines for ValidationErrors"""
+
+    if report.when != 'call' or report.longrepr is None:
+        return
+
+    longrepr = report.longrepr
+    try:
+        # Try `chain` attribute (assuming ExceptionChainRepr).
+        for element_tuple in longrepr.chain:
+            reprtraceback = element_tuple[0]
+            _format_reprtraceback(reprtraceback)
+    except AttributeError:
+        try:
+            # Try `reprtraceback` attribute (assuming ExceptionRepr).
+            _format_reprtraceback(longrepr.reprtraceback)
+        except AttributeError:
+            # Unknown type goes unmodified.
+            pass
 
 
 def _should_truncate(line_count, char_count):
@@ -179,10 +284,10 @@ def _should_truncate(line_count, char_count):
 _truncation_notice = '...Full output truncated, {0}'.format(USAGE_MSG)
 
 
-@hookimpl(tryfirst=True, hookwrapper=True)
+@pytest.hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_runtest_makereport(item, call):
     """Hook wrapper to replace ReprEntry instances for ValidationError
-    exceptons and to handle when 'mandatory' tests fail.
+    exceptions and to handle failure of 'mandatory' tests.
     """
     if call.when == 'call':
 
@@ -194,17 +299,6 @@ def pytest_runtest_makereport(item, call):
             call.excinfo.value._truncation_notice = _truncation_notice
 
         outcome = yield
-
-        # Check for failure again--unittest-style failures only appear
-        # after `yield`.
-        datafail = datafail or \
-            call.excinfo and call.excinfo.errisinstance(ValidationError)
-
-        if datafail:
-            result = outcome.get_result()
-            entries = result.longrepr.reprtraceback.reprentries
-            new_entries = [DatatestReprEntry(entry) for entry in entries]
-            result.longrepr.reprtraceback.reprentries = new_entries
 
         # If test was mandatory, session should fail immediately.
         if call.excinfo:
@@ -221,7 +315,7 @@ def pytest_runtest_makereport(item, call):
                 item.session.shouldfail = shouldfail
 
     else:
-        outcome = yield
+        outcome = yield  # noqa: F841 (set flake8 to ignore)
 
 
 def pytest_terminal_summary(terminalreporter, exitstatus):
