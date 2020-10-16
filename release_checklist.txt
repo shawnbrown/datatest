@@ -1,42 +1,41 @@
 
-=================
 Release Checklist
 =================
 
 1. Check that *packages* argument of setup() is correct. Check with:
 
-   >>> import setuptools
-   >>> sorted(setuptools.find_packages('.', exclude=['tests']))
+       >>> import setuptools
+       >>> sorted(setuptools.find_packages('.', exclude=['tests']))
 
 2. Make sure correct version number is set in the following files:
 
-   datatest/__init__.py
-   docs/conf.py
+       datatest/__init__.py
+       docs/conf.py
 
-3. Make sure __past__ sub-package includes a stub module for the
+3. Make sure `__past__` sub-package includes a stub module for the
    current API version.
 
 4. Update README.rst (including "Backward Compatibility" section).
 
 5. Commit and push final changes to upstream repository:
 
-     Prepare version info, CHANGELOG, and README for version X.X.X release.
+       Prepare version info, CHANGELOG, and README for version X.X.X release.
 
 6. Perform final checks to make sure there are no CI test failures.
 
 7. Make sure the packaging tools are up-to-date:
 
-        pip install -U twine wheel setuptools
+       pip install -U twine wheel setuptools
 
 8. Remove all existing files in the `dist/` folder.
 
 9. Build new distributions:
 
-   python setup.py sdist bdist_wheel
+       python setup.py sdist bdist_wheel
 
 10. Upload source and wheel distributions to PyPI:
 
-   twine upload dist/*
+        twine upload dist/*
 
 11. Double check PyPI project page and test installation from PyPI.
 
@@ -46,13 +45,13 @@ Release Checklist
     version (e.g., X.X.X.dev0) so that "latest" docs aren't confused with the
     just-published "stable" docs:
 
-    datatest/__init__.py
-    docs/conf.py
+	    datatest/__init__.py
+        docs/conf.py
 
     Commit these changes with a comment like the one below:
 
-      Iterate version number to differentiate development version
-      from latest release.
+        Iterate version number to differentiate development version
+        from latest release.
 
 14. Make sure the documentation reflects the new versions:
 
@@ -61,5 +60,5 @@ Release Checklist
 
 15. Publish update announcement to relevant mailing lists:
 
-  python-announce-list@python.org
-  testing-in-python@lists.idyll.org
+    * python-announce-list@python.org
+    * testing-in-python@lists.idyll.org
