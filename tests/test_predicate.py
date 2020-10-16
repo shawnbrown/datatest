@@ -129,7 +129,7 @@ class TestCheckNaN(unittest.TestCase):
         self.assertFalse(_check_nan(complex(1)))
         self.assertFalse(_check_nan(decimal.Decimal('1.123')))
 
-    @unittest.skipIf(not numpy, 'numpy not found')
+    @unittest.skipUnless(numpy, 'requires numpy')
     def test_numpy_cases(self):
         self.assertTrue(_check_nan(numpy.nan))
         self.assertFalse(_check_nan(numpy.int64(123)))
@@ -330,7 +330,7 @@ class TestPredicate(unittest.TestCase):
         self.assertFalse(pred(('abc', 1.0)))
         self.assertFalse(pred(('abc', 'xyz')))
 
-    @unittest.skipIf(not numpy, 'numpy not found')
+    @unittest.skipUnless(numpy, 'requires numpy')
     def test_numpy_types(self):
         """Check that built-in types can match numpy types."""
         # Match numpy.character sub-types.

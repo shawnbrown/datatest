@@ -379,7 +379,7 @@ class TestFromDatatest(unittest.TestCase):
         self.assertEqual(reader_list.count(('y', 2)), 1)
 
 
-@unittest.skipIf(not pandas, 'pandas not found')
+@unittest.skipUnless(pandas, 'requires pandas')
 class TestFromPandas(unittest.TestCase):
     def setUp(self):
         self.df = pandas.DataFrame({
@@ -451,7 +451,7 @@ class TestFromPandas(unittest.TestCase):
         self.assertEqual(list(reader), expected)
 
 
-@unittest.skipIf(not xlrd, 'xlrd not found')
+@unittest.skipUnless(xlrd, 'requires xlrd')
 class TestFromExcel(SampleFilesTestCase):
     def test_default_worksheet(self):
         reader = get_reader.from_excel('sample_multiworksheet.xlsx')  # <- Defaults to 1st worksheet.
@@ -476,7 +476,7 @@ class TestFromExcel(SampleFilesTestCase):
         self.assertEqual(list(reader), expected)
 
 
-@unittest.skipIf(not dbfread, 'dbfread not found')
+@unittest.skipUnless(dbfread, 'requires dbfread')
 class TestFromDbf(SampleFilesTestCase):
     def test_dbf(self):
         reader = get_reader.from_dbf('sample_dbase.dbf')
@@ -552,7 +552,7 @@ class TestFunctionDispatching(SampleFilesTestCase):
         reader = get_reader(query)  # <- datatest.Result
         self.assertEqual(list(reader), [('A', 'B'), ('x', 1), ('y', 2)])
 
-    @unittest.skipIf(not xlrd, 'xlrd not found')
+    @unittest.skipUnless(xlrd, 'requires xlrd')
     def test_excel(self):
         reader = get_reader('sample_excel2007.xlsx')
         expected = [
@@ -568,7 +568,7 @@ class TestFunctionDispatching(SampleFilesTestCase):
         ]
         self.assertEqual(list(reader), expected)
 
-    @unittest.skipIf(not pandas, 'pandas not found')
+    @unittest.skipUnless(pandas, 'requires pandas')
     def test_pandas(self):
         df = pandas.DataFrame({
             'col1': (1, 2, 3),
@@ -583,7 +583,7 @@ class TestFunctionDispatching(SampleFilesTestCase):
         ]
         self.assertEqual(list(reader), expected)
 
-    @unittest.skipIf(not dbfread, 'dbfread not found')
+    @unittest.skipUnless(dbfread, 'requires dbfread')
     def test_dbf(self):
         reader = get_reader('sample_dbase.dbf')
         expected = [

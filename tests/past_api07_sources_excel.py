@@ -19,14 +19,14 @@ workbook_path = os.path.join(
 )
 
 
-@unittest.skipIf(xlrd is None, 'xlrd not found')
+@unittest.skipUnless(xlrd, 'requires xlrd')
 class TestExcelSource(OtherTests, unittest.TestCase):
     def setUp(self):
         global workbook_path
         self.datasource = ExcelSource(workbook_path)  # <- Defaults to "Sheet 1"
 
 
-@unittest.skipIf(xlrd is None, 'xlrd not found')
+@unittest.skipUnless(xlrd, 'requires xlrd')
 class TestExcelSourceCount(unittest.TestCase):
 #class TestExcelSourceCount(CountTests, unittest.TestCase):
     def setUp(self):

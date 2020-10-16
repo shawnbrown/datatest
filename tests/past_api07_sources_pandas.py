@@ -30,22 +30,21 @@ try:
     if (_version_info(pandas) < (0, 13, 0)
             or _version_info(pandas.np) < (1, 7, 1)):
         raise ImportError
-    missing_pandas = False
 except ImportError:
-    missing_pandas = True
+    pandas = None
 
 
 ########################################################################
 # Test with DataFrame with no specified index (using default indexing).
 ########################################################################
-@unittest.skipIf(missing_pandas, 'pandas not found')
+@unittest.skipUnless(pandas, 'requires pandas 0.13 or newer')
 class TestPandasSource(OtherTests, unittest.TestCase):
     def setUp(self):
         df = pandas.DataFrame(self.testdata, columns=self.fieldnames)
         self.datasource = PandasSource(df)
 
 
-@unittest.skipIf(missing_pandas, 'pandas not found')
+@unittest.skipUnless(pandas, 'requires pandas 0.13 or newer')
 class TestPandasSourceCount(CountTests, unittest.TestCase):
     def setUp(self):
         df = pandas.DataFrame(self.testdata, columns=self.fieldnames)
@@ -55,7 +54,7 @@ class TestPandasSourceCount(CountTests, unittest.TestCase):
 ########################################################################
 # Test with DataFrame that has a specified index.
 ########################################################################
-@unittest.skipIf(missing_pandas, 'pandas not found')
+@unittest.skipUnless(pandas, 'requires pandas 0.13 or newer')
 class TestPandasSourceWithIndex(OtherTests, unittest.TestCase):
     def setUp(self):
         df = pandas.DataFrame(self.testdata, columns=self.fieldnames)
@@ -63,7 +62,7 @@ class TestPandasSourceWithIndex(OtherTests, unittest.TestCase):
         self.datasource = PandasSource(df)
 
 
-@unittest.skipIf(missing_pandas, 'pandas not found')
+@unittest.skipUnless(pandas, 'requires pandas 0.13 or newer')
 class TestPandasSourceWithIndexCount(CountTests, unittest.TestCase):
     def setUp(self):
         df = pandas.DataFrame(self.testdata, columns=self.fieldnames)

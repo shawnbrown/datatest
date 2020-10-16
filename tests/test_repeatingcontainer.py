@@ -366,7 +366,7 @@ class TestNestedExample(unittest.TestCase):
         self.assertEqual(subresult2b._objs, ('abcxxxABC', 'defxxxDEF'))
 
 
-@unittest.skipIf(not pandas, 'pandas not found')
+@unittest.skipUnless(pandas, 'requires pandas')
 class TestPandasExample(unittest.TestCase):
     """Quick integration test using a RepeatingContainer of DataFrames."""
 

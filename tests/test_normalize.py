@@ -45,7 +45,7 @@ class TestNormalizeLazyUnchanged(unittest.TestCase):
         self.assertIs(_normalize_lazy(data), data)
 
 
-@unittest.skipIf(not squint, 'squint not found')
+@unittest.skipUnless(squint, 'requires squint')
 class TestNormalizeLazySquint(unittest.TestCase):
     """Test squint package's `Result` and `Query` objects."""
     def test_sequence_result(self):
@@ -93,7 +93,7 @@ class TestNormalizeLazyResultAndQuery(unittest.TestCase):
         self.assertEqual(normalized.evaluation_type, list)
 
 
-@unittest.skipIf(not pandas, 'pandas not found')
+@unittest.skipUnless(pandas, 'requires pandas')
 class TestNormalizeLazyPandas(unittest.TestCase):
     def test_dataframe_with_rangeindex(self):
         """DataFrames using a RangeIndex should be treated as sequences."""
@@ -197,7 +197,7 @@ class TestNormalizeLazyPandas(unittest.TestCase):
             _normalize_lazy(s)
 
 
-@unittest.skipIf(not numpy, 'numpy not found')
+@unittest.skipUnless(numpy, 'requires numpy')
 class TestNormalizeLazyNumpy(unittest.TestCase):
     def test_two_dimentional_array(self):
         arr = numpy.array([['a', 'x'], ['b', 'y']])
@@ -310,7 +310,7 @@ class TestNormalizeEager(unittest.TestCase):
         self.assertIsInstance(output, tuple)
         self.assertEqual(output, (1, 2, 3))
 
-    @unittest.skipIf(not squint, 'squint not found')
+    @unittest.skipUnless(squint, 'requires squint')
     def test_squint_object(self):
         result_obj = squint.Result(iter([1, 2, 3]), evaltype=tuple)
         output = _normalize_eager(result_obj)
