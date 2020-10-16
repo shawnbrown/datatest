@@ -24,21 +24,25 @@ Release Checklist
 
 6. Perform final checks to make sure there are no CI test failures.
 
-7. Remove all existing files in the dist/ folder.
+7. Make sure the packaging tools are up-to-date:
 
-8. Build new distributions:
+        pip install -U twine wheel setuptools
+
+8. Remove all existing files in the `dist/` folder.
+
+9. Build new distributions:
 
    python setup.py sdist bdist_wheel
 
-9. Upload source and wheel distributions to PyPI:
+10. Upload source and wheel distributions to PyPI:
 
    twine upload dist/*
 
-10. Double check PyPI project page and test installation from PyPI.
+11. Double check PyPI project page and test installation from PyPI.
 
-11. Add version tag to upstream repository (also used by readthedocs.org).
+12. Add version tag to upstream repository (also used by readthedocs.org).
 
-12. Iterate version number in repository indicating that it is a development
+13. Iterate version number in repository indicating that it is a development
     version (e.g., X.X.X.dev0) so that "latest" docs aren't confused with the
     just-published "stable" docs:
 
@@ -50,12 +54,12 @@ Release Checklist
       Iterate version number to differentiate development version
       from latest release.
 
-13. Make sure the documentation reflects the new versions:
+14. Make sure the documentation reflects the new versions:
 
     * https://datatest.readthedocs.io/ (stable)
     * https://datatest.readthedocs.io/en/latest/ (latest)
 
-14. Publish update announcement to relevant mailing lists:
+15. Publish update announcement to relevant mailing lists:
 
   python-announce-list@python.org
   testing-in-python@lists.idyll.org
