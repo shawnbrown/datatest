@@ -402,6 +402,15 @@ class TestPredicate(unittest.TestCase):
         from_inverted = Predicate(~Predicate('abc'))
         self.assertTrue(from_inverted._inverted)
 
+    @unittest.skipUnless(numpy, 'requires numpy')
+    def test_predicate_from_predicate_numpy(self):
+        pred1 = Predicate(numpy.int64)
+        pred2 = Predicate(pred1)
+        self.assertIsNot(pred1, pred2, msg='should be different object')
+        self.assertIs(pred1.obj, pred2.obj, msg='should keep original reference')
+        self.assertIs(pred1.matcher, pred2.matcher)
+        self.assertEqual(pred1._inverted, pred2._inverted)
+
     def test_passthrough(self):
         """Callable predicates should return the values provided by
         the given function as-is--the values should not be converted
