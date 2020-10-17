@@ -595,6 +595,11 @@ than all differences of a given type. For example, if the difference
                 Extra('D'),
             ]
 
+        This acceptance suppresses the extra ``'C'`` but does not address
+        the extra ``'D'`` so the ValidationError is still raised. This
+        remaining error can be addressed by correcting the data, altering
+        the acceptance, or modifying the requirement.
+
     .. group-tab:: No Acceptance
 
         .. code-block:: python
@@ -620,10 +625,6 @@ than all differences of a given type. For example, if the difference
                 Extra('C'),
                 Extra('D'),
             ]
-
-This acceptance suppresses the extra ``'C'`` but does not address
-the extra ``'D'``. So the ValidationError for both code samples
-includes the extra ``'D'`` difference.
 
 
 Accepted Container of Instances
