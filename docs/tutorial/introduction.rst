@@ -790,13 +790,73 @@ To learn more about these features, see :ref:`composability-docs` and
 Data Handling Tools
 *******************
 
-Datatest also provides utilities for other kinds of data handling:
+Working Directory
+-----------------
 
-:class:`working_directory`
-    Context manager and decorator to temporarily set a working
-    directory.
+You can use :class:`working_directory` (a context manager and decorator)
+to assure that relative file paths behave consistently:
 
-:class:`RepeatingContainer`
-    Operate on a group of objects together instead of repeating
-    the same methods and operations on each individual object
-    (useful when comparing one source of data against another).
+.. code-block:: python
+    :emphasize-lines: 4
+
+    import pandas as pd
+    from datatest import working_directory
+
+    with working_directory(__file__):
+        my_df = pd.read_csv('myfile.csv')
+
+
+Repeating Container
+-------------------
+
+You can use a :class:`RepeatingContainer` to operate on multiple
+objects at the same time rather than duplicating the same operation
+for each object:
+
+.. tabs::
+
+    .. group-tab:: Using RepeatingContainer
+
+        .. code-block:: python
+            :emphasize-lines: 9,11,13
+
+            import pandas as pd
+            from datatest import RepeatingContainer
+
+            repeating = RepeatingContainer([
+                pd.read_csv('file1.csv'),
+                pd.read_csv('file2.csv'),
+            ])
+
+            counted1, counted2 = repeating['C'].count()
+
+            filled1, filled2 = repeating.fillna(method='backfill')
+
+            summed1, summed2 = repeating[['A', 'C']].groupby('A').sum()
+
+        In the three statements above, operations are performed on
+        multiple pandas DataFrames using single lines of code. Results
+        are then unpacked into individual variable names. Compare this
+        example with code in the "No RepeatingContainer" tab.
+
+    .. group-tab:: No RepeatingContainer
+
+        .. code-block:: python
+            :emphasize-lines: 6-7,9-10,12-13
+
+            import pandas as pd
+
+            df1 = pd.read_csv('file1.csv')
+            df2 = pd.read_csv('file2.csv')
+
+            counted1 = df1['C'].count()
+            counted2 = df2['C'].count()
+
+            filled1 = df1.fillna(method='backfill')
+            filled2 = df2.fillna(method='backfill')
+
+            summed1 = df1[['A', 'C']].groupby('A').sum()
+            summed2 = df2[['A', 'C']].groupby('A').sum()
+
+        Without a RepeatingContainer, operations are duplicated for
+        each individual DataFrame.
