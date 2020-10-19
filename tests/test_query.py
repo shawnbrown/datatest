@@ -197,7 +197,7 @@ class TestDictItems(unittest.TestCase):
         with self.assertRaises(TypeError):
             normalized = DictItems(source)
 
-    def test_virtual_subset_rel(self):
+    def test_virtual_subclass_rel(self):
         """DictItems should be virtual subclass of IterItems."""
         items = DictItems([('a', 1), ('b', 2)])
         self.assertIsInstance(items, IterItems)
