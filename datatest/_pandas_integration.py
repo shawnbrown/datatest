@@ -82,7 +82,7 @@ class ValidationAccessor(object):
             raise err
 
     def set(self, requirement, msg=None):
-        """Check that element set equals requirement set."""
+        """Check that set of elements equals *requirement* set."""
         try:
             return validate.set(self._data, requirement, msg=msg)
         except ValidationError as err:
@@ -92,7 +92,7 @@ class ValidationAccessor(object):
             raise err
 
     def subset(self, requirement, msg=None):
-        """Check that element set contains requirement subset."""
+        """Check that data elements are a subset of *requirement*."""
         try:
             return validate.subset(self._data, requirement, msg=msg)
         except ValidationError as err:
@@ -102,7 +102,7 @@ class ValidationAccessor(object):
             raise err
 
     def superset(self, requirement, msg=None):
-        """Check that element set is contained in requirement superset."""
+        """Check that data is a superset of *requirement* elements."""
         try:
             return validate.superset(self._data, requirement, msg=msg)
         except ValidationError as err:

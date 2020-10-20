@@ -473,17 +473,18 @@ class ValidateType(object):
         self(data, requirement, msg=msg)
 
     def subset(self, data, requirement, msg=None):
-        """Check that *requirement* is a subset of *data* (i.e., that
-        all elements in *requirement* are also contained in *data*):
+        """Check that the set of elements in *data* is a subset of the
+        set of elements in *requirement* (i.e., that every element of
+        *data* is also a member of *requirement*).
 
         .. code-block:: python
             :emphasize-lines: 7
 
             from datatest import validate
 
-            data = ['A', 'B', 'C', 'D']
+            data = ['A', 'B', 'C']
 
-            requirement = {'A', 'B', 'C'}
+            requirement = {'A', 'B', 'C', 'D'}
 
             validate.subset(data, requirement)
         """
@@ -500,17 +501,18 @@ class ValidateType(object):
         self(data, requirement, msg=msg)
 
     def superset(self, data, requirement, msg=None):
-        """Check that *requirement* is a superset of *data* (i.e., that
-        all elements in *data* are also contained in *requirement*):
+        """Check that the set of elements in *data* is a superset of the
+        set of elements in *requirement* (i.e., that members of *data*
+        include all elements of *requirement*).
 
         .. code-block:: python
             :emphasize-lines: 7
 
             from datatest import validate
 
-            data = ['A', 'B', 'C']
+            data = ['A', 'B', 'C', 'D']
 
-            requirement = {'A', 'B', 'C', 'D'}
+            requirement = {'A', 'B', 'C'}
 
             validate.superset(data, requirement)
         """

@@ -532,41 +532,41 @@ class RequiredSet(GroupRequirement):
         return differences, 'does not satisfy set membership'
 
 
-class RequiredSubset(GroupRequirement):
-    """Require that data contains all elements of *subset*."""
-    def __init__(self, subset):
-        if not isinstance(subset, Set):
-            subset = set(subset)
-        self._subset = subset
+class RequiredSuperset(GroupRequirement):
+    """A requirement to test that data is a superset of *requirement*."""
+    def __init__(self, requirement):
+        if not isinstance(requirement, Set):
+            requirement = set(requirement)
+        self._set = requirement
 
     def check_group(self, group):
-        missing = self._subset.copy()
+        missing = self._set.copy()
         for element in group:
             if not missing:
                 break
             missing.discard(element)
 
         differences = (Missing(element) for element in missing)
-        description = 'must contain all elements of given subset'
+        description = 'must contain all elements of given requirement'
         return differences, description
 
 
-class RequiredSuperset(GroupRequirement):
-    """Require that data contains only elements of *superset*."""
-    def __init__(self, superset):
-        if not isinstance(superset, Set):
-            superset = set(superset)
-        self._superset = superset
+class RequiredSubset(GroupRequirement):
+    """A requirement to test that data is a subset of *requirement*."""
+    def __init__(self, requirement):
+        if not isinstance(requirement, Set):
+            requirement = set(requirement)
+        self._set = requirement
 
     def check_group(self, group):
-        superset = self._superset
+        superset = self._set
         extras = set()
         for element in group:
             if element not in superset:
                 extras.add(element)
 
         differences = (Extra(element) for element in extras)
-        description = 'may contain only elements of given superset'
+        description = 'may only contain elements of given requirement'
         return differences, description
 
 

@@ -906,20 +906,20 @@ class TestRequiredSet2(unittest.TestCase):
         self.assertEqual(list(differences), [Missing(1)])
 
 
-class TestRequiredSubset(unittest.TestCase):
+class TestRequiredSuperset(unittest.TestCase):
     def test_element_group(self):
         data = [1, 2, 3]
-        requirement = RequiredSubset(set([1, 2]))
+        requirement = RequiredSuperset(set([1, 2]))
         self.assertIsNone(requirement(data))
 
         data = [1, 2]
-        requirement = RequiredSubset(set([1, 2, 3, 4]))
+        requirement = RequiredSuperset(set([1, 2, 3, 4]))
         diff, desc = requirement(data)
         self.assertEqual(list(diff), [Missing(3), Missing(4)])
         self.assertRegex(desc, 'must contain all')
 
     def test_data_mapping(self):
-        requirement = RequiredSubset(set([1, 2, 3]))
+        requirement = RequiredSuperset(set([1, 2, 3]))
 
         data = {'a': [1, 2, 3], 'b': [1, 2, 3], 'c': [1, 2, 3]}
         self.assertIsNone(requirement(data))
@@ -933,7 +933,7 @@ class TestRequiredSubset(unittest.TestCase):
         self.assertRegex(desc, 'must contain all')
 
     def test_single_element_handling(self):
-        requirement = RequiredSubset(set([1, 2]))
+        requirement = RequiredSuperset(set([1, 2]))
 
         diff, desc = requirement(1)
         self.assertEqual(list(diff), [Missing(2)])
@@ -943,20 +943,20 @@ class TestRequiredSubset(unittest.TestCase):
         self.assertEqual(diff, [Missing(1), Missing(2)])
 
 
-class TestRequiredSuperset(unittest.TestCase):
+class TestRequiredSubset(unittest.TestCase):
     def test_element_group(self):
         data = [1, 2]
-        requirement = RequiredSuperset(set([1, 2, 3]))
+        requirement = RequiredSubset(set([1, 2, 3]))
         self.assertIsNone(requirement(data))
 
         data = [1, 2, 3, 4]
-        requirement = RequiredSuperset(set([1, 2]))
+        requirement = RequiredSubset(set([1, 2]))
         diff, desc = requirement(data)
         self.assertEqual(list(diff), [Extra(3), Extra(4)])
-        self.assertRegex(desc, 'may contain only')
+        self.assertRegex(desc, 'may only contain')
 
     def test_data_mapping(self):
-        requirement = RequiredSuperset(set([1, 2, 3]))
+        requirement = RequiredSubset(set([1, 2, 3]))
 
         data = {'a': [1, 2, 3], 'b': [1, 2], 'c': [1]}
         self.assertIsNone(requirement(data))
@@ -967,10 +967,10 @@ class TestRequiredSuperset(unittest.TestCase):
             ('c', [Extra(4)]),
         ]
         self.assertEqual(evaluate_items(diff), expected)
-        self.assertRegex(desc, 'may contain only')
+        self.assertRegex(desc, 'may only contain')
 
     def test_single_element_handling(self):
-        requirement = RequiredSuperset(set([1, 2]))
+        requirement = RequiredSubset(set([1, 2]))
 
         diff, desc = requirement(3)
         self.assertEqual(list(diff), [Extra(3)])

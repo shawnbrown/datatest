@@ -557,36 +557,36 @@ class TestValidate(unittest.TestCase):
         expected = {'A': [Extra(3)], 'B': [Missing(4)]}
         self.assertEqual(actual, expected)
 
-    def test_subset_method(self):
+    def test_superset_method(self):
         data = [1, 2, 3, 4]
-        subset = [1, 2, 3]
-        validate.subset(data, subset)
+        requirement = [1, 2, 3]
+        validate.superset(data, requirement)
 
         with self.assertRaises(ValidationError) as cm:
             data = [1, 2, 3]
-            subset = set([1, 2, 3, 4])
-            validate.subset(data, subset)
+            requirement = set([1, 2, 3, 4])
+            validate.superset(data, requirement)
         actual = cm.exception.differences
         expected = [Missing(4)]
         self.assertEqual(actual, expected)
 
         with self.assertRaises(ValidationError) as cm:
             data ={'A': [1, 2, 3], 'B': [3, 4, 5]}
-            subset = {'A': iter([1, 2]), 'B': iter([2, 3])}
-            validate.subset(data, subset)
+            requirement = {'A': iter([1, 2]), 'B': iter([2, 3])}
+            validate.superset(data, requirement)
         actual = cm.exception.differences
         expected = {'B': [Missing(2)]}
         self.assertEqual(actual, expected)
 
-    def test_superset_method(self):
+    def test_subset_method(self):
         data = [1, 2, 3]
-        superset = [1, 2, 3, 4]
-        validate.superset(data, superset)
+        requirement = [1, 2, 3, 4]
+        validate.subset(data, requirement)
 
         with self.assertRaises(ValidationError) as cm:
             data = {'A': [1, 2, 3], 'B': [3, 4, 5]}
-            superset = {'A': set([1, 2, 3]), 'B': set([2, 3, 4])}
-            validate.superset(data, superset)
+            requirement = {'A': set([1, 2, 3]), 'B': set([2, 3, 4])}
+            validate.subset(data, requirement)
         actual = cm.exception.differences
         expected = {'B': [Extra(5)]}
         self.assertEqual(actual, expected)
