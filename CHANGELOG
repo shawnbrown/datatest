@@ -5,6 +5,8 @@ Datatest Changelog
 COMING SOON (0.9.7)
 -------------------
 
+* Fixed bug where ValidationErrors were crashing pytest-xdist workers.
+
 * Added tighter Pandas integration using Pandas' extension API.
 
   After calling the new "register_accessors()" function, your existing
