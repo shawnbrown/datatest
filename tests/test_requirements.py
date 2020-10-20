@@ -44,6 +44,11 @@ from datatest.requirements import (
 from datatest.differences import NOVALUE
 
 
+# Remove for datatest version 0.9.8.
+import warnings
+warnings.filterwarnings('ignore', message='subset and superset warning')
+
+
 class TestBuildDescription(unittest.TestCase):
     def test_docstring_messy(self):
         def func(x):

@@ -21,6 +21,10 @@ try:
 except ImportError:
     numpy = None
 
+# Remove for datatest version 0.9.8.
+import warnings
+warnings.filterwarnings('ignore', message='subset and superset warning')
+
 
 class TestNamespaces(unittest.TestCase):
     def test_root_namespace(self):

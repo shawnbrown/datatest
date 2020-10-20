@@ -15,6 +15,11 @@ from datatest.validation import validate
 from datatest.validation import valid
 
 
+# Remove for datatest version 0.9.8.
+import warnings
+warnings.filterwarnings('ignore', message='subset and superset warning')
+
+
 # FOR TESTING: A minimal subclass of BaseDifference.
 # BaseDifference itself should not be instantiated
 # directly.
