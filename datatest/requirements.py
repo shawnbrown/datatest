@@ -532,9 +532,32 @@ class RequiredSet(GroupRequirement):
         return differences, 'does not satisfy set membership'
 
 
+_subset_superset_warning = """subset and superset warning:
+
+    WARNING: The semantics for the subset() and superset() methods
+    were inverted in datatest 0.9.7. Make sure you are using these
+    methods correctly. See documentation for details:
+
+        https://datatest.readthedocs.io/en/stable/reference/datatest-core.html#datatest.validate.subset
+
+    To disable this warning use:
+
+        import warnings
+        warnings.filterwarnings('ignore', message='subset and superset warning')
+
+    This warning is temporary--it will be removed from future versions
+    of datatest.
+
+Source:
+""".strip()
+
+
 class RequiredSuperset(GroupRequirement):
     """A requirement to test that data is a superset of *requirement*."""
     def __init__(self, requirement):
+        import warnings
+        warnings.warn(_subset_superset_warning, stacklevel=3)
+
         if not isinstance(requirement, Set):
             requirement = set(requirement)
         self._set = requirement
@@ -554,6 +577,9 @@ class RequiredSuperset(GroupRequirement):
 class RequiredSubset(GroupRequirement):
     """A requirement to test that data is a subset of *requirement*."""
     def __init__(self, requirement):
+        import warnings
+        warnings.warn(_subset_superset_warning, stacklevel=3)
+
         if not isinstance(requirement, Set):
             requirement = set(requirement)
         self._set = requirement
