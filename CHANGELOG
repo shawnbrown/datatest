@@ -55,6 +55,18 @@ COMING SOON (0.9.7)
 
     https://pypi.org/project/squint/
 
+* Changed validate.subset() and validate.superset() behavior:
+
+  The semantics are now inverted. This behavior was flipped to more
+  closely match user expectations. The previous semantics were used
+  because they reflect the internal structure of datatest more precisely.
+  But these are implementation details that and they are not as important
+  as having a more intuitive API.
+
+* Added temporary a warning when using the new subset superset methods
+  to alert users to the new behavior. This warning will be removed from
+  future versions of datatest.
+
 
 2019-06-03 (0.9.6)
 ------------------
