@@ -17,6 +17,30 @@ working_directory
 
 .. autoclass:: working_directory
 
+    .. tip::
+
+        Take care when using pytest's fixture finalization in combination
+        with "session" or "module" level fixtures. In these cases, you
+        should use :func:`working_directory` as a context manager (inside
+        the function) and avoid using it as a decorator (outside the
+        function):
+
+        .. code-block:: python
+            :emphasize-lines: 3
+
+            @pytest.fixture(scope='session')
+            def connection():
+                with working_directory(__file__):
+                    conn = ...  # Establish database connection.
+                yield conn
+                conn.close()
+
+        The example above restores the original working directory as
+        soon as the ``with`` statement finishes. But if the decorator
+        form was used, the original directory wouldn't be restored
+        until *after* the fixture is finalized---not usually what
+        you want.
+
 
 ******************
 RepeatingContainer
