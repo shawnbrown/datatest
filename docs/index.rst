@@ -34,13 +34,13 @@ Table of Contents
     :caption: Documentation
     :hidden:
 
-    Introduction <self>
+    Home <self>
 
 
 .. toctree::
     :maxdepth: 2
 
-    tutorial/index
+    intro/index
     how-to/index
     reference/index
     discussion/index
