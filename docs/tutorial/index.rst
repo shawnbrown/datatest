@@ -14,7 +14,7 @@ Tutorials
 .. toctree::
     :maxdepth: 2
 
-    introduction
+    tour-of-datatest
     Automated Testing <automated-testing>
     Pipeline Validation <pipeline-validation>
 
