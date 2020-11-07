@@ -1,14 +1,14 @@
 
 .. meta::
-    :description: Test driven data-wrangling can provide much-needed
-                  structure to guide the workflow of data preparation,
-                  itself.
-    :keywords: test driven data-wrangling, structured data-wrangling
+    :description: A discussion about the need for a structured approach
+                  to data preparation and data-wrangling.
+    :keywords: data preparation, data-wrangling, test driven, structured,
+               data science
 
 
-##########################
-Test Driven Data-Wrangling
-##########################
+################
+Data Preparation
+################
 
 In the practice of data science, data preparation is a huge part of
 the job. Practitioners often spend 50 to 80 percent of their time
@@ -55,9 +55,9 @@ Typically, data tests should be defined in the following order:
     the order they appear in the test file itself.
 
 
-*************************
-Data Preparation Workflow
-*************************
+***********************************
+Test Driven Data-Wrangling Workflow
+***********************************
 
 Using a quick edit-test cycle, users can:
 
