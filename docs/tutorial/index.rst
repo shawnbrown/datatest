@@ -16,4 +16,5 @@ Tutorials
 
     introduction
     Automated Testing <automated-testing>
+    Pipeline Validation <pipeline-validation>
 
