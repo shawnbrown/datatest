@@ -15,7 +15,5 @@ Tutorials
     :maxdepth: 2
 
     introduction
-    testing-pandas
-    querying-data
-    Tidying a File <tidying-a-file.rst>
-    Comparing Two Files <compare-two-files.rst>
+    Automated Testing <automated-testing>
+
