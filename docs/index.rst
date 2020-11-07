@@ -43,7 +43,7 @@ Table of Contents
     tutorial/index
     how-to/index
     reference/index
-    Discussion <discussion/data-wrangling>
+    discussion/index
 
 
 .. note::
