@@ -15,5 +15,9 @@ Discussion
     :maxdepth: 2
 
     Fundamentals <fundamentals>
+    Tips and Tricks <tips-and-tricks>
     data-preparation
+    validate-vs-accept
+    terminology
+    project-history
 
