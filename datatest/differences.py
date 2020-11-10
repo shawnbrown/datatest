@@ -254,7 +254,7 @@ class Deviation(BaseDifference):
 
     @property
     def deviation(self):
-        """Numeric deviation from expected value."""
+        """Quantative deviation from expected value."""
         return self._deviation
 
     @property
