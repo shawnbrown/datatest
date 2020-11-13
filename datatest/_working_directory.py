@@ -10,8 +10,8 @@ class working_directory(contextlib.ContextDecorator):
     directory is automatically changed back to its previous
     location.
 
-    Use the global ``__file__`` variable to load data relative to
-    a file's current directory::
+    You can use Python's :py:obj:`__file__` constant to load data
+    relative to a file's current directory::
 
         from datatest import working_directory
         import pandas as pd
