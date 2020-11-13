@@ -21,12 +21,19 @@ working_directory
 
         Take care when using pytest's fixture finalization in combination
         with "session" or "module" level fixtures. In these cases, you
-        should use :func:`working_directory` as a context manager (inside
-        the function) and avoid using it as a decorator (outside the
-        function):
+        should use :func:`working_directory` as a context manager---not
+        as a decorator.
+
+        In the first example below, the original working directory is
+        restored immediately when the ``with`` statement ends. But
+        in the second example, the original directory isn't restored
+        until after the entire session is finished (not usually what
+        you want):
 
         .. code-block:: python
-            :emphasize-lines: 3
+            :emphasize-lines: 5
+
+            # Correct:
 
             @pytest.fixture(scope='session')
             def connection():
@@ -35,11 +42,21 @@ working_directory
                 yield conn
                 conn.close()
 
-        The example above restores the original working directory as
-        soon as the ``with`` statement finishes. But if the decorator
-        form was used, the original directory wouldn't be restored
-        until *after* the fixture is finalized---not usually what
-        you want.
+        .. code-block:: python
+            :emphasize-lines: 4
+
+            # Wrong:
+
+            @pytest.fixture(scope='session')
+            @working_directory(__file__)
+            def connection():
+                conn = ...  # Establish database connection.
+                yield conn
+                conn.close()
+
+        When a fixture does not require finalization or if the fixture
+        is short-lived (e.g., a function-level fixture) then either
+        form is acceptible.
 
 
 ******************
