@@ -56,6 +56,7 @@ intersphinx_mapping = {
     'pandas': ('https://pandas.pydata.org/pandas-docs/stable/', None),
     'numpy': ('https://docs.scipy.org/doc/numpy/', None),
     'squint': ('https://squint.readthedocs.io/en/stable/', None),
+    'pytest': ('https://docs.pytest.org/en/stable/', None),
 }
 
 # autodoc settings
