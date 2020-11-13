@@ -138,6 +138,7 @@ if __name__ == '__main__':
                 'datatest._vendor.squint',
             ],
             # Additional fields:
+            install_requires=[],  # <- No hard requirements!
             description='Test driven data-wrangling and data validation.',
             long_description=long_description,
             author='Shawn Brown',
