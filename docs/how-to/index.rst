@@ -17,7 +17,7 @@ How-to Guide
     :maxdepth: 1
 
     Install Datatest <install>
-    Get Started <get-started>
+    Get Started Testing <get-started>
     Run Tests <run-tests>
     Column Names <column-names>
     Customize Differences <customize-differences>
