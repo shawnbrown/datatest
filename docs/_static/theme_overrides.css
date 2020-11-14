@@ -24,3 +24,16 @@
         overflow: visible !important;
     }
 }
+
+
+/*
+    The sphinx_rtd_theme (as of version 0.5.0) does not include styles
+    for "details" or "summary" elements.
+*/
+details {
+    margin-bottom: 1em;
+}
+
+summary {
+    margin-bottom: 1em;
+}
