@@ -71,6 +71,8 @@ markers and continue testing even when a mandatory test fails:
 Pytest Samples
 ==============
 
+.. start-inclusion-marker-pytestsamples
+
 .. tabs::
 
     .. group-tab:: Pandas
@@ -262,6 +264,8 @@ Pytest Samples
                 import sys
                 sys.exit(pytest.main(sys.argv))
 
+.. end-inclusion-marker-pytestsamples
+
 
 ********
 Unittest
@@ -325,6 +329,8 @@ you can use the ``-f`` option to stop after any failing test:
 
 Unittest Samples
 ================
+
+.. start-inclusion-marker-unittestsamples
 
 .. tabs::
 
@@ -503,3 +509,4 @@ Unittest Samples
                 from datatest import main
                 main()
 
+.. end-inclusion-marker-unittestsamples

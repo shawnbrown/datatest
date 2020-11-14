@@ -30,23 +30,51 @@ Once you have reviewed the tutorials and have a basic understanding
 of datatest, you should be ready to start testing your own data.
 
 
-====================================
-1. Copy One of the Following Samples
-====================================
+=========================================
+1. Create a File and Add Some Sample Code
+=========================================
 
 A simple way to get started is to create a **.py** file in the same folder
 as the data you want to test. It's a good idea to follow established testing
-conventions and make sure your filename starts with "**test\_**". Then, copy
-one of the code samples from :doc:`/intro/automated-testing` into your file
-and begin changing the tests to suit your own data.
+conventions and make sure your filename starts with "**test\_**".
+
+Then, copy one of following the **pytest** or **unittest** code samples
+to use as a template for writing your own tests:
+
+.. raw:: html
+
+   <details>
+   <summary><a>Pytest Samples</a></summary>
+
+.. include:: ../intro/automated-testing.rst
+    :start-after: start-inclusion-marker-pytestsamples
+    :end-before: end-inclusion-marker-pytestsamples
+
+.. raw:: html
+
+   </details>
 
 
-======================================
-2. Adapt Sample Code to Suit Your Data
-======================================
+.. raw:: html
 
-After copying the sample code into your own file, you can begin to
-adapt it to meet your own needs:
+   <details>
+   <summary><a>Unittest Samples</a></summary>
+
+.. include:: ../intro/automated-testing.rst
+    :start-after: start-inclusion-marker-unittestsamples
+    :end-before: end-inclusion-marker-unittestsamples
+
+.. raw:: html
+
+   </details>
+
+
+==========================================
+2. Adapt the Sample Code to Suit Your Data
+==========================================
+
+After copying the sample code into your own file, begin adapting
+it to suit your data:
 
 1. Change the fixture to use your data (instead of "example.csv").
 2. Update the set in ``test_column_names()`` to require the names your
