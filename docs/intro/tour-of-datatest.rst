@@ -337,7 +337,7 @@ When validation fails, a :class:`ValidationError` is raised. A ValidationError
 contains a collection of difference objects---one difference for each element
 in *data* that fails to satisfy the *requirement*.
 
-Difference objects can be one of of four types: :class:`Missing`,
+Difference objects can be one of four types: :class:`Missing`,
 :class:`Extra`, :class:`Deviation` or :class:`Invalid`.
 
 
