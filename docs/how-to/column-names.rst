@@ -10,195 +10,191 @@
 How to Validate Column Names
 ############################
 
-To validate column names, we need pass the names as they appear and
-the names we're expecting to the :func:`validate` function (or the
-:meth:`assertValid() <DataTestCase.assertValid>` method if we're
-writing unittest-style tests).
+To validate the column names in a data source, simply pass the names
+themselves as the *data* argument when calling :func:`validate`. You
+control the method of validation with the *requirement* you provide.
 
 
-=============
-Some Examples
-=============
+===================
+Column Requirements
+===================
 
-**Select:** The columns names of a :class:`datatest.Select` can be
-accessed with the :attr:`fieldnames <Select.fieldnames>` attribute.
 
-.. tabs::
+Exist in Any Order
+==================
 
-    .. group-tab:: Pytest
+Using a :py:class:`set` requirement, we can check that column names
+exist but allow them to appear in any order:
 
-        .. code-block:: python
-            :emphasize-lines: 11
+.. code-block:: python
 
-            from datatest import validate
-            from datatest import Select
+    column_names = ...
+    validate(column_names, {'A', 'B', 'C'})
 
 
-            def test_columns():
+Are a Subset/Superset of Required Columns
+=========================================
 
-                mydata = Select('mydata.csv')
+Using :meth:`validate.subset`/:meth:`validate.superset`, we can check
+that column names are a subset or superset of the required names:
 
-                required_columns = {'A', 'B', 'C'}
+.. code-block:: python
 
-                validate(mydata.fieldnames, required_columns)
+    column_names = ...
+    validate.subset(column_names, {'A', 'B', 'C'})
 
 
-    .. group-tab:: Unittest
+Are Defined in Specific Order
+=============================
 
-        .. code-block:: python
-            :emphasize-lines: 13
+Using a :py:class:`list` requirement, we can check that column names
+exist and that they appear in a specified order:
 
-            from datatest import DataTestCase
-            from datatest import Select
+.. code-block:: python
 
+    column_names = ...
+    validate(column_names, ['A', 'B', 'C'])
 
-            class TestMyData(DataTestCase):
 
-                def test_columns(self):
+Match a Specific Format
+=======================
 
-                    mydata = Select('mydata.csv')
+Sometimes we don't care exactly what the column names are but we want to
+check that they conform to a specific format. To do this, we can define a
+helper function that performs any arbitrary comparison we want. Below, we
+check that column names are all written in uppercase letters:
 
-                    required_columns = {'A', 'B', 'C'}
+.. code-block:: python
 
-                    self.assertValid(mydata.fieldnames, required_columns)
+    def isupper(x):  # <- helper function
+        return x.isupper()
 
+    column_names = ...
+    validate(column_names, isupper)
 
-**DataFrame:** The columns names of a ``pandas.DataFrame`` can be
-accessed with the ``columns`` attribute.
+..
+    In this case, our helper function calls the :py:meth:`isupper()
+    <str.isupper>` method. Alternatively, we could perform this same
+    check using :py:func:`operator.methodcaller`:
 
-.. tabs::
+In this case, our helper function calls the ``isupper()`` method.
+Alternatively, we could perform this same check using
+:py:func:`operator.methodcaller`:
 
-    .. group-tab:: Pytest
+.. code-block:: python
 
-        .. code-block:: python
-            :emphasize-lines: 11
+    from operator import methodcaller
 
-            import pandas as pd
-            import datatest as dt
+    column_names = ...
+    validate(column_names, methodcaller('isupper'))
 
 
-            def test_columns():
+In addition to :meth:`isupper() <str.isupper>`, there are other
+string methods that can be useful for validating specific formats:
+:meth:`islower() <str.islower>`, :meth:`isalpha() <str.isalpha>`,
+:meth:`isascii() <str.isascii>`, :meth:`isidentifier() <str.isidentifier>`,
+etc.
 
-                mydata = pd.read_csv('mydata.csv')  # <- Creates DataFrame.
 
-                required_columns = {'A', 'B', 'C'}
+===================================
+Examples Using Various Data Sources
+===================================
 
-                validate(mydata.columns, required_columns)
 
-    .. group-tab:: Unittest
+csv.reader()
+============
 
-        .. code-block:: python
-            :emphasize-lines: 13
+.. code-block:: python
+    :emphasize-lines: 7-8
 
-            import pandas as pd
-            import datatest as dt
+    import csv
+    from datatest import validate
 
+    with open('mydata.csv', newline='') as csvfile:
+        reader = csv.reader(csvfile)
 
-            class TestMyData(dt.DataTestCase):
+        header_row = next(reader)
+        validate(header_row, {'A', 'B', 'C'})
 
-                def test_columns(self):
 
-                    mydata = pd.read_csv('mydata.csv')  # <- Creates DataFrame.
+csv.DictReader()
+================
 
-                    required_columns = {'A', 'B', 'C'}
+.. code-block:: python
+    :emphasize-lines: 7
 
-                    self.assertValid(mydata.columns, required_columns)
+    import csv
+    from datatest import validate
 
+    with open('mydata.csv', newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
 
-==============
-Other Criteria
-==============
+        validate(reader.fieldnames, {'A', 'B', 'C'})
 
-The examples above check that the column names are members of a given
-:py:class:`set`. But because sets are unordered, we are not validating
-the order of these columns---only that they exist.
 
-**Column Order:** If we want to validate the order the columns, we
-can use a :py:class:`list` of ``required_columns`` (instead instead of
-a set).
+Pandas
+======
 
-.. tabs::
+.. code-block:: python
+    :emphasize-lines: 5
 
-    .. group-tab:: Pytest
+    import pandas as pd
+    import datatest as dt
 
-        .. code-block:: python
-            :emphasize-lines: 9
+    df = pd.read_csv('mydata.csv')
+    dt.validate(df.columns, {'A', 'B', 'C'})
 
-            from datatest import validate
-            from datatest import Select
 
+Pandas (Integrated)
+===================
 
-            def test_columns():
+.. code-block:: python
+    :emphasize-lines: 4,7
 
-                mydata = Select('mydata.csv')
+    import pandas as pd
+    import datatest as dt
 
-                required_columns = ['A', 'B', 'C']  # <- Checks order.
+    dt.register_accessors()
 
-                validate(mydata.fieldnames, required_columns)
+    df = pd.read_csv('mydata.csv')
+    df.columns.validate({'A', 'B', 'C'})
 
 
-    .. group-tab:: Unittest
+Squint
+======
 
-        .. code-block:: python
-            :emphasize-lines: 11
+.. code-block:: python
+    :emphasize-lines: 5
 
-            from datatest import DataTestCase
-            from datatest import Select
+    import squint
+    from datatest import validate
 
+    select = squint.Select('mydata.csv')
+    validate(select.fieldnames, {'A', 'B', 'C'})
 
-            class TestMyData(DataTestCase):
 
-                def test_columns(self):
+Database
+========
 
-                    mydata = Select('mydata.csv')
+If you're using a DBAPI2 compatible connection (see :pep:`249`), you
+can get a table's column names using the :pep:`cursor.description
+<249#description>` attribute:
 
-                    required_columns = ['A', 'B', 'C']  # <- Checks order.
+.. code-block:: python
+    :emphasize-lines: 7-9
 
-                    self.assertValid(mydata.fieldnames, required_columns)
+    import sqlite3
+    from datatest import validate
 
+    connection = sqlite3.connect('mydata.sqlite3')
+    cursor = connection.cursor()
 
-**Column Format:** If we don't care exactly what the column names are
-but we want to check that they conform to a specific format, we can use
-a predicate **function**:
+    cursor.execute('SELECT * FROM mytable LIMIT 0;')
+    column_names = [item[0] for item in cursor.description]
+    validate(column_names, {'A', 'B', 'C'})
 
-.. tabs::
-
-    .. group-tab:: Pytest
-
-        .. code-block:: python
-            :emphasize-lines: 9-11
-
-            from datatest import validate
-            from datatest import Select
-
-
-            def test_columns():
-
-                mydata = Select('mydata.csv')
-
-                def required_format(value):
-                    """must be upper case"""
-                    return value.isupper()
-
-                validate(mydata.fieldnames, required_format)
-
-    .. group-tab:: Unittest
-
-        .. code-block:: python
-            :emphasize-lines: 11-13
-
-            from datatest import DataTestCase
-            from datatest import Select
-
-
-            class TestMyData(DataTestCase):
-
-                def test_columns(self):
-
-                    mydata = Select('mydata.csv')
-
-                    def required_format(value):
-                        """must be upper case"""
-                        return value.isupper()
-
-                    self.assertValid(mydata.fieldnames, required_format)
+Above, we select all columns (``SELECT *``) from our table but limit
+the result to zero rows (``LIMIT 0``). Executing this query populates
+``cursor.description`` even though no records are returned. We take
+the column name from each item in description (``item[0]``) and perform
+our validation.
