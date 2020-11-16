@@ -28,7 +28,7 @@ are "Excel safe" and receive a list of differences when values are
 vulnerable to inadvertent auto-formatting:
 
 .. code-block:: python
-    :emphasize-lines: 35
+    :emphasize-lines: 44
 
     import re
     from datatest import validate, Predicate
@@ -57,7 +57,7 @@ vulnerable to inadvertent auto-formatting:
         # Whitespace normalization.
         | \s.*              # Leading whitespace.
         | .*\s              # Trailing whitespace.
-        | .*\s\s.*          # Irregular whitespace (for Office 365).
+        | .*\s\s.*          # Irregular whitespace (new in Office 365).
 
         # Other conversions
         | =.+               # Spreadsheet formula.
@@ -65,7 +65,14 @@ vulnerable to inadvertent auto-formatting:
     )$''', re.VERBOSE | re.IGNORECASE), name='excel_safe')
 
 
-    data = ['AOX-18', 'APR-23', 'DBB-01', 'DEC-20', 'DNZ-33', 'DVH-50']
+    data = [
+        'AOX-18',
+        'APR-23',
+        'DBB-01',
+        'DEC-20',
+        'DNZ-33',
+        'DVH-50',
+    ]
     validate(data, excel_safe)
 
 In the example above, we use ``excel_safe`` as our *requirement*.
@@ -75,7 +82,7 @@ Excel would auto-convert into date types:
 .. code-block:: none
 
     ValidationError: does not satisfy excel_safe() (2 differences): [
-        Invalid('APR-10'),
+        Invalid('APR-23'),
         Invalid('DEC-20'),
     ]
 
@@ -89,13 +96,21 @@ There are a few ways to do this.
 
 We can prefix the failing values with apostrophes (``'APR-23``
 and ``'DEC-20``). This causes Excel to treat them as text instead
-of numbers or dates:
+of dates or numbers:
 
 .. code-block:: python
+    :emphasize-lines: 5,7
 
     ...
 
-    data = ['AOX-18', "'APR-23", 'DBB-01', "'DEC-20", 'DNZ-33', 'DVH-50']
+    data = [
+        "AOX-18",
+        "'APR-23",
+        "DBB-01",
+        "'DEC-20",
+        "DNZ-33",
+        "DVH-50",
+    ]
     validate(data, excel_safe)
 
 
@@ -104,10 +119,18 @@ the values. Below, the hyphens in *data* have been replaced with
 underscores (``_``):
 
 .. code-block:: python
+    :emphasize-lines: 4-9
 
     ...
 
-    data = ['AOX_18', 'APR_23', 'DBB_01', 'DEC_20', 'DNZ_33', 'DVH_50']
+    data = [
+        'AOX_18',
+        'APR_23',
+        'DBB_01',
+        'DEC_20',
+        'DNZ_33',
+        'DVH_50',
+    ]
     validate(data, excel_safe)
 
 
