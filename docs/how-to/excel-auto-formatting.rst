@@ -42,8 +42,10 @@ vulnerable to inadvertent auto-formatting:
         | (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[ \-]\d{1,2}
         | [01]?[0-9]-(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)
 
-        # Twelve-hour clock conversion.
-        | [01]?[0-9][ ]?(AM?|PM?)
+        # Time conversions.
+        | [01]?[0-9][ ]?(AM?|PM?)     # Twelve-hour clock.
+        | \d?\d[ ]*:                  # HH (hours).
+        | \d?\d[ ]*(:[ ]*\d\d?){1,2}  # HH:MM and HH:MM:SS
 
         # Numeric conversions.
         | 0\d+\.?\d*        # Number with leading zeros.
@@ -125,12 +127,3 @@ error.
 
 
 .. _`file an issue`: https://github.com/shawnbrown/datatest/issues
-
-
-..
-    TODO - Other patterns that Excel changes:
-
-    * 12:12 -> 12:12 (12:12:00 PM)
-    * 25:32 -> 25:32:00 (1/1/1900 1:32:00 AM)
-    * 1:1 -> 01:01:00 AM
-    * 1:1:1 -> 01:01:01 AM
