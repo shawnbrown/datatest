@@ -28,9 +28,10 @@ are "Excel safe" and receive a list of differences when values are
 vulnerable to inadvertent auto-formatting:
 
 .. code-block:: python
+    :emphasize-lines: 35
 
     import re
-    from datatest import Predicate
+    from datatest import validate, Predicate
 
 
     # Predicate to check that elements are not subject
@@ -62,105 +63,12 @@ vulnerable to inadvertent auto-formatting:
     )$''', re.VERBOSE | re.IGNORECASE), name='excel_safe')
 
 
-An Example
-==========
+    data = ['AOX-18', 'APR-23', 'DBB-01', 'DEC-20', 'DNZ-33', 'DVH-50']
+    validate(data, excel_safe)
 
-CSV File
---------
-
-As an example, the file :download:`excel_autoformat.csv
-</_static/excel_autoformat.csv>` contains two values that would
-get converted to dates if Excel's automatic formatting were
-applied to them:
-
-.. literalinclude:: /_static/excel_autoformat.csv
-    :language: none
-    :lineno-match:
-    :lines: 15-19
-    :emphasize-lines: 3
-
-
-.. literalinclude:: /_static/excel_autoformat.csv
-    :language: none
-    :lineno-match:
-    :lines: 47-51
-    :emphasize-lines: 3
-
-The values ``APR-10`` and ``DEC-20`` would get converted to April
-10th and December 20th respectively.
-
-
-Checking the File
------------------
-
-To check our file (:download:`excel_autoformat.csv
-</_static/excel_autoformat.csv>`), we can use the
-following tests:
-
-.. tabs::
-
-    .. group-tab:: Pytest
-
-        .. code-block:: python
-            :emphasize-lines: 19,23
-
-            import re
-            import pytest
-            from datatest import validate
-            from datatest import working_directory
-            from datatest import Select
-            from datatest import Predicate
-
-
-            excel_safe = ...  # Define Excel-safe Predicate.
-
-
-            @pytest.fixture(scope='module')
-            @working_directory(__file__)
-            def mydata():
-                return Select('excel_autoformat.csv')
-
-
-            def test_column_a(mydata):
-                validate(mydata('A'), excel_safe)
-
-
-            def test_column_b(mydata):
-                validate(mydata('B'), excel_safe)
-
-    .. group-tab:: Unittest
-
-        .. code-block:: python
-            :emphasize-lines: 19,22
-
-            import re
-            from datatest import DataTestCase
-            from datatest import working_directory
-            from datatest import Select
-            from datatest import Predicate
-
-
-            excel_safe = ...  # Define Excel-safe Predicate.
-
-
-            def setUpModule():
-                global mydata
-                with working_directory(__file__):
-                    mydata = Select('excel_autoformat.csv')
-
-
-            class TestMyData(DataTestCase):
-                def test_column_a(self):
-                    self.assertValid(mydata('A'), excel_safe)
-
-                def test_column_b(self):
-                    self.assertValid(mydata('B'), excel_safe)
-
-
-The example above contains two tests. When running these tests,
-``test_column_a()`` passes without error, but ``test_column_b()``
-fails. This is because column **B** contains two values that are
-not Excel-safe. The following error is reported:
+In the example above, we use ``excel_safe`` as our *requirement*.
+The validation fails because our *data* contains two codes that
+Excel would auto-convert into date types:
 
 .. code-block:: none
 
@@ -173,59 +81,36 @@ not Excel-safe. The following error is reported:
 Fixing the Data
 ---------------
 
-To address these issues, we need to edit **excel_autoformat.csv** and
-change the values in column **B** so they are no longer subject to Excel's
-auto-formatting behavior. There are a few ways to do this.
+To address the failure, we need to change the values in *data* so
+they are no longer subject to Excel's auto-formatting behavior.
+There are a few ways to do this.
 
-You can prefix values with an apostrophe (``'``) which causes Excel to
-treat them as text (instead of as numbers or dates):
+We can prefix the failing values with apostrophes (``'APR-23``
+and ``'DEC-20``). This causes Excel to treat them as text instead
+of numbers or dates:
 
-.. code-block:: none
-    :lineno-start: 15
-    :emphasize-lines: 3
+.. code-block:: python
 
-    292,AOJ-35
-    294,AOX-18
-    295,'APR-10
-    298,AQV-25
-    314,ATF-21
+    ...
 
-.. code-block:: none
-    :lineno-start: 47
-    :emphasize-lines: 3
+    data = ['AOX-18', "'APR-23", 'DBB-01', "'DEC-20", 'DNZ-33', 'DVH-50']
+    validate(data, excel_safe)
 
-    874,CYL-23
-    887,DBB-01
-    895,'DEC-20
-    906,DNZ-33
-    981,DVH-50
 
-Another approach would be to change the formatting for the entire
-column. Below, the hyphens in column **B** have been replaced with
+Another approach would be to change the formatting for the all of
+the values. Below, the hyphens in *data* have been replaced with
 underscores (``_``):
 
-.. code-block:: none
-    :lineno-start: 15
-    :emphasize-lines: 3
+.. code-block:: python
 
-    292,AOJ_35
-    294,AOX_18
-    295,APR_10
-    298,AQV_25
-    314,ATF_21
+    ...
 
-.. code-block:: none
-    :lineno-start: 47
-    :emphasize-lines: 3
+    data = ['AOX_18', 'APR_23', 'DBB_01', 'DEC_20', 'DNZ_33', 'DVH_50']
+    validate(data, excel_safe)
 
-    874,CYL_23
-    887,DBB_01
-    895,DEC_20
-    906,DNZ_33
-    981,DVH_50
 
-After making the needed changes and saving the file, the tests will
-now pass without error.
+After making the needed changes, the validation will now pass without
+error.
 
 
 .. caution::
