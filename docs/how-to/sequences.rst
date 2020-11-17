@@ -14,41 +14,14 @@ To check for a specific sequence, you can pass an iterable object
 (other than a set, mapping, tuple or string) as the *requirement*
 argument:
 
-.. tabs::
+.. code-block:: python
+    :emphasize-lines: 4
 
-    .. group-tab:: Pytest
+    from datatest import validate
 
-        .. code-block:: python
-            :emphasize-lines: 8
-
-            from datatest import validate
-
-
-            def test_sequence():
-
-                data = ['A', 'B', 'X', 'C', 'D']
-
-                requirement = ['A', 'B', 'C', 'D']  # <- a list
-
-                validate(data, requirement)
-
-    .. group-tab:: Unittest
-
-        .. code-block:: python
-            :emphasize-lines: 10
-
-            from datatest import DataTestCase
-
-
-            class MyTest(DataTestCase):
-
-                def test_sequence(self):
-
-                    data = ['A', 'B', 'X', 'C', 'D']
-
-                    requirement = ['A', 'B', 'C', 'D']  # <- a list
-
-                    self.assertValid(data, requirement)
+    data = ['A', 'B', 'X', 'C', 'D']
+    requirement = ['A', 'B', 'C', 'D']  # <- a list
+    validate(data, requirement)
 
 
 Elements in the *data* and *requirement* lists are compared by
@@ -90,41 +63,14 @@ does not describe **where** in your sequence the differences occur.
 To get the index positions associated with any differences, you
 can :py:func:`enumerate` your *data* and *requirement* objects:
 
-.. tabs::
+.. code-block:: python
+    :emphasize-lines: 5
 
-    .. group-tab:: Pytest
+    from datatest import validate
 
-        .. code-block:: python
-            :emphasize-lines: 10
-
-            from datatest import validate
-
-
-            def test_enumerated_sequence():
-
-                data = ['A', 'B', 'X', 'C', 'D']
-
-                requirement = ['A', 'B', 'C', 'D']
-
-                validate(enumerate(data), enumerate(requirement))
-
-    .. group-tab:: Unittest
-
-        .. code-block:: python
-            :emphasize-lines: 12
-
-            from datatest import DataTestCase
-
-
-            class MyTest(DataTestCase):
-
-                def test_enumerated_sequence(self):
-
-                    data = ['A', 'B', 'X', 'C', 'D']
-
-                    requirement = ['A', 'B', 'C', 'D']
-
-                    self.assertValid(enumerate(data), enumerate(requirement))
+    data = ['A', 'B', 'X', 'C', 'D']
+    requirement = ['A', 'B', 'C', 'D']
+    validate(enumerate(data), enumerate(requirement))
 
 
 A required **enumerate object** is treated as a mapping. The keys
@@ -143,51 +89,20 @@ Element Order
 -------------
 
 When comparing elements by sequence position, one mis-alignment can
-create differences for all following elements. If this behavior
-is not desireable, you may want to check for relative order instead.
+create differences for all following elements. If this behavior is
+not desireable, you may want to check for *relative order* instead.
 
-.. tabs::
+If you want to check the relative order of elements rather than
+their index positions, you can use :meth:`validate.order`:
 
-    .. group-tab:: Pytest
+.. code-block:: python
+    :emphasize-lines: 5
 
-        If you want to check the relative order of elements rather than
-        their index positions, you can use :meth:`validate.order`:
+    from datatest import validate
 
-        .. code-block:: python
-            :emphasize-lines: 10
-
-            from datatest import validate
-
-
-            def test_sequence_order():
-
-                data = ['A', 'B', 'X', 'C', 'D']
-
-                requirement = ['A', 'B', 'C', 'D']
-
-                validate.order(data, requirement)
-
-    .. group-tab:: Unittest
-
-        If you want to check the relative order of elements rather than
-        their index positions, you can use :meth:`assertValidOrder()
-        <DataTestCase.assertValidOrder>`:
-
-        .. code-block:: python
-            :emphasize-lines: 12
-
-            from datatest import DataTestCase
-
-
-            class MyTest(DataTestCase):
-
-                def test_sequence_order(self):
-
-                    data = ['A', 'B', 'X', 'C', 'D']
-
-                    requirement = ['A', 'B', 'C', 'D']
-
-                    self.assertValidOrder(data, requirement)
+    data = ['A', 'B', 'X', 'C', 'D']
+    requirement = ['A', 'B', 'C', 'D']
+    validate.order(data, requirement)
 
 
 When checking for relative order, this method tries to align
