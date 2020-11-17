@@ -10,35 +10,36 @@
 How to Run Tests
 ################
 
+======
+Pytest
+======
 
-.. tabs::
+If you have a pytest style script named ``test_mydata.py``,
+you can run it by typing the following at the command line:
 
-    .. group-tab:: Pytest
+.. code-block:: console
 
-        If you have a pytest style script named ``test_mydata.py``,
-        you can run it by typing the following at the command line:
+    pytest test_mydata.py
 
-        .. code-block:: none
+You invoke pytest just as you would in any other circumstance---see
+pytest's standard |pytest-usage|_ for full details.
 
-            pytest test_mydata.py
 
-        Datatest behaves as a pytest plugin and you run datatest
-        validations the same way you would run any other pytest
-        style tests---see pytest's standard |pytest-usage|_ for
-        full details.
+========
+Unittest
+========
 
-    .. group-tab:: Unittest
+If you have a unittest style script named ``test_mydata.py``,
+you can run it by typing the following at the command line:
 
-        If you have a unittest style script named ``test_mydata.py``,
-        you can run it by typing the following at the command line:
+.. code-block:: console
 
-        .. code-block:: none
+    python -m datatest test_mydata.py
 
-            python -m datatest test_mydata.py
-
-        Datatest includes a unittest style test-runner runs tests in
-        line-number order (to support an incremental testing approach).
-        See datatest's :ref:`unittest-style-invocation` for details.
+Datatest includes a unittest-style test runner that facilitates
+incremental testing. It runs tests in declaration order (i.e.,
+by line-number) and supports the :func:`@mandatory <mandatory>`
+decorator.
 
 
 ..
