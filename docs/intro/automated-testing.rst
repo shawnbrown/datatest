@@ -83,10 +83,8 @@ Pytest Samples
             #!/usr/bin/env python3
             import pytest
             import pandas as pd
+            import datatest as dt
             from datatest import (
-                validate,
-                accepted,
-                working_directory,
                 Missing,
                 Extra,
                 Invalid,
@@ -95,7 +93,7 @@ Pytest Samples
 
 
             @pytest.fixture(scope='session')
-            @working_directory(__file__)
+            @dt.working_directory(__file__)
             def df():
                 return pd.read_csv('example.csv')
 
@@ -103,12 +101,12 @@ Pytest Samples
             @pytest.mark.mandatory
             def test_column_names(df):
                 required_names = {'A', 'B', 'C'}
-                validate(df.columns, required_names)
+                dt.validate(df.columns, required_names)
 
 
             def test_a(df):
                 requirement = {'x', 'y', 'z'}
-                validate(df['A'], requirement)
+                dt.validate(df['A'], requirement)
 
 
             # ...add more tests here...
@@ -126,10 +124,8 @@ Pytest Samples
             #!/usr/bin/env python3
             import pytest
             import pandas as pd
+            import datatest as dt
             from datatest import (
-                register_accessors,
-                accepted,
-                working_directory,
                 Missing,
                 Extra,
                 Invalid,
@@ -138,14 +134,14 @@ Pytest Samples
 
 
             @pytest.fixture(scope='session')
-            @working_directory(__file__)
+            @dt.working_directory(__file__)
             def df():
                 return pd.read_csv('example.csv')
 
 
             @pytest.fixture(scope='session', autouse=True)
             def pandas_integration():
-                register_accessors()
+                dt.register_accessors()
 
 
             @pytest.mark.mandatory
@@ -341,10 +337,8 @@ Unittest Samples
 
             #!/usr/bin/env python3
             import pandas as pd
+            import datatest as dt
             from datatest import (
-                DataTestCase,
-                mandatory,
-                working_directory,
                 Missing,
                 Extra,
                 Invalid,
@@ -352,14 +346,14 @@ Unittest Samples
             )
 
 
-            @working_directory(__file__)
+            @dt.working_directory(__file__)
             def setUpModule():
                 global df
                 df = pd.read_csv('example.csv')
 
 
-            class TestMyData(DataTestCase):
-                @mandatory
+            class TestMyData(dt.DataTestCase):
+                @dt.mandatory
                 def test_column_names(self):
                     required_names = {'A', 'B', 'C'}
                     self.assertValid(df.columns, required_names)
@@ -382,11 +376,8 @@ Unittest Samples
 
             #!/usr/bin/env python3
             import pandas as pd
+            import datatest as dt
             from datatest import (
-                DataTestCase,
-                mandatory,
-                working_directory,
-                register_accessors,
                 Missing,
                 Extra,
                 Invalid,
@@ -394,15 +385,15 @@ Unittest Samples
             )
 
 
-            @working_directory(__file__)
+            @dt.working_directory(__file__)
             def setUpModule():
                 global df
                 df = pd.read_csv('example.csv')
-                register_accessors()  # Register pandas accessors.
+                dt.register_accessors()  # Register pandas accessors.
 
 
-            class TestMyData(DataTestCase):
-                @mandatory
+            class TestMyData(dt.DataTestCase):
+                @dt.mandatory
                 def test_column_names(self):
                     required_names = {'A', 'B', 'C'}
                     df.columns.validate(required_names)
@@ -489,20 +480,21 @@ Unittest Samples
 
             class MyTest(DataTestCase):
                 def setUp(self):
-                    self.cursor = connection.cursor()
-                    self.addCleanup(lambda: self.cursor.close())
+                    cursor = connection.cursor()
+                    self.cursor = cursor
+                    self.addCleanup(lambda: cursor.close())
 
                 @mandatory
-                def test_column_names(cursor):
-                    cursor.execute('SELECT * FROM mytable LIMIT 0;')
-                    column_names = [item[0] for item in cursor.description]
+                def test_column_names(self):
+                    self.cursor.execute('SELECT * FROM mytable LIMIT 0;')
+                    column_names = [item[0] for item in self.cursor.description]
                     required_names = {'A', 'B', 'C'}
                     self.assertValid(column_names, required_names)
 
-                def test_a(cursor):
-                    cursor.execute('SELECT A FROM mytable;')
+                def test_a(self):
+                    self.cursor.execute('SELECT A FROM mytable;')
                     requirement = {'x', 'y', 'z'}
-                    self.assertValid(cursor, requirement)
+                    self.assertValid(self.cursor, requirement)
 
 
             if __name__ == '__main__':
