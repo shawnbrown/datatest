@@ -26,6 +26,7 @@ your own tests:
 .. code-block:: python
 
     from statistics import median
+    from datatest import validate
     from datatest.requirements import adapts_mapping
     from datatest.requirements import RequiredInterval
 
@@ -49,6 +50,9 @@ your own tests:
                 lower = upper = 0
 
             super().__init__(lower, upper)
+
+    ...
+
 
 In "Exploratory Data Analysis" by John W. Tukey (1977), a multiplier
 of 1.5 was proposed for labeling outliers and 3.0 was proposed for
@@ -78,63 +82,51 @@ by Hoaglin and Iglewicz (1987).
 Example Usage
 =============
 
-Use of ``RequiredOutliers`` is demonstrated below:
+The following example uses the ``RequiredOutliers`` class defined
+earlier to check for outliers in a list of values:
 
-.. tabs::
+.. code-block:: python
+    :emphasize-lines: 4
 
-    .. group-tab:: Pytest
+    ...
 
-        .. code-block:: python
-            :emphasize-lines: 8,19
-
-            from datatest import validate
-
-            ...
-
-            def test_outliers1():
-                data = [54, 44, 42, 46, 87, 48, 56, 52]  # <- 87 is an outlier
-
-                requirement = RequiredOutliers(data, multiplier=2.2)
-
-                validate(data, requirement)
+    data = [54, 44, 42, 46, 87, 48, 56, 52]  # <- 87 is an outlier
+    requirement = RequiredOutliers(data, multiplier=2.2)
+    validate(data, requirement)
 
 
-            def test_outliers2():
-                data = {
-                    'A': [54, 44, 42, 46, 87, 48, 56, 52],  # <- 87 is an outlier
-                    'B': [87, 83, 60, 85, 97, 91, 95, 93],  # <- 60 is an outlier
-                }
+.. code-block:: none
 
-                requirement = RequiredOutliers(data, multiplier=2.2)
+    ValidationError: elements `x` do not satisfy `23.0 <= x <= 77.0` (1 difference): [
+        Deviation(+10.0, 77.0),
+    ]
 
-                validate(data, requirement)
 
-    .. group-tab:: Unittest
+You can also use the class to validate mappings of values as well:
 
-        .. code-block:: python
-            :emphasize-lines: 9,19
+.. code-block:: python
+    :emphasize-lines: 7
 
-            from datatest import DataTestCase
+    ...
 
-            ...
+    data = {
+        'A': [54, 44, 42, 46, 87, 48, 56, 52],  # <- 87 is an outlier
+        'B': [87, 83, 60, 85, 97, 91, 95, 93],  # <- 60 is an outlier
+    }
+    requirement = RequiredOutliers(data, multiplier=2.2)
+    validate(data, requirement)
 
-            class MyTest(DataTestCase):
-                def test_outliers1(self):
-                    data = [54, 44, 42, 46, 87, 48, 56, 52]  # <- 87 is an outlier
 
-                    requirement = RequiredOutliers(data, multiplier=2.2)
+.. code-block:: none
 
-                    self.assertValid(data, requirement)
+    ValidationError: does not satisfy mapping requirements (2 differences): {
+        'A': [Deviation(+10.0, 77.0)],
+        'B': [Deviation(-2.0, 62.0)],
+    }
 
-                def test_outliers2(self):
-                    data = {
-                        'A': [54, 44, 42, 46, 87, 48, 56, 52],  # <- 87 is an outlier
-                        'B': [87, 83, 60, 85, 97, 91, 95, 93],  # <- 60 is an outlier
-                    }
 
-                    requirement = RequiredOutliers(data, multiplier=2.2)
-
-                    self.assertValid(data, requirement)
+Addressing Outliers
+===================
 
 Once potential outliers have been identified, you need to decide
 how best to address them---there is no single best practice for
@@ -155,7 +147,7 @@ How it Works
 
 To use this approach most effectively, it helps to understand how
 it works. The following example explains the technique in detail
-using the same data as the ``test_outliers1()`` example above:
+using the same data as the first example given above:
 
    .. math::
 
