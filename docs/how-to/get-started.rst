@@ -10,22 +10,6 @@
 How to Get Started With Testing
 ###############################
 
-.. sidebar:: Example Data
-
-    The samples here are written to test the following
-    :download:`example.csv </_static/example.csv>`:
-
-    ===  ===  ===
-     A    B    C
-    ===  ===  ===
-     x   foo   20
-     x   foo   30
-     y   foo   10
-     y   bar   20
-     z   bar   10
-     z   bar   10
-    ===  ===  ===
-
 Once you have reviewed the tutorials and have a basic understanding
 of datatest, you should be ready to start testing your own data.
 

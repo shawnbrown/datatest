@@ -510,3 +510,27 @@ Unittest Samples
                 main()
 
 .. end-inclusion-marker-unittestsamples
+
+
+***********************
+Data for Script Samples
+***********************
+
+.. sidebar:: Download File
+
+    | :download:`example.csv </_static/example.csv>`
+    | :download:`example.sqlite3 </_static/example.sqlite3>`
+
+The test samples given on this page were written to check
+the following data set:
+
+    ===  ===  ===
+     A    B    C
+    ===  ===  ===
+     x   foo   20
+     x   foo   30
+     y   foo   10
+     y   bar   20
+     z   bar   10
+     z   bar   10
+    ===  ===  ===
