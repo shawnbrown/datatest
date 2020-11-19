@@ -165,13 +165,6 @@ all ZIP Codes in Pennsylvania begin with "1" (15501, 16512, etc.). We can
 use these known associations as a sanity check to make sure that our "state"
 and "zipcode" values are plausible and consistent.
 
-This check works well to detect data processing errors that might mis-align
-or otherwise damage "zipcode" and "city" values. But it cannot detect if
-ZIP Codes are assigned to the wrong states within in the same 
-number-group---for example, it wouldn't be able to determine if a Kentucky
-ZIP Code was used on an Indiana address (since both Kentucky and Indiana
-have ZIP Codes beginning with "4").
-
 The following example defines a helper function, ``state_zip_consistency()``,
 to check the first digit of a ZIP Code against a set of associated state
 codes:
@@ -200,3 +193,10 @@ codes:
         return state in lookup[first_digit]
 
     validate(df[['state', 'zipcode']], state_zip_consistency)
+
+This check works well to detect data processing errors that might mis-align
+or otherwise damage "zipcode" and "city" values. But it cannot detect if
+ZIP Codes are assigned to the wrong states within in the same 
+number-group---for example, it wouldn't be able to determine if a Kentucky
+ZIP Code was used on an Indiana address (since both Kentucky and Indiana
+have ZIP Codes beginning with "4").
