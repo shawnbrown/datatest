@@ -75,8 +75,8 @@ be best to simply check that the field is not empty.
 .. _`delivery address line`: https://pe.usps.com/text/pub28/28c2_012.htm
 .. _`commonly used suffixes`: https://pe.usps.com/text/pub28/28apc_002.htm
 
-The example below uses a regular expression (``\w+``) to match one or
-more non-space characters:
+The example below uses a regular expression, ``\w+``, to match one or
+more letters or numbers:
 
 .. code-block:: python
 
@@ -92,12 +92,12 @@ City Name
 The US Postal Service sells a regularly updated *City State Product*
 file. For paying customers who purchase the USPS file or for users of
 third-party services, "city" values can be matched against a controlled
-vocabulary of approved city names. As with the street validation, when
-such resources are unavailable it's probably best to check that the
-field is not empty.
+vocabulary of approved city names. As with street validation, when such
+resources are unavailable it's probably best to check that the field is
+not empty.
 
-The example below uses a regular expression (``\w+``) to match one or
-more non-space characters:
+The example below uses a regular expression, ``[A-Za-z]+``, to match one
+or more letters:
 
 .. code-block:: python
 
@@ -138,11 +138,11 @@ values in the "state" column are members of the ``state_codes`` set:
 ZIP Code
 --------
 
-The set of valid Zip Codes is very large but they can be easily
+The set of valid ZIP Codes is very large but they can be easily
 checked for well-formedness. Basic ZIP Codes are five digits and
-extended ZIP+4 codes are nine digits (e.g., 20500 and 20500-0005).
+extended ZIP+4 Codes are nine digits (e.g., 20500 and 20500-0005).
 
-This example uses a regex (``^\d{5}(-\d{4})?$``) to match the two
+This example uses a regex, ``^\d{5}(-\d{4})?$``, to match the two
 possible formats:
 
 .. code-block:: python
