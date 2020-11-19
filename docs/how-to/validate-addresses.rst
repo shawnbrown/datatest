@@ -80,11 +80,10 @@ more non-space characters:
 
 .. code-block:: python
 
-    import re
     from datatest import validate
     ...
 
-    validate(df['street'], re.compile(r'\w+'))
+    validate.regex(df['street'], r'\w+')
 
 
 City Name
@@ -102,11 +101,10 @@ more non-space characters:
 
 .. code-block:: python
 
-    import re
     from datatest import validate
     ...
 
-    validate(df['city'], re.compile(r'\w+'))
+    validate.regex(df['city'], r'[A-Za-z]+')
 
 
 State Abbreviation
@@ -149,11 +147,10 @@ possible formats:
 
 .. code-block:: python
 
-    import re
     from datatest import validate
     ...
 
-    validate(df['zipcode'], re.compile(r'^\d{5}(-\d{4})?$'))
+    validate.regex(df['zipcode'], r'^\d{5}(-\d{4})?$')
 
 
 State-ZIP Code Consistency
