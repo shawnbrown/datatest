@@ -345,6 +345,36 @@ class TestMakeDifference(unittest.TestCase):
         diff = _make_difference('a', regex)
         self.assertEqual(diff, Invalid('a', re.compile('^test$')))
 
+    def test_boolean_comparisons(self):
+        """Boolean differences should not be treated quantitatively."""
+        diff = _make_difference(False, True)
+        self.assertIs(diff.invalid, False)
+        self.assertIs(diff.expected, True)
+
+        diff = _make_difference(True, False)
+        self.assertIs(diff.invalid, True)
+        self.assertIs(diff.expected, False)
+
+        diff = _make_difference(0, True)
+        self.assertEqual(diff.invalid, 0)
+        self.assertIsNot(diff.invalid, False)
+        self.assertIs(diff.expected, True)
+
+        diff = _make_difference(1, False)
+        self.assertEqual(diff.invalid, 1)
+        self.assertIsNot(diff.invalid, True)
+        self.assertIs(diff.expected, False)
+
+        diff = _make_difference(False, 1)
+        self.assertIs(diff.invalid, False)
+        self.assertEqual(diff.expected, 1)
+        self.assertIsNot(diff.expected, True)
+
+        diff = _make_difference(True, 0)
+        self.assertIs(diff.invalid, True)
+        self.assertEqual(diff.expected, 0)
+        self.assertIsNot(diff.expected, False)
+
     def test_novalue_comparisons(self):
         diff = _make_difference('a', NOVALUE)
         self.assertEqual(diff, Extra('a'))

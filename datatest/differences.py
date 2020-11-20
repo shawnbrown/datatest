@@ -298,6 +298,11 @@ def _make_difference(actual, expected, show_expected=True):
     if expected is NOVALUE:
         return Extra(actual)
 
+    if isinstance(expected, bool) or isinstance(actual, bool):
+        if show_expected:
+            return Invalid(actual, expected)
+        return Invalid(actual)
+
     try:
         deviation = actual - expected
         return Deviation(deviation, expected)
