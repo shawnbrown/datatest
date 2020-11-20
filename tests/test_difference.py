@@ -404,12 +404,25 @@ class TestMakeDifference(unittest.TestCase):
         diff = _make_difference('a', 6, show_expected=False)
         self.assertEqual(diff, Invalid('a'))
 
-        # Show expected has no value with Missing or Extra differences.
+        # Show expected should not effect Missing, Extra, or Deviation:
+
+        diff = _make_difference(NOVALUE, 6, show_expected=True)
+        self.assertEqual(diff, Missing(6))
+
         diff = _make_difference(NOVALUE, 6, show_expected=False)
         self.assertEqual(diff, Missing(6))
 
+        diff = _make_difference(6, NOVALUE, show_expected=True)
+        self.assertEqual(diff, Extra(6))
+
         diff = _make_difference(6, NOVALUE, show_expected=False)
         self.assertEqual(diff, Extra(6))
+
+        diff = _make_difference(1, 2, show_expected=True)
+        self.assertEqual(diff, Deviation(-1, 2))
+
+        diff = _make_difference(1, 2, show_expected=False)
+        self.assertEqual(diff, Deviation(-1, 2))
 
     def test_same(self):
         with self.assertRaises(ValueError):
