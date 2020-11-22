@@ -110,13 +110,13 @@ or more letters:
 State Abbreviation
 ------------------
 
-Unlike the previous fields, the set of possible state abbreviations
-is small and easy to check against. The set includes codes for all
-50 states, the District of Columbia, US territories, associate states,
-and armed forces delivery codes.
+Unlike the previous fields, the set of possible state abbreviations is small
+and easy to check against. The set includes codes for all 50 states, the
+District of Columbia, US territories, associate states, and armed forces
+delivery codes.
 
-In this example, we use :func:`validate.subset` to check that the
-values in the "state" column are members of the ``state_codes`` set:
+In this example, we use :func:`validate.subset` to check that the values in
+the "state" column are members of the ``state_codes`` set:
 
 .. code-block:: python
 
@@ -138,12 +138,12 @@ values in the "state" column are members of the ``state_codes`` set:
 ZIP Code
 --------
 
-The set of valid ZIP Codes is very large but they can be easily
-checked for well-formedness. Basic ZIP Codes are five digits and
-extended ZIP+4 Codes are nine digits (e.g., 20500 and 20500-0005).
+The set of valid ZIP Codes is very large but they can be easily checked for
+well-formedness. Basic ZIP Codes are five digits and extended ZIP+4 Codes are
+nine digits (e.g., 20500 and 20500-0005).
 
-This example uses a regex, ``^\d{5}(-\d{4})?$``, to match the two
-possible formats:
+This example uses a regex, ``^\d{5}(-\d{4})?$``, to match the two possible
+formats:
 
 .. code-block:: python
 
@@ -153,14 +153,14 @@ possible formats:
     validate.regex(df['zipcode'], r'^\d{5}(-\d{4})?$')
 
 
-State-ZIP Code Consistency
---------------------------
+State and ZIP Code Consistency
+------------------------------
 
-ZIP Code digits are associated with specific states and regions. For
-example, all ZIP Codes in Indiana begin with "4" (46350, 46247, etc.) and
-all ZIP Codes in Pennsylvania begin with "1" (15501, 16512, etc.). We can
-use these known associations as a sanity check to make sure that our "state"
-and "zipcode" values are plausible and consistent.
+ZIP Code digits are associated with specific states and regions. For example,
+all ZIP Codes in Indiana begin with "4" (46350, 46247, etc.) and all ZIP Codes
+in Pennsylvania begin with "1" (15501, 16512, etc.). We can use these known
+associations as a sanity check to make sure that our "state" and "zipcode"
+values are plausible and consistent.
 
 The following example defines a helper function, ``state_zip_consistency()``,
 to check the first digit of a ZIP Code against a set of associated state
@@ -191,9 +191,8 @@ codes:
 
     validate(df[['state', 'zipcode']], state_zip_consistency)
 
-This check works well to detect data processing errors that might mis-align
-or otherwise damage "zipcode" and "city" values. But it cannot detect if
-ZIP Codes are assigned to the wrong states within in the same 
-number-group---for example, it wouldn't be able to determine if a Kentucky
-ZIP Code was used on an Indiana address (since both Kentucky and Indiana
-have ZIP Codes beginning with "4").
+This check works well to detect data processing errors that might mis-align or
+otherwise damage "zipcode" and "city" values. But it cannot detect if ZIP Codes
+are assigned to the wrong states within in the same number-group---for example,
+it wouldn't be able to determine if a Kentucky ZIP Code was used on an Indiana
+address (since both Kentucky and Indiana have ZIP Codes beginning with "4").
