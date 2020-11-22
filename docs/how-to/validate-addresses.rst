@@ -38,24 +38,39 @@ omissions. If this weaker form of verification is useful for your
 situation, the following examples could be helpful.
 
 
-Example Data
-------------
+Load Data as Text
+-----------------
 
-The validation examples below are designed to check address data
-like the following:
+To start, we will load our example addresses into a pandas
+:class:`DataFrame <pandas.DataFrame>`. It's important to specify
+``dtype=str`` to prevent pandas' type inference from loading values
+(like ZIP Codes) using a numeric dtype---address fields should be
+handled as text:
 
-    ============================  =============  =====  ==========
-    street                        city           state  zipcode
-    ============================  =============  =====  ==========
-    1600 Pennsylvania Avenue NW   Washington     DC     20500
-    30 Rockefeller Plaza          New York       NY     10112
-    350 Fifth Avenue, 34th Floor  New York       NY     10118-3299
-    1060 W Addison St             Chicago        IL     60613
-    15 Central Park W Apt 7P      New York       NY     10023-7711
-    11 Wall St                    New York       NY     10005
-    2400 Fulton St                San Francisco  CA     94118-4107
-    351 Farmington Ave            Hartford       CT     06105-6400
-    ============================  =============  =====  ==========
+.. code-block:: python
+
+    import pandas as pd
+    from datatest import validate
+
+    df = pd.read_csv('addresses.csv', dtype=str)
+
+    ...
+
+
+Our address data will look something like the following:
+
+============================  =============  =====  ==========
+street                        city           state  zipcode
+============================  =============  =====  ==========
+1600 Pennsylvania Avenue NW   Washington     DC     20500
+30 Rockefeller Plaza          New York       NY     10112
+350 Fifth Avenue, 34th Floor  New York       NY     10118-3299
+1060 W Addison St             Chicago        IL     60613
+15 Central Park W Apt 7P      New York       NY     10023-7711
+11 Wall St                    New York       NY     10005
+2400 Fulton St                San Francisco  CA     94118-4107
+351 Farmington Ave            Hartford       CT     06105-6400
+============================  =============  =====  ==========
 
 
 Street Address
@@ -80,7 +95,6 @@ more letters or numbers:
 
 .. code-block:: python
 
-    from datatest import validate
     ...
 
     validate.regex(df['street'], r'\w+')
@@ -101,7 +115,6 @@ or more letters:
 
 .. code-block:: python
 
-    from datatest import validate
     ...
 
     validate.regex(df['city'], r'[A-Za-z]+')
@@ -120,7 +133,6 @@ the "state" column are members of the ``state_codes`` set:
 
 .. code-block:: python
 
-    from datatest import validate
     ...
 
     state_codes = {
@@ -147,7 +159,6 @@ formats:
 
 .. code-block:: python
 
-    from datatest import validate
     ...
 
     validate.regex(df['zipcode'], r'^\d{5}(-\d{4})?$')
@@ -156,9 +167,9 @@ formats:
 State and ZIP Code Consistency
 ------------------------------
 
-ZIP Code digits are associated with specific states and regions. For example,
-all ZIP Codes in Indiana begin with "4" (46350, 46247, etc.) and all ZIP Codes
-in Pennsylvania begin with "1" (15501, 16512, etc.). We can use these known
+The first digit of a ZIP Code is associated with a specific region of the
+country (a group of states). For example, ZIP Codes begging with "4" only
+occur in Indiana, Kentucky, Michigan, and Ohio. We can use these regional
 associations as a sanity check to make sure that our "state" and "zipcode"
 values are plausible and consistent.
 
@@ -168,7 +179,6 @@ codes:
 
 .. code-block:: python
 
-    from datatest import validate
     ...
 
     def state_zip_consistency(state_zipcode):
@@ -191,8 +201,9 @@ codes:
 
     validate(df[['state', 'zipcode']], state_zip_consistency)
 
-This check works well to detect data processing errors that might mis-align or
-otherwise damage "zipcode" and "city" values. But it cannot detect if ZIP Codes
-are assigned to the wrong states within in the same number-group---for example,
-it wouldn't be able to determine if a Kentucky ZIP Code was used on an Indiana
-address (since both Kentucky and Indiana have ZIP Codes beginning with "4").
+This check works well to detect data processing errors that might mis-align
+or otherwise damage "state" and "zipcode" values. But it cannot detect if
+ZIP Codes are assigned to the wrong states within in the same region---for
+example, it wouldn't be able to determine if an Indiana ZIP Code was used on
+an Kentucky address (since the ZIP Codes in both of these states begin with
+"4").
