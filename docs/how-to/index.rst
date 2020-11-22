@@ -24,7 +24,7 @@ How-to Guide
     Data Types <data-types>
     Date Formats <date-formats>
     Excel Auto-Formatting <excel-auto-formatting>
-    Validate Addresses <validate-addresses>
+    Addresses <addresses>
     File Names <file-names>
     Fixtures <fixtures/index>
     Fuzzy Matching <fuzzy-matching>
