@@ -36,4 +36,10 @@ details {
 
 summary {
     margin-bottom: 1em;
+    cursor: pointer;
+}
+
+summary:hover {
+    background: rgb(240, 240, 240); /* fallback if no "rgba" support */
+    background-color: rgba(0, 0, 0, 0.0625);
 }
