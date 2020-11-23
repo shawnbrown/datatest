@@ -232,14 +232,15 @@ Check that file names begin with a date in YYYYMMDD format (e.g.,
 
 .. code-block:: python
 
-    from datatest import validate
+    from pathlib import Path
+    from datatest import validate, working_directory
 
 
     with working_directory(__file__):
         file_names = (p.name for p in Path('.').iterdir() if p.is_file())
 
     msg = 'Should have date prefix followed by an underscore (YYYYMMDD_).'
-    validate.regex(data, r'^\d{4}\d{2}\d{2}_.+', msg=msg)
+    validate.regex(file_names, r'^\d{4}\d{2}\d{2}_.+', msg=msg)
 
 
 You can change the regex pattern to match another naming scheme of your
@@ -281,10 +282,10 @@ example demonstrates loading a few properties into a DataFrame:
 
     # DataFrame contents:
     #
-    #     file_name   size               last_modified
-    # 0   file1.csv  10825  2020-10-24 14:14:15.807765
-    # 1   file2.csv   6517  2020-04-21 21:48:13.000000
-    # 2  file3.xlsx   6985  2019-06-05 13:14:27.000000
+    #     file_name   size        last_modified
+    # 0   file1.csv  10825  2020-10-24 14:14:15
+    # 1   file2.csv   6517  2020-04-21 21:48:13
+    # 2  file3.xlsx   6985  2019-06-05 13:14:27
 
     msg = 'Should be lowercase with no spaces.',
     dt.validate.regex(df['file_name'], r'[a-z0-9_.\-]+', msg=msg)
