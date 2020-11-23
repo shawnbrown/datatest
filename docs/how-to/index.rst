@@ -26,7 +26,6 @@ How-to Guide
     Excel Auto-Formatting <excel-auto-formatting>
     Addresses <addresses>
     File Names <file-names>
-    Fixtures <fixtures/index>
     Fuzzy Matching <fuzzy-matching>
     NaN Values <nan-values>
     Outliers <outliers>
