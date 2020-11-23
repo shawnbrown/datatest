@@ -10,48 +10,284 @@
 How to Validate File Names
 ##########################
 
-The following example uses :py:func:`glob() <glob.glob>` to get
-a list of file names from a specified location and then uses a
-helper function to check that they end with ``'.csv'``.
+Sometimes you need to make sure that files are well organized and conform
+to some specific naming scheme. To validate the files names in a directory,
+simply pass the names themselves as the *data* argument when calling
+:func:`validate`. You then control the method of validation with the
+*requirement* you provide.
 
-.. tabs::
+.. admonition:: pathlib Basics
+    :class: note
 
-    .. group-tab:: Pytest
+    While there are multiple ways to get file names stored on disk, examples
+    on this page use the Standard Library's :py:mod:`pathlib` module. If you're
+    not familiar with pathlib, please review some basics examples before
+    continuing:
 
-        .. code-block:: python
+    .. raw:: html
 
-            from glob import glob
-            from datatest import validate, working_directory
+       <details>
+       <summary><a>Basic Examples</a></summary>
 
+    These examples assume the following directory structure:
 
-            def test_file_names():
-                with working_directory(__file__):
-                    file_list = glob('myfiles/*')
+    .. code-block:: none
 
-                def is_csv(value):  # <- Helper function.
-                    return value.lower().endswith('.csv')
-
-                if not file_list:
-                    raise Exception('no files found')
-                validate(file_list, is_csv, 'should be CSV files')
-
-
-    .. group-tab:: Unittest
-
-        .. code-block:: python
-
-            from glob import glob
-            from datatest import DataTestCase, working_directory
+        ├── file1.csv
+        ├── file2.csv
+        ├── file3.xlsx
+        └── directory1/
+            ├── file4.csv
+            └── file5.xlsx
 
 
-            class MyTest(DataTestCase):
+    Import the :py:class:`Path <pathlib.Path>` class:
 
-                def test_file_names(self):
-                    with working_directory(__file__):
-                        file_list = glob('myfiles/*')
+    .. code-block:: python
 
-                    def is_csv(value):  # <- Helper function.
-                        return value.lower().endswith('.csv')
+        >>> from pathlib import Path
 
-                    self.assertGreater(len(file_list), 0, 'no files found')
-                    self.assertValid(file_list, is_csv, 'should be CSV files')
+
+    Get a list of file and directory names from the current directory:
+
+    .. code-block:: python
+
+        >>> [str(p) for p in Path('.').iterdir()]
+        ['file1.csv', 'file2.csv', 'file3.xlsx', 'directory1']
+
+
+    Filter the results to just files, no directories, using an ``if``
+    clause:
+
+    .. code-block:: python
+
+        >>> [str(p) for p in Path('.').iterdir() if p.is_file()]
+        ['file1.csv', 'file2.csv', 'file3.xlsx']
+
+
+    Get a list of path names ending in ".csv" from the current directory
+    using :py:meth:`glob <pathlib.Path.glob>`-style pattern matching:
+
+    .. code-block:: python
+
+        >>> [str(p) for p in Path('.').glob('*.csv')]
+        ['file1.csv', 'file2.csv']
+
+
+    Get a list of CSV paths from the current directory and all subdirectories:
+
+    .. code-block:: python
+
+        >>> [str(p) for p in Path('.').rglob('*.csv')]  # <- Using "recursive glob".
+        ['file1.csv', 'file2.csv', 'directory1/file4.csv']
+
+
+    Get a list of CSV names from the current directory and all subdirectories
+    using ``p.name`` instead of ``str(p)`` (excludes directory name):
+
+    .. code-block:: python
+
+        >>> [p.name for p in Path('.').rglob('*.csv')]  # <- p.name excludes directory
+        ['file1.csv', 'file2.csv', 'file4.csv']
+
+
+    Get a list of file and directory paths from the parent directory
+    using the special name ``..``:
+
+    .. code-block:: python
+
+        >>> [str(p) for p in Path('..').iterdir()]
+        [ <parent directory names here> ]
+
+
+    .. raw:: html
+
+       </details>
+
+
+Lowercase
+=========
+
+Check that file names are lowercase:
+
+.. code-block:: python
+
+    from pathlib import Path
+    from datatest import validate, working_directory
+
+
+    with working_directory(__file__):
+        file_names = (str(p) for p in Path('.').iterdir() if p.is_file())
+
+    def islower(x):
+        return x.islower()
+
+    validate(file_names, islower, msg='should be lowercase')
+
+
+Lowercase Without Spaces
+========================
+
+Check that file names are lowercase and don't use spaces:
+
+.. code-block:: python
+
+    from pathlib import Path
+    from datatest import validate, working_directory
+
+
+    with working_directory(__file__):
+        file_names = (str(p) for p in Path('.').iterdir() if p.is_file())
+
+    msg = 'Should be lowercase with no spaces.',
+    validate.regex(file_names, r'[a-z0-9_.\-]+', msg=msg)
+
+
+Not Too Long
+============
+
+Check that the file names aren't too long (25 characters or less):
+
+.. code-block:: python
+
+    from pathlib import Path
+    from datatest import validate, working_directory
+
+
+    with working_directory(__file__):
+        file_names = (str(p) for p in Path('.').iterdir() if p.is_file())
+
+    def not_too_long(x):
+        """Path names should be 25 characters or less."""
+        return len(x) <= 25
+
+    validate(file_names, not_too_long)
+
+
+Check for CSV Type
+==================
+
+Check that files are CSVs files:
+
+.. code-block:: python
+
+    from pathlib import Path
+    from datatest import validate, working_directory
+
+
+    with working_directory(__file__):
+        file_names = (str(p) for p in Path('.').iterdir() if p.is_file())
+
+    def is_csv(x):
+        return x.lower().endswith('.csv')
+
+    validate(file_names, is_csv, msg='should be CSV file')
+
+
+Multiple Files Types
+====================
+
+Check that files are CSV, Excel, or DBF file types:
+
+.. code-block:: python
+
+    from pathlib import Path
+    from datatest import validate, working_directory
+
+
+    with working_directory(__file__):
+        file_names = (str(p) for p in Path('.').iterdir() if p.is_file())
+
+    def tabular_formats(x):  # <- Helper function.
+        """Should be CSV, Excel, or DBF files."""
+        suffix = Path(x).suffix
+        return suffix.lower() in {'.csv', '.xlsx', '.xls', '.dbf'}
+
+    validate(file_names, tabular_formats)
+
+
+Specific Files Exist
+====================
+
+Using :meth:`validate.superset`, check that the list of file names
+includes a given set of required files:
+
+.. code-block:: python
+
+    from pathlib import Path
+    from datatest import validate, working_directory
+
+
+    with working_directory(__file__):
+        file_names = (str(p) for p in Path('.').iterdir() if p.is_file())
+
+    validate.superset(file_names, {'readme.txt', 'license.txt', 'config.ini'})
+
+
+Includes Date
+=============
+
+Check that file names begin with a date in YYYYMMDD format (e.g.,
+20201103_data.csv):
+
+.. code-block:: python
+
+    from datatest import validate
+
+
+    with working_directory(__file__):
+        file_names = (p.name for p in Path('.').iterdir() if p.is_file())
+
+    msg = 'Should have date prefix followed by an underscore (YYYYMMDD_).'
+    validate.regex(data, r'^\d{4}\d{2}\d{2}_.+', msg=msg)
+
+
+You can change the regex pattern to match another naming scheme of your
+choice. See the following examples for ideas:
+
+=======================  ===========================  ===================
+description              regex pattern                example
+=======================  ===========================  ===================
+date prefix              ``^\d{4}-\d{2}-\d{2}_.+``    2020-11-03_data.csv
+date prefix (no hyphen)  ``^\d{4}\d{2}\d{2}_.+``      20201103_data.csv
+date suffix              ``.+_\d{4}-\d{2}-\d{2}.+$``  data_2020-11-03.csv
+date suffix (no hyphen)  ``.+_\d{4}\d{2}\d{2}.+$``    data_20201103.csv
+=======================  ===========================  ===================
+
+
+Load Properties into DataFrame
+==============================
+
+In some cases you might want to load multiple file properties into
+a pandas DataFrame to perform multiple checks on the same data. This
+example demonstrates loading a few properties into a DataFrame:
+
+.. code-block:: python
+
+    from datetime import datetime
+    from pathlib import Path
+    import pandas as pd
+    import datatest as dt
+
+
+    def make_row(path):
+        stats = path.stat()
+        last_modified = datetime.fromtimestamp(stats.st_mtime)
+        return (path.name, stats.st_size, last_modified)
+
+    data = (make_row(p) for p in Path('.').iterdir() if p.is_file())
+
+    df = pd.DataFrame(data, columns=['file_name', 'size', 'last_modified'])
+
+    # DataFrame contents:
+    #
+    #     file_name   size               last_modified
+    # 0   file1.csv  10825  2020-10-24 14:14:15.807765
+    # 1   file2.csv   6517  2020-04-21 21:48:13.000000
+    # 2  file3.xlsx   6985  2019-06-05 13:14:27.000000
+
+    msg = 'Should be lowercase with no spaces.',
+    dt.validate.regex(df['file_name'], r'[a-z0-9_.\-]+', msg=msg)
+
+    ...  # Additional checks here.
+
