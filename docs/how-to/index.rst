@@ -22,7 +22,7 @@ How-to Guide
     Column Names <column-names>
     Customize Differences <customize-differences>
     Data Types <data-types>
-    Date Formats <date-formats>
+    Date and Time Strings <date-time-str>
     Excel Auto-Formatting <excel-auto-formatting>
     Addresses <addresses>
     File Names <file-names>
