@@ -73,7 +73,7 @@ format codes              description                example
 ``%d %B %Y``              DD Month YYYY              17 March 2021
 ``%b %d, %Y``             Mnth DD, YYYY              Mar 17, 2021
 ``%a %b %d %H:%M:%S %Y``  WkDay Mnth DD H:M:S YYYY   Wed Mar 17 19:42:50 2021
-``%I:%M %p``              12-hour time               7:42 PM
+``%I:%M %p``              12-hour time               7:42 PM [1]_
 ``%H:%M:%S``              24-hour time with seconds  19:42:50
 ========================  =========================  ========================
 
@@ -83,3 +83,9 @@ for all supported codes.
 .. _`strftime codes`: https://docs.python.org/library/datetime.html#strftime-and-strptime-format-codes
 .. _`strftime() and strptime() Format Codes`: https://docs.python.org/library/datetime.html#strftime-and-strptime-format-codes
 
+
+.. rubric:: Footnotes
+
+.. [1] The code ``%p`` expects the system locale's equivalent of AM or PM.
+       For example, the locale ``en_US`` uses "AM" and "PM" while the locale
+       ``de_DE`` uses "am" and "pm".
