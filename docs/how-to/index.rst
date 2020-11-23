@@ -32,4 +32,3 @@ How-to Guide
     Phone Numbers <phone-numbers>
     Re-order Acceptances <reorder-acceptances>
     Sequences <sequences>
-    Sets, Subsets, and Supersets <set-membership>
