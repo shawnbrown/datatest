@@ -41,7 +41,7 @@ that column names are a subset or superset of the required names:
 .. code-block:: python
 
     column_names = ...
-    validate.subset(column_names, {'A', 'B', 'C'})
+    validate.subset(column_names, {'A', 'B', 'C', 'D', 'E'})
 
 
 Are Defined in Specific Order
