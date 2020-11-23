@@ -51,9 +51,10 @@ Date strings that don't match the required format are flagged as
         Invalid('2021-02-29'),
     ]
 
-Above, the date ``03-17-2021`` doesn't match because it's not well-formed
-and ``2021-02-29`` doesn't match because 2021 is not a leap-year so it has
-no February 29th.
+Above, the date ``03-17-2021`` is invalid because it's not well-formed
+and ``2021-02-29`` is invalid because 2021 is not a leap-year so the last
+day of February is the 28th---there is no February 29th in that calendar
+year.
 
 
 Strftime Codes for Common Formats
