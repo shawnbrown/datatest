@@ -195,7 +195,7 @@ class Invalid(BaseDifference):
 
     @property
     def expected(self):
-        """The expected value."""
+        """The expected value (optional)."""
         return self._expected
 
     def __repr__(self):
