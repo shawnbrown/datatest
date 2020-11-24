@@ -43,6 +43,14 @@ def _nan_to_token(value):
     return func(value)
 
 
+def _safe_isnan(x):
+    """Wrapper for isnan() so it won't fail on non-numeric values."""
+    try:
+        return isnan(x)
+    except TypeError:
+        return False
+
+
 class BaseDifference(abc.ABC):
     """The base class for "difference" objects---all other difference
     classes are derived from this base.
@@ -266,7 +274,7 @@ class Deviation(BaseDifference):
         cls_name = self.__class__.__name__
 
         deviation = self._deviation
-        if isnan(deviation):
+        if _safe_isnan(deviation):
             deviation_repr = "float('nan')"
         else:
             try:
@@ -275,7 +283,7 @@ class Deviation(BaseDifference):
                 deviation_repr = repr(deviation)
 
         expected = self._expected
-        if isnan(expected):
+        if _safe_isnan(expected):
             expected_repr = "float('nan')"
         else:
             expected_repr = repr(expected)

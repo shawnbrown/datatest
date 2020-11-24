@@ -168,6 +168,16 @@ class TestDeviation(unittest.TestCase):
         diff = Deviation(float('nan'), 100)  # None reference.
         self.assertEqual(repr(diff), "Deviation(float('nan'), 100)")
 
+    def test_repr_with_datetime(self):
+        diff = Deviation(
+            datetime.timedelta(hours=-1),
+            datetime.datetime(1989, 2, 24, hour=11, minute=30),
+        )
+
+        expected = ('Deviation(datetime.timedelta(days=-1, seconds=82800), '
+                    'datetime.datetime(1989, 2, 24, 11, 30))')
+        self.assertEqual(repr(diff), expected)
+
     def test_zero_and_empty_value_handling(self):
         """Empty values receive special handling."""
         # Expected 0 (pass without error).
