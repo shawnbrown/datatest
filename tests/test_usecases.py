@@ -4,6 +4,7 @@ that we want make sure are as convinient as possible for users.
 """
 from . import _unittest as unittest
 import math
+import datetime
 import datatest
 
 try:
@@ -248,3 +249,12 @@ class TestNanHandling(unittest.TestCase):
         )()
         data = data.fillna(nantoken)  # <- Normalized!
         datatest.validate.superset(data, set([1, 2, nantoken]))
+
+
+class TestDateHandling(unittest.TestCase):
+    def test_timedelta_tolerance(self):
+        data = datetime.datetime(1989, 2, 24, hour=10, minute=30)
+        requirement = datetime.datetime(1989, 2, 24, hour=11, minute=30)
+
+        with datatest.accepted.tolerance(datetime.timedelta(hours=1)):
+            datatest.validate(data, requirement)
