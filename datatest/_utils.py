@@ -297,6 +297,4 @@ def pretty_timedelta_repr(delta, extras=None):
         args.append('microseconds=%d' % microseconds)
     if not args:
         args.append('0')
-    return '%s.%s(%s)' % (delta.__class__.__module__,
-                          delta.__class__.__qualname__,
-                          ', '.join(args))
+    return '%s(%s)' % (delta.__class__.__name__, ', '.join(args))

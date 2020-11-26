@@ -174,7 +174,7 @@ class TestDeviation(unittest.TestCase):
             datetime.datetime(1989, 2, 24, hour=11, minute=30),
         )
 
-        expected = ('Deviation(datetime.timedelta(seconds=-3600), '
+        expected = ('Deviation(timedelta(seconds=-3600), '
                     'datetime.datetime(1989, 2, 24, 11, 30))')
         self.assertEqual(repr(diff), expected)
 

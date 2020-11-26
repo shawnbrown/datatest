@@ -110,13 +110,16 @@ class TestMakeSentinel(unittest.TestCase):
 
 
 class TestPrettyTimedeltaRepr(unittest.TestCase):
-    def test_no_change(self):
-        """When the units align to timedelta's internal
-        normalization, the pretty repr will be the same
-        as the built-in repr for positve timedeltas.
+    def test_already_normalized_units(self):
+        """When the units align to timedelta's internal normalization,
+        the pretty repr should make no additional changes (other than
+        omitting the module prefix.
         """
         delta = timedelta(days=6, seconds=27, microseconds=100)
-        self.assertEqual(pretty_timedelta_repr(delta), repr(delta))
+
+        actual = pretty_timedelta_repr(delta)
+        expected = 'timedelta(days=6, seconds=27, microseconds=100)'
+        self.assertEqual(actual, expected)
 
     def test_default_behavior(self):
         """When there are no *extras*, positive deltas should have
@@ -125,7 +128,7 @@ class TestPrettyTimedeltaRepr(unittest.TestCase):
         delta = timedelta(days=11, seconds=49600)
 
         actual = pretty_timedelta_repr(delta, extras=None)  # <- No extras!
-        expected = 'datetime.timedelta(days=11, seconds=49600)'
+        expected = 'timedelta(days=11, seconds=49600)'
         self.assertEqual(actual, expected)
 
     def test_extras_weeks(self):
@@ -133,7 +136,7 @@ class TestPrettyTimedeltaRepr(unittest.TestCase):
         delta = timedelta(days=11, seconds=49600)
 
         actual = pretty_timedelta_repr(delta, extras='weeks')
-        expected = 'datetime.timedelta(weeks=1, days=4, seconds=49600)'
+        expected = 'timedelta(weeks=1, days=4, seconds=49600)'
         self.assertEqual(actual, expected)
 
     def test_extras_hours_minutes(self):
@@ -141,14 +144,14 @@ class TestPrettyTimedeltaRepr(unittest.TestCase):
         delta = timedelta(days=11, seconds=49600)
 
         actual = pretty_timedelta_repr(delta, extras='hours,minutes')
-        expected = 'datetime.timedelta(days=11, hours=13, minutes=46, seconds=40)'
+        expected = 'timedelta(days=11, hours=13, minutes=46, seconds=40)'
         self.assertEqual(actual, expected)
 
     def test_negative_delta_default_behavior(self):
         delta = timedelta(days=-9, seconds=-49600)
 
         actual = pretty_timedelta_repr(delta)
-        expected = 'datetime.timedelta(days=-9, seconds=-49600)'
+        expected = 'timedelta(days=-9, seconds=-49600)'
         self.assertEqual(actual, expected)
 
     def test_negative_delta_extras_hours_minutes(self):
@@ -158,13 +161,13 @@ class TestPrettyTimedeltaRepr(unittest.TestCase):
         delta = timedelta(microseconds=-1)
 
         actual = pretty_timedelta_repr(delta, extras='hours,minutes')
-        expected = 'datetime.timedelta(microseconds=-1)'
+        expected = 'timedelta(microseconds=-1)'
         self.assertEqual(actual, expected)
 
         delta = timedelta(days=-9, seconds=-49600)
 
         actual = pretty_timedelta_repr(delta, extras='hours,minutes')
-        expected = 'datetime.timedelta(days=-9, hours=-13, minutes=-46, seconds=-40)'
+        expected = 'timedelta(days=-9, hours=-13, minutes=-46, seconds=-40)'
         self.assertEqual(actual, expected)
 
     def test_negative_delta_custom_extras(self):
@@ -172,5 +175,5 @@ class TestPrettyTimedeltaRepr(unittest.TestCase):
         delta = timedelta(days=-9, seconds=-49600)
 
         actual = pretty_timedelta_repr(delta, extras='weeks')
-        expected = 'datetime.timedelta(weeks=-1, days=-2, seconds=-49600)'
+        expected = 'timedelta(weeks=-1, days=-2, seconds=-49600)'
         self.assertEqual(actual, expected)
