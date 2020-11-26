@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 from cmath import isnan
+from datetime import timedelta
 from ._compatibility.builtins import *
 from ._compatibility import abc
 from ._compatibility.contextlib import suppress
 from ._utils import _make_sentinel
+from ._utils import pretty_timedelta_repr
 
 
 __all__ = [
@@ -276,6 +278,8 @@ class Deviation(BaseDifference):
         deviation = self._deviation
         if _safe_isnan(deviation):
             deviation_repr = "float('nan')"
+        elif isinstance(deviation, timedelta):
+            deviation_repr = pretty_timedelta_repr(deviation, None)
         else:
             try:
                 deviation_repr = '{0:+}'.format(deviation)  # Apply +/- sign
