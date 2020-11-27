@@ -240,11 +240,11 @@ def pretty_timedelta_repr(delta):
 
     args = []
     if days:
-        args.append('days=%d' % days)
+        args.append('days=%+d' % days)
     if seconds:
-        args.append('seconds=%d' % seconds)
+        args.append('seconds=%+d' % seconds)
     if microseconds:
-        args.append('microseconds=%d' % microseconds)
+        args.append('microseconds=%+d' % microseconds)
     if not args:
         args.append('0')
     return '%s(%s)' % (delta.__class__.__name__, ', '.join(args))

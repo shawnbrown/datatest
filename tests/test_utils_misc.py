@@ -111,26 +111,16 @@ class TestMakeSentinel(unittest.TestCase):
 
 class TestPrettyTimedeltaRepr(unittest.TestCase):
     def test_already_normalized_units(self):
-        """When the units align to timedelta's internal normalization,
-        the pretty repr should make no additional changes (other than
-        omitting the module prefix.
-        """
         delta = timedelta(days=6, seconds=27, microseconds=100)
 
         actual = pretty_timedelta_repr(delta)
-        expected = 'timedelta(days=6, seconds=27, microseconds=100)'
+        expected = 'timedelta(days=+6, seconds=+27, microseconds=+100)'
         self.assertEqual(actual, expected)
 
-    def test_default_behavior(self):
-        delta = timedelta(days=11, seconds=49600)
+    def test_negative_delta(self):
+        delta = timedelta(seconds=-2)  # The built-in repr for this timedelta
+                                       # is: timedelta(days=-1, seconds=86398)
 
         actual = pretty_timedelta_repr(delta)
-        expected = 'timedelta(days=11, seconds=49600)'
-        self.assertEqual(actual, expected)
-
-    def test_negative_delta_default_behavior(self):
-        delta = timedelta(days=-9, seconds=-49600)
-
-        actual = pretty_timedelta_repr(delta)
-        expected = 'timedelta(days=-9, seconds=-49600)'
+        expected = 'timedelta(seconds=-2)'
         self.assertEqual(actual, expected)
