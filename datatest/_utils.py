@@ -224,27 +224,22 @@ def pretty_timedelta_repr(delta):
     #    >>> datetime.timedelta(microseconds=-1)
     #    datetime.timedelta(days=-1, seconds=86399, microseconds=999999)
     if delta.days < 0:
-        isnegative = True
+        sign = '-'
         delta = -delta  # Flip sign get rid of negative value normalization.
     else:
-        isnegative = False
+        sign = '+'
 
     days = delta.days
     seconds = delta.seconds
     microseconds = delta.microseconds
 
-    if isnegative:
-        days = -days
-        seconds = -seconds
-        microseconds = -microseconds
-
     args = []
     if days:
-        args.append('days=%+d' % days)
+        args.append('days=%s%d' % (sign, days))
     if seconds:
-        args.append('seconds=%+d' % seconds)
+        args.append('seconds=%s%d' % (sign, seconds))
     if microseconds:
-        args.append('microseconds=%+d' % microseconds)
+        args.append('microseconds=%s%d' % (sign, microseconds))
     if not args:
         args.append('0')
     return '%s(%s)' % (delta.__class__.__name__, ', '.join(args))
