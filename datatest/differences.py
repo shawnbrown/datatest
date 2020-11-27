@@ -219,6 +219,25 @@ class Invalid(BaseDifference):
         return '{0}({1}{2})'.format(cls_name, invalid_repr, expected_repr)
 
 
+def _slice_datetime_repr_prefix(obj_repr):
+    """Takes a default "datetime", "date", or "timedelta" repr and
+    returns it with the module prefix sliced-off::
+
+        >>> _slice_datetime_repr_prefix('datetime.date(2020, 12, 25)')
+        'date(2020, 12, 25)'
+    """
+    # The following implementation (using "startswith" and "[9:]")
+    # may look clumsy but it can run up to 10 times faster than a
+    # more concise "re.compile()" and "regex.sub()" approach. In
+    # some situations, this function can get called many, many
+    # times. DON'T GET CLEVER--KEEP THIS FUNCTION FAST.
+    if obj_repr.startswith('datetime.datetime(') \
+            or obj_repr.startswith('datetime.date(') \
+            or obj_repr.startswith('datetime.timedelta('):
+        return obj_repr[9:]
+    return obj_repr
+
+
 class Deviation(BaseDifference):
     """Created when a quantative value deviates from its expected value.
 
@@ -279,7 +298,7 @@ class Deviation(BaseDifference):
         if _safe_isnan(deviation):
             deviation_repr = "float('nan')"
         elif isinstance(deviation, timedelta):
-            deviation_repr = pretty_timedelta_repr(deviation, None)
+            deviation_repr = pretty_timedelta_repr(deviation)
         else:
             try:
                 deviation_repr = '{0:+}'.format(deviation)  # Apply +/- sign
@@ -291,6 +310,8 @@ class Deviation(BaseDifference):
             expected_repr = "float('nan')"
         else:
             expected_repr = repr(expected)
+            if expected_repr.startswith('datetime.'):
+                expected_repr = _slice_datetime_repr_prefix(expected_repr)
 
         return '{0}({1}, {2})'.format(cls_name, deviation_repr, expected_repr)
 

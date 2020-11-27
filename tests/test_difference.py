@@ -174,8 +174,18 @@ class TestDeviation(unittest.TestCase):
             datetime.datetime(1989, 2, 24, hour=11, minute=30),
         )
 
-        expected = ('Deviation(timedelta(seconds=-3600), '
-                    'datetime.datetime(1989, 2, 24, 11, 30))')
+        expected = \
+            'Deviation(timedelta(seconds=-3600), datetime(1989, 2, 24, 11, 30))'
+
+        self.assertEqual(repr(diff), expected)
+
+    def test_repr_with_date(self):
+        diff = Deviation(
+            datetime.timedelta(days=1),
+            datetime.date(1989, 2, 24),
+        )
+
+        expected = 'Deviation(timedelta(days=1), date(1989, 2, 24))'
         self.assertEqual(repr(diff), expected)
 
     def test_zero_and_empty_value_handling(self):
