@@ -205,31 +205,18 @@ class IterItems(ABC):
         return NotImplemented
 
 
-def pretty_timedelta_repr(delta, extras=None):
-    """Supports more human-readable reprs for timedelta objects.
+def pretty_timedelta_repr(delta):
+    """Supports more human-readable reprs for negative value timedeltas.
 
-    Negative values are presented naturally:
+    Negative values are presented naturally::
 
         >>> pretty_timedelta_repr(datetime.timedelta(microseconds=-1))
-        'datetime.timedelta(microseconds=-1)'
+        'timedelta(microseconds=-1)'
 
-    Compare this with timedelta's default repr:
+    Compare this with timedelta's default repr::
 
         >>> repr(datetime.timedelta(microseconds=-1))
         'datetime.timedelta(days=-1, seconds=86399, microseconds=999999)'
-
-    Using the optional *extras* argument, you can specify a string of
-    comma-separated units to use when constructing the repr. Possible
-    values are 'weeks', 'hours', 'minutes', and 'milliseconds'.
-    Required units ('days', 'seconds', and 'microseconds') will be
-    included as necessary.
-
-    Below, we specify extra units ("hours" and "minutes") to produce
-    a more intuitive repr:
-
-        >>> delta = datetime.timedelta(seconds=29156)
-        >>> pretty_timedelta_repr(delta, extras='hours,minutes')
-        'datetime.timedelta(hours=8, minutes=5, seconds=56)'
     """
     # Note: timedeltas are normalized so that negative values
     # always have a negative 'days' attribute. For example:
@@ -242,57 +229,20 @@ def pretty_timedelta_repr(delta, extras=None):
     else:
         isnegative = False
 
-    if extras:
-        extras = set(x.strip() for x in extras.split(','))
-    else:
-        extras = set()
-
     days = delta.days
     seconds = delta.seconds
     microseconds = delta.microseconds
 
-    if 'weeks' in extras:
-        weeks, days = divmod(days, 7)
-    else:
-        weeks = 0
-
-    if 'hours' in extras:
-        hours, seconds = divmod(seconds, 3600)
-    else:
-        hours = 0
-
-    if 'minutes' in extras:
-        minutes, seconds = divmod(seconds, 60)
-    else:
-        minutes = 0
-
-    if 'milliseconds' in extras:
-        milliseconds, microseconds = divmod(microseconds, 1000)
-    else:
-        milliseconds = 0
-
     if isnegative:
-        weeks = -weeks
         days = -days
-        hours = -hours
-        minutes = -minutes
         seconds = -seconds
-        milliseconds = -milliseconds
         microseconds = -microseconds
 
     args = []
-    if weeks:
-        args.append('weeks=%d' % weeks)
     if days:
         args.append('days=%d' % days)
-    if hours:
-        args.append('hours=%d' % hours)
-    if minutes:
-        args.append('minutes=%d' % minutes)
     if seconds:
         args.append('seconds=%d' % seconds)
-    if milliseconds:
-        args.append('milliseconds=%d' % milliseconds)
     if microseconds:
         args.append('microseconds=%d' % microseconds)
     if not args:
