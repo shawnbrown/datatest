@@ -23,6 +23,7 @@ How-to Guide
     Customize Differences <customize-differences>
     Data Types <data-types>
     Date and Time Strings <date-time-str>
+    Date and Time Objects <date-time-obj>
     Excel Auto-Formatting <excel-auto-formatting>
     Addresses <addresses>
     File Names <file-names>
