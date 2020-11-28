@@ -77,6 +77,50 @@ set, or mapping of differences:
     constructor ``float('nan')``.
 
 
+Dropping NaNs Before Validation
+===============================
+
+Sometimes it's OK to ignore NaN values entirely. If this is
+appropriate in your circumstance, you can simply remove all
+NaN records and validate the remaining data.
+
+If you're using Pandas, you can call the |Series.dropna| and
+|DataFrame.dropna| methods to drop records that contain NaN
+values:
+
+.. |Series.dropna| replace:: :meth:`Series.dropna() <pandas.Series.dropna>`
+.. |DataFrame.dropna| replace:: :meth:`DataFrame.dropna() <pandas.DataFrame.dropna>`
+
+.. code-block:: python
+    :emphasize-lines: 6
+
+    from datatest import validate
+    import pandas as pd
+
+
+    data = pd.Series([1, 1, 2, 2, float('nan')], dtype='float64')
+    data = data.dropna()  # Drop records with NaN values.
+    requirement = {1, 2}
+
+    validate(data, requirement)
+
+
+An example that does not rely on Pandas:
+
+.. code-block:: python
+    :emphasize-lines: 6
+
+    from datatest import validate
+    from math import isnan
+
+
+    data = [1, 1, 2, 2, float('nan')]
+    data = [x for x in data if not isnan(x)]  # Drop records with NaN values.
+    requirement = {1, 2}
+
+    validate(data, requirement)
+
+
 Validating NaN Values
 =====================
 
@@ -146,50 +190,6 @@ An example that does not rely on Pandas:
     data = [nan_to_token(x) for x in data]  # Replace NaNs with NanToken.
 
     requirement = {1, 2, NanToken}
-
-    validate(data, requirement)
-
-
-Dropping NaNs Before Validation
-===============================
-
-Sometimes it's OK to ignore NaN values entirely. If this is
-appropriate in your circumstance, you can simply remove all
-NaN records and validate the remaining data.
-
-If you're using Pandas, you can call the |Series.dropna| and
-|DataFrame.dropna| methods to drop records that contain NaN
-values:
-
-.. |Series.dropna| replace:: :meth:`Series.dropna() <pandas.Series.dropna>`
-.. |DataFrame.dropna| replace:: :meth:`DataFrame.dropna() <pandas.DataFrame.dropna>`
-
-.. code-block:: python
-    :emphasize-lines: 6
-
-    from datatest import validate
-    import pandas as pd
-
-
-    data = pd.Series([1, 1, 2, 2, float('nan')], dtype='float64')
-    data = data.dropna()  # Drop records with NaN values.
-    requirement = {1, 2}
-
-    validate(data, requirement)
-
-
-An example that does not rely on Pandas:
-
-.. code-block:: python
-    :emphasize-lines: 6
-
-    from datatest import validate
-    from math import isnan
-
-
-    data = [1, 1, 2, 2, float('nan')]
-    data = [x for x in data if not isnan(x)]  # Drop records with NaN values.
-    requirement = {1, 2}
 
     validate(data, requirement)
 
