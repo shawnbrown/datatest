@@ -116,7 +116,7 @@ Pytest Samples
                 import sys
                 sys.exit(pytest.main(sys.argv))
 
-    .. group-tab:: Pandas (itegrated)
+    .. group-tab:: Pandas (integrated)
 
         .. code-block:: python
             :linenos:
@@ -369,7 +369,7 @@ Unittest Samples
                 from datatest import main
                 main()
 
-    .. group-tab:: Pandas (itegrated)
+    .. group-tab:: Pandas (integrated)
 
         .. code-block:: python
             :linenos:
