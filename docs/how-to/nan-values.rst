@@ -39,42 +39,100 @@ Accepting NaN Differences
 If validation fails and returns NaN differences, you can accept
 them as you would any other difference:
 
-.. code-block:: python
-    :emphasize-lines: 8
+.. tabs::
 
-    from datatest import validate, accepted, Extra
-    from math import nan
+    .. group-tab:: Using Acceptance
+
+        .. code-block:: python
+            :emphasize-lines: 8
+
+            from math import nan
+            from datatest import validate, accepted, Extra
 
 
-    data = [5, 6, float('nan')]
-    requirement = {5, 6}
+            data = [5, 6, float('nan')]
+            requirement = {5, 6}
 
-    with accepted(Extra(nan)):
-        validate(data, requirement)
+            with accepted(Extra(nan)):
+                validate(data, requirement)
+
+
+    .. group-tab:: No Acceptance
+
+        .. code-block:: python
+
+            from math import nan
+            from datatest import validate
+
+
+            data = [5, 6, float('nan')]
+            requirement = {5, 6}
+
+            validate(data, requirement)
+
+
+        .. code-block:: none
+            :emphasize-lines: 5
+
+            Traceback (most recent call last):
+              File "example.py", line 8, in <module>
+                validate(data, requirement)
+            datatest.ValidationError: does not satisfy set membership (1 difference): [
+                Extra(nan),
+            ]
+
 
 Like other values, NaNs can also be accepted as part of a list,
 set, or mapping of differences:
 
-.. code-block:: python
-    :emphasize-lines: 8
+.. tabs::
 
-    from datatest import validate, accepted, Extra, Missing
-    from math import nan
+    .. group-tab:: Using Acceptance
+
+        .. code-block:: python
+            :emphasize-lines: 8
+
+            from math import nan
+            from datatest import validate, accepted, Missing, Extra
 
 
-    data = [5, 6, float('nan')]
-    requirement = {5, 6, 7}
+            data = [5, 6, float('nan')]
+            requirement = {5, 6, 7}
 
-    known_issues = accepted([Missing(7), Extra(nan)])
+            with accepted([Missing(7), Extra(nan)]):
+                validate(data, requirement)
 
-    with known_issues:
-        validate(data, requirement)
+
+    .. group-tab:: No Acceptance
+
+        .. code-block:: python
+
+            from math import nan
+            from datatest import validate
+
+
+            data = [5, 6, float('nan')]
+            requirement = {5, 6, 7}
+
+            validate(data, requirement)
+
+
+        .. code-block:: none
+            :emphasize-lines: 5-6
+
+            Traceback (most recent call last):
+              File "example.py", line 8, in <module>
+                validate(data, requirement)
+            datatest.ValidationError: does not satisfy set membership (2 differences): [
+                Missing(7),
+                Extra(nan),
+            ]
+
 
 .. note::
 
     The :py:data:`math.nan` value is new in Python 3.5. NaN values can
-    also be created in any Python version with the :py:class:`float`
-    constructor ``float('nan')``.
+    also be created in any Python version using ``float('nan')``.
 
 
 Dropping NaNs Before Validation
@@ -84,41 +142,49 @@ Sometimes it's OK to ignore NaN values entirely. If this is
 appropriate in your circumstance, you can simply remove all
 NaN records and validate the remaining data.
 
-If you're using Pandas, you can call the |Series.dropna| and
-|DataFrame.dropna| methods to drop records that contain NaN
-values:
+.. tabs::
 
-.. |Series.dropna| replace:: :meth:`Series.dropna() <pandas.Series.dropna>`
-.. |DataFrame.dropna| replace:: :meth:`DataFrame.dropna() <pandas.DataFrame.dropna>`
+    .. group-tab:: Pandas Example
 
-.. code-block:: python
-    :emphasize-lines: 6
+        If you're using Pandas, you can call the |Series.dropna| and
+        |DataFrame.dropna| methods to drop records that contain NaN
+        values:
 
-    from datatest import validate
-    import pandas as pd
+        .. |Series.dropna| replace:: :meth:`Series.dropna() <pandas.Series.dropna>`
+        .. |DataFrame.dropna| replace:: :meth:`DataFrame.dropna() <pandas.DataFrame.dropna>`
 
+        .. code-block:: python
+            :emphasize-lines: 6
 
-    data = pd.Series([1, 1, 2, 2, float('nan')], dtype='float64')
-    data = data.dropna()  # Drop records with NaN values.
-    requirement = {1, 2}
-
-    validate(data, requirement)
+            import pandas as pd
+            from datatest import validate
 
 
-An example that does not rely on Pandas:
+            data = pd.Series([1, 1, 2, 2, float('nan')])
+            data = data.dropna()  # Drop NaN valued elements.
+            requirement = {1, 2}
 
-.. code-block:: python
-    :emphasize-lines: 6
-
-    from datatest import validate
-    from math import isnan
+            validate(data, requirement)
 
 
-    data = [1, 1, 2, 2, float('nan')]
-    data = [x for x in data if not isnan(x)]  # Drop records with NaN values.
-    requirement = {1, 2}
+    .. group-tab:: Non-Pandas Example
 
-    validate(data, requirement)
+        In this example, we use the Standard Library's :py:func:`math.isnan`
+        in a list comprehension to drop NaN values from our data:
+
+        .. code-block:: python
+            :emphasize-lines: 6
+
+            from math import isnan
+            from datatest import validate
+
+
+            data = [1, 1, 2, 2, float('nan')]
+            data = [x for x in data if not isnan(x)]  # Keep values if not NaN.
+
+            requirement = {1, 2}
+
+            validate(data, requirement)
 
 
 Validating NaN Values
@@ -130,68 +196,72 @@ by replacing NaN values with a special token before validation. Using
 NaN values directly can be frought with problems and should usually
 be avoided.
 
-If you're using Pandas, you can call the |Series.fillna| and
-|DataFrame.fillna| methods to replace NaNs with a different value.
+Below, we define a custom ``NanToken`` object and use it to replace
+actual NaN values.
 
-.. |Series.fillna| replace:: :meth:`Series.fillna() <pandas.Series.fillna>`
-.. |DataFrame.fillna| replace:: :meth:`DataFrame.fillna() <pandas.DataFrame.fillna>`
+.. tabs::
 
+    .. group-tab:: Pandas Example
 
-Below, we define a custom ``NanToken`` value and use it to replace
-actual NaN values:
+        If you're using Pandas, you can call the |Series.fillna| and
+        |DataFrame.fillna| methods to replace NaNs with a different value:
 
-.. code-block:: python
-    :emphasize-lines: 14
+        .. |Series.fillna| replace:: :meth:`Series.fillna() <pandas.Series.fillna>`
+        .. |DataFrame.fillna| replace:: :meth:`DataFrame.fillna() <pandas.DataFrame.fillna>`
 
-    from datatest import validate
-    import pandas as pd
-    import numpy as np
+        .. code-block:: python
+            :emphasize-lines: 13
 
-
-    class NanToken(object):
-        def __repr__(self):
-            return self.__class__.__name__
-
-    NanToken = NanToken()
+            import pandas as pd
+            from datatest import validate
 
 
-    data = pd.Series([1, 1, 2, 2, np.nan], dtype='float64')
-    data = data.fillna(NanToken)  # Replace NaNs with NanToken.
+            class NanToken(object):
+                def __repr__(self):
+                    return self.__class__.__name__
 
-    requirement = {1, 2, NanToken}
-
-    validate(data, requirement)
-
-
-An example that does not rely on Pandas:
-
-.. code-block:: python
-    :emphasize-lines: 20
-
-    from datatest import validate
-    from math import isnan
+            NanToken = NanToken()
 
 
-    class NanToken(object):
-        def __repr__(self):
-            return self.__class__.__name__
+            data = pd.Series([1, 1, 2, 2, float('nan')])
+            data = data.fillna(NanToken)  # Replace NaNs with NanToken.
 
-    NanToken = NanToken()
+            requirement = {1, 2, NanToken}
 
-
-    def nan_to_token(x):
-        try:
-            return NanToken if isnan(x) else x
-        except TypeError:
-            return x
+            validate(data, requirement)
 
 
-    data = [1, 1, 2, 2, float('nan')]
-    data = [nan_to_token(x) for x in data]  # Replace NaNs with NanToken.
+    .. group-tab:: Non-Pandas Example
 
-    requirement = {1, 2, NanToken}
+        In this example, we use a list comprehension and helper function
+        to replace NaN values in our list of data elements:
 
-    validate(data, requirement)
+        .. code-block:: python
+            :emphasize-lines: 19
+
+            from math import isnan
+            from datatest import validate
+
+
+            class NanToken(object):
+                def __repr__(self):
+                    return self.__class__.__name__
+
+            NanToken = NanToken()
+
+
+            def replace_nan(x):  # <- Helper function.
+                if isnan(x):
+                    return NanToken
+                return x
+
+
+            data = [1, 1, 2, 2, float('nan')]
+            data = [replace_nan(x) for x in data]  # Replace NaNs with NanToken.
+
+            requirement = {1, 2, NanToken}
+
+            validate(data, requirement)
 
 
 A Deeper Understanding
@@ -221,8 +291,8 @@ While NaN values cannot be compared directly, they *can* be compared
 as part of a difference object. In fact, difference comparisons treat
 all NaN values as equal---even when the underlying type is different::
 
-    >>> from datatest import Invalid
     >>> import decimal, math, numpy
+    >>> from datatest import Invalid
 
     >>> Invalid(math.nan) == Invalid(float('nan'))
     True
