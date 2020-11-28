@@ -187,14 +187,14 @@ NaN records and validate the remaining data.
             validate(data, requirement)
 
 
-Validating NaN Values
+Requiring NaN Values
 =====================
 
-You may want to check that NaNs are part of a required set instead
-of accepting them as differences. The most robust way to do this is
-by replacing NaN values with a special token before validation. Using
-NaN values directly can be frought with problems and should usually
-be avoided.
+If necessary, it's possible to require that NaNs appear in your
+*data*. But putting NaN values directly into a *requirement* can
+be frought with problems and should usually be avoided. The most
+robust way to do this is by replacing NaN values with a special
+token and then requiring the token.
 
 Below, we define a custom ``NanToken`` object and use it to replace
 actual NaN values.
