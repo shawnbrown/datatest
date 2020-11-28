@@ -40,10 +40,11 @@ If validation fails and returns NaN differences, you can accept
 them as you would any other difference:
 
 .. code-block:: python
-    :emphasize-lines: 7
+    :emphasize-lines: 8
 
     from datatest import validate, accepted, Extra
     from math import nan
+
 
     data = [5, 6, float('nan')]
     requirement = {5, 6}
@@ -55,21 +56,23 @@ Like other values, NaNs can also be accepted as part of a list,
 set, or mapping of differences:
 
 .. code-block:: python
-    :emphasize-lines: 7-8
+    :emphasize-lines: 8
 
     from datatest import validate, accepted, Extra, Missing
     from math import nan
+
 
     data = [5, 6, float('nan')]
     requirement = {5, 6, 7}
 
     known_issues = accepted([Missing(7), Extra(nan)])
+
     with known_issues:
         validate(data, requirement)
 
 .. note::
 
-    The :data:`math.nan` value is new in Python 3.5. NaN values can
+    The :py:data:`math.nan` value is new in Python 3.5. NaN values can
     also be created in any Python version with the :py:class:`float`
     constructor ``float('nan')``.
 
@@ -83,25 +86,35 @@ by replacing NaN values with a special token before validation. Using
 NaN values directly can be frought with problems and should usually
 be avoided.
 
-If you are using Pandas, you can use the ``fillna()`` method to
-replace NaNs with a token value:
+If you're using Pandas, you can call the |Series.fillna| and
+|DataFrame.fillna| methods to replace NaNs with a different value.
+
+.. |Series.fillna| replace:: :meth:`Series.fillna() <pandas.Series.fillna>`
+.. |DataFrame.fillna| replace:: :meth:`DataFrame.fillna() <pandas.DataFrame.fillna>`
+
+
+Below, we define a custom ``NanToken`` value and use it to replace
+actual NaN values:
 
 .. code-block:: python
-    :emphasize-lines: 12,13
+    :emphasize-lines: 14
 
     from datatest import validate
     import pandas as pd
     import numpy as np
 
-    nantoken = type(
-        'nantoken',
-        (object,),
-        {'__repr__': (lambda x: '<nantoken>')},
-    )()
 
-    data = pd.Series([1, 1, 2, 2, np.float64('nan')], dtype='float64')
-    data = data.fillna(nantoken)    # <- Replace NaNs with nantoken.
-    requirement = {1, 2, nantoken}  # <- Use nantoken as required value.
+    class NanToken(object):
+        def __repr__(self):
+            return self.__class__.__name__
+
+    NanToken = NanToken()
+
+
+    data = pd.Series([1, 1, 2, 2, np.nan], dtype='float64')
+    data = data.fillna(NanToken)  # Replace NaNs with NanToken.
+
+    requirement = {1, 2, NanToken}
 
     validate(data, requirement)
 
@@ -109,26 +122,30 @@ replace NaNs with a token value:
 An example that does not rely on Pandas:
 
 .. code-block:: python
-    :emphasize-lines: 17,18
+    :emphasize-lines: 20
 
     from datatest import validate
     from math import isnan
 
-    nantoken = type(
-        'nantoken',
-        (object,),
-        {'__repr__': (lambda x: '<nantoken>')},
-    )()
+
+    class NanToken(object):
+        def __repr__(self):
+            return self.__class__.__name__
+
+    NanToken = NanToken()
+
 
     def nan_to_token(x):
         try:
-            return nantoken if isnan(x) else x
+            return NanToken if isnan(x) else x
         except TypeError:
             return x
 
+
     data = [1, 1, 2, 2, float('nan')]
-    data = [nan_to_token(x) for x in data]  # <- Replace NaNs with nantoken.
-    requirement = {1, 2, nantoken}          # <- Use nantoken as required value.
+    data = [nan_to_token(x) for x in data]  # Replace NaNs with NanToken.
+
+    requirement = {1, 2, NanToken}
 
     validate(data, requirement)
 
@@ -140,17 +157,22 @@ Sometimes it's OK to ignore NaN values entirely. If this is
 appropriate in your circumstance, you can simply remove all
 NaN records and validate the remaining data.
 
-If you are using Pandas, you can use the ``dropna()`` method to
-drop records that contain NaN values:
+If you're using Pandas, you can call the |Series.dropna| and
+|DataFrame.dropna| methods to drop records that contain NaN
+values:
+
+.. |Series.dropna| replace:: :meth:`Series.dropna() <pandas.Series.dropna>`
+.. |DataFrame.dropna| replace:: :meth:`DataFrame.dropna() <pandas.DataFrame.dropna>`
 
 .. code-block:: python
-    :emphasize-lines: 5
+    :emphasize-lines: 6
 
     from datatest import validate
     import pandas as pd
 
+
     data = pd.Series([1, 1, 2, 2, float('nan')], dtype='float64')
-    data = data.dropna()  # <- Drop records with NaN values.
+    data = data.dropna()  # Drop records with NaN values.
     requirement = {1, 2}
 
     validate(data, requirement)
@@ -159,13 +181,14 @@ drop records that contain NaN values:
 An example that does not rely on Pandas:
 
 .. code-block:: python
-    :emphasize-lines: 5
+    :emphasize-lines: 6
 
     from datatest import validate
     from math import isnan
 
+
     data = [1, 1, 2, 2, float('nan')]
-    data = [x for x in data if not isnan(x)]  # <- Drop records with NaN values.
+    data = [x for x in data if not isnan(x)]  # Drop records with NaN values.
     requirement = {1, 2}
 
     validate(data, requirement)
@@ -177,13 +200,22 @@ A Deeper Understanding
 Equality: NaN ≠ NaN
 -------------------
 
-NaN values don't compare as equal to anything---even themselves.
-To check if a value is NaN, it's common for modules and packages
-to provide a function for this purpose:
+NaN values don't compare as equal to anything---even themselves::
 
-* :py:func:`math.isnan` (from the Python Standard Library)
-* :func:`numpy.isnan`
-* :func:`pandas.isnan`
+    >>> x = float('nan')
+    >>> x == x
+    False
+
+
+To check if a value is NaN, it's common for modules and packages
+to provide a function for this purpose (e.g., :py:func:`math.isnan`,
+:obj:`numpy.isnan() <numpy.isnan>`, :func:`pandas.isna`, etc.)::
+
+    >>> import math
+    >>> x = float('nan')
+    >>> math.isnan(x)
+    True
+
 
 While NaN values cannot be compared directly, they *can* be compared
 as part of a difference object. In fact, difference comparisons treat
@@ -191,7 +223,7 @@ all NaN values as equal---even when the underlying type is different::
 
     >>> from datatest import Invalid
     >>> import decimal, math, numpy
-    >>>
+
     >>> Invalid(math.nan) == Invalid(float('nan'))
     True
     >>> Invalid(math.nan) == Invalid(complex('nan'))
@@ -206,17 +238,17 @@ all NaN values as equal---even when the underlying type is different::
     True
 
 
-Identity: NaN *is not* NaN (for the most part)
-----------------------------------------------
+Identity: NaN is NaN, Except When it Isn't
+------------------------------------------
 
 Some packages provide a NaN constant that can be referenced in
 user code (e.g., :py:data:`math.nan` and :py:data:`numpy.nan`).
 While it may be tempting to use these constants to check for
 matching NaN values, this approach is not reliable in practice.
 
-To optimize performance, Numpy and Pandas must tightly controll
-their internal data representations. When :data:`numpy.nan` is
-inserted into an :class:`array <numpy.array>` or :class:`Series
+To optimize performance, Numpy and Pandas must strictly manage the
+memory layouts of the data they contain. When :data:`numpy.nan` is
+inserted into an :class:`ndarray <numpy.ndarray>` or :class:`Series
 <pandas.Series>`, the value is coerced into a compatible ``dtype``
 when necessary. When a NaN's type is coerced, a separate instance
 is created and the ability to match using the ``is`` operator
@@ -224,15 +256,18 @@ no longer works as you might expect::
 
     >>> import pandas as pd
     >>> import numpy as np
-    >>>
-    >>> s = pd.Series([10, 11, 12])
-    >>>
-    >>> s[2] = np.nan
+
+    >>> np.nan is np.nan
+    True
+
+    >>> s = pd.Series([10, 11, np.nan])
+    >>> s[2]
+    nan
     >>> s[2] is np.nan
     False
 
 
-You can see that the values have different types::
+We can verify that the types are now different:
 
     >>> type(np.nan)
     float
