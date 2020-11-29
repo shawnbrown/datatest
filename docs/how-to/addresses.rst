@@ -19,8 +19,8 @@ Unfortunately, the only "real" way to validate addresses is to use
 a verification service or program. Simple validation checks cannot
 guarantee that an address is correct or deliverable. In the United
 States, proper address verification requires the use of `CASS certified`_
-software. Several online services offer proper address verification
-but to use one you must write code to interact with a service's API.
+software. Several online services offer address verification but to
+use one you must write code to interact with that service's API.
 Implementing such a solution is beyond the scope of this document.
 
 .. _`CASS certified`: https://postalpro.usps.com/certifications/cass
@@ -34,8 +34,8 @@ Sometimes the benefits of comprehensive address verification are not
 enough to justify the work required to interface with a third-party
 service or the possible cost of a subscription fee. Simple checks for
 well-formedness and set membership can catch many obvious errors and
-omissions. If this weaker form of verification is useful for your
-situation, the following examples could be helpful.
+omissions. This weaker form of verification can be useful in many
+situations.
 
 
 Load Data as Text
@@ -43,9 +43,10 @@ Load Data as Text
 
 To start, we will load our example addresses into a pandas
 :class:`DataFrame <pandas.DataFrame>`. It's important to specify
-``dtype=str`` to prevent pandas' type inference from loading values
-(like ZIP Codes) using a numeric dtype---address fields should be
-handled as text:
+``dtype=str`` to prevent pandas' type inference from loading certain
+columns using a numeric dtype. In some data sets, ZIP Codes could be
+misidentified as numeric data and loading them into numeric column
+would strip any leading zeros---corrupting the data you're testing:
 
 .. code-block:: python
 
