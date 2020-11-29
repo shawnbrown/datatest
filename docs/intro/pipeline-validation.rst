@@ -149,7 +149,7 @@ Validation Off
 To run the example above without validation, run Python in
 *optimized* mode. In optimized mode, ``__debug__`` is False and
 ``assert`` statements are skipped. You can invoke optimized mode
-using the ``-O`` command line option:
+using the :py:option:`-O` command line option:
 
 .. code-block:: console
 
