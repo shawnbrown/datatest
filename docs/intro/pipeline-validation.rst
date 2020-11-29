@@ -232,6 +232,27 @@ processing:
         save_to_destination(iterator)           # STEP 4
 
 
+.. tip::
+
+    If you need perform multiple sampling operations on exhaustible
+    iterators, you may want to define a function for doing so:
+
+    .. code-block:: python
+
+        import itertools
+
+        def get_sample(iterable, n=100):
+            iterator = iter(iterable)
+            sample = list(itertools.islice(iterator, n))
+            iterator = itertools.chain(sample, iterator)
+            return sample, iterator
+
+        ...
+
+        sample, iterator = get_sample(iterator)
+        validate(sample, (int, str))
+
+
 .. important::
 
     As previously noted, validating samples of a larger data set should
