@@ -239,9 +239,9 @@ processing:
     set as a whole, some validations could fail even when the data is
     good and some validations could pass even when the data is bad.
 
-    For example, the code above includes a call to :func:`validate.unique`
-    but this validation is only checking the small sample---duplicates in
-    the remaining data set could pass unnoticed. This may be acceptable
+    In some of the examples above, there are calls to :func:`validate.unique`
+    but this validation only checks data included in the sample---duplicates
+    in the remaining data set could pass unnoticed. This may be acceptable
     for some situations but not for others.
 
 
