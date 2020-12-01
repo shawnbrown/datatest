@@ -41,7 +41,7 @@ Select.__module__ = 'datatest'
 Query.__module__ = 'datatest'
 Result.__module__ = 'datatest'
 
-__version__ = '0.9.7.dev0'
+__version__ = '0.10.0.dev0'
 
 
 #############################################
