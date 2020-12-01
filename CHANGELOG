@@ -2,8 +2,8 @@
 Datatest Changelog
 ==================
 
-COMING SOON (0.9.7)
--------------------
+COMING SOON (0.10.0)
+--------------------
 
 * Fixed bug where ValidationErrors were crashing pytest-xdist workers.
 
@@ -31,6 +31,8 @@ COMING SOON (0.9.7)
     index values become the dictionary keys.
 
   * `Index` and `MultiIndex`: These objects are treated as sequences.
+
+* Changed `repr` behavior of Deviation to make timedeltas more readable.
 
 * Added Predicate matching support for NumPy types `np.character`,
   `np.integer`, `np.floating`, and `np.complexfloating`.
