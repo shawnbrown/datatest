@@ -28,11 +28,37 @@ You can compare :py:class:`date <datetime.date>` and :py:class:`datetime
     validate(datetime(2020, 12, 25, 9, 30), datetime(2020, 12, 25, 9, 30))
 
 
+Compare mappings of date objects:
+
+.. code-block:: python
+    :emphasize-lines: 16
+
+    from datetime import date
+    from datatest import validate
+
+    data = {
+        'A': date(2020, 12, 24),
+        'B': date(2020, 12, 25),
+        'C': date(2020, 12, 26),
+    }
+
+    requirement = {
+        'A': date(2020, 12, 24),
+        'B': date(2020, 12, 25),
+        'C': date(2020, 12, 26),
+    }
+
+    validate(data, requirement)
+
+
 Interval Validation
 ===================
 
-Below, we use :meth:`validate.interval` to check that dates fall on or
-between the 1st and 31st of December 2020:
+We can use :meth:`validate.interval` to check that date and datetime
+values are within a given range.
+
+
+Check that dates fall within the month of December 2020:
 
 .. code-block:: python
     :emphasize-lines: 11
@@ -41,13 +67,31 @@ between the 1st and 31st of December 2020:
     from datatest import validate
 
     data = [
-        date(2020, 12, 1),
-        date(2020, 12, 5),
+        date(2020, 12, 4),
+        date(2020, 12, 11),
+        date(2020, 12, 18),
         date(2020, 12, 25),
-        date(2020, 12, 30),
     ]
 
     validate.interval(data, min=date(2020, 12, 1), max=date(2020, 12, 31))
+
+
+Check that dates are one week old or newer:
+
+.. code-block:: python
+    :emphasize-lines: 11
+
+    from datetime import date, timedelta
+    from datatest import validate
+
+    data = {
+        'A': date(2020, 12, 24),
+        'B': date(2020, 12, 25),
+        'C': date(2020, 12, 26),
+    }
+
+    one_week_ago = date.today() - timedelta(days=-7)
+    validate.interval(data, min=one_week_ago, msg='one week old or newer')
 
 
 Failures and Acceptances
@@ -110,7 +154,7 @@ Failed Interval
 
             data = [
                 date(2020, 11, 26),
-                date(2020, 12, 5),
+                date(2020, 12, 11),
                 date(2020, 12, 25),
                 date(2021, 1, 4),
             ]
@@ -140,7 +184,7 @@ Failed Interval
 
             data = [
                 date(2020, 11, 26),
-                date(2020, 12, 5),
+                date(2020, 12, 11),
                 date(2020, 12, 25),
                 date(2021, 1, 4),
             ]
