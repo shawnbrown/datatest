@@ -154,14 +154,15 @@ NaN records and validate the remaining data.
         .. |DataFrame.dropna| replace:: :meth:`DataFrame.dropna() <pandas.DataFrame.dropna>`
 
         .. code-block:: python
-            :emphasize-lines: 6
+            :emphasize-lines: 7
 
             import pandas as pd
             from datatest import validate
 
 
-            data = pd.Series([1, 1, 2, 2, float('nan')])
-            data = data.dropna()  # Drop NaN valued elements.
+            source = pd.Series([1, 1, 2, 2, float('nan')])
+
+            data = source.dropna()  # Drop NaN valued elements.
             requirement = {1, 2}
 
             validate(data, requirement)
@@ -173,15 +174,15 @@ NaN records and validate the remaining data.
         in a list comprehension to drop NaN values from our data:
 
         .. code-block:: python
-            :emphasize-lines: 6
+            :emphasize-lines: 7
 
             from math import isnan
             from datatest import validate
 
 
-            data = [1, 1, 2, 2, float('nan')]
-            data = [x for x in data if not isnan(x)]  # Keep values if not NaN.
+            source = [1, 1, 2, 2, float('nan')]
 
+            data = [x for x in source if not isnan(x)]  # Keep values if not NaN.
             requirement = {1, 2}
 
             validate(data, requirement)
@@ -210,7 +211,7 @@ actual NaN values.
         .. |DataFrame.fillna| replace:: :meth:`DataFrame.fillna() <pandas.DataFrame.fillna>`
 
         .. code-block:: python
-            :emphasize-lines: 13
+            :emphasize-lines: 14
 
             import pandas as pd
             from datatest import validate
@@ -223,9 +224,9 @@ actual NaN values.
             NanToken = NanToken()
 
 
-            data = pd.Series([1, 1, 2, 2, float('nan')])
-            data = data.fillna(NanToken)  # Replace NaNs with NanToken.
+            source = pd.Series([1, 1, 2, 2, float('nan')])
 
+            data = source.fillna(NanToken)  # Replace NaNs with NanToken.
             requirement = {1, 2, NanToken}
 
             validate(data, requirement)
@@ -237,7 +238,7 @@ actual NaN values.
         to replace NaN values in our list of data elements:
 
         .. code-block:: python
-            :emphasize-lines: 19
+            :emphasize-lines: 20
 
             from math import isnan
             from datatest import validate
@@ -256,9 +257,9 @@ actual NaN values.
                 return x
 
 
-            data = [1, 1, 2, 2, float('nan')]
-            data = [replace_nan(x) for x in data]  # Replace NaNs with NanToken.
+            source = [1, 1, 2, 2, float('nan')]
 
+            data = [replace_nan(x) for x in source]  # Replace NaNs with NanToken.
             requirement = {1, 2, NanToken}
 
             validate(data, requirement)
