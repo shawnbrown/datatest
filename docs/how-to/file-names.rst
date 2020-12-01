@@ -256,39 +256,42 @@ date suffix (no hyphen)  ``.+_\d{4}\d{2}\d{2}.+$``    data_20201103.csv
 =======================  ===========================  ===================
 
 
-Load Properties into DataFrame
-==============================
+See Also
+========
 
-In some cases you might want to load multiple file properties into
-a pandas DataFrame to perform multiple checks on the same data. This
-example demonstrates loading a few properties into a DataFrame:
+* :doc:`test-file-properties`
 
-.. code-block:: python
+..
+    In some cases you might want to load multiple file properties into
+    a pandas DataFrame to perform multiple checks on the same data. This
+    example demonstrates loading a few properties into a DataFrame:
 
-    from datetime import datetime
-    from pathlib import Path
-    import pandas as pd
-    import datatest as dt
+    .. code-block:: python
+
+        from datetime import datetime
+        from pathlib import Path
+        import pandas as pd
+        import datatest as dt
 
 
-    def make_row(path):
-        stats = path.stat()
-        last_modified = datetime.fromtimestamp(stats.st_mtime)
-        return (path.name, stats.st_size, last_modified)
+        def make_row(path):
+            stats = path.stat()
+            last_modified = datetime.fromtimestamp(stats.st_mtime)
+            return (path.name, stats.st_size, last_modified)
 
-    data = (make_row(p) for p in Path('.').iterdir() if p.is_file())
+        data = (make_row(p) for p in Path('.').iterdir() if p.is_file())
 
-    df = pd.DataFrame(data, columns=['file_name', 'size', 'last_modified'])
+        df = pd.DataFrame(data, columns=['file_name', 'size', 'last_modified'])
 
-    # DataFrame contents:
-    #
-    #     file_name   size        last_modified
-    # 0   file1.csv  10825  2020-10-24 14:14:15
-    # 1   file2.csv   6517  2020-04-21 21:48:13
-    # 2  file3.xlsx   6985  2019-06-05 13:14:27
+        # DataFrame contents:
+        #
+        #     file_name   size        last_modified
+        # 0   file1.csv  10825  2020-10-24 14:14:15
+        # 1   file2.csv   6517  2020-04-21 21:48:13
+        # 2  file3.xlsx   6985  2019-06-05 13:14:27
 
-    msg = 'Should be lowercase with no spaces.',
-    dt.validate.regex(df['file_name'], r'[a-z0-9_.\-]+', msg=msg)
+        msg = 'Should be lowercase with no spaces.',
+        dt.validate.regex(df['file_name'], r'[a-z0-9_.\-]+', msg=msg)
 
-    ...  # Additional checks here.
+        ...  # Additional checks here.
 

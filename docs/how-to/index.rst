@@ -24,9 +24,10 @@ How-to Guide
     Data Types <data-types>
     Date and Time Strings <date-time-str>
     Date and Time Objects <date-time-obj>
+    File Names <file-names>
+    Test File Properties <test-file-properties>
     Excel Auto-Formatting <excel-auto-formatting>
     Addresses <addresses>
-    File Names <file-names>
     Fuzzy Matching <fuzzy-matching>
     NaN Values <nan-values>
     Outliers <outliers>
