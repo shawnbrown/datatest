@@ -54,7 +54,7 @@ Example
                 paths = (p for p in pathlib.Path('..').glob('*.*') if p.is_file())
                 properties_dict = (get_properties(p) for p in paths)
                 df = pd.DataFrame.from_records(properties_dict)
-                df.set_index(['path'], inplace=True)
+                df = df.set_index(['path'])
                 return df
 
 
