@@ -68,7 +68,7 @@ Example
 
 
             def test_filename(df):
-                msg = 'Must be lowercase with no spaces.',
+                msg = 'Must be lowercase with no spaces.'
                 dt.validate.regex(df['name'], r'[a-z0-9_.\-]+', msg=msg)
 
 
