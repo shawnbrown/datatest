@@ -59,11 +59,12 @@ Example
 
 
             def test_filetype(df):
+                suffixes = {'.csv', '.txt'}
                 def csv_or_txt(x):  # <- Helper function.
                     suffix = pathlib.Path(x).suffix
-                    return suffix.lower() in {'.csv', '.txt'}
+                    return suffix.lower() in suffixes
 
-                msg = 'Must be CSV or TXT files.'
+                msg = f'File suffix must be one of {suffixes}'
                 dt.validate(df.index, csv_or_txt, msg=msg)
 
 
