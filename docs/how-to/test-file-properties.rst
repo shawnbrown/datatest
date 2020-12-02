@@ -51,8 +51,7 @@ Example
             @pytest.fixture(scope='session')
             @dt.working_directory(__file__)
             def df():
-                pattern = r'../*.*'
-                paths = (p for p in pathlib.Path('.').glob(pattern) if p.is_file())
+                paths = (p for p in pathlib.Path('..').glob('*.*') if p.is_file())
                 properties_dict = (get_properties(p) for p in paths)
                 df = pd.DataFrame.from_records(properties_dict)
                 df.set_index(['path'], inplace=True)
@@ -125,8 +124,7 @@ Example
             @pytest.fixture(scope='session')
             @working_directory(__file__)
             def files_info():
-                pattern = r'../*.*'
-                paths = (p for p in pathlib.Path('.').glob(pattern) if p.is_file())
+                paths = (p for p in pathlib.Path('..').glob('*.*') if p.is_file())
                 dict_of_lists = collections.defaultdict(list)
                 for path in paths:
                     properties_dict = get_properties(path)
