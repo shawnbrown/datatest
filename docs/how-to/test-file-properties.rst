@@ -74,7 +74,7 @@ Example
 
 
             def test_freshness(df):
-                one_week_ago = datetime.date.today() - datetime.timedelta(days=-7)
+                one_week_ago = datetime.date.today() - datetime.timedelta(days=7)
                 msg = 'Must be no older than one week.'
                 dt.validate.interval(df['modified_date'], min=one_week_ago, msg=msg)
 
