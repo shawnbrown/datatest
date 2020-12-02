@@ -224,6 +224,8 @@ class ValidateType(object):
         If the elements in *data* do not match the required set, then
         :class:`Missing` and :class:`Extra` differences are generated.
 
+    .. _sequence-validation:
+
     **Sequence Validation:**
 
         When *requirement* is an iterable type other than a set,

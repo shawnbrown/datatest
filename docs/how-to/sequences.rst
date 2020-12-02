@@ -10,9 +10,12 @@
 How to Validate Sequences
 #########################
 
-To check for a specific sequence, you can pass an iterable object
-(other than a set, mapping, tuple or string) as the *requirement*
-argument:
+
+Index Position
+==============
+
+To check for a specific sequence, you can pass a list [1]_ as the
+*requirement* argument:
 
 .. code-block:: python
     :emphasize-lines: 4
@@ -55,8 +58,8 @@ In this example, there are three differences:
     ]
 
 
-Enumerated Sequences
---------------------
+Using enumerate()
+-----------------
 
 While the previous example works well for short lists, the error
 does not describe **where** in your sequence the differences occur.
@@ -85,8 +88,8 @@ for any differences will correspond to their index positions:
     }
 
 
-Element Order
--------------
+Relative Order
+==============
 
 When comparing elements by sequence position, one mis-alignment can
 create differences for all following elements. If this behavior is
@@ -135,3 +138,10 @@ relative order produces only one difference:
          Extra((2, 'X')),
     ]
 
+
+.. rubric:: Footnotes
+
+.. [1] The validate() function will check *data* by index position when the
+       *requirement* is any iterable object other than a set, mapping, tuple
+       or string. See the :ref:`Sequence Validation <sequence-validation>`
+       section of the :func:`validate` documentation for full details.
