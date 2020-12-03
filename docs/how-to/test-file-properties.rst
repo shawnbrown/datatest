@@ -51,30 +51,30 @@ Example
             @pytest.fixture(scope='session')
             @dt.working_directory(__file__)
             def df():
-                pattern = r'../*.*'
-                paths = (p for p in pathlib.Path('.').glob(pattern) if p.is_file())
+                paths = (p for p in pathlib.Path('..').glob('*.*') if p.is_file())
                 properties_dict = (get_properties(p) for p in paths)
                 df = pd.DataFrame.from_records(properties_dict)
-                df.set_index(['path'], inplace=True)
+                df = df.set_index(['path'])
                 return df
 
 
             def test_filetype(df):
+                suffixes = {'.csv', '.txt'}
                 def csv_or_txt(x):  # <- Helper function.
                     suffix = pathlib.Path(x).suffix
-                    return suffix.lower() in {'.csv', '.txt'}
+                    return suffix.lower() in suffixes
 
-                msg = 'Must be CSV or TXT files.'
+                msg = f'File suffix must be one of {suffixes}'
                 dt.validate(df.index, csv_or_txt, msg=msg)
 
 
             def test_filename(df):
-                msg = 'Must be lowercase with no spaces.',
+                msg = 'Must be lowercase with no spaces.'
                 dt.validate.regex(df['name'], r'[a-z0-9_.\-]+', msg=msg)
 
 
             def test_freshness(df):
-                one_week_ago = datetime.date.today() - datetime.timedelta(days=-7)
+                one_week_ago = datetime.date.today() - datetime.timedelta(days=7)
                 msg = 'Must be no older than one week.'
                 dt.validate.interval(df['modified_date'], min=one_week_ago, msg=msg)
 
@@ -125,8 +125,7 @@ Example
             @pytest.fixture(scope='session')
             @working_directory(__file__)
             def files_info():
-                pattern = r'../*.*'
-                paths = (p for p in pathlib.Path('.').glob(pattern) if p.is_file())
+                paths = (p for p in pathlib.Path('..').glob('*.*') if p.is_file())
                 dict_of_lists = collections.defaultdict(list)
                 for path in paths:
                     properties_dict = get_properties(path)
