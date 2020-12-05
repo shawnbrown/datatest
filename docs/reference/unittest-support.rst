@@ -100,6 +100,8 @@ for full details.
     each column.
 
 
+.. _datatestcase-docs:
+
 ************
 DataTestCase
 ************
