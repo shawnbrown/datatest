@@ -27,12 +27,12 @@ class DataTestCase(TestCase):
     """This optional wrapper class provides an interface that is
     consistent with established unittest conventions. This class
     extends |TestCase| with methods for asserting validity and
-    accepting differences. In addition, familiar methods (like
-    |setUp|, |addCleanup|, |assertions| etc.) are also available.
+    accepting differences. In addition, familiar methods and attributes
+    (like |setUp|, |maxDiff|, |assertions| etc.) are also available.
 
     .. |TestCase| replace:: :py:class:`unittest.TestCase`
-    .. |setUp| replace:: :py:meth:`setUp <unittest.TestCase.setUp>`
-    .. |addCleanup| replace:: :py:meth:`addCleanup <unittest.TestCase.addCleanup>`
+    .. |setUp| replace:: :py:meth:`setUp() <unittest.TestCase.setUp>`
+    .. |maxDiff| replace:: :py:attr:`maxDiff <unittest.TestCase.maxDiff>`
     .. |assertions| replace:: :ref:`assertions <python:assert-methods>`
     """
     maxDiff = getattr(TestCase, 'maxDiff', 80 * 8)  # Uses default in 3.1 and 2.6.
@@ -57,99 +57,7 @@ class DataTestCase(TestCase):
             raise err
 
     def assertValid(self, data, requirement, msg=None):
-        """Raise a :exc:`ValidationError` if *data* does not satisfy
-        *requirement* or pass without error if data is valid.
-
-        This is a rich comparison object---the given *data* and
-        *requirement* arguments can be mappings, iterables, or other
-        objects. An optional *msg* string can be provided to describe
-        the validation.
-
-        **Predicate Validation:**
-
-            When *requirement* is a callable, tuple, string, or
-            non-iterable object, it is used to construct a
-            :class:`Predicate` for testing elements in *data*:
-
-            .. code-block:: python
-                :emphasize-lines: 5
-
-                def test_predicate(self):
-                    data = [2, 4, 6, 8]
-                    def iseven(x):  # <- callable requirement
-                        return x % 2 == 0
-                    self.assertValid(data, iseven)  # <- callable used as predicate
-
-            If the predicate returns False, then an :class:`Invalid`
-            or :class:`Deviation` difference is generated. If the
-            predicate returns a difference object, that object is
-            used in place of a generated difference
-            (see :ref:`difference-docs`). When the predicate returns
-            any other truthy value, an element is considered valid.
-
-        .. _set-validation:
-
-        **Set Validation:**
-
-            When *requirement* is a set, the elements in *data* are
-            checked for membership in the set:
-
-            .. code-block:: python
-                :emphasize-lines: 4
-
-                def test_set(self):
-                    data = ['a', 'a', 'b', 'b', 'c', 'c']
-                    required_set = {'a', 'b', 'c'}
-                    self.assertValid(data, required_set)  # <- tests for set membership
-
-            If the elements in *data* do not match the required set,
-            then :class:`Missing` and :class:`Extra` differences are
-            generated.
-
-        **Sequence Validation:**
-
-            When *requirement* is an iterable type other than a set,
-            mapping, tuple or string, then *data* is validated as a
-            sequence of elements. Elements are checked for predicate
-            matches against required objects of the same position
-            (both *data* and *requirement* should yield values in a
-            predictable order):
-
-            .. code-block:: python
-                :emphasize-lines: 4
-
-                def test_sequence(self):
-                    data = ['A', 'B', 'C', ...]
-                    sequence = ['A', 'B', 'C', ...]
-                    self.assertValid(data, sequence)  # <- compare elements by position
-
-            For details on predicate matching, see :class:`Predicate`.
-
-        **Mapping Validation:**
-
-            When *requirement* is a dictionary or other mapping, the
-            values in *data* are checked against required objects of
-            the same key (*data* must also be a mapping):
-
-            .. code-block:: python
-                :emphasize-lines: 4
-
-                def test_mapping(self):
-                    data = {'A': 1, 'B': 2, 'C': ...}
-                    required_dict = {'A': 1, 'B': 2, 'C': ...}
-                    self.assertValid(data, required_dict)  # <- compares values
-
-            If values do not satisfy the corresponding required
-            object, then differences are generated according to
-            each object type. If an object itself is a nested
-            mapping, it is treated as a predicate object.
-
-        **Requirement Object Validation:**
-
-            When *requirement* is a subclass of
-            :class:`BaseRequirement`, it is used to check data and
-            generate differences directly.
-        """
+        """Wrapper for :func:`validate`."""
         __tracebackhide__ = _pytest_tracebackhide
         self._apply_validation(validate, data, requirement, msg=msg)
 
@@ -206,22 +114,15 @@ class DataTestCase(TestCase):
         self._apply_validation(validate.unique, data, msg=msg)
 
     def accepted(self, obj, msg=None, scope=None):
-        """Accepts differences that match *obj* without triggering a test
-        failure. The given *obj* can be a difference class, a difference
-        instance, or a container of difference instances.
-        """
+        """Wrapper for :func:`accepted`."""
         return AcceptedDifferences(obj, msg=msg, scope=scope)
 
     def acceptedKeys(self, predicate, msg=None):
-        """Accepts differences in a mapping whose keys satisfy the
-        given *predicate*.
-        """
+        """Wrapper for :meth:`accepted.keys`."""
         return AcceptedKeys(predicate, msg)
 
     def acceptedArgs(self, predicate, msg=None):
-        """Accepted differences in a mapping whose args satisfy the
-        given *predicate*.
-        """
+        """Wrapper for :meth:`accepted.args`."""
         return AcceptedArgs(predicate, msg)
 
     def acceptedTolerance(self, lower, upper=None, msg=None):
@@ -229,7 +130,7 @@ class DataTestCase(TestCase):
         acceptedTolerance(tolerance, /, msg=None)
         acceptedTolerance(lower, upper, msg=None)
 
-        See documentation for full details.
+        Wrapper for :meth:`accepted.tolerance`.
         """
         return AcceptedTolerance(lower, upper=upper, msg=msg)
 
@@ -238,34 +139,16 @@ class DataTestCase(TestCase):
         acceptedPercent(tolerance, /, msg=None)
         acceptedPercent(lower, upper, msg=None)
 
-        See documentation for full details.
+        Wrapper for :meth:`accepted.percent`.
         """
         return AcceptedPercent(lower, upper, msg)
 
     def acceptedFuzzy(self, cutoff=0.6, msg=None):
-        """Accepted invalid strings that match their expected value
-        with a similarity greater than or equal to *cutoff* (default
-        0.6).
-
-        Similarity measures are determined using the ratio() method of
-        the difflib.SequenceMatcher class. The values range from 1.0
-        (exactly the same) to 0.0 (completely different).
-        """
+        """Wrapper for :meth:`accepted.fuzzy`."""
         return AcceptedFuzzy(cutoff=cutoff, msg=msg)
 
     def acceptedCount(self, number, msg=None, scope=None):
-        """Accepted a limited *number* of differences without
-        triggering a test failure::
-
-            with self.acceptedCount(2):  # Accepts up to two differences.
-                data = ['47306', '1370', 'TX']  # <- '1370' and 'TX' invalid
-                requirement = re.compile(r'^\\d{5}$')
-                self.assertValid(data, requirement)
-
-        If the count of differences exceeds the given *number*, the
-        test will fail with a :class:`ValidationError` containing all
-        observed differences.
-        """
+        """Wrapper for :meth:`accepted.count`."""
         return AcceptedCount(number, msg=msg, scope=scope)
 
     ####################

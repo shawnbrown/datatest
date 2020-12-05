@@ -130,21 +130,6 @@ DataTestCase
 
     .. automethod:: assertValidOrder
 
-    .. attribute:: maxDiff
-
-        This attribute controls the maximum length of diffs output by
-        assert methods that report diffs on failure. It defaults to
-        80*8 characters.
-
-        Setting ``maxDiff`` to ``None`` means that there is no maximum
-        length for diffs::
-
-            self.maxDiff = None
-
-        This attribute affects :meth:`assertValid()` as well as any
-        inherited methods like assertSequenceEqual(), assertDictEqual()
-        and assertMultiLineEqual().
-
     .. automethod:: accepted
 
     .. automethod:: acceptedKeys
@@ -154,52 +139,12 @@ DataTestCase
     .. method:: acceptedTolerance(tolerance, /, msg=None)
                 acceptedTolerance(lower, upper, msg=None)
 
-        Accepts numeric :class:`Deviations <datatest.Deviation>`
-        within a given *tolerance* without triggering a test
-        failure::
-
-            with self.acceptedTolerance(5):  # tolerance of +/- 5
-                data = ...
-                requirement = ...
-                self.assertValid(data, requirement)
-
-        Specifying different *lower* and *upper* bounds::
-
-            with self.acceptedTolerance(-2, 3):  # tolerance from -2 to +3
-                data = ...
-                requirement = ...
-                self.assertValid(data, requirement)
-
-        Deviations within the given range are suppressed while those
-        outside the range will trigger a test failure.
-
-        Empty values (None, empty string, etc.) are treated as zeros
-        when performing comparisons.
+        Wrapper for :meth:`accepted.tolerance`.
 
     .. method:: acceptedPercent(tolerance, /, msg=None)
                 acceptedPercent(lower, upper, msg=None)
 
-        Accepts :class:`Deviations <datatest.Deviation>` with
-        percentages of error within a given *tolerance* without
-        triggering a test failure::
-
-            with self.acceptedPercent(0.03):  # tolerance of +/- 3%
-                data = ...
-                requirement = ...
-                self.assertValid(data, requirement)
-
-        Specifying different *lower* and *upper* bounds::
-
-            with self.acceptedPercent(-0.02, 0.01):  # tolerance from -2% to +1%
-                data = ...
-                requirement = ...
-                self.assertValid(data, requirement)
-
-        Deviations within the given range are suppressed while those
-        outside the range will trigger a test failure.
-
-        Empty values (None, empty string, etc.) are treated as zeros
-        when performing comparisons.
+        Wrapper for :meth:`accepted.percent`.
 
     .. automethod:: acceptedFuzzy
 
