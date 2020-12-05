@@ -323,6 +323,13 @@ you can use the ``-f`` option to stop after any failing test:
     python -m datatest -f
 
 
+:class:`DataTestCase` is a child class of :py:class:`unittest.TestCase` and
+it inherits all of its parent's methods. You can also import :py:mod:`unittest`
+directly to use functions like :py:func:`unittest.addModuleCleanup` and
+features like `Class and Module Fixtures
+<https://docs.python.org/library/unittest.html#class-and-module-fixtures>`_.
+
+
 Unittest Samples
 ================
 
