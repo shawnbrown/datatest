@@ -10,8 +10,8 @@
 Unittest Support
 ################
 
-Datatest can be used for unittest-style testing. For more information,
-refer to the introduction:
+Datatest can be used for unittest-style testing. For a quick
+introduction, see:
 
 * :ref:`Introduction <unittest-intro-docs>`
 * :ref:`Basic Examples <unittest-samples-docs>`
