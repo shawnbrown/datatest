@@ -108,6 +108,19 @@ DataTestCase
 
 .. autoclass:: DataTestCase
 
+    The assertion methods wrap :func:`validate` and its methods:
+
+    .. code-block:: python
+        :emphasize-lines: 7
+
+        from datatest import DataTestCase
+
+        class MyTest(DataTestCase):
+            def test_mydata(self):
+                data = ...
+                requirement = ...
+                self.assertValid(data, requirement)
+
     .. automethod:: assertValid
 
     .. automethod:: assertValidPredicate
@@ -129,6 +142,20 @@ DataTestCase
     .. automethod:: assertValidUnique
 
     .. automethod:: assertValidOrder
+
+    The acceptance methods wrap :func:`accepted` and its methods:
+
+    .. code-block:: python
+        :emphasize-lines: 7
+
+        from datatest import DataTestCase
+
+        class MyTest(DataTestCase):
+            def test_mydata(self):
+                data = ...
+                requirement = ...
+                with self.accepted(Missing):
+                    self.assertValid(data, requirement)
 
     .. automethod:: accepted
 
