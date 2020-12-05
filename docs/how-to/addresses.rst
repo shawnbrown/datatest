@@ -60,18 +60,21 @@ would strip any leading zeros---corrupting the data you're testing:
 
 Our address data will look something like the following:
 
-============================  =============  =====  ==========
-street                        city           state  zipcode
-============================  =============  =====  ==========
-1600 Pennsylvania Avenue NW   Washington     DC     20500
-30 Rockefeller Plaza          New York       NY     10112
-350 Fifth Avenue, 34th Floor  New York       NY     10118-3299
-1060 W Addison St             Chicago        IL     60613
-15 Central Park W Apt 7P      New York       NY     10023-7711
-11 Wall St                    New York       NY     10005
-2400 Fulton St                San Francisco  CA     94118-4107
-351 Farmington Ave            Hartford       CT     06105-6400
-============================  =============  =====  ==========
+.. table::
+    :widths: auto
+
+    ============================  =============  =====  ==========
+    street                        city           state  zipcode
+    ============================  =============  =====  ==========
+    1600 Pennsylvania Avenue NW   Washington     DC     20500
+    30 Rockefeller Plaza          New York       NY     10112
+    350 Fifth Avenue, 34th Floor  New York       NY     10118-3299
+    1060 W Addison St             Chicago        IL     60613
+    15 Central Park W Apt 7P      New York       NY     10023-7711
+    11 Wall St                    New York       NY     10005
+    2400 Fulton St                San Francisco  CA     94118-4107
+    351 Farmington Ave            Hartford       CT     06105-6400
+    ============================  =============  =====  ==========
 
 
 Street Address
