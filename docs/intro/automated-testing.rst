@@ -296,12 +296,12 @@ with incremental testing:
 .. code-block:: python
     :emphasize-lines: 4
 
-    from datatest import DataTestCase, mandatory, Extra
+    from datatest import DataTestCase, mandatory
 
     class TestMyData(DataTestCase):
         @mandatory
         def test_one(self):
-            data = ['A', 'B', 'C', 'D']
+            data = ['A', 'A', 'B', 'B']
             requirement = {'A', 'B'}
             self.assertValid(data, requirement)
 
