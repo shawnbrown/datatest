@@ -17,45 +17,6 @@ refer to the introduction:
 * :ref:`Basic Examples <unittest-samples-docs>`
 
 
-.. _unittest-style-invocation:
-
-**********************
-Command-Line Interface
-**********************
-
-The datatest module can be used from the command line just like
-unittest. To run the program with `test discovery
-<http://docs.python.org/library/unittest.html#test-discovery>`_
-use the following command::
-
-    python -m datatest
-
-Run tests from specific modules, classes, or individual methods with::
-
-    python -m datatest test_module1 test_module2
-    python -m datatest test_module.TestClass
-    python -m datatest test_module.TestClass.test_method
-
-The syntax and command-line options (``-f``, ``-v``, etc.) are the
-same as unittest---see unittest's `command-line documentation
-<http://docs.python.org/library/unittest.html#command-line-interface>`_
-for full details.
-
-.. note::
-
-    Tests are ordered by **file name** and then by **line number**
-    (within each file) when running datatest from the command-line.
-
-..
-    Unlike strict unit testing, data preparation tests are often
-    dependant on one another---this strict order-by-line-number
-    behavior lets users design test suites appropriately.
-    For example, asserting the population of a city will always
-    fail when the 'city' column is missing. So it's appropriate
-    to validate column names *before* validating the contents of
-    each column.
-
-
 .. _datatestcase-docs:
 
 ************
@@ -132,6 +93,45 @@ DataTestCase
     .. automethod:: acceptedFuzzy
 
     .. automethod:: acceptedCount
+
+
+.. _unittest-style-invocation:
+
+**********************
+Command-Line Interface
+**********************
+
+The datatest module can be used from the command line just like
+unittest. To run the program with `test discovery
+<http://docs.python.org/library/unittest.html#test-discovery>`_
+use the following command::
+
+    python -m datatest
+
+Run tests from specific modules, classes, or individual methods with::
+
+    python -m datatest test_module1 test_module2
+    python -m datatest test_module.TestClass
+    python -m datatest test_module.TestClass.test_method
+
+The syntax and command-line options (``-f``, ``-v``, etc.) are the
+same as unittest---see unittest's `command-line documentation
+<http://docs.python.org/library/unittest.html#command-line-interface>`_
+for full details.
+
+.. note::
+
+    Tests are ordered by **file name** and then by **line number**
+    (within each file) when running datatest from the command-line.
+
+..
+    Unlike strict unit testing, data preparation tests are often
+    dependant on one another---this strict order-by-line-number
+    behavior lets users design test suites appropriately.
+    For example, asserting the population of a city will always
+    fail when the 'city' column is missing. So it's appropriate
+    to validate column names *before* validating the contents of
+    each column.
 
 
 *******************
