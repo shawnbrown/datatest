@@ -263,6 +263,8 @@ Pytest Samples
 .. end-inclusion-marker-pytestsamples
 
 
+.. _unittest-intro-docs:
+
 ********
 Unittest
 ********
@@ -329,6 +331,8 @@ directly to use functions like :py:func:`unittest.addModuleCleanup` and
 features like `Class and Module Fixtures
 <https://docs.python.org/library/unittest.html#class-and-module-fixtures>`_.
 
+
+.. _unittest-samples-docs:
 
 Unittest Samples
 ================

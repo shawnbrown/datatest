@@ -10,55 +10,11 @@
 Unittest Support
 ################
 
+Datatest can be used for unittest-style testing. For more information,
+refer to the introduction:
 
-*************
-Basic Example
-*************
-
-This short example demonstrates unittest-style testing of data in
-a CSV file (:download:`mydata.csv </_static/mydata.csv>`):
-
-.. code-block:: python
-
-    import datatest
-
-
-    def setUpModule():
-        global select
-        with datatest.working_directory(__file__):
-            select = datatest.Select('mydata.csv')
-
-
-    class TestMyData(datatest.DataTestCase):
-        def test_header(self):
-            fieldnames = select.fieldnames
-            required_names = ['user_id', 'active']
-            self.assertValid(fieldnames, required_names)
-
-        def test_active_column(self):
-            active = select({'active'})
-            expected_values = {'Y', 'N'}
-            self.assertValid(active, expected_values)
-
-        def test_user_id_column(self):
-            user_id = select(['user_id'])
-            def positive_int(x):  # <- Helper function.
-                return int(x) > 0
-            self.assertValid(user_id, positive_int)
-
-
-    if __name__ == '__main__':
-        datatest.main()
-
-
-A data test-case is created by subclassing
-:class:`datatest.DataTestCase` and individual
-tests are defined with methods whose names
-start with "``test``".
-
-Inside each method, a call to :meth:`self.assertValid()
-<DataTestCase.assertValid>` checks that the data satisfies
-a given requirement.
+* :ref:`Introduction <unittest-intro-docs>`
+* :ref:`Basic Examples <unittest-samples-docs>`
 
 
 .. _unittest-style-invocation:
