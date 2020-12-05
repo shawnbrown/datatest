@@ -24,10 +24,16 @@ __unittest = True  # Hides internal stack frames from unittest output.
 
 
 class DataTestCase(TestCase):
-    """This class extends :py:class:`unittest.TestCase` with methods
-    for asserting data validity. In addition to the new functionality,
-    familiar methods (like setUp, addCleanup, etc.) are still
-    available.
+    """This optional wrapper class provides an interface that is
+    consistent with established unittest conventions. This class
+    extends |TestCase| with methods for asserting validity and
+    accepting differences. In addition, familiar methods (like
+    |setUp|, |addCleanup|, |assertions| etc.) are also available.
+
+    .. |TestCase| replace:: :py:class:`unittest.TestCase`
+    .. |setUp| replace:: :py:meth:`setUp <unittest.TestCase.setUp>`
+    .. |addCleanup| replace:: :py:meth:`addCleanup <unittest.TestCase.addCleanup>`
+    .. |assertions| replace:: :ref:`assertions <python:assert-methods>`
     """
     maxDiff = getattr(TestCase, 'maxDiff', 80 * 8)  # Uses default in 3.1 and 2.6.
 
