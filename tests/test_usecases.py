@@ -196,6 +196,43 @@ class TestNanHandling(unittest.TestCase):
         with datatest.accepted.args(float('nan')):
             datatest.validate(data, set(['a', 'b']))
 
+    @unittest.skipUnless(pandas, 'requires pandas')
+    def test_pandas_requirement(self):
+        """Pandas objects should work as data and requirements."""
+        # Series with specified index.
+        series_index = pandas.Series([1, 2, 3], index=['x', 'y', 'z'])
+        datatest.validate(series_index, series_index)
+
+        # Series with default RangeIndex.
+        series_rangeindex = pandas.Series([1, 2, 3])
+        datatest.validate(series_rangeindex, series_rangeindex)
+
+        # DataFrame with specified index.
+        df_index = pandas.DataFrame(
+            data=[['foo', 1], ['bar', 2], ['baz', 3]],
+            columns=['B', 'C'],
+            index=['x', 'y', 'z'],
+        )
+        datatest.validate(df_index, df_index)
+
+        # DataFrame with default RangeIndex.
+        df_rangeindex = pandas.DataFrame(
+            data=[['foo', 1], ['bar', 2], ['baz', 3]],
+            columns=['B', 'C'],
+        )
+        datatest.validate(df_rangeindex, df_rangeindex)
+
+        # Index
+        index = pandas.Index(['x', 'y', 'z'])
+        datatest.validate(index, index)
+
+        # MultiIndex
+        multi = pandas.MultiIndex.from_tuples(
+            tuples=[('x', 'foo'), ('y', 'bar'), ('z', 'baz')],
+            names=('A', 'B'),
+        )
+        datatest.validate(multi, multi)
+
     @unittest.skipUnless(pandas and numpy, 'requires pandas and numpy')
     def test_accepting_pandas_numpy(self):
         data = pandas.Series([1, 1, 2, 2, numpy.float64('nan')], dtype='float64')
