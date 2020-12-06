@@ -69,9 +69,10 @@ def _normalize_lazy(obj):
             if isinstance(obj.index, pandas.RangeIndex):
                 # DataFrame with RangeIndex is treated as an iterator.
                 if len(obj.columns) == 1:
-                    return (x[0] for x in obj.values)  # <- EXIT!
+                    obj = (x[0] for x in obj.values)
                 else:
-                    return (tuple(x) for x in obj.values)  # <- EXIT!
+                    obj = (tuple(x) for x in obj.values)
+                return TypedIterator(obj, evaltype=list)  # <- EXIT!
             else:
                 # DataFrame with another index type is treated as a mapping.
                 if len(obj.columns) == 1:
@@ -86,7 +87,7 @@ def _normalize_lazy(obj):
 
             if isinstance(obj.index, pandas.RangeIndex):
                 # Series with RangeIndex is treated as an iterator.
-                return iter(obj.values)  # <- EXIT!
+                return TypedIterator(obj.values, evaltype=list)  # <- EXIT!
             else:
                 # Series with another index type is treated as a mapping.
                 return IterItems(obj.iteritems())  # <- EXIT!

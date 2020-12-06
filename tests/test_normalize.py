@@ -101,7 +101,8 @@ class TestNormalizeLazyPandas(unittest.TestCase):
         df = pandas.DataFrame(data)  # Pandas auto-assigns a RangeIndex.
         result = _normalize_lazy(df)
 
-        self.assertEqual(list(data), data)
+        self.assertIsInstance(result, TypedIterator)
+        self.assertEqual(result.fetch(), data)
 
     def test_dataframe_with_otherindex(self):
         """DataFrames using other index types should be treated as mappings."""
@@ -167,7 +168,8 @@ class TestNormalizeLazyPandas(unittest.TestCase):
         s = pandas.Series(data)  # Pandas auto-assigns a RangeIndex.
         result = _normalize_lazy(s)
 
-        self.assertEqual(list(data), data)
+        self.assertIsInstance(result, TypedIterator)
+        self.assertEqual(result.fetch(), data)
 
     def test_series_with_otherindex(self):
         """Series using other index types should be treated as mappings."""
