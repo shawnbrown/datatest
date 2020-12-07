@@ -171,10 +171,11 @@ class ValidateType(object):
     """Raise a :exc:`ValidationError` if *data* does not satisfy
     *requirement* or pass without error if data is valid.
 
-    This is a rich comparison object---the given *data* and
+    This is a rich comparison function---the given *data* and
     *requirement* arguments can be mappings, iterables, or other
-    objects. An optional *msg* string can be provided to describe
-    the validation.
+    objects (including objects from :mod:`pandas`, :mod:`numpy`,
+    database cursors, and :mod:`squint`). An optional *msg* string
+    can be provided to describe the validation.
 
     .. _predicate-validation:
 
