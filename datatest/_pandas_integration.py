@@ -161,28 +161,25 @@ class ValidateIndex(ValidationAccessor):
 ##############################################
 
 def register_accessors():
-    """Register "validate" accessors for pandas :class:`DataFrame
-    <pandas.DataFrame>`, :class:`Series <pandas.Series>`, and
-    :class:`Index <pandas.Index>` objects:
+    """Register the ``validate`` accessor for tighter :mod:`pandas`
+    integration. This provides an alternate syntax for validating
+    DataFrame, Series, Index, and MultiIndex objects.
+
+    After calling :func:`register_accessors`, you can use "validate"
+    as a method:
 
     .. code-block:: python
-        :emphasize-lines: 4
+        :emphasize-lines: 8,9
 
         import pandas as pd
         import datatest as dt
 
+        df = pd.read_csv('example.csv')
+
+        dt.validate(df['A'], {'x', 'y', 'z'})  # <- Validate column 'A'.
+
         dt.register_accessors()
-        ...
-
-    After registration, the "validate" accessor maps calls to
-    :func:`validate`::
-
-        ...
-        # Check a column's values using the "validate" accessor.
-        df['A'].validate({'x', 'y', 'z'})
-
-        # Check a column's values using equivalent non-accessor syntax.
-        validate(df['A'], {'x', 'y', 'z'})
+        df['A'].validate({'x', 'y', 'z'})  # <- Validate 'A' using accessor syntax.
     """
     global ValidateDataFrame
     global ValidateSeries
