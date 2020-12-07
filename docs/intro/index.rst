@@ -17,4 +17,4 @@ Introduction
     tour-of-datatest
     Automated Testing <automated-testing>
     Pipeline Validation <pipeline-validation>
-
+    Validating Pandas <validating-pandas>
