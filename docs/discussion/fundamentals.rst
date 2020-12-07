@@ -2,13 +2,13 @@
 .. currentmodule:: datatest
 
 .. meta::
-    :description: A discussion of data testing fundamentals.
-    :keywords: data, testing, incremental, validation, data-wrangling
+    :description: A discussion on organizing a data test suite.
+    :keywords: data, testing, organizing, incremental, validation
 
 
-#########################
-Data Testing Fundamentals
-#########################
+#######################
+Organizing a Test Suite
+#######################
 
 Unlike unit testing of software, it's oftentimes not possible to check
 data properties as independent "units" in isolation. Later tests often
