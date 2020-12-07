@@ -24,6 +24,7 @@ You can copy the following ``RequiredOutliers`` class to use in
 your own tests:
 
 .. code-block:: python
+    :linenos:
 
     from statistics import median
     from datatest import validate
@@ -87,6 +88,8 @@ earlier to check for outliers in a list of values:
 
 .. code-block:: python
     :emphasize-lines: 4
+    :linenos:
+    :lineno-start: 28
 
     ...
 
@@ -106,6 +109,8 @@ You can also use the class to validate mappings of values as well:
 
 .. code-block:: python
     :emphasize-lines: 7
+    :linenos:
+    :lineno-start: 33
 
     ...
 

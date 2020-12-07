@@ -23,6 +23,7 @@ are float instances:
 
 .. code-block:: python
     :emphasize-lines: 4
+    :linenos:
 
     from datatest import validate
 
@@ -36,6 +37,7 @@ valid if they are strings:
 
 .. code-block:: python
     :emphasize-lines: 4
+    :linenos:
 
     from datatest import validate
 
@@ -52,6 +54,7 @@ contain a number followed by a string:
 
 .. code-block:: python
     :emphasize-lines: 5
+    :linenos:
 
     from numbers import Number
     from datatest import validate
@@ -74,6 +77,7 @@ to validate types in NumPy arrays:
 
 .. code-block:: python
     :emphasize-lines: 9
+    :linenos:
 
     import numpy as np
     import datatest as dt
@@ -91,6 +95,7 @@ You can also use NumPy's own generic types (e.g., ``np.character``,
 
 .. code-block:: python
     :emphasize-lines: 9
+    :linenos:
 
     import numpy as np
     import datatest as dt

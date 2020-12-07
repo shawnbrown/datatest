@@ -29,6 +29,7 @@ vulnerable to inadvertent auto-formatting:
 
 .. code-block:: python
     :emphasize-lines: 44
+    :linenos:
 
     import re
     from datatest import validate, Predicate
@@ -100,6 +101,8 @@ of dates or numbers:
 
 .. code-block:: python
     :emphasize-lines: 5,7
+    :linenos:
+    :lineno-start: 34
 
     ...
 
@@ -120,6 +123,8 @@ underscores (``_``):
 
 .. code-block:: python
     :emphasize-lines: 4-9
+    :linenos:
+    :lineno-start: 34
 
     ...
 

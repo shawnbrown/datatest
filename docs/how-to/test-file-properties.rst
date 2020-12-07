@@ -23,6 +23,7 @@ Example
     .. group-tab:: Pandas
 
         .. code-block:: python
+            :linenos:
 
             import datetime
             import os
@@ -92,6 +93,7 @@ Example
     .. group-tab:: dict-of-lists
 
         .. code-block:: python
+            :linenos:
 
             import datetime
             import os
@@ -179,9 +181,17 @@ Below, we count the number of lines in each file and add a
 
 .. code-block:: python
     :emphasize-lines: 12-13,22
+    :linenos:
 
     import datetime
     import os
+
+    ...
+
+.. code-block:: python
+    :emphasize-lines: 9-10,19
+    :linenos:
+    :lineno-start: 7
 
     ...
 

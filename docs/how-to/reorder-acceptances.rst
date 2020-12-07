@@ -26,6 +26,8 @@ whole-error acceptance, :func:`accepted.count`, and a group-wise
 acceptance, :func:`accepted([...]) <accepted>`:
 
 .. code-block:: python
+    :linenos:
+    :lineno-start: 21
 
     with accepted.count(4) | accepted([Missing('A'), Missing('B')]):
         ...
@@ -40,7 +42,11 @@ Explicit Ordering
 -----------------
 
 If you want to control this order explicitly, you can use nested
-``with`` statements to change the default behavior::
+``with`` statements to change the default behavior:
+
+.. code-block:: python
+    :linenos:
+    :lineno-start: 21
 
     with accepted([Missing('A'), Missing('B')]):
         with accepted.count(4):

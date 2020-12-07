@@ -111,6 +111,7 @@ Lowercase
 Check that file names are lowercase:
 
 .. code-block:: python
+    :linenos:
 
     from pathlib import Path
     from datatest import validate, working_directory
@@ -131,6 +132,7 @@ Lowercase Without Spaces
 Check that file names are lowercase and don't use spaces:
 
 .. code-block:: python
+    :linenos:
 
     from pathlib import Path
     from datatest import validate, working_directory
@@ -149,6 +151,7 @@ Not Too Long
 Check that the file names aren't too long (25 characters or less):
 
 .. code-block:: python
+    :linenos:
 
     from pathlib import Path
     from datatest import validate, working_directory
@@ -170,6 +173,7 @@ Check for CSV Type
 Check that files are CSVs files:
 
 .. code-block:: python
+    :linenos:
 
     from pathlib import Path
     from datatest import validate, working_directory
@@ -190,6 +194,7 @@ Multiple Files Types
 Check that files are CSV, Excel, or DBF file types:
 
 .. code-block:: python
+    :linenos:
 
     from pathlib import Path
     from datatest import validate, working_directory
@@ -213,6 +218,7 @@ Using :meth:`validate.superset`, check that the list of file names
 includes a given set of required files:
 
 .. code-block:: python
+    :linenos:
 
     from pathlib import Path
     from datatest import validate, working_directory
@@ -231,6 +237,7 @@ Check that file names begin with a date in YYYYMMDD format (e.g.,
 20201103_data.csv):
 
 .. code-block:: python
+    :linenos:
 
     from pathlib import Path
     from datatest import validate, working_directory

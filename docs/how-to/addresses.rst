@@ -49,6 +49,7 @@ misidentified as numeric data and loading them into numeric column
 would strip any leading zeros---corrupting the data you're testing:
 
 .. code-block:: python
+    :linenos:
 
     import pandas as pd
     from datatest import validate
@@ -98,6 +99,8 @@ The example below uses a regular expression, ``\w+``, to match one or
 more letters or numbers:
 
 .. code-block:: python
+    :linenos:
+    :lineno-start: 7
 
     ...
 
@@ -118,6 +121,8 @@ The example below uses a regular expression, ``[A-Za-z]+``, to match one
 or more letters:
 
 .. code-block:: python
+    :linenos:
+    :lineno-start: 10
 
     ...
 
@@ -136,6 +141,8 @@ In this example, we use :func:`validate.subset` to check that the values in
 the "state" column are members of the ``state_codes`` set:
 
 .. code-block:: python
+    :linenos:
+    :lineno-start: 13
 
     ...
 
@@ -162,6 +169,8 @@ This example uses a regex, ``^\d{5}(-\d{4})?$``, to match the two possible
 formats:
 
 .. code-block:: python
+    :linenos:
+    :lineno-start: 25
 
     ...
 
@@ -182,6 +191,8 @@ to check the first digit of a ZIP Code against a set of associated state
 codes:
 
 .. code-block:: python
+    :linenos:
+    :lineno-start: 28
 
     ...
 

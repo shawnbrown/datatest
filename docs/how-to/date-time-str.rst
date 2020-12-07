@@ -18,6 +18,7 @@ dates that match the pattern YYYY-MM-DD:
 
 .. code-block:: python
     :emphasize-lines: 17
+    :linenos:
 
     from datetime import datetime
     from datatest import validate

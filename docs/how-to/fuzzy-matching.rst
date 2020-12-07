@@ -21,6 +21,7 @@ approximate matches with the :meth:`accepted.fuzzy` acceptance:
 
 .. code-block:: python
     :emphasize-lines: 7
+    :linenos:
 
     from datatest import validate, accepted
 
@@ -38,6 +39,7 @@ previously:
 
 .. code-block:: python
     :emphasize-lines: 7
+    :linenos:
 
     from datatest import validate
 

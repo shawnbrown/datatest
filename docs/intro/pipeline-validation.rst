@@ -27,6 +27,8 @@ in a pipeline framework, the steps are often a type of "task" or
 A simple pipeline could look something like the following:
 
 .. code-block:: python
+    :linenos:
+    :lineno-start: 21
 
     ...
 
@@ -45,6 +47,8 @@ existing steps:
 
 .. code-block:: python
     :emphasize-lines: 6,10-11,15
+    :linenos:
+    :lineno-start: 21
 
     ...
 
@@ -106,6 +110,8 @@ validation on or off as needed:
 
 .. code-block:: python
     :emphasize-lines: 6-7,11-13,17-18
+    :linenos:
+    :lineno-start: 21
 
     ...
 
@@ -175,6 +181,8 @@ of items for validation:
 
 .. code-block:: python
     :emphasize-lines: 10-12,16-17
+    :linenos:
+    :lineno-start: 21
 
     ...
 
@@ -208,9 +216,18 @@ validation and then reconstruct the iterator to continue with data
 processing:
 
 .. code-block:: python
-    :emphasize-lines: 1,10-12,16-18
+    :emphasize-lines: 1
+    :linenos:
+    :lineno-start: 1
 
     import itertools
+
+    ...
+
+.. code-block:: python
+    :emphasize-lines: 8-10,14-16
+    :linenos:
+    :lineno-start: 22
 
     ...
 
@@ -238,6 +255,8 @@ processing:
     iterators, you may want to define a function for doing so:
 
     .. code-block:: python
+        :linenos:
+        :lineno-start: 1
 
         import itertools
 
@@ -249,8 +268,20 @@ processing:
 
         ...
 
+    Calling this function returns a tuple that contains a *sample*
+    and the reconstructed *iterator*:
+
+    .. code-block:: python
+        :emphasize-lines: 3
+        :linenos:
+        :lineno-start: 27
+
+        ...
+
         sample, iterator = get_sample(iterator)
         validate(sample, (int, str))
+
+        ...
 
 
 .. important::

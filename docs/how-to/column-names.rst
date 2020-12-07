@@ -106,6 +106,7 @@ csv.reader()
 
 .. code-block:: python
     :emphasize-lines: 7-8
+    :linenos:
 
     import csv
     from datatest import validate
@@ -122,6 +123,7 @@ csv.DictReader()
 
 .. code-block:: python
     :emphasize-lines: 7
+    :linenos:
 
     import csv
     from datatest import validate
@@ -137,6 +139,7 @@ Pandas
 
 .. code-block:: python
     :emphasize-lines: 5
+    :linenos:
 
     import pandas as pd
     import datatest as dt
@@ -150,6 +153,7 @@ Pandas (Integrated)
 
 .. code-block:: python
     :emphasize-lines: 4,7
+    :linenos:
 
     import pandas as pd
     import datatest as dt
@@ -165,6 +169,7 @@ Squint
 
 .. code-block:: python
     :emphasize-lines: 5
+    :linenos:
 
     import squint
     from datatest import validate
@@ -182,6 +187,7 @@ can get a table's column names using the :pep:`cursor.description
 
 .. code-block:: python
     :emphasize-lines: 7-9
+    :linenos:
 
     import sqlite3
     from datatest import validate

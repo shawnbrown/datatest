@@ -45,6 +45,7 @@ them as you would any other difference:
 
         .. code-block:: python
             :emphasize-lines: 8
+            :linenos:
 
             from math import nan
             from datatest import validate, accepted, Extra
@@ -60,6 +61,7 @@ them as you would any other difference:
     .. group-tab:: No Acceptance
 
         .. code-block:: python
+            :linenos:
 
             from math import nan
             from datatest import validate
@@ -91,6 +93,7 @@ set, or mapping of differences:
 
         .. code-block:: python
             :emphasize-lines: 8
+            :linenos:
 
             from math import nan
             from datatest import validate, accepted, Missing, Extra
@@ -106,6 +109,7 @@ set, or mapping of differences:
     .. group-tab:: No Acceptance
 
         .. code-block:: python
+            :linenos:
 
             from math import nan
             from datatest import validate
@@ -155,6 +159,7 @@ NaN records and validate the remaining data.
 
         .. code-block:: python
             :emphasize-lines: 7
+            :linenos:
 
             import pandas as pd
             from datatest import validate
@@ -175,6 +180,7 @@ NaN records and validate the remaining data.
 
         .. code-block:: python
             :emphasize-lines: 7
+            :linenos:
 
             from math import isnan
             from datatest import validate
@@ -212,6 +218,7 @@ actual NaN values.
 
         .. code-block:: python
             :emphasize-lines: 14
+            :linenos:
 
             import pandas as pd
             from datatest import validate
@@ -239,6 +246,7 @@ actual NaN values.
 
         .. code-block:: python
             :emphasize-lines: 20
+            :linenos:
 
             from math import isnan
             from datatest import validate

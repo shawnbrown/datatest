@@ -19,6 +19,7 @@ To check for a specific sequence, you can pass a list [1]_ as the
 
 .. code-block:: python
     :emphasize-lines: 4
+    :linenos:
 
     from datatest import validate
 
@@ -68,6 +69,7 @@ can :py:func:`enumerate` your *data* and *requirement* objects:
 
 .. code-block:: python
     :emphasize-lines: 5
+    :linenos:
 
     from datatest import validate
 
@@ -100,6 +102,7 @@ their index positions, you can use :meth:`validate.order`:
 
 .. code-block:: python
     :emphasize-lines: 5
+    :linenos:
 
     from datatest import validate
 

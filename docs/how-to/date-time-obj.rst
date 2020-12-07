@@ -19,6 +19,7 @@ You can compare :py:class:`date <datetime.date>` and :py:class:`datetime
 
 .. code-block:: python
     :emphasize-lines: 4,6
+    :linenos:
 
     from datetime import date, datetime
     from datatest import validate
@@ -32,6 +33,7 @@ Compare mappings of date objects:
 
 .. code-block:: python
     :emphasize-lines: 16
+    :linenos:
 
     from datetime import date
     from datatest import validate
@@ -62,6 +64,7 @@ Check that dates fall within the month of December 2020:
 
 .. code-block:: python
     :emphasize-lines: 11
+    :linenos:
 
     from datetime import date
     from datatest import validate
@@ -80,6 +83,7 @@ Check that dates are one week old or newer:
 
 .. code-block:: python
     :emphasize-lines: 11
+    :linenos:
 
     from datetime import date, timedelta
     from datatest import validate
@@ -111,6 +115,7 @@ Failed Equality
     .. group-tab:: Failure
 
         .. code-block:: python
+            :linenos:
 
             from datetime import date
             from datatest import validate
@@ -132,6 +137,7 @@ Failed Equality
 
         .. code-block:: python
             :emphasize-lines: 4
+            :linenos:
 
             from datetime import date, timedelta
             from datatest import validate, accepted
@@ -148,6 +154,7 @@ Failed Interval
     .. group-tab:: Failure
 
         .. code-block:: python
+            :linenos:
 
             from datetime import date
             from datatest import validate
@@ -178,6 +185,7 @@ Failed Interval
 
         .. code-block:: python
             :emphasize-lines: 11
+            :linenos:
 
             from datetime import date, timedelta
             from datatest import validate, accepted
@@ -201,6 +209,7 @@ Failed Mapping Equalities
     .. group-tab:: Failure
 
         .. code-block:: python
+            :linenos:
 
             from datetime import datetime
             from datatest import validate
@@ -242,6 +251,7 @@ Failed Mapping Equalities
 
         .. code-block:: python
             :emphasize-lines: 20
+            :linenos:
 
             from datetime import datetime, timedelta
             from datatest import validate, accepted
