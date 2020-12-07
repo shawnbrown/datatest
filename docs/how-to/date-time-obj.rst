@@ -90,7 +90,7 @@ Check that dates are one week old or newer:
         'C': date(2020, 12, 26),
     }
 
-    one_week_ago = date.today() - timedelta(days=-7)
+    one_week_ago = date.today() - timedelta(days=7)
     validate.interval(data, min=one_week_ago, msg='one week old or newer')
 
 
