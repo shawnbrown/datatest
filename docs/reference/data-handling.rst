@@ -59,6 +59,82 @@ working_directory
         form is acceptible.
 
 
+.. _pandas-accessor-docs:
+
+****************
+Pandas Accessors
+****************
+
+Datatest provides an optional :ref:`extension accessor
+<pandas:ecosystem.accessors>` for integrating validation
+directly with pandas objects.
+
+.. autofunction:: register_accessors
+
+
+Accessor Equivalencies
+======================
+
+Below, you can compare the accessor syntax against the equivalent
+non-accessor syntax:
+
+.. tabs::
+
+    .. group-tab:: Accessor Syntax
+
+        .. code-block:: python
+
+            import datatest as dt
+            dt.register_accessors()
+            ...
+
+            df.columns.validate({'A', 'B', 'C'})      # Index
+
+            df['A'].validate({'x', 'y', 'z'})         # Series
+
+            df['C'].validate.interval(10, 30)         # Series
+
+            df[['A', 'C']].validate((str, int))       # DataFrame
+
+    .. group-tab:: Non-accessor Syntax
+
+        .. code-block:: python
+
+            import datatest as dt
+
+            ...
+
+            dt.validate(df.columns, {'A', 'B', 'C'})  # Index
+
+            dt.validate(df['A'], {'x', 'y', 'z'})     # Series
+
+            dt.validate.interval(df['C'], 10, 30)     # Series
+
+            dt.validate(df[['A', 'C']], (str, int))   # DataFrame
+
+
+Here is the full list of accessor equivalencies:
+
+.. table::
+    :widths: auto
+
+    ======================================= ==================================================================
+    Accessor Expression                     Equivalent Non-accessor Expression
+    ======================================= ==================================================================
+    ``obj.validate(requirement)``           :class:`validate(obj, requirement) <validate>`
+    ``obj.validate.predicate(requirement)`` :class:`validate.predicate(obj, requirement) <validate.predicate>`
+    ``obj.validate.regex(requirement)``     :class:`validate.regex(obj, requirement) <validate.regex>`
+    ``obj.validate.approx(requirement)``    :class:`validate.approx(obj, requirement) <validate.approx>`
+    ``obj.validate.fuzzy(requirement)``     :class:`validate.fuzzy(obj, requirement) <validate.fuzzy>`
+    ``obj.validate.interval(min, max)``     :class:`validate.interval(obj, min, max) <validate.interval>`
+    ``obj.validate.set(requirement)``       :class:`validate.set(obj, requirement) <validate.set>`
+    ``obj.validate.subset(requirement)``    :class:`validate.subset(obj, requirement) <validate.subset>`
+    ``obj.validate.superset(requirement)``  :class:`validate.superset(obj, requirement) <validate.superset>`
+    ``obj.validate.unique()``               :class:`validate.unique(obj) <validate.unique>`
+    ``obj.validate.order(requirement)``     :class:`validate.order(obj, requirement) <validate.order>`
+    ======================================= ==================================================================
+
+
 ******************
 RepeatingContainer
 ******************

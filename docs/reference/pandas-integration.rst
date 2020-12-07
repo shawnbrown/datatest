@@ -2,235 +2,274 @@
 .. currentmodule:: datatest
 
 .. meta::
-    :description: datatest API for pandas integration
-    :keywords: datatest, pandas, validate, validation
+    :description: An introduction to using Pandas together with Datatest.
+    :keywords: datatest, pandas, validate, testing, DataFrame, Series, Index
 
 
-##################
-Pandas Integration
-##################
+#########################
+Validating Pandas Objects
+#########################
 
-Datatest can validate :mod:`pandas` objects the same way it validates
-built-in types:
+The :mod:`pandas` data analysis package is commonly used for data
+work. This page explains how datatest handles the validation of
+|DataFrame|, |Series|, |Index|, and |MultiIndex| objects.
 
-* :class:`Index <pandas.Index>` objects are validated as sequences.
-* :class:`Series <pandas.Series>` objects are validated as sequences.
-* :class:`DataFrame <pandas.DataFrame>` objects are validated as
-  mappings where each index element is a key and associated data
-  elements are values. If the DataFrame contains multiple columns,
-  data elements are wrapped in a tuple.
-
-
-********
-Examples
-********
-
-The following examples demonstrate how datatest handles pandas
-objects. The examples will use the following DataFrame:
-
-.. code-block:: python
-
-    import pandas as pd
-    import datatest as dt
-
-
-    df = pd.DataFrame(
-        data=[
-            ['x', 'foo', 20],
-            ['x', 'foo', 30],
-            ['y', 'foo', 10],
-            ['y', 'bar', 20],
-            ['z', 'bar', 10],
-            ['z', 'bar', 10],
-        ],
-        columns=['A', 'B', 'C'],
-    )
-
-    ...
-
-
-Index
-=====
-
-In this example, we check that the values in ``df.columns`` (an Index)
-are members of the set ``{'A', 'B', 'C'}``:
-
-.. code-block:: python
-
-    dt.validate(df.columns, {'A', 'B', 'C'})
-
-This is roughly equivalent to:
-
-.. code-block:: python
-
-    dt.validate(['A', 'B', 'C'], {'A', 'B', 'C'})
-
-
-Series
-======
-
-In this example, we check that the values in ``df['A']`` (a Series)
-are members of the set ``{'x', 'y', 'z'}``:
-
-.. code-block:: python
-
-    dt.validate(df['A'], {'x', 'y', 'z'})
-
-This is roughly equivalent to:
-
-.. code-block:: python
-
-    dt.validate(['x', 'x', 'y', 'y', 'z', 'z'], {'x', 'y', 'z'})
+.. |DataFrame| replace:: :class:`DataFrame <pandas.DataFrame>`
+.. |Series| replace:: :class:`Series <pandas.Series>`
+.. |Index| replace:: :class:`Index <pandas.Index>`
+.. |MultiIndex| replace:: :class:`MultiIndex <pandas.MultiIndex>`
+.. |extension accessors| replace:: :ref:`extension accessors <pandas:ecosystem.accessors>`
 
 
 DataFrame
 =========
 
-In the following example, we check that the records of
-``df[['A', 'C']]`` (a DataFrame) contain an integer and
-a string:
-
-.. code-block:: python
-
-    dt.validate(df[['A', 'C']], (str, int))
-
-This is roughly equivalent to:
-
-.. code-block:: python
-
-    dt.validate(
-        {
-            0: ('x', 20),
-            1: ('x', 30),
-            2: ('y', 10),
-            3: ('y', 20),
-            4: ('z', 10),
-            5: ('z', 10),
-        },
-        (str, int)
-    )
-
-
-.. hint::
-
-    As noted earlier, DataFrames are treated as mappings where
-    indexes are keys and data elements are values. The following
-    examples show some simple DataFrame objects and their equivalent
-    mapping representations.
-
-    Consider the following:
-
-    .. code-block:: python
-
-        >>> import pandas as pd
-        >>> data = [['x', 1], ['y', 2], ['z', 3]]
-        >>> my_df = pd.DataFrame(data, columns=['A', 'B'])
-        >>> my_df
-           A  B
-        0  x  1
-        1  y  2
-        2  z  3
-
-    Validation treats the above DataFrame the same as the following
-    dictionary of tuple records:
-
-    .. code-block:: python
-
-        >>> my_dict = {
-        ...     0: ('x', 1),
-        ...     1: ('y', 2),
-        ...     2: ('z', 3),
-        ... }
-
-    For single column DataFrames, values are not wrapped in tuples:
-
-    .. code-block:: python
-
-        >>> import pandas as pd
-        >>> my_df = pd.DataFrame(['x', 'y', 'x'], columns=['A'])
-        >>> my_df
-           A
-        0  x
-        1  y
-        2  z
-
-    Validation treats the above DataFrame the same as the following
-    dictionary of values:
-
-    .. code-block:: python
-
-        >>> my_dict = {
-        ...     0: 'x',
-        ...     1: 'y',
-        ...     2: 'z',
-        ... }
-
-
-.. _pandas-accessor-docs:
-
-***************************************
-Accessors (Alternate Validation Syntax)
-***************************************
-
-Accessors provide an alternate syntax for validation. While
-they do not provide additional functionality, some users may
-prefer the more integrated style.
-
-.. autofunction:: register_accessors
-
-
-Accessor Equivalencies
-======================
-
-The following examples demonstrate the "validate" accessor for
-Index, Series, and DataFrame objects. The equivalent non-accessor
-syntax is included for comparison:
+For validation, :class:`DataFrame <pandas.DataFrame>` objects using
+the default index type are treated as sequences. DataFrames using an
+index of any other type are treated as mappings:
 
 .. tabs::
 
-    .. group-tab:: Accessor Syntax
+    .. group-tab:: Default Index
 
         .. code-block:: python
+            :linenos:
 
-            df.columns.validate({'A', 'B', 'C'})  # Index accessor
+            import pandas as pd
+            import datatest as dt
 
-            df['A'].validate({'x', 'y', 'z'})     # Series accessor
 
-            df['C'].validate.interval(10, 30)     # Series accessor
+            df = pd.DataFrame(data={'A': ['foo', 'bar', 'baz', 'qux'],
+                                    'B': [10, 20, 'x', 'y']})
 
-            df[['A', 'C']].validate((str, int))   # DataFrame accessor
 
-    .. group-tab:: Non-accessor Syntax
+            requirement = [
+                ('foo', 10),
+                ('bar', 20),
+                ('baz', 'x'),
+                ('qux', 'y'),
+            ]
+
+            dt.validate(df, requirement)
+
+        Since no index was specified, ``df`` uses the default
+        :class:`RangeIndex <pandas.RangeIndex>` type---which tells
+        :func:`validate()` to treat the DataFrame as a sequence.
+
+    .. group-tab:: Specified Index
 
         .. code-block:: python
+            :linenos:
 
-            dt.validate(df.columns, {'A', 'B', 'C'})
-
-            dt.validate(df['A'], {'x', 'y', 'z'})
-
-            dt.validate.interval(df['C'], 10, 30)
-
-            dt.validate(df[['A', 'C']], (str, int))
+            import pandas as pd
+            import datatest as dt
 
 
-Here is the full list of accessor equivalencies:
+            df = pd.DataFrame(data={'A': ['foo', 'bar', 'baz', 'qux'],
+                                    'B': [10, 20, 'x', 'y']},
+                              index=['I', 'II', 'III', 'IV'])
 
-.. table::
-    :widths: auto
+            requirement = {
+                'I': ('foo', 10),
+                'II': ('bar', 20),
+                'III': ('baz', 'x'),
+                'IV': ('qux', 'y'),
+            }
 
-    ======================================= ==================================================================
-    Accessor Expression                     Equivalent Non-accessor Expression
-    ======================================= ==================================================================
-    ``obj.validate(requirement)``           :class:`validate(obj, requirement) <validate>`
-    ``obj.validate.predicate(requirement)`` :class:`validate.predicate(obj, requirement) <validate.predicate>`
-    ``obj.validate.regex(requirement)``     :class:`validate.regex(obj, requirement) <validate.regex>`
-    ``obj.validate.approx(requirement)``    :class:`validate.approx(obj, requirement) <validate.approx>`
-    ``obj.validate.fuzzy(requirement)``     :class:`validate.fuzzy(obj, requirement) <validate.fuzzy>`
-    ``obj.validate.interval(min, max)``     :class:`validate.interval(obj, min, max) <validate.interval>`
-    ``obj.validate.set(requirement)``       :class:`validate.set(obj, requirement) <validate.set>`
-    ``obj.validate.subset(requirement)``    :class:`validate.subset(obj, requirement) <validate.subset>`
-    ``obj.validate.superset(requirement)``  :class:`validate.superset(obj, requirement) <validate.superset>`
-    ``obj.validate.unique()``               :class:`validate.unique(obj) <validate.unique>`
-    ``obj.validate.order(requirement)``     :class:`validate.order(obj, requirement) <validate.order>`
-    ======================================= ==================================================================
+            dt.validate(df, requirement)
 
+        In this example, we've specified an index and therefore
+        ``df`` is treated as a mapping.
+
+
+The distinction between implicit and explicit indexing is also
+apparent in error reporting:
+
+.. tabs::
+
+    .. group-tab:: Default Index
+
+        .. code-block:: python
+            :linenos:
+
+            import pandas as pd
+            import datatest as dt
+
+
+            df = pd.DataFrame(data={'A': ['foo', 'bar', 'baz', 'qux'],
+                                    'B': [10, 20, 'x', 'y']})
+
+
+            dt.validate(df, (str, int))
+
+
+        .. code-block:: none
+            :emphasize-lines: 5-6
+
+            Traceback (most recent call last):
+              File "example.py", line 9, in <module>
+                dt.validate(df, (str, int))
+            datatest.ValidationError: does not satisfy (<class 'str'>, <class 'int'>) (2 differences): [
+                Invalid(('baz', 'x')),
+                Invalid(('qux', 'y')),
+            ]
+
+        Since the DataFrame was treated as a sequence, the error includes
+        a sequence of differences.
+
+    .. group-tab:: Specified Index
+
+        .. code-block:: python
+            :linenos:
+
+            import pandas as pd
+            import datatest as dt
+
+
+            df = pd.DataFrame(data={'A': ['foo', 'bar', 'baz', 'qux'],
+                                    'B': [10, 20, 'x', 'y']},
+                              index=['I', 'II', 'III', 'IV'])
+
+            dt.validate(df, (str, int))
+
+
+        .. code-block:: none
+            :emphasize-lines: 5-6
+
+            Traceback (most recent call last):
+              File "example.py", line 9, in <module>
+                dt.validate(df, (str, int))
+            datatest.ValidationError: does not satisfy (<class 'str'>, <class 'int'>) (2 differences): {
+                'III': Invalid(('baz', 'x')),
+                'IV': Invalid(('qux', 'y')),
+            }
+
+        In this example, the DataFrame was treated as a mapping, so the
+        error includes a mapping of differences.
+
+
+Series
+======
+
+:class:`Series <pandas.Series>` objects are handled the same way as
+DataFrames. Series with a default index are treated as sequences and
+Series with explicitly defined indexes are treated as mappings:
+
+.. tabs::
+
+    .. group-tab:: Default Index
+
+        .. code-block:: python
+            :linenos:
+
+            import pandas as pd
+            import datatest as dt
+
+
+            s = pd.Series(data=[10, 20, 'x', 'y'])
+
+
+            requirement = [10, 20, 'x', 'y']
+
+            dt.validate(s, requirement)
+
+    .. group-tab:: Specified Index
+
+        .. code-block:: python
+            :linenos:
+
+            import pandas as pd
+            import datatest as dt
+
+
+            s = pd.Series(data=[10, 20, 'x', 'y'],
+                          index=['I', 'II', 'III', 'IV'])
+
+            requirement = {'I': 10, 'II': 20, 'III': 'x', 'IV': 'y'}
+
+            dt.validate(s, requirement)
+
+
+Like before, the sequence and mapping handling is also apparent
+in the error reporting:
+
+.. tabs::
+
+    .. group-tab:: Default Index
+
+        .. code-block:: python
+            :linenos:
+
+            import pandas as pd
+            import datatest as dt
+
+
+            s = pd.Series(data=[10, 20, 'x', 'y'])
+
+
+            dt.validate(s, int)
+
+
+        .. code-block:: none
+            :emphasize-lines: 5-6
+
+            Traceback (most recent call last):
+              File "example.py", line 8, in <module>
+                dt.validate(s, int)
+            datatest.ValidationError: does not satisfy 'int' (2 differences): [
+                Invalid('x'),
+                Invalid('y'),
+            ]
+
+    .. group-tab:: Specified Index
+
+        .. code-block:: python
+            :linenos:
+
+            import pandas as pd
+            import datatest as dt
+
+
+            s = pd.Series(data=[10, 20, 'x', 'y'],
+                          index=['I', 'II', 'III', 'IV'])
+
+            dt.validate(s, int)
+
+
+        .. code-block:: none
+            :emphasize-lines: 5-6
+
+            Traceback (most recent call last):
+              File "example.py", line 8, in <module>
+                dt.validate(s, int)
+            datatest.ValidationError: does not satisfy 'int' (2 differences): {
+                'III': Invalid('x'),
+                'IV': Invalid('y'),
+            }
+
+
+Index and MultiIndex
+====================
+
+:class:`Index <pandas.Index>` and :class:`MultiIndex <pandas.MultiIndex>`
+objects are all treated as sequences:
+
+.. code-block:: python
+    :linenos:
+
+    import pandas as pd
+    import datatest as dt
+
+
+    index = pd.Index(['I', 'II', 'III', 'IV'])
+    requirement = ['I', 'II', 'III', 'IV']
+    dt.validate(index, requirement)
+
+    multi = pd.MultiIndex.from_tuples([
+        ('I', 'a'),
+        ('II', 'b'),
+        ('III', 'c'),
+        ('IV', 'd'),
+    ])
+    requirement = [('I', 'a'), ('II', 'b'), ('III', 'c'), ('IV', 'd')]
+    dt.validate(multi, requirement)
