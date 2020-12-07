@@ -14,7 +14,7 @@ Discussion
 .. toctree::
     :maxdepth: 2
 
-    Fundamentals <fundamentals>
+    Organizing Tests <organizing-tests>
     Tips and Tricks <tips-and-tricks>
     data-preparation
     validate-vs-accept
