@@ -325,11 +325,25 @@ you can use the ``-f`` option to stop after any failing test:
     python -m datatest -f
 
 
-:class:`DataTestCase` is a child class of :py:class:`unittest.TestCase` and
-it inherits all of its parent's methods. You can also import :py:mod:`unittest`
-directly to use functions like :py:func:`unittest.addModuleCleanup` and
-features like `Class and Module Fixtures
-<https://docs.python.org/library/unittest.html#class-and-module-fixtures>`_.
+You can also use features directly from :mod:`unittest`.
+This includes decorators like :py:func:`@skip() <unittest.skip>`
+and :py:func:`@skipIf() <unittest.skipIf>`, functions like
+:py:func:`addModuleCleanup() <unittest.addModuleCleanup>`,
+and features like `Class and Module Fixtures
+<https://docs.python.org/library/unittest.html#class-and-module-fixtures>`_:
+
+.. code-block:: python
+    :emphasize-lines: 5
+
+    import unittest
+    from datatest import DataTestCase
+
+    class TestMyData(DataTestCase):
+        @unittest.skip('Data not yet collected.')
+        def test_one(self):
+            data = ...
+            requirement = ...
+            self.assertValid(data, requirement)
 
 
 .. _unittest-samples-docs:
