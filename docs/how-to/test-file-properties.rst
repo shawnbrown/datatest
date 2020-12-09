@@ -55,8 +55,8 @@ Example
                 directory = '.'  # Current directory.
                 pattern = '*.csv'  # Matches CSV files.
                 paths = (p for p in pathlib.Path(directory).glob(pattern) if p.is_file())
-                properties_dict = (get_properties(p) for p in paths)
-                df = pd.DataFrame.from_records(properties_dict)
+                dict_records = (get_properties(p) for p in paths)
+                df = pd.DataFrame.from_records(dict_records)
                 df = df.set_index(['path'])
                 return df
 
