@@ -38,9 +38,9 @@ many tests as necessary to determine if a dataset is *fit for purpose*.
 Pytest
 ******
 
-With pytest, you can use datatest functions and classes just
-as you would in any other context. And you can run pytest using
-its normal, console interface (see :ref:`pytest:usage`).
+With :mod:`pytest`, you can use datatest functions and classes
+just as you would in any other context. And you can run pytest
+using its normal, console interface (see :ref:`pytest:usage`).
 
 To facilitate incremental testing, datatest implements a
 "mandatory" marker to stop the session early when a mandatory
@@ -270,7 +270,7 @@ Unittest
 ********
 
 Datatest provides a handful of tools for integrating data validation
-with a unittest test suite. While normal datatest functions work
+with a :mod:`unittest` test suite. While normal datatest functions work
 fine, this integration provides an interface that is more consistent
 with established unittest conventions (e.g., "mixedCase" methods,
 decorators, and helper classes).
@@ -525,7 +525,7 @@ Data for Script Samples
     | :download:`example.sqlite3 </_static/example.sqlite3>`
 
 The test samples given on this page were written to check
-the following data set:
+the following dataset:
 
     ===  ===  ===
      A    B    C
