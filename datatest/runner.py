@@ -36,28 +36,17 @@ def mandatory(test_item):
 # _sort_key() function can find the proper line number when test_item
 # gets wrapped by functools.wraps().
 def skip(reason):
-    """A decorator to unconditionally skip a test:
+    """Unconditionally skip a test.
 
-    .. code-block:: python
-
-        @datatest.skip('Not finished collecting raw data.')
-        class TestSumTotals(datatest.DataTestCase):
-            def test_totals(self):
-                ...
+    .. deprecated:: 0.10.0
+        Use :py:func:`unittest.skip` instead.
     """
-    def decorator(test_item):
-        if not isinstance(test_item, type):
-            orig_item = test_item           # <- Not in unittest.skip()
-            @functools.wraps(test_item)
-            def skip_wrapper(*args, **kwargs):
-                raise unittest.SkipTest(reason)
-            test_item = skip_wrapper
-            test_item._wrapped = orig_item  # <- Not in unittest.skip()
-
-        test_item.__unittest_skip__ = True
-        test_item.__unittest_skip_why__ = reason
-        return test_item
-    return decorator
+    import warnings
+    warnings.warn(
+        'datatest.skip() is deprecated, use unittest.skip() instead',
+        category=DeprecationWarning,
+    )
+    return unittest.skip(reason)
 
 
 def _id(obj):
@@ -65,17 +54,31 @@ def _id(obj):
 
 
 def skipIf(condition, reason):
-    """A decorator to skip a test if the condition is true."""
-    if condition:
-        return skip(reason)
-    return _id
+    """A decorator to skip a test if the condition is true.
+
+    .. deprecated:: 0.10.0
+        Use :py:func:`unittest.skipIf` instead.
+    """
+    import warnings
+    warnings.warn(
+        'datatest.skipIf() is deprecated, use unittest.skipIf() instead',
+        category=DeprecationWarning,
+    )
+    return unittest.skipIf(condition, reason)
 
 
 def skipUnless(condition, reason):
-    """A decorator to skip a test unless the condition is true."""
-    if not condition:
-        return skip(reason)
-    return _id
+    """A decorator to skip a test unless the condition is true.
+
+    .. deprecated:: 0.10.0
+        Use :py:func:`unittest.skipUnless` instead.
+    """
+    import warnings
+    warnings.warn(
+        'datatest.skipUnless() is deprecated, use unittest.skipUnless() instead',
+        category=DeprecationWarning,
+    )
+    return unittest.skipUnless(condition, reason)
 
 
 class DataTestResult(TextTestResult):
@@ -291,8 +294,10 @@ if sys.version_info[:2] in [(3, 1), (2, 6)]:  # 3.1 and 2.6
 def _sort_key(test):
     """Accepts test method, returns module name and line number."""
     method = getattr(test, test._testMethodName)
-    while hasattr(method, '_wrapped'):  # If object is wrapped with a
-        method = method._wrapped        # decorator, unwrap it.
+
+    # Unwrap object if it has been decorated (e.g., with unittest.skip())
+    while hasattr(method, '__wrapped__'):
+        method = method.__wrapped__
 
     try:
         lineno = inspect.getsourcelines(method)[1]

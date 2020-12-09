@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
+import sys
 from . import _unittest as unittest
 from datatest import DataTestCase
 from datatest import ValidationError
 from datatest import Missing
 
 from datatest.runner import DataTestResult
-from datatest.runner import skip
 from datatest.runner import mandatory
 from datatest.runner import _sort_key
 
@@ -54,15 +54,15 @@ class TestOrdering(unittest.TestCase):
         # Define and instantiate sample case.
         class SampleCase(unittest.TestCase):
             def test_reference(self):  # <- This line number used as reference.
-                pass                         # +1
-                                             # +2
-            @skip('Testing skip behavior.')  # +3 (first check)
-            def test_skipped(self):          # +4
-                pass                         # +5
-                                             # +6
-            @mandatory                       # +7 (second check)
-            def test_mandatory(self):        # +8
-                pass                         # +9
+                pass                                  # +1
+                                                      # +2
+            @unittest.skip('Testing skip behavior.')  # +3 (first check)
+            def test_skipped(self):                   # +4
+                pass                                  # +5
+                                                      # +6
+            @mandatory                                # +7 (second check)
+            def test_mandatory(self):                 # +8
+                pass                                  # +9
 
         # Get line number of undecorated method--this is uses as a
         # reference point from which to determine the required line
@@ -70,11 +70,18 @@ class TestOrdering(unittest.TestCase):
         reference_case = SampleCase('test_reference')
         _, reference_line_no = _sort_key(reference_case)
 
-        # Test line number of skipped method.
-        skipped_case = SampleCase('test_skipped')
-        skipped_line_no = reference_line_no + 3
-        _, line_no = _sort_key(skipped_case)
-        self.assertEqual(skipped_line_no, line_no)
+        # Starting in Python 3.3, the @functools.wraps() decorator
+        # added a greatly needed `__wrapped__` attribute that points
+        # to the original wrapped object. After @unittest.skip() is
+        # applied, this attribute is needed to get the line number
+        # of the original object (instead of the line number of the
+        # decorator).
+        if sys.version_info >= (3, 3):
+            # Test line number of skipped method.
+            skipped_case = SampleCase('test_skipped')
+            skipped_line_no = reference_line_no + 3
+            _, line_no = _sort_key(skipped_case)
+            self.assertEqual(skipped_line_no, line_no)
 
         # Test line number of mandatory method.
         mandatory_case = SampleCase('test_mandatory')

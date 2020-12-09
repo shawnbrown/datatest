@@ -150,22 +150,14 @@ Test Runner Program
             def test_columns(self):
                 ...
 
-.. py:decorator:: skip(reason)
+.. autodecorator:: skip(reason)
 
-    A decorator to unconditionally skip a test::
 
-        @datatest.skip('Not finished collecting raw data.')
-        class TestSumTotals(datatest.DataTestCase):
-            def test_totals(self):
-                ...
+.. autodecorator:: skipIf
 
-.. py:decorator:: skipIf(condition, reason)
 
-    A decorator to skip a test if the condition is true.
+.. autodecorator:: skipUnless
 
-.. py:decorator:: skipUnless(condition, reason)
-
-    A decorator to skip a test unless the condition is true.
 
 .. autoclass:: DataTestRunner
     :members:
