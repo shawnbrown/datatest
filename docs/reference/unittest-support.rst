@@ -150,15 +150,6 @@ Test Runner Program
             def test_columns(self):
                 ...
 
-.. autodecorator:: skip(reason)
-
-
-.. autodecorator:: skipIf
-
-
-.. autodecorator:: skipUnless
-
-
 .. autoclass:: DataTestRunner
     :members:
     :inherited-members:
@@ -172,3 +163,14 @@ Test Runner Program
 .. autoclass:: main
    :members:
    :inherited-members:
+
+
+*******************
+Deprecated Features
+*******************
+
+.. autodecorator:: skip(reason)
+
+.. autodecorator:: skipIf
+
+.. autodecorator:: skipUnless
