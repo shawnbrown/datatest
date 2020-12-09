@@ -10,11 +10,11 @@
 Unittest Support
 ################
 
-Datatest can be used for unittest-style testing. For a quick
-introduction, see:
+Datatest can be used together with the :mod:`unittest` package
+from the Python Standard Library. For a quick introduction, see:
 
-* :ref:`Introduction <unittest-intro-docs>`
-* :ref:`Basic Examples <unittest-samples-docs>`
+* :ref:`Automated Data Testing: Unittest <unittest-intro-docs>`
+* :ref:`Unittest Samples <unittest-samples-docs>`
 
 
 .. _datatestcase-docs:
