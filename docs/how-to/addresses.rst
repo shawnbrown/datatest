@@ -3,12 +3,12 @@
 
 .. meta::
     :description: How to validate date formats.
-    :keywords: datatest, date format, validate, validation
+    :keywords: datatest, address, validation, validate
 
 
-##############################
-How to Validate Addresses (US)
-##############################
+######################################
+How to Validate Mailing Addresses (US)
+######################################
 
 
 ===========================
