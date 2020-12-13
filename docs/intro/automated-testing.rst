@@ -506,8 +506,9 @@ Unittest Samples
             class MyTest(DataTestCase):
                 def setUp(self):
                     cursor = connection.cursor()
+                    self.addCleanup(cursor.close)
+
                     self.cursor = cursor
-                    self.addCleanup(lambda: cursor.close())
 
                 @mandatory
                 def test_column_names(self):
