@@ -97,7 +97,7 @@ Change to the unpacked directory and run the tests::
   python setup.py test
 
 Don't worry if some of the tests are skipped. Tests for optional data
-sources (like pandas DataFrames or MS Excel files) are skipped when the
+sources (like pandas DataFrames or NumPy arrays) are skipped when the
 related third-party packages are not installed.
 
 If the source code and test results are satisfactory, install the
