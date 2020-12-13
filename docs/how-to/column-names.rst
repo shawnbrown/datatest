@@ -32,8 +32,8 @@ exist but allow them to appear in any order:
     validate(column_names, {'A', 'B', 'C'})
 
 
-Are a Subset/Superset of Required Columns
-=========================================
+A Subset/Superset of Required Columns
+=====================================
 
 Using :meth:`validate.subset`/:meth:`validate.superset`, we can check
 that column names are a subset or superset of the required names:
@@ -44,8 +44,8 @@ that column names are a subset or superset of the required names:
     validate.subset(column_names, {'A', 'B', 'C', 'D', 'E'})
 
 
-Are Defined in Specific Order
-=============================
+Defined in a Specific Order
+===========================
 
 Using a :py:class:`list` requirement, we can check that column names
 exist and that they appear in a specified order:
@@ -56,8 +56,8 @@ exist and that they appear in a specified order:
     validate(column_names, ['A', 'B', 'C'])
 
 
-Match a Specific Format
-=======================
+Match a Custom Format (Helper Function)
+=======================================
 
 Sometimes we don't care exactly what the column names are but we want to
 check that they conform to a specific format. To do this, we can define a
@@ -72,28 +72,46 @@ check that column names are all written in uppercase letters:
     column_names = ...
     validate(column_names, isupper)
 
-..
-    In this case, our helper function calls the :py:meth:`isupper()
-    <str.isupper>` method. Alternatively, we could perform this same
-    check using :py:func:`operator.methodcaller`:
-
-In this case, our helper function calls the ``isupper()`` method.
-Alternatively, we could perform this same check using
-:py:func:`operator.methodcaller`:
-
-.. code-block:: python
-
-    from operator import methodcaller
-
-    column_names = ...
-    validate(column_names, methodcaller('isupper'))
-
-
 In addition to :meth:`isupper() <str.isupper>`, there are other
 string methods that can be useful for validating specific formats:
 :meth:`islower() <str.islower>`, :meth:`isalpha() <str.isalpha>`,
 :meth:`isascii() <str.isascii>`, :meth:`isidentifier() <str.isidentifier>`,
 etc.
+
+
+We can also use more involved functions to check for detailed formats.
+Below, we check that column names start with two capital letters and
+end with one or more digits:
+
+.. code-block:: python
+
+    def two_letters_plus_digits(x):
+        first_two_chars = x[:2]
+        remaining_chars = x[2:]
+
+        if not first_two_chars.isalpha():
+            return False
+        if not first_two_chars.isupper():
+            return False
+        return remaining_chars.isdigit()
+
+    column_names = ...
+    validate(column_names, two_letters_plus_digits)
+
+
+Match a Custom Format (Regex Pattern)
+=====================================
+
+We can also use :meth:`validate.regex` to check that column names match
+a :ref:`regular expression <python:re-syntax>` pattern. In the following
+example, we check that column names start with two capital letters
+(``^[A-Z]{2}``) and end with one or more digits (``\d+$``):
+
+.. code-block:: python
+
+    column_names = ...
+    msg = 'Must have two capital letters followed by digits.'
+    validate.regex(column_names, r'^[A-Z]{2}\d+$', msg=msg)
 
 
 ===================================
