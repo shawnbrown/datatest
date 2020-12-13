@@ -25,6 +25,8 @@ DataTestCase
 
 .. autoclass:: DataTestCase
 
+    **VALIDATION METHODS**
+
     The assertion methods wrap :func:`validate` and its methods:
 
     .. code-block:: python
@@ -59,6 +61,8 @@ DataTestCase
     .. automethod:: assertValidUnique
 
     .. automethod:: assertValidOrder
+
+    **ACCEPTANCE METHODS**
 
     The acceptance methods wrap :func:`accepted` and its methods:
 
