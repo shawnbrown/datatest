@@ -30,6 +30,7 @@ How-to Guide
     Addresses <addresses>
     Fuzzy Matching <fuzzy-matching>
     NaN Values <nan-values>
+    Negative Matches <negative-matches>
     Outliers <outliers>
     Phone Numbers <phone-numbers>
     Re-order Acceptances <reorder-acceptances>
