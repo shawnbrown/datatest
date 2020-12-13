@@ -27,7 +27,7 @@ How-to Guide
     File Names <file-names>
     Test File Properties <test-file-properties>
     Excel Auto-Formatting <excel-auto-formatting>
-    Addresses <addresses>
+    Mailing Addresses <mail-address>
     Fuzzy Matching <fuzzy-matching>
     NaN Values <nan-values>
     Negative Matches <negative-matches>
