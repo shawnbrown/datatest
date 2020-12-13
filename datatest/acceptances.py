@@ -972,9 +972,10 @@ class AcceptedFactoryType(object):
         """Returns a context manager that accepts invalid strings
         that match their expected value with a similarity greater
         than or equal to *cutoff* (default 0.6). Similarity measures
-        are determined using the ratio() method of the
-        :py:class:`difflib.SequenceMatcher` class. The values range
-        from 0.0 (completely different) to 1.0 (exactly the same).
+        are determined using :py:meth:`SequenceMatcher.ratio()
+        <difflib.SequenceMatcher.ratio>` from the Standard Library's
+        :py:mod:`difflib` module. The values range from ``1.0``
+        (exactly the same) to ``0.0`` (completely different).
 
         The following example accepts string differences that match
         with a ratio of ``0.6`` or greater:
