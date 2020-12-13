@@ -325,7 +325,7 @@ class ValidateType(object):
 
     def regex(self, data, requirement, flags=0, msg=None):
         r"""Require that string values match a given regular
-        expression:
+        expression (also see :ref:`python:re-syntax`):
 
         .. code-block:: python
             :emphasize-lines: 5
