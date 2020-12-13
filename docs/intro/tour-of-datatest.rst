@@ -46,7 +46,7 @@ use different validation methods for different *requirement* types.
 
 
 For example, when *requirement* is a :py:class:`set`, validation
-checks that elements in *data* are members of the required set:
+checks that elements in *data* are members of that set:
 
 .. code-block:: python
     :linenos:
@@ -77,7 +77,7 @@ the function returns True when applied to each element in *data*:
 
 
 When *requirement* is a **type**, validation checks that the
-elements in *data* are an instances of that type:
+elements in *data* are a instances of that type:
 
 .. code-block:: python
     :linenos:
@@ -231,8 +231,7 @@ handling for several third-party data types.
     .. group-tab:: Pandas (integrated API)
 
         For users who prefer a more tightly integrated API, Datatest
-        provides pandas `accessor extensions
-        <https://pandas.pydata.org/pandas-docs/stable/reference/extensions.html>`_:
+        provides the ``validate`` accessor for testing pandas objects:
 
         .. code-block:: python
             :linenos:
@@ -505,9 +504,9 @@ Accepted Type
 -------------
 
 Without an acceptance, the following validation would fail because the
-values ``'C'`` and ``'D'`` are not members of the set (see the following
-example). But if we decide that :class:`Extra` differences are acceptible,
-we can use ``accepted(Extra)``:
+values ``'C'`` and ``'D'`` are not members of the set (see below). But
+if we decide that :class:`Extra` differences are acceptible, we can use
+``accepted(Extra)``:
 
 .. tabs::
 
@@ -597,8 +596,8 @@ than all differences of a given type. For example, if the difference
 
         This acceptance suppresses the extra ``'C'`` but does not address
         the extra ``'D'`` so the ValidationError is still raised. This
-        remaining error can be addressed by correcting the data, altering
-        the acceptance, or modifying the requirement.
+        remaining error can be addressed by correcting the data, modifying
+        the requirement, or altering the acceptance.
 
     .. group-tab:: No Acceptance
 
