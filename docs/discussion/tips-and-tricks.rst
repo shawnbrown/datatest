@@ -329,7 +329,6 @@ function factory is a function that makes other functions.
 
             from datatest import validate
 
-
             def ends_with(suffix):  # <- Helper function factory.
                 suffix = suffix.lower()
                 def helper(x):
@@ -337,12 +336,14 @@ function factory is a function that makes other functions.
                 helper.__doc__ = f'should end with {suffix!r}'
                 return helper
 
-
             data1 = [...]
             validate(data1, ends_with('.csv'))
 
             data2 = [...]
             validate(data2, ends_with('.txt'))
+
+            data3 = [...]
+            validate(data3, ends_with('.ini'))
 
     .. group-tab:: No Factory
 
@@ -353,21 +354,26 @@ function factory is a function that makes other functions.
 
             from datatest import validate
 
-
             def ends_with_csv(x):  # <- Helper function.
                 """should end with '.csv'"""
                 return x.lower().endswith('.csv')
-
-            data1 = [...]
-            validate(data1, ends_with_csv)
-
 
             def ends_with_txt(x):  # <- Helper function.
                 """should end with '.txt'"""
                 return x.lower().endswith('.txt')
 
+            def ends_with_ini(x):  # <- Helper function.
+                """should end with '.ini'"""
+                return x.lower().endswith('.ini')
+
+            data1 = [...]
+            validate(data1, ends_with_csv)
+
             data2 = [...]
             validate(data2, ends_with_txt)
+
+            data3 = [...]
+            validate(data3, ends_with_ini)
 
 
 Lambda Expressions
