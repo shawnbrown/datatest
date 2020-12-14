@@ -17,7 +17,10 @@ Discussion
     Organizing Tests <organizing-tests>
     Tips and Tricks <tips-and-tricks>
     data-preparation
-    validate-vs-accept
-    terminology
-    project-history
+
+..
+    OMIT UNFINISHED PAGES:
+      validate-vs-accept
+      terminology
+      project-history
 
