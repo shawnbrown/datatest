@@ -180,7 +180,6 @@ Below, we count the number of lines in each file and add a
 ``line_count`` to the dictionary of properties:
 
 .. code-block:: python
-    :emphasize-lines: 12-13,22
     :linenos:
 
     import datetime
