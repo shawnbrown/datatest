@@ -1,3 +1,6 @@
+:orphan:
+
+.. currentmodule:: datatest
 
 .. meta::
     :description: Test-driven data preparation can provide much-needed
