@@ -45,6 +45,10 @@ Table of Contents
     reference/index
     discussion/index
 
+..
+    OMIT UNFINISHED PAGES:
+      tutorial/index
+
 
 .. note::
     This documentation is aimed at newer versions of Python and

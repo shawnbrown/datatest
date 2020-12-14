@@ -1,3 +1,4 @@
+:orphan:
 
 .. meta::
     :description: Datatest examples demonstrating use of pandas DataFrame objects.
@@ -206,7 +207,7 @@ More Information
 
 .. seealso::
 
-    See the :doc:`../reference/pandas-integration` reference docs
+    See the :doc:`../intro/validating-pandas` introduction docs
     for more information and examples.
 
     See :ref:`pandas-accessor-docs` to learn about the alternate
