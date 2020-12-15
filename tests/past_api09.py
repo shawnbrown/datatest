@@ -10,13 +10,13 @@ class TestSubsetAndSupersetMethods(unittest.TestCase):
     def test_subset(self):
         """Check old-style 0.9.x API validate.subset() behavior."""
         data = ['A', 'B', 'C', 'D']
-        requirement = {'A', 'B'}
+        requirement = set(['A', 'B'])
         datatest.validate.subset(data, requirement)
 
     def test_superset(self):
         """Check old-style 0.9.x API validate.superset() behavior."""
         data = ['A', 'B']
-        requirement = {'A', 'B', 'C', 'D'}
+        requirement = set(['A', 'B', 'C', 'D'])
         datatest.validate.superset(data, requirement)
 
 
