@@ -120,10 +120,10 @@ Backward Compatibility
 ======================
 
 If you have existing tests that use API features which have
-changed since 0.8.0, you can still run your old code by
+changed since 0.9.0, you can still run your old code by
 adding the following import to the beginning of each file::
 
-  from datatest.__past__ import api08
+  from datatest.__past__ import api09
 
 To maintain existing test code, this project makes a best-effort
 attempt to provide backward compatibility support for older
@@ -140,10 +140,10 @@ maintained into the future.
 Soft Dependencies
 =================
 
-There are no hard, third-party dependencies. But if you want to
-interface with pandas DataFrames, MS Excel workbooks, or other
+Datatest has no hard, third-party dependencies. But if you want
+to interface with pandas DataFrames, NumPy arrays, or other
 optional data sources, you will need to install the relevant
-packages (``pandas``, ``xlrd``, etc.).
+packages (``pandas``, ``numpy``, etc.).
 
 
 Older Pythons (3.1 and 2.6)
