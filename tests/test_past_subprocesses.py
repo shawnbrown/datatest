@@ -51,6 +51,10 @@ class TestBackwardsCompatibility(unittest.TestCase):
         """Test compatibility with version 0.8 API."""
         self.assertSubprocess('tests.past_api08')
 
+    def test_api09(self):
+        """Test compatibility with version 0.9 API."""
+        self.assertSubprocess('tests.past_api09')
+
 
 if __name__ == '__main__':
     unittest.main()
