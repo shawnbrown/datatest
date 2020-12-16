@@ -13,6 +13,12 @@
 How-to Guide
 ############
 
+.. epigraph::
+
+    *"Hell is other people's data."*
+    ---Jim Harris [#f1]_
+
+
 .. toctree::
     :maxdepth: 1
 
@@ -35,3 +41,7 @@ How-to Guide
     Phone Numbers <phone-numbers>
     Re-order Acceptances <reorder-acceptances>
     Sequences <sequences>
+
+
+.. [#f1] Harris, Jim. "Hell is other people’s data", OCDQ (blog), August 06, 2010,
+         Retrieved from http://www.ocdqblog.com/home/hell-is-other-peoples-data.html
