@@ -535,8 +535,8 @@ class RequiredSet(GroupRequirement):
 _subset_superset_warning = """subset and superset warning:
 
     WARNING: The semantics for the subset() and superset() methods
-    were inverted in datatest 0.9.7. Make sure you are using these
-    methods correctly. See documentation for details:
+    have been inverted after datatest 0.9.6. Make sure you are using
+    these methods correctly. See documentation for details:
 
         https://datatest.readthedocs.io/en/stable/reference/datatest-core.html#datatest.validate.subset
 
@@ -544,6 +544,11 @@ _subset_superset_warning = """subset and superset warning:
 
         import warnings
         warnings.filterwarnings('ignore', message='subset and superset warning')
+
+    If you are using pytest, you can disable warnings by putting the following
+    line at the top of your script:
+
+        pytestmark = pytest.mark.filterwarnings('ignore:subset and superset warning')
 
     This warning is temporary--it will be removed from future versions
     of datatest.
