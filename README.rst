@@ -29,7 +29,7 @@ system of validation methods, difference classes, and acceptance
 context managers.
 
 Datatest has no hard dependencies; it's tested on Python 2.6, 2.7,
-3.2 through 3.9, PyPy, and PyPy3; and is freely available under
+3.2 through 3.10, PyPy, and PyPy3; and is freely available under
 the Apache License, version 2.
 
 .. _pytest: https://pytest.org
@@ -111,7 +111,7 @@ package::
 Supported Versions
 ==================
 
-Tested on Python 2.6, 2.7, 3.2 through 3.9, PyPy, and PyPy3.
+Tested on Python 2.6, 2.7, 3.2 through 3.10, PyPy, and PyPy3.
 Datatest is pure Python and may also run on other implementations
 as well (check using "setup.py test" before installing).
 
