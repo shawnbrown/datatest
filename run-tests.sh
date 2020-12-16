@@ -27,13 +27,15 @@ run_command ()
 #-----------------------------------------------------------------------
 # Run test suite in all supported versions of Python.
 #-----------------------------------------------------------------------
+run_command "python3.9 -B -m unittest $*"
+run_command "python3.8 -B -m unittest $*"
 run_command "python3.7 -B -m unittest $*"
 run_command "python3.6 -B -m unittest $*"
 run_command "python3.5 -B -m unittest $*"
 run_command "python3.4 -B -m unittest $*"
-run_command "python3.3 -B -m unittest $*"
-run_command "python3.2 -B -m unittest $*"
-run_command "python3.1 -B tests/discover.py $*"
+#run_command "python3.3 -B -m unittest $*"
+#run_command "python3.2 -B -m unittest $*"
+#run_command "python3.1 -B tests/discover.py $*"
 run_command "python2.7 -B -m unittest discover $*"
 run_command "python2.6 -B tests/discover.py $*"
 
