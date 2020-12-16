@@ -49,15 +49,3 @@ Table of Contents
     OMIT UNFINISHED PAGES:
       tutorial/index
 
-
-.. note::
-    This documentation is aimed at newer versions of Python and
-    uses some of the following features:
-
-    * :py:class:`set` literals: ``{1, 2, 3}``
-    * :py:data:`Ellipsis` literals: ``...`` (for wildcard :ref:`predicate-docs`)
-    * the :py:mod:`statistics` module
-    * f-strings (formatted string literals, see :pep:`498`)
-
-    If you are using an older version of Python, you may need to
-    convert some examples into older syntax before running them.
