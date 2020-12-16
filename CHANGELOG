@@ -71,7 +71,7 @@ COMING SOON (0.10.0)
   to alert users to the new behavior. This warning will be removed from
   future versions of datatest.
 
-* Added Python 3.9 testing and support.
+* Added Python 3.9 and 3.10 testing and support.
 
 * Removed Python 3.1 testing and support. If you were still using this
   version of Python, please email me---this is a story I need to hear.
