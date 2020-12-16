@@ -19,13 +19,3 @@ except ImportError:
         else:
             i = n // 2
             return (data[i - 1] + data[i]) / 2
-
-    def XXmedian(iterable):
-        values = sorted(iterable)
-        index = (len(values) - 1) / 2.0
-        if index % 1:
-            lower = int(index - 0.5)
-            upper = int(index + 0.5)
-            return (values[lower] + values[upper]) / 2.0
-        return values[int(index)]
-
