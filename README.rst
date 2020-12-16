@@ -28,8 +28,8 @@ a testing framework like pytest_ or unittest_. It implements a
 system of validation methods, difference classes, and acceptance
 context managers.
 
-Datatest has no hard dependencies; supports Python 2.6, 2.7,
-3.1 through 3.9, PyPy, and PyPy3; and is freely available under
+Datatest has no hard dependencies; it's tested on Python 2.6, 2.7,
+3.2 through 3.9, PyPy, and PyPy3; and is freely available under
 the Apache License, version 2.
 
 .. _pytest: https://pytest.org
@@ -111,7 +111,7 @@ package::
 Supported Versions
 ==================
 
-Tested on Python 2.6, 2.7, 3.1 through 3.9, PyPy, and PyPy3.
+Tested on Python 2.6, 2.7, 3.2 through 3.9, PyPy, and PyPy3.
 Datatest is pure Python and may also run on other implementations
 as well (check using "setup.py test" before installing).
 
@@ -144,21 +144,6 @@ Datatest has no hard, third-party dependencies. But if you want
 to interface with pandas DataFrames, NumPy arrays, or other
 optional data sources, you will need to install the relevant
 packages (``pandas``, ``numpy``, etc.).
-
-
-Older Pythons (3.1 and 2.6)
-===========================
-
-While datatest supports Python 3.1 and 2.6, some earlier builds
-of these versions were bundled with an older version of SQLite
-that is not compatible with datatest. The ``sqlite3`` package is
-part of the Python Standard Library and some features of datatest
-use it for internal data handling---though users never need to
-use the package directly.
-
-If you must use one of these older Python versions and you are
-experiencing issues, it is recommended that you upgrade to the
-latest patch release (currently Python 3.1.5 or Python 2.6.9).
 
 
 Development Repository

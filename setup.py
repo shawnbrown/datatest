@@ -139,7 +139,7 @@ if __name__ == '__main__':
             ],
             # Additional fields:
             install_requires=[],  # <- No hard requirements!
-            python_requires='>=2.6.*, !=3.0.*',
+            python_requires='>=2.6.*, !=3.0.*, !=3.1.*',
             description='Test driven data-wrangling and data validation.',
             long_description=long_description,
             author='Shawn Brown',
@@ -154,7 +154,6 @@ if __name__ == '__main__':
                 'Programming Language :: Python :: 2.6',
                 'Programming Language :: Python :: 2.7',
                 'Programming Language :: Python :: 3',
-                'Programming Language :: Python :: 3.1',
                 'Programming Language :: Python :: 3.2',
                 'Programming Language :: Python :: 3.3',
                 'Programming Language :: Python :: 3.4',
