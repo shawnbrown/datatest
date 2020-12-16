@@ -12,7 +12,7 @@ Tips and Tricks for Data Testing
 
 This document is intended for users who are already familiar with
 datatest and its features. It's a grab-bag of ideas and patterns
-you can use for your own tests.
+you can use in your own code.
 
 
 Using methodcaller()
@@ -79,6 +79,7 @@ for validation:
 
     result = compare[['A', 'C']].groupby('A').sum()
     data, requirement = result  # Unpack result items.
+
     dt.validate(data, requirement)
 
 
