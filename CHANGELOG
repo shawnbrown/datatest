@@ -8,6 +8,7 @@ COMING SOON (0.11.0)
 * Removed deprecated decorators: skip(), skipIf(), skipUnless() (use
   unittest.skip(), etc. instead).
 * Removed deprecated aliases Selector and ProxyGroup.
+* Removed the long-deprecated "allowed" interface.
 
 
 2020-12-17 (0.10.0)

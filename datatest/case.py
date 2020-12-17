@@ -191,52 +191,6 @@ class DataTestCase(TestCase):
         self._warn('self.acceptedCount()')
         return AcceptedCount(number, msg)
 
-    # Deprecated since 0.9.5
-
-    def allowedSpecific(self, differences, msg=None):
-        self._warn('self.acceptedSpecific()')
-        return self.accepted(differences, msg)
-
-    def allowedMissing(self, msg=None):
-        self._warn('self.accepted(Missing)')
-        return self.accepted(differences.Missing, msg=msg)
-
-    def allowedExtra(self, msg=None):
-        self._warn('self.accepted(Extra)')
-        return self.accepted(differences.Extra, msg=msg)
-
-    def allowedInvalid(self, msg=None):
-        self._warn('self.accepted(Invalid)')
-        return self.accepted(differences.Invalid, msg=msg)
-
-    def allowedKeys(self, predicate, msg=None):
-        self._warn('self.acceptedKeys()')
-        return AcceptedKeys(predicate, msg)
-
-    def allowedArgs(self, predicate, msg=None):
-        self._warn('self.acceptedArgs()')
-        return AcceptedArgs(predicate, msg)
-
-    def allowedDeviation(self, lower, upper=None, msg=None):
-        self._warn('self.acceptedTolerance(...)')
-        return AcceptedTolerance(lower, upper, msg)
-
-    def allowedPercent(self, lower, upper=None, msg=None):
-        self._warn('self.acceptedPercent(...)')
-        return self.acceptedPercent(lower, upper, msg)
-
-    def allowedPercentDeviation(self, lower, upper=None, msg=None):
-        self._warn('self.acceptedPercent(...)')
-        return self.acceptedPercent(lower, upper, msg)
-
-    def allowedFuzzy(self, cutoff=0.6, msg=None):
-        self._warn('self.acceptedFuzzy()')
-        return AcceptedFuzzy(cutoff=cutoff, msg=msg)
-
-    def allowedLimit(self, number, msg=None):
-        self._warn('self.acceptedCount()')
-        return AcceptedCount(number, msg)
-
 
 # Prettify default signature of methods that accept multiple signatures.
 # This only works for Python 3.3 and newer--older versions will simply

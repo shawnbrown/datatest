@@ -8,10 +8,7 @@ from __future__ import absolute_import
 # Datatest Core API (__all__ property defined in submodules)
 from .validation import *   # Validation error and functions.
 from .differences import *  # Difference classes.
-from .acceptances import (  # Acceptance context manger API.
-    accepted,
-    allowed,  # <- Deprecated since 0.9.5
-)
+from .acceptances import accepted
 
 from ._vendor.predicate import Predicate
 

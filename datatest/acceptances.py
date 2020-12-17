@@ -38,7 +38,6 @@ __all__ = [
     'AcceptedPercent',
     'AcceptedCount',
     'AcceptedFuzzy',
-    'allowed',  # <- Deprecated API.
 ]
 
 
@@ -1093,75 +1092,3 @@ with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
 
 
 accepted = AcceptedFactoryType()  # Use as instance.
-
-
-#####################
-# Deprecated in 0.9.5
-#####################
-
-class allowed(abc.ABC):
-    def __new__(cls, *args, **kwds):
-        msg = ("Can't instantiate abstract class allowed, use constructor "
-               "methods like allowed.missing(), allowed.extra(), etc.")
-        raise TypeError(msg)
-
-    @staticmethod
-    def _warn(new_name):
-        import warnings
-        message = "'allowed' API is deprecated, use {0} instead".format(new_name)
-        warnings.warn(message, DeprecationWarning, stacklevel=3)
-
-    @classmethod
-    def specific(cls, differences, msg=None):
-        cls._warn('accepted(...)')
-        return accepted(differences, msg=msg)
-
-    @classmethod
-    def missing(cls, msg=None):
-        cls._warn('accepted(Missing)')
-        return accepted(Missing)
-
-    @classmethod
-    def extra(cls, msg=None):
-        cls._warn('accepted(Extra)')
-        return accepted(Extra)
-
-    @classmethod
-    def invalid(cls, msg=None):
-        cls._warn('accepted(Invalid)')
-        return accepted(Invalid)
-
-    @classmethod
-    def keys(cls, predicate, msg=None):
-        cls._warn('accepted.keys(...)')
-        return accepted.keys(predicate, msg)
-
-    @classmethod
-    def args(cls, predicate, msg=None):
-        cls._warn('accepted.args(...)')
-        return accepted.args(predicate, msg)
-
-    @classmethod
-    def fuzzy(cls, cutoff=0.6, msg=None):
-        cls._warn('accepted.fuzzy(...)')
-        return accepted.fuzzy(cutoff=cutoff, msg=msg)
-
-    @classmethod
-    def deviation(cls, lower, upper=None, msg=None):
-        cls._warn('accepted.tolerance(...)')
-        return accepted.tolerance(lower, upper, msg)
-
-    @classmethod
-    def percent(cls, lower, upper=None, msg=None):
-        cls._warn('accepted.percent(...)')
-        return accepted.percent(lower, upper, msg)
-
-    @classmethod
-    def percent_deviation(cls, lower, upper=None, msg=None):
-        cls._warn('accepted.percent(...)')
-        return accepted.percent(lower, upper, msg)
-
-    @classmethod
-    def limit(cls, number, msg=None):
-        cls._warn('accepted.count(...)')
-        return accepted.count(number, msg)
