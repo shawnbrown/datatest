@@ -31,56 +31,6 @@ def mandatory(test_item):
     return test_item
 
 
-# The standard unittest.skip decorators are reimplemented to add a
-# _wrapped attribute that points to the orignal object so that the
-# _sort_key() function can find the proper line number when test_item
-# gets wrapped by functools.wraps().
-def skip(reason):
-    """Unconditionally skip a test.
-
-    .. deprecated:: 0.10.0
-        Use :py:func:`unittest.skip` instead.
-    """
-    import warnings
-    warnings.warn(
-        'datatest.skip() is deprecated, use unittest.skip() instead',
-        category=DeprecationWarning,
-    )
-    return unittest.skip(reason)
-
-
-def _id(obj):
-    return obj
-
-
-def skipIf(condition, reason):
-    """A decorator to skip a test if the condition is true.
-
-    .. deprecated:: 0.10.0
-        Use :py:func:`unittest.skipIf` instead.
-    """
-    import warnings
-    warnings.warn(
-        'datatest.skipIf() is deprecated, use unittest.skipIf() instead',
-        category=DeprecationWarning,
-    )
-    return unittest.skipIf(condition, reason)
-
-
-def skipUnless(condition, reason):
-    """A decorator to skip a test unless the condition is true.
-
-    .. deprecated:: 0.10.0
-        Use :py:func:`unittest.skipUnless` instead.
-    """
-    import warnings
-    warnings.warn(
-        'datatest.skipUnless() is deprecated, use unittest.skipUnless() instead',
-        category=DeprecationWarning,
-    )
-    return unittest.skipUnless(condition, reason)
-
-
 class DataTestResult(TextTestResult):
     """A datatest result class that can print formatted text results to
     a stream.

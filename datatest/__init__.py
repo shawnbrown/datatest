@@ -21,9 +21,6 @@ from ._pandas_integration import register_accessors
 # Unittest-style API
 from .case import DataTestCase
 from .runner import mandatory
-from .runner import skip
-from .runner import skipIf
-from .runner import skipUnless
 from .runner import DataTestRunner
 from .main import DataTestProgram
 from .main import main

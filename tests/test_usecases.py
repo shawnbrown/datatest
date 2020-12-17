@@ -56,9 +56,6 @@ class TestNamespaces(unittest.TestCase):
         self.assertTrue(hasattr(datatest, 'DataTestCase'))
         self.assertTrue(hasattr(datatest, 'main'))
         self.assertTrue(hasattr(datatest, 'mandatory'))
-        self.assertTrue(hasattr(datatest, 'skip'))
-        self.assertTrue(hasattr(datatest, 'skipIf'))
-        self.assertTrue(hasattr(datatest, 'skipUnless'))
 
     def test_pytest_flag(self):
         """Pytest should not try to rewrite the datatest module itself.
