@@ -167,14 +167,3 @@ Test Runner Program
 .. autoclass:: main
    :members:
    :inherited-members:
-
-
-*******************
-Deprecated Features
-*******************
-
-.. autodecorator:: skip(reason)
-
-.. autodecorator:: skipIf
-
-.. autodecorator:: skipUnless
