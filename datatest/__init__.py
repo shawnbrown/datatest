@@ -47,29 +47,3 @@ __version__ = '0.10.0'
 from . import _excepthook
 import sys as _sys
 _sys.excepthook = _excepthook.excepthook
-
-
-#############################################
-# Temporary aliases and deprecation warnings.
-#############################################
-import warnings as _warnings
-
-
-class Selector(Select):
-    def __init__(self, *args, **kwds):
-        _warnings.warn(
-            'Selector has been renamed, use Select instead',
-            category=DeprecationWarning,
-            stacklevel=2,
-        )
-        return super(Selector, self).__init__(*args, **kwds)
-
-
-class ProxyGroup(RepeatingContainer):
-    def __init__(self, *args, **kwds):
-        _warnings.warn(
-            'ProxyGroup has been renamed, use RepeatingContainer instead',
-            category=DeprecationWarning,
-            stacklevel=2,
-        )
-        return super(ProxyGroup, self).__init__(*args, **kwds)
