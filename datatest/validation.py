@@ -490,6 +490,27 @@ class ValidateType(object):
             requirement = {'A', 'B', 'C', 'D'}
 
             validate.subset(data, requirement)
+
+        .. attention::
+
+            In version 0.10.0, the semantics of :meth:`subset()
+            <validate.subset>` have been inverted. To mitigate problems
+            for users upgrading from 0.9.6, this method issues a warning.
+
+            To ignore this warning you can add the following lines to
+            your code:
+
+            .. code-block:: python
+
+                import warnings
+                warnings.filterwarnings('ignore', message='subset and superset warning')
+
+            And for pytest users, you can add the following to the beginning
+            of a test script:
+
+            .. code-block:: python
+
+                pytestmark = pytest.mark.filterwarnings('ignore:subset and superset warning')
         """
         __tracebackhide__ = _pytest_tracebackhide
 
@@ -518,6 +539,27 @@ class ValidateType(object):
             requirement = {'A', 'B', 'C'}
 
             validate.superset(data, requirement)
+
+        .. attention::
+
+            In version 0.10.0, the semantics of :meth:`superset()
+            <validate.superset>` have been inverted. To mitigate problems
+            for users upgrading from 0.9.6, this method issues a warning.
+
+            To ignore this warning you can add the following lines to
+            your code:
+
+            .. code-block:: python
+
+                import warnings
+                warnings.filterwarnings('ignore', message='subset and superset warning')
+
+            And for pytest users, you can add the following to the beginning
+            of a test script:
+
+            .. code-block:: python
+
+                pytestmark = pytest.mark.filterwarnings('ignore:subset and superset warning')
         """
         __tracebackhide__ = _pytest_tracebackhide
 
