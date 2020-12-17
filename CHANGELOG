@@ -9,6 +9,7 @@ COMING SOON (0.11.0)
   unittest.skip(), etc. instead).
 * Removed deprecated aliases Selector and ProxyGroup.
 * Removed the long-deprecated "allowed" interface.
+* Removed deprecated acceptances: "specific", "limit", etc.
 
 
 2020-12-17 (0.10.0)

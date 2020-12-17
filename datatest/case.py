@@ -151,46 +151,6 @@ class DataTestCase(TestCase):
         """Wrapper for :meth:`accepted.count`."""
         return AcceptedCount(number, msg=msg, scope=scope)
 
-    ####################
-    # Deprecated methods
-    ####################
-
-    @staticmethod
-    def _warn(new_name):
-        import warnings
-        message = "this method is deprecated, use {0} instead"
-        warnings.warn(message.format(new_name), DeprecationWarning, stacklevel=3)
-
-    # Deprecated since 0.9.6
-
-    def acceptedSpecific(self, differences, msg=None):
-        self._warn('self.accepted(...)')
-        return self.accepted(differences, msg=msg)
-
-    def acceptedMissing(self, msg=None):
-        self._warn('self.accepted(Missing)')
-        return self.accepted(differences.Missing, msg=msg)
-
-    def acceptedExtra(self, msg=None):
-        self._warn('self.accepted(Extra)')
-        return self.accepted(differences.Extra, msg=msg)
-
-    def acceptedInvalid(self, msg=None):
-        self._warn('self.accepted(Invalid)')
-        return self.accepted(differences.Invalid, msg=msg)
-
-    def acceptedDeviation(self, lower, upper=None, msg=None):
-        self._warn('self.acceptedTolerance(...)')
-        return AcceptedTolerance(lower, upper, msg)
-
-    def acceptedPercentDeviation(self, lower, upper=None, msg=None):
-        self._warn('self.acceptedPercent(...)')
-        return self.acceptedPercent(lower, upper, msg)
-
-    def acceptedLimit(self, number, msg=None):
-        self._warn('self.acceptedCount()')
-        return AcceptedCount(number, msg)
-
 
 # Prettify default signature of methods that accept multiple signatures.
 # This only works for Python 3.3 and newer--older versions will simply

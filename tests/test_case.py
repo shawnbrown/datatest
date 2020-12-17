@@ -299,39 +299,3 @@ class TestAcceptanceWrappers(unittest.TestCase):
     def test_acceptedCount(self):
         cm = self.case.acceptedCount(10)
         self.assertTrue(isinstance(cm, AcceptedCount))
-
-    # Deprecated since 0.9.6
-
-    def assertDeprecatedWrapper(self, func, expected_class):
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter('always')
-            cm = func()
-            self.assertTrue(isinstance(cm, expected_class),
-                            msg='expected {0}, got {1}'.format(expected_class.__name__,
-                                                               cm.__class__.__name__))
-        self.assertEqual(len(w), 1, msg='expects 1 warning, got {0}'.format(len(w)))
-        self.assertTrue(issubclass(w[0].category, DeprecationWarning))
-
-    def test_acceptedSpecific(self):
-        func = lambda: self.case.acceptedSpecific([Missing('foo')])
-        self.assertDeprecatedWrapper(func, AcceptedDifferences)
-
-    def test_acceptedMissing(self):
-        func = lambda: self.case.acceptedMissing()
-        self.assertDeprecatedWrapper(func, AcceptedDifferences)
-
-    def test_acceptedExtra(self):
-        func = lambda: self.case.acceptedExtra()
-        self.assertDeprecatedWrapper(func, AcceptedDifferences)
-
-    def test_acceptedInvalid(self):
-        func = lambda: self.case.acceptedInvalid()
-        self.assertDeprecatedWrapper(func, AcceptedDifferences)
-
-    def test_acceptedDeviation(self):
-        func = lambda: self.case.acceptedDeviation(5)
-        self.assertDeprecatedWrapper(func, AcceptedTolerance)
-
-    def test_acceptedLimit(self):
-        func = lambda: self.case.acceptedLimit(10)
-        self.assertDeprecatedWrapper(func, AcceptedCount)

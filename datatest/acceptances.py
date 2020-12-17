@@ -1042,38 +1042,6 @@ class AcceptedFactoryType(object):
         no_module_prefix = default_repr[name_start:]  # Slice-off module.
         return '<' + no_module_prefix
 
-    # Following methods deprecated in 0.9.6
-
-    @staticmethod
-    def _warn(new_name):
-        import warnings
-        message = "method is deprecated, use {0} instead".format(new_name)
-        warnings.warn(message, DeprecationWarning, stacklevel=3)
-
-    def specific(self, differences, msg=None):
-        self._warn('accepted(...)')
-        return self(differences, msg=msg)
-
-    def missing(self, msg=None):
-        self._warn('accepted(Missing)')
-        return self(Missing, msg=msg)
-
-    def extra(self, msg=None):
-        self._warn('accepted(Extra)')
-        return self(Extra, msg=msg)
-
-    def invalid(self, msg=None):
-        self._warn('accepted(Invalid)')
-        return self(Invalid, msg=msg)
-
-    def deviation(self, lower, upper=None, msg=None):
-        self._warn('accepted.tolerance(...)')
-        return self.tolerance(lower, upper, msg)
-
-    def limit(self, number, msg=None):
-        self._warn('accepted.count(...)')
-        return self.count(number, msg)
-
 
 with contextlib.suppress(AttributeError):  # inspect.Signature() is new in 3.3
     AcceptedFactoryType.tolerance.__signature__ = inspect.Signature([
