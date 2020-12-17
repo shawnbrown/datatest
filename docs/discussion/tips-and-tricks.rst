@@ -28,10 +28,10 @@ on an object. For example:
 
     data = [...]
 
-    def isupper(x):  # <- Helper function.
+    def is_upper(x):  # <- Helper function.
         return x.isupper()
 
-    validate(data, isupper)
+    validate(data, is_upper)
 
 
 In the case above, our helper function calls the ``isupper()``
