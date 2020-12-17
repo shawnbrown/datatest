@@ -2,8 +2,8 @@
 Datatest Changelog
 ==================
 
-COMING SOON (0.10.0)
---------------------
+2020-12-17 (0.10.0)
+-------------------
 
 * Fixed bug where ValidationErrors were crashing pytest-xdist workers.
 
