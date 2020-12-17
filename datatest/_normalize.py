@@ -57,6 +57,8 @@ def _normalize_lazy(obj):
             return obj  # <- EXIT!
 
         if isinstance(obj, squint.Select):
+            if squint.__version__ == '0.1.0':
+                return obj(obj.fieldnames).execute()  # <- EXIT!
             return obj().execute()  # <- EXIT!
 
     pandas = sys.modules.get('pandas', None)
