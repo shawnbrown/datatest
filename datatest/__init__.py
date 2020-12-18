@@ -27,7 +27,7 @@ from ._working_directory import working_directory
 from ._vendor.repeatingcontainer import RepeatingContainer
 
 
-__version__ = '0.11.0.dev1'
+__version__ = '0.11.0'
 
 
 #############################################
