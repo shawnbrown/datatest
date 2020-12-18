@@ -55,9 +55,27 @@ The easiest way to install datatest is to use `pip <https://pip.pypa.io>`_::
 
   pip install datatest
 
-To upgrade an existing installation, use the "``--upgrade``" option::
+
+If you aren't worried about supporting a codebase of older scripts, upgrade
+an existing installation with the "``--upgrade``" option::
 
   pip install --upgrade datatest
+
+If you have an existing codebase of older datatest scripts, you should
+upgrade using the following steps:
+
+    * Install datatest 0.10.0 first::
+
+          pip install --force-reinstall datatest==0.10.0
+
+    * Run your existing code and check for DeprecationWarnings.
+
+    * Update the parts of your code that use deprecated features.
+
+    * Once your code is running without DeprecationWarnings,
+      install the latest version of datatest, 0.11.0::
+
+          pip install --upgrade datatest
 
 
 Stuntman Mike
