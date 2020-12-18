@@ -11,7 +11,6 @@ from . import _io as io
 from . import _unittest as unittest
 from datatest._compatibility.decimal import Decimal
 
-from .common import MinimalSource
 import datatest
 from datatest.__past__ import api07  # <- MONKEY PATCH!!!
 
@@ -21,6 +20,7 @@ from datatest import Extra
 from datatest import Invalid
 from datatest.__past__.api07_diffs import xDeviation
 from datatest.__past__.api07_sources import CsvSource
+from datatest.__past__.api07_sources import MinimalSource
 from datatest import DataTestCase
 from datatest.__past__.api07_comp import CompareSet
 from datatest import allow_iter

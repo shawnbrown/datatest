@@ -3,6 +3,9 @@ from . import _unittest as unittest
 import datatest
 from datatest.__past__ import api09  # <- MONKEY PATCH!!!
 
+# IMPORT ADDITIONAL TESTS
+#from .past_api09_query import *
+
 
 class TestSubsetAndSupersetMethods(unittest.TestCase):
     """Semantics were inverted in the following version (0.10.x)."""

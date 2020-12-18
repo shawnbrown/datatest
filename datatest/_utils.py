@@ -5,7 +5,7 @@ import re
 from io import IOBase
 from numbers import Number
 
-from ._compatibility.abc import ABC
+from ._compatibility import abc
 from ._compatibility.collections.abc import ItemsView
 from ._compatibility.collections.abc import Iterable
 from ._compatibility.collections.abc import Mapping
@@ -151,7 +151,32 @@ def _make_sentinel(name, reprstring, docstring, truthy=True):
     return type(name, (object,), cls_dict)()
 
 
-class IterItems(ABC):
+class BaseElement(abc.ABC):
+    """An abstract base class used to determine if an object should
+    be treated as a single data element or as a collection of multiple
+    data elements.
+
+    Objects that are considered individual data elements include:
+
+    * non-iterable objects
+    * strings
+    * mappings
+    * tuples
+    """
+    @abc.abstractmethod
+    def __init__(self, *args, **kwds):
+        pass
+
+    @classmethod
+    def __subclasshook__(cls, subclass):
+        if cls is BaseElement:
+            if (issubclass(subclass, (string_types, Mapping, tuple))
+                    or not issubclass(subclass, Iterable)):
+                return True
+        return NotImplemented
+
+
+class IterItems(abc.ABC):
     """An iterator that returns item-pairs appropriate for constructing
     a dictionary or other mapping. The given *items_or_mapping* should
     be an iterable of key/value pairs or a mapping.

@@ -4,8 +4,6 @@ from ._compatibility.collections.abc import Collection
 from ._compatibility.collections.abc import Iterable
 from ._compatibility.collections.abc import Iterator
 from ._compatibility.collections.abc import Mapping
-from ._vendor.squint import Query
-from ._vendor.squint import Result
 from ._utils import exhaustible
 from ._utils import iterpeek
 from ._utils import IterItems
@@ -33,15 +31,6 @@ def _normalize_lazy(obj):
     """Return an iterator for lazy evaluation."""
     if isinstance(obj, TypedIterator):
         if issubclass(obj.evaltype, Mapping):
-            obj = IterItems(obj)
-        return obj  # <- EXIT!
-
-    # Vendored Squint objects (will be deprecated in 0.9.7).
-    if isinstance(obj, Query):
-        obj = obj.execute()
-
-    if isinstance(obj, Result):
-        if issubclass(obj.evaluation_type, Mapping):
             obj = IterItems(obj)
         return obj  # <- EXIT!
 
@@ -135,10 +124,6 @@ def _normalize_eager(obj, default_type=None):
     must be a collection type (a sized iterable container).
     """
     if isinstance(obj, TypedIterator):
-        return obj.fetch()
-
-    # Vendored Squint objects (will be deprecated in 0.9.8).
-    if isinstance(obj, Result):
         return obj.fetch()
 
     # Separate Squint module.

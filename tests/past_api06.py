@@ -8,11 +8,11 @@ development-release API.
 """
 from . import _io as io
 from . import _unittest as unittest
-from .common import MinimalSource
 
 import datatest
 from datatest.__past__ import api06  # <- MONKEY PATCH!!!
 from datatest.__past__.api07_error import DataError
+from datatest.__past__.api07_sources import MinimalSource
 
 
 class TestApiDev1(unittest.TestCase):

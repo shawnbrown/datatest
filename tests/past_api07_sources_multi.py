@@ -4,10 +4,10 @@ from . import _unittest as unittest
 from .mixins import CountTests
 from .mixins import OtherTests
 
-from .common import MinimalSource
 from .common import make_csv_file
 
 from datatest.__past__.api07_sources import CsvSource
+from datatest.__past__.api07_sources import MinimalSource
 from datatest.__past__.api07_sources import MultiSource
 
 

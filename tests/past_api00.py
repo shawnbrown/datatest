@@ -10,9 +10,9 @@ from . import _unittest as unittest
 import datatest
 from datatest.__past__ import api00  # <- MONKEY PATCH!!!
 
-from .common import MinimalSource
 DataTestCase = datatest.DataTestCase
 from datatest.__past__.api07_error import DataError
+from datatest.__past__.api07_sources import MinimalSource
 
 
 class TestAttributes(unittest.TestCase):

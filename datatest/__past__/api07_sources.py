@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
-from .._vendor.load_csv import load_csv
-from .._vendor.temptable import (
+from .load_csv import load_csv
+from .temptable import (
     load_data,
     new_table_name,
     savepoint,
 )
-from .._vendor.squint.query import DEFAULT_CONNECTION
+from .squint.query import DEFAULT_CONNECTION
 
 
 def _load_temp_sqlite_table(columns, records):
@@ -172,6 +172,30 @@ class BaseSource(object):
             missing = ', '.join(repr(x) for x in missing)
             msg = '{0} not in {1}'.format(missing, self.__repr__())
             raise LookupError(msg)
+
+
+########################################################################
+# For Testing
+########################################################################
+class MinimalSource(BaseSource):
+    """Minimal data source implementation for testing."""
+    def __init__(self, data, fieldnames=None):
+        if not fieldnames:
+            data_iter = iter(data)
+            fieldnames = next(data_iter)  # <- First row.
+            data = list(data_iter)        # <- Remaining rows.
+        self._data = data
+        self._fieldnames = fieldnames
+
+    def __repr__(self):
+        return self.__class__.__name__ + '(<data>, <fieldnames>)'
+
+    def columns(self):
+        return self._fieldnames
+
+    def __iter__(self):
+        for row in self._data:
+            yield dict(zip(self._fieldnames, row))
 
 
 ########################################################################

@@ -5,16 +5,17 @@ import inspect
 import datatest
 from datatest._compatibility import itertools
 from datatest._compatibility.collections.abc import Sequence
-from datatest._vendor.get_reader import get_reader
-from datatest._vendor.load_csv import load_csv
-from datatest._vendor.temptable import (
+from .get_reader import get_reader
+from .load_csv import load_csv
+from .temptable import (
     load_data,
     new_table_name,
     savepoint,
     table_exists,
 )
-from datatest._vendor.squint.query import DEFAULT_CONNECTION
-from datatest._vendor.squint import BaseElement
+from . import squint
+from .squint.query import DEFAULT_CONNECTION
+from .squint import BaseElement
 from datatest._utils import file_types
 from datatest._utils import string_types
 from datatest._utils import iterpeek
@@ -22,16 +23,18 @@ from datatest.acceptances import BaseAcceptance
 from datatest import Invalid
 from datatest.differences import NOVALUE
 
-datatest.DataResult = datatest.Result
+datatest.Result = squint.Result
+datatest.DataResult = squint.Result
 
 
-class DataQuery(datatest.Query):
+class DataQuery(squint.Query):
     def __call__(self, *args, **kwds):
         self.execute(*args, **kwds)
+datatest.Query = squint.Query
 datatest.DataQuery = DataQuery
 
 
-class DataSource(datatest.Select):
+class DataSource(squint.Select):
     def __init__(self, data, fieldnames=None):
         first_value, iterator = iterpeek(data)
         if isinstance(first_value, dict):
@@ -85,6 +88,7 @@ class DataSource(datatest.Select):
     def columns(self, type=list):  # Removed in datatest 0.8.2
         return type(self.fieldnames)
 
+datatest.Select = squint.Select
 datatest.DataSource = DataSource
 
 

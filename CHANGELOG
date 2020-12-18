@@ -10,6 +10,11 @@ COMING SOON (0.11.0)
 * Removed deprecated aliases Selector and ProxyGroup.
 * Removed the long-deprecated "allowed" interface.
 * Removed deprecated acceptances: "specific", "limit", etc.
+* Removed deprecated `Select`, `Query`, and `Result` API. Use **squint**
+  instead:
+  - https://pypi.org/project/squint/
+* Removed deprecated `get_reader()` function. Use **get-reader** instead:
+  - https://pypi.org/project/get-reader/
 
 
 2020-12-17 (0.10.0)

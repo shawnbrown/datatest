@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from . import _unittest as unittest
 
-from .common import MinimalSource
+from datatest.__past__.api07_sources import MinimalSource
 from .mixins import OtherTests
 from .mixins import CountTests
 

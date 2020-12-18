@@ -11,10 +11,10 @@ from ._compatibility.collections.abc import Mapping
 from ._compatibility import contextlib
 from ._compatibility import itertools
 
+from ._utils import BaseElement
 from ._utils import exhaustible
 from ._utils import nonstringiter
 from ._vendor.predicate import get_matcher
-from ._vendor.squint import BaseElement
 
 from .validation import ValidationError
 from .differences import (

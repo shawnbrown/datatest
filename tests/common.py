@@ -9,7 +9,6 @@ from functools import wraps
 
 from . import _io as io
 from . import _unittest as unittest
-from datatest.__past__.api07_sources import BaseSource
 
 
 class MkdtempTestCase(unittest.TestCase):
@@ -84,24 +83,3 @@ def make_csv_file(fieldnames, datarows):
         init_string.append(','.join(row))    # Concat cells into row.
     init_string = '\n'.join(init_string)     # Concat rows into final string.
     return io.StringIO(init_string)
-
-
-class MinimalSource(BaseSource):
-    """Minimal data source implementation for testing."""
-    def __init__(self, data, fieldnames=None):
-        if not fieldnames:
-            data_iter = iter(data)
-            fieldnames = next(data_iter)  # <- First row.
-            data = list(data_iter)        # <- Remaining rows.
-        self._data = data
-        self._fieldnames = fieldnames
-
-    def __repr__(self):
-        return self.__class__.__name__ + '(<data>, <fieldnames>)'
-
-    def columns(self):
-        return self._fieldnames
-
-    def __iter__(self):
-        for row in self._data:
-            yield dict(zip(self._fieldnames, row))

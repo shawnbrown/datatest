@@ -1,8 +1,6 @@
 """Tests for normalization functions."""
 import sqlite3
 from . import _unittest as unittest
-from datatest._vendor.squint import Query
-from datatest._vendor.squint import Result
 from datatest.requirements import BaseRequirement
 from datatest._utils import IterItems
 
@@ -69,28 +67,6 @@ class TestNormalizeLazySquint(unittest.TestCase):
         normalized = _normalize_lazy(select_object)
         self.assertIsInstance(normalized, squint.Result)
         self.assertEqual(normalized.evaltype, list)
-
-
-class TestNormalizeLazyResultAndQuery(unittest.TestCase):
-    """Test deprecated `Result` and `Query` objects."""
-    def test_sequence_result(self):
-        with self.assertWarns(DeprecationWarning):
-            result_object = Result([1, 2, 3, 4], evaluation_type=list)
-        normalized = _normalize_lazy(result_object)
-        self.assertIs(normalized, result_object, msg='should return original object')
-
-    def test_iteritems_result(self):
-        with self.assertWarns(DeprecationWarning):
-            result_object = Result(IterItems([('a', 1), ('b', 2)]), evaluation_type=dict)
-        normalized = _normalize_lazy(result_object)
-        self.assertIsInstance(normalized, IterItems)
-
-    def test_query(self):
-        with self.assertWarns(DeprecationWarning):
-            query_object = Query.from_object([1, 2, 3, 4])
-        normalized = _normalize_lazy(query_object)
-        self.assertIsInstance(normalized, Result)
-        self.assertEqual(normalized.evaluation_type, list)
 
 
 @unittest.skipUnless(pandas, 'requires pandas')
@@ -303,14 +279,6 @@ class TestNormalizeEager(unittest.TestCase):
 
         output = _normalize_eager(iter([1, 2, 3]), default_type=set)
         self.assertEqual(output, set([1, 2, 3]))
-
-    def test_deprecated_result_object(self):
-        with self.assertWarns(DeprecationWarning):
-            result_obj = Result(iter([1, 2, 3]), evaluation_type=tuple)
-
-        output = _normalize_eager(result_obj)
-        self.assertIsInstance(output, tuple)
-        self.assertEqual(output, (1, 2, 3))
 
     @unittest.skipUnless(squint, 'requires squint')
     def test_squint_object(self):

@@ -14,12 +14,6 @@ from .common import ignore_deprecations
 
 # Import code to test.
 from datatest.case import DataTestCase
-
-from datatest._vendor.squint import (
-    Select,
-    Query,
-    Result,
-)
 from datatest.validation import validate
 from datatest.validation import ValidationError
 from datatest.differences import (
@@ -37,6 +31,11 @@ from datatest.acceptances import (
     AcceptedPercent,
     AcceptedCount,
 )
+
+try:
+    import squint
+except ImportError:
+    squint = None
 
 
 class TestHelperCase(unittest.TestCase):
@@ -161,15 +160,17 @@ class TestAssertValid(DataTestCase):
         message = str(cm.exception)
         self.assertTrue(message.endswith(']'), 'should show full diff when None')
 
+    @unittest.skipUnless(squint, 'requires squint')
     def test_query_objects(self):
-        source = Select([('A', 'B'), ('1', '2'), ('1', '2')])
+        source = squint.Select([('A', 'B'), ('1', '2'), ('1', '2')])
         query_obj1 = source(['B'])
         query_obj2 = source(['B'])
         self.assertValid(query_obj1, query_obj2)
 
+    @unittest.skipUnless(squint, 'requires squint')
     def test_result_objects(self):
-        result_obj1 = Result(['2', '2'], evaluation_type=list)
-        result_obj2 = Result(['2', '2'], evaluation_type=list)
+        result_obj1 = squint.Result(['2', '2'], evaltype=list)
+        result_obj2 = squint.Result(['2', '2'], evaltype=list)
         self.assertValid(result_obj1, result_obj2)
 
 

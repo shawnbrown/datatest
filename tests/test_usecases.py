@@ -48,8 +48,6 @@ class TestNamespaces(unittest.TestCase):
 
         # Data handling support.
         self.assertTrue(hasattr(datatest, 'working_directory'))
-        self.assertTrue(hasattr(datatest, 'get_reader'))
-        self.assertTrue(hasattr(datatest, 'Select'))
         self.assertTrue(hasattr(datatest, 'RepeatingContainer'))
 
         # Unittest-style support.

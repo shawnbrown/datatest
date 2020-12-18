@@ -8,9 +8,9 @@ from datatest.__past__.api07_comp import CompareDict
 from .mixins import CountTests
 from .mixins import OtherTests
 
-from .common import MinimalSource
 from datatest.__past__.api07_sources import _FilterValueError
 from datatest.__past__.api07_sources import AdapterSource
+from datatest.__past__.api07_sources import MinimalSource
 
 
 class TestAdapterSourceBasics(OtherTests, unittest.TestCase):
