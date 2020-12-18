@@ -56,8 +56,8 @@ exist and that they appear in a specified order:
     validate(column_names, ['A', 'B', 'C'])
 
 
-Match a Custom Format (Helper Function)
-=======================================
+Matches Custom Formats
+======================
 
 Sometimes we don't care exactly what the column names are but we want to
 check that they conform to a specific format. To do this, we can define a
@@ -79,39 +79,49 @@ string methods that can be useful for validating specific formats:
 etc.
 
 
-We can also use more involved functions to check for detailed formats.
-Below, we check that column names start with two capital letters and
-end with one or more digits:
+A More Complex Example
+----------------------
 
-.. code-block:: python
+Below, we check that the column names start with two capital letters
+and end with one or more digits. The examples below demonstrate different
+ways of checking this format:
 
-    def two_letters_plus_digits(x):
-        first_two_chars = x[:2]
-        remaining_chars = x[2:]
+.. tabs::
 
-        if not first_two_chars.isalpha():
-            return False
-        if not first_two_chars.isupper():
-            return False
-        return remaining_chars.isdigit()
+    .. group-tab:: Regex Pattern
 
-    column_names = ...
-    validate(column_names, two_letters_plus_digits)
+        We can use :meth:`validate.regex` to check that column names match
+        a :ref:`regular expression <python:re-syntax>` pattern. The pattern
+        matches strings that start with two capital letters (``^[A-Z]{2}``)
+        and end with one or more digits (``\d+$``):
 
+        .. code-block:: python
 
-Match a Custom Format (Regex Pattern)
-=====================================
+            column_names = ...
+            msg = 'Must have two capital letters followed by digits.'
+            validate.regex(column_names, r'^[A-Z]{2}\d+$', msg=msg)
 
-We can also use :meth:`validate.regex` to check that column names match
-a :ref:`regular expression <python:re-syntax>` pattern. In the following
-example, we check that column names start with two capital letters
-(``^[A-Z]{2}``) and end with one or more digits (``\d+$``):
+    .. group-tab:: Helper Function
 
-.. code-block:: python
+        This example performs the same validation as the Regex Pattern
+        version, but uses :term:`slicing <python:slice>` and string methods
+        to implement the same requirement:
 
-    column_names = ...
-    msg = 'Must have two capital letters followed by digits.'
-    validate.regex(column_names, r'^[A-Z]{2}\d+$', msg=msg)
+        .. code-block:: python
+
+            def two_letters_plus_digits(x):
+                """Must have two capital letters followed by digits."""
+                first_two_chars = x[:2]
+                remaining_chars = x[2:]
+
+                if not first_two_chars.isalpha():
+                    return False
+                if not first_two_chars.isupper():
+                    return False
+                return remaining_chars.isdigit()
+
+            column_names = ...
+            validate(column_names, two_letters_plus_digits)
 
 
 ===================================
