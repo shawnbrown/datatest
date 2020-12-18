@@ -132,10 +132,10 @@ if __name__ == '__main__':
             packages=[
                 'datatest',
                 'datatest.__past__',
+                'datatest.__past__.squint',
                 'datatest._compatibility',
                 'datatest._compatibility.collections',
                 'datatest._vendor',
-                'datatest._vendor.squint',
             ],
             # Additional fields:
             install_requires=[],  # <- No hard requirements!
