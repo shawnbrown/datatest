@@ -62,6 +62,17 @@ class TestNormalizeLazySquint(unittest.TestCase):
         self.assertIsInstance(normalized, squint.Result)
         self.assertEqual(normalized.evaltype, list)
 
+    def test_query_that_returns_noncontainer(self):
+        query_object = squint.Query.from_object([1, 2, 3, 4]).sum()
+        normalized = _normalize_lazy(query_object)
+        self.assertEqual(normalized, 10)
+
+    def test_query_that_returns_mapping(self):
+        query_object = squint.Query.from_object({'a': 1, 'b': 2})
+        normalized = _normalize_lazy(query_object)
+        self.assertIsInstance(normalized, IterItems)
+        self.assertEqual(set(normalized), set([('a', 1), ('b', 2)]))
+
     def test_select(self):
         select_object = squint.Select([['A'], [1], [2], [3], [4]])
         normalized = _normalize_lazy(select_object)

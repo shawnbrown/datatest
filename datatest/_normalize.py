@@ -27,6 +27,9 @@ class TypedIterator(Iterator):
         return self.evaltype(self._iterator)
 
 
+NoneType = type(None)
+
+
 def _normalize_lazy(obj):
     """Return an iterator for lazy evaluation."""
     if isinstance(obj, TypedIterator):
@@ -38,7 +41,10 @@ def _normalize_lazy(obj):
     squint = sys.modules.get('squint', None)
     if squint:
         if isinstance(obj, squint.Query):
-            return obj.execute()  # <- EXIT!
+            obj = obj.execute()
+            if issubclass(getattr(obj, 'evaltype', NoneType), Mapping):
+                obj = IterItems(obj)
+            return obj  # <- EXIT!
 
         if isinstance(obj, squint.Result):
             if issubclass(obj.evaltype, Mapping):
