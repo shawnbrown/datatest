@@ -52,9 +52,10 @@ def _normalize_lazy(obj):
             return obj  # <- EXIT!
 
         if isinstance(obj, squint.Select):
-            if squint.__version__ == '0.1.0':
+            try:
+                return obj().execute()  # <- EXIT!
+            except TypeError:  # Squint >= 0.1.0 raises an error.
                 return obj(obj.fieldnames).execute()  # <- EXIT!
-            return obj().execute()  # <- EXIT!
 
     pandas = sys.modules.get('pandas', None)
     if pandas:
