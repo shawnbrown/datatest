@@ -52,11 +52,12 @@ class TestNormalizeLazySquint(unittest.TestCase):
         self.assertIs(normalized, result_object, msg='should return original object')
 
     def test_iteritems_result(self):
-        result_object = squint.Result(IterItems([('a', 1), ('b', 2)]), evaltype=dict)
+        result_object = squint.Result([('a', 1), ('b', 2)], evaltype=dict)
         normalized = _normalize_lazy(result_object)
         self.assertIsInstance(normalized, IterItems)
+        self.assertEqual(set(normalized), set([('a', 1), ('b', 2)]))
 
-    def test_query(self):
+    def test_query_that_returns_sequence(self):
         query_object = squint.Query.from_object([1, 2, 3, 4])
         normalized = _normalize_lazy(query_object)
         self.assertIsInstance(normalized, squint.Result)
