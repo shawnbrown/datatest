@@ -178,6 +178,93 @@ class TestValidateIdioms(unittest.TestCase):
         self.assertEqual(differences, expected)
 
 
+class TestAcceptedKeysDecorator(unittest.TestCase):
+    """The accepted.keys() method should be usable as a decorator."""
+
+    def test_single_value_keys(self):
+        Missing = datatest.Missing
+        ValidationError = datatest.ValidationError
+
+        with self.assertRaises(ValidationError) as cm:
+
+            @datatest.accepted.keys  # <- Use as decorator!
+            def key_is_vowel(key):
+                return key in set(['a', 'e', 'i', 'o', 'u'])
+
+            with key_is_vowel:
+                raise ValidationError({'a': Missing(1), 'b': Missing(2)})
+
+        self.assertEqual(cm.exception.differences, {'b': Missing(2)})
+
+    def test_composite_keys(self):
+        Missing = datatest.Missing
+        ValidationError = datatest.ValidationError
+
+        with self.assertRaises(ValidationError) as cm:
+
+            @datatest.accepted.keys  # <- Use as decorator!
+            def key_is_known_tuple(key):
+                return key in set([('a', 1), ('b', 2)])
+
+            with key_is_known_tuple:
+                raise ValidationError({('a', 1): Missing(1), ('c', 3): Missing(3)})
+
+        self.assertEqual(cm.exception.differences, {('c', 3): Missing(3)})
+
+
+class TestAcceptedArgsDecorator(unittest.TestCase):
+    """The accepted.args() method should be usable as a decorator."""
+
+    def test_single_arg(self):
+        Missing = datatest.Missing
+        ValidationError = datatest.ValidationError
+
+        # Check single-value args:
+        with self.assertRaises(ValidationError) as cm:
+
+            @datatest.accepted.args  # <- Use as decorator!
+            def arg_is_vowel(arg):
+                return arg in set(['a', 'e', 'i', 'o', 'u'])
+
+            with arg_is_vowel:
+                raise ValidationError([Missing('a'), Missing('b')])
+
+        self.assertEqual(cm.exception.differences, [Missing('b')])
+
+    def test_single_arg_tuple(self):
+        """Compare with `test_multiple_args()` wrapping and unwrapping."""
+        Invalid = datatest.Invalid
+        ValidationError = datatest.ValidationError
+
+        # Check args where first arg is a tuple:
+        with self.assertRaises(ValidationError) as cm:
+
+            @datatest.accepted.args  # <- Use as decorator!
+            def args_is_known_tuple(args):
+                return args in set([('a', 'A'), ('b', 'B')])
+
+            with args_is_known_tuple:
+                raise ValidationError([Invalid(('a', 'A')), Invalid(('c', 'C'))])
+
+        self.assertEqual(cm.exception.differences, [Invalid(('c', 'C'))])
+
+    def test_multiple_args(self):
+        """Compare with `test_single_arg_tuple()` wrapping and unwrapping."""
+        Invalid = datatest.Invalid
+        ValidationError = datatest.ValidationError
+
+        with self.assertRaises(ValidationError) as cm:
+
+            @datatest.accepted.args  # <- Use as decorator!
+            def args_is_known_tuple(args):
+                return args in set([('a', 'A'), ('b', 'B')])
+
+            with args_is_known_tuple:
+                raise ValidationError([Invalid('a', 'A'), Invalid('c', 'C')])
+
+        self.assertEqual(cm.exception.differences, [Invalid('c', 'C')])
+
+
 class TestNanHandling(unittest.TestCase):
     def test_accepting_builtin(self):
         data = ['a', 'a', 'b', 'b', float('nan')]
