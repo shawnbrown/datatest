@@ -3,6 +3,10 @@ from .validation import ValidationError
 from .validation import validate
 
 
+__datatest = True
+__unittest = True
+
+
 # To learn how Pandas integration works, see "Registering custom accessors"
 # on the following page:
 #
