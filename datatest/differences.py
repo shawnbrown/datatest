@@ -179,7 +179,7 @@ class Invalid(BaseDifference):
     .. code-block:: none
         :emphasize-lines: 2
 
-        ValidationError: does not satisfy iseven (1 difference): [
+        ValidationError: does not satisfy iseven() (1 difference): [
             Invalid(9),
         ]
     """
