@@ -21,6 +21,26 @@ work. This page explains how datatest handles the validation of
 .. |extension accessors| replace:: :ref:`extension accessors <pandas:ecosystem.accessors>`
 
 
+.. admonition:: Accessor Syntax
+    :class: note
+
+    Examples on this page use the ``validate`` accessor:
+
+    .. code-block:: python
+
+        # Accessor syntax:
+
+        df['A'].validate({'x', 'y', 'z'})
+
+    We could also use the equivalent non-accessor syntax:
+
+    .. code-block:: python
+
+        # Basic syntax:
+
+        dt.validate(df['A'], {'x', 'y', 'z'})
+
+
 DataFrame
 =========
 
@@ -38,6 +58,7 @@ index of any other type are treated as mappings:
             import pandas as pd
             import datatest as dt
 
+            dt.register_accessors()
 
             df = pd.DataFrame(data={'A': ['foo', 'bar', 'baz', 'qux'],
                                     'B': [10, 20, 'x', 'y']})
@@ -50,7 +71,7 @@ index of any other type are treated as mappings:
                 ('qux', 'y'),
             ]
 
-            dt.validate(df, requirement)
+            df.validate(requirement)
 
         Since no index was specified, ``df`` uses the default
         :class:`RangeIndex <pandas.RangeIndex>` type---which tells
@@ -64,6 +85,7 @@ index of any other type are treated as mappings:
             import pandas as pd
             import datatest as dt
 
+            dt.register_accessors()
 
             df = pd.DataFrame(data={'A': ['foo', 'bar', 'baz', 'qux'],
                                     'B': [10, 20, 'x', 'y']},
@@ -76,14 +98,15 @@ index of any other type are treated as mappings:
                 'IV': ('qux', 'y'),
             }
 
-            dt.validate(df, requirement)
+            df.validate(requirement)
 
-        In this example, we've specified an index and therefore
-        ``df`` is treated as a mapping.
+        In this example, we've specified an index and therefore ``df``
+        is handled as a mapping.
 
 
 The distinction between implicit and explicit indexing is also
-apparent in error reporting:
+apparent in error reporting. Compare the examples on each of the
+tabs below:
 
 .. tabs::
 
@@ -95,21 +118,22 @@ apparent in error reporting:
             import pandas as pd
             import datatest as dt
 
+            dt.register_accessors()
 
             df = pd.DataFrame(data={'A': ['foo', 'bar', 'baz', 'qux'],
                                     'B': [10, 20, 'x', 'y']})
 
 
-            dt.validate(df, (str, int))
+            df.validate((str, int))
 
 
         .. code-block:: none
             :emphasize-lines: 5-6
 
             Traceback (most recent call last):
-              File "example.py", line 9, in <module>
-                dt.validate(df, (str, int))
-            datatest.ValidationError: does not satisfy (<class 'str'>, <class 'int'>) (2 differences): [
+              File "example.py", line 10, in <module>
+                df.validate((str, int))
+            datatest.ValidationError: does not satisfy `(str, int)` (2 differences): [
                 Invalid(('baz', 'x')),
                 Invalid(('qux', 'y')),
             ]
@@ -125,21 +149,22 @@ apparent in error reporting:
             import pandas as pd
             import datatest as dt
 
+            dt.register_accessors()
 
             df = pd.DataFrame(data={'A': ['foo', 'bar', 'baz', 'qux'],
                                     'B': [10, 20, 'x', 'y']},
                               index=['I', 'II', 'III', 'IV'])
 
-            dt.validate(df, (str, int))
+            df.validate((str, int))
 
 
         .. code-block:: none
             :emphasize-lines: 5-6
 
             Traceback (most recent call last):
-              File "example.py", line 9, in <module>
-                dt.validate(df, (str, int))
-            datatest.ValidationError: does not satisfy (<class 'str'>, <class 'int'>) (2 differences): {
+              File "example.py", line 10, in <module>
+                df.validate((str, int))
+            datatest.ValidationError: does not satisfy `(str, int)` (2 differences): {
                 'III': Invalid(('baz', 'x')),
                 'IV': Invalid(('qux', 'y')),
             }
@@ -165,13 +190,14 @@ Series with explicitly defined indexes are treated as mappings:
             import pandas as pd
             import datatest as dt
 
+            dt.register_accessors()
 
             s = pd.Series(data=[10, 20, 'x', 'y'])
 
 
             requirement = [10, 20, 'x', 'y']
 
-            dt.validate(s, requirement)
+            s.validate(requirement)
 
     .. group-tab:: Specified Index
 
@@ -181,13 +207,14 @@ Series with explicitly defined indexes are treated as mappings:
             import pandas as pd
             import datatest as dt
 
+            dt.register_accessors()
 
             s = pd.Series(data=[10, 20, 'x', 'y'],
                           index=['I', 'II', 'III', 'IV'])
 
             requirement = {'I': 10, 'II': 20, 'III': 'x', 'IV': 'y'}
 
-            dt.validate(s, requirement)
+            s.validate(requirement)
 
 
 Like before, the sequence and mapping handling is also apparent
@@ -203,20 +230,21 @@ in the error reporting:
             import pandas as pd
             import datatest as dt
 
+            dt.register_accessors()
 
             s = pd.Series(data=[10, 20, 'x', 'y'])
 
 
-            dt.validate(s, int)
+            s.validate(int)
 
 
         .. code-block:: none
             :emphasize-lines: 5-6
 
             Traceback (most recent call last):
-              File "example.py", line 8, in <module>
-                dt.validate(s, int)
-            datatest.ValidationError: does not satisfy 'int' (2 differences): [
+              File "example.py", line 9, in <module>
+                s.validate(int)
+            datatest.ValidationError: does not satisfy `int` (2 differences): [
                 Invalid('x'),
                 Invalid('y'),
             ]
@@ -229,20 +257,21 @@ in the error reporting:
             import pandas as pd
             import datatest as dt
 
+            dt.register_accessors()
 
             s = pd.Series(data=[10, 20, 'x', 'y'],
                           index=['I', 'II', 'III', 'IV'])
 
-            dt.validate(s, int)
+            s.validate(int)
 
 
         .. code-block:: none
             :emphasize-lines: 5-6
 
             Traceback (most recent call last):
-              File "example.py", line 8, in <module>
-                dt.validate(s, int)
-            datatest.ValidationError: does not satisfy 'int' (2 differences): {
+              File "example.py", line 9, in <module>
+                s.validate(int)
+            datatest.ValidationError: does not satisfy `int` (2 differences): {
                 'III': Invalid('x'),
                 'IV': Invalid('y'),
             }
@@ -260,10 +289,11 @@ objects are all treated as sequences:
     import pandas as pd
     import datatest as dt
 
+    dt.register_accessors()
 
     index = pd.Index(['I', 'II', 'III', 'IV'])
     requirement = ['I', 'II', 'III', 'IV']
-    dt.validate(index, requirement)
+    index.validate(requirement)
 
     multi = pd.MultiIndex.from_tuples([
         ('I', 'a'),
@@ -272,4 +302,4 @@ objects are all treated as sequences:
         ('IV', 'd'),
     ])
     requirement = [('I', 'a'), ('II', 'b'), ('III', 'c'), ('IV', 'd')]
-    dt.validate(multi, requirement)
+    multi.validate(requirement)
