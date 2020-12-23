@@ -75,7 +75,7 @@ class TestBuildDescription(unittest.TestCase):
     def test_builtin_type(self):
         description = _build_description(float)
         msg = 'should be name in single quotes'
-        self.assertEqual(description, "does not satisfy 'float'", msg=msg)
+        self.assertEqual(description, "does not satisfy `float`", msg=msg)
 
     def test_user_defined_type(self):
         """User-defined classes should use the name in quotes (not the
@@ -94,7 +94,7 @@ class TestBuildDescription(unittest.TestCase):
 
         description = _build_description(MyClass)
         msg = 'user defined classes should work same as built-in types (name in quotes)'
-        self.assertEqual(description, "does not satisfy 'MyClass'", msg=msg)
+        self.assertEqual(description, "does not satisfy `MyClass`", msg=msg)
 
     def test_lambda_expression(self):
         description = _build_description(lambda x: False)
@@ -109,7 +109,7 @@ class TestBuildDescription(unittest.TestCase):
         self.assertEqual(description, "does not satisfy 'abc'")
 
         description = _build_description(123)
-        self.assertEqual(description, "does not satisfy 123")
+        self.assertEqual(description, "does not satisfy `123`")
 
         class MyClass(object):
             """A dummy class for testing."""
@@ -122,7 +122,7 @@ class TestBuildDescription(unittest.TestCase):
 
         myinstance = MyClass()  # <- Instance of user-defined class.
         description = _build_description(myinstance)
-        self.assertEqual(description, "does not satisfy **dummy class**")
+        self.assertEqual(description, "does not satisfy `**dummy class**`")
 
 
 #######################################################################
@@ -390,7 +390,7 @@ class TestRequiredPredicate2(unittest.TestCase):
 
         diff, desc = requirement(data)
         self.assertEqual(list(diff), [Deviation(+2, 10)])
-        self.assertEqual(desc, 'does not satisfy 10')
+        self.assertEqual(desc, 'does not satisfy `10`')
 
     def test_novalue_token(self):
         data = [123, 'abc']
@@ -403,7 +403,7 @@ class TestRequiredPredicate2(unittest.TestCase):
         requirement = RequiredPredicate(10)
         diff, desc = requirement(data)
         self.assertEqual(list(diff), [Missing(10)])
-        self.assertEqual(desc, 'does not satisfy 10')
+        self.assertEqual(desc, 'does not satisfy `10`')
 
         data = ['abc', NOVALUE]
         requirement = RequiredPredicate('abc')
@@ -691,7 +691,7 @@ class TestRequiredFuzzy(unittest.TestCase):
         diff, desc = requirement(data)
 
         self.assertEqual(list(diff), [Invalid((2, 'abx')), Invalid((1, 'xyz'))])
-        self.assertEqual(desc, "does not satisfy (1, 'abc'), fuzzy matching at ratio 0.6 or greater")
+        self.assertEqual(desc, "does not satisfy `(1, 'abc')`, fuzzy matching at ratio 0.6 or greater")
 
     def test_show_expected(self):
         data = ['abx', 'aby', 'xyz']
@@ -717,7 +717,7 @@ class TestRequiredFuzzy(unittest.TestCase):
 
         diff, desc = requirement(data)
         self.assertEqual(list(diff), [Deviation(+2, 10)])
-        self.assertEqual(desc, 'does not satisfy 10, fuzzy matching at ratio 0.6 or greater')
+        self.assertEqual(desc, 'does not satisfy `10`, fuzzy matching at ratio 0.6 or greater')
 
     def test_novalue_token(self):
         data = [123, 'abc']
@@ -729,7 +729,7 @@ class TestRequiredFuzzy(unittest.TestCase):
         requirement = RequiredFuzzy(10)
         diff, desc = requirement(data)
         self.assertEqual(list(diff), [Missing(10)])
-        self.assertEqual(desc, 'does not satisfy 10, fuzzy matching at ratio 0.6 or greater')
+        self.assertEqual(desc, 'does not satisfy `10`, fuzzy matching at ratio 0.6 or greater')
 
         data = ['abc', NOVALUE]
         requirement = RequiredFuzzy('abc')

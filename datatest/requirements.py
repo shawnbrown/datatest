@@ -35,6 +35,22 @@ from ._utils import nonstringiter
 from ._utils import string_types
 
 
+def _get_formatted_name_or_repr(obj):
+    name = getattr(obj, '__name__', None)
+    if name:
+        if name.startswith('<'):  # E.g., "<lambda>".
+            obj_repr = name
+        else:
+            if callable(obj) and not isinstance(obj, type):
+                obj_repr = '{0}()'.format(name)
+            else:
+                obj_repr = '{0}'.format(name)
+    else:
+        obj_repr = repr(obj)
+
+    return obj_repr
+
+
 def _build_description(obj):
     """Build a default failure description for requirement classes
     that do not return their own descriptions.
@@ -50,17 +66,15 @@ def _build_description(obj):
             if description:
                 return description  # <- EXIT!
 
-    name = getattr(obj, '__name__', None)
-    if name:
-        if name.startswith('<'):  # E.g., "<lambda>".
-            obj_repr = name
-        else:
-            if callable(obj) and not isinstance(obj, type):
-                obj_repr = "{0}()".format(name)
-            else:
-                obj_repr = "'{0}'".format(name)
-    else:
+    if isinstance(obj, tuple):
+        reprs = ', '.join(_get_formatted_name_or_repr(x) for x in obj)
+        obj_repr = '`({0})`'.format(reprs)
+    elif isinstance(obj, str):
         obj_repr = repr(obj)
+    else:
+        obj_repr = _get_formatted_name_or_repr(obj)
+        if not (obj_repr[-2:] == '()' or obj_repr.startswith('<')):
+            obj_repr = '`{0}`'.format(obj_repr)
 
     return 'does not satisfy {0}'.format(obj_repr)
 
