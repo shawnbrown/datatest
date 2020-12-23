@@ -4,7 +4,7 @@
 .. meta::
     :description: Examples showing how to use datatest together with
                   testing frameworks like pytest and unittest.
-    :keywords: etl, elt, data, automated, testing, pytest, unittest, python
+    :keywords: pytest, pandas, DataFrame, fixture, unittest, python
 
 
 ######################
@@ -95,7 +95,7 @@ Pytest Samples
             @pytest.fixture(scope='session')
             @dt.working_directory(__file__)
             def df():
-                return pd.read_csv('example.csv')
+                return pd.read_csv('example.csv')  # Returns DataFrame.
 
 
             @pytest.mark.mandatory
@@ -136,7 +136,7 @@ Pytest Samples
             @pytest.fixture(scope='session')
             @dt.working_directory(__file__)
             def df():
-                return pd.read_csv('example.csv')
+                return pd.read_csv('example.csv')  # Returns DataFrame.
 
 
             @pytest.fixture(scope='session', autouse=True)
