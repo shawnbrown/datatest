@@ -129,7 +129,7 @@ Failed Equality
             Traceback (most recent call last):
               File "example.py", line 4, in <module>
                 validate(date(2020, 12, 27), date(2020, 12, 25))
-            ValidationError: does not satisfy date(2020, 12, 25) (1 difference): [
+            datatest.ValidationError: does not satisfy `datetime.date(2020, 12, 25)` (1 difference): [
                 Deviation(timedelta(days=+2), date(2020, 12, 25)),
             ]
 
@@ -175,8 +175,8 @@ Failed Interval
             Traceback (most recent call last):
               File "example.py", line 11, in <module>
                 validate.interval(data, min=date(2020, 12, 1), max=date(2020, 12, 31))
-            datatest.ValidationError: elements `x` do not satisfy `date(2020, 12, 1, 0,
-            0) <= x <= date(2020, 12, 31, 0, 0)` (2 differences): [
+            datatest.ValidationError: elements `x` do not satisfy `datetime.date(2020,
+            12, 1) <= x <= datetime.date(2020, 12, 31)` (2 differences): [
                 Deviation(timedelta(days=-5), date(2020, 12, 1)),
                 Deviation(timedelta(days=+4), date(2020, 12, 31)),
             ]

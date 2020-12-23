@@ -428,13 +428,12 @@ not an even number. These are represented in the error as :class:`Invalid`
 differences:
 
 .. code-block:: none
-    :emphasize-lines: 4-8
+    :emphasize-lines: 4-7
 
     Traceback (most recent call last):
       File "example.py", line 9, in <module>
         validate(data, requirement)
-    datatest.ValidationError: does not satisfy (<class 'str'>, <function iseven
-    at 0x3f75ca26>) (2 differences): [
+    datatest.ValidationError: does not satisfy `(str, iseven())` (2 differences): [
         Invalid((1.25, 8)),
         Invalid(('e', 9)),
     ]
