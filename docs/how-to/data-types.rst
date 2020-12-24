@@ -68,6 +68,167 @@ class is used to check for numbers of any type (:py:class:`int`,
 <decimal.Decimal>`, etc.).
 
 
+Checking Pandas Types
+=====================
+
+Check the types for each row of elements within a :class:`DataFrame`:
+
+.. tabs::
+
+    .. group-tab:: Passing
+
+        .. code-block:: python
+            :emphasize-lines: 9
+            :linenos:
+
+            import pandas as pd
+            import datatest as dt
+
+            dt.register_accessors()
+
+            df = pd.DataFrame(data={'A': ['foo', 'bar', 'baz', 'qux'],
+                                    'B': [10, 20, 30, 40]})
+
+            df.validate((str, int))
+
+    .. group-tab:: Failing
+
+        .. code-block:: python
+            :emphasize-lines: 9
+            :linenos:
+
+            import pandas as pd
+            import datatest as dt
+
+            dt.register_accessors()
+
+            df = pd.DataFrame(data={'A': ['foo', 'bar', 'baz', 'qux'],
+                                    'B': [10, 20, 'x', 'y']})
+
+            df.validate((str, int))
+
+        .. code-block:: none
+            :emphasize-lines: 5-6
+
+            Traceback (most recent call last):
+              File "example.py", line 9, in <module>
+                df.validate((str, int))
+            datatest.ValidationError: does not satisfy `(str, int)` (2 differences): [
+                Invalid(('baz', 'x')),
+                Invalid(('qux', 'y')),
+            ]
+
+
+Check the type of each element, one column at a time:
+
+.. tabs::
+
+    .. group-tab:: Passing
+
+        .. code-block:: python
+            :emphasize-lines: 9-10
+            :linenos:
+
+            import pandas as pd
+            import datatest as dt
+
+            dt.register_accessors()
+
+            df = pd.DataFrame(data={'A': ['foo', 'bar', 'baz', 'qux'],
+                                    'B': [10, 20, 30, 40]})
+
+            df['A'].validate(str)
+            df['B'].validate(int)
+
+    .. group-tab:: Failing
+
+        .. code-block:: python
+            :emphasize-lines: 9-10
+            :linenos:
+
+            import pandas as pd
+            import datatest as dt
+
+            dt.register_accessors()
+
+            df = pd.DataFrame(data={'A': ['foo', 'bar', 'baz', 'qux'],
+                                    'B': [10, 20, 'x', 'y']})
+
+            df['A'].validate(str)
+            df['B'].validate(int)
+
+        .. code-block:: none
+            :emphasize-lines: 5-6
+
+            Traceback (most recent call last):
+              File "example.py", line 10, in <module>
+                df['B'].validate(int)
+            datatest.ValidationError: does not satisfy `int` (2 differences): [
+                Invalid('x'),
+                Invalid('y'),
+            ]
+
+
+Check the ``dtype`` of the columns themselves (not the elements contained
+in them):
+
+.. tabs::
+
+    .. group-tab:: Passing
+
+        .. code-block:: python
+            :emphasize-lines: 15
+            :linenos:
+
+            import pandas as pd
+            import numpy as np
+            import datatest as dt
+
+            dt.register_accessors()
+
+            df = pd.DataFrame(data={'A': ['foo', 'bar', 'baz', 'qux'],
+                                    'B': [10, 20, 30, 40]})
+
+            required = {
+                'A': np.dtype(object),
+                'B': np.dtype(int),
+            }
+
+            df.dtypes.validate(required)
+
+    .. group-tab:: Failing
+
+        .. code-block:: python
+            :emphasize-lines: 15
+            :linenos:
+
+            import pandas as pd
+            import numpy as np
+            import datatest as dt
+
+            dt.register_accessors()
+
+            df = pd.DataFrame(data={'A': ['foo', 'bar', 'baz', 'qux'],
+                                    'B': [10, 20, 'x', 'y']})
+
+            required = {
+                'A': np.dtype(object),
+                'B': np.dtype(int),
+            }
+
+            df.dtypes.validate(required)
+
+        .. code-block:: none
+            :emphasize-lines: 5
+
+            Traceback (most recent call last):
+              File "example.py", line 15, in <module>
+                df.dtypes.validate(required)
+            datatest.ValidationError: does not satisfy `dtype('int64')` (1 difference): {
+                'B': Invalid(dtype('O'), expected=dtype('int64')),
+            }
+
+
 NumPy Types
 ===========
 
