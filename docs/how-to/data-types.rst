@@ -71,6 +71,121 @@ class is used to check for numbers of any type (:py:class:`int`,
 Checking Pandas Types
 =====================
 
+.. admonition:: Type Inference and Conversion
+    :class: note
+
+    .. raw:: html
+
+       <details>
+       <summary><a>A Quick Refresher</a></summary>
+
+    Import the :mod:`pandas` package:
+
+    .. code-block:: python
+
+        >>> import pandas as pd
+
+    **INFERENCE**
+
+    When a column's values are all integers (``1``, ``2``, and ``3``),
+    then Pandas infers an integer dtype:
+
+    .. code-block:: python
+        :emphasize-lines: 5
+
+        >>> pd.Series([1, 2, 3])
+        0    1
+        1    2
+        2    3
+        dtype: int64
+
+    When a column's values are a mix of integers (``1`` and ``3``)  and
+    floating point numbers (``2.0``), then Pandas will infer a floating
+    point dtype---notice that the original integers have been coerced
+    into float values:
+
+    .. code-block:: python
+        :emphasize-lines: 5
+
+        >>> pd.Series([1, 2.0, 3])
+        0    1.0
+        1    2.0
+        2    3.0
+        dtype: float64
+
+    When certain non-numeric types are present, ``'three'``, then pandas
+    will use a generic "object" dtype:
+
+    .. code-block:: python
+        :emphasize-lines: 5
+
+        >>> pd.Series([1, 2.0, 'three'])
+        0        1
+        1        2
+        2    three
+        dtype: object
+
+    **CONVERSION**
+
+    When a dtype is specified, ``dtype=float``, Pandas will attempt to
+    convert values into the given type. Here, the integers are explicitly
+    converted into float values:
+
+    .. code-block:: python
+        :emphasize-lines: 5
+
+        >>> pd.Series([1, 2, 3], dtype=float)
+        0    1.0
+        1    2.0
+        2    3.0
+        dtype: float64
+
+    In this example, integers and floating point numbers are converted
+    into string values, ``dtype=str``:
+
+    .. code-block:: python
+        :emphasize-lines: 5
+
+        >>> pd.Series([1, 2.0, 3], dtype=str)
+        0      1
+        1    2.0
+        2      3
+        dtype: object
+
+    When a value cannot be converted into a specified type, an error
+    is raised:
+
+    .. code-block:: python
+        :emphasize-lines: 16
+
+        >>> pd.Series([1, 2.0, 'three'], dtype=int)
+        Traceback (most recent call last):
+          File "<stdin>", line 1, in <module>
+          File "~/myproject/venv/lib64/python3.8/site-packages/pandas/core/series.py", line
+          327, in __init__
+            data = sanitize_array(data, index, dtype, copy, raise_cast_failure=True)
+          File "~/myproject/venv/lib64/python3.8/site-packages/pandas/core/construction.py",
+           line 447, in sanitize_array
+            subarr = _try_cast(data, dtype, copy, raise_cast_failure)
+          File "~/myproject/venv/lib64/python3.8/site-packages/pandas/core/construction.py",
+           line 555, in _try_cast
+            maybe_cast_to_integer_array(arr, dtype)
+          File "~/myproject/venv/lib64/python3.8/site-packages/pandas/core/dtypes/cast.py",
+          line 1674, in maybe_cast_to_integer_array
+            casted = np.array(arr, dtype=dtype, copy=copy)
+        ValueError: invalid literal for int() with base 10: 'three'
+
+
+    **SEE ALSO**
+
+    For more details, see the Pandas documentation regarding
+    :ref:`pandas:basics.object_conversion`.
+
+    .. raw:: html
+
+       </details>
+
+
 Check the types for each row of elements within a :class:`DataFrame`:
 
 .. tabs::
@@ -169,15 +284,15 @@ Check the type of each element, one column at a time:
             ]
 
 
-Check the ``dtype`` of the columns themselves (not the elements contained
-in them):
+Check the ``dtypes`` of the columns themselves (not the elements they
+contain):
 
 .. tabs::
 
     .. group-tab:: Passing
 
         .. code-block:: python
-            :emphasize-lines: 15
+            :emphasize-lines: 10-14
             :linenos:
 
             import pandas as pd
@@ -193,13 +308,12 @@ in them):
                 'A': np.dtype(object),
                 'B': np.dtype(int),
             }
-
             df.dtypes.validate(required)
 
     .. group-tab:: Failing
 
         .. code-block:: python
-            :emphasize-lines: 15
+            :emphasize-lines: 10-14
             :linenos:
 
             import pandas as pd
@@ -215,14 +329,13 @@ in them):
                 'A': np.dtype(object),
                 'B': np.dtype(int),
             }
-
             df.dtypes.validate(required)
 
         .. code-block:: none
             :emphasize-lines: 5
 
             Traceback (most recent call last):
-              File "example.py", line 15, in <module>
+              File "example.py", line 14, in <module>
                 df.dtypes.validate(required)
             datatest.ValidationError: does not satisfy `dtype('int64')` (1 difference): {
                 'B': Invalid(dtype('O'), expected=dtype('int64')),
