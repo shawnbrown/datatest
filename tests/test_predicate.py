@@ -442,6 +442,39 @@ class TestPredicate(unittest.TestCase):
         self.assertEqual(predicate(3), True)
         self.assertIs(predicate(5), TOKEN, msg='TOKEN should be returned, not True.')
 
+    def test_equality_inconsistency(self):
+        """Badly behaved objects could have inconsistent EQ and NE
+        behavior. To make sure that Predicate objects are consistent
+        they should only use`==` internally, not `!=`.
+        """
+        class Inconsistent(object):
+            def __init__(self_, value):
+                self_.value = value
+
+            def __eq__(self_, other):
+                return self_.value == other
+
+            def __ne__(self_, other):
+                """Badly behaved not-equals method."""
+                return self_.__eq__(other)  # <- DECEPTIVE RESULT!
+
+        # Test `Inconsistent` class, itself.
+        obj = Inconsistent(1)
+        self.assertTrue(obj == 1, msg='expected behavior')
+        self.assertTrue(obj != 1, msg='badly behaved comparison result')
+        self.assertFalse(obj == 2, msg='expected behavior')
+        self.assertFalse(obj != 2, msg='badly behaved comparison result')
+
+        # Test predicate matching.
+        pred = Predicate(Inconsistent(1))
+        self.assertTrue(pred(1))
+        self.assertFalse(pred(2))
+
+        # Test inverted predicate matching.
+        pred = ~Predicate(Inconsistent(1))
+        self.assertFalse(pred(1))
+        self.assertTrue(pred(2))
+
     def test_equality_failure(self):
         class BadObj(object):
             def __eq__(self, other):
