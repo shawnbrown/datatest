@@ -186,9 +186,15 @@ class Invalid(BaseDifference):
     __slots__ = ('_invalid', '_expected')
 
     def __init__(self, invalid, expected=NOVALUE):
-        if invalid == expected:
+        try:
+            is_equal = invalid == expected
+        except TypeError:
+            is_equal = False
+
+        if is_equal:
             msg = 'expects unequal values, got {0!r} and {1!r}'
             raise ValueError(msg.format(invalid, expected))
+
         self._invalid = invalid
         self._expected = expected
 

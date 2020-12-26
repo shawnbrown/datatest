@@ -146,6 +146,17 @@ class TestInvalid(unittest.TestCase):
         with self.assertRaises(ValueError):
             Invalid('foo', 'foo')
 
+    def test_equality_error(self):
+        class BadObj(object):
+            def __eq__(self, other):
+                if isinstance(other, BadObj):
+                    return True
+                raise TypeError('Sudden but inevitable betrayal!')
+
+        diff = Invalid(BadObj(), float)  # <- Checks for equality on init.
+        self.assertEqual(diff.invalid, BadObj())
+        self.assertEqual(diff.expected, float)
+
 
 class TestDeviation(unittest.TestCase):
     def test_instantiation(self):
