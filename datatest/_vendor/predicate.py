@@ -308,9 +308,14 @@ class Predicate(object):
             self.__name__ = name
 
     def __call__(self, other):
+        try:
+            is_match = self.matcher == other
+        except TypeError:
+            is_match = False
+
         if self._inverted:
-            return not self.matcher == other  # <- Do not change to "!=".
-        return self.matcher == other
+            return not is_match
+        return is_match
 
     def __invert__(self):
         new_pred = self.__class__(self)

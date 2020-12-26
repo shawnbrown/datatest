@@ -353,6 +353,18 @@ class TestPredicate(unittest.TestCase):
         self.assertTrue(pred(numpy.complex64(1.0)))
         self.assertTrue(pred(numpy.complex128(2.0)))
 
+    @unittest.skipUnless(numpy, 'requires numpy')
+    def test_numpy_equality_error(self):
+        """Doing `numpy.dtype(float) == 1` raises a TypeError.
+        Comparisons that error-out should be caught and considered
+        non-matches/False.
+        """
+        pred = Predicate(numpy.dtype(float))
+        self.assertFalse(pred(1))
+
+        pred = Predicate(1)
+        self.assertFalse(pred(numpy.dtype(float)))
+
     def test_inverted_logic(self):
         pred = ~Predicate('abc')
         self.assertFalse(pred('abc'))
@@ -429,6 +441,25 @@ class TestPredicate(unittest.TestCase):
         self.assertEqual(predicate(1), False)
         self.assertEqual(predicate(3), True)
         self.assertIs(predicate(5), TOKEN, msg='TOKEN should be returned, not True.')
+
+    def test_equality_failure(self):
+        class BadObj(object):
+            def __eq__(self, other):
+                if isinstance(other, BadObj):
+                    return True
+                raise TypeError('Sudden but inevitable betrayal!')
+
+        pred = Predicate(BadObj())
+        self.assertFalse(pred(1))
+
+        pred = Predicate(1)
+        self.assertFalse(pred(BadObj()))
+
+        pred = ~Predicate(BadObj())  # Check inverted case.
+        self.assertTrue(pred(1))
+
+        pred = ~Predicate(1)  # Check inverted case.
+        self.assertTrue(pred(BadObj()))
 
 
 if __name__ == '__main__':
