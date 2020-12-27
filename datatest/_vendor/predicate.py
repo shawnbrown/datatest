@@ -6,6 +6,7 @@ from cmath import isnan
 from .._compatibility.builtins import *
 from .._compatibility import abc
 from .._utils import regex_types
+from .._utils import isidentifier
 
 
 class MatcherBase(abc.ABC):
@@ -305,6 +306,9 @@ class Predicate(object):
             self._inverted = False
 
         if name is not None:
+            if not isidentifier(name):
+                message = "name must be valid Python identifier, got {0!r}"
+                raise ValueError(message.format(name))
             self.__name__ = name
 
     def __call__(self, other):

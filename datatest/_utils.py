@@ -19,6 +19,15 @@ try:
 except NameError:
     string_types = (str,)
 
+
+try:
+    isidentifier = str.isidentifier  # New in Python 3.0
+except AttributeError:
+    identifier_pattern = re.compile(r'^[A-Za-z_][A-Za-z0-9_]*$')
+    def isidentifier(text):
+        return identifier_pattern.match(text) is not None
+
+
 try:
     from StringIO import StringIO
     file_types = (IOBase, file, StringIO)

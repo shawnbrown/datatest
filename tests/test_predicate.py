@@ -396,6 +396,25 @@ class TestPredicate(unittest.TestCase):
         pred5 = Predicate(pred3, name='pred5_name')  # <- Overrides pred3 name.
         self.assertEqual(pred5.__name__, 'pred5_name')
 
+        # Test bad name values.
+        with self.assertRaises(ValueError):
+            Predicate('abc', name='1foo')
+
+        with self.assertRaises(ValueError):
+            Predicate('abc', name='foo!')
+
+        with self.assertRaises(ValueError):
+            Predicate('abc', name='foo bar')
+
+        with self.assertRaises(ValueError):
+            Predicate('abc', name='foo()')
+
+        with self.assertRaises(ValueError):
+            Predicate('abc', name='foo ')
+
+        with self.assertRaises(ValueError):
+            Predicate('abc', name='')
+
     def test_str(self):
         pred = Predicate('abc')
         self.assertEqual(str(pred), "'abc'")
