@@ -33,6 +33,46 @@ About NaN values:
 * Comparisons involving a NaN will return False.
 
 
+Checking for NaN Values
+=======================
+
+To make sure data elements do not contain NaN values, you can use
+a helper function:
+
+.. code-block:: python
+    :emphasize-lines: 7-9
+    :linenos:
+
+    from math import isnan
+    from datatest import validate
+
+
+    data = [5, 6, float('nan')]
+
+    def not_nan(x):
+        """Values should not be NaN."""
+        return not isnan(x)
+
+    validate(data, not_nan)
+
+
+You can also do this using an inverted :class:`Predicate` match:
+
+.. code-block:: python
+    :emphasize-lines: 7
+    :linenos:
+
+    from math import isnan
+    from datatest import validate, Predicate
+
+
+    data = [5, 6, float('nan')]
+
+    requirement = ~Predicate(isnan)
+
+    validate(data, requirement)
+
+
 Accepting NaN Differences
 =========================
 
