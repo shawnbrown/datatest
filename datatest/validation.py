@@ -493,7 +493,7 @@ class ValidateType(object):
 
         .. attention::
 
-            In version 0.10.0, the semantics of :meth:`subset()
+            Since version 0.10.0, the semantics of :meth:`subset()
             <validate.subset>` have been inverted. To mitigate problems
             for users upgrading from 0.9.6, this method issues a warning.
 
@@ -542,7 +542,7 @@ class ValidateType(object):
 
         .. attention::
 
-            In version 0.10.0, the semantics of :meth:`superset()
+            Since version 0.10.0, the semantics of :meth:`superset()
             <validate.superset>` have been inverted. To mitigate problems
             for users upgrading from 0.9.6, this method issues a warning.
 
