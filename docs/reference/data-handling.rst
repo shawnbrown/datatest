@@ -80,7 +80,7 @@ non-accessor syntax:
 
 .. tabs::
 
-    .. group-tab:: Accessor Syntax
+    .. tab:: Accessor Syntax
 
         .. code-block:: python
 
@@ -96,7 +96,7 @@ non-accessor syntax:
 
             df[['A', 'C']].validate((str, int))       # DataFrame
 
-    .. group-tab:: Non-accessor Syntax
+    .. tab:: Non-accessor Syntax
 
         .. code-block:: python
 

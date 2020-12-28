@@ -21,7 +21,7 @@ approximate matches with the :meth:`accepted.fuzzy` acceptance:
 
 .. tabs::
 
-    .. group-tab:: Using Acceptance
+    .. tab:: Using Acceptance
 
         .. code-block:: python
             :emphasize-lines: 19
@@ -48,7 +48,7 @@ approximate matches with the :meth:`accepted.fuzzy` acceptance:
             with accepted.fuzzy(cutoff=0.6):
                 validate(linked_record, master_record)
 
-    .. group-tab:: No Acceptance
+    .. tab:: No Acceptance
 
         .. code-block:: python
             :linenos:

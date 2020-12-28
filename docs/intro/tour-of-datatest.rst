@@ -127,7 +127,7 @@ works for all of the different *data* formats:
 
 .. tabs::
 
-    .. group-tab:: Element
+    .. tab:: Element
 
         An individual element:
 
@@ -144,7 +144,7 @@ works for all of the different *data* formats:
         A *data* value is treated as single element if it's a string, tuple,
         or non-iterable object.
 
-    .. group-tab:: Group
+    .. tab:: Group
 
         A group of elements:
 
@@ -162,7 +162,7 @@ works for all of the different *data* formats:
         other than a string, tuple, or mapping (e.g., in this case a
         :py:class:`list`).
 
-    .. group-tab:: Mapping
+    .. tab:: Mapping
 
         A mapping of elements:
 
@@ -180,7 +180,7 @@ works for all of the different *data* formats:
         elements if they are strings, tuples, non-iterable objects, or
         nested mappings.
 
-    .. group-tab:: Mapping of Groups
+    .. tab:: Mapping of Groups
 
         A mapping of groups of elements:
 
@@ -209,7 +209,7 @@ handling for several third-party data types.
 
 .. tabs::
 
-    .. group-tab:: Pandas
+    .. tab:: Pandas
 
         Datatest can work with :mod:`pandas` DataFrame, Series, Index,
         and MultiIndex objects:
@@ -228,7 +228,7 @@ handling for several third-party data types.
 
             dt.validate(df[['A', 'B']], (str, int))
 
-    .. group-tab:: Pandas (integrated API)
+    .. tab:: Pandas (integrated API)
 
         For users who prefer a more tightly integrated API, Datatest
         provides the ``validate`` accessor for testing pandas objects:
@@ -253,7 +253,7 @@ handling for several third-party data types.
         can use :func:`validate` as a *method* of your existing
         DataFrame, Series, Index, and MultiIndex objects.
 
-    .. group-tab:: NumPy
+    .. tab:: NumPy
 
         Handling is also supported for :mod:`numpy` objects including one-
         or two-dimentional array, recarray, and structured array objects.
@@ -272,7 +272,7 @@ handling for several third-party data types.
 
             dt.validate(a[['f0', 'f1']], (str, int))
 
-    .. group-tab:: Squint
+    .. tab:: Squint
 
         Datatest also works well with :mod:`squint` Select, Query, and Result
         objects:
@@ -300,7 +300,7 @@ handling for several third-party data types.
             This *simple query interface* was named "Squint" and the
             code was moved into its own project.
 
-    .. group-tab:: Databases
+    .. tab:: Databases
 
         Database queries can also be validated directly:
 
@@ -509,7 +509,7 @@ if we decide that :class:`Extra` differences are acceptible, we can use
 
 .. tabs::
 
-    .. group-tab:: Using Acceptance
+    .. tab:: Using Acceptance
 
         .. code-block:: python
             :linenos:
@@ -526,7 +526,7 @@ if we decide that :class:`Extra` differences are acceptible, we can use
             with accepted(Extra):
                 validate(data, requirement)
 
-    .. group-tab:: No Acceptance
+    .. tab:: No Acceptance
 
         .. code-block:: python
             :linenos:
@@ -567,7 +567,7 @@ than all differences of a given type. For example, if the difference
 
 .. tabs::
 
-    .. group-tab:: Using Acceptance
+    .. tab:: Using Acceptance
 
         .. code-block:: python
             :linenos:
@@ -598,7 +598,7 @@ than all differences of a given type. For example, if the difference
         remaining error can be addressed by correcting the data, modifying
         the requirement, or altering the acceptance.
 
-    .. group-tab:: No Acceptance
+    .. tab:: No Acceptance
 
         .. code-block:: python
             :linenos:
@@ -635,7 +635,7 @@ two differences explicitly:
 
 .. tabs::
 
-    .. group-tab:: Using Acceptance
+    .. tab:: Using Acceptance
 
         .. code-block:: python
             :linenos:
@@ -652,7 +652,7 @@ two differences explicitly:
             with accepted([Extra('C'), Extra('D')]):
                 validate(data, requirement)
 
-    .. group-tab:: No Acceptance
+    .. tab:: No Acceptance
 
         .. code-block:: python
             :linenos:
@@ -690,7 +690,7 @@ of plus-or-minus five without triggering a test failure:
 
 .. tabs::
 
-    .. group-tab:: Using Acceptance
+    .. tab:: Using Acceptance
 
         .. code-block:: python
             :linenos:
@@ -714,7 +714,7 @@ of plus-or-minus five without triggering a test failure:
             with accepted.tolerance(5):  # accepts ±5
                 validate(data, requirement)
 
-    .. group-tab:: No Acceptance
+    .. tab:: No Acceptance
 
         .. code-block:: python
             :linenos:
@@ -813,7 +813,7 @@ for each object:
 
 .. tabs::
 
-    .. group-tab:: Using RepeatingContainer
+    .. tab:: Using RepeatingContainer
 
         .. code-block:: python
             :emphasize-lines: 9,11,13
@@ -837,7 +837,7 @@ for each object:
         are then unpacked into individual variable names. Compare this
         example with code in the "No RepeatingContainer" tab.
 
-    .. group-tab:: No RepeatingContainer
+    .. tab:: No RepeatingContainer
 
         .. code-block:: python
             :emphasize-lines: 6-7,9-10,12-13

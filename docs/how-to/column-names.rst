@@ -88,7 +88,7 @@ ways of checking this format:
 
 .. tabs::
 
-    .. group-tab:: Regex Pattern
+    .. tab:: Regex Pattern
 
         We can use :meth:`validate.regex` to check that column names match
         a :ref:`regular expression <python:re-syntax>` pattern. The pattern
@@ -101,7 +101,7 @@ ways of checking this format:
             msg = 'Must have two capital letters followed by digits.'
             validate.regex(column_names, r'^[A-Z]{2}\d+$', msg=msg)
 
-    .. group-tab:: Helper Function
+    .. tab:: Helper Function
 
         This example performs the same validation as the Regex Pattern
         version, but uses :term:`slicing <python:slice>` and string methods

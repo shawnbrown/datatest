@@ -50,7 +50,7 @@ index of any other type are treated as mappings:
 
 .. tabs::
 
-    .. group-tab:: Default Index
+    .. tab:: Default Index
 
         .. code-block:: python
             :linenos:
@@ -77,7 +77,7 @@ index of any other type are treated as mappings:
         :class:`RangeIndex <pandas.RangeIndex>` type---which tells
         :func:`validate()` to treat the DataFrame as a sequence.
 
-    .. group-tab:: Specified Index
+    .. tab:: Specified Index
 
         .. code-block:: python
             :linenos:
@@ -110,7 +110,7 @@ tabs below:
 
 .. tabs::
 
-    .. group-tab:: Default Index
+    .. tab:: Default Index
 
         .. code-block:: python
             :linenos:
@@ -141,7 +141,7 @@ tabs below:
         Since the DataFrame was treated as a sequence, the error includes
         a sequence of differences.
 
-    .. group-tab:: Specified Index
+    .. tab:: Specified Index
 
         .. code-block:: python
             :linenos:
@@ -182,7 +182,7 @@ Series with explicitly defined indexes are treated as mappings:
 
 .. tabs::
 
-    .. group-tab:: Default Index
+    .. tab:: Default Index
 
         .. code-block:: python
             :linenos:
@@ -199,7 +199,7 @@ Series with explicitly defined indexes are treated as mappings:
 
             s.validate(requirement)
 
-    .. group-tab:: Specified Index
+    .. tab:: Specified Index
 
         .. code-block:: python
             :linenos:
@@ -222,7 +222,7 @@ in the error reporting:
 
 .. tabs::
 
-    .. group-tab:: Default Index
+    .. tab:: Default Index
 
         .. code-block:: python
             :linenos:
@@ -249,7 +249,7 @@ in the error reporting:
                 Invalid('y'),
             ]
 
-    .. group-tab:: Specified Index
+    .. tab:: Specified Index
 
         .. code-block:: python
             :linenos:

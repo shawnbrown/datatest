@@ -112,7 +112,7 @@ Failed Equality
 
 .. tabs::
 
-    .. group-tab:: Failure
+    .. tab:: Failure
 
         .. code-block:: python
             :linenos:
@@ -133,7 +133,7 @@ Failed Equality
                 Deviation(timedelta(days=+2), date(2020, 12, 25)),
             ]
 
-    .. group-tab:: Acceptance
+    .. tab:: Acceptance
 
         .. code-block:: python
             :emphasize-lines: 4
@@ -151,7 +151,7 @@ Failed Interval
 
 .. tabs::
 
-    .. group-tab:: Failure
+    .. tab:: Failure
 
         .. code-block:: python
             :linenos:
@@ -181,7 +181,7 @@ Failed Interval
                 Deviation(timedelta(days=+4), date(2020, 12, 31)),
             ]
 
-    .. group-tab:: Acceptance
+    .. tab:: Acceptance
 
         .. code-block:: python
             :emphasize-lines: 11
@@ -206,7 +206,7 @@ Failed Mapping Equalities
 
 .. tabs::
 
-    .. group-tab:: Failure
+    .. tab:: Failure
 
         .. code-block:: python
             :linenos:
@@ -247,7 +247,7 @@ Failed Mapping Equalities
                 'job826': Deviation(timedelta(seconds=-68), datetime(2020, 11, 27, 3, 55, 20)),
             }
 
-    .. group-tab:: Acceptance
+    .. tab:: Acceptance
 
         .. code-block:: python
             :emphasize-lines: 20

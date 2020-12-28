@@ -190,7 +190,7 @@ Check the types for each row of elements within a :class:`DataFrame`:
 
 .. tabs::
 
-    .. group-tab:: Passing
+    .. tab:: Passing
 
         .. code-block:: python
             :emphasize-lines: 9
@@ -206,7 +206,7 @@ Check the types for each row of elements within a :class:`DataFrame`:
 
             df.validate((str, int))
 
-    .. group-tab:: Failing
+    .. tab:: Failing
 
         .. code-block:: python
             :emphasize-lines: 9
@@ -238,7 +238,7 @@ Check the type of each element, one column at a time:
 
 .. tabs::
 
-    .. group-tab:: Passing
+    .. tab:: Passing
 
         .. code-block:: python
             :emphasize-lines: 9-10
@@ -255,7 +255,7 @@ Check the type of each element, one column at a time:
             df['A'].validate(str)
             df['B'].validate(int)
 
-    .. group-tab:: Failing
+    .. tab:: Failing
 
         .. code-block:: python
             :emphasize-lines: 9-10
@@ -289,7 +289,7 @@ contain):
 
 .. tabs::
 
-    .. group-tab:: Passing
+    .. tab:: Passing
 
         .. code-block:: python
             :emphasize-lines: 10-14
@@ -310,7 +310,7 @@ contain):
             }
             df.dtypes.validate(required)
 
-    .. group-tab:: Failing
+    .. tab:: Failing
 
         .. code-block:: python
             :emphasize-lines: 10-14

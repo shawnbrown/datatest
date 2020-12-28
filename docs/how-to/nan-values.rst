@@ -81,7 +81,7 @@ them as you would any other difference:
 
 .. tabs::
 
-    .. group-tab:: Using Acceptance
+    .. tab:: Using Acceptance
 
         .. code-block:: python
             :emphasize-lines: 8
@@ -98,7 +98,7 @@ them as you would any other difference:
                 validate(data, requirement)
 
 
-    .. group-tab:: No Acceptance
+    .. tab:: No Acceptance
 
         .. code-block:: python
             :linenos:
@@ -129,7 +129,7 @@ set, or mapping of differences:
 
 .. tabs::
 
-    .. group-tab:: Using Acceptance
+    .. tab:: Using Acceptance
 
         .. code-block:: python
             :emphasize-lines: 8
@@ -146,7 +146,7 @@ set, or mapping of differences:
                 validate(data, requirement)
 
 
-    .. group-tab:: No Acceptance
+    .. tab:: No Acceptance
 
         .. code-block:: python
             :linenos:
