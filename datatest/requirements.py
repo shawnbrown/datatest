@@ -36,7 +36,13 @@ from ._utils import string_types
 
 
 def _get_formatted_name_or_repr(obj):
-    name = getattr(obj, '__name__', None)
+    if hasattr(obj, '__qualname__') and '<locals>' not in obj.__qualname__:
+        name = obj.__qualname__
+    elif hasattr(obj, '__name__'):
+        name = obj.__name__
+    else:
+        name = None
+
     if name:
         if name.startswith('<'):  # E.g., "<lambda>".
             obj_repr = name

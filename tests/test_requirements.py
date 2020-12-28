@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
+import platform
 import re
 from . import _unittest as unittest
 from datatest._compatibility.collections.abc import Iterable
@@ -47,6 +48,10 @@ from datatest.differences import NOVALUE
 # Remove for datatest version 0.9.8.
 import warnings
 warnings.filterwarnings('ignore', message='subset and superset warning')
+
+
+PYPY3 = (platform.python_implementation() == 'PyPy'
+         and platform.python_version_tuple()[0] == '3')
 
 
 class TestBuildDescription(unittest.TestCase):
@@ -100,6 +105,27 @@ class TestBuildDescription(unittest.TestCase):
         description = _build_description(lambda x: False)
         msg = 'if object is in angle brackets, should not use backticks'
         self.assertEqual(description, "does not satisfy <lambda>", msg=msg)
+
+    def test_name(self):
+        def foo(x):
+            pass
+        description = _build_description(foo)
+        self.assertEqual(description, 'does not satisfy foo()')
+
+    def test_qualname(self):
+        if PYPY3:
+            return  # PyPy3 cannot tell the difference between a
+                    # user-defined function and a built-in function.
+                    # So this test gives the wrong result.
+                    # See https://foss.heptapod.net/pypy/pypy/-/issues/3367
+                    #     https://doc.pypy.org/en/latest/cpython_differences.html
+
+        if platform.python_version_tuple()[0] == '2':  # Python 2 doesn't have __qualname__.
+            description = _build_description(str.isupper)
+            self.assertEqual(description, 'does not satisfy isupper()')
+        else:
+            description = _build_description(str.isupper)
+            self.assertEqual(description, 'does not satisfy str.isupper()')
 
     def test_no_docstring_no_name(self):
         """Non-type objects with no name and no docstring should use
