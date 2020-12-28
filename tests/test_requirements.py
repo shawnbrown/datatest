@@ -74,7 +74,7 @@ class TestBuildDescription(unittest.TestCase):
 
     def test_builtin_type(self):
         description = _build_description(float)
-        msg = 'should be name in single quotes'
+        msg = 'should be name in backticks'
         self.assertEqual(description, "does not satisfy `float`", msg=msg)
 
     def test_user_defined_type(self):
@@ -93,12 +93,12 @@ class TestBuildDescription(unittest.TestCase):
         self.assertTrue(MyClass.__doc__, msg='make sure class has docstring')
 
         description = _build_description(MyClass)
-        msg = 'user defined classes should work same as built-in types (name in quotes)'
+        msg = 'like built-in types, user-defined classes should have name in backticks'
         self.assertEqual(description, "does not satisfy `MyClass`", msg=msg)
 
     def test_lambda_expression(self):
         description = _build_description(lambda x: False)
-        msg = 'if object is in angle brackets, should not use quotes'
+        msg = 'if object is in angle brackets, should not use backticks'
         self.assertEqual(description, "does not satisfy <lambda>", msg=msg)
 
     def test_no_docstring_no_name(self):
