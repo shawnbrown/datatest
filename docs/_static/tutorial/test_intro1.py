@@ -17,10 +17,10 @@ def test_using_function():
     """Check that function returns True."""
     data = [2, 4, 6, 8]
 
-    def iseven(x):
+    def is_even(x):
         return x % 2 == 0
 
-    validate(data, iseven)
+    validate(data, is_even)
 
 
 def test_using_type():

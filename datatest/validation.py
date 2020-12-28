@@ -192,10 +192,10 @@ class ValidateType(object):
 
             data = [2, 4, 6, 8]
 
-            def iseven(x):
+            def is_even(x):
                 return x % 2 == 0
 
-            validate(data, iseven)  # <- callable used as predicate
+            validate(data, is_even)  # <- callable used as predicate
 
         If the predicate returns False, then an :class:`Invalid` or
         :class:`Deviation` difference is generated. If the predicate

@@ -70,10 +70,10 @@ the function returns True when applied to each element in *data*:
 
     data = [2, 4, 6, 8]
 
-    def iseven(x):
+    def is_even(x):
         return x % 2 == 0
 
-    validate(data, requirement=iseven)
+    validate(data, requirement=is_even)
 
 
 When *requirement* is a **type**, validation checks that the
@@ -103,10 +103,10 @@ tuple:
 
     data = [('a', 2), ('b', 4), ('c', 6)]
 
-    def iseven(x):
+    def is_even(x):
         return x % 2 == 0
 
-    requirement = (str, iseven)
+    requirement = (str, is_even)
     validate(data, requirement)
 
 In addition to the examples above, several other validation
@@ -405,7 +405,7 @@ differences:
 "Invalid" Differences
 ---------------------
 
-In this next example, the *requirement* is a tuple, ``(str, iseven)``.
+In this next example, the *requirement* is a tuple, ``(str, is_even)``.
 It checks for tuple elements where the first value is a string and the
 second value is an even number:
 
@@ -416,10 +416,10 @@ second value is an even number:
 
     data = [('a', 2), ('b', 4), ('c', 6), (1.25, 8), ('e', 9)]
 
-    def iseven(x):
+    def is_even(x):
         return x % 2 == 0
 
-    requirement = (str, iseven)
+    requirement = (str, is_even)
     validate(data, requirement)
 
 Two of the elements in *data* fail to satisfy the *requirement*: ``(1.25, 8)``
@@ -433,7 +433,7 @@ differences:
     Traceback (most recent call last):
       File "example.py", line 9, in <module>
         validate(data, requirement)
-    datatest.ValidationError: does not satisfy `(str, iseven())` (2 differences): [
+    datatest.ValidationError: does not satisfy `(str, is_even())` (2 differences): [
         Invalid((1.25, 8)),
         Invalid(('e', 9)),
     ]

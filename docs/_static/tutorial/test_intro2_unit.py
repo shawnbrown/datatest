@@ -17,10 +17,10 @@ class ExampleTests(datatest.DataTestCase):
         """Check that function returns True."""
         data = [2, 4, 6, 9]
 
-        def iseven(x):
+        def is_even(x):
             return x % 2 == 0
 
-        self.assertValid(data, iseven)
+        self.assertValid(data, is_even)
 
     def test_using_type(self):
         """Check that values are of the given type."""

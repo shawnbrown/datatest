@@ -169,17 +169,17 @@ class Invalid(BaseDifference):
 
         data = [2, 4, 6, 9]
 
-        def iseven(x):
+        def is_even(x):
             return x % 2 == 0
 
-        datatest.validate(data, iseven)
+        datatest.validate(data, is_even)
 
     Running this example raises the following error:
 
     .. code-block:: none
         :emphasize-lines: 2
 
-        ValidationError: does not satisfy iseven() (1 difference): [
+        ValidationError: does not satisfy is_even() (1 difference): [
             Invalid(9),
         ]
     """
