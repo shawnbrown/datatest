@@ -26,7 +26,7 @@ help you:
 Datatest can be used directly in your own projects or as part of
 a testing framework like pytest_ or unittest_. It implements a
 system of validation methods, difference classes, and acceptance
-context managers.
+managers.
 
 Datatest has no hard dependencies; it's tested on Python 2.6, 2.7,
 3.2 through 3.10, PyPy, and PyPy3; and is freely available under
