@@ -120,12 +120,12 @@ class TestBuildDescription(unittest.TestCase):
                     # See https://foss.heptapod.net/pypy/pypy/-/issues/3367
                     #     https://doc.pypy.org/en/latest/cpython_differences.html
 
-        if platform.python_version_tuple()[0] == '2':  # Python 2 doesn't have __qualname__.
-            description = _build_description(str.isupper)
-            self.assertEqual(description, 'does not satisfy isupper()')
-        else:
+        if hasattr(str.isupper, '__qualname__'):  # New in Python 3.3
             description = _build_description(str.isupper)
             self.assertEqual(description, 'does not satisfy str.isupper()')
+        else:
+            description = _build_description(str.isupper)
+            self.assertEqual(description, 'does not satisfy isupper()')
 
     def test_no_docstring_no_name(self):
         """Non-type objects with no name and no docstring should use
