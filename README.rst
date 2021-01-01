@@ -181,27 +181,27 @@ Copyright 2014 - 2021 National Committee for an Effective Congress, et al.
 ..
   SUBSTITUTION DEFINITONS:
 
-.. |buildstatus| image:: https://travis-ci.org/shawnbrown/datatest.svg?branch=master
+.. |buildstatus| image:: https://img.shields.io/travis/shawnbrown/datatest?logo=travis-ci&logoColor=white&style=flat-square
     :target: https://travis-ci.org/shawnbrown/datatest
     :alt: Current Build Status
 
-.. |devstatus| image:: https://img.shields.io/pypi/status/datatest.svg
+.. |devstatus| image:: https://img.shields.io/pypi/status/datatest.svg?logo=pypi&logoColor=white&style=flat-square
     :target: https://pypi.org/project/datatest/
     :alt: Development Status
 
-.. |license| image:: https://img.shields.io/badge/license-Apache%202-blue.svg
+.. |license| image:: https://img.shields.io/badge/license-Apache 2-blue.svg?logo=open-source-initiative&logoColor=white&style=flat-square
     :target: https://opensource.org/licenses/Apache-2.0
     :alt: Apache 2.0 License
 
-.. |pyversions| image:: https://img.shields.io/pypi/pyversions/datatest.svg
+.. |pyversions| image:: https://img.shields.io/pypi/pyversions/datatest.svg?logo=python&logoColor=white&style=flat-square
     :target: https://pypi.org/project/datatest/#supported-versions
     :alt: Supported Python Versions
 
-.. |githubstars| image:: https://img.shields.io/github/stars/shawnbrown/datatest.svg
+.. |githubstars| image:: https://img.shields.io/github/stars/shawnbrown/datatest.svg?logo=github&logoColor=white&style=flat-square
     :target: https://github.com/shawnbrown/datatest/stargazers
     :alt: GitHub users who have starred this project
 
-.. |pypiversion| image:: https://img.shields.io/pypi/v/datatest.svg
+.. |pypiversion| image:: https://img.shields.io/pypi/v/datatest.svg?logo=pypi&logoColor=white&style=flat-square
     :target: https://pypi.org/project/datatest/
     :alt: Current PyPI Version
 
