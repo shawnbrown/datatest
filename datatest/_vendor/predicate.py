@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+"""Predicate class and matcher functions."""
+
 from __future__ import absolute_import
 import re
 import sys

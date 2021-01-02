@@ -1,6 +1,19 @@
-# -*- coding: utf-8 -*-
+"""Acceptance classes and functions."""
+
 from __future__ import absolute_import
 from __future__ import division
+
+__all__ = [
+    'accepted',
+    'AcceptedDifferences',
+    'AcceptedKeys',
+    'AcceptedArgs',
+    'AcceptedTolerance',
+    'AcceptedPercent',
+    'AcceptedCount',
+    'AcceptedFuzzy',
+]
+
 import difflib
 import inspect
 from numbers import Number
@@ -15,7 +28,6 @@ from ._utils import BaseElement
 from ._utils import exhaustible
 from ._utils import nonstringiter
 from ._vendor.predicate import get_matcher
-
 from .validation import ValidationError
 from .differences import (
     BaseDifference,
@@ -27,19 +39,6 @@ from .differences import (
 
 __datatest = True  # Used to detect in-module stack frames (which are
                    # omitted from output).
-
-
-__all__ = [
-    'accepted',
-    'AcceptedDifferences',
-    'AcceptedKeys',
-    'AcceptedArgs',
-    'AcceptedTolerance',
-    'AcceptedPercent',
-    'AcceptedCount',
-    'AcceptedFuzzy',
-]
-
 
 class BaseAcceptance(abc.ABC):
     """Context manager base class to accept certain differences without

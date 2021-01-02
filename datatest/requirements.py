@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
-"""This module defines requirement classes used internally by datatest."""
+"""Requirement classes and functions."""
+
 from __future__ import absolute_import
 from __future__ import division
-
 import difflib
 import re
 from numbers import Number
@@ -18,6 +17,7 @@ from ._compatibility.functools import partial
 from ._compatibility.functools import wraps
 from ._compatibility.itertools import chain
 from ._compatibility.itertools import zip_longest
+
 from .differences import (
     BaseDifference,
     Extra,
@@ -27,12 +27,12 @@ from .differences import (
     NOVALUE,
 )
 from ._normalize import normalize
-from ._vendor.predicate import Predicate
 from ._utils import BaseElement
 from ._utils import IterItems
 from ._utils import iterpeek
 from ._utils import nonstringiter
 from ._utils import string_types
+from ._vendor.predicate import Predicate
 
 
 def _get_formatted_name_or_repr(obj):

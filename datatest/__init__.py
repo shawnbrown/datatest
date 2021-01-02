@@ -3,13 +3,15 @@
 
 PYTEST_DONT_REWRITE
 """
+
 from __future__ import absolute_import
+
+__version__ = '0.12.0.dev1'
 
 # Datatest Core API (__all__ property defined in submodules)
 from .validation import *   # Validation error and functions.
 from .differences import *  # Difference classes.
 from .acceptances import accepted
-
 from ._vendor.predicate import Predicate
 
 # Pandas extensions.
@@ -25,10 +27,6 @@ from .main import main
 # Data Handling API
 from ._working_directory import working_directory
 from ._vendor.repeatingcontainer import RepeatingContainer
-
-
-__version__ = '0.12.0.dev1'
-
 
 #############################################
 # Register traceback formatting handler.

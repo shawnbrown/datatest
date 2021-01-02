@@ -1,4 +1,5 @@
 """Adds "validate" accessors to pandas DataFrame, Series, and Index."""
+
 from .validation import ValidationError
 from .validation import validate
 

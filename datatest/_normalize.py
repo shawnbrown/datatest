@@ -1,9 +1,11 @@
 """Normalize objects for validation."""
+
 import sys
 from ._compatibility.collections.abc import Collection
 from ._compatibility.collections.abc import Iterable
 from ._compatibility.collections.abc import Iterator
 from ._compatibility.collections.abc import Mapping
+
 from ._utils import exhaustible
 from ._utils import iterpeek
 from ._utils import IterItems

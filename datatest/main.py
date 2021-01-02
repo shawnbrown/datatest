@@ -1,4 +1,5 @@
 """Datatest main program"""
+
 import sys as _sys
 from unittest import TestProgram as _TestProgram
 from unittest import defaultTestLoader as _defaultTestLoader

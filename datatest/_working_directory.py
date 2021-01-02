@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+"""working_directory context manager."""
+
 import os
 from ._compatibility import contextlib
 

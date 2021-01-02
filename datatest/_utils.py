@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 """Utility helper functions."""
+
 from __future__ import absolute_import
 import re
 from io import IOBase
 from numbers import Number
-
 from ._compatibility import abc
 from ._compatibility.collections.abc import ItemsView
 from ._compatibility.collections.abc import Iterable

@@ -1,9 +1,16 @@
-# -*- coding: utf-8 -*-
 """Validation and comparison handling."""
+
+__all__ = [
+    'validate',
+    'valid',
+    'ValidationError',
+]
+
 from ._compatibility.collections.abc import Iterable
 from ._compatibility.collections.abc import Mapping
 from ._compatibility.collections.abc import Set
 from ._compatibility.functools import partial
+
 from .differences import BaseDifference
 from ._normalize import normalize
 from . import requirements
@@ -14,11 +21,6 @@ from ._utils import iterpeek
 from ._utils import nonstringiter
 from ._utils import _safesort_key
 
-__all__ = [
-    'validate',
-    'valid',
-    'ValidationError',
-]
 
 __unittest = True  # Hides internal stack frames from unittest output.
 

@@ -1,12 +1,4 @@
-# -*- coding: utf-8 -*-
-from cmath import isnan
-from datetime import timedelta
-from ._compatibility.builtins import *
-from ._compatibility import abc
-from ._compatibility.contextlib import suppress
-from ._utils import _make_sentinel
-from ._utils import pretty_timedelta_repr
-
+"""Difference classes."""
 
 __all__ = [
     'BaseDifference',
@@ -15,6 +7,15 @@ __all__ = [
     'Invalid',
     'Deviation',
 ]
+
+from cmath import isnan
+from datetime import timedelta
+from ._compatibility.builtins import *
+from ._compatibility import abc
+from ._compatibility.contextlib import suppress
+
+from ._utils import _make_sentinel
+from ._utils import pretty_timedelta_repr
 
 
 NOVALUE = _make_sentinel(
