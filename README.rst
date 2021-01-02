@@ -12,25 +12,20 @@ datatest: Test driven data-wrangling and data validation
 .. start-inclusion-marker-description
 
 Datatest helps to speed up and formalize data-wrangling and data
-validation tasks. It repurposes software testing practices for
-data preparation and quality assurance projects. Datatest can
-help you:
+validation tasks. It implements a system of validation methods,
+difference classes, and acceptance managers. Datatest can help you:
 
 * Clean and wrangle data faster and more accurately.
 * Maintain a record of checks and decisions regarding important data sets.
 * Distinguish between ideal criteria and acceptible deviation.
-* Validate data pipeline component input and output.
+* Validate the input and output of data pipeline components.
 * Measure progress of data preparation tasks.
 * On-board new team members with an explicit and structured process.
 
-Datatest can be used directly in your own projects or as part of
-a testing framework like pytest_ or unittest_. It implements a
-system of validation methods, difference classes, and acceptance
-managers.
-
-Datatest has no hard dependencies; it's tested on Python 2.6, 2.7,
-3.2 through 3.10, PyPy, and PyPy3; and is freely available under
-the Apache License, version 2.
+Datatest can be used directly in your own projects or as part of a testing
+framework like pytest_ or unittest_. It has no hard dependencies; it's
+tested on Python 2.6, 2.7, 3.2 through 3.10, PyPy, and PyPy3; and is freely
+available under the Apache License, version 2.
 
 .. _pytest: https://pytest.org
 .. _unittest: https://docs.python.org/library/unittest.html
@@ -46,6 +41,55 @@ the Apache License, version 2.
     | https://pypi.org/project/datatest/
 
 
+Code Examples
+=============
+
+Validating a Dictionary of Lists
+--------------------------------
+
+.. code-block:: python
+
+    from datatest import validate, accepted, Invalid
+
+
+    data = {
+        'A': [1, 2, 3, 4],
+        'B': ['x', 'y', 'x', 'x'],
+        'C': ['foo', 'bar', 'baz', 'EMPTY']
+    }
+
+    validate(data.keys(), {'A', 'B', 'C'})
+
+    validate(data['A'], int)
+
+    validate(data['B'], {'x', 'y'})
+
+    with accepted(Invalid('EMPTY')):
+        validate(data['C'], str.islower)
+
+
+Validating a Pandas DataFrame
+-----------------------------
+
+.. code-block:: python
+
+    import pandas as pd
+    from datatest import register_accessors, accepted, Invalid
+
+
+    register_accessors()
+    df = pd.read_csv('data.csv')
+
+    df.columns.validate({'A', 'B', 'C'})
+
+    df['A'].validate(int)
+
+    df['B'].validate({'x', 'y'})
+
+    with accepted(Invalid('EMPTY')):
+        df['C'].validate(str.islower)
+
+
 Installation
 ============
 
@@ -57,32 +101,36 @@ The easiest way to install datatest is to use `pip <https://pip.pypa.io>`_:
 
     pip install datatest
 
-If you aren't worried about supporting a codebase of older scripts, upgrade
-an existing installation with the ``--upgrade`` option:
+If you are upgrading from version 0.11.0 or newer, use the ``--upgrade``
+option:
 
 .. code-block:: console
 
     pip install --upgrade datatest
 
+
+Upgrading from Datatest 0.9.6
+-----------------------------
+
 If you have an existing codebase of older datatest scripts, you should
 upgrade using the following steps:
 
-    * Install datatest 0.10.0 first:
+* Install datatest 0.10.0 first:
 
-      .. code-block:: console
+  .. code-block:: console
 
-          pip install --force-reinstall datatest==0.10.0
+      pip install --force-reinstall datatest==0.10.0
 
-    * Run your existing code and check for DeprecationWarnings.
+* Run your existing code and check for DeprecationWarnings.
 
-    * Update the parts of your code that use deprecated features.
+* Update the parts of your code that use deprecated features.
 
-    * Once your code is running without DeprecationWarnings,
-      install the latest version of datatest, 0.11.0:
+* Once your code is running without DeprecationWarnings,
+  install the latest version of datatest, 0.11.0:
 
-      .. code-block:: console
+  .. code-block:: console
 
-          pip install --upgrade datatest
+      pip install --upgrade datatest
 
 
 Stuntman Mike
