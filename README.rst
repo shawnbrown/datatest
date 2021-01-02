@@ -51,20 +51,25 @@ Installation
 
 .. start-inclusion-marker-install
 
-The easiest way to install datatest is to use `pip <https://pip.pypa.io>`_::
+The easiest way to install datatest is to use `pip <https://pip.pypa.io>`_:
 
-  pip install datatest
+.. code-block:: console
 
+    pip install datatest
 
 If you aren't worried about supporting a codebase of older scripts, upgrade
-an existing installation with the "``--upgrade``" option::
+an existing installation with the ``--upgrade`` option:
 
-  pip install --upgrade datatest
+.. code-block:: console
+
+    pip install --upgrade datatest
 
 If you have an existing codebase of older datatest scripts, you should
 upgrade using the following steps:
 
-    * Install datatest 0.10.0 first::
+    * Install datatest 0.10.0 first:
+
+      .. code-block:: console
 
           pip install --force-reinstall datatest==0.10.0
 
@@ -73,7 +78,9 @@ upgrade using the following steps:
     * Update the parts of your code that use deprecated features.
 
     * Once your code is running without DeprecationWarnings,
-      install the latest version of datatest, 0.11.0::
+      install the latest version of datatest, 0.11.0:
+
+      .. code-block:: console
 
           pip install --upgrade datatest
 
@@ -83,9 +90,11 @@ Stuntman Mike
 
 If you need bug-fixes or features that are not available
 in the current stable release, you can "pip install" the
-development version directly from GitHub::
+development version directly from GitHub:
 
-  pip install --upgrade https://github.com/shawnbrown/datatest/archive/master.zip
+.. code-block:: console
+
+    pip install --upgrade https://github.com/shawnbrown/datatest/archive/master.zip
 
 All of the usual caveats for a development install should
 apply---only use this version if you can risk some instability
@@ -102,26 +111,32 @@ install datatest manually.
 Download the latest **source** distribution from the Python Package
 Index (PyPI):
 
-  https://pypi.org/project/datatest/ (navigate to "Download files")
+    https://pypi.org/project/datatest/ (navigate to "Download files")
 
 Unpack the file (replacing X.Y.Z with the appropriate version number)
-and review the source code::
+and review the source code:
 
-  tar xvfz datatest-X.Y.Z.tar.gz
+.. code-block:: console
 
-Change to the unpacked directory and run the tests::
+    tar xvfz datatest-X.Y.Z.tar.gz
 
-  cd datatest-X.Y.Z
-  python setup.py test
+Change to the unpacked directory and run the tests:
+
+.. code-block:: console
+
+    cd datatest-X.Y.Z
+    python setup.py test
 
 Don't worry if some of the tests are skipped. Tests for optional data
 sources (like pandas DataFrames or NumPy arrays) are skipped when the
 related third-party packages are not installed.
 
 If the source code and test results are satisfactory, install the
-package::
+package:
 
-  python setup.py install
+.. code-block:: console
+
+    python setup.py install
 
 .. end-inclusion-marker-install
 
@@ -139,9 +154,11 @@ Backward Compatibility
 
 If you have existing tests that use API features which have
 changed since 0.9.0, you can still run your old code by
-adding the following import to the beginning of each file::
+adding the following import to the beginning of each file:
 
-  from datatest.__past__ import api09
+.. code-block:: python
+
+    from datatest.__past__ import api09
 
 To maintain existing test code, this project makes a best-effort
 attempt to provide backward compatibility support for older
