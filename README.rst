@@ -109,8 +109,8 @@ option:
     pip install --upgrade datatest
 
 
-Upgrading from Datatest 0.9.6
------------------------------
+Upgrading From Version 0.9.6
+----------------------------
 
 If you have an existing codebase of older datatest scripts, you should
 upgrade using the following steps:
@@ -126,7 +126,7 @@ upgrade using the following steps:
 * Update the parts of your code that use deprecated features.
 
 * Once your code is running without DeprecationWarnings,
-  install the latest version of datatest, 0.11.0:
+  install the latest version of datatest:
 
   .. code-block:: console
 
