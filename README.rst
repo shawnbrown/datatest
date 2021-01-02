@@ -9,8 +9,6 @@ datatest: Test driven data-wrangling and data validation
 |buildstatus| |devstatus| |license| |pyversions|
 
 
-.. start-inclusion-marker-description
-
 Datatest helps to speed up and formalize data-wrangling and data
 validation tasks. It implements a system of validation methods,
 difference classes, and acceptance managers. Datatest can help you:
@@ -29,8 +27,6 @@ available under the Apache License, version 2.
 
 .. _pytest: https://pytest.org
 .. _unittest: https://docs.python.org/library/unittest.html
-
-.. end-inclusion-marker-description
 
 
 :Documentation:

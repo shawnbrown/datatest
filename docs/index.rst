@@ -1,9 +1,9 @@
 :tocdepth: 2
 
 .. meta::
-    :description: Table of Contents for Datatest.
-    :keywords: datatest, validation, wrangling, data pipeline, testing
-    :title: Index
+    :description: Datatest introduction and table of contents.
+    :keywords: data cleaning, data quality, etl testing, data validation, data testing, data preparation, python, datatest
+    :title: Datatest: Test driven data-wrangling and data validation.
 
 .. module:: datatest
     :synopsis: Test driven data-wrangling and data validation.
@@ -17,13 +17,39 @@ Datatest: Test driven data-wrangling and data validation
 
 Version |release|
 
-.. include:: ../README.rst
-    :start-after: start-inclusion-marker-description
-    :end-before: end-inclusion-marker-description
+Datatest helps to speed up and formalize data-wrangling and data
+validation tasks. It was designed to work with poorly formatted
+data by detecting and describing validation failures.
 
-See the project's `README <https://pypi.org/project/datatest/>`_
-file for full details regarding supported versions, backward
-compatibility, and more.
+* |Validate| the format, type, set membership, and more from a variety of
+  data sources including pandas ``DataFrames`` and ``Series``, NumPy
+  ``ndarrays``, built-in data structures, etc.
+* Smart |comparison behavior| applies the appropriate validation method for
+  a given data requirement.
+* Automatic |data handling| manages the validation of single elements,
+  sequences, sets, dictionaries, and other containers of elements.
+* |Difference objects| characterize the discrepancies and deviations
+  between a dataset and its requirements.
+* |Acceptance managers| distinguish between ideal criteria and acceptable
+  differences.
+
+.. |Validate| replace:: :ref:`Validate <intro-validation>`
+.. |comparison behavior| replace:: :ref:`comparison behavior <intro-smart-comparisons>`
+.. |data handling| replace:: :ref:`data handling <intro-automatic-data-handling>`
+.. |Difference objects| replace:: :ref:`Difference objects <intro-difference-objects>`
+.. |Acceptance managers| replace:: :ref:`Acceptance managers <intro-acceptance-managers>`
+
+
+**Test driven data-wrangling** is a process for taking data from a source
+of unverified quality or format and producing a verified, well-formatted
+dataset. It repurposes software testing practices for data preparation
+and quality assurance projects. **Pipeline validation** monitors the status
+and quality of data as it passes through a pipeline and identifies *where*
+in a pipeline an error occurs.
+
+See the project `README <https://pypi.org/project/datatest/>`_ file for
+full details regarding supported versions, backward compatibility, and
+more.
 
 
 =================
