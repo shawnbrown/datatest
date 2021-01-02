@@ -21,14 +21,9 @@ Datatest helps to speed up and formalize data-wrangling and data
 validation tasks. It was designed to work with poorly formatted
 data by detecting and describing validation failures.
 
-.. |comparison behavior| replace:: :ref:`comparison behavior <intro-smart-comparisons>`
-.. |data handling| replace:: :ref:`data handling <intro-automatic-data-handling>`
-.. |Difference objects| replace:: :ref:`Difference objects <intro-difference-objects>`
-.. |Acceptance managers| replace:: :ref:`Acceptance managers <intro-acceptance-managers>`
-
-* :ref:`Validate <intro-validation>` the format, type, set membership, and
-  more from a variety of data sources including pandas ``DataFrames`` and
-  ``Series``, NumPy ``ndarrays``, built-in data structures, etc.
+* |Validate| the format, type, set membership, and more from a variety of data
+  sources including pandas ``DataFrames`` and ``Series``, NumPy ``ndarrays``,
+  built-in data structures, etc.
 * Smart |comparison behavior| applies the appropriate validation method for
   a given data requirement.
 * Automatic |data handling| manages the validation of single elements,
@@ -37,6 +32,12 @@ data by detecting and describing validation failures.
   between a dataset and its requirements.
 * |Acceptance managers| distinguish between ideal criteria and acceptable
   differences.
+
+.. |Validate| replace:: :ref:`Validate <intro-validation>`
+.. |comparison behavior| replace:: :ref:`comparison behavior <intro-smart-comparisons>`
+.. |data handling| replace:: :ref:`data handling <intro-automatic-data-handling>`
+.. |Difference objects| replace:: :ref:`Difference objects <intro-difference-objects>`
+.. |Acceptance managers| replace:: :ref:`Acceptance managers <intro-acceptance-managers>`
 
 
 **Test driven data-wrangling** is a process for taking data from a source

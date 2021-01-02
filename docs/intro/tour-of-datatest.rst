@@ -15,6 +15,8 @@ This document introduces :doc:`datatest </index>`'s support for
 validation, error reporting, and acceptance declarations.
 
 
+.. _intro-validation:
+
 **********
 Validation
 **********
@@ -37,6 +39,8 @@ satisfies a given *requirement*:
     requirement = ...
     validate(data, requirement)
 
+
+.. _intro-smart-comparisons:
 
 Smart Comparisons
 -----------------
@@ -113,6 +117,8 @@ In addition to the examples above, several other validation
 behaviors are available. For a complete listing with detailed
 examples, see :ref:`validation-docs`.
 
+
+.. _intro-automatic-data-handling:
 
 Automatic Data Handling
 -----------------------
@@ -328,6 +334,8 @@ handling for several third-party data types.
         support this interface.
 
 
+.. _intro-difference-objects:
+
 ******
 Errors
 ******
@@ -483,6 +491,8 @@ This validation fails because some of the values don't match (C: ``299``
         'D': Deviation(+5, 400),
     }
 
+
+.. _intro-acceptance-managers:
 
 ***********
 Acceptances
