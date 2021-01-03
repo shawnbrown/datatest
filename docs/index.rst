@@ -15,14 +15,12 @@
 Datatest: Test driven data-wrangling and data validation
 ########################################################
 
-Version |release|
-
 
 .. include:: ../README.rst
     :start-after: start-inclusion-marker-badge-substitutions
     :end-before: end-inclusion-marker-badge-substitutions
 
-|license| |pyversions| |installrequires|
+|license| |pyversions| |installrequires| |releasebadge|
 
 
 Datatest helps to speed up and formalize data-wrangling and data
