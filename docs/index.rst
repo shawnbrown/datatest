@@ -17,6 +17,14 @@ Datatest: Test driven data-wrangling and data validation
 
 Version |release|
 
+
+.. include:: ../README.rst
+    :start-after: start-inclusion-marker-badge-substitutions
+    :end-before: end-inclusion-marker-badge-substitutions
+
+|license| |pyversions| |installrequires|
+
+
 Datatest helps to speed up and formalize data-wrangling and data
 validation tasks. It was designed to work with poorly formatted
 data by detecting and describing validation failures.
