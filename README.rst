@@ -155,7 +155,7 @@ install datatest manually.
 Download the latest **source** distribution from the Python Package
 Index (PyPI):
 
-    https://pypi.org/project/datatest/ (navigate to "Download files")
+    https://pypi.org/project/datatest/#files
 
 Unpack the file (replacing X.Y.Z with the appropriate version number)
 and review the source code:
