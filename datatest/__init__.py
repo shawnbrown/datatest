@@ -6,7 +6,7 @@ PYTEST_DONT_REWRITE
 
 from __future__ import absolute_import
 
-__version__ = '0.12.0.dev1'
+__version__ = '0.11.1'
 
 # Datatest Core API (__all__ property defined in submodules)
 from .validation import *   # Validation error and functions.
