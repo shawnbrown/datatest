@@ -20,7 +20,7 @@ Datatest: Test driven data-wrangling and data validation
     :start-after: start-inclusion-marker-badge-substitutions
     :end-before: end-inclusion-marker-badge-substitutions
 
-|license| |pyversions| |installrequires| |releasebadge|
+|licensebadge| |pythonbadge| |requiresbadge| |releasebadge| |repobadge|
 
 
 Datatest helps to speed up and formalize data-wrangling and data

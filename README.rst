@@ -3,11 +3,8 @@
 datatest: Test driven data-wrangling and data validation
 ********************************************************
 
-..
-    Project badges for quick reference:
-
-|buildstatus| |devstatus| |license| |pyversions|
-
+|licensebadge| |pythonbadge| |requiresbadge|
+|repobadge| |buildbadge| |statusbadge| |stabledocsbadge| |latestdocsbadge|
 
 Datatest helps to speed up and formalize data-wrangling and data
 validation tasks. It implements a system of validation methods,
@@ -241,35 +238,47 @@ Copyright 2014 - 2021 National Committee for an Effective Congress, et al.
 
 .. start-inclusion-marker-badge-substitutions
 
-.. |buildstatus| image:: https://img.shields.io/travis/shawnbrown/datatest?logo=travis-ci&logoColor=white&style=flat-square
+.. |buildbadge| image:: https://img.shields.io/travis/shawnbrown/datatest?logo=travis-ci&logoColor=white&style=flat-square
     :target: https://travis-ci.org/shawnbrown/datatest
     :alt: Current Build Status
 
-.. |devstatus| image:: https://img.shields.io/pypi/status/datatest.svg?logo=pypi&logoColor=white&style=flat-square
-    :target: https://pypi.org/project/datatest/
-    :alt: Development Status
-
-.. |license| image:: https://img.shields.io/badge/license-Apache_2-informational?logo=open-source-initiative&logoColor=white&style=flat-square
-    :target: https://opensource.org/licenses/Apache-2.0
-    :alt: Apache 2.0 License
-
-.. |pyversions| image:: https://img.shields.io/badge/python-2.6_|_2.7_|_3.2_through_3.10_|_PyPy_|_PyPy3-informational?logo=python&logoColor=white&style=flat-square
-    :target: https://pypi.org/project/datatest/#supported-versions
-    :alt: Supported Python Versions
-
-.. |installrequires| image:: https://img.shields.io/badge/install_requires-no_dependencies-informational?logo=pypi&logoColor=white&style=flat-square
-    :target: https://pypi.org/project/datatest/#installation
-    :alt: Installation Requirements
-
-.. |pypiversion| image:: https://img.shields.io/pypi/v/datatest?logo=pypi&logoColor=white&style=flat-square
+.. |pypibadge| image:: https://img.shields.io/pypi/v/datatest?logo=pypi&logoColor=white&style=flat-square
     :target: https://pypi.org/project/datatest/
     :alt: Current PyPI Version
 
-.. |newcommits| image:: https://img.shields.io/github/commits-since/shawnbrown/datatest/latest?color=success&logo=github&logoColor=white&style=flat-square
+.. |commitsbadge| image:: https://img.shields.io/github/commits-since/shawnbrown/datatest/latest?color=informational&logo=github&logoColor=white&style=flat-square
     :target: https://github.com/shawnbrown/datatest/
     :alt: Commits Since Last Release
 
-.. |githubstars| image:: https://img.shields.io/github/stars/shawnbrown/datatest.svg?logo=github&logoColor=white&style=flat-square
+.. |statusbadge| image:: https://img.shields.io/pypi/status/datatest.svg?logo=pypi&logoColor=white&style=flat-square
+    :target: https://pypi.org/project/datatest/
+    :alt: Development Status
+
+.. |licensebadge| image:: https://img.shields.io/badge/license-Apache_2-informational?logo=open-source-initiative&logoColor=white&style=flat-square
+    :target: https://opensource.org/licenses/Apache-2.0
+    :alt: Apache 2.0 License
+
+.. |pythonbadge| image:: https://img.shields.io/badge/python-2.6_|_2.7_|_3.2_through_3.10_|_PyPy_|_PyPy3-informational?logo=python&logoColor=white&style=flat-square
+    :target: https://pypi.org/project/datatest/#supported-versions
+    :alt: Supported Python Versions
+
+.. |requiresbadge| image:: https://img.shields.io/badge/install_requires-no_dependencies-informational?logo=pypi&logoColor=white&style=flat-square
+    :target: https://pypi.org/project/datatest/#installation
+    :alt: Installation Requirements
+
+.. |repobadge| image:: https://img.shields.io/badge/repo-GitHub-informational?logo=github&logoColor=white&style=flat-square
+    :target: https://github.com/shawnbrown/datatest/
+    :alt: Development Repository
+
+.. |stabledocsbadge| image:: https://img.shields.io/badge/docs_(stable)-Read_the_Docs-informational?logo=read-the-docs&logoColor=white&style=flat-square
+    :target: https://datatest.readthedocs.io/en/stable/
+    :alt: Documentation (stable)
+
+.. |latestdocsbadge| image:: https://img.shields.io/badge/docs_(latest)-Read_the_Docs-informational?logo=read-the-docs&logoColor=white&style=flat-square
+    :target: https://datatest.readthedocs.io/en/latest/
+    :alt: Documentation (latest)
+
+.. |starsbadge| image:: https://img.shields.io/github/stars/shawnbrown/datatest.svg?logo=github&logoColor=white&style=flat-square
     :target: https://github.com/shawnbrown/datatest/stargazers
     :alt: GitHub users who have starred this project
 
