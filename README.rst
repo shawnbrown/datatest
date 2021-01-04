@@ -250,7 +250,7 @@ Copyright 2014 - 2021 National Committee for an Effective Congress, et al.
     :target: https://github.com/shawnbrown/datatest/
     :alt: Commits Since Last Release
 
-.. |statusbadge| image:: https://img.shields.io/pypi/status/datatest.svg?logo=pypi&logoColor=white&style=flat-square
+.. |statusbadge| image:: https://img.shields.io/pypi/status/datatest?label=PyPI%20status&logo=pypi&logoColor=white&style=flat-square
     :target: https://pypi.org/project/datatest/
     :alt: Development Status
 
