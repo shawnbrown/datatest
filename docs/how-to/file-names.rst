@@ -21,7 +21,7 @@ simply pass the names themselves as the *data* argument when calling
 
     While there are multiple ways to get file names stored on disk, examples
     on this page use the Standard Library's :py:mod:`pathlib` module. If you're
-    not familiar with pathlib, please review some basics examples before
+    not familiar with pathlib, please review some basic examples before
     continuing:
 
     .. raw:: html

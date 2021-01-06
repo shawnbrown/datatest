@@ -45,7 +45,7 @@ To start, we will load our example addresses into a pandas
 :class:`DataFrame <pandas.DataFrame>`. It's important to specify
 ``dtype=str`` to prevent pandas' type inference from loading certain
 columns using a numeric dtype. In some data sets, ZIP Codes could be
-misidentified as numeric data and loading them into numeric column
+misidentified as numeric data and loading them into a numeric column
 would strip any leading zeros---corrupting the data you're testing:
 
 .. code-block:: python
@@ -181,7 +181,7 @@ State and ZIP Code Consistency
 ------------------------------
 
 The first digit of a ZIP Code is associated with a specific region of the
-country (a group of states). For example, ZIP Codes begging with "4" only
+country (a group of states). For example, ZIP Codes beginning with "4" only
 occur in Indiana, Kentucky, Michigan, and Ohio. We can use these regional
 associations as a sanity check to make sure that our "state" and "zipcode"
 values are plausible and consistent.
