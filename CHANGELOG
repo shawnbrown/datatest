@@ -5,11 +5,11 @@ Datatest Changelog
 2021-01-03 (0.11.1)
 -------------------
 
-* Fixed validation and predicate handling of non-comparable objects.
+* Fixed validation, predicate, and difference handling of non-comparable
+  objects.
 * Fixed bug in normalization of Queries from `squint` package.
 * Changed failure output to imporove error reporting with Pandas accessors.
 * Changed predicate failure message to quote code objects using backticks.
-* Fixed predicate and difference handling of uncomparable objects.
 
 
 2020-12-17 (0.11.0)
