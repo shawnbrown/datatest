@@ -12,7 +12,10 @@ class working_directory(contextlib.ContextDecorator):
     location.
 
     You can use Python's :py:obj:`__file__` constant to load data
-    relative to a file's current directory::
+    relative to a file's current directory:
+
+    .. code-block:: python
+        :emphasize-lines: 4
 
         from datatest import working_directory
         import pandas as pd
@@ -20,7 +23,10 @@ class working_directory(contextlib.ContextDecorator):
         with working_directory(__file__):
             my_df = pd.read_csv('myfile.csv')
 
-    This context manager can also be used as a decorator::
+    This context manager can also be used as a decorator:
+
+    .. code-block:: python
+        :emphasize-lines: 4
 
         from datatest import working_directory
         import pandas as pd
@@ -31,7 +37,12 @@ class working_directory(contextlib.ContextDecorator):
 
     In some cases, you may want to forgo the use of a context manager
     or decorator. You can explicitly control directory switching with
-    the ``change()`` and ``revert()`` methods::
+    the ``change()`` and ``revert()`` methods:
+
+    .. code-block:: python
+        :emphasize-lines: 4,8
+
+        from datatest import working_directory
 
         work_dir = working_directory(__file__)
         work_dir.change()
@@ -63,9 +74,18 @@ class working_directory(contextlib.ContextDecorator):
             self._original_dir = None
 
     def change(self):
-        """Change to the defined working directory (enter the context)."""
+        """Change to the defined working directory (enter the context).
+
+        While operating in a working directory context, you cannot
+        enter it again. Calling ``change()`` a second time will raise
+        a :py:class:`RuntimeError`---you must first call ``revert()``.
+        """
         self.__enter__()
 
     def revert(self):
-        """Revert to the original working directory (exit the context)."""
+        """Revert to the original working directory (exit the context).
+
+        If no context has been entered, calling ``revert()`` will do
+        nothing and pass without error.
+        """
         self.__exit__(None, None, None)
