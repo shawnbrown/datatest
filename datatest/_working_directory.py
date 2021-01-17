@@ -28,15 +28,44 @@ class working_directory(contextlib.ContextDecorator):
         @working_directory(__file__)
         def my_df():
             return pd.read_csv('myfile.csv')
+
+    In some cases, you may want to forgo the use of a context manager
+    or decorator. You can explicitly control directory switching with
+    the ``change()`` and ``revert()`` methods::
+
+        work_dir = working_directory(__file__)
+        work_dir.change()
+
+        ...
+
+        work_dir.revert()
     """
     def __init__(self, path):
         if os.path.isfile(path):
             path = os.path.dirname(path)
         self._working_dir = os.path.abspath(path)
+        self._original_dir = None  # Assigned on __enter__(), not before.
 
     def __enter__(self):
+        if self._original_dir:
+            msg = 'cannot reenter {0}, already entered from {1!r}'.format(
+                self.__class__.__name__,
+                self._original_dir,
+            )
+            raise RuntimeError(msg)
+
         self._original_dir = os.path.abspath(os.getcwd())
         os.chdir(self._working_dir)
 
     def __exit__(self, exc_type, exc_value, traceback):
-        os.chdir(self._original_dir)
+        if self._original_dir:
+            os.chdir(self._original_dir)
+            self._original_dir = None
+
+    def change(self):
+        """Change to the defined working directory (enter the context)."""
+        self.__enter__()
+
+    def revert(self):
+        """Revert to the original working directory (exit the context)."""
+        self.__exit__(None, None, None)
