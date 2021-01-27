@@ -1,3 +1,4 @@
+"""Datatest: Test driven data-wrangling and data validation."""
 import ast
 import optparse
 import os
@@ -125,7 +126,7 @@ if __name__ == '__main__':
             # Required meta-data:
             name='datatest',
             version=get_version('datatest/__init__.py'),
-            url='https://pypi.org/project/datatest/',
+            url='https://github.com/shawnbrown/datatest',  # Homepage link.
             packages=[
                 'datatest',
                 'datatest.__past__',
@@ -136,15 +137,21 @@ if __name__ == '__main__':
             ],
             # Additional fields:
             install_requires=[],  # <- No hard requirements!
+            keywords='data wrangling testing validation',
+            project_urls={
+                'Documentation': 'https://datatest.readthedocs.io/',
+            },
             python_requires='>=2.6.*, !=3.0.*, !=3.1.*',
             description='Test driven data-wrangling and data validation.',
             long_description=long_description,
+            long_description_content_type='text/x-rst',
             author='Shawn Brown',
             license='Apache 2.0',
             classifiers  = [
                 'Topic :: Software Development :: Quality Assurance',
                 'Topic :: Software Development :: Testing',
                 'License :: OSI Approved :: Apache Software License',
+                'Operating System :: OS Independent',
                 'Development Status :: 4 - Beta',
                 'Framework :: Pytest',
                 'Programming Language :: Python :: 2',
