@@ -11,45 +11,51 @@ class working_directory(contextlib.ContextDecorator):
     directory is automatically changed back to its previous
     location.
 
-    You can use Python's :py:obj:`__file__` constant to load data
-    relative to a file's current directory:
+    **Context Manager:**
 
-    .. code-block:: python
-        :emphasize-lines: 4
+        You can use Python's :py:obj:`__file__` constant to load data
+        relative to a file's current directory:
 
-        from datatest import working_directory
-        import pandas as pd
+        .. code-block:: python
+            :emphasize-lines: 4
 
-        with working_directory(__file__):
-            my_df = pd.read_csv('myfile.csv')
+            from datatest import working_directory
+            import pandas as pd
 
-    This context manager can also be used as a decorator:
+            with working_directory(__file__):
+                my_df = pd.read_csv('myfile.csv')
 
-    .. code-block:: python
-        :emphasize-lines: 4
+    **Decorator:**
 
-        from datatest import working_directory
-        import pandas as pd
+        This context manager can also be used as a decorator:
 
-        @working_directory(__file__)
-        def my_df():
-            return pd.read_csv('myfile.csv')
+        .. code-block:: python
+            :emphasize-lines: 4
 
-    In some cases, you may want to forgo the use of a context manager
-    or decorator. You can explicitly control directory switching with
-    the ``change()`` and ``revert()`` methods:
+            from datatest import working_directory
+            import pandas as pd
 
-    .. code-block:: python
-        :emphasize-lines: 4,8
+            @working_directory(__file__)
+            def my_df():
+                return pd.read_csv('myfile.csv')
 
-        from datatest import working_directory
+    **Explicit Control:**
 
-        work_dir = working_directory(__file__)
-        work_dir.change()
+        In some cases, you may want to forgo the use of a context manager
+        or decorator. You can explicitly control directory switching with
+        the ``change()`` and ``revert()`` methods:
 
-        ...
+        .. code-block:: python
+            :emphasize-lines: 4,8
 
-        work_dir.revert()
+            from datatest import working_directory
+
+            work_dir = working_directory(__file__)
+            work_dir.change()
+
+            ...
+
+            work_dir.revert()
     """
     def __init__(self, path):
         if os.path.isfile(path):
