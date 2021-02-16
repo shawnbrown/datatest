@@ -35,7 +35,7 @@ class MinimalDifference(BaseDifference):
 
 
 def dedent_and_strip(text):
-    """."""
+    """A helper function to dedent and strip strings."""
     return textwrap.dedent(text).strip()
 
 
@@ -99,22 +99,20 @@ class TestValidationError(unittest.TestCase):
     def test_str_method(self):
         # Assert basic format and trailing comma.
         err = ValidationError([MinimalDifference('A')], 'invalid data')
-        expected = """
+        expected = dedent_and_strip("""
             invalid data (1 difference): [
                 MinimalDifference('A'),
             ]
-        """
-        expected = textwrap.dedent(expected).strip()
+        """)
         self.assertEqual(str(err), expected)
 
         # Assert without description.
         err = ValidationError([MinimalDifference('A')])  # <- No description!
-        expected = """
+        expected = dedent_and_strip("""
             1 difference: [
                 MinimalDifference('A'),
             ]
-        """
-        expected = textwrap.dedent(expected).strip()
+        """)
         self.assertEqual(str(err), expected)
 
         # Assert "no cacheing"--objects that inhereit from some
@@ -122,23 +120,23 @@ class TestValidationError(unittest.TestCase):
         # not do this.
         err._differences = [MinimalDifference('B')]
         err._description = 'changed'
-        updated = textwrap.dedent("""
+        updated = dedent_and_strip("""
             changed (1 difference): [
                 MinimalDifference('B'),
             ]
-        """).strip()
+        """)
         self.assertEqual(str(err), updated)
 
         # Assert dict format and trailing comma.
         err = ValidationError({'x': MinimalDifference('A'),
                                'y': MinimalDifference('B')},
                               'invalid data')
-        regex = textwrap.dedent(r"""
+        regex = dedent_and_strip(r"""
             invalid data \(2 differences\): \{
                 '[xy]': MinimalDifference\('[AB]'\),
                 '[xy]': MinimalDifference\('[AB]'\),
             \}
-        """).strip()
+        """)
         self.assertRegex(str(err), regex)  # <- Using regex because dict order
                                            #    can not be assumed for Python
                                            #    versions 3.5 and earlier.
@@ -157,7 +155,7 @@ class TestValidationError(unittest.TestCase):
                                MinimalDifference(True),
                                MinimalDifference(0),
                                MinimalDifference(None)])
-        expected = """
+        expected = dedent_and_strip("""
             9 differences: [
                 MinimalDifference(None),
                 MinimalDifference(0),
@@ -169,22 +167,20 @@ class TestValidationError(unittest.TestCase):
                 MinimalDifference('Z'),
                 MinimalDifference('Z', 'Z'),
             ]
-        """
-        expected = textwrap.dedent(expected).strip()
+        """)
         self.assertEqual(str(err), expected)
 
         # Make sure that all differences are being sorted (not just
         # those being displayed).
         err._should_truncate = lambda lines, chars: lines > 4
-        expected = """
+        expected = dedent_and_strip("""
             9 differences: [
                 MinimalDifference(None),
                 MinimalDifference(0),
                 MinimalDifference(True),
                 MinimalDifference(1, 'C'),
                 ...
-        """
-        expected = textwrap.dedent(expected).strip()
+        """)
         self.assertEqual(str(err), expected)
 
         # Check sorting of non-mapping container.
@@ -199,7 +195,7 @@ class TestValidationError(unittest.TestCase):
             },
             'description string'
         )
-        expected = """
+        expected = dedent_and_strip("""
             description string (6 differences): {
                 1: MinimalDifference('A'),
                 2: [MinimalDifference('A'), MinimalDifference('B')],
@@ -208,8 +204,7 @@ class TestValidationError(unittest.TestCase):
                 ('A', 'C'): MinimalDifference('A'),
                 ('C', 3): [MinimalDifference(1, 2), MinimalDifference('Z', 3)],
             }
-        """
-        expected = textwrap.dedent(expected).strip()
+        """)
         self.assertEqual(str(err), expected)
 
     def test_str_no_sorting(self):
@@ -229,7 +224,7 @@ class TestValidationError(unittest.TestCase):
 
         err._sorted_str = False  # <- Turn-off sorting!
 
-        expected = """
+        expected = dedent_and_strip("""
             9 differences: [
                 MinimalDifference('Z', 'Z'),
                 MinimalDifference('Z'),
@@ -241,8 +236,7 @@ class TestValidationError(unittest.TestCase):
                 MinimalDifference(0),
                 MinimalDifference(None),
             ]
-        """
-        expected = textwrap.dedent(expected).strip()
+        """)
         self.assertEqual(str(err), expected)
 
         # Check sorted dict keys but unsorted value containers.
@@ -260,7 +254,7 @@ class TestValidationError(unittest.TestCase):
 
         err._sorted_str = False  # <- Turn-off sorting!
 
-        expected = """
+        expected = dedent_and_strip("""
             description string (6 differences): {
                 1: MinimalDifference('A'),
                 2: [MinimalDifference('B'), MinimalDifference('A')],
@@ -269,8 +263,7 @@ class TestValidationError(unittest.TestCase):
                 ('A', 'C'): MinimalDifference('A'),
                 ('C', 3): [MinimalDifference('Z', 3), MinimalDifference(1, 2)],
             }
-        """
-        expected = textwrap.dedent(expected).strip()
+        """)
         self.assertEqual(str(err), expected)
 
     def test_str_truncation(self):
@@ -281,38 +274,35 @@ class TestValidationError(unittest.TestCase):
                               'invalid data')
         self.assertIsNone(err._should_truncate)
         self.assertIsNone(err._truncation_notice)
-        no_truncation = """
+        no_truncation = dedent_and_strip("""
             invalid data (3 differences): [
                 MinimalDifference('A'),
                 MinimalDifference('B'),
                 MinimalDifference('C'),
             ]
-        """
-        no_truncation = textwrap.dedent(no_truncation).strip()
+        """)
         self.assertEqual(str(err), no_truncation)
 
         # Truncate without notice.
         err._should_truncate = lambda line_count, char_count: char_count > 35
         err._truncation_notice = None
-        truncation_witout_notice = """
+        truncation_witout_notice = dedent_and_strip("""
             invalid data (3 differences): [
                 MinimalDifference('A'),
                 ...
-        """
-        truncation_witout_notice = textwrap.dedent(truncation_witout_notice).strip()
+        """)
         self.assertEqual(str(err), truncation_witout_notice)
 
         # Truncate and use truncation notice.
         err._should_truncate = lambda line_count, char_count: char_count > 35
         err._truncation_notice = 'Message truncated.'
-        truncation_plus_notice = """
+        truncation_plus_notice = dedent_and_strip("""
             invalid data (3 differences): [
                 MinimalDifference('A'),
                 ...
 
             Message truncated.
-        """
-        truncation_plus_notice = textwrap.dedent(truncation_plus_notice).strip()
+        """)
         self.assertEqual(str(err), truncation_plus_notice)
 
     def test_repr(self):
