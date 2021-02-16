@@ -6,6 +6,7 @@ __all__ = [
     'ValidationError',
 ]
 
+import sys
 from ._compatibility.collections.abc import Iterable
 from ._compatibility.collections.abc import Mapping
 from ._compatibility.collections.abc import Set
@@ -158,6 +159,71 @@ class ValidationError(AssertionError):
         if self.description:
             return '{0}({1!r}, {2!r})'.format(cls_name, self.differences, self.description)
         return '{0}({1!r})'.format(cls_name, self.differences)
+
+
+if sys.version_info[:2] >= (3, 7):
+    # The _render_traceback_() method is only added to ValidationError
+    # when using Python 3.7 or newer. It uses features that are new in
+    # 3.7 so this method is simply not defined under earlier versions
+    # of Python.
+
+    from ._excepthook import _next_is_internal
+
+
+    def _render_traceback_(self):
+        """Return a list of strings for use as a Jupyter/IPython
+        traceback. The strings will be syntax-highlighted and omit
+        stack trace entries located inside the datatest package
+        itself.
+        """
+        etype, evalue, tb = sys.exc_info()
+
+        # If this exception is not currently being handled, then don't try
+        # to format a traceback for it (exit early).
+        if evalue is not self:
+            from traceback import format_exception
+            exception_lines = format_exception(self.__class__, self, None)
+            return ['No traceback available\n'] + exception_lines  # <- EXIT!
+
+        try:
+            # Skip stack trace entries from the beginning of the traceback
+            # when traces are located inside IPython itself.
+            while tb:
+                name = tb.tb_frame.f_globals['__name__']
+                if name.startswith('IPython.') and tb.tb_next:
+                    tb = tb.tb_next
+                else:
+                    break
+
+            # Remove stack trace entries from the end of the traceback
+            # when traces are located inside datatest.
+            tb_ref = tb
+            while tb_ref:
+                if _next_is_internal(tb_ref):
+                    tb_ref.tb_next = None  # <- Only settable in 3.7 and newer.
+                    break
+                tb_ref = tb_ref.tb_next
+
+            try:
+                # Get syntax-highlighted traceback as a list of strings.
+                from IPython.core.ultratb import FormattedTB
+                fmt_tb = FormattedTB(mode='Context', color_scheme='Neutral')
+                stb = fmt_tb.structured_traceback(etype, evalue, tb)
+            except ImportError:
+                # Get simple text traceback as a list of strings.
+                from traceback import format_exception
+                stb = format_exception(etype, evalue, tb, limit=None)
+                stb = [s.rstrip() for s in stb]
+
+        except Exception as e:
+            import warnings
+            warnings.warn(e)
+            raise
+
+        return stb
+
+
+    ValidationError._render_traceback_ = _render_traceback_
 
 
 def _pytest_tracebackhide(excinfo):

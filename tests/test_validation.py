@@ -1,4 +1,6 @@
 """Tests for validation and comparison functions."""
+import re
+import sys
 import textwrap
 from . import _unittest as unittest
 from datatest.differences import (
@@ -30,6 +32,11 @@ class MinimalDifference(BaseDifference):
     @property
     def args(self):
         return self._args
+
+
+def dedent_and_strip(text):
+    """."""
+    return textwrap.dedent(text).strip()
 
 
 class TestValidationError(unittest.TestCase):
@@ -348,6 +355,89 @@ class TestValidationError(unittest.TestCase):
 
         err = ValidationError([MinimalDifference('A')])
         self.assertEqual(err.args, ([MinimalDifference('A')], None))
+
+
+class TestRenderTraceback(unittest.TestCase):
+    """The ValidationError._render_traceback_() method returns a list
+    of strings for Jupyter/IPython to display a syntax-highlighted
+    tracebacks that omits stack frames that originate from within
+    datatest itself. This method is only defined in Python 3.7 and
+    newer.
+    """
+
+    def test_not_current_error(self):
+        """When a ValidationError is not the currently-handled error,
+        _render_traceback_() should display "No traceback available"
+        in place of a traceback.
+        """
+        if sys.version_info[:2] < (3, 7):
+            return  # <- EXIT!
+
+        err = ValidationError(Invalid('abc'))
+        list_of_strings = err._render_traceback_()
+        self.assertIsInstance(list_of_strings, list)
+        actual_text = '\n'.join(list_of_strings)
+
+        expected_text = dedent_and_strip("""
+            No traceback available
+
+            datatest.ValidationError: 1 difference: [
+                Invalid('abc'),
+            ]
+        """)
+        self.assertEqual(actual_text.strip(), expected_text)
+
+    def test_current_error(self):
+        """When a ValidationError is currently being handled,
+        _render_traceback_() should return a rich IPython-style
+        traceback if IPython is installed. If IPython is not
+        installed, a normal Python traceback should be returned.
+        """
+        if sys.version_info[:2] < (3, 7):
+            return  # <- EXIT!
+
+        # Get traceback lines of currently handled error.
+        try:
+            raise ValidationError(Invalid('abc'))
+        except ValidationError as err:
+            list_of_strings = err._render_traceback_()
+
+        self.assertIsInstance(list_of_strings, list)
+        actual_text = '\n'.join(list_of_strings)
+
+        # Strip ANSI color escape codes from output.
+        ansi_escape_code_regex = r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])'
+        actual_text = re.sub(ansi_escape_code_regex, '', actual_text)
+
+        # Get regex pattern to use for matching.
+        try:
+            import IPython
+            expected_regex = dedent_and_strip(r"""
+                ---------------------------------------------------------------------------
+                ValidationError                           Traceback \(most recent call last\)
+                [^\n]+
+                    \d+[^\n]*
+                    \d+         try:
+                --> \d+             raise ValidationError\(Invalid\('abc'\)\)
+                    \d+         except ValidationError as err:
+                    \d+             list_of_strings = err._render_traceback_\(\)
+
+                ValidationError: 1 difference: \[
+                    Invalid\('abc'\),
+                \]
+            """)
+        except ImportError:
+            expected_regex = dedent_and_strip(r"""
+                Traceback \(most recent call last\):
+                  File "[^"]+", line \d+, in test_\w+
+                    raise ValidationError\(Invalid\('abc'\)\)
+                datatest.ValidationError: 1 difference: \[
+                    Invalid\('abc'\),
+                \]
+            """)
+
+        msg = '\nText does not match pattern:\n{0}'.format(actual_text)
+        self.assertRegex(actual_text, expected_regex, msg=msg)
 
 
 class TestValidationIntegration(unittest.TestCase):
