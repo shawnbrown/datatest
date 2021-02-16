@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""test driven data-wrangling and validation
+"""Datatest: Test driven data-wrangling and data validation.
 
 PYTEST_DONT_REWRITE
 """
