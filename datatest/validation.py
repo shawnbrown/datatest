@@ -216,6 +216,12 @@ if sys.version_info[:2] >= (3, 7):
                 stb = [s.rstrip() for s in stb]
 
         except Exception as e:
+            # If this method raises an error, IPython and Jupyter will ignore
+            # it (silently failing) and handle the original exception message
+            # using their default formatting behavior. While this keeps the
+            # interface from breaking, it makes debugging very difficult. For
+            # this reason, we issue a warning with the an error's text before
+            # raising the error itself.
             import warnings
             warnings.warn(e)
             raise
