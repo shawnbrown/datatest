@@ -514,5 +514,35 @@ class TestPredicate(unittest.TestCase):
         self.assertTrue(pred(BadObj()))
 
 
+class TestIntersectedPredicate(unittest.TestCase):
+    def test_basics(self):
+        greater_than_3 = Predicate(lambda x: x > 3)
+        is_even = Predicate(lambda x: x % 2 == 0)
+        pred = greater_than_3 & is_even
+
+        self.assertFalse(pred(1))
+        self.assertFalse(pred(2))
+        self.assertFalse(pred(3))
+        self.assertTrue(pred(4))
+        self.assertFalse(pred(5))
+        self.assertTrue(pred(6))
+        self.assertFalse(pred(7))
+
+    @unittest.expectedFailure
+    def test_inverted(self):
+        greater_than_3 = Predicate(lambda x: x > 3)
+        is_even = Predicate(lambda x: x % 2 == 0)
+        pred = greater_than_3 & is_even
+
+        inv_pred = ~pred  # Invert predicate.
+        self.assertTrue(inv_pred(1))
+        self.assertTrue(inv_pred(2))
+        self.assertTrue(inv_pred(3))
+        self.assertFalse(inv_pred(4))
+        self.assertTrue(inv_pred(5))
+        self.assertFalse(inv_pred(6))
+        self.assertTrue(inv_pred(7))
+
+
 if __name__ == '__main__':
     unittest.main()

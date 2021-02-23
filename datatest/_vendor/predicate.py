@@ -327,6 +327,18 @@ class Predicate(object):
         new_pred._inverted = not self._inverted
         return new_pred
 
+    def intersection(self, other):
+        """Return a new predicate that matches only those values
+        that match both the current predicate and the given *other*
+        predicate.
+        """
+        return self.__and__(other)
+
+    def __and__(self, other):
+        if not isinstance(other, Predicate):
+            return NotImplemented
+        return IntersectedPredicate(self, other)
+
     def __repr__(self):
         inverted = '~' if self._inverted else ''
         class_name = self.__class__.__name__
@@ -342,3 +354,19 @@ class Predicate(object):
     def __str__(self):
         inverted = 'not ' if self._inverted else ''
         return '{0}{1}'.format(inverted, repr(self.matcher))
+
+
+class IntersectedPredicate(Predicate):
+    def __init__(self, left, right):
+        self.left = left
+        self.right = right
+        self._inverted = False
+
+    def __repr__(self):
+        return '({0!r} & {1!r})'.format(self.left, self.right)
+
+    def __call__(self, other):
+        is_match = self.left(other) and self.right(other)
+        if self._inverted:
+            return not is_match
+        return is_match
