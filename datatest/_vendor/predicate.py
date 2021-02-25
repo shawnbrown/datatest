@@ -348,6 +348,11 @@ class Predicate(object):
             return NotImplemented
         return PredicateIntersectionType(self, other)
 
+    def __or__(self, other):
+        if not isinstance(other, Predicate):
+            return NotImplemented
+        return PredicateUnionType(self, other)
+
     def __repr__(self):
         inverted = '~' if self._inverted else ''
         class_name = self.__class__.__name__

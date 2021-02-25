@@ -552,16 +552,14 @@ class TestPredicateIntersectionType(unittest.TestCase):
         with self.assertRaises(TypeError):
             PredicateIntersectionType('foobarbaz', greater_than_3)
 
-    def test_bitwiseand(self):
+    def test_bitwise_operator(self):
         greater_than_3 = Predicate(lambda x: x > 3)
         is_even = Predicate(lambda x: x % 2 == 0)
-        pred = greater_than_3 & is_even  # <- Test bitwise-and operator.
 
+        pred = greater_than_3 & is_even  # <- Bitwise operator.
         self.assertIsInstance(pred, PredicateIntersectionType)
-        self.assertFalse(pred(3))
-        self.assertTrue(pred(4))
 
-    def test_bitwiseand_bad_type(self):
+    def test_bitwise_operator_bad_type(self):
         greater_than_3 = Predicate(lambda x: x > 3)
 
         with self.assertRaises(TypeError):
@@ -592,6 +590,17 @@ class TestPredicateUnionType(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             PredicateIntersectionType('foobarbaz', is_foo)
+
+    def test_bitwise_operator(self):
+        pred = Predicate('foo') | Predicate('bar')
+        self.assertIsInstance(pred, PredicateUnionType)
+
+    def test_bitwise_operator_bad_type(self):
+        with self.assertRaises(TypeError):
+            Predicate('foo') | 'foobarbaz'
+
+        with self.assertRaises(TypeError):
+            'foobarbaz' | Predicate('foo')
 
 
 if __name__ == '__main__':
