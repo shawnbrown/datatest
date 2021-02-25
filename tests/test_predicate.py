@@ -27,6 +27,7 @@ from datatest._vendor.predicate import (
     MatcherTuple,
     Predicate,
     PredicateIntersectionType,
+    PredicateUnionType,
 )
 
 
@@ -515,7 +516,7 @@ class TestPredicate(unittest.TestCase):
         self.assertTrue(pred(BadObj()))
 
 
-class TestIntersectedPredicate(unittest.TestCase):
+class TestPredicateIntersectionType(unittest.TestCase):
     def test_basics(self):
         pred = PredicateIntersectionType(
             Predicate(lambda x: x > 3),
