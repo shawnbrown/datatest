@@ -372,23 +372,23 @@ class PredicateIntersectionType(Predicate):
             msg = msg.format(left.__class__.__name__, right.__class__.__name__)
             raise TypeError(msg)
 
-        self.left = left
-        self.right = right
+        self._left = left
+        self._right = right
         self._inverted = False
 
     def __copy__(self):
         new_pred = self.__class__.__new__(self.__class__)
-        new_pred.left = self.left
-        new_pred.right = self.right
+        new_pred._left = self._left
+        new_pred._right = self._right
         new_pred._inverted = self._inverted
         return new_pred
 
     def __repr__(self):
         inverted = '~' if self._inverted else ''
-        return '{0}({1!r} & {2!r})'.format(inverted, self.left, self.right)
+        return '{0}({1!r} & {2!r})'.format(inverted, self._left, self._right)
 
     def __call__(self, other):
-        is_match = self.left(other) and self.right(other)
+        is_match = self._left(other) and self._right(other)
         if self._inverted:
             return not is_match
         return is_match
