@@ -542,6 +542,15 @@ class TestIntersectedPredicate(unittest.TestCase):
         self.assertFalse(inv_pred(6))
         self.assertTrue(inv_pred(7))
 
+    def test_bad_type(self):
+        greater_than_3 = Predicate(lambda x: x > 3)
+
+        with self.assertRaises(TypeError):
+            PredicateIntersectionType(greater_than_3, 'foobarbaz')
+
+        with self.assertRaises(TypeError):
+            PredicateIntersectionType('foobarbaz', greater_than_3)
+
     def test_bitwiseand(self):
         greater_than_3 = Predicate(lambda x: x > 3)
         is_even = Predicate(lambda x: x % 2 == 0)

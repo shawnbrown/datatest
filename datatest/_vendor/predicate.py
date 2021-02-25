@@ -367,6 +367,11 @@ class Predicate(object):
 
 class PredicateIntersectionType(Predicate):
     def __init__(self, left, right):
+        if not (isinstance(left, Predicate) and isinstance(right, Predicate)):
+            msg = 'left and right must be Predicate objects, got {0!r} and {1!r}'
+            msg = msg.format(left.__class__.__name__, right.__class__.__name__)
+            raise TypeError(msg)
+
         self.left = left
         self.right = right
         self._inverted = False
