@@ -322,8 +322,17 @@ class Predicate(object):
             return not is_match
         return is_match
 
+    def __copy__(self):
+        new_pred = self.__class__.__new__(self.__class__)
+        new_pred.obj = self.obj
+        new_pred.matcher = self.matcher
+        new_pred._inverted = self._inverted
+        if hasattr(self, '__name__'):
+            new_pred.__name__ = self.__name__
+        return new_pred
+
     def __invert__(self):
-        new_pred = self.__class__(self)
+        new_pred = self.__copy__()
         new_pred._inverted = not self._inverted
         return new_pred
 
@@ -337,7 +346,7 @@ class Predicate(object):
     def __and__(self, other):
         if not isinstance(other, Predicate):
             return NotImplemented
-        return IntersectedPredicate(self, other)
+        return PredicateIntersectionType(self, other)
 
     def __repr__(self):
         inverted = '~' if self._inverted else ''
@@ -356,14 +365,22 @@ class Predicate(object):
         return '{0}{1}'.format(inverted, repr(self.matcher))
 
 
-class IntersectedPredicate(Predicate):
+class PredicateIntersectionType(Predicate):
     def __init__(self, left, right):
         self.left = left
         self.right = right
         self._inverted = False
 
+    def __copy__(self):
+        new_pred = self.__class__.__new__(self.__class__)
+        new_pred.left = self.left
+        new_pred.right = self.right
+        new_pred._inverted = self._inverted
+        return new_pred
+
     def __repr__(self):
-        return '({0!r} & {1!r})'.format(self.left, self.right)
+        inverted = '~' if self._inverted else ''
+        return '{0}({1!r} & {2!r})'.format(inverted, self.left, self.right)
 
     def __call__(self, other):
         is_match = self.left(other) and self.right(other)

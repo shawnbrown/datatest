@@ -528,7 +528,6 @@ class TestIntersectedPredicate(unittest.TestCase):
         self.assertTrue(pred(6))
         self.assertFalse(pred(7))
 
-    @unittest.expectedFailure
     def test_inverted(self):
         greater_than_3 = Predicate(lambda x: x > 3)
         is_even = Predicate(lambda x: x % 2 == 0)
