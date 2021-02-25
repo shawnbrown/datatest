@@ -543,6 +543,16 @@ class TestPredicateIntersectionType(unittest.TestCase):
         self.assertFalse(inv_pred(6))
         self.assertTrue(inv_pred(7))
 
+    def test_repr(self):
+        pred = PredicateIntersectionType(
+            Predicate(lambda x: x > 3),
+            Predicate(lambda x: x % 2 == 0),
+        )
+        self.assertEqual(repr(pred), '(Predicate(<lambda>) & Predicate(<lambda>))')
+
+        inv_pred = ~pred
+        self.assertEqual(repr(inv_pred), '~(Predicate(<lambda>) & Predicate(<lambda>))')
+
     def test_bad_type(self):
         greater_than_3 = Predicate(lambda x: x > 3)
 
@@ -581,6 +591,13 @@ class TestPredicateUnionType(unittest.TestCase):
         self.assertFalse(inv_pred('foo'))
         self.assertFalse(inv_pred('bar'))
         self.assertTrue(inv_pred('baz'))
+
+    def test_repr(self):
+        pred = PredicateUnionType(Predicate('foo'), Predicate('bar'))
+        self.assertEqual(repr(pred), "(Predicate('foo') | Predicate('bar'))")
+
+        inv_pred = ~pred
+        self.assertEqual(repr(inv_pred), "~(Predicate('foo') | Predicate('bar'))")
 
     def test_bad_type(self):
         is_foo = Predicate('foo')
