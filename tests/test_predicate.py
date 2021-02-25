@@ -542,14 +542,23 @@ class TestIntersectedPredicate(unittest.TestCase):
         self.assertFalse(inv_pred(6))
         self.assertTrue(inv_pred(7))
 
-    def test_bitwise_and(self):
+    def test_bitwiseand(self):
         greater_than_3 = Predicate(lambda x: x > 3)
         is_even = Predicate(lambda x: x % 2 == 0)
-        pred = greater_than_3 & is_even
+        pred = greater_than_3 & is_even  # <- Test bitwise-and operator.
 
         self.assertIsInstance(pred, PredicateIntersectionType)
         self.assertFalse(pred(3))
         self.assertTrue(pred(4))
+
+    def test_bitwiseand_bad_type(self):
+        greater_than_3 = Predicate(lambda x: x > 3)
+
+        with self.assertRaises(TypeError):
+            greater_than_3 & 'foobarbaz'
+
+        with self.assertRaises(TypeError):
+            'foobarbaz' & greater_than_3
 
 
 if __name__ == '__main__':
