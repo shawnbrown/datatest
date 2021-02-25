@@ -365,7 +365,7 @@ class Predicate(object):
         return '{0}{1}'.format(inverted, repr(self.matcher))
 
 
-class PredicateIntersectionType(Predicate):
+class PredicateCombinedType(Predicate):
     def __init__(self, left, right):
         if not (isinstance(left, Predicate) and isinstance(right, Predicate)):
             msg = 'left and right must be Predicate objects, got {0!r} and {1!r}'
@@ -383,6 +383,14 @@ class PredicateIntersectionType(Predicate):
         new_pred._inverted = self._inverted
         return new_pred
 
+    def __repr__(self):
+        raise NotImplementedError
+
+    def __call__(self, other):
+        raise NotImplementedError
+
+
+class PredicateIntersectionType(PredicateCombinedType):
     def __repr__(self):
         inverted = '~' if self._inverted else ''
         return '{0}({1!r} & {2!r})'.format(inverted, self._left, self._right)
