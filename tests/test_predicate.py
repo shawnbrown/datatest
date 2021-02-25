@@ -571,5 +571,28 @@ class TestPredicateIntersectionType(unittest.TestCase):
             'foobarbaz' & greater_than_3
 
 
+class TestPredicateUnionType(unittest.TestCase):
+    def test_basics(self):
+        pred = PredicateUnionType(Predicate('foo'), Predicate('bar'))
+        self.assertTrue(pred('foo'))
+        self.assertTrue(pred('bar'))
+        self.assertFalse(pred('baz'))
+
+    def test_inverted(self):
+        inv_pred = ~PredicateUnionType(Predicate('foo'), Predicate('bar'))  # inversion operator (~).
+        self.assertFalse(inv_pred('foo'))
+        self.assertFalse(inv_pred('bar'))
+        self.assertTrue(inv_pred('baz'))
+
+    def test_bad_type(self):
+        is_foo = Predicate('foo')
+
+        with self.assertRaises(TypeError):
+            PredicateIntersectionType(is_foo, 'foobarbaz')
+
+        with self.assertRaises(TypeError):
+            PredicateIntersectionType('foobarbaz', is_foo)
+
+
 if __name__ == '__main__':
     unittest.main()

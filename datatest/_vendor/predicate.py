@@ -400,3 +400,15 @@ class PredicateIntersectionType(PredicateCombinedType):
         if self._inverted:
             return not is_match
         return is_match
+
+
+class PredicateUnionType(PredicateCombinedType):
+    def __repr__(self):
+        inverted = '~' if self._inverted else ''
+        return '{0}({1!r} | {2!r})'.format(inverted, self._left, self._right)
+
+    def __call__(self, other):
+        is_match = self._left(other) or self._right(other)
+        if self._inverted:
+            return not is_match
+        return is_match
