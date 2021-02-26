@@ -349,6 +349,26 @@ except AttributeError:
 
 
 try:
+    expectedFailure
+except NameError:
+    # The following code was adapted from the Python 2.7 standard library.
+    import functools
+
+    class UnexpectedSuccess(Exception):
+        pass
+
+    def expectedFailure(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                func(*args, **kwargs)
+            except Exception:
+                return  # <- EXIT!
+            raise UnexpectedSuccess
+        return wrapper
+
+
+try:
     skip  # New in 2.7 and 3.1
     skipIf
     skipUnless
