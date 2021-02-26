@@ -75,10 +75,10 @@ class TestNormalizeLazySquint(unittest.TestCase):
         self.assertEqual(set(normalized), set([('a', 1), ('b', 2)]))
 
     def test_select(self):
+        """Select objects should not be changed by normalization."""
         select_object = squint.Select([['A'], [1], [2], [3], [4]])
         normalized = _normalize_lazy(select_object)
-        self.assertIsInstance(normalized, squint.Result)
-        self.assertEqual(normalized.evaltype, list)
+        self.assertIsInstance(normalized, squint.Select)
 
 
 @unittest.skipUnless(pandas, 'requires pandas')
