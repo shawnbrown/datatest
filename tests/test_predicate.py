@@ -577,54 +577,55 @@ class TestPredicateIntersectionType(unittest.TestCase):
 
 
 class TestPredicateUnionType(unittest.TestCase):
+    def setUp(self):
+        """Define simple predicates to use for testing."""
+        self.pred_foo = Predicate('foo')  # Is "foo".
+        self.pred_bar = Predicate('bar')  # Is "bar".
+
     def test_basics(self):
-        pred = PredicateUnionType(Predicate('foo'), Predicate('bar'))
+        pred = PredicateUnionType(self.pred_foo, self.pred_bar)
         self.assertTrue(pred('foo'))
         self.assertTrue(pred('bar'))
         self.assertFalse(pred('baz'))
 
     def test_inverted(self):
-        inv_pred = ~PredicateUnionType(Predicate('foo'), Predicate('bar'))  # inversion operator (~).
+        # Using the inversion operator (~).
+        inv_pred = ~PredicateUnionType(self.pred_foo, self.pred_bar)
         self.assertFalse(inv_pred('foo'))
         self.assertFalse(inv_pred('bar'))
         self.assertTrue(inv_pred('baz'))
 
     def test_repr(self):
-        pred = PredicateUnionType(Predicate('foo'), Predicate('bar'))
+        pred = PredicateUnionType(self.pred_foo, self.pred_bar)
         self.assertEqual(repr(pred), "(Predicate('foo') | Predicate('bar'))")
 
         inv_pred = ~pred
         self.assertEqual(repr(inv_pred), "~(Predicate('foo') | Predicate('bar'))")
 
     def test_bad_type(self):
-        is_foo = Predicate('foo')
+        with self.assertRaises(TypeError):
+            PredicateIntersectionType(self.pred_foo, 'foobarbaz')
 
         with self.assertRaises(TypeError):
-            PredicateIntersectionType(is_foo, 'foobarbaz')
-
-        with self.assertRaises(TypeError):
-            PredicateIntersectionType('foobarbaz', is_foo)
+            PredicateIntersectionType('foobarbaz', self.pred_foo)
 
     def test_bitwise_operator(self):
-        pred = Predicate('foo') | Predicate('bar')
+        pred = self.pred_foo | self.pred_bar
         self.assertIsInstance(pred, PredicateUnionType)
 
     def test_bitwise_operator_bad_type(self):
         with self.assertRaises(TypeError):
-            Predicate('foo') | 'foobarbaz'
+            self.pred_foo | 'foobarbaz'
 
         with self.assertRaises(TypeError):
-            'foobarbaz' | Predicate('foo')
+            'foobarbaz' | self.pred_foo
 
     def test_union_method(self):
-        greater_than_3 = Predicate(lambda x: x > 3)
-        is_even = Predicate(lambda x: x % 2 == 0)
-
-        pred = greater_than_3.union(is_even)  # <- Union method.
+        pred = self.pred_foo.union(self.pred_bar)  # <- Union method.
         self.assertIsInstance(pred, PredicateUnionType)
 
         with self.assertRaises(TypeError):
-            greater_than_3.union('foobarbaz')
+            self.pred_foo.union('foobarbaz')
 
 
 if __name__ == '__main__':
