@@ -517,11 +517,13 @@ class TestPredicate(unittest.TestCase):
 
 
 class TestPredicateIntersectionType(unittest.TestCase):
+    def setUp(self):
+        """Define simple predicates to use for testing."""
+        self.pred_gt3 = Predicate(lambda x: x > 3)  # Greater-than three.
+        self.pred_even = Predicate(lambda x: x % 2 == 0)  # Is even.
+
     def test_basics(self):
-        pred = PredicateIntersectionType(
-            Predicate(lambda x: x > 3),
-            Predicate(lambda x: x % 2 == 0),
-        )
+        pred = PredicateIntersectionType(self.pred_gt3, self.pred_even)
         self.assertFalse(pred(1))
         self.assertFalse(pred(2))
         self.assertFalse(pred(3))
@@ -531,10 +533,8 @@ class TestPredicateIntersectionType(unittest.TestCase):
         self.assertFalse(pred(7))
 
     def test_inverted(self):
-        inv_pred = ~PredicateIntersectionType(  # Uses inversion operator (~).
-            Predicate(lambda x: x > 3),
-            Predicate(lambda x: x % 2 == 0),
-        )
+        # Using the inversion operator (~).
+        inv_pred = ~PredicateIntersectionType(self.pred_gt3, self.pred_even)
         self.assertTrue(inv_pred(1))
         self.assertTrue(inv_pred(2))
         self.assertTrue(inv_pred(3))
@@ -544,49 +544,36 @@ class TestPredicateIntersectionType(unittest.TestCase):
         self.assertTrue(inv_pred(7))
 
     def test_repr(self):
-        pred = PredicateIntersectionType(
-            Predicate(lambda x: x > 3),
-            Predicate(lambda x: x % 2 == 0),
-        )
+        pred = PredicateIntersectionType(self.pred_gt3, self.pred_even)
         self.assertEqual(repr(pred), '(Predicate(<lambda>) & Predicate(<lambda>))')
 
         inv_pred = ~pred
         self.assertEqual(repr(inv_pred), '~(Predicate(<lambda>) & Predicate(<lambda>))')
 
     def test_bad_type(self):
-        greater_than_3 = Predicate(lambda x: x > 3)
+        with self.assertRaises(TypeError):
+            PredicateIntersectionType(self.pred_gt3, 'foobarbaz')
 
         with self.assertRaises(TypeError):
-            PredicateIntersectionType(greater_than_3, 'foobarbaz')
-
-        with self.assertRaises(TypeError):
-            PredicateIntersectionType('foobarbaz', greater_than_3)
+            PredicateIntersectionType('foobarbaz', self.pred_gt3)
 
     def test_bitwise_operator(self):
-        greater_than_3 = Predicate(lambda x: x > 3)
-        is_even = Predicate(lambda x: x % 2 == 0)
-
-        pred = greater_than_3 & is_even  # <- Bitwise operator.
+        pred = self.pred_gt3 & self.pred_even  # <- Bitwise operator.
         self.assertIsInstance(pred, PredicateIntersectionType)
 
     def test_bitwise_operator_bad_type(self):
-        greater_than_3 = Predicate(lambda x: x > 3)
+        with self.assertRaises(TypeError):
+            self.pred_gt3 & 'foobarbaz'
 
         with self.assertRaises(TypeError):
-            greater_than_3 & 'foobarbaz'
-
-        with self.assertRaises(TypeError):
-            'foobarbaz' & greater_than_3
+            'foobarbaz' & self.pred_gt3
 
     def test_intersection_method(self):
-        greater_than_3 = Predicate(lambda x: x > 3)
-        is_even = Predicate(lambda x: x % 2 == 0)
-
-        pred = greater_than_3.intersection(is_even)  # <- Intersection method.
+        pred = self.pred_gt3.intersection(self.pred_even)  # <- Intersection method.
         self.assertIsInstance(pred, PredicateIntersectionType)
 
         with self.assertRaises(TypeError):
-            greater_than_3.intersection('foobarbaz')
+            self.pred_gt3.intersection('foobarbaz')
 
 
 class TestPredicateUnionType(unittest.TestCase):
