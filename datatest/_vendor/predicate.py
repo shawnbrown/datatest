@@ -341,12 +341,18 @@ class Predicate(object):
         that match both the current predicate and the given *other*
         predicate.
         """
-        return self.__and__(other)
+        return self & other
 
     def __and__(self, other):
         if not isinstance(other, Predicate):
             return NotImplemented
         return PredicateIntersectionType(self, other)
+
+    def union(self, other):
+        """Return a new predicate that matches the current predicate or
+        the given *other* predicate.
+        """
+        return self | other
 
     def __or__(self, other):
         if not isinstance(other, Predicate):

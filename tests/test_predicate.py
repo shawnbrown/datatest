@@ -578,6 +578,16 @@ class TestPredicateIntersectionType(unittest.TestCase):
         with self.assertRaises(TypeError):
             'foobarbaz' & greater_than_3
 
+    def test_intersection_method(self):
+        greater_than_3 = Predicate(lambda x: x > 3)
+        is_even = Predicate(lambda x: x % 2 == 0)
+
+        pred = greater_than_3.intersection(is_even)  # <- Intersection method.
+        self.assertIsInstance(pred, PredicateIntersectionType)
+
+        with self.assertRaises(TypeError):
+            greater_than_3.intersection('foobarbaz')
+
 
 class TestPredicateUnionType(unittest.TestCase):
     def test_basics(self):
@@ -618,6 +628,16 @@ class TestPredicateUnionType(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             'foobarbaz' | Predicate('foo')
+
+    def test_union_method(self):
+        greater_than_3 = Predicate(lambda x: x > 3)
+        is_even = Predicate(lambda x: x % 2 == 0)
+
+        pred = greater_than_3.union(is_even)  # <- Union method.
+        self.assertIsInstance(pred, PredicateUnionType)
+
+        with self.assertRaises(TypeError):
+            greater_than_3.union('foobarbaz')
 
 
 if __name__ == '__main__':
