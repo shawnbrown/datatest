@@ -376,7 +376,7 @@ class Predicate(object):
         return '{0}{1}'.format(inverted, repr(self.matcher))
 
 
-class PredicateCombinedType(Predicate):
+class PredicateCombinedType(Predicate, abc.ABC):
     def __init__(self, left, right):
         if not (isinstance(left, Predicate) and isinstance(right, Predicate)):
             msg = 'left and right must be Predicate objects, got {0!r} and {1!r}'
@@ -387,6 +387,12 @@ class PredicateCombinedType(Predicate):
         self._right = right
         self._inverted = False
 
+    @property
+    @abc.abstractmethod
+    def op_char(self):
+        # Concrete method should return a bitwise operator character (| or &).
+        raise NotImplementedError
+
     def __copy__(self):
         new_pred = self.__class__.__new__(self.__class__)
         new_pred._left = self._left
@@ -395,16 +401,18 @@ class PredicateCombinedType(Predicate):
         return new_pred
 
     def __repr__(self):
-        raise NotImplementedError
+        inverted = '~' if self._inverted else ''
+        return '{0}({1!r} {2} {3!r})'.format(inverted, self._left, self.op_char, self._right)
 
+    @abc.abstractmethod
     def __call__(self, other):
         raise NotImplementedError
 
 
 class PredicateIntersectionType(PredicateCombinedType):
-    def __repr__(self):
-        inverted = '~' if self._inverted else ''
-        return '{0}({1!r} & {2!r})'.format(inverted, self._left, self._right)
+    @property
+    def op_char(self):
+        return '&'
 
     def __call__(self, other):
         is_match = self._left(other) and self._right(other)
@@ -414,9 +422,9 @@ class PredicateIntersectionType(PredicateCombinedType):
 
 
 class PredicateUnionType(PredicateCombinedType):
-    def __repr__(self):
-        inverted = '~' if self._inverted else ''
-        return '{0}({1!r} | {2!r})'.format(inverted, self._left, self._right)
+    @property
+    def op_char(self):
+        return '|'
 
     def __call__(self, other):
         is_match = self._left(other) or self._right(other)
