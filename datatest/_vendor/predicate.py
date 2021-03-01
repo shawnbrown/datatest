@@ -401,8 +401,21 @@ class PredicateCombinedType(Predicate, abc.ABC):
         return new_pred
 
     def __repr__(self):
-        inverted = '~' if self._inverted else ''
-        return '{0}({1!r} {2} {3!r})'.format(inverted, self._left, self.op_char, self._right)
+        left_repr = repr(self._left)
+        if isinstance(self._left, PredicateCombinedType) and \
+                not isinstance(self._left, self.__class__):
+            left_repr = '({0})'.format(left_repr)
+
+        right_repr = repr(self._right)
+        if isinstance(self._right, PredicateCombinedType) and \
+                not isinstance(self._right, self.__class__):
+            right_repr = '({0})'.format(right_repr)
+
+        text = '{0} {1} {2}'.format(left_repr, self.op_char, right_repr)
+        if self._inverted:
+            text = '~({0})'.format(text)
+
+        return text
 
     @abc.abstractmethod
     def __call__(self, other):

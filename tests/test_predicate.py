@@ -545,7 +545,7 @@ class TestPredicateIntersectionType(unittest.TestCase):
 
     def test_repr(self):
         pred = PredicateIntersectionType(self.pred_gt3, self.pred_even)
-        self.assertEqual(repr(pred), '(Predicate(<lambda>) & Predicate(<lambda>))')
+        self.assertEqual(repr(pred), 'Predicate(<lambda>) & Predicate(<lambda>)')
 
         inv_pred = ~pred
         self.assertEqual(repr(inv_pred), '~(Predicate(<lambda>) & Predicate(<lambda>))')
@@ -597,7 +597,7 @@ class TestPredicateUnionType(unittest.TestCase):
 
     def test_repr(self):
         pred = PredicateUnionType(self.pred_foo, self.pred_bar)
-        self.assertEqual(repr(pred), "(Predicate('foo') | Predicate('bar'))")
+        self.assertEqual(repr(pred), "Predicate('foo') | Predicate('bar')")
 
         inv_pred = ~pred
         self.assertEqual(repr(inv_pred), "~(Predicate('foo') | Predicate('bar'))")
@@ -626,6 +626,66 @@ class TestPredicateUnionType(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             self.pred_foo.union('foobarbaz')
+
+
+class TesCombinedTypeNesting(unittest.TestCase):
+    def setUp(self):
+        """Define simple predicates to use for testing."""
+        self.pred_foo = Predicate('foo')  # Is "foo".
+        self.pred_bar = Predicate('bar')  # Is "bar".
+        self.pred_baz = Predicate('baz')  # Is "baz".
+        self.pred_gt3 = Predicate(lambda x: x > 3)  # Greater-than three.
+        self.pred_even = Predicate(lambda x: x % 2 == 0)  # Is even.
+
+    def test_behavior(self):
+        pred = self.pred_foo | self.pred_bar | self.pred_baz | (self.pred_gt3 & self.pred_even)
+        self.assertFalse(pred(1))
+        self.assertFalse(pred(2))
+        self.assertFalse(pred(3))
+        self.assertTrue(pred(4))
+        self.assertFalse(pred(5))
+        self.assertTrue(pred(6))
+        self.assertFalse(pred(7))
+        self.assertTrue(pred('foo'))
+        self.assertTrue(pred('bar'))
+        self.assertTrue(pred('baz'))
+        self.assertFalse(pred('qux'))
+
+    def test_repr(self):
+        """Several of the following predicates are logically nonsensical
+        but since we're only testing the repr behavior, this is OK.
+        """
+        pred = self.pred_foo | self.pred_bar | self.pred_baz
+        expected = "Predicate('foo') | Predicate('bar') | Predicate('baz')"
+        self.assertEqual(repr(pred), expected)
+
+        pred = self.pred_foo & self.pred_bar & self.pred_baz
+        expected = "Predicate('foo') & Predicate('bar') & Predicate('baz')"
+        self.assertEqual(repr(pred), expected)
+
+        pred = self.pred_foo | self.pred_bar & self.pred_baz  # "&" takes precedence
+        expected = "Predicate('foo') | (Predicate('bar') & Predicate('baz'))"
+        self.assertEqual(repr(pred), expected)
+
+        pred = (self.pred_foo | self.pred_bar) & self.pred_baz  # Change order
+        expected = "(Predicate('foo') | Predicate('bar')) & Predicate('baz')"
+        self.assertEqual(repr(pred), expected)
+
+        pred = self.pred_foo & self.pred_bar | self.pred_baz  # "&" takes precedence
+        expected = "(Predicate('foo') & Predicate('bar')) | Predicate('baz')"
+        self.assertEqual(repr(pred), expected)
+
+        pred = self.pred_foo & (self.pred_bar | self.pred_baz)  # Change order
+        expected = "Predicate('foo') & (Predicate('bar') | Predicate('baz'))"
+        self.assertEqual(repr(pred), expected)
+
+        pred = self.pred_foo | self.pred_bar | self.pred_gt3 & self.pred_even | self.pred_baz
+        expected = "Predicate('foo') | Predicate('bar') | (Predicate(<lambda>) & Predicate(<lambda>)) | Predicate('baz')"
+        self.assertEqual(repr(pred), expected)
+
+        pred = self.pred_foo | (self.pred_bar | self.pred_gt3) & self.pred_even | self.pred_baz
+        expected = "Predicate('foo') | ((Predicate('bar') | Predicate(<lambda>)) & Predicate(<lambda>)) | Predicate('baz')"
+        self.assertEqual(repr(pred), expected)
 
 
 if __name__ == '__main__':
