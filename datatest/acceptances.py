@@ -344,6 +344,11 @@ class AcceptedDifferences(BaseAcceptance):
         else:
             self._obj = normalize(obj)
 
+        # Working attributes for checking groups of differences.
+        self._current_scope = None
+        self._current_allowance = None
+        self._current_check = None
+
     @staticmethod
     def _normalize_differences(obj):
         """Raise a TypeError if *obj* is anything other than a
@@ -404,6 +409,7 @@ class AcceptedDifferences(BaseAcceptance):
         if isinstance(current_allowance, type):
             default_scope = 'element'
             current_allowance = [current_allowance]
+            # Will check for matching differences using isinstance().
             current_check = \
                 lambda x: current_allowance and isinstance(x, current_allowance[0])
         else:
@@ -414,8 +420,10 @@ class AcceptedDifferences(BaseAcceptance):
             else:
                 default_scope = 'element'
                 current_allowance = [current_allowance]
+            # Will check for matching differences using `in` operator.
             current_check = lambda x: x in current_allowance
 
+        # Set "scope", "allowance", and "check" function for current group.
         self._current_scope = self._scope or default_scope
         self._current_allowance = current_allowance
         self._current_check = current_check
