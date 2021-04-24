@@ -94,7 +94,7 @@ class TestIterItems(unittest.TestCase):
 
 class TestMakeSentinel(unittest.TestCase):
     def test_basic(self):
-        sentinel = _utils._make_sentinel(
+        sentinel = _utils._make_token(
             'TheName', '<the repr>', 'The docstring.'
         )
         self.assertEqual(sentinel.__class__.__name__, 'TheName')
@@ -103,10 +103,10 @@ class TestMakeSentinel(unittest.TestCase):
         self.assertTrue(bool(sentinel))
 
     def test_falsy(self):
-        sentinel = _utils._make_sentinel(
+        token = _utils._make_token(
             'TheName', '<the repr>', 'The docstring.', truthy=False
         )
-        self.assertFalse(bool(sentinel))
+        self.assertFalse(bool(token))
 
 
 class TestPrettyTimedeltaRepr(unittest.TestCase):

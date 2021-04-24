@@ -133,17 +133,17 @@ def _make_decimal(d):
     return d.normalize()
 
 
-def _make_sentinel(name, reprstring, docstring, truthy=True):
-    """Return a new object instance to use as a sentinel to represent
+def _make_token(name, reprstring, docstring, truthy=True):
+    """Return a new object instance to use as a token to represent
     an entity that cannot be used directly because of some logical
     reason or implementation detail.
 
-    * Query uses a sentinel for the result data when optimizing
+    * Query uses a token for the result data when optimizing
       queries because the result does not exist until the query
       is actually executed.
-    * _get_error() uses a sentinel to build an appropriate error
+    * _get_error() uses a token to build an appropriate error
       when objects normally required for processing are not found.
-    * DataError uses a sentinel to compare float('nan') objects
+    * DataError uses a token to compare float('nan') objects
       because they are not considered to be equal when directly
       compared.
     """

@@ -14,21 +14,21 @@ from ._compatibility.builtins import *
 from ._compatibility import abc
 from ._compatibility.contextlib import suppress
 
-from ._utils import _make_sentinel
+from ._utils import _make_token
 from ._utils import pretty_timedelta_repr
 
 
-NOVALUE = _make_sentinel(
+NOVALUE = _make_token(
     'NoValueType',
     '<no value>',
-    'Sentinel to mark when a value does not exist.',
+    'Token to mark when a value does not exist.',
     truthy=False,
 )
 
 
-NANTOKEN = _make_sentinel(
-    'NanSentinelType',
-    '<nan sentinel>',
+NANTOKEN = _make_token(
+    'NanTokenType',
+    '<nan token>',
     'Token for comparing differences that contain not-a-number values.',
 )
 

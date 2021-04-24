@@ -37,7 +37,7 @@ from ..._utils import (
     nonstringiter,
     sortable,
     exhaustible,
-    _make_sentinel,
+    _make_token,
     _unique_everseen,
     file_types,
     string_types,
@@ -627,8 +627,8 @@ _execution_step = namedtuple(
     field_names=('function', 'args', 'kwds')
 )
 
-RESULT_TOKEN = _make_sentinel(
-    'ResultSentinelType',
+RESULT_TOKEN = _make_token(
+    'ResultTokenType',
     '<RESULT>',
     'Token for representing a data result when optimizing execution plan.',
 )
