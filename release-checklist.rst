@@ -5,16 +5,16 @@ Release Checklist
 #. Make sure correct version number is set in the following files
    (remove the ".devN" suffix):
 
-       datatest/__init__.py
-       docs/conf.py
+        datatest/__init__.py
+        docs/conf.py
 
 #. Make sure the description argument in setup.py matches the project
    description on GitHub.
 
 #. Check that *packages* argument of setup() is correct. Check with:
 
-       >>> import setuptools
-       >>> sorted(setuptools.find_packages('.', exclude=['tests']))
+        >>> import setuptools
+        >>> sorted(setuptools.find_packages('.', exclude=['tests']))
 
 #. Make sure ``__past__`` sub-package includes a stub module for the
    current API version.
@@ -23,13 +23,13 @@ Release Checklist
 
 #. Commit and push final changes to upstream repository:
 
-       Prepare version info, CHANGELOG, and README for version N.N.N release.
+        Prepare version info, CHANGELOG, and README for version N.N.N release.
 
 #. Perform final checks to make sure there are no CI test failures.
 
 #. Make sure the packaging tools are up-to-date:
 
-       pip install -U twine wheel setuptools
+        pip install -U twine wheel setuptools
 
 #. Remove all existing files in the ``dist/`` folder.
 
@@ -49,7 +49,7 @@ Release Checklist
    version (e.g., N.N.N.dev1) so that "latest" docs aren't confused with the
    just-published "stable" docs:
 
-	    datatest/__init__.py
+        datatest/__init__.py
         docs/conf.py
 
    Commit these changes with a comment like the one below:
