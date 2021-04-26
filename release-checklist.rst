@@ -120,6 +120,9 @@ Release Checklist
    * https://datatest.readthedocs.io/ (stable)
    * https://datatest.readthedocs.io/en/latest/ (latest)
 
+   If the documentation was not automatically updated, you may need to
+   login to https://readthedocs.org/ and start the build process manually.
+
 #. Publish update announcement to relevant mailing lists:
 
    * python-announce-list@python.org
