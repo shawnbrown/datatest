@@ -35,9 +35,11 @@ Release Checklist
 
 #. Update ``README.rst`` (including "Backward Compatibility" section).
 
+#. Make final edits to ``CHANGELOG`` (doublecheck release date and version).
+
 #. Commit and push final changes to upstream repository:
 
-        Prepare version info, CHANGELOG, and README for version N.N.N release.
+        Prepare version info, README, and CHANGELOG for version N.N.N release.
 
 #. Perform final checks to make sure there are no CI test failures.
 
