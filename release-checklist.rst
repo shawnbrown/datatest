@@ -61,6 +61,26 @@ Release Checklist
 
         python setup.py sdist bdist_wheel
 
+#. Upload distributions to TestPyPI:
+
+        twine upload --repository testpypi dist/*
+
+#. View the package's web page on TestPyPI and verify that the information
+   is correct for the "Project links" and "Meta" sections:
+
+   * https://test.pypi.org/project/datatest
+
+   If you are testing a pre-release version, make sure to use the URL returned
+   by twine in the previous step (the default URL shows the latest *stable*
+   version).
+
+#. Test the installation process from TestPyPI:
+
+        python -m pip install --index-url https://test.pypi.org/simple/ datatest
+
+   If you're testing a pre-release version, make sure to use the "pip install"
+   command listed at the top of the project's TestPyPI page.
+
 #. Upload source and wheel distributions to PyPI:
 
    .. code-block:: console
