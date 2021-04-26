@@ -8,15 +8,27 @@ Release Checklist
    * ``datatest/__init__.py``
    * ``docs/conf.py``
 
-#. Make sure the description argument in setup.py matches the project
-   description on GitHub.
+#. Make sure the *description* argument in ``setup.py`` matches the project
+   description on GitHub (in the "About" section).
 
-#. Check that *packages* argument of ``setup()`` is correct. Check with:
+#. In the call to ``setup()``, check the versions defined by the
+   *python_requires* argument (see the "Version specifiers" section of
+   PEP-440 for details).
+
+#. In the call to ``setup()``, check the trove classifiers in the
+   *classifiers* argument (see https://pypi.org/classifiers/ for values).
+
+#. Check that *packages* argument of ``setup()`` is correct. Check that the
+   value matches what ``setuptools.find_packages()`` returns:
 
    .. code-block:: python
 
         >>> import setuptools
         >>> sorted(setuptools.find_packages('.', exclude=['tests']))
+
+   Defining this list explicitly (rather than using ``find_packages()``
+   directly in ``setup.py`` file) is needed when installing on systems
+   where ``setuptools`` is not available.
 
 #. Make sure ``__past__`` sub-package includes a stub module for the
    current API version.
@@ -55,21 +67,29 @@ Release Checklist
 
         twine upload dist/*
 
-#. Double check PyPI project page and test installation from PyPI.
+#. Double check PyPI project page and test installation from PyPI:
+
+   .. code-block:: console
+
+        python -m pip install datatest
 
 #. Add version tag to upstream repository (also used by readthedocs.org).
 
-#. Iterate version number in repository indicating that it is a development
-   version (e.g., N.N.N.dev1) so that "latest" docs aren't confused with the
-   just-published "stable" docs:
+#. Iterate the version number in the development repository to the next
+   anticipated release and add a "dev" suffix (e.g., N.N.N.dev1). This
+   version number should conform to the "Version scheme" section of PEP-440.
+   Make sure these changes are reflected in the following files:
 
    * ``datatest/__init__.py``
    * ``docs/conf.py``
 
    Commit these changes with a comment like the one below:
 
-        Iterate version number to differentiate development version
-        from latest release.
+        Iterate version number to the next anticipated release.
+
+   This is done so that installations made directly from the development
+   repository and the "latest" docs are not confused with the just-published
+   "stable" versions.
 
 #. Make sure the documentation reflects the new versions:
 
