@@ -5,13 +5,15 @@ Release Checklist
 #. Make sure correct version number is set in the following files
    (remove the ".devN" suffix):
 
-        datatest/__init__.py
-        docs/conf.py
+   * ``datatest/__init__.py``
+   * ``docs/conf.py``
 
 #. Make sure the description argument in setup.py matches the project
    description on GitHub.
 
 #. Check that *packages* argument of setup() is correct. Check with:
+
+   .. code-block:: python
 
         >>> import setuptools
         >>> sorted(setuptools.find_packages('.', exclude=['tests']))
@@ -29,9 +31,13 @@ Release Checklist
 
 #. Make sure the packaging tools are up-to-date:
 
+   .. code-block:: console
+
         pip install -U twine wheel setuptools check-manifest
 
 #. Check the manifest against the project's root folder:
+
+   .. code-block:: console
 
         check-manifest .
 
@@ -39,9 +45,13 @@ Release Checklist
 
 #. Build new distributions:
 
+   .. code-block:: console
+
         python setup.py sdist bdist_wheel
 
 #. Upload source and wheel distributions to PyPI:
+
+   .. code-block:: console
 
         twine upload dist/*
 
@@ -53,8 +63,8 @@ Release Checklist
    version (e.g., N.N.N.dev1) so that "latest" docs aren't confused with the
    just-published "stable" docs:
 
-        datatest/__init__.py
-        docs/conf.py
+   * datatest/__init__.py
+   * docs/conf.py
 
    Commit these changes with a comment like the one below:
 
