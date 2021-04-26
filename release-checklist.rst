@@ -29,7 +29,11 @@ Release Checklist
 
 #. Make sure the packaging tools are up-to-date:
 
-        pip install -U twine wheel setuptools
+        pip install -U twine wheel setuptools check-manifest
+
+#. Check the manifest against the project's root folder:
+
+        check-manifest .
 
 #. Remove all existing files in the ``dist/`` folder.
 
