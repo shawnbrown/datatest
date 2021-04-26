@@ -63,6 +63,8 @@ Release Checklist
 
 #. Upload distributions to TestPyPI:
 
+   .. code-block:: console
+
         twine upload --repository testpypi dist/*
 
 #. View the package's web page on TestPyPI and verify that the information
@@ -75,6 +77,8 @@ Release Checklist
    version).
 
 #. Test the installation process from TestPyPI:
+
+   .. code-block:: console
 
         python -m pip install --index-url https://test.pypi.org/simple/ datatest
 
