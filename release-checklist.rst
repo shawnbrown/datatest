@@ -11,7 +11,7 @@ Release Checklist
 #. Make sure the description argument in setup.py matches the project
    description on GitHub.
 
-#. Check that *packages* argument of setup() is correct. Check with:
+#. Check that *packages* argument of ``setup()`` is correct. Check with:
 
    .. code-block:: python
 
@@ -21,7 +21,7 @@ Release Checklist
 #. Make sure ``__past__`` sub-package includes a stub module for the
    current API version.
 
-#. Update README.rst (including "Backward Compatibility" section).
+#. Update ``README.rst`` (including "Backward Compatibility" section).
 
 #. Commit and push final changes to upstream repository:
 
@@ -63,8 +63,8 @@ Release Checklist
    version (e.g., N.N.N.dev1) so that "latest" docs aren't confused with the
    just-published "stable" docs:
 
-   * datatest/__init__.py
-   * docs/conf.py
+   * ``datatest/__init__.py``
+   * ``docs/conf.py``
 
    Commit these changes with a comment like the one below:
 
