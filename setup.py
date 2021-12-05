@@ -141,7 +141,7 @@ if __name__ == '__main__':
             project_urls={
                 'Documentation': 'https://datatest.readthedocs.io/',
             },
-            python_requires='>=2.6.*, !=3.0.*, !=3.1.*',
+            python_requires='>=2.6, !=3.0.*, !=3.1.*',
             description='Test driven data-wrangling and data validation.',
             long_description=long_description,
             long_description_content_type='text/x-rst',
